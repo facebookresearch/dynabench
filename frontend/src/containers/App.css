@@ -1,0 +1,12 @@
+.footer {
+  background-color: #f8f9fa!important;
+  font-size: 12px;
+  padding: 20px;
+  margin-top: 300px;
+}
+
+.card table, .card table tr td, .card table tr th {
+  font-size: 12px;
+  padding: 5px;
+  margin: 5px;
+}
