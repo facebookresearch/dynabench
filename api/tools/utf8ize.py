@@ -1,0 +1,17 @@
+#! /usr/bin/env python
+import MySQLdb
+
+db = MySQLdb.connect(host='localhost', user=config['db_user'], passwd=config['db_password'], db=config['db_name'])
+cursor = db.cursor()
+
+cursor.execute("ALTER DATABASE `%s` CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'" % dbname)
+
+sql = "SELECT DISTINCT(table_name) FROM information_schema.columns WHERE table_schema = '%s'" % dbname
+cursor.execute(sql)
+
+results = cursor.fetchall()
+for row in results:
+  sql = "ALTER TABLE `%s` convert to character set DEFAULT COLLATE DEFAULT" % (row[0])
+  cursor.execute(sql)
+db.commit()
+db.close()

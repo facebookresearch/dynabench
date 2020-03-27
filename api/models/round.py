@@ -1,0 +1,50 @@
+import sqlalchemy as db
+from .base import Base, dbs, BaseModel
+
+class Round(Base):
+    __tablename__ = 'rounds'
+    __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
+
+    id = db.Column(db.Integer, primary_key=True) # note that we have tid/rid as unique id too
+
+    tid = db.Column(db.Integer, db.ForeignKey("tasks.id"), nullable=False)
+    task = db.orm.relationship("Task", foreign_keys="Round.tid")
+
+    rid = db.Column(db.Integer, default=1, nullable=False) # probably want to add an INDEX on this
+
+    secret = db.Column(db.String(length=255), nullable=False)
+    url = db.Column(db.String(length=255), nullable=False)
+
+    desc = db.Column(db.String(length=255))
+    longdesc = db.Column(db.Text)
+
+    total_verified = db.Column(db.Integer, default=0)
+    total_collected = db.Column(db.Integer, default=0)
+    total_time_spent = db.Column(db.Time, default=0)
+
+    start_datetime = db.Column(db.DateTime, nullable=False)
+    end_datetime = db.Column(db.DateTime, nullable=True)
+
+    def __repr__(self):
+        return '<Round {}>'.format(self.id)
+
+    def to_dict(self, safe=True):
+        d = {}
+        for column in self.__table__.columns:
+            if safe and column.name in ['secret']: continue
+            d[column.name] = str(getattr(self, column.name))
+        return d
+
+class RoundModel(BaseModel):
+    def __init__(self):
+        super(RoundModel, self).__init__(Round)
+    def getByTidAndRid(self, tid, rid):
+        try:
+            return dbs.query(Round).filter(Round.tid == tid).filter(Round.rid == rid).one() # should be unique
+        except db.orm.exc.NoResultFound:
+            return False
+    def getByTid(self, tid):
+        try:
+            return dbs.query(Round).filter(Round.tid == tid).all()
+        except db.orm.exc.NoResultFound:
+            return False
