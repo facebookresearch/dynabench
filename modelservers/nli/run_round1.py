@@ -1,44 +1,90 @@
-import os, sys
-sys.path.append('../../api')
+# Copyright (c) Facebook, Inc. and its affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the license found in the
+# LICENSE file in the root directory of this source tree.
+#
 
-import bottle
-from common.cors import *
-
+import sys
+sys.path.append('..')
 sys.path.append('./anli/src')
+import os, random, json
+import ssl
 
-from model_server.servers import BertServer, BertClient
+from multiprocessing import Process
+from aiohttp import web
+
+from model_server.servers import BertClient, BertServer
 
 import logging
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+def get_cors_headers():
+    headers = {}
+    headers['Access-Control-Allow-Origin'] = 'http://54.185.202.254:3000'
+    headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, OPTIONS'
+    headers['Access-Control-Allow-Headers'] = 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token, Authorization'
+    headers['Access-Control-Allow-Credentials'] = 'true'
+    return headers
 
-# First, start the model server as a background process
-try:
-    pid = os.fork()
-except OSError:
-    exit("Could not create a child process")
+async def handle_post_hypothesis(request):
+    if request.content_length <= 0 :
+        raise web.HTTPBadRequest(reason='Missing data')
+    post_data = await request.json()
+    if 'hypothesis' not in post_data or len(post_data['hypothesis']) < 1:
+        raise web.HTTPBadRequest(reason='Missing data')
+    try:
+        bert_input = {
+            's1': post_data['context'],
+            's2': post_data['hypothesis']
+        }
+        logging.info("Example: {}".format(bert_input))
+        response = bert_client.infer(bert_input)
+    except e:
+        logging.exception('Error')
+    return web.json_response(response, headers=get_cors_headers())#, headers={'Access-Control-Allow-Origin': '*'})
 
-if pid == 0:
-    model_path = "/home/ubuntu/saved_models/06-21-21:12:27_bert-large-uncased_on_smnli/yixin_bert.model"
-    model_server = BertServer(model_path, port_num=6666, device_num=-1)
+async def handle_options(request):
+    return web.Response(headers=get_cors_headers())
+
+def run_bert_server(port):
+    '''
+    Run BERT server, to be launched from forked proc
+    '''
+    model_path = os.path.join('/home/ubuntu/models/bert_round1.pt')
+    model_server = BertServer(model_path, port_num=port, device_num=-1)
+    logging.info("BERT Server starting")
     model_server.start_server()
     model_server.shutdown()
 
-# Second, handle incoming http requests and forward to the model server via client
-app = bottle.default_app()
-app.default_error_handler = my_error_handler
-bert_client = BertClient(6666)
-@bottle.post('/')
-def handle():
-    data = bottle.request.json
-    if not data or 'context' not in data or 'hypothesis' not in data:
-        logging.info('Missing data')
-        bottle.abort(400, 'Missing data')
-    # TODO: check secret, attach some encrypted msg
-    response = bert_client.infer({'s1': data['context'], 's2': data['hypothesis']})
-    return json.dumps(response)
+if __name__ == '__main__':
+    # Set up logger
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
-bottle.run(host='0.0.0.0', port=8081, debug=True, reloader=True)
+    # Spawn BERT server
+    server_proc = Process(target=run_bert_server, args=(6666,))
+    server_proc.start()
 
-bert_client.shutdown()
-os.waitpid(0, 0)
+    # Set up client to talk to BERT server
+    bert_client = BertClient(6666)
+    logging.info("BERT Client started")
+
+    # Launch HTTP server
+    app = web.Application()
+    app.add_routes([
+        web.options('/', handle_options),
+        web.post('/aab397c39e7e84c8dfdf1455721cea799c6d3893884dec30af79a7445fa40d7d', handle_post_hypothesis),
+        ])
+    logging.info("Launching HTTP Server")
+
+    #ssl_context = ssl.create_default_context(ssl.PROTOCOL_SSLv23)
+    #ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+
+    # WITH SSL, adversarialnli.com:
+    #ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    #ssl_context.load_cert_chain('/home/ubuntu/.ssl/adversarialnli.com.crt', keyfile='/home/ubuntu/.ssl/adversarialnli.com-key.pem')
+    #web.run_app(app, ssl_context=ssl_context)
+    # WITHOUT SSL (for now), dynabench:
+    web.run_app(app)
+
+    bert_client.shutdown()
+    server_proc.join()
