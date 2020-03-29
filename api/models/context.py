@@ -6,10 +6,9 @@ class Context(Base):
     __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
 
     id = db.Column(db.Integer, primary_key=True)
-    tid = db.Column(db.Integer, db.ForeignKey("tasks.id"), nullable=False)
-    task = db.orm.relationship("Task", foreign_keys="Context.tid")
-    rid = db.Column(db.Integer, db.ForeignKey("rounds.rid"), nullable=False)
-    round = db.orm.relationship("Round", foreign_keys="Context.rid")
+
+    r_realid = db.Column(db.Integer, db.ForeignKey("rounds.id"), nullable=False)
+    round = db.orm.relationship("Round", foreign_keys="Context.r_realid")
 
     context = db.Column(db.Text)
 
@@ -32,7 +31,7 @@ class ContextModel(BaseModel):
     def __init__(self):
         super(ContextModel, self).__init__(Context)
 
-    def getRandom(self, tid, rid, n=1):
+    def getRandom(self, rid, n=1):
         # https://stackoverflow.com/questions/60805/getting-random-row-through-sqlalchemy
         #return dbs.query(Context).filter(Context.tid == tid).filter(Context.rid == rid).options(db.orm.load_only('id')).offset(
         #        db.sql.func.floor(
@@ -40,4 +39,4 @@ class ContextModel(BaseModel):
         #            dbs.query(db.sql.func.count(Context.id))
         #        )
         #    ).limit(n).all()
-        return dbs.query(Context).filter(Context.tid == tid).filter(Context.rid == rid).order_by(db.sql.func.rand()).limit(n).all()
+        return dbs.query(Context).filter(Context.r_realid == rid).order_by(db.sql.func.rand()).limit(n).all()

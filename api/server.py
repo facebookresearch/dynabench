@@ -19,5 +19,6 @@ from controllers.users import *
 from controllers.models import *
 from controllers.contexts import *
 from controllers.tasks import *
+from controllers.examples import *
 
 bottle.run(host='0.0.0.0', port=8080, debug=True, reloader=True)

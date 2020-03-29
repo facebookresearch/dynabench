@@ -9,30 +9,20 @@ import {
 import UserContext from './UserContext';
 
 class UserInfoCard extends React.Component {
-  state = {
-    user: {}
-  }
-  static contextType = UserContext;
-  componentDidMount() {
-    this.context.api.getUser(this.context.user.id)
-    .then(result => {
-      this.setState({user: result});
-    })
-    .catch(error => {
-      console.log(error);
-    });
+  constructor(props) {
+    super(props);
   }
   render() {
     return (<UserContext.Consumer>
       {props => (
         <CardGroup style={{marginTop: 20, width: '100%'}}>
         <Card>
-          <Card.Header>{this.state.user.username}</Card.Header>
+          <Card.Header>{this.props.user.username}</Card.Header>
           <Card.Body>
             <Card.Title></Card.Title>
-            <Card.Text>Email: {this.state.user.email}</Card.Text>
-            <Card.Text>Real name: {this.state.user.realname}</Card.Text>
-            <Card.Text>Affiliation: {this.state.user.affiliation}</Card.Text>
+            <Card.Text>Email: {this.props.user.email}</Card.Text>
+            <Card.Text>Real name: {this.props.user.realname}</Card.Text>
+            <Card.Text>Affiliation: {this.props.user.affiliation}</Card.Text>
           </Card.Body>
           <Card.Footer>
             <small className="text-muted">Last login: X</small>
@@ -46,10 +36,24 @@ class UserInfoCard extends React.Component {
 
 class ProfilePage extends React.Component {
   static contextType = UserContext;
+  constructor(props) {
+    super(props);
+    this.state = {
+      user: {}
+    };
+  }
   componentDidMount () {
-    if (!this.context.user.id) {
-      // TBD: Make this display some error at the top
-      this.props.history.push("/login");
+    if (!this.context.api.loggedIn()) {
+      this.props.history.push("/login?msg=" + encodeURIComponent("Please login first.") + "&src=/profile");
+    } else {
+      const user = this.context.api.getCredentials();
+      this.context.api.getUser(user.id)
+      .then(result => {
+        this.setState({user: result});
+      })
+      .catch(error => {
+        console.log(error);
+      });
     }
   }
   render() {
@@ -59,7 +63,7 @@ class ProfilePage extends React.Component {
             <h2>Your profile</h2>
           </Row>
           <Row>
-            <UserInfoCard />
+            <UserInfoCard user={this.state.user} />
           </Row>
         </Container>
       );

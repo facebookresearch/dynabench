@@ -1,5 +1,6 @@
 import sqlalchemy as db
 from .base import Base, dbs, BaseModel
+from .model import Model
 
 class Score(Base):
     __tablename__ = 'scores'
@@ -7,8 +8,9 @@ class Score(Base):
 
     id = db.Column(db.Integer, primary_key=True)
     mid = db.Column(db.Integer, db.ForeignKey("models.id"), nullable=False)
-    tid = db.Column(db.Integer, db.ForeignKey("tasks.id"), nullable=False)
-    rid = db.Column(db.Integer, db.ForeignKey("rounds.rid"), nullable=False) # does this work?
+    model = db.orm.relationship("Model", foreign_keys="Score.mid")
+    rid = db.Column(db.Integer, db.ForeignKey("rounds.id"), nullable=False)
+    round = db.orm.relationship("Round", foreign_keys="Score.rid")
 
     desc = db.Column(db.String(length=255))
     longdesc = db.Column(db.Text)

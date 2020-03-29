@@ -5,12 +5,12 @@ class Round(Base):
     __tablename__ = 'rounds'
     __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
 
-    id = db.Column(db.Integer, primary_key=True) # note that we have tid/rid as unique id too
+    id = db.Column(db.Integer, primary_key=True)
 
     tid = db.Column(db.Integer, db.ForeignKey("tasks.id"), nullable=False)
     task = db.orm.relationship("Task", foreign_keys="Round.tid")
 
-    rid = db.Column(db.Integer, default=1, nullable=False) # probably want to add an INDEX on this
+    rid = db.Column(db.Integer, default=1, nullable=False, index=True)
 
     secret = db.Column(db.String(length=255), nullable=False)
     url = db.Column(db.String(length=255), nullable=False)
@@ -22,11 +22,11 @@ class Round(Base):
     total_collected = db.Column(db.Integer, default=0)
     total_time_spent = db.Column(db.Time, default=0)
 
-    start_datetime = db.Column(db.DateTime, nullable=False)
+    start_datetime = db.Column(db.DateTime, nullable=True)
     end_datetime = db.Column(db.DateTime, nullable=True)
 
     def __repr__(self):
-        return '<Round {}>'.format(self.id)
+        return '<Round {} {}>'.format(self.tid, self.rid)
 
     def to_dict(self, safe=True):
         d = {}

@@ -20,8 +20,8 @@ for task in tasks:
     t = Task(name=task['name'], shortname=task['shortname'], desc=task['desc'], cur_round=1, last_updated=db.sql.func.now(), targets=task['targets'], has_context=task['has_context'])
     dbs.add(t)
     dbs.flush()
-    r = Round(task=t, num=1, secret=secrets.token_hex(), url='https://TBD')
+    r = Round(task=t, rid=1, secret=secrets.token_hex(), url='https://TBD')
     dbs.add(r)
     dbs.flush()
-    t.cur_round = r.num
+    t.cur_round = r.rid
     dbs.commit()

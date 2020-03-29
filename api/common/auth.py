@@ -40,12 +40,11 @@ def requires_auth(f):
         try:
             token = jwt_token_from_header()
         except AuthorizationError as e:
-            bottle.abort(400, e.message['description'])
+            bottle.abort(403, 'Access denied (%s)' % e.message['description'])
         credentials = get_payload(token)
         args = list(args)
         args.insert(0, credentials)
         return f(*args, **kwargs)
-
     return decorated
 
 def get_token(payload):

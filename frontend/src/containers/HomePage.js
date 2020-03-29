@@ -107,7 +107,7 @@ class HomePage extends React.Component {
       {id: 5, name: 'HATE SPEECH', desc: 'Hate speech detection is classifying one or more sentences by whether or not they constitute hate speech.', round: 1, examples: 123, verified: 123, tries_per: 8, time_per: 120}
     ];
     */
-    const taskCards = this.state.tasks.map((task, index) =>
+    const taskCards = !this.state.tasks ? <p>No tasks found</p> : this.state.tasks.map((task, index) =>
       <Card key={task.id} className="taskCard" onClick={() => this.props.history.push("/tasks/" + task.id)}>
         <span className={index < 3 ? "taskHeader taskHeaderRight" : "taskHeader taskHeaderLeft"}><h2>{task.shortname}</h2></span>
         <Card.Body>

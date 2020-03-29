@@ -41,7 +41,7 @@ for rid in contexts.keys():
     for context in contexts[rid]:
         print(task.id, rid, context, task, round)
         tags = 'ANLI|ANLI'+rid
-        c = Context(task=task, round=round, context=context, tags=tags)
+        c = Context(round=round, context=context, tags=tags)
         print(c)
         dbs.add(c)
         dbs.flush()

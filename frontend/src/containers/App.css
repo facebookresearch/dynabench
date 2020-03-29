@@ -10,3 +10,29 @@
   padding: 5px;
   margin: 5px;
 }
+
+.context {
+  background-color: rgba(108, 117, 125, 0.1);
+  padding: 10px;
+  margin-bottom: 4px;
+}
+.hypothesis  {
+  padding: 10px;
+  margin-bottom: 4px;
+}
+.retracted  {
+  padding: 10px;
+  margin-bottom: 4px;
+  opacity: 0.7;
+}
+.correct {
+  color: white;
+  background-color: #28a745!important;
+}
+.incorrect {
+  color: black;
+  background-color: #dc3545!important;
+}
+.c3-tooltip-container {
+width: 200px;
+}

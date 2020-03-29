@@ -16,20 +16,28 @@ import C3Chart from 'react-c3js';
 import 'c3/c3.css';
 
 class UserPage extends React.Component {
+  static contextType = UserContext;
   constructor(props) {
     super(props);
     this.state = {
       userId: null,
-      user: {
-        username: 'douwe',
-      }
+      user: {}
     };
   }
   componentDidMount() {
     const { match: { params } } = this.props;
-    this.setState(params);
+    this.setState(params, function() {
+      this.context.api.getUser(this.state.userId)
+      .then(result => {
+        this.setState({user: result});
+      })
+      .catch(error => {
+        console.log(error);
+      });
+    });
   }
   render() {
+    console.log(this.state);
     return (
       <Container>
         <Row>
@@ -37,6 +45,7 @@ class UserPage extends React.Component {
         </Row>
         <Row>
           <CardGroup style={{marginTop: 20, width: '100%'}}>
+            {this.state.user.id ?
             <Card>
               <Card.Header>
                 {this.state.user.username}
@@ -47,14 +56,25 @@ class UserPage extends React.Component {
                 </span>
               </Card.Header>
               <Card.Body>
-                <Card.Text>
-                  {this.state.user.email}
-                </Card.Text>
+                {
+                  (this.state.user.id == this.context.user.id) ?
+                  <small style={{float: 'right'}}><Link className="btn-link" to="/profile">Looking for your profile?</Link></small>
+                  :
+                  ''
+                }
+                <Card.Text>Affiliation: {this.state.user.affiliation}</Card.Text>
                 <Card.Text>
                   Badges: Rockstar
                 </Card.Text>
               </Card.Body>
             </Card>
+              :
+            <Card>
+              <Card.Body>
+                <Card.Text>User unknown</Card.Text>
+              </Card.Body>
+            </Card>
+            }
           </CardGroup>
         </Row>
       </Container>

@@ -54,6 +54,10 @@ h2 {
   box-shadow: 0 30px 60px 0 rgba(0,0,0,0.3);
   text-align: center;
 }
+#formContent .msg {
+  padding-left: 30px;
+  padding-right: 30px;
+}
 
 #formFooter {
   background-color: #f6f6f6;

@@ -44,6 +44,17 @@ class App extends React.Component {
   updateState(value) {
     this.setState(value);
   }
+  componentDidMount() {
+    if (this.api.loggedIn()) {
+      this.setState({user: this.api.getCredentials()});
+    }
+    // else {
+    //  var token = this.api.getToken();
+    //  if (token) {
+    //    console.log('we have an expired token, we should refresh!');
+    //  }
+    //}
+  }
   render() {
     return (
       <UserContext.Provider value={ {user: this.state.user, updateState: this.updateState, api: this.api } }>

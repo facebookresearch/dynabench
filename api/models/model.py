@@ -7,7 +7,9 @@ class Model(Base):
 
     id = db.Column(db.Integer, primary_key=True)
     tid = db.Column(db.Integer, db.ForeignKey("tasks.id"), nullable=False)
+    task = db.orm.relationship("Task", foreign_keys="Model.tid")
     uid = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    user = db.orm.relationship("User", foreign_keys="Model.uid")
 
     name = db.Column(db.String(length=255), nullable=False)
     shortname = db.Column(db.String(length=255), nullable=False)

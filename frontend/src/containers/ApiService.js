@@ -6,6 +6,18 @@ function delay(t, v) {
    });
 }
 
+const EventEmitter = {
+  events: {},
+  dispatch: function (event, data) {
+    if (!this.events[event]) return;
+    this.events[event].forEach(callback => callback(data));
+  },
+  subscribe: function (event, callback) {
+    if (!this.events[event]) this.events[event] = []
+    this.events[event].push(callback);
+  }
+}
+
 export default class ApiService {
     constructor(domain) {
         this.domain = domain || 'http://54.185.202.254:8080'
@@ -14,7 +26,7 @@ export default class ApiService {
         this.getToken = this.getToken.bind(this)
         this.login = this.login.bind(this)
         this.register = this.register.bind(this)
-        this.getProfile = this.getProfile.bind(this)
+        this.getCredentials = this.getCredentials.bind(this)
         this.updating_already = false;
     }
 
@@ -59,9 +71,11 @@ export default class ApiService {
     }
 
     getUser(id) {
-      return this.fetch(`${this.domain}/users/${id}`, {
+      var f = this.fetch(`${this.domain}/users/${id}`, {
         method: 'GET'
-      }).then(res => {
+      });
+      console.log(f);
+      return f.then(res => {
         return Promise.resolve(res);
       })
     }
@@ -82,10 +96,72 @@ export default class ApiService {
       })
     }
 
+    getModelResponse(modelUrl, context, hypothesis) {
+        return this.fetch(modelUrl, {
+            method: 'POST',
+            body: JSON.stringify(
+              {'context': context, 'hypothesis': hypothesis}
+            )
+        }).then(res => {
+            return Promise.resolve(res);
+        })
+    }
+
+    retractExample(id) {
+        return this.fetch(`${this.domain}/examples/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(
+              {
+                'retracted': true
+              }
+            )
+        }).then(res => {
+            return Promise.resolve(res);
+        })
+    }
+
+    storeExample(tid, rid, uid, cid, hypothesis, target, response) {
+        return this.fetch(`${this.domain}/examples`, {
+            method: 'POST',
+            body: JSON.stringify(
+              {
+                'hypothesis': hypothesis,
+                'tid': tid,
+                'rid': rid,
+                'cid': cid,
+                'uid': uid,
+                'target': target,
+                // TODO: make this more specific later to reduce latency:
+                // Only .prob and .signed?
+                'response': response
+              }
+            )
+        }).then(res => {
+            return Promise.resolve(res);
+        })
+    }
+
     loggedIn() {
-        // Checks if there is a saved token and it's still valid
-        const token = this.getToken() // GEtting token from localstorage
-        return !!token && !this.isTokenExpired(token) // handwaiving here
+      const token = this.getToken()
+      if (!token) {
+        console.log('We do not have a token');
+        return false;
+      } else if (!!token && !this.isTokenExpired(token)) {
+        console.log('We have a valid token');
+        return true;
+      } else {
+        console.log('We have a token that is not longer valid - refreshing');
+        return this.refreshTokenWrapper(
+          function() {
+            console.log('Our token was refreshed (loggedIn)');
+            return true;
+          },
+          function() {
+            console.log('Could not refresh token (loggedIn)');
+            //window.location.href = '/login';
+            return false;
+          });
+      }
     }
 
     isTokenExpired(token) {
@@ -103,86 +179,86 @@ export default class ApiService {
     }
 
     setToken(idToken) {
-        // Saves user token to localStorage
         localStorage.setItem('id_token', idToken)
     }
 
     getToken() {
-        // Retrieves the user token from localStorage
         return localStorage.getItem('id_token')
     }
 
     logout() {
-        // Clear user token and profile data from localStorage
         localStorage.removeItem('id_token');
     }
 
-    getProfile() {
-        // Using jwt-decode npm package to decode the token
-        return decode(this.getToken());
+    getCredentials() {
+      console.log(this.getToken());
+      return decode(this.getToken());
     }
 
+    refreshTokenWrapper(callback, error) {
+      if (this.updating_already) {
+        // TODO: Make this actually wait for an event?
+        return delay(1000).then(() => {
+          return callback()
+        });
+      } else {
+        this.updating_already = true;
+        return this.refreshToken()
+        .then((result) => {
+          this.updating_already = false;
+          return callback();
+        })
+        .catch(() => {
+          this.updating_already = false;
+          return error();
+        });
+      }
+    }
 
-    fetch(url, options) {
+    refreshToken() {
+      return this.doFetch(`${this.domain}/authenticate/refresh`)
+      .then(result => {
+        this.setToken(result.token)
+      });
+    }
+
+    doFetch(url, options) {
       const token = this.getToken();
       const headers = {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         'Authorization': token ? ('Bearer ' + token ) : 'None',
       }
+      return fetch(url, {
+        headers,
+        credentials: 'include', // not sure if we always need this?
+        ...options
+      })
+      .then(this._checkStatus)
+      .then(response => response.json());
+    }
 
-      // TODO: Turn this into its own function
+    fetch(url, options) {
+      const token = this.getToken();
       if (!!token && this.isTokenExpired(token) && url !== `${this.domain}/authenticate`) {
-        if (!this.updating_already) {
-          this.updating_already = true;
-          return fetch(`${this.domain}/authenticate/refresh`, {
-            method: 'GET', headers,
-            credentials: 'include' // so that we send the token cookie along
-          })
-          .then(response => response.json())
-          .then(result => {
-            this.setToken(result.token);
-            headers['Authorization'] = 'Bearer ' + this.getToken();
-            return fetch(url, {
-              headers,
-              credentials: 'include', // not sure if we always need this?
-              ...options
-            })
-            .then(this._checkStatus)
-            .then(response => {
-              this.updating_already = false;
-              return response.json()
-            })
+        return this.refreshTokenWrapper(
+          (res) => {
+            console.log('Our token was refreshed (fetch callback)');
+            return this.doFetch(url, options);
+          },
+          (res) => {
+            console.log('Could not refresh token (fetch)');
+            var error = new Error('Could not refresh token')
+            //window.location.href = '/login';
+            throw error
           });
-        } else {
-          return delay(1000).then(() => {
-            // wait a bit so that we'll have the new token - ugly I know
-            headers['Authorization'] = 'Bearer ' + this.getToken();
-            return fetch(url, {
-              headers,
-              credentials: 'include', // not sure if we always need this?
-              ...options
-            })
-            .then(this._checkStatus)
-            .then(response => {
-              return response.json()
-            })
-          });
-        }
-      } else {
-        return fetch(url, {
-          headers,
-          credentials: 'include', // not sure if we always need this?
-          ...options
-        })
-        .then(this._checkStatus)
-        .then(response => response.json())
       }
+      return this.doFetch(url, options);
     }
 
     _checkStatus(response) {
         // raises an error in case response status is not a success
-        if (response.status >= 200 && response.status < 300) { // Success status lies between 200 to 300
+        if (response.status >= 200 && response.status < 300) {
             return response
         } else {
             var error = new Error(response.statusText)

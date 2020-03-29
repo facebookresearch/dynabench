@@ -5,10 +5,13 @@ import { Link } from 'react-router-dom';
 import './LoginPage.css';
 import UserContext from './UserContext';
 
+import qs from 'qs';
+
 class LoginPage extends React.Component {
   construct() {
   }
   render() {
+    var query = qs.parse(this.props.location.search, { ignoreQueryPrefix: true })
     return (
       <UserContext.Consumer>
       {props => (
@@ -17,8 +20,9 @@ class LoginPage extends React.Component {
               <div className="wrapper fadeInDown">
               <div id="formContent" className="loginForm">
                 <h2>Login</h2>
+                <p className="msg">{query.msg}</p>
                 <Formik
-                  initialValues={{ email: '', password: '' }}
+                  initialValues={{ email: '', password: '', src: query.src ? query.src : '/' }}
                   validate={values => {
                     const errors = {};
                     if (!values.email) {
@@ -30,8 +34,8 @@ class LoginPage extends React.Component {
                     props.api.login(values.email, values.password)
                     .then(result => {
                       console.log(result);
-                      props.updateState({user: result.user});
-                      this.props.history.push("/");
+                      props.updateState({user: props.api.getCredentials()});
+                      this.props.history.push(values.src);
                     })
                     .catch(error => {
                       console.log(error);

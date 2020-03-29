@@ -1,14 +1,19 @@
+import logging
 import sqlalchemy as db
 from .base import Base, dbs, BaseModel
+from .context import ContextModel
+from .user import UserModel
+import numpy as np
 
 class Example(Base):
     __tablename__ = 'examples'
     __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
 
     id = db.Column(db.Integer, primary_key=True)
-    tid = db.Column(db.Integer, db.ForeignKey("tasks.id"), nullable=False)
-    rid = db.Column(db.Integer, db.ForeignKey("rounds.id"), nullable=False)
     cid = db.Column(db.Integer, db.ForeignKey("contexts.id"), nullable=False)
+    context = db.orm.relationship("Context", foreign_keys="Example.cid")
+    uid = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    user = db.orm.relationship("User", foreign_keys="Example.uid")
 
     text = db.Column(db.Text)
     explanation = db.Column(db.Text)
@@ -39,12 +44,41 @@ class ExampleModel(BaseModel):
     def __init__(self):
         super(ExampleModel, self).__init__(Example)
 
-    def create(self, context_id, target_pred, model_preds, model_wrong, text, explanation, **kwargs):
-        e = Example(cid=context_id, target_pred=target_pred, model_preds=model_preds,
-                text=text, explanation=explanation, generated_datetime=db.sql.func.now(),
-                **kwargs)
-        dbs.add(e)
-        return dbs.commit()
+    def create(self, tid, rid, uid, cid, hypothesis, tgt, pred, signed):
+        cm = ContextModel()
+        c = cm.get(cid)
+        if int(tid) != c.round.task.id or int(rid) != c.round.rid:
+            logging.error('Task id ({}={}) or round id ({}={}) do not match context'.format(tid, c.round.task.id, rid, c.round.rid))
+            return False
+
+        pred_str = '|'.join(str(x) for x in pred)
+
+        import hashlib
+        h = hashlib.sha1()
+        h.update(c.context.encode('utf-8'))
+        h.update(hypothesis.encode('utf-8'))
+        h.update("{}{}{}".format(tid, rid, pred_str).encode('utf-8'))
+        h.update(c.round.secret.encode('utf-8'))
+        if h.hexdigest() != signed:
+            logging.error("Signature does not match (received %s, expected %s)" %
+                    (h.hexdigest(), signed))
+            return False
+
+        try:
+            um = UserModel()
+            user = um.get(uid)
+            e = Example(user=user, context=c, \
+                    text=hypothesis, target_pred=tgt, model_preds=pred_str, \
+                    model_wrong=(tgt != np.argmax(pred)),
+                    generated_datetime=db.sql.func.now())
+            dbs.add(e)
+            dbs.flush()
+            dbs.commit()
+            logging.error('Added example (%s)' % (e.id))
+        except Exception as error_message:
+            logging.error('Could not create example (%s)' % error_message)
+            return False
+        return e.id
 
     def getRandomToVerify(tid, n=1):
         # https://stackoverflow.com/questions/60805/getting-random-row-through-sqlalchemy
