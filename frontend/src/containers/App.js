@@ -61,10 +61,14 @@ class App extends React.Component {
       <Router>
         <ScrollToTop />
         <Navbar bg="light" expand="lg" className="navbar-fixed-top">
+          <Navbar.Brand as={Link} to="/"><img src="/logo.png" style={{width: 100, marginLeft: 5, marginRight: 20}} alt="DynaBench" /></Navbar.Brand>
           <Nav className="mr-auto">
-            <Navbar.Brand as={Link} to="/">DynaBench</Navbar.Brand>
+            <Nav.Item>
             <Nav.Link as={Link} to="/about">About</Nav.Link>
+            </Nav.Item>
+            <Nav.Item>
             <Nav.Link as={Link} to="/tasks">Tasks</Nav.Link>
+            </Nav.Item>
           </Nav>
           <Nav className="justify-content-end">
             <Navbar.Text>
