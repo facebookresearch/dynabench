@@ -15,8 +15,11 @@ from multiprocessing import Process
 from aiohttp import web
 
 from model_server.servers import BertClient, BertServer
+from settings import my_task_id, my_round_id, my_secret
 
 import logging
+
+import hashlib
 
 def get_cors_headers():
     headers = {}
@@ -41,6 +44,24 @@ async def handle_post_hypothesis(request):
         response = bert_client.infer(bert_input)
     except e:
         logging.exception('Error')
+
+    logging.info('Generating signature')
+    preds = '|'.join(str(x) for x in response['prob'])
+    h = hashlib.sha1()
+    print("{}{}{}{}{}{}".format( \
+            response['s1'].encode('utf-8'),
+            response['s2'].encode('utf-8'),
+            my_task_id, my_round_id, preds,
+            my_secret.encode('utf-8')
+        ))
+    h.update(response['s1'].encode('utf-8'))
+    h.update(response['s2'].encode('utf-8'))
+    h.update("{}{}{}".format(my_task_id, my_round_id, preds).encode('utf-8'))
+    h.update(my_secret.encode('utf-8'))
+    signed = h.hexdigest()
+    logging.info('Signature {}'.format(signed))
+    response['signed'] = signed
+
     return web.json_response(response, headers=get_cors_headers())#, headers={'Access-Control-Allow-Origin': '*'})
 
 async def handle_options(request):
@@ -50,9 +71,10 @@ def run_bert_server(port):
     '''
     Run BERT server, to be launched from forked proc
     '''
+    logging.info("Launching BERT Server process")
     model_path = os.path.join('/home/ubuntu/models/bert_round1.pt')
     model_server = BertServer(model_path, port_num=port, device_num=-1)
-    logging.info("BERT Server starting")
+    logging.info("BERT Server starting now:")
     model_server.start_server()
     model_server.shutdown()
 
@@ -71,7 +93,7 @@ if __name__ == '__main__':
     # Launch HTTP server
     app = web.Application()
     app.add_routes([
-        web.options('/', handle_options),
+        web.options('/aab397c39e7e84c8dfdf1455721cea799c6d3893884dec30af79a7445fa40d7d', handle_options),
         web.post('/aab397c39e7e84c8dfdf1455721cea799c6d3893884dec30af79a7445fa40d7d', handle_post_hypothesis),
         ])
     logging.info("Launching HTTP Server")
