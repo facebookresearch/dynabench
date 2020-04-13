@@ -61,7 +61,7 @@ class App extends React.Component {
       <Router>
         <ScrollToTop />
         <Navbar bg="light" expand="lg" className="navbar-fixed-top">
-          <Navbar.Brand as={Link} to="/"><img src="/logo.png" style={{width: 100, marginLeft: 5, marginRight: 20}} alt="DynaBench" /></Navbar.Brand>
+          <Navbar.Brand as={Link} to="/"><img src="/logo.png" style={{width: 80, marginLeft: 5, marginRight: 20}} alt="DynaBench" /></Navbar.Brand>
           <Nav className="mr-auto">
             <Nav.Item>
             <Nav.Link as={Link} to="/about">About</Nav.Link>
@@ -71,9 +71,22 @@ class App extends React.Component {
             </Nav.Item>
           </Nav>
           <Nav className="justify-content-end">
-            <Navbar.Text>
-              { this.state.user.id ? <span><Link to={'/profile'}>{this.state.user.username}</Link> | <Link to={'/logout'}>Logout</Link></span> : <Link to="/login">Login</Link> }
-            </Navbar.Text>
+              { this.state.user.id ? <>
+                <Nav.Item>
+                  <Nav.Link as={Link} to={'/profile'}>{this.state.user.username}</Nav.Link>
+                </Nav.Item>
+                <Nav.Item>
+                  <Nav.Link as={Link} to={'/logout'}>Logout</Nav.Link>
+                </Nav.Item>
+                </> : <>
+                <Nav.Item>
+                  <Nav.Link as={Link} to="/login">Login</Nav.Link>
+                </Nav.Item>
+                <Nav.Item>
+                  <Nav.Link as={Link} to="/register">Sign up</Nav.Link>
+                </Nav.Item>
+                </>
+              }
           </Nav>
         </Navbar>
         <div id="#content">
