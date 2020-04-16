@@ -20,7 +20,7 @@ const EventEmitter = {
 
 export default class ApiService {
     constructor(domain) {
-        this.domain = domain || 'http://54.185.202.254:8080'
+        this.domain = domain || 'http://35.155.243.4:8080'
         this.fetch = this.fetch.bind(this)
         this.setToken = this.setToken.bind(this)
         this.getToken = this.getToken.bind(this)

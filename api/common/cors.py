@@ -7,7 +7,9 @@ def enable_cors_generic_route():
 def enable_cors_after_request_hook():
     add_cors_headers()
 def add_cors_headers():
-    bottle.response.headers['Access-Control-Allow-Origin'] = 'http://54.185.202.254:3000'
+    host = bottle.request.get_header('host').split(':')[0]
+    # TODO: https and use domain name
+    bottle.response.headers['Access-Control-Allow-Origin'] = 'http://' + host
     bottle.response.headers['Access-Control-Allow-Methods'] = \
         'GET, POST, PUT, OPTIONS'
     bottle.response.headers['Access-Control-Allow-Headers'] = \
