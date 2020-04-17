@@ -1,5 +1,5 @@
 import sqlalchemy as db
-from .base import Base, dbs
+from .base import Base, BaseModel
 
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -36,29 +36,29 @@ class User(Base):
             d[column.name] = str(getattr(self, column.name))
         return d
 
-class UserModel():
+class UserModel(BaseModel):
     def __init__(self):
-        pass
+        super(UserModel, self).__init__(User)
 
     def create(self, email, password, username, **kwargs):
         u = User(email=email, username=username, **kwargs)
         u.set_password(password)
-        dbs.add(u)
-        return dbs.commit()
+        self.dbs.add(u)
+        return self.dbs.commit()
 
     def get(self, id):
         try:
-            return dbs.query(User).filter(User.id == id).one()
+            return self.dbs.query(User).filter(User.id == id).one()
         except db.orm.exc.NoResultFound:
             return False
     def getByEmail(self, email):
         try:
-            return dbs.query(User).filter(User.email == email).one()
+            return self.dbs.query(User).filter(User.email == email).one()
         except db.orm.exc.NoResultFound:
             return False
     def getByEmailAndPassword(self, email, password):
         try:
-            user = dbs.query(User).filter(User.email == email).one()
+            user = self.dbs.query(User).filter(User.email == email).one()
         except db.orm.exc.NoResultFound:
             return False
         if user.check_password(password):
@@ -67,23 +67,23 @@ class UserModel():
             return False
     def getByRefreshToken(self, refresh_token):
         try:
-            return dbs.query(User).filter(User.refresh_token == refresh_token).one()
+            return self.dbs.query(User).filter(User.refresh_token == refresh_token).one()
         except db.orm.exc.NoResultFound:
             return False
 
     def exists(self, email=None, username=None):
         if email is not None:
-            return dbs.query(User.id).filter_by(email=email).scalar() is not None
+            return self.dbs.query(User.id).filter_by(email=email).scalar() is not None
         elif username is not None:
-            return dbs.query(User.id).filter_by(username=username).scalar() is not None
+            return self.dbs.query(User.id).filter_by(username=username).scalar() is not None
         else:
             return True # wtf?
 
     def list(self):
-        users = dbs.query(User).all()
+        users = self.dbs.query(User).all()
         return [u.to_dict() for u in users]
 
     def update(self, id, kwargs):
-        u = dbs.query(User).filter(User.id == id)
+        u = self.dbs.query(User).filter(User.id == id)
         u.update(kwargs)
-        dbs.commit()
+        self.dbs.commit()

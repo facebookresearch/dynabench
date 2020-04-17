@@ -1,4 +1,10 @@
 import React from 'react';
+import {
+  Container,
+  Row, Col,
+  Card,
+  CardGroup
+} from 'react-bootstrap';
 
 class VerifyInterface extends React.Component {
   render() {

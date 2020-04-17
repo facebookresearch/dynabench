@@ -12,23 +12,22 @@ def connect_db():
     DBSession = sessionmaker(bind=engine)
     return DBSession()
 
-dbs = connect_db()
-
 class BaseModel():
     def __init__(self, model):
         self.model = model
+        self.dbs = connect_db()
 
     def get(self, id):
         try:
-            return dbs.query(self.model).filter(self.model.id == id).one()
+            return self.dbs.query(self.model).filter(self.model.id == id).one()
         except db.orm.exc.NoResultFound:
             return False
 
     def list(self):
-        rows = dbs.query(self.model).all()
+        rows = self.dbs.query(self.model).all()
         return [r.to_dict() for r in rows]
 
     def update(self, id, kwargs):
-        t = dbs.query(self.model).filter(self.model.id == id)
+        t = self.dbs.query(self.model).filter(self.model.id == id)
         t.update(kwargs)
         dbs.commit()

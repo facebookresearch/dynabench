@@ -1,5 +1,5 @@
 import sqlalchemy as db
-from .base import Base, dbs, BaseModel
+from .base import Base, BaseModel
 
 class Task(Base):
     __tablename__ = 'tasks'
@@ -38,6 +38,6 @@ class TaskModel(BaseModel):
         super(TaskModel, self).__init__(Task)
     def getByShortName(self, shortname):
         try:
-            return dbs.query(Task).filter(Task.shortname == shortname).one()
+            return self.dbs.query(Task).filter(Task.shortname == shortname).one()
         except db.orm.exc.NoResultFound:
             return False
