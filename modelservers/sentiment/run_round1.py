@@ -14,7 +14,6 @@ import ssl
 from multiprocessing import Process
 from aiohttp import web
 
-from model_server.servers import BertClient, BertServer
 from settings import my_task_id, my_round_id, my_secret
 
 import logging
@@ -29,33 +28,62 @@ def get_cors_headers():
     headers['Access-Control-Allow-Credentials'] = 'true'
     return headers
 
+from transformers import (
+    AutoConfig,
+    AutoModelForSequenceClassification,
+    AutoTokenizer
+)
+import torch
+import torch.nn.functional as F
+
+async def get_model_preds(inputString):
+    model_path = '/home/ubuntu/models/sentiment/sst2-roberta-megasentiment-r1'
+    config = AutoConfig.from_pretrained(
+        model_path,
+        num_labels=2,
+        finetuning_task='SST-2'
+    )
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_path
+    )
+    model = AutoModelForSequenceClassification.from_pretrained(
+        model_path,
+        config=config
+    )
+    model.eval()
+    with torch.no_grad():
+        # TODO: I am sure we can do better than this instead of setting max_length so high
+        batch_encoding = tokenizer.batch_encode_plus(
+            [(inputString, )], max_length=512, pad_to_max_length=True,
+        )
+        input_ids = torch.tensor(batch_encoding['input_ids'], dtype=torch.long)
+        attention_mask = torch.tensor(batch_encoding['attention_mask'], dtype=torch.long)
+        outputs = model(input_ids, attention_mask)
+        preds = F.softmax(outputs[0], dim=1)
+    return preds.tolist()
+
 async def handle_post_hypothesis(request):
     if request.content_length <= 0 :
         raise web.HTTPBadRequest(reason='Missing data')
     post_data = await request.json()
+    response = {}
     if 'hypothesis' not in post_data or len(post_data['hypothesis']) < 1:
         raise web.HTTPBadRequest(reason='Missing data')
     try:
-        bert_input = {
-            's1': post_data['context'],
-            's2': post_data['hypothesis']
-        }
-        logging.info("Example: {}".format(bert_input))
-        response = bert_client.infer(bert_input)
+        logging.info("Example: {}".format(post_data['hypothesis']))
+        response['prob'] = await get_model_preds(post_data['hypothesis'])
     except e:
         logging.exception('Error')
 
     logging.info('Generating signature')
     preds = '|'.join(str(x) for x in response['prob'])
     h = hashlib.sha1()
-    print("{}{}{}{}{}{}".format( \
-            response['s1'].encode('utf-8'),
-            response['s2'].encode('utf-8'),
+    print("{}{}{}{}{}".format( \
+            post_data['hypothesis'].encode('utf-8'),
             my_task_id, my_round_id, preds,
             my_secret.encode('utf-8')
         ))
-    h.update(response['s1'].encode('utf-8'))
-    h.update(response['s2'].encode('utf-8'))
+    h.update(post_data['hypothesis'].encode('utf-8'))
     h.update("{}{}{}".format(my_task_id, my_round_id, preds).encode('utf-8'))
     h.update(my_secret.encode('utf-8'))
     signed = h.hexdigest()
@@ -67,34 +95,15 @@ async def handle_post_hypothesis(request):
 async def handle_options(request):
     return web.Response(headers=get_cors_headers())
 
-def run_bert_server(port):
-    '''
-    Run BERT server, to be launched from forked proc
-    '''
-    logging.info("Launching BERT Server process")
-    model_path = os.path.join('/home/ubuntu/models/nli/bert_round1.pt')
-    model_server = BertServer(model_path, port_num=port, device_num=-1)
-    logging.info("BERT Server starting now:")
-    model_server.start_server()
-    model_server.shutdown()
-
 if __name__ == '__main__':
     # Set up logger
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
-    # Spawn BERT server
-    server_proc = Process(target=run_bert_server, args=(6666,))
-    server_proc.start()
-
-    # Set up client to talk to BERT server
-    bert_client = BertClient(6666)
-    logging.info("BERT Client started")
-
     # Launch HTTP server
     app = web.Application()
     app.add_routes([
-        web.options('/aab397c39e7e84c8dfdf1455721cea799c6d3893884dec30af79a7445fa40d7d', handle_options),
-        web.post('/aab397c39e7e84c8dfdf1455721cea799c6d3893884dec30af79a7445fa40d7d', handle_post_hypothesis),
+        web.options('/71a840c1ea7ba20f4c5b20360938c2af04958cb343e5037ac089eb63c5417aa5', handle_options),
+        web.post('/71a840c1ea7ba20f4c5b20360938c2af04958cb343e5037ac089eb63c5417aa5', handle_post_hypothesis),
         ])
     logging.info("Launching HTTP Server")
 
@@ -106,7 +115,4 @@ if __name__ == '__main__':
     #ssl_context.load_cert_chain('/home/ubuntu/.ssl/adversarialnli.com.crt', keyfile='/home/ubuntu/.ssl/adversarialnli.com-key.pem')
     #web.run_app(app, ssl_context=ssl_context)
     # WITHOUT SSL (for now), dynabench:
-    web.run_app(app)
-
-    bert_client.shutdown()
-    server_proc.join()
+    web.run_app(app, port=8090)
