@@ -78,18 +78,24 @@ class CreateInterface extends React.Component {
         this.setState({submitDisabled: false, refreshDisabled: false});
         return;
       }
-      // TODO: use task URL not fixed one
-      this.context.api.getModelResponse('http://54.186.66.195:8080/aab397c39e7e84c8dfdf1455721cea799c6d3893884dec30af79a7445fa40d7d', this.state.context.context, this.state.hypothesis)
+      this.context.api.getTaskRound(this.state.task.id, this.state.task.cur_round)
       .then(result => {
-        this.setState({content: [...this.state.content, {cls: 'hypothesis', modelPred: result.prob.indexOf(Math.max(...result.prob)), fooled: result.prob.indexOf(Math.max(...result.prob)) !== this.state.target, text: this.state.hypothesis, retracted: false, response: result}]}, function() {
-          this.context.api.storeExample(this.state.task.id, this.state.task.cur_round, this.context.user.id, this.state.context.id, this.state.hypothesis, this.state.target, result)
-          .then(result => {
-            var key = this.state.content.length-1;
-            this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false, mapKeyToExampleId: {...this.state.mapKeyToExampleId, [key]: result.id}});
-          })
-          .catch(error => {
-            console.log(error);
+        var modelUrl = result.url;
+        this.context.api.getModelResponse(modelUrl, this.state.context.context, this.state.hypothesis)
+        .then(result => {
+          this.setState({content: [...this.state.content, {cls: 'hypothesis', modelPred: result.prob.indexOf(Math.max(...result.prob)), fooled: result.prob.indexOf(Math.max(...result.prob)) !== this.state.target, text: this.state.hypothesis, retracted: false, response: result}]}, function() {
+            this.context.api.storeExample(this.state.task.id, this.state.task.cur_round, this.context.user.id, this.state.context.id, this.state.hypothesis, this.state.target, result)
+            .then(result => {
+              var key = this.state.content.length-1;
+              this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false, mapKeyToExampleId: {...this.state.mapKeyToExampleId, [key]: result.id}});
+            })
+            .catch(error => {
+              console.log(error);
+            });
           });
+        })
+        .catch(error => {
+          console.log(error);
         });
       })
       .catch(error => {

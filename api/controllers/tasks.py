@@ -2,6 +2,7 @@ import bottle
 import common.auth as _auth
 
 from models.task import TaskModel
+from models.round import RoundModel
 
 import json
 
@@ -12,14 +13,17 @@ def tasks():
     return json.dumps(tasks)
 
 @bottle.get('/tasks/<tid:int>')
-def get_model(tid):
+def get_task(tid):
     t = TaskModel()
     task = t.get(tid)
     if not task:
         bottle.abort(404, 'Not found')
     return json.dumps(task.to_dict())
 
-@bottle.post('/tasks/<tid:int>/<rid:int>')
-def addexample(tid, rid):
-    # if not logged in abort(401, "Sorry, access denied.")
-    pass
+@bottle.get('/tasks/<tid:int>/<rid:int>')
+def get_task_round(tid, rid):
+    rm = RoundModel()
+    round = rm.getByTidAndRid(tid, rid)
+    if not round:
+        bottle.abort(404, 'Not found')
+    return json.dumps(round.to_dict())

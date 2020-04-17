@@ -86,6 +86,7 @@ class TaskNav extends React.Component {
 }
 
 class TaskPage extends React.Component {
+  static contextType = UserContext;
   constructor(props) {
     super(props);
     this.state = {
@@ -104,7 +105,15 @@ class TaskPage extends React.Component {
   }
   componentDidMount() {
     const { match: { params } } = this.props;
-    this.setState(params);
+    this.setState(params, function() {
+      this.context.api.getTask(this.state.taskId)
+      .then(result => {
+        this.setState({task: result});
+      })
+      .catch(error => {
+        console.log(error);
+      });
+    });
   }
   render() {
     function renderTooltip(props, text) {

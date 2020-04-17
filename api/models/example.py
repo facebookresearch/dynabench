@@ -55,7 +55,9 @@ class ExampleModel(BaseModel):
 
         import hashlib
         h = hashlib.sha1()
-        h.update(c.context.encode('utf-8'))
+        if c.round.task.has_context:
+            # no context for e.g. sentiment
+            h.update(c.context.encode('utf-8'))
         h.update(hypothesis.encode('utf-8'))
         h.update("{}{}{}".format(tid, rid, pred_str).encode('utf-8'))
         h.update(c.round.secret.encode('utf-8'))

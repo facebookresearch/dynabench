@@ -13,6 +13,6 @@ def contexts(tid, rid):
     c = ContextModel()
     context = c.getRandom(round.id, n=1)
     if not context:
-        bottle.abort(500, 'No contexts available')
+        bottle.abort(500, f'No contexts available ({round.id})')
     context = context[0].to_dict()
     return json.dumps(context)

@@ -9,7 +9,7 @@ function delay(t, v) {
 export default class ApiService {
   constructor(domain) {
     if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-      this.domain = domain || 'http://54.187.22.210/8081'
+      this.domain = domain || 'http://54.187.22.210:8081'
     } else {
       this.domain = domain || 'http://54.187.22.210:8080'
     }
@@ -67,7 +67,6 @@ export default class ApiService {
     var f = this.fetch(`${this.domain}/users/${id}`, {
       method: 'GET'
     });
-    console.log(f);
     return f.then(res => {
       return Promise.resolve(res);
     })
@@ -75,6 +74,14 @@ export default class ApiService {
 
   getTask(id) {
     return this.fetch(`${this.domain}/tasks/${id}`, {
+      method: 'GET'
+    }).then(res => {
+      return Promise.resolve(res);
+    })
+  }
+
+  getTaskRound(id, rid) {
+    return this.fetch(`${this.domain}/tasks/${id}/${rid}`, {
       method: 'GET'
     }).then(res => {
       return Promise.resolve(res);

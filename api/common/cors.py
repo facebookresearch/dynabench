@@ -1,4 +1,5 @@
 import bottle
+import logging
 
 @bottle.route('/<:re:.*>', method='OPTIONS')
 def enable_cors_generic_route():
@@ -8,6 +9,9 @@ def enable_cors_after_request_hook():
     add_cors_headers()
 def add_cors_headers():
     host = bottle.request.get_header('host').split(':')[0]
+    app = bottle.default_app()
+    if app.config['mode'] == 'dev':
+        host += ':3000'
     # TODO: https and use domain name
     bottle.response.headers['Access-Control-Allow-Origin'] = 'http://' + host
     bottle.response.headers['Access-Control-Allow-Methods'] = \
