@@ -1,5 +1,5 @@
 import sqlalchemy as db
-from .base import Base, dbs, BaseModel
+from .base import Base, BaseModel
 
 class Model(Base):
     __tablename__ = 'models'
@@ -36,4 +36,4 @@ class ModelModel(BaseModel):
     #def get(self, id):
     #    return dbs.query(Model).filter(Model.id == id).one()
     def getByTid(self, tid):
-        return dbs.query(Model).filter(Model.tid == tid).all()
+        return self.dbs.query(Model).filter(Model.tid == tid).all()

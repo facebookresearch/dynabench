@@ -1,5 +1,5 @@
 import sqlalchemy as db
-from .base import Base, dbs, BaseModel
+from .base import Base, BaseModel
 
 class Round(Base):
     __tablename__ = 'rounds'
@@ -40,11 +40,11 @@ class RoundModel(BaseModel):
         super(RoundModel, self).__init__(Round)
     def getByTidAndRid(self, tid, rid):
         try:
-            return dbs.query(Round).filter(Round.tid == tid).filter(Round.rid == rid).one() # should be unique
+            return self.dbs.query(Round).filter(Round.tid == tid).filter(Round.rid == rid).one() # should be unique
         except db.orm.exc.NoResultFound:
             return False
     def getByTid(self, tid):
         try:
-            return dbs.query(Round).filter(Round.tid == tid).all()
+            return self.dbs.query(Round).filter(Round.tid == tid).all()
         except db.orm.exc.NoResultFound:
             return False

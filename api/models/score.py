@@ -1,5 +1,5 @@
 import sqlalchemy as db
-from .base import Base, dbs, BaseModel
+from .base import Base, BaseModel
 from .model import Model
 
 class Score(Base):
@@ -32,19 +32,19 @@ class ScoreModel(BaseModel):
         super(ScoreModel, self).__init__(Score)
     def getOverallPerfByTask(self, tid, n=5):
         try:
-            return dbs.query(Score.id,db.sql.func.avg(Score.perf).label('avg_perf')).filter(Score.tid == tid).group_by(Score.rid).order_by(db.sql.func.avg(Score.perf).desc()).limit(n)
+            return self.dbs.query(Score.id,db.sql.func.avg(Score.perf).label('avg_perf')).filter(Score.tid == tid).group_by(Score.rid).order_by(db.sql.func.avg(Score.perf).desc()).limit(n)
         # TODO: Join model
         except db.orm.exc.NoResultFound:
             return False
     def getByTaskAndRound(self, tid, rid):
         try:
-            return dbs.query(Score).join(Model).filter(Score.tid == tid).filter(Score.rid == rid).order_by(Score.perf.desc()).all()
+            return self.dbs.query(Score).join(Model).filter(Score.tid == tid).filter(Score.rid == rid).order_by(Score.perf.desc()).all()
         except db.orm.exc.NoResultFound:
             return False
     def getByTaskAndModelIds(self, tid, mids):
         """ For getting e.g. scores of the top N models """
         assert isinstance(mids, list)
         try:
-            return dbs.query(Score).filter(Score.tid == tid).filter(Score.id.in_(mids)).all()
+            return self.dbs.query(Score).filter(Score.tid == tid).filter(Score.id.in_(mids)).all()
         except db.orm.exc.NoResultFound:
             return False

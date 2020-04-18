@@ -1,5 +1,5 @@
 import sqlalchemy as db
-from .base import Base, dbs, BaseModel
+from .base import Base, BaseModel
 
 class Context(Base):
     __tablename__ = 'contexts'
@@ -39,4 +39,4 @@ class ContextModel(BaseModel):
         #            dbs.query(db.sql.func.count(Context.id))
         #        )
         #    ).limit(n).all()
-        return dbs.query(Context).filter(Context.r_realid == rid).order_by(db.sql.func.rand()).limit(n).all()
+        return self.dbs.query(Context).filter(Context.r_realid == rid).order_by(db.sql.func.rand()).limit(n).all()

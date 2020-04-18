@@ -8,7 +8,10 @@ def enable_cors_generic_route():
 def enable_cors_after_request_hook():
     add_cors_headers()
 def add_cors_headers():
-    host = bottle.request.get_header('host').split(':')[0]
+    if bottle.request.get_header('host') is not None:
+        host = bottle.request.get_header('host').split(':')[0]
+    else:
+        host = 'dynabench.org'
     app = bottle.default_app()
     if app.config['mode'] == 'dev':
         host += ':3000'

@@ -78,12 +78,21 @@ class CreateInterface extends React.Component {
         this.setState({submitDisabled: false, refreshDisabled: false});
         return;
       }
+
       this.context.api.getTaskRound(this.state.task.id, this.state.task.cur_round)
       .then(result => {
         var modelUrl = result.url;
         this.context.api.getModelResponse(modelUrl, this.state.context.context, this.state.hypothesis)
         .then(result => {
-          this.setState({content: [...this.state.content, {cls: 'hypothesis', modelPred: result.prob.indexOf(Math.max(...result.prob)), fooled: result.prob.indexOf(Math.max(...result.prob)) !== this.state.target, text: this.state.hypothesis, retracted: false, response: result}]}, function() {
+          this.setState({
+            content: [...this.state.content, {
+              cls: 'hypothesis',
+              modelPred: result.prob.indexOf(Math.max(...result.prob)),
+              fooled: result.prob.indexOf(Math.max(...result.prob)) !== this.state.target,
+              text: this.state.hypothesis,
+              retracted: false,
+              response: result}
+          ]}, function() {
             this.context.api.storeExample(this.state.task.id, this.state.task.cur_round, this.context.user.id, this.state.context.id, this.state.hypothesis, this.state.target, result)
             .then(result => {
               var key = this.state.content.length-1;

@@ -1,6 +1,6 @@
 import logging
 import sqlalchemy as db
-from .base import Base, dbs, BaseModel
+from .base import Base, BaseModel
 from .context import ContextModel
 from .user import UserModel
 import numpy as np
@@ -73,10 +73,10 @@ class ExampleModel(BaseModel):
                     text=hypothesis, target_pred=tgt, model_preds=pred_str, \
                     model_wrong=(tgt != np.argmax(pred)),
                     generated_datetime=db.sql.func.now())
-            dbs.add(e)
-            dbs.flush()
-            dbs.commit()
-            logging.error('Added example (%s)' % (e.id))
+            self.dbs.add(e)
+            self.dbs.flush()
+            self.dbs.commit()
+            logging.info('Added example (%s)' % (e.id))
         except Exception as error_message:
             logging.error('Could not create example (%s)' % error_message)
             return False
@@ -88,7 +88,7 @@ class ExampleModel(BaseModel):
         return example.query.filter(Example.tid == tid).filter(Example.model_wrong == True).filter(Example.retracted == False).filter(Example.verified_correct == False).options(db.orm.load_only('id')).offset(
                 db.sql.func.floor(
                     db.sql.func.random() *
-                    dbs.query(db.sql.func.count(example.id))
+                    self.dbs.query(db.sql.func.count(example.id))
                 )
             ).limit(n).all()
 
