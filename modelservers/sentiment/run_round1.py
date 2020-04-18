@@ -20,9 +20,12 @@ import logging
 
 import hashlib
 
-def get_cors_headers():
+def get_cors_headers(cors_url):
     headers = {}
-    headers['Access-Control-Allow-Origin'] = 'http://54.187.22.210'
+    valid_cors_urls = ['http://54.187.22.210', 'http://54.187.22.210:3000', 'http://dynabench.org:3000', 'http://beta.dynabench.org']
+    if cors_url not in valid_cors_urls:
+        cors_url = 'http://dynabench.org'
+    headers['Access-Control-Allow-Origin'] = cors_url
     headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, OPTIONS'
     headers['Access-Control-Allow-Headers'] = 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token, Authorization'
     headers['Access-Control-Allow-Credentials'] = 'true'
@@ -59,7 +62,7 @@ async def get_model_preds(inputString):
         input_ids = torch.tensor(batch_encoding['input_ids'], dtype=torch.long)
         attention_mask = torch.tensor(batch_encoding['attention_mask'], dtype=torch.long)
         outputs = model(input_ids, attention_mask)
-        preds = F.softmax(outputs[0], dim=1)
+        preds = F.softmax(outputs[0], dim=1).squeeze()
     return preds.tolist()
 
 async def handle_post_hypothesis(request):
@@ -69,6 +72,7 @@ async def handle_post_hypothesis(request):
     response = {}
     if 'hypothesis' not in post_data or len(post_data['hypothesis']) < 1:
         raise web.HTTPBadRequest(reason='Missing data')
+
     try:
         logging.info("Example: {}".format(post_data['hypothesis']))
         response['prob'] = await get_model_preds(post_data['hypothesis'])
@@ -90,10 +94,12 @@ async def handle_post_hypothesis(request):
     logging.info('Signature {}'.format(signed))
     response['signed'] = signed
 
-    return web.json_response(response, headers=get_cors_headers())#, headers={'Access-Control-Allow-Origin': '*'})
+    cors_url = request.headers.get('origin')
+    return web.json_response(response, headers=get_cors_headers(cors_url))#, headers={'Access-Control-Allow-Origin': '*'})
 
 async def handle_options(request):
-    return web.Response(headers=get_cors_headers())
+    cors_url = request.headers.get('origin')
+    return web.Response(headers=get_cors_headers(cors_url))
 
 if __name__ == '__main__':
     # Set up logger
