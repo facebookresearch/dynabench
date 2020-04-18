@@ -29,7 +29,6 @@ class CreateInterface extends React.Component {
     super(props);
     this.state = {
       taskId: null,
-      roundId: null,
       task: {},
       context: null,
       target: 0,
@@ -79,32 +78,25 @@ class CreateInterface extends React.Component {
         return;
       }
 
-      this.context.api.getTaskRound(this.state.task.id, this.state.task.cur_round)
+      this.context.api.getModelResponse(this.state.task.round.url, this.state.context.context, this.state.hypothesis)
       .then(result => {
-        var modelUrl = result.url;
-        this.context.api.getModelResponse(modelUrl, this.state.context.context, this.state.hypothesis)
-        .then(result => {
-          this.setState({
-            content: [...this.state.content, {
-              cls: 'hypothesis',
-              modelPred: result.prob.indexOf(Math.max(...result.prob)),
-              fooled: result.prob.indexOf(Math.max(...result.prob)) !== this.state.target,
-              text: this.state.hypothesis,
-              retracted: false,
-              response: result}
-          ]}, function() {
-            this.context.api.storeExample(this.state.task.id, this.state.task.cur_round, this.context.user.id, this.state.context.id, this.state.hypothesis, this.state.target, result)
-            .then(result => {
-              var key = this.state.content.length-1;
-              this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false, mapKeyToExampleId: {...this.state.mapKeyToExampleId, [key]: result.id}});
-            })
-            .catch(error => {
-              console.log(error);
-            });
+        this.setState({
+          content: [...this.state.content, {
+            cls: 'hypothesis',
+            modelPred: result.prob.indexOf(Math.max(...result.prob)),
+            fooled: result.prob.indexOf(Math.max(...result.prob)) !== this.state.target,
+            text: this.state.hypothesis,
+            retracted: false,
+            response: result}
+        ]}, function() {
+          this.context.api.storeExample(this.state.task.id, this.state.task.cur_round, this.context.user.id, this.state.context.id, this.state.hypothesis, this.state.target, result)
+          .then(result => {
+            var key = this.state.content.length-1;
+            this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false, mapKeyToExampleId: {...this.state.mapKeyToExampleId, [key]: result.id}});
+          })
+          .catch(error => {
+            console.log(error);
           });
-        })
-        .catch(error => {
-          console.log(error);
         });
       })
       .catch(error => {

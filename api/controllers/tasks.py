@@ -9,16 +9,16 @@ import json
 @bottle.get('/tasks')
 def tasks():
     t = TaskModel()
-    tasks = t.list()
+    tasks = t.listWithRounds()
     return json.dumps(tasks)
 
 @bottle.get('/tasks/<tid:int>')
 def get_task(tid):
     t = TaskModel()
-    task = t.get(tid)
+    task = t.getWithRound(tid)
     if not task:
         bottle.abort(404, 'Not found')
-    return json.dumps(task.to_dict())
+    return json.dumps(task)
 
 @bottle.get('/tasks/<tid:int>/<rid:int>')
 def get_task_round(tid, rid):

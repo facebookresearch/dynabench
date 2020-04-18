@@ -1,5 +1,6 @@
 import sqlalchemy as db
 from .base import Base, BaseModel
+from .round import Round
 
 class Task(Base):
     __tablename__ = 'tasks'
@@ -41,3 +42,18 @@ class TaskModel(BaseModel):
             return self.dbs.query(Task).filter(Task.shortname == shortname).one()
         except db.orm.exc.NoResultFound:
             return False
+    def listWithRounds(self):
+        rows = self.dbs.query(Task, Round).join(Round, (Round.tid == Task.id) & (Round.rid == Task.cur_round)).all()
+        tasks = [x[0].to_dict() for x in rows]
+        for ii, r in enumerate([x[1] for x in rows]):
+            tasks[ii]['round'] = r.to_dict()
+        return tasks
+    def getWithRound(self, tid):
+        try:
+            t, r = self.dbs.query(Task, Round).filter(Task.id == tid).join(Round, (Round.tid == Task.id) & (Round.rid == Task.cur_round)).one()
+            t = t.to_dict()
+            t['round'] = r.to_dict()
+            return t
+        except db.orm.exc.NoResultFound:
+            return False
+

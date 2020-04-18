@@ -3,10 +3,12 @@ import common.auth as _auth
 from common.helpers import check_fields
 
 from models.example import ExampleModel
+from models.round import RoundModel
 
 import json
 
 import logging
+from datetime import datetime
 
 @bottle.get('/examples/<eid:int>')
 def get_example(eid):
@@ -47,5 +49,8 @@ def post_example(credentials):
     eid = em.create(tid=data['tid'], rid=data['rid'], uid=data['uid'], cid=data['cid'], hypothesis=data['hypothesis'], tgt=data['target'], pred=data['response']['prob'], signed=data['response']['signed'])
     if not eid:
         bottle.abort(400, 'Could not create example')
+
+    rm = RoundModel()
+    rm.incrementExampleCount(data['tid'], data['rid'])
 
     return json.dumps({'success': 'ok', 'id': eid})

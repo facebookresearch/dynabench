@@ -48,3 +48,9 @@ class RoundModel(BaseModel):
             return self.dbs.query(Round).filter(Round.tid == tid).all()
         except db.orm.exc.NoResultFound:
             return False
+    def incrementExampleCount(self, tid, rid):
+        r = self.getByTidAndRid(tid, rid)
+        if r:
+            r.total_collected = r.total_collected+1
+            r.task.last_updated = db.sql.func.now()
+            self.dbs.commit()

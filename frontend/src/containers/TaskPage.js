@@ -92,9 +92,6 @@ class TaskPage extends React.Component {
     this.state = {
       taskId: null,
       task: {
-        name: 'Natural Language Inference',
-        desc: 'Natural Language Inference is classifying context-hypothesis pairs into whether they entail, contradict or are neutral.',
-        longdesc: 'The current state of the art is a RoBERTa model trained on various NLI datasets: SNLI, MultiNLI, FEVER and AdversarialNLI. It was trained for X epochs with hyperparameter settings that can be found here, etc. etc.',
         scores: {
           data1: [30, 20, 50, 40],
           data2: [23, 45, 56, 68],
