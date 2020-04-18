@@ -40,7 +40,7 @@ class TasksPage extends React.Component {
             <thead></thead>
             <tbody>
             <tr><td>Round:</td><td>{task.cur_round}</td></tr>
-          <tr><td>Verified/Collected<br/>(model error rate):</td><td>{task.total_verified}/{task.total_collected}<br/>({task.total_collected > 0 ? (task.total_verified / task.total_collected).toFixed(2) : '0.00'}%)</td></tr>
+          <tr><td>Verified/Collected<br/>(model error rate):</td><td>{task.round.total_verified}/{task.round.total_collected}<br/>({task.round.total_collected > 0 ? (task.round.total_verified / task.round.total_collected).toFixed(2) : '0.00'}%)</td></tr>
             </tbody>
             </Table>
           </Card.Body>
