@@ -25,7 +25,7 @@ class UserInfoCard extends React.Component {
             <Card.Text>Affiliation: {this.props.user.affiliation}</Card.Text>
           </Card.Body>
           <Card.Footer>
-            <small className="text-muted">Last login: X</small>
+            <small className="text-muted"></small>
           </Card.Footer>
         </Card>
         </CardGroup>
