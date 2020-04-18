@@ -76,7 +76,7 @@ class ExampleModel(BaseModel):
             self.dbs.add(e)
             self.dbs.flush()
             self.dbs.commit()
-            logging.error('Added example (%s)' % (e.id))
+            logging.info('Added example (%s)' % (e.id))
         except Exception as error_message:
             logging.error('Could not create example (%s)' % error_message)
             return False

@@ -6,16 +6,18 @@ Base = declarative_base()
 
 # now this is very ugly..
 def connect_db():
-    engine = db.create_engine('mysql+pymysql://dynabench:dynabench@localhost:3306/dynabench')
+    engine = db.create_engine('mysql+pymysql://dynabench:dynabench@localhost:3306/dynabench', pool_pre_ping=True)
     connection = engine.connect()
     Base.metadata.bind = engine
     DBSession = sessionmaker(bind=engine)
     return DBSession()
 
+dbs = connect_db()
+
 class BaseModel():
     def __init__(self, model):
         self.model = model
-        self.dbs = connect_db()
+        self.dbs = dbs #connect_db()
 
     def get(self, id):
         try:
