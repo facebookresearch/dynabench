@@ -8,15 +8,21 @@ def enable_cors_generic_route():
 def enable_cors_after_request_hook():
     add_cors_headers()
 def add_cors_headers():
-    if bottle.request.get_header('host') is not None:
-        host = bottle.request.get_header('host').split(':')[0]
+    # TODO: https
+    valid_cors_urls = [
+            'http://54.187.22.210',
+            'http://54.187.22.210:3000',
+            'http://dynabench.org:3000',
+            'http://www.dynabench.org',
+            'http://www.dynabench.org:3000',
+            'http://beta.dynabench.org',
+            'http://beta.dynabench.org:3000']
+    if bottle.request.get_header('origin') not in valid_cors_urls:
+        host = 'http://dynabench.org'
     else:
-        host = 'dynabench.org'
+        host = bottle.request.get_header('origin')
     app = bottle.default_app()
-    if app.config['mode'] == 'dev':
-        host += ':3000'
-    # TODO: https and use domain name
-    bottle.response.headers['Access-Control-Allow-Origin'] = 'http://' + host
+    bottle.response.headers['Access-Control-Allow-Origin'] = host
     bottle.response.headers['Access-Control-Allow-Methods'] = \
         'GET, POST, PUT, OPTIONS'
     bottle.response.headers['Access-Control-Allow-Headers'] = \
