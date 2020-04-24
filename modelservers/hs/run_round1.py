@@ -27,7 +27,7 @@ import torch
 import torch.nn.functional as F
 
 async def get_model_preds(inputString):
-    model_path = '/home/ubuntu/models/sentiment/sst2-roberta-megasentiment-r1'
+    model_path = '/home/ubuntu/models/hs/hatespeech-waseem'
     config = AutoConfig.from_pretrained(
         model_path,
         num_labels=2,
@@ -83,6 +83,6 @@ if __name__ == '__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
     # Launch HTTP server
-    url_secret = '71a840c1ea7ba20f4c5b20360938c2af04958cb343e5037ac089eb63c5417aa5'
-    url_port = 8090
+    url_secret = '284f9a9f492b8a9beec1d0dda296db959f728f10a9b2ba10a141001a1da3ddde'
+    url_port = 8091
     launch_modelserver(url_secret, url_port, handle_post_hypothesis)
