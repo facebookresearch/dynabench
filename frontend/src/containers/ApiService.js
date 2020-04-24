@@ -9,9 +9,11 @@ function delay(t, v) {
 export default class ApiService {
   constructor(domain) {
     if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-      this.domain = domain || 'http://54.187.22.210:8081'
+      //this.domain = domain || 'https://54.187.22.210:8081'
+      this.domain = domain || 'https://dynabench.org:8081'
     } else {
-      this.domain = domain || 'http://54.187.22.210:8080'
+      //this.domain = domain || 'https://54.187.22.210:8080'
+      this.domain = domain || 'https://dynabench.org:8080'
     }
 
     this.fetch = this.fetch.bind(this)

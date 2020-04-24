@@ -26,7 +26,7 @@ from controllers.examples import *
 
 if running_mode == 'dev':
     app.config['mode'] = 'dev'
-    bottle.run(host='0.0.0.0', port=8081, debug=True, reloader=True)
+    bottle.run(host='0.0.0.0', port=8081, debug=True, server='cheroot', reloader=True, certfile='/home/ubuntu/.ssl/dynabench.org.crt', keyfile='/home/ubuntu/.ssl/dynabench.org-key.pem')
 elif running_mode == 'prod':
     app.config['mode'] = 'prod'
     bottle.run(host='0.0.0.0', port=8080, debug=True, server='cheroot') # , certfile='', keyfile=''

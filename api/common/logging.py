@@ -22,4 +22,3 @@ def logger_hook():
                                     bottle.request.method,
                                     bottle.request.url,
                                     bottle.response.status))
-
