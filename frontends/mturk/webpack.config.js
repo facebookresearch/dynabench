@@ -10,10 +10,6 @@ module.exports = {
     libraryTarget: "umd",
   },
   target: "web",
-  externals: {
-    react: "react",
-    "react-dom": "react-dom",
-  },
   node: {
     net: "empty",
     dns: "empty",
