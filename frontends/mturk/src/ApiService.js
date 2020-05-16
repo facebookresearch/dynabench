@@ -102,21 +102,4 @@ class ApiService {
   }
 }
 
-// TODO: The above somehow doesn't work, so just split out the functions
-//
-// Ugly, but okay:
-const fetch_headers = {
-  'Accept': 'application/json',
-  'Content-Type': 'application/json',
-  'Authorization': 'None',
-}
-
-function getContext() {
-  let domain = 'https://dynabench.org:8081';
-  let tid = 1;
-  let rid = 1;
-  return fetch(`${domain}/contexts/${tid}/${rid}`, {fetch_headers})
-    .then(response => response.json());
-}
-
-export { ApiService, getContext };
+export { ApiService };
