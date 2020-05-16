@@ -12,6 +12,7 @@ def add_cors_headers():
             'https://54.187.22.210',
             'https://54.187.22.210:3000',
             'https://dynabench.org:3000',
+            'http://www.dynabench.org:3001', # Mturk dev interface
             'https://www.dynabench.org',
             'https://www.dynabench.org:3000',
             'https://beta.dynabench.org',

@@ -11,6 +11,22 @@ class ApiService {
     this.fetch = this.fetch.bind(this)
   }
 
+  getTask(id) {
+    return this.fetch(`${this.domain}/tasks/${id}`, {
+      method: 'GET'
+    }).then(res => {
+      return Promise.resolve(res);
+    })
+  }
+
+  getRandomContext(tid, rid) {
+    return this.fetch(`${this.domain}/contexts/${tid}/${rid}`, {
+      method: 'GET'
+    }).then(res => {
+      return Promise.resolve(res);
+    })
+  }
+
   getModelResponse(modelUrl, context, hypothesis) {
     return this.fetch(modelUrl, {
       method: 'POST',
@@ -59,7 +75,7 @@ class ApiService {
     const headers = {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      'Authorization': 'None',
+      'Authorization': 'turk',
     }
     return fetch(url, {
       headers,
@@ -85,4 +101,22 @@ class ApiService {
     }
   }
 }
-export { ApiService };
+
+// TODO: The above somehow doesn't work, so just split out the functions
+//
+// Ugly, but okay:
+const fetch_headers = {
+  'Accept': 'application/json',
+  'Content-Type': 'application/json',
+  'Authorization': 'None',
+}
+
+function getContext() {
+  let domain = 'https://dynabench.org:8081';
+  let tid = 1;
+  let rid = 1;
+  return fetch(`${domain}/contexts/${tid}/${rid}`, {fetch_headers})
+    .then(response => response.json());
+}
+
+export { ApiService, getContext };

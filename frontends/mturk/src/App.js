@@ -1,11 +1,13 @@
 import React from 'react';
+
+import 'bootstrap/dist/css/bootstrap.min.css';
+
 import './App.css';
 
 import { useMephistoTask, getBlockedExplanation } from "mephisto-task";
 import { TaskDescription, TaskFrontend } from "./components/core.jsx";
 
-//import { ApiService } from './ApiService.js';
-import { Hello } from './HelloWorld.js';
+import { ApiService } from './ApiService.js';
 
 function App() {
   const {
@@ -43,11 +45,7 @@ function App() {
     return <h1>Gathering data...</h1>;
   }
 
-  h = new Hello();
-  console.log(h.hello);
-
-  //api = new ApiService();
-  //console.log(api);
+  let api = new ApiService();
 
   return (
     <>
@@ -56,7 +54,7 @@ function App() {
         task_config={taskConfig}
         onSubmit={handleSubmit}
         isOnboarding={isOnboarding}
-        hello={h}
+        api={api}
       />
     </>
   );

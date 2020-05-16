@@ -19,15 +19,16 @@ def get_example(eid):
     return json.dumps(example.to_dict())
 
 @bottle.put('/examples/<eid:int>')
-@_auth.requires_auth
+@_auth.requires_auth_or_turk
 def update_example(credentials, eid):
     try:
         em = ExampleModel()
         example = em.get(eid)
         if not example:
             bottle.abort(404, 'Not found')
-        if not example.uid == credentials['id']:
-            bottle.abort(403, 'Access denied')
+        if (credentials['id'] != 'turk' and example.uid != credentials['id']) or \
+                (credentials['id'] == 'turk' and example.uid != 1):
+                    bottle.abort(403, 'Access denied')
         data = bottle.request.json
         logging.info("Updating example {} with {}".format(example.id, data))
         em.update(example.id, data)
@@ -37,7 +38,7 @@ def update_example(credentials, eid):
         bottle.abort(500, {'error': str(e)})
 
 @bottle.post('/examples')
-@_auth.requires_auth
+@_auth.requires_auth_or_turk
 def post_example(credentials):
     data = bottle.request.json
     logging.info(data)
@@ -46,7 +47,10 @@ def post_example(credentials):
     if data['uid'] != credentials['id']:
         bottle.abort(403, 'Access denied')
     em = ExampleModel()
-    eid = em.create(tid=data['tid'], rid=data['rid'], uid=data['uid'], cid=data['cid'], hypothesis=data['hypothesis'], tgt=data['target'], pred=data['response']['prob'], signed=data['response']['signed'])
+    # TODO: Add specific Turk account uid? Or add a new turk user every time we see an unseen credential?
+    eid = em.create(tid=data['tid'], rid=data['rid'], uid=data['uid'] if credentials['id'] != 'turk' else 1,
+            cid=data['cid'], hypothesis=data['hypothesis'], tgt=data['target'],
+            pred=data['response']['prob'], signed=data['response']['signed'])
     if not eid:
         bottle.abort(400, 'Could not create example')
 
