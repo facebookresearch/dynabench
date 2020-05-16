@@ -12,6 +12,7 @@ class TaskDescription extends React.Component {
 class TaskFrontend extends React.Component {
   constructor(props) {
     super(props);
+    console.log(props);
   }
   render() {
     return <h1>Task frontend</h1>;
