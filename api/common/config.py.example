@@ -3,7 +3,7 @@ config = { \
         'jwtexp': 15*60, # in seconds (5 minutes)
         'jwtalgo': '',
         'cookie_secret': '',
-        'refreshexp': 90 # in days
+        'refreshexp': 90, # in days
         'db_name': '',
         'db_user': '',
         'db_password': '',
