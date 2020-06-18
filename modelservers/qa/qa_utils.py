@@ -136,6 +136,7 @@ def compute_predictions_logits(
                     end_index=0,
                     start_logit=null_start_logit,
                     end_logit=null_end_logit,
+                    model_conf=0.0,
                 )
             )
         prelim_predictions = sorted(prelim_predictions, key=lambda x: (x.start_logit + x.end_logit), reverse=True)
