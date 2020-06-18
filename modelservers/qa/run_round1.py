@@ -22,11 +22,13 @@ from transformers import (
     AutoTokenizer
 )
 from transformers.data.processors.squad import squad_convert_examples_to_features, SquadResult
+from transformers.data.metrics.squad_metrics import compute_f1, compute_exact
 
 import torch
 from torch.utils.data import DataLoader, SequentialSampler
 
 
+THRESHOLD_F1 = 0.4
 QA_CONFIG = {
     'max_seq_length': 512,
     'max_query_length': 64,
@@ -140,6 +142,14 @@ async def handle_submit_post(request):
         model_pred = model_preds[0]
         response['prediction'] = model_pred
 
+        # Evaluate the model prediction against the human answer
+        human_ans = ''
+        if 'answer_human' in post_data:
+            human_ans = post_data['answer_human'].strip()
+            response['prediction']['eval_f1'] = compute_f1(human_ans, response['prediction']['text'])
+            response['prediction']['eval_exact'] = compute_exact(human_ans, response['prediction']['text'])
+            response['prediction']['model_is_correct'] = response['prediction']['eval_f1'] > THRESHOLD_F1
+
     except Exception as e:
         logging.exception(f'Error: {e}')
 
@@ -149,7 +159,7 @@ async def handle_submit_post(request):
             my_task_id, \
             my_round_id, \
             my_secret, \
-            [post_data['passage'], post_data['question']] \
+            [post_data['passage'], post_data['question'], human_ans] \
             )
 
     cors_url = request.headers.get('origin')
@@ -160,7 +170,7 @@ if __name__ == '__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
     # Launch HTTP server
-    url_secret = my_secret if my_secret else 'b7a65254215340ae976e3e19ae87c4eaa0d10e30f7424c72888df7086a8a6846'
+    url_secret = 'b7a65254215340ae976e3e19ae87c4eaa0d10e30f7424c72888df7086a8a6846'
 
     url_port = 8097
     launch_modelserver(url_secret, url_port, handle_submit_post)
