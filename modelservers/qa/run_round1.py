@@ -22,11 +22,13 @@ from transformers import (
     AutoTokenizer
 )
 from transformers.data.processors.squad import squad_convert_examples_to_features, SquadResult
+from transformers.data.metrics.squad_metrics import compute_f1, compute_exact
 
 import torch
 from torch.utils.data import DataLoader, SequentialSampler
 
 
+THRESHOLD_F1 = 0.4
 QA_CONFIG = {
     'max_seq_length': 512,
     'max_query_length': 64,
@@ -140,6 +142,14 @@ async def handle_submit_post(request):
         model_pred = model_preds[0]
         response = model_pred
         response['prob'] = response['model_conf'] # this is what the frontend expects
+
+        # Evaluate the model prediction against the human answer
+        human_ans = ''
+        if 'answer_human' in post_data:
+            human_ans = post_data['answer_human'].strip()
+            response['prediction']['eval_f1'] = compute_f1(human_ans, response['prediction']['text'])
+            response['prediction']['eval_exact'] = compute_exact(human_ans, response['prediction']['text'])
+            response['prediction']['model_is_correct'] = response['prediction']['eval_f1'] > THRESHOLD_F1
 
     except Exception as e:
         logging.exception(f'Error: {e}')
