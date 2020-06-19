@@ -42,7 +42,7 @@ async def handle_post_hypothesis(request):
             my_task_id, \
             my_round_id, \
             my_secret, \
-            [response['prob'], response['s1'], response['s2']] \
+            ['|'.join(str(x) for x in response['prob']), response['s1'], response['s2']] \
             )
 
     cors_url = request.headers.get('origin')
