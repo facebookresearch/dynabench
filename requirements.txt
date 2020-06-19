@@ -1,0 +1,11 @@
+aiohttp
+bottle
+cheroot
+jwt
+numpy
+pymysql
+six
+SQLAlchemy
+torch
+transformers
+werkzeug
