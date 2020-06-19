@@ -149,9 +149,8 @@ async def handle_submit_post(request):
             my_task_id, \
             my_round_id, \
             my_secret, \
-            # TODO: Should be this:
-            #[response['text'], post_data['context'], post_data['hypothesis']] \
-            [post_data['context'], post_data['hypothesis']] \
+            # TODO: Make this use the response['text'] instead
+            [str(response['prob']) + '|' + str(1 - response['prob']), post_data['context'], post_data['hypothesis']] \
             )
 
     cors_url = request.headers.get('origin')
