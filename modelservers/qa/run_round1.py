@@ -125,31 +125,33 @@ async def handle_submit_post(request):
 
     post_data = await request.json()
     response = {}
-    required_fields = ['passage', 'question']
+    required_fields = ['context', 'hypothesis']
     if any(field not in post_data or len(post_data[field]) <= 0 for field in required_fields):
         raise web.HTTPBadRequest(reason='Missing data')
 
     try:
-        logging.info("Passage: {}".format(post_data['passage']))
-        logging.info("Question: {}".format(post_data['question']))
+        logging.info("Passage: {}".format(post_data['context']))
+        logging.info("Question: {}".format(post_data['hypothesis']))
         example = {
-            'passage': post_data['passage'].strip(),
-            'question': post_data['question'].strip()
+            'passage': post_data['context'].strip(),
+            'question': post_data['hypothesis'].strip()
         }
         model_preds = await get_model_preds([example])
         model_pred = model_preds[0]
-        response['prediction'] = model_pred
+        response = model_pred
+        response['prob'] = response['model_conf'] # this is what the frontend expects
 
     except Exception as e:
         logging.exception(f'Error: {e}')
 
     logging.info('Generating signature')
     response['signed'] = generate_response_signature( \
-            response['prediction']['text'], \
             my_task_id, \
             my_round_id, \
             my_secret, \
-            [post_data['passage'], post_data['question']] \
+            # TODO: Should be this:
+            #[response['text'], post_data['context'], post_data['hypothesis']] \
+            [post_data['context'], post_data['hypothesis']] \
             )
 
     cors_url = request.headers.get('origin')
@@ -160,7 +162,7 @@ if __name__ == '__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
     # Launch HTTP server
-    url_secret = my_secret if my_secret else 'b7a65254215340ae976e3e19ae87c4eaa0d10e30f7424c72888df7086a8a6846'
+    url_secret = 'b7a65254215340ae976e3e19ae87c4eaa0d10e30f7424c72888df7086a8a6846'
 
     url_port = 8097
     launch_modelserver(url_secret, url_port, handle_submit_post)
