@@ -33,13 +33,11 @@ def launch_modelserver(url_secret, url_port, handler):
     ssl_context.load_cert_chain('/home/ubuntu/.ssl/dynabench.org.crt', keyfile='/home/ubuntu/.ssl/dynabench.org-key.pem')
     web.run_app(app, ssl_context=ssl_context, port=url_port)
 
-def generate_response_signature(prob, my_task_id, my_round_id, my_secret, stringlist):
-    preds = '|'.join(str(x) for x in prob)
+def generate_response_signature(my_task_id, my_round_id, my_secret, stringlist):
     h = hashlib.sha1()
     for x in stringlist:
         h.update(x.encode('utf-8'))
-    h.update("{}{}{}".format(my_task_id, my_round_id, preds).encode('utf-8'))
-    h.update(my_secret.encode('utf-8'))
+    h.update("{}{}{}".format(my_task_id, my_round_id, my_secret).encode('utf-8'))
     signed = h.hexdigest()
     logging.info('Signature {}'.format(signed))
     return signed

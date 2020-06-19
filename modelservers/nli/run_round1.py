@@ -39,11 +39,10 @@ async def handle_post_hypothesis(request):
 
     logging.info('Generating signature')
     response['signed'] = generate_response_signature( \
-            response['prob'], \
             my_task_id, \
             my_round_id, \
             my_secret, \
-            [response['s1'], response['s2']] \
+            [response['prob'], response['s1'], response['s2']] \
             )
 
     cors_url = request.headers.get('origin')
