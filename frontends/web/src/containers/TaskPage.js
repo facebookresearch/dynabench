@@ -15,7 +15,7 @@ import { Link } from 'react-router-dom';
 import UserContext from './UserContext';
 
 import C3Chart from 'react-c3js';
-import 'c3/c3.css';
+//import 'c3/c3.css';
 
 const LineChart = ({ size, data }) =>
   <C3Chart size={{ height: 150 }} data={{ json: data }} />;

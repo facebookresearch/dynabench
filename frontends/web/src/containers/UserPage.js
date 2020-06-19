@@ -13,7 +13,7 @@ import { Link } from 'react-router-dom';
 import UserContext from './UserContext';
 
 import C3Chart from 'react-c3js';
-import 'c3/c3.css';
+//import 'c3/c3.css';
 
 class UserPage extends React.Component {
   static contextType = UserContext;

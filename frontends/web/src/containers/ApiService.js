@@ -98,11 +98,11 @@ export default class ApiService {
     })
   }
 
-  getModelResponse(modelUrl, context, hypothesis) {
+  getModelResponse(modelUrl, modelInputs) {
     return this.fetch(modelUrl, {
       method: 'POST',
       body: JSON.stringify(
-        {'context': context, 'hypothesis': hypothesis}
+        {'context': modelInputs.context, 'hypothesis': modelInputs.hypothesis}
       )
     }).then(res => {
       return Promise.resolve(res);

@@ -9,14 +9,17 @@
     "formik": "^2.1.4",
     "jwt-decode": "^2.2.0",
     "moment": "^2.24.0",
+    "prop-types": "^15.7.2",
     "qs": "^6.9.3",
     "react": "^16.13.0",
     "react-bootstrap": "^1.0.0-beta.17",
     "react-c3js": "^0.1.20",
     "react-dom": "^16.13.0",
     "react-moment": "^0.9.7",
+    "react-powerplug": "^1.0.0",
     "react-router-dom": "^5.1.2",
-    "react-scripts": "3.4.0"
+    "react-scripts": "3.4.0",
+    "react-text-annotate": "^0.3.0"
   },
   "scripts": {
     "start": "HTTPS=true SSL_CRT_FILE=/home/ubuntu/.ssl/dynabench.org.crt SSL_KEY_FILE=/home/ubuntu/.ssl/dynabench.org-key.pem react-scripts start",
