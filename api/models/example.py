@@ -51,16 +51,22 @@ class ExampleModel(BaseModel):
             logging.error('Task id ({}={}) or round id ({}={}) do not match context'.format(tid, c.round.task.id, rid, c.round.rid))
             return False
 
+        # TODO: If task has_answer, handle here (specifically target_pred and model_wrong)
+
         import hashlib
         h = hashlib.sha1()
+        if isinstance(pred, list):
+            pred_str = '|'.join([str(x) for x in pred])
+        else:
+            pred_str = pred
+        h.update(pred_str.encode('utf-8'))
         if c.round.task.has_context:
             # no context for e.g. sentiment
             h.update(c.context.encode('utf-8'))
-        # TODO: If task has_answer, handle here
         h.update(hypothesis.encode('utf-8'))
         h.update("{}{}{}".format(tid, rid, c.round.secret).encode('utf-8'))
         if h.hexdigest() != signed:
-            rawstr = c.context.encode('utf-8') + hypothesis.encode('utf-8') + "{}{}{}".format(tid, rid, c.round.secret).encode('utf-8')
+            rawstr = pred_str.encode('utf-8') + c.context.encode('utf-8') + hypothesis.encode('utf-8') + "{}{}{}".format(tid, rid, c.round.secret).encode('utf-8')
             logging.error("Signature does not match (received %s, expected %s [%s])" %
                     (h.hexdigest(), signed, rawstr))
             return False
@@ -68,9 +74,8 @@ class ExampleModel(BaseModel):
         try:
             um = UserModel()
             user = um.get(uid)
-            if isinstance(pred, list): pred = '|'.join([str(x) for x in pred])
             e = Example(user=user, context=c, \
-                    text=hypothesis, target_pred=tgt, model_preds=pred, \
+                    text=hypothesis, target_pred=tgt, model_preds=pred_str, \
                     model_wrong=(tgt != np.argmax(pred)),
                     generated_datetime=db.sql.func.now())
             self.dbs.add(e)

@@ -48,6 +48,7 @@ def post_example(credentials):
         bottle.abort(403, 'Access denied')
     em = ExampleModel()
     # TODO: Add specific Turk account uid? Or add a new turk user every time we see an unseen credential?
+    # TODO: Make this accept anything instead of forcing it to be 'prob' (e.g. for QA)
     eid = em.create(tid=data['tid'], rid=data['rid'], uid=data['uid'] if credentials['id'] != 'turk' else 1,
             cid=data['cid'], hypothesis=data['hypothesis'], tgt=data['target'],
             pred=data['response']['prob'], signed=data['response']['signed'])
