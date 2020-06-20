@@ -109,7 +109,7 @@ class HomePage extends React.Component {
     */
     const taskCards = !this.state.tasks ? <p>No tasks found</p> : this.state.tasks.map((task, index) =>
       <Card key={task.id} className="taskCard" onClick={() => this.props.history.push("/tasks/" + task.id)}>
-        <span className={index < 3 ? "taskHeader taskHeaderRight" : "taskHeader taskHeaderLeft"}><h2>{task.shortname}</h2></span>
+        <h2 className="taskHeader">{task.name}</h2>
         <Card.Body>
           <Card.Text className="taskDescription">
             {task.desc}
@@ -133,9 +133,11 @@ class HomePage extends React.Component {
       <>
       <div className={"jumbotron jumboSlider " + (this.state.showjumbo ? "" : "hideJumbo")}>
         <Container>
-        <h1>Rethinking AI Benchmarking</h1>
-        <p>DynaBench is a research platform for <strong>dynamic adversarial data collection</strong> and benchmarking. Static benchmarks have well-known issues: they <Link className="btn-link" to="/">saturate quickly</Link>, <Link className="btn-link" to="/">are susceptible to overfitting</Link>, <Link className="btn-link" to="/">contain exploitable annotator artifacts</Link> and <Link className="btn-link" to="/">have unclear or imperfect evaluation metrics</Link>. This platform essentially is a scientific experiment: can we make faster progress if we collect data dynamically, with humans and models in the loop, rather than in the old-fashioned static way?</p>
-        <Button as={Link} to="/about" variant="primary">Read more</Button> <Button variant="outline-secondary" onClick={this.hideJumbo} >Got it</Button>
+          <Row className="justify-content-center text-center">
+            <h1>Rethinking AI Benchmarking</h1>
+            <p>DynaBench is a research platform for dynamic adversarial data collection and benchmarking. Static benchmarks have well-known issues: they saturate quickly, are susceptible to overfitting, contain exploitable annotator artifacts and have unclear or imperfect evaluation metrics.<br></br><br></br> This platform essentially is a scientific experiment: can we make faster progress if we collect data dynamically, with humans and models in the loop, rather than in the old-fashioned static way?</p>
+            <Button className="button-ellipse" as={Link} to="/about" variant="primary">Read more</Button>
+          </Row>
         </Container>
       </div>
       <Container>

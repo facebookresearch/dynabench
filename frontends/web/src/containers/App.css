@@ -1,11 +1,20 @@
-.footer {
-  background-color: #f8f9fa!important;
-  font-size: 12px;
-  padding: 20px;
-  margin-top: 300px;
+.blue-bg {
+  background-color: #1283d8;
 }
 
-.card table, .card table tr td, .card table tr th {
+.blue-color {
+  color: #1283d8;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+  color: #fff;
+  font-family: OpenSansSemiBold;
+}
+
+
+.card table,
+.card table tr td,
+.card table tr th {
   font-size: 12px;
   padding: 5px;
   margin: 5px;
@@ -16,23 +25,48 @@
   padding: 10px;
   margin-bottom: 4px;
 }
-.hypothesis  {
+.hypothesis {
   padding: 10px;
   margin-bottom: 4px;
 }
-.retracted  {
+.retracted {
   padding: 10px;
   margin-bottom: 4px;
   opacity: 0.7;
 }
 .correct {
   color: white;
-  background-color: #28a745!important;
+  background-color: #28a745 !important;
 }
 .incorrect {
   color: black;
-  background-color: #dc3545!important;
+  background-color: #dc3545 !important;
 }
 .c3-tooltip-container {
-width: 200px;
+  width: 200px;
+}
+
+.table {
+  color: #6e6e66;
+}
+
+.footer {
+  background-color: #000;
+  color: #fff;
+  font-size: 12px;
+  padding: 20px;
+  margin-top: 300px;
+}
+
+.footer-nav-link {
+    margin-right: 25px;
+    color: #fff;
+}
+
+.footer-nav-link a {
+    color: inherit;
+}
+
+.footer-nav-link a:hover {
+    color: inherit;
 }
