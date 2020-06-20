@@ -1,6 +1,6 @@
 import React from 'react';
 import { Formik } from 'formik';
-import { Container, Row } from 'react-bootstrap';
+import { Container, Row, Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import './LoginPage.css';
 import UserContext from './UserContext';
@@ -19,7 +19,7 @@ class LoginPage extends React.Component {
             <Row>
               <div className="wrapper fadeInDown">
               <div id="formContent" className="loginForm">
-                <h2>Login</h2>
+                <h2>Log in</h2>
                 <p className="msg">{query.msg}</p>
                 <Formik
                   initialValues={{ email: '', password: '', src: query.src ? query.src : '/' }}
@@ -59,8 +59,8 @@ class LoginPage extends React.Component {
                       <input
                         type="email"
                         name="email"
-                        className="fadeIn first"
-                        placeholder="email"
+                        className="fadeIn first text-left"
+                        placeholder="Email"
                         onChange={handleChange}
                         onBlur={handleBlur}
                         value={values.email}
@@ -69,17 +69,15 @@ class LoginPage extends React.Component {
                       <input
                         type="password"
                         name="password"
-                        className="fadeIn second"
-                        placeholder="password"
+                        className="fadeIn second text-left"
+                        placeholder="Password"
                         onChange={handleChange}
                         onBlur={handleBlur}
                         value={values.password}
                       />
                       <small className="form-text text-muted">{errors.password && touched.password && errors.password}</small>
                       <small className="form-text text-muted">{errors.general}</small>
-                      <button type="submit" className="btn btn-primary fadeIn third submitBtn" disabled={isSubmitting}>
-                        Submit
-                      </button>
+                      <Button type="submit" variant="primary" type="submit" className="btn btn-primary fadeIn third submitBtn button-ellipse" disabled={isSubmitting} >Submit</Button>
                     </form>
                     <div id="formFooter">
                       <p>Don't have an account? <Link className="btn-link underlineHover" to="/register">Sign up</Link></p>

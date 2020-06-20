@@ -1,9 +1,19 @@
+#content {
+    min-height: 88vh;
+}
+
 .blue-bg {
   background-color: #1283d8;
 }
 
 .blue-color {
   color: #1283d8;
+}
+
+.button-ellipse {
+  -webkit-border-radius: 40px;
+  border-radius: 40px;
+  font-family: OpenSansSemiBold;
 }
 
 .navbar-dark .navbar-nav .nav-link {
@@ -55,7 +65,6 @@
   color: #fff;
   font-size: 12px;
   padding: 20px;
-  margin-top: 300px;
 }
 
 .footer-nav-link {

@@ -110,7 +110,7 @@ class App extends React.Component {
               )}
           </Nav>
         </Navbar>
-        <div id="#content">
+        <div id="content">
         <Switch>
           <Route path="/about" component={AboutPage} />
           <Route path="/contact" component={ContactPage} />
