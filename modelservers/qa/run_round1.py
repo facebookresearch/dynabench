@@ -145,8 +145,8 @@ async def handle_submit_post(request):
         response['prob'] = model_pred['model_conf'] # this is what the frontend expects
 
         # Evaluate the model prediction against the human answer
-        if 'answer_human' in post_data:
-            human_ans = post_data['answer_human'].strip()
+        if 'answer' in post_data:
+            human_ans = post_data['answer'].strip()
             response['eval_f1'] = compute_f1(human_ans, response['text'])
             response['eval_exact'] = compute_exact(human_ans, response['text'])
             response['model_is_correct'] = response['eval_f1'] > THRESHOLD_F1
