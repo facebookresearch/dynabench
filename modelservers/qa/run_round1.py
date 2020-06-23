@@ -131,6 +131,7 @@ async def handle_submit_post(request):
     if any(field not in post_data or len(post_data[field]) <= 0 for field in required_fields):
         raise web.HTTPBadRequest(reason='Missing data')
 
+    human_ans = ''
     try:
         logging.info("Passage: {}".format(post_data['context']))
         logging.info("Question: {}".format(post_data['hypothesis']))
@@ -140,16 +141,15 @@ async def handle_submit_post(request):
         }
         model_preds = await get_model_preds([example])
         model_pred = model_preds[0]
-        response = model_pred
-        response['prob'] = response['model_conf'] # this is what the frontend expects
+        response['text'] = model_pred['text']
+        response['prob'] = model_pred['model_conf'] # this is what the frontend expects
 
         # Evaluate the model prediction against the human answer
-        human_ans = ''
         if 'answer_human' in post_data:
             human_ans = post_data['answer_human'].strip()
-            response['prediction']['eval_f1'] = compute_f1(human_ans, response['prediction']['text'])
-            response['prediction']['eval_exact'] = compute_exact(human_ans, response['prediction']['text'])
-            response['prediction']['model_is_correct'] = response['prediction']['eval_f1'] > THRESHOLD_F1
+            response['eval_f1'] = compute_f1(human_ans, response['text'])
+            response['eval_exact'] = compute_exact(human_ans, response['text'])
+            response['model_is_correct'] = response['eval_f1'] > THRESHOLD_F1
 
     except Exception as e:
         logging.exception(f'Error: {e}')
@@ -159,8 +159,8 @@ async def handle_submit_post(request):
             my_task_id, \
             my_round_id, \
             my_secret, \
-            # TODO: Make this use the response['text'] instead
-            [str(response['prob']) + '|' + str(1 - response['prob']), post_data['context'], post_data['hypothesis']] \
+            [str(response['prob']) + '|' + str(response['text']),
+             post_data['context'], post_data['hypothesis'], human_ans] \
             )
 
     cors_url = request.headers.get('origin')
