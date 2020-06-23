@@ -1,41 +1,30 @@
 import React from "react";
 
-import { CreateInterface } from './CreateInterface.js';
+import { NLITaskPreview, NLITaskOnboarder, NLITaskMain } from './nli-1/core.jsx';
 
-class TaskDescription extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-  render() {
-    return <>
-        <h1>Adversarial Sentiment Analysis</h1>
-        <p>In this task, you will be asked to find examples that fool an AI model into making the wrong prediction.</p>
-      </>;
-  }
-}
+const TaskComponents = {
+  'nli-1': [NLITaskPreview, NLITaskOnboarder, NLITaskMain],
+  // TODO: New tasks are added here
+};
 
 class TaskFrontend extends React.Component {
   constructor(props) {
     super(props);
     this.api = props.api;
-    this.state = {
-      context: ''
-    };
-  }
-  componentDidMount() {
-    this.api.getRandomContext(1, 1)
-    .then(result => {
-      this.setState({context: result});
-    })
-    .catch(error => {
-      console.log(error);
-    });
+    this.task = 'nli-1'; // TODO: Pass this from run_mturk.py
   }
   render() {
-    return (
-      <CreateInterface api={this.api} />
-    );
+    const TaskPreview = TaskComponents[this.task][0];
+    const TaskOnboarder = TaskComponents[this.task][1];
+    const TaskMain = TaskComponents[this.task][2];
+    if (this.props.isPreview) {
+      return <TaskPreview {...this.props} />;
+    } else if (this.props.isOnboarding) {
+      return <TaskOnboarder {...this.props} />;
+    } else {
+      return <TaskMain {...this.props} />;
+    }
   }
 }
 
-export { TaskDescription, TaskFrontend };
+export { TaskFrontend };
