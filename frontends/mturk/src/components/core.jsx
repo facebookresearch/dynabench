@@ -14,9 +14,7 @@ class TaskFrontend extends React.Component {
     this.task = 'nli-1'; // TODO: Pass this from run_mturk.py
   }
   render() {
-    const TaskPreview = TaskComponents[this.task][0];
-    const TaskOnboarder = TaskComponents[this.task][1];
-    const TaskMain = TaskComponents[this.task][2];
+    const [ TaskPreview, TaskOnboarder, TaskMain ] = TaskComponents[this.task];
     if (this.props.isPreview) {
       return <TaskPreview {...this.props} />;
     } else if (this.props.isOnboarding) {
