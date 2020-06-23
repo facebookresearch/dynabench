@@ -64,7 +64,8 @@ def construct_tasks(n):
     return [{} for _ in range(n)]
 
 extra_args = {
-    'static_task_data': construct_tasks(10)
+    'static_task_data': construct_tasks(10),
+    'task_id': 'nli-1'
 }
 
 try:
