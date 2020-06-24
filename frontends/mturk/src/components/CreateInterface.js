@@ -81,7 +81,14 @@ class CreateInterface extends React.Component {
           this.api.storeExample(this.state.task.id, this.state.task.cur_round, 'turk', this.state.context.id, this.state.hypothesis, this.state.target, result)
           .then(result => {
             var key = this.state.content.length-1;
-            this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false, mapKeyToExampleId: {...this.state.mapKeyToExampleId, [key]: result.id}});
+            this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false, mapKeyToExampleId: {...this.state.mapKeyToExampleId, [key]: result.id}},
+              function () {
+                if (this.state.content[this.state.content.length-1].fooled || this.state.content.length > 10) {
+                  // TODO: Determine exactly when to trigger this
+                  console.log('Success! You can submit HIT');
+                  this.props.onSubmit(this.state.content);
+                }
+              });
           })
           .catch(error => {
             console.log(error);
