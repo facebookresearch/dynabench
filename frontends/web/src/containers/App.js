@@ -13,6 +13,7 @@ import {
 import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 import HomePage from "./HomePage";
 import LoginPage from "./LoginPage";
+import ForgotPassword from "./ForgotPassword";
 import RegisterPage from "./RegisterPage";
 import ProfilePage from "./ProfilePage";
 import AboutPage from "./AboutPage";
@@ -54,7 +55,13 @@ class App extends React.Component {
   }
   render() {
     return (
-      <UserContext.Provider value={ {user: this.state.user, updateState: this.updateState, api: this.api } }>
+      <UserContext.Provider
+        value={{
+          user: this.state.user,
+          updateState: this.updateState,
+          api: this.api,
+        }}
+      >
       <Router>
         <ScrollToTop />
           <Navbar
@@ -134,6 +141,7 @@ class App extends React.Component {
           <Route path="/tasks/:taskId" component={TaskPage} />
           <Route path="/tasks" component={TasksPage} />
           <Route path="/login" component={LoginPage} />
+          <Route path="/forgot" component={ForgotPassword} />
           <Route path="/logout" component={Logout} />
           <Route path="/profile" component={ProfilePage} />
           <Route path="/register" component={RegisterPage} />
