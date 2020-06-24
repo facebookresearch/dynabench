@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Col,
   Container,
   Row,
   Jumbotron,
@@ -16,7 +17,7 @@ import Moment from 'react-moment';
 class HomePageTable extends React.Component {
   render() {
     return <>
-      <h2>{this.props.title}</h2>
+      <h2 className="text-uppercase">{this.props.title}</h2>
       <Table striped bordered hover>
         <thead>
           {this.props.th}
@@ -108,10 +109,11 @@ class HomePage extends React.Component {
     ];
     */
     const taskCards = !this.state.tasks ? <p>No tasks found</p> : this.state.tasks.map((task, index) =>
+      <Col md={6} lg={3}>
       <Card key={task.id} className="taskCard" onClick={() => this.props.history.push("/tasks/" + task.id)}>
-        <h2 className="taskHeader">{task.name}</h2>
+        <h2 className="taskHeader blue-color text-uppercase text-center">{task.name}</h2>
         <Card.Body>
-          <Card.Text className="taskDescription">
+          <Card.Text className="text-center">
             {task.desc}
           </Card.Text>
           <Table className="table-striped">
@@ -128,6 +130,7 @@ class HomePage extends React.Component {
           </small>
         </Card.Footer>
       </Card>
+      </Col>
     );
     return (
       <>
@@ -140,12 +143,11 @@ class HomePage extends React.Component {
           </Row>
         </Container>
       </div>
-      <Container>
-        <Row>
-          <CardGroup>
-            {taskCards}
-          </CardGroup>
-        </Row>
+      <Container className="homeCardgroup">
+        <h2 className="header font-weight-light d-block text-center">Tasks</h2>
+        <CardGroup>
+          {taskCards}
+        </CardGroup>
       </Container>
       </>
     );
