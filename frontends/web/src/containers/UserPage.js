@@ -41,7 +41,7 @@ class UserPage extends React.Component {
     return (
       <Container>
         <Row>
-          <h2>USER OVERVIEW</h2><br/>
+          <h2 className="text-uppercase">User Overview</h2><br/>
         </Row>
         <Row>
           <CardGroup style={{marginTop: 20, width: '100%'}}>

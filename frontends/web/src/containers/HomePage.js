@@ -109,18 +109,19 @@ class HomePage extends React.Component {
     ];
     */
     const taskCards = !this.state.tasks ? <p>No tasks found</p> : this.state.tasks.map((task, index) =>
-      <Col md={6} lg={3}>
-      <Card key={task.id} className="taskCard" onClick={() => this.props.history.push("/tasks/" + task.id)}>
-        <h2 className="taskHeader blue-color text-uppercase text-center">{task.name}</h2>
+      <Col sm={6} lg={3}>
+      <Card key={task.id} className="task-card" onClick={() => this.props.history.push("/tasks/" + task.id)}>
+        <h2 className="task-header blue-color text-uppercase text-center">{task.name}</h2>
         <Card.Body>
           <Card.Text className="text-center">
             {task.desc}
           </Card.Text>
-          <Table className="table-striped">
+          <Table>
           <thead></thead>
           <tbody>
           <tr><td>Round:</td><td>{task.cur_round}</td></tr>
-          <tr><td>Verified/Collected<br/>(model error rate):</td><td>{task.round.total_verified}/{task.round.total_collected}<br/>({task.round.total_collected > 0 ? (task.round.total_verified / task.round.total_collected).toFixed(2) : '0.00'}%)</td></tr>
+          <tr><td>Verified/Collected</td><td>{task.round.total_verified}/{task.round.total_collected}</td></tr>
+          <tr><td>(Model error rate):</td><td>({task.round.total_collected > 0 ? (task.round.total_verified / task.round.total_collected).toFixed(2) : '0.00'}%)</td></tr>
           </tbody>
           </Table>
         </Card.Body>
@@ -134,17 +135,19 @@ class HomePage extends React.Component {
     );
     return (
       <>
-      <div className={"jumbotron jumboSlider " + (this.state.showjumbo ? "" : "hideJumbo")}>
+      <Jumbotron className={"pb-0 bg-white jumbo-slider " + (this.state.showjumbo ? "" : "hide-jumbo")}>
         <Container>
           <Row className="justify-content-center text-center">
-            <h1>Rethinking AI Benchmarking</h1>
+            <Col lg={8}>
+            <h1 className="mb-4">Rethinking AI Benchmarking</h1>
             <p>DynaBench is a research platform for dynamic adversarial data collection and benchmarking. Static benchmarks have well-known issues: they saturate quickly, are susceptible to overfitting, contain exploitable annotator artifacts and have unclear or imperfect evaluation metrics.<br></br><br></br> This platform essentially is a scientific experiment: can we make faster progress if we collect data dynamically, with humans and models in the loop, rather than in the old-fashioned static way?</p>
             <Button className="button-ellipse" as={Link} to="/about" variant="primary">Read more</Button>
+            </Col>
           </Row>
         </Container>
-      </div>
-      <Container className="homeCardgroup">
-        <h2 className="header font-weight-light d-block text-center">Tasks</h2>
+      </Jumbotron>
+      <Container className="pb-4 pb-sm-5">
+        <h2 className="home-cardgroup-header text-reset mt-0 mb-4 font-weight-light d-block text-center">Tasks</h2>
         <CardGroup>
           {taskCards}
         </CardGroup>

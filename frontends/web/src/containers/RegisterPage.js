@@ -12,9 +12,9 @@ class RegisterPage extends React.Component {
       {props => (
           <Container>
             <Row>
-              <div className="wrapper fadeInDown">
-              <div id="formContent" className="loginForm text-center">
-                <h2>REGISTER</h2>
+              <div className="wrapper fade-in-down">
+              <div id="formContent" className="login-form text-center">
+                <h2 className="text-uppercase">Register</h2>
                 <Formik
                   initialValues={{ email: '', username: '', password: '', accept: false }}
                   validate={values => {
@@ -69,7 +69,7 @@ class RegisterPage extends React.Component {
                       <input
                         type="email"
                         name="email"
-                        className="fadeIn first"
+                        className="fade-in first"
                         placeholder="email"
                         onChange={handleChange}
                         onBlur={handleBlur}
@@ -79,7 +79,7 @@ class RegisterPage extends React.Component {
                       <input
                         type="text"
                         name="username"
-                        className="fadeIn second"
+                        className="fade-in second"
                         placeholder="username / nickname"
                         onChange={handleChange}
                         onBlur={handleBlur}
@@ -89,7 +89,7 @@ class RegisterPage extends React.Component {
                       <input
                         type="password"
                         name="password"
-                        className="fadeIn third"
+                        className="fade-in third"
                         placeholder="password"
                         onChange={handleChange}
                         onBlur={handleBlur}
@@ -99,19 +99,19 @@ class RegisterPage extends React.Component {
                       <input
                         type="checkbox"
                         name="accept"
-                        className="fadeIn third"
+                        className="fade-in third"
                         onChange={handleChange}
                         onBlur={handleBlur}
                         value={values.accept}
                         checked={values.accept}
                       /> I accept the <Link className="btn-link" to="/terms">terms and conditions</Link>.
                       <small className="form-text text-muted">{errors.accept && touched.accept && errors.accept}</small>
-                      <Button type="submit" variant="primary" className="fadeIn third submitBtn" disabled={isSubmitting}>
+                      <Button type="submit" variant="primary" className="fade-in third submit-btn" disabled={isSubmitting}>
                         Register
                       </Button>
                     </form>
-                    <div id="formFooter">
-                      <p>Already have an account? <Link className="underlineHover btn-link" to="/login">Login</Link></p>
+                    <div id="form-footer">
+                      <p>Already have an account? <Link className="underline-hover btn-link" to="/login">Login</Link></p>
                     </div>
                     </>
                   )}
