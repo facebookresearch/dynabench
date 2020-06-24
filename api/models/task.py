@@ -26,7 +26,7 @@ class Task(Base):
 
     #cur_round = db.Column(db.Integer, db.ForeignKey("rounds.id"), nullable=False)
     cur_round = db.Column(db.Integer, nullable=False)
-
+    hidden = db.Column(db.Boolean, default=False)
     has_context = db.Column(db.Boolean, default=True)
 
     def __repr__(self):
