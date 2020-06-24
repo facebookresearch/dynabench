@@ -18,7 +18,9 @@ def add_cors_headers():
             'https://beta.dynabench.org',
             'https://beta.dynabench.org:3000',
             'https://localhost:3000',
-            'http://localhost:3000']
+            'http://localhost:3000',
+            'https://localhost:3001',
+            'http://localhost:3001']
     if bottle.request.get_header('origin') not in valid_cors_urls:
         host = 'https://dynabench.org'
     else:
