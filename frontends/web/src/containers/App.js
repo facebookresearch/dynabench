@@ -3,6 +3,7 @@ import "./App.css";
 import {
   Navbar,
   Nav,
+  NavDropdown,
   Card,
   CardGroup,
   Row,
@@ -59,8 +60,9 @@ class App extends React.Component {
           <Navbar
             expand="lg"
             variant="dark"
-            className="shadow navbar-fixed-top blue-bg"
+            className="shadow navbar-fixed-top blue-bg justify-content-start"
           >
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Brand as={Link} to="/">
               <img
                 src="/logo_w.png"
@@ -68,16 +70,28 @@ class App extends React.Component {
                 alt="DynaBench"
               />
             </Navbar.Brand>
+          <Navbar.Collapse>
           <Nav className="mr-auto">
             <Nav.Item>
-                <Nav.Link as={Link} to="/about" className="">
+                <Nav.Link as={Link} to="/about">
                   About
                 </Nav.Link>
             </Nav.Item>
             <Nav.Item>
-                <Nav.Link as={Link} to="/tasks">
-                  Tasks
-                </Nav.Link>
+              <NavDropdown title="Tasks" id="basic-nav-dropdown">
+                <NavDropdown.Item href="/tasks/1">
+                  Natural Language Institute
+                </NavDropdown.Item>
+                <NavDropdown.Item href="/tasks/2">
+                  Questions & Answers
+                </NavDropdown.Item>
+                <NavDropdown.Item href="/tasks/3">
+                  Sentiment
+                </NavDropdown.Item>
+                <NavDropdown.Item href="/tasks/4">
+                  Hate Speech
+                </NavDropdown.Item>
+              </NavDropdown>
             </Nav.Item>
           </Nav>
           <Nav className="justify-content-end">
@@ -102,13 +116,14 @@ class App extends React.Component {
                     </Nav.Link>
                 </Nav.Item>
                 <Nav.Item>
-                    <Nav.Link as={Link} to="/register">
+                    <Nav.Link as={Link} to="/register" className="signup-nav-link">
                       Sign up
                     </Nav.Link>
                 </Nav.Item>
                 </>
               )}
           </Nav>
+          </Navbar.Collapse>
         </Navbar>
         <div id="content">
         <Switch>

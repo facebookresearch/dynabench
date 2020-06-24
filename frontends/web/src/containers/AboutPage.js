@@ -14,7 +14,7 @@ class AboutPage extends React.Component {
     return (
       <Container>
         <Row>
-          <h2>About</h2>
+          <h2>ABOUT</h2>
         </Row>
         <Row>
           <CardGroup style={{marginTop: 20, width: '100%'}}>
@@ -28,7 +28,7 @@ class AboutPage extends React.Component {
           </CardGroup>
         </Row>
         <Row>
-          <h2>Frequently Asked Questions</h2>
+          <h2>FREQUENTLY ASKED QUESTIONS</h2>
         </Row>
         <Row>
           <CardGroup style={{marginTop: 20, width: '100%'}}>

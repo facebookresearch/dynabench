@@ -31,7 +31,9 @@ class TasksPage extends React.Component {
     const taskCards = this.state.tasks.map((task, index) =>
       <CardGroup key={task.id} style={{marginTop: 20, width: '100%'}}>
         <Card className="taskCard" onClick={() => this.props.history.push("/tasks/" + task.id)}>
-          <span className={index < 3 ? "taskHeader taskHeaderRight" : "taskHeader taskHeaderLeft"}><h2>{task.name} ({task.shortname})</h2></span>
+          <span className={index < 3 ? "taskHeader taskHeaderRight" : "taskHeader taskHeaderLeft"}>
+            <h2 className="text-uppercase">{task.name} ({task.shortname})</h2>
+          </span>
           <Card.Body>
             <Card.Text>
               {task.desc}
@@ -55,7 +57,7 @@ class TasksPage extends React.Component {
     return (
       <Container>
         <Row>
-          <h2>Tasks</h2>
+          <h2>TASKS</h2>
         </Row>
         <Row>
           {taskCards}

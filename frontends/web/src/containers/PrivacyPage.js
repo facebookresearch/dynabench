@@ -14,7 +14,7 @@ class PrivacyPage extends React.Component {
     return (
       <Container>
         <Row>
-          <h2>Privacy</h2>
+          <h2>PRIVACY</h2>
         </Row>
         <Row>
           <CardGroup style={{marginTop: 20, width: '100%'}}>
