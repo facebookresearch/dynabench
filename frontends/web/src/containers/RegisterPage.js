@@ -69,8 +69,8 @@ class RegisterPage extends React.Component {
                       <input
                         type="email"
                         name="email"
-                        className="fade-in first"
-                        placeholder="email"
+                        className="fade-in first text-left"
+                        placeholder="Email"
                         onChange={handleChange}
                         onBlur={handleBlur}
                         value={values.email}
@@ -79,8 +79,8 @@ class RegisterPage extends React.Component {
                       <input
                         type="text"
                         name="username"
-                        className="fade-in second"
-                        placeholder="username / nickname"
+                        className="fade-in second text-left"
+                        placeholder="Username"
                         onChange={handleChange}
                         onBlur={handleBlur}
                         value={values.username}
@@ -89,8 +89,8 @@ class RegisterPage extends React.Component {
                       <input
                         type="password"
                         name="password"
-                        className="fade-in third"
-                        placeholder="password"
+                        className="fade-in third text-left"
+                        placeholder="Password"
                         onChange={handleChange}
                         onBlur={handleBlur}
                         value={values.password}
@@ -104,7 +104,7 @@ class RegisterPage extends React.Component {
                         onBlur={handleBlur}
                         value={values.accept}
                         checked={values.accept}
-                      /> I accept the <Link className="btn-link" to="/terms">terms and conditions</Link>.
+                      /> I accept the <Link className="btn-link" to="/terms">Terms and conditions</Link>.
                       <small className="form-text text-muted">{errors.accept && touched.accept && errors.accept}</small>
                       <Button type="submit" variant="primary" className="fade-in third submit-btn" disabled={isSubmitting}>
                         Register

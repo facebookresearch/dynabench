@@ -2,6 +2,10 @@
   min-height: 88vh;
 }
 
+.sidebar-wrapper {
+  padding: 0px;
+}
+
 .blue-bg {
   background-color: #1283d8;
 }
