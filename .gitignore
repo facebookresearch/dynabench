@@ -1,1 +1,3 @@
 logs/
+*.DS_Store
+frontends/web/package-lock.json
