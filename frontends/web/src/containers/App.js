@@ -80,15 +80,15 @@ class App extends React.Component {
             <Nav.Item>
               <NavDropdown title="Tasks" id="basic-nav-dropdown">
                 <NavDropdown.Item href="/tasks/1">
-                  Natural Language Institute
+                  Natural Language Inference
                 </NavDropdown.Item>
                 <NavDropdown.Item href="/tasks/2">
-                  Questions & Answers
+                  Question Answering
                 </NavDropdown.Item>
                 <NavDropdown.Item href="/tasks/3">
-                  Sentiment
+                  Sentiment Analysis
                 </NavDropdown.Item>
-                <NavDropdown.Item href="/tasks/4">
+                <NavDropdown.Item href="/tasks/5">
                   Hate Speech
                 </NavDropdown.Item>
               </NavDropdown>
