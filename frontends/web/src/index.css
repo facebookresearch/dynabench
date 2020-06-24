@@ -1,11 +1,10 @@
 body {
-  margin: 0;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  color: #6e6e6e;
   font-family: -apple-system, BlinkMacSystemFont, 'OpenSansRegular', 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: #6e6e6e;
 }
 
 code {
@@ -28,3 +27,38 @@ code {
   src: url(./fonts/OpenSans-Regular.ttf);
 }
 
+*:focus {
+  outline: none;
+}
+
+h1 {
+  font-family: OpenSansLight;
+}
+
+h2 {
+  color: #cccccc;
+  display: inline-block;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 40px 8px 10px;
+}
+
+a {
+  color: #92badd;
+  display: inline-block;
+}
+
+#icon {
+  width: 60%;
+}
+
+/* TABS */
+
+h2.inactive {
+  color: #cccccc;
+}
+
+h2.active {
+  color: #0d0d0d;
+  border-bottom: 2px solid #5fbae9;
+}

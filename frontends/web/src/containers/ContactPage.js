@@ -14,7 +14,7 @@ class ContactPage extends React.Component {
     return (
       <Container>
         <Row>
-          <h2>Contact</h2>
+          <h2>CONTACT</h2>
         </Row>
         <Row>
           <CardGroup style={{marginTop: 20, width: '100%'}}>

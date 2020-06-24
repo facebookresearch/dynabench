@@ -18,8 +18,8 @@ class LoginPage extends React.Component {
           <Container>
             <Row>
               <div className="wrapper fadeInDown">
-              <div id="formContent" className="loginForm">
-                <h2>Log in</h2>
+              <div id="formContent" className="loginForm text-center">
+                <h2>LOG IN</h2>
                 <p className="msg">{query.msg}</p>
                 <Formik
                   initialValues={{ email: '', password: '', src: query.src ? query.src : '/' }}
@@ -77,9 +77,9 @@ class LoginPage extends React.Component {
                       />
                       <small className="form-text text-muted">{errors.password && touched.password && errors.password}</small>
                       <small className="form-text text-muted">{errors.general}</small>
-                      <Button type="submit" variant="primary" type="submit" className="btn btn-primary fadeIn third submitBtn button-ellipse" disabled={isSubmitting} >Submit</Button>
+                      <Button type="submit" variant="primary" type="submit" className="fadeIn third submitBtn button-ellipse" disabled={isSubmitting}>SUBMIT</Button>
                     </form>
-                    <div id="formFooter">
+                    <div className="formFooter">
                       <p>Don't have an account? <Link className="btn-link underlineHover" to="/register">Sign up</Link></p>
                       <p><Link className="btn-link underlineHover" to="/forgot">Forgot Password?</Link></p>
                     </div>
