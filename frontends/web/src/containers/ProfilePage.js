@@ -60,7 +60,7 @@ class ProfilePage extends React.Component {
       return (
         <Container>
           <Row>
-            <h2>YOUR PROFILE</h2>
+            <h2 className="text-uppercase">Your Profile</h2>
           </Row>
           <Row>
             <UserInfoCard user={this.state.user} />

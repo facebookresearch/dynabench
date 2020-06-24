@@ -9,7 +9,7 @@
   width: 100%;
 }
 
-.loginForm {
+.login-form {
   border-radius: 10px;
   box-shadow: 0 30px 60px 0 rgba(0,0,0,0.3);
   max-width: 450px;
@@ -18,11 +18,11 @@
   width: 90%;
 }
 
-.loginForm .msg {
+.login-form .msg {
   padding: 0 30px;
 }
 
-.loginForm .formFooter {
+.login-form .form-footer {
   background-color: #f6f6f6;
   border-top: 1px solid #dce8f1;
   padding: 25px;
@@ -30,7 +30,7 @@
 
 /* FORM TYPOGRAPHY*/
 
-.submitBtn {
+.submit-btn {
   background-color: #56baed;
   border: none;
   box-shadow: 0 10px 30px 0 rgba(95,186,233,0.4);
@@ -40,23 +40,23 @@
   transition: all 0.3s ease-in-out;
 }
 
-.submitBtn:hover {
+.submit-btn:hover {
   background-color: #39ace7;
 }
 
-.submitBtn:active {
+.submit-btn:active {
   transform: scale(0.95);
 }
 
-.submitBtn:disabled,
-.submitBtn[disabled] {
+.submit-btn:disabled,
+.submit-btn[disabled] {
   background-color: #cccccc;
   border: 1px solid #999999;
   color: #666666;
   cursor: not-allowed;
 }
 
-.loginForm input[type=text], .loginForm input[type=email], .loginForm input[type=password] {
+.login-form input[type=text], .login-form input[type=email], .login-form input[type=password] {
   background-color: #f6f6f6;
   border: 2px solid #f6f6f6;
   border-radius: 5px;
@@ -67,7 +67,7 @@
   width: 85%;
 }
 
-.loginForm input:focus {
+.login-form input:focus {
   background-color: #fff;
   border-bottom: 2px solid #5fbae9;
 }
@@ -75,11 +75,11 @@
 /* ANIMATIONS */
 
 /* Simple CSS3 Fade-in-down Animation */
-.fadeInDown {
-  animation: fadeInDown 1s both;
+.fade-in-down {
+  animation: fade-in-down 1s both;
 }
 
-@keyframes fadeInDown {
+@keyframes fade-in-down {
   0% {
     opacity: 0;
     transform: translate3d(0, -100%, 0);
@@ -91,31 +91,31 @@
 }
 
 /* Simple CSS3 Fade-in Animation */
-@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+@keyframes fade-in { from { opacity:0; } to { opacity:1; } }
 
-.fadeIn {
+.fade-in {
   opacity:0;
-  animation: fadeIn 1s ease-in forwards;
+  animation: fade-in 1s ease-in forwards;
 }
 
-.fadeIn.first {
+.fade-in.first {
   animation-delay: 0.4s;
 }
 
-.fadeIn.second {
+.fade-in.second {
   animation-delay: 0.6s;
 }
 
-.fadeIn.third {
+.fade-in.third {
   animation-delay: 0.8s;
 }
 
-.fadeIn.fourth {
+.fade-in.fourth {
   animation-delay: 1s;
 }
 
 /* Simple CSS3 Underline Animation */
-.underlineHover::after {
+.underline-hover::after {
   background-color: #56baed;
   content: "";
   display: block;
@@ -124,11 +124,11 @@
   width: 0;
 }
 
-.underlineHover:hover {
+.underline-hover:hover {
   color: #0d0d0d;
   text-decoration: none;
 }
 
-.underlineHover:hover::after {
+.underline-hover:hover::after {
   width: 100%;
 }

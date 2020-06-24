@@ -60,9 +60,9 @@ class App extends React.Component {
           <Navbar
             expand="lg"
             variant="dark"
-            className="shadow navbar-fixed-top blue-bg justify-content-start"
+            className="shadow blue-bg justify-content-start"
           >
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Toggle aria-controls="basic-navbar-nav" className="border-0 mr-2" />
             <Navbar.Brand as={Link} to="/">
               <img
                 src="/logo_w.png"
@@ -77,22 +77,20 @@ class App extends React.Component {
                   About
                 </Nav.Link>
             </Nav.Item>
-            <Nav.Item>
               <NavDropdown title="Tasks" id="basic-nav-dropdown">
-                <NavDropdown.Item href="/tasks/1">
+                <NavDropdown.Item href="/tasks/1" className="py-3">
                   Natural Language Inference
                 </NavDropdown.Item>
-                <NavDropdown.Item href="/tasks/2">
+                <NavDropdown.Item href="/tasks/2" className="py-3">
                   Question Answering
                 </NavDropdown.Item>
-                <NavDropdown.Item href="/tasks/3">
+                <NavDropdown.Item href="/tasks/3" className="py-3">
                   Sentiment Analysis
                 </NavDropdown.Item>
-                <NavDropdown.Item href="/tasks/5">
+                <NavDropdown.Item href="/tasks/5" className="py-3">
                   Hate Speech
                 </NavDropdown.Item>
               </NavDropdown>
-            </Nav.Item>
           </Nav>
           <Nav className="justify-content-end">
               {this.state.user.id ? (
@@ -144,24 +142,24 @@ class App extends React.Component {
           <Route path="/" component={HomePage} />
         </Switch>
         </div>
-        <footer className="footer">
+        <footer className="footer text-white">
             <Container fluid>
             <Row>
                 <div className="footer-nav-link">
                   Copyright © 2020 Facebook, Inc.
                 </div>
                 <div className="footer-nav-link">
-                  <Link to="/contact" className="btn-link">
+                  <Link to="/contact" className="text-reset">
                     Contact
                   </Link>
                 </div>
                 <div className="footer-nav-link">
-                  <Link to="/terms" className="btn-link">
+                  <Link to="/terms" className="text-reset">
                     Terms and conditions
                   </Link>
                 </div>
                 <div className="footer-nav-link">
-                  <Link to="/privacy" className="btn-link">
+                  <Link to="/privacy" className="text-reset">
                     Privacy policy
                   </Link>
                 </div>

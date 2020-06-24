@@ -28,7 +28,7 @@ class TaskMainPage extends React.Component {
     return (
       <Row>
         <div className="col-sm-4">
-          <h2>OVERALL MODEL LEADERBOARD</h2>
+          <h2 className="text-uppercase">Overall Model Leaderboard</h2>
           <Table striped bordered hover>
             <thead>
               <tr><th>Model</th><th>Mean accuracy</th></tr>
@@ -40,11 +40,11 @@ class TaskMainPage extends React.Component {
           </Table>
         </div>
         <div className="col-sm-4">
-          <h2>TREND</h2>
+          <h2 className="text-uppercase">Trend</h2>
           <LineChart data={this.props.task.scores} />
           </div>
           <div className="col-sm-4">
-          <h2>OVERALL USER LEADERBOARD</h2>
+          <h2 className="text-uppercase">Overall User Leaderboard</h2>
           <Table striped bordered hover>
             <thead>
               <tr><th>Model</th><th>Mean MER</th><th>Total</th></tr>

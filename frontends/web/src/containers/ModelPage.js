@@ -35,7 +35,7 @@ class ModelPage extends React.Component {
     return (
       <Container>
         <Row>
-          <h2>MODEL OVERVIEW</h2><br/>
+          <h2 className="text-uppercase">Model Overview</h2><br/>
         </Row>
         <Row>
           <CardGroup style={{marginTop: 20, width: '100%'}}>
