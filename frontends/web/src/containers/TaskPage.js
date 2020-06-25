@@ -302,6 +302,8 @@ const Rechart = ({
   },
   data,
 }) => {
+  const globalColors = ['#6fb98f', '#075756', '#66a5ad'];
+  const dataset = Object.keys(data[0]).filter((item) => item != 'name');
   return (
     <Card>
       <Card.Header>Trend</Card.Header>
@@ -331,7 +333,16 @@ const Rechart = ({
               }}
               verticalAlign={verticalAlign}
             />
-            <Line
+            {dataset.map((item, index) => (
+              <Line
+                dataKey={item}
+                dot={{ fill: globalColors[index] }}
+                stroke={globalColors[index]}
+                strokeWidth={2}
+                type="linear"
+              />
+            ))}
+            {/* <Line
               dataKey="data1"
               dot={{ fill: '#6fb98f' }}
               stroke="#6fb98f"
@@ -351,7 +362,7 @@ const Rechart = ({
               stroke="#66a5ad"
               strokeWidth={2}
               type="linear"
-            />
+            /> */}
           </LineChart>
         </ResponsiveContainer>
       </Card.Body>
