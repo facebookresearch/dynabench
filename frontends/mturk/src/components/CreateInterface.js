@@ -26,8 +26,12 @@ class CreateInterface extends React.Component {
       submitDisabled: true,
       refreshDisabled: true,
       mapKeyToExampleId: {},
+      tries: 0,
+      total_tries: 10, // NOTE: Set this to your preferred value
+      taskCompleted: false
     };
     this.getNewContext = this.getNewContext.bind(this);
+    this.handleTaskSubmit = this.handleTaskSubmit.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
     this.handleResponseChange = this.handleResponseChange.bind(this);
     this.retractExample = this.retractExample.bind(this);
@@ -59,6 +63,9 @@ class CreateInterface extends React.Component {
       console.log(error);
     });
   }
+  handleTaskSubmit() {
+    this.props.onSubmit(this.state.content);
+  }
   handleResponse() {
     this.setState({submitDisabled: true, refreshDisabled: true}, function () {
       if (this.state.hypothesis.length == 0) {
@@ -81,7 +88,14 @@ class CreateInterface extends React.Component {
           this.api.storeExample(this.state.task.id, this.state.task.cur_round, 'turk', this.state.context.id, this.state.hypothesis, this.state.target, result)
           .then(result => {
             var key = this.state.content.length-1;
-            this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false, mapKeyToExampleId: {...this.state.mapKeyToExampleId, [key]: result.id}});
+            this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false, mapKeyToExampleId: {...this.state.mapKeyToExampleId, [key]: result.id}},
+              function () {
+                this.state.tries += 1;
+                if (this.state.content[this.state.content.length-1].fooled || this.state.tries >= this.state.total_tries) {
+                  console.log('Success! You can submit HIT');
+                  this.setState({taskCompleted: true});
+                }
+              });
           })
           .catch(error => {
             console.log(error);
@@ -141,6 +155,11 @@ class CreateInterface extends React.Component {
             </Row>
           </div>
     );
+    if (this.state.taskCompleted) {
+      var taskTracker = <Button className="btn btn-primary btn-success" onClick={this.handleTaskSubmit}>Submit HIT</Button>;
+    } else {
+      var taskTracker = <small style={{padding: 7}}>Tries: {this.state.tries} / {this.state.total_tries}</small>;
+    }
     return (
       <Container>
         <Row>
@@ -161,7 +180,9 @@ class CreateInterface extends React.Component {
             <small className="form-text text-muted">Please enter your input. Remember, the goal is to find an example that the model gets wrong but that another person would get right. Load time may be slow; please be patient.</small>
           </InputGroup>
           <InputGroup>
-            <Button className="btn btn-primary" style={{marginRight: 2}} onClick={this.handleResponse} disabled={this.state.submitDisabled}>Submit <i className={this.state.submitDisabled ? "fa fa-cog fa-spin" : ""} /></Button> <Button className="btn btn-secondary" onClick={this.getNewContext} disabled={this.state.refreshDisabled}>Switch to next context</Button>
+            <Button className="btn btn-primary" style={{marginRight: 2}} onClick={this.handleResponse} disabled={this.state.submitDisabled}>Submit <i className={this.state.submitDisabled ? "fa fa-cog fa-spin" : ""} /></Button>
+            <Button className="btn btn-secondary" style={{marginRight: 2}} onClick={this.getNewContext} disabled={this.state.refreshDisabled}>Switch to next context</Button>
+            {taskTracker}
           </InputGroup>
         </Row>
       </Container>

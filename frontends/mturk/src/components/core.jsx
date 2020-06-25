@@ -11,7 +11,7 @@ class TaskFrontend extends React.Component {
   constructor(props) {
     super(props);
     this.api = props.api;
-    this.task = 'nli-1'; // TODO: Pass this from run_mturk.py
+    this.task = props.initialTaskData.task_id;
   }
   render() {
     const [ TaskPreview, TaskOnboarder, TaskMain ] = TaskComponents[this.task];

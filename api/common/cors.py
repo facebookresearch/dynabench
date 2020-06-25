@@ -21,7 +21,10 @@ def add_cors_headers():
             'http://localhost:3000',
             'https://localhost:3001',
             'http://localhost:3001']
-    if bottle.request.get_header('origin') not in valid_cors_urls:
+    # TODO: Do this properly, ugly hack to get Mephisto working
+    if bottle.request.get_header('origin').endswith('herokuapp.com'):
+        host = bottle.request.get_header('origin')
+    elif bottle.request.get_header('origin') not in valid_cors_urls:
         host = 'https://dynabench.org'
     else:
         host = bottle.request.get_header('origin')

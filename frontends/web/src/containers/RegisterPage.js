@@ -1,6 +1,6 @@
 import React from 'react';
 import { Formik } from 'formik';
-import { Container, Row } from 'react-bootstrap';
+import { Container, Button, Row } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import './LoginPage.css';
 import UserContext from './UserContext';
@@ -13,8 +13,8 @@ class RegisterPage extends React.Component {
           <Container>
             <Row>
               <div className="wrapper fadeInDown">
-              <div id="formContent" className="loginForm">
-                <h2>Register</h2>
+              <div id="formContent" className="loginForm text-center">
+                <h2>REGISTER</h2>
                 <Formik
                   initialValues={{ email: '', username: '', password: '', accept: false }}
                   validate={values => {
@@ -106,9 +106,9 @@ class RegisterPage extends React.Component {
                         checked={values.accept}
                       /> I accept the <Link className="btn-link" to="/terms">terms and conditions</Link>.
                       <small className="form-text text-muted">{errors.accept && touched.accept && errors.accept}</small>
-                      <button type="submit" className="btn btn-primary fadeIn third submitBtn" disabled={isSubmitting}>
+                      <Button type="submit" variant="primary" className="fadeIn third submitBtn" disabled={isSubmitting}>
                         Register
-                      </button>
+                      </Button>
                     </form>
                     <div id="formFooter">
                       <p>Already have an account? <Link className="underlineHover btn-link" to="/login">Login</Link></p>
