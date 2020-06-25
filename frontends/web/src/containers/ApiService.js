@@ -49,6 +49,17 @@ export default class ApiService {
     })
   }
 
+  forgotPassword(email) {
+    return this.fetch(`${this.domain}/forgotPassword`, {
+      method: 'POST',
+      body: JSON.stringify(
+        {'email': email}
+      )
+    }).then(res => {
+      return Promise.resolve(res);
+    })
+  }
+
   getUsers() {
     return this.fetch(`${this.domain}/users`, {
       method: 'GET'
