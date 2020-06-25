@@ -51,13 +51,15 @@ class CreateInterface extends React.Component {
   retractExample(e) {
     e.preventDefault();
     var idx = e.target.getAttribute("data-index");
-    this.api.retractExample(this.state.mapKeyToExampleId[idx])
+    this.api.retractExample(
+      this.state.mapKeyToExampleId[idx],
+      'turk|' + this.props.providerWorkerId + '|' + this.props.mephistoWorkerId
+    )
     .then(result => {
       const newContent = this.state.content.slice();
       newContent[idx].cls = 'retracted';
       newContent[idx].retracted = true;
       this.setState({content: newContent});
-      console.log(newContent);
     })
     .catch(error => {
       console.log(error);
@@ -84,13 +86,19 @@ class CreateInterface extends React.Component {
             retracted: false,
             response: result}
         ]}, function() {
-          // TODO: Insert mturk ID here
-          this.api.storeExample(this.state.task.id, this.state.task.cur_round, 'turk', this.state.context.id, this.state.hypothesis, this.state.target, result)
-          .then(result => {
+          this.api.storeExample(
+            this.state.task.id,
+            this.state.task.cur_round,
+            'turk|' + this.props.providerWorkerId + '|' + this.props.mephistoWorkerId,
+            this.state.context.id,
+            this.state.hypothesis,
+            this.state.target,
+            result
+          ).then(result => {
             var key = this.state.content.length-1;
+            this.state.tries += 1;
             this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false, mapKeyToExampleId: {...this.state.mapKeyToExampleId, [key]: result.id}},
               function () {
-                this.state.tries += 1;
                 if (this.state.content[this.state.content.length-1].fooled || this.state.tries >= this.state.total_tries) {
                   console.log('Success! You can submit HIT');
                   this.setState({taskCompleted: true});
