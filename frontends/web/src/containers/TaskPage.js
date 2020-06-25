@@ -24,51 +24,6 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-const Rechart = ({ size, data }) => {
-  console.log('data:', data);
-  return (
-    <div className="col-sm-12 col-md-12">
-      <Card>
-        <Card.Header>Trend</Card.Header>
-        <Card.Body>
-          <ResponsiveContainer width="100%" height={500}>
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis tickCount={8} />
-              <ChartTooltip />
-              <Legend
-                align="right"
-                verticalAlign="top"
-                layout="vertical"
-                wrapperStyle={{ paddingLeft: 10 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="data1"
-                stroke="#8884d8"
-                strokeWidth={2}
-              />
-              <Line
-                type="monotone"
-                dataKey="data2"
-                stroke="#ffa500"
-                strokeWidth={2}
-              />
-              <Line
-                type="monotone"
-                dataKey="data3"
-                stroke="#228B22"
-                strokeWidth={2}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-};
-
 class TaskMainPage extends React.Component {
   constructor(props) {
     super(props);
@@ -105,10 +60,24 @@ class TaskMainPage extends React.Component {
             </tbody>
           </Table>
         </div>
-        <div className="col-sm-4">
-          <h2 className="text-uppercase">Trend</h2>
-          <Rechart data={this.props.task.scores} />
+
+        {/* Mobile / Tablet / Desktop charts */}
+        <div className="col-sm-12 d-block d-sm-none">
+          <Rechart size={chartSizes.xs} data={this.props.task.scores} />
         </div>
+        <div className="col-12 d-none d-sm-block d-md-none">
+          <Rechart size={chartSizes.sm} data={this.props.task.scores} />
+        </div>
+        <div className="col-12 d-none d-md-block d-lg-none">
+          <Rechart size={chartSizes.md} data={this.props.task.scores} />
+        </div>
+        <div className="col-12 d-none d-lg-block d-xl-none">
+          <Rechart size={chartSizes.lg} data={this.props.task.scores} />
+        </div>
+        <div className="col-12 d-none d-xl-block">
+          <Rechart size={chartSizes.xl} data={this.props.task.scores} />
+        </div>
+
         <div className="col-sm-4">
           <h2 className="text-uppercase">Overall User Leaderboard</h2>
           <Table striped bordered hover>
@@ -175,25 +144,25 @@ class TaskPage extends React.Component {
       task: {
         scores: [
           {
-            name: '0',
+            name: 0,
             data1: 30,
             data2: 23,
             data3: 22,
           },
           {
-            name: '1',
+            name: 1,
             data1: 20,
             data2: 45,
             data3: 23,
           },
           {
-            name: '2',
+            name: 2,
             data1: 50,
             data2: 56,
             data3: 21,
           },
           {
-            name: '3',
+            name: 3,
             data1: 40,
             data2: 68,
             data3: 43,
@@ -305,13 +274,7 @@ class TaskPage extends React.Component {
                     </Card.Header>
                     <Card.Body>
                       <Card.Text>{this.state.task.longdesc}</Card.Text>
-
-                      <Card>
-                        <Card.Header></Card.Header>
-                        <Card.Body>
-                          <TaskMainPage task={this.state.task} />
-                        </Card.Body>
-                      </Card>
+                      <TaskMainPage task={this.state.task} />
                     </Card.Body>
                   </Card>
                 </CardGroup>
@@ -323,5 +286,118 @@ class TaskPage extends React.Component {
     );
   }
 }
+
+// Defaults for mobile
+const Rechart = ({
+  size: {
+    align = 'center',
+    fontSize = 10,
+    height = 250,
+    left = -40,
+    legendAlign = null,
+    right = 10,
+    verticalAlign = 'bottom',
+    width = '100%',
+    xAxisLeftPadding = 25,
+  },
+  data,
+}) => {
+  return (
+    <Card>
+      <Card.Header>Trend</Card.Header>
+      <Card.Body>
+        <ResponsiveContainer width={width} height={height}>
+          <LineChart margin={{ left, right }} data={data}>
+            <XAxis
+              allowDecimals={false}
+              dataKey="name"
+              padding={{ left: xAxisLeftPadding }}
+              tick={{ fontSize }}
+              tickLine={false}
+            />
+            <YAxis
+              interval="preserveStartEnd"
+              tick={false}
+              padding={{ top: 10 }}
+              tick={{ fontSize }}
+            />
+            <ChartTooltip />
+            <Legend
+              align={align}
+              layout={verticalAlign == 'top' ? 'vertical' : 'horizontal'}
+              wrapperStyle={{
+                fontSize,
+                right: legendAlign,
+              }}
+              verticalAlign={verticalAlign}
+            />
+            <Line
+              dataKey="data1"
+              dot={{ fill: '#6fb98f' }}
+              stroke="#6fb98f"
+              strokeWidth={2}
+              type="linear"
+            />
+            <Line
+              dataKey="data2"
+              dot={{ fill: '#075756' }}
+              stroke="#075756"
+              strokeWidth={2}
+              type="linear"
+            />
+            <Line
+              dataKey="data3"
+              dot={{ fill: '#66a5ad' }}
+              stroke="#66a5ad"
+              strokeWidth={2}
+              type="linear"
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </Card.Body>
+    </Card>
+  );
+};
+
+const chartSizes = {
+  xs: { fontSize: 10, legendAlign: -10 },
+  sm: {
+    align: 'center',
+    fontSize: 14,
+    height: 300,
+    left: -30,
+    xAxisLeftPadding: 50,
+  },
+  md: {
+    align: 'right',
+    fontSize: 14,
+    height: 332,
+    left: -20,
+    legendAlign: -35,
+    verticalAlign: 'top',
+    width: '90%',
+    xAxisLeftPadding: 50,
+  },
+  lg: {
+    fontSize: 14,
+    height: 492,
+    left: -20,
+    legendAlign: -35,
+    width: 700,
+    verticalAlign: 'top',
+    align: 'right',
+    xAxisLeftPadding: 50,
+  },
+  xl: {
+    align: 'right',
+    fontSize: 14,
+    height: 492,
+    left: -20,
+    legendAlign: -100,
+    width: 700,
+    verticalAlign: 'top',
+    xAxisLeftPadding: 50,
+  },
+};
 
 export default TaskPage;
