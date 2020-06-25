@@ -13,7 +13,7 @@ class RegisterPage extends React.Component {
           <Container>
             <Row>
               <div className="wrapper fade-in-down">
-              <div id="formContent" className="login-form text-center">
+              <div id="form-content" className="login-form text-center">
                 <h2 className="text-uppercase">Register</h2>
                 <Formik
                   initialValues={{ email: '', username: '', password: '', accept: false }}
