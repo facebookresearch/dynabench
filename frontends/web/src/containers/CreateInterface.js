@@ -28,7 +28,7 @@ class Explainer extends React.Component {
   render() {
     return (
       <Row>
-        <h2>Find examples that fool the model - {this.props.taskName}</h2> <small style={{marginTop: 40, marginLeft: 20, fontSize: 10}}>(<a href="#" className="btn-link">Need an explainer?</a>)</small>
+        <h2 className="text-uppercase">Find examples that fool the model - {this.props.taskName}</h2> <small style={{marginTop: 40, marginLeft: 20, fontSize: 10}}>(<a href="#" className="btn-link">Need an explainer?</a>)</small>
       </Row>
     );
   }
@@ -78,7 +78,6 @@ class ResponseInfo extends React.Component {
       newContent[idx].cls = 'retracted';
       newContent[idx].retracted = true;
       this.setState({content: newContent});
-      console.log(newContent);
     })
     .catch(error => {
       console.log(error);

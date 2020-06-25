@@ -38,13 +38,13 @@ class ApiService {
     })
   }
 
-  retractExample(id) {
-    // TODO: This needs an id check server-side, right?
+  retractExample(id, uid) {
     return this.fetch(`${this.domain}/examples/${id}`, {
       method: 'PUT',
       body: JSON.stringify(
         {
-          'retracted': true
+          'retracted': true,
+          'uid': uid // MECHANICAL TURK WORKER ID
         }
       )
     }).then(res => {

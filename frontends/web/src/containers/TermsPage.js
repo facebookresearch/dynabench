@@ -14,7 +14,7 @@ class TermsPage extends React.Component {
     return (
       <Container>
         <Row>
-          <h2>Terms</h2>
+          <h2 className="text-uppercase">Terms</h2>
         </Row>
         <Row>
           <CardGroup style={{marginTop: 20, width: '100%'}}>

@@ -8,6 +8,7 @@ from mephisto.core.operator import Operator
 from mephisto.core.utils import get_root_dir
 
 USE_LOCAL = True
+#USE_LOCAL = False
 
 db = LocalMephistoDB()
 
@@ -17,6 +18,7 @@ TASK_DIRECTORY = '../frontends/mturk/'
 
 # ARG_STRING goes through shlex.split twice, hence be careful if these
 # strings contain anything which needs quoting.
+task_id = 'nli-1'
 task_title = "Test static task"
 task_description = "This is a simple test of static tasks."
 port = 3001
@@ -46,6 +48,7 @@ assert USE_LOCAL or requester_name.endswith(
 # The first time using mturk, need to call the following here
 #requester.register()
 
+
 ARG_STRING = (
     "--blueprint-type static_react_task "
     f"--architect-type {architect_type} "
@@ -55,17 +58,16 @@ ARG_STRING = (
     "--task-reward 0.3 "
     "--task-tags task,testing "
     f'--task-source "{TASK_DIRECTORY}/build/bundle.js" '
-    f"--task-name dynabench-1 "
+    f"--task-name {task_id} "
     f"--units-per-assignment 1 "
     f"--port {port}"
 )
 
 def construct_tasks(n):
-    return [{} for _ in range(n)]
+    return [{'task_id': task_id} for _ in range(n)]
 
 extra_args = {
     'static_task_data': construct_tasks(10),
-    'task_id': 'nli-1'
 }
 
 try:

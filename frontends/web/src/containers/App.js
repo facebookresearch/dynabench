@@ -3,6 +3,7 @@ import "./App.css";
 import {
   Navbar,
   Nav,
+  NavDropdown,
   Card,
   CardGroup,
   Row,
@@ -12,6 +13,7 @@ import {
 import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 import HomePage from "./HomePage";
 import LoginPage from "./LoginPage";
+import ForgotPassword from "./ForgotPassword";
 import RegisterPage from "./RegisterPage";
 import ProfilePage from "./ProfilePage";
 import AboutPage from "./AboutPage";
@@ -53,14 +55,21 @@ class App extends React.Component {
   }
   render() {
     return (
-      <UserContext.Provider value={ {user: this.state.user, updateState: this.updateState, api: this.api } }>
+      <UserContext.Provider
+        value={{
+          user: this.state.user,
+          updateState: this.updateState,
+          api: this.api,
+        }}
+      >
       <Router>
         <ScrollToTop />
           <Navbar
             expand="lg"
             variant="dark"
-            className="shadow navbar-fixed-top blue-bg"
+            className="shadow blue-bg justify-content-start"
           >
+          <Navbar.Toggle aria-controls="basic-navbar-nav" className="border-0 mr-2" />
             <Navbar.Brand as={Link} to="/">
               <img
                 src="/logo_w.png"
@@ -68,17 +77,27 @@ class App extends React.Component {
                 alt="DynaBench"
               />
             </Navbar.Brand>
+          <Navbar.Collapse>
           <Nav className="mr-auto">
             <Nav.Item>
-                <Nav.Link as={Link} to="/about" className="">
+                <Nav.Link as={Link} to="/about">
                   About
                 </Nav.Link>
             </Nav.Item>
-            <Nav.Item>
-                <Nav.Link as={Link} to="/tasks">
-                  Tasks
-                </Nav.Link>
-            </Nav.Item>
+              <NavDropdown title="Tasks" id="basic-nav-dropdown">
+                <NavDropdown.Item href="/tasks/1" className="py-3">
+                  Natural Language Inference
+                </NavDropdown.Item>
+                <NavDropdown.Item href="/tasks/2" className="py-3">
+                  Question Answering
+                </NavDropdown.Item>
+                <NavDropdown.Item href="/tasks/3" className="py-3">
+                  Sentiment Analysis
+                </NavDropdown.Item>
+                <NavDropdown.Item href="/tasks/5" className="py-3">
+                  Hate Speech
+                </NavDropdown.Item>
+              </NavDropdown>
           </Nav>
           <Nav className="justify-content-end">
               {this.state.user.id ? (
@@ -102,13 +121,14 @@ class App extends React.Component {
                     </Nav.Link>
                 </Nav.Item>
                 <Nav.Item>
-                    <Nav.Link as={Link} to="/register">
+                    <Nav.Link as={Link} to="/register" className="signup-nav-link">
                       Sign up
                     </Nav.Link>
                 </Nav.Item>
                 </>
               )}
           </Nav>
+          </Navbar.Collapse>
         </Navbar>
         <div id="content">
         <Switch>
@@ -121,6 +141,7 @@ class App extends React.Component {
           <Route path="/tasks/:taskId" component={TaskPage} />
           <Route path="/tasks" component={TasksPage} />
           <Route path="/login" component={LoginPage} />
+          <Route path="/forgot" component={ForgotPassword} />
           <Route path="/logout" component={Logout} />
           <Route path="/profile" component={ProfilePage} />
           <Route path="/register" component={RegisterPage} />
@@ -129,24 +150,24 @@ class App extends React.Component {
           <Route path="/" component={HomePage} />
         </Switch>
         </div>
-        <footer className="footer">
+        <footer className="footer text-white">
             <Container fluid>
             <Row>
                 <div className="footer-nav-link">
                   Copyright © 2020 Facebook, Inc.
                 </div>
                 <div className="footer-nav-link">
-                  <Link to="/contact" className="btn-link">
+                  <Link to="/contact" className="text-reset">
                     Contact
                   </Link>
                 </div>
                 <div className="footer-nav-link">
-                  <Link to="/terms" className="btn-link">
+                  <Link to="/terms" className="text-reset">
                     Terms and conditions
                   </Link>
                 </div>
                 <div className="footer-nav-link">
-                  <Link to="/privacy" className="btn-link">
+                  <Link to="/privacy" className="text-reset">
                     Privacy policy
                   </Link>
                 </div>

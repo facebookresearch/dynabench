@@ -26,10 +26,18 @@ def update_example(credentials, eid):
         example = em.get(eid)
         if not example:
             bottle.abort(404, 'Not found')
-        if (credentials['id'] != 'turk' and example.uid != credentials['id']) or \
-                (credentials['id'] == 'turk' and example.uid != 1):
-                    bottle.abort(403, 'Access denied')
+        if credentials['id'] != 'turk' and example.uid != credentials['id']:
+            bottle.abort(403, 'Access denied')
         data = bottle.request.json
+        if credentials['id'] == 'turk':
+            if not check_fields(data, ['uid']):
+                bottle.abort(400, 'Missing data');
+            if data['uid'].startswith('turk|'):
+                _, data['annotator_id'], _ = data['uid'].split('|')
+            if example.annotator_id != data['annotator_id']:
+                bottle.abort(403, 'Access denied')
+            del data['uid'] # don't store this
+
         logging.info("Updating example {} with {}".format(example.id, data))
         em.update(example.id, data)
         return json.dumps({'success': 'ok'})
@@ -44,14 +52,25 @@ def post_example(credentials):
     logging.info(data)
     if not check_fields(data, ['tid', 'rid', 'uid', 'cid', 'hypothesis', 'target', 'response']):
         bottle.abort(400, 'Missing data')
-    if data['uid'] != credentials['id']:
-        bottle.abort(403, 'Access denied')
+
+    if credentials['id'] == 'turk' and data['uid'].startswith('turk|'):
+        logging.info(data['uid'])
+        _, data['annotator_id'], _ = data['uid'].split('|')
+    elif data['uid'] != credentials['id']:
+            bottle.abort(403, 'Access denied')
     em = ExampleModel()
-    # TODO: Add specific Turk account uid? Or add a new turk user every time we see an unseen credential?
     # TODO: Make this accept anything instead of forcing it to be 'prob' (e.g. for QA)
-    eid = em.create(tid=data['tid'], rid=data['rid'], uid=data['uid'] if credentials['id'] != 'turk' else 1,
-            cid=data['cid'], hypothesis=data['hypothesis'], tgt=data['target'],
-            pred=data['response']['prob'], signed=data['response']['signed'])
+    eid = em.create( \
+            tid=data['tid'], \
+            rid=data['rid'], \
+            uid=data['uid'] if credentials['id'] != 'turk' else 'turk', \
+            cid=data['cid'], \
+            hypothesis=data['hypothesis'], \
+            tgt=data['target'], \
+            pred=data['response']['prob'], \
+            signed=data['response']['signed'], \
+            annotator_id=data['annotator_id'] if credentials['id'] == 'turk' else '' \
+            )
     if not eid:
         bottle.abort(400, 'Could not create example')
 

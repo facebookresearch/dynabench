@@ -54,7 +54,6 @@ def requires_auth_or_turk(f):
             credentials = get_payload(token)
         except AuthorizationError as e:
             if bottle.request.headers.get('Authorization') == 'turk':
-                # TODO: Make this use the actual turk uid
                 credentials = {'id': 'turk'}
             else:
                 bottle.abort(403, 'Access denied (%s)' % e.message['description'])

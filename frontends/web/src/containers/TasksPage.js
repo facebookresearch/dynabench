@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   Container,
+  Col,
   Row,
   Card,
   CardGroup,
@@ -29,18 +30,19 @@ class TasksPage extends React.Component {
   }
   render() {
     const taskCards = this.state.tasks.map((task, index) =>
-      <CardGroup key={task.id} style={{marginTop: 20, width: '100%'}}>
-        <Card className="taskCard" onClick={() => this.props.history.push("/tasks/" + task.id)}>
-          <span className={index < 3 ? "taskHeader taskHeaderRight" : "taskHeader taskHeaderLeft"}><h2>{task.name} ({task.shortname})</h2></span>
+      <Col sm={6} lg={3}>
+        <Card key={task.id} className="task-card" onClick={() => this.props.history.push("/tasks/" + task.id)}>
+          <h2 className="task-header text-uppercase text-center">{task.name} ({task.shortname})</h2>
           <Card.Body>
-            <Card.Text>
+            <Card.Text className="text-center">
               {task.desc}
             </Card.Text>
-            <Table className="table-striped">
+            <Table>
             <thead></thead>
             <tbody>
             <tr><td>Round:</td><td>{task.cur_round}</td></tr>
-          <tr><td>Verified/Collected<br/>(model error rate):</td><td>{task.round.total_verified}/{task.round.total_collected}<br/>({task.round.total_collected > 0 ? (task.round.total_verified / task.round.total_collected).toFixed(2) : '0.00'}%)</td></tr>
+            <tr><td>Verified/Collected</td><td>{task.round.total_verified}/{task.round.total_collected}</td></tr>
+            <tr><td>(Model error rate):</td><td>({task.round.total_collected > 0 ? (task.round.total_verified / task.round.total_collected).toFixed(2) : '0.00'}%)</td></tr>
             </tbody>
             </Table>
           </Card.Body>
@@ -50,15 +52,17 @@ class TasksPage extends React.Component {
             </small>
           </Card.Footer>
         </Card>
-      </CardGroup>
+      </Col>
     );
     return (
       <Container>
         <Row>
-          <h2>Tasks</h2>
+          <h2 className="text-uppercase">Tasks</h2>
         </Row>
         <Row>
+          <CardGroup style={{marginTop: 20, width: '100%'}}>
           {taskCards}
+          </CardGroup>
         </Row>
       </Container>
     );

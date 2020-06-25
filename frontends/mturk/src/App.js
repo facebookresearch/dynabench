@@ -38,12 +38,14 @@ function App() {
   return (
     <>
       <TaskFrontend
-        task_data={initialTaskData}
-        task_config={taskConfig}
+        initialTaskData={initialTaskData}
+        taskConfig={taskConfig}
         onSubmit={handleSubmit}
         isOnboarding={isOnboarding}
         isPreview={isPreview}
         api={api}
+        providerWorkerId={providerWorkerId}
+        mephistoWorkerId={mephistoWorkerId}
       />
     </>
   );
