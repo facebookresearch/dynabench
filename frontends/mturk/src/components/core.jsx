@@ -1,9 +1,11 @@
 import React from "react";
 
-import { NLITaskPreview, NLITaskOnboarder, NLITaskMain } from './nli-1/core.jsx';
+import { NLITaskPreview, NLITaskOnboarder, NLITaskMain } from './divyansh/nli-1/core.jsx';
+import { QATaskPreview, QATaskOnboarder, QATaskMain } from './divyansh/qa-1/core.jsx';
 
 const TaskComponents = {
-  'nli-1': [NLITaskPreview, NLITaskOnboarder, NLITaskMain],
+  'divyansh-nli-1': [NLITaskPreview, NLITaskOnboarder, NLITaskMain],
+  'divyansh-qa-1': [QATaskPreview, QATaskOnboarder, QATaskMain],
   // TODO: New tasks are added here
 };
 
@@ -14,7 +16,7 @@ class TaskFrontend extends React.Component {
     if (props.initialTaskData) {
       this.task = props.initialTaskData.task_id;
     } else {
-      this.task = 'nli-1';
+      this.task = 'divyansh-nli-1';
     }
   }
   render() {
