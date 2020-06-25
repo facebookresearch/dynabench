@@ -62,7 +62,7 @@ class TaskMainPage extends React.Component {
 class TaskNav extends React.Component {
   render(props) {
     return (
-      <Nav variant="tabs" defaultActiveKey="#overall">
+      <Nav defaultActiveKey="#overall" className="flex-column">
         <Nav.Item>
           <Nav.Link href="#overall" className="btn-link">Overall</Nav.Link>
         </Nav.Item>
@@ -74,11 +74,6 @@ class TaskNav extends React.Component {
         </Nav.Item>
         <Nav.Item>
           <Nav.Link href="#3" className="btn-link">Round 3</Nav.Link>
-        </Nav.Item>
-        <Nav.Item>
-          <Nav.Link href="#disabled" disabled>
-            More to come..
-          </Nav.Link>
         </Nav.Item>
       </Nav>
     );
@@ -130,55 +125,88 @@ class TaskPage extends React.Component {
       return renderTooltip(props, "Submit model predictions on this task")
     }
     return (
-      <Container>
+      <Container fluid>
         <Row>
-          <h2 className="text-uppercase">{this.state.task.name}</h2><br/>
-        </Row>
-        <Row>
-          <p style={{marginLeft: 8}}>{this.state.task.desc}</p>
-        </Row>
-        <Row>
-          <CardGroup style={{marginTop: 20, width: '100%'}}>
-            <Card>
-              <Card.Header>
-                <Nav variant="pills">
-                  <Nav.Item>
-                    <OverlayTrigger placement="bottom" delay={{ show: 250, hide: 400 }} overlay={renderCreateTooltip}>
-                      <Button as={Link} to={"/tasks/" + this.state.taskId + "/create"}>Create</Button>
-                    </OverlayTrigger>
-                  </Nav.Item>
-                  <Nav.Item>&nbsp;</Nav.Item>
-                  <Nav.Item>
-                    <OverlayTrigger placement="bottom" delay={{ show: 250, hide: 400 }} overlay={renderVerifyTooltip}>
-                      <Button variant="secondary" as={Link} to={"/tasks/" + this.state.taskId + "/verify"}>Verify</Button>
-                    </OverlayTrigger>
-                  </Nav.Item>
-                  <Nav.Item>&nbsp;</Nav.Item>
-                  <Nav.Item>
-                    <OverlayTrigger placement="bottom" delay={{ show: 250, hide: 400 }} overlay={renderSubmitTooltip}>
-                      <Button variant="success" as={Link} to={"/tasks/" + this.state.taskId + "/submit"}>Submit</Button>
-                    </OverlayTrigger>
-                  </Nav.Item>
-                </Nav>
-              </Card.Header>
-              <Card.Body>
+          <Col xs={2} className="sidebar-wrapper">
+            <TaskNav task={this.state.task} />
+          </Col>
+          <Col xs={10} className="page-content-wrapper">
+            <Container fluid>
+              <Row>
+                <h2>{this.state.task.name}</h2>
+                <br />
+              </Row>
+              <Row>
+                <p style={{ marginLeft: 8 }}>{this.state.task.desc}</p>
+              </Row>
+              <Row>
+                <CardGroup style={{ marginTop: 20, width: "100%" }}>
+                  <Card>
+                    <Card.Header>
+                      <Nav variant="pills">
+                        <Nav.Item>
+                          <OverlayTrigger
+                            placement="bottom"
+                            delay={{ show: 250, hide: 400 }}
+                            overlay={renderCreateTooltip}
+                          >
+                            <Button
+                              as={Link}
+                              to={"/tasks/" + this.state.taskId + "/create"}
+                            >
+                              Create
+                            </Button>
+                          </OverlayTrigger>
+                        </Nav.Item>
+                        <Nav.Item>&nbsp;</Nav.Item>
+                        <Nav.Item>
+                          <OverlayTrigger
+                            placement="bottom"
+                            delay={{ show: 250, hide: 400 }}
+                            overlay={renderVerifyTooltip}
+                          >
+                            <Button
+                              variant="secondary"
+                              as={Link}
+                              to={"/tasks/" + this.state.taskId + "/verify"}
+                            >
+                              Verify
+                            </Button>
+                          </OverlayTrigger>
+                        </Nav.Item>
+                        <Nav.Item>&nbsp;</Nav.Item>
+                        <Nav.Item>
+                          <OverlayTrigger
+                            placement="bottom"
+                            delay={{ show: 250, hide: 400 }}
+                            overlay={renderSubmitTooltip}
+                          >
+                            <Button
+                              variant="success"
+                              as={Link}
+                              to={"/tasks/" + this.state.taskId + "/submit"}
+                            >
+                              Submit
+                            </Button>
+                          </OverlayTrigger>
+                        </Nav.Item>
+                      </Nav>
+                    </Card.Header>
+                    <Card.Body>
+                      <Card.Text>{this.state.task.longdesc}</Card.Text>
 
-                <Card.Text>
-                  {this.state.task.longdesc}
-                </Card.Text>
-
-                <Card>
-                  <Card.Header>
-                    <TaskNav task={this.state.task} />
-                  </Card.Header>
-                  <Card.Body>
-                    <TaskMainPage task={this.state.task} />
-                  </Card.Body>
-                </Card>
-
-              </Card.Body>
-            </Card>
-          </CardGroup>
+                      <Card>
+                        <Card.Header></Card.Header>
+                        <Card.Body>
+                          <TaskMainPage task={this.state.task} />
+                        </Card.Body>
+                      </Card>
+                    </Card.Body>
+                  </Card>
+                </CardGroup>
+              </Row>
+            </Container>
+          </Col>
         </Row>
       </Container>
     );
