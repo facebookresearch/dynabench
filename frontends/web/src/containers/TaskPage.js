@@ -11,14 +11,34 @@ import {
   OverlayTrigger
 } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-
 import UserContext from './UserContext';
+import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip as ChartTooltip, Legend, ResponsiveContainer } from 'recharts';
 
-import C3Chart from 'react-c3js';
-//import 'c3/c3.css';
+const Rechart = ({ size, data }) => {
+  console.log('data:', data)
+  return(
+    <div className="col-sm-12 col-md-12">
+    <Card>
+    <Card.Header>Trend</Card.Header>
+    <Card.Body>
+    <ResponsiveContainer width="100%" height={500}>
+    <LineChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="name" />
+        <YAxis tickCount={8} />
+        <ChartTooltip />
+        <Legend align="right" verticalAlign="top" layout="vertical" wrapperStyle={{paddingLeft: 10}} />
+        <Line type="monotone" dataKey="data1" stroke="#8884d8" strokeWidth={2} />
+        <Line type="monotone" dataKey="data2" stroke="#ffa500" strokeWidth={2} />
+        <Line type="monotone" dataKey="data3" stroke="#228B22" strokeWidth={2} />
+    </LineChart>
+    </ResponsiveContainer>
+    </Card.Body>
+    </Card>
+    </div>
+)
+}
 
-const LineChart = ({ size, data }) =>
-  <C3Chart size={{ height: 150 }} data={{ json: data }} />;
 
 class TaskMainPage extends React.Component {
   constructor(props) {
@@ -27,7 +47,7 @@ class TaskMainPage extends React.Component {
   render() {
     return (
       <Row>
-        <div className="col-sm-4">
+        <div className="col-sm-12 col-md-12">
           <h2>Overall Model Leaderboard</h2>
           <Table striped bordered hover>
             <thead>
@@ -39,11 +59,8 @@ class TaskMainPage extends React.Component {
             </tbody>
           </Table>
         </div>
-        <div className="col-sm-4">
-          <h2>Trend</h2>
-          <LineChart data={this.props.task.scores} />
-          </div>
-          <div className="col-sm-4">
+          <Rechart data={this.props.task.scores} />
+          <div className="col-sm-12 col-md-12">
           <h2>Overall User Leaderboard</h2>
           <Table striped bordered hover>
             <thead>
@@ -92,25 +109,47 @@ class TaskPage extends React.Component {
     this.state = {
       taskId: null,
       task: {
-        scores: {
-          data1: [30, 20, 50, 40],
-          data2: [23, 45, 56, 68],
-          data3: [22, 23, 21, 43]
-        }
+        scores: [
+          {
+      name: '0',
+      data1: 30,
+      data2: 23,
+      data3: 22
+    },
+    {
+      name: '1',
+      data1: 20,
+      data2: 45,
+      data3: 23
+    },
+    {
+      name: '2',
+      data1: 50,
+      data2: 56,
+      data3: 21
+    },
+    {
+      name: '3',
+      data1: 40,
+      data2: 68,
+      data3: 43
+    }
+        ]
       }
     };
   }
   componentDidMount() {
-    const { match: { params } } = this.props;
-    this.setState(params, function() {
-      this.context.api.getTask(this.state.taskId)
-      .then(result => {
-        this.setState({task: result});
-      })
-      .catch(error => {
-        console.log(error);
-      });
-    });
+    // const { match: { params } } = this.props;
+    // this.setState(params, function() {
+    //   this.context.api.getTask(this.state.taskId)
+    //   .then(result => {
+    //     console.log(result);
+    //     this.setState({task: result});
+    //   })
+    //   .catch(error => {
+    //     console.log(error);
+    //   });
+    // });
   }
   render() {
     function renderTooltip(props, text) {
