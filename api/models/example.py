@@ -10,10 +10,15 @@ class Example(Base):
     __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
 
     id = db.Column(db.Integer, primary_key=True)
+
     cid = db.Column(db.Integer, db.ForeignKey("contexts.id"), nullable=False)
     context = db.orm.relationship("Context", foreign_keys="Example.cid")
-    uid = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    uid = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
     user = db.orm.relationship("User", foreign_keys="Example.uid")
+
+    annotator_id = db.Column(db.Text)
+    anon_id = db.Column(db.Text)
 
     text = db.Column(db.Text)
     explanation = db.Column(db.Text)
@@ -44,7 +49,11 @@ class ExampleModel(BaseModel):
     def __init__(self):
         super(ExampleModel, self).__init__(Example)
 
-    def create(self, tid, rid, uid, cid, hypothesis, tgt, pred, signed):
+    def create(self, tid, rid, uid, cid, hypothesis, tgt, pred, signed, annotator_id=None):
+        if uid == 'turk' and annotator_id is None:
+            logging.error('Annotator id not specified but received Turk example')
+            return False
+
         cm = ContextModel()
         c = cm.get(cid)
         if int(tid) != c.round.task.id or int(rid) != c.round.rid:
@@ -72,12 +81,24 @@ class ExampleModel(BaseModel):
             return False
 
         try:
-            um = UserModel()
-            user = um.get(uid)
-            e = Example(user=user, context=c, \
+            e = Example(context=c, \
                     text=hypothesis, target_pred=tgt, model_preds=pred_str, \
                     model_wrong=(tgt != np.argmax(pred)),
                     generated_datetime=db.sql.func.now())
+
+            # store uid/annotator_id and anon_id
+            anon_id = hashlib.sha1()
+            anon_id.update(c.round.secret.encode('utf-8'))
+            if uid == 'turk':
+                e.annotator_id = annotator_id
+                anon_id.update(e.annotator_id.encode('utf-8'))
+            else:
+                um = UserModel()
+                user = um.get(uid)
+                e.user = user
+                anon_id.update(str(uid).encode('utf-8'))
+            e.anon_id = anon_id.hexdigest()
+
             self.dbs.add(e)
             self.dbs.flush()
             self.dbs.commit()

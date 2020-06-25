@@ -78,7 +78,6 @@ class ResponseInfo extends React.Component {
       newContent[idx].cls = 'retracted';
       newContent[idx].retracted = true;
       this.setState({content: newContent});
-      console.log(newContent);
     })
     .catch(error => {
       console.log(error);

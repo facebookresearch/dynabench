@@ -44,6 +44,8 @@ function App() {
         isOnboarding={isOnboarding}
         isPreview={isPreview}
         api={api}
+        providerWorkerId={providerWorkerId}
+        mephistoWorkerId={mephistoWorkerId}
       />
     </>
   );

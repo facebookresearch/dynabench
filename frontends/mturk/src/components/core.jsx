@@ -11,7 +11,11 @@ class TaskFrontend extends React.Component {
   constructor(props) {
     super(props);
     this.api = props.api;
-    this.task = props.initialTaskData.task_id;
+    if (props.initialTaskData) {
+      this.task = props.initialTaskData.task_id;
+    } else {
+      this.task = 'nli-1';
+    }
   }
   render() {
     const [ TaskPreview, TaskOnboarder, TaskMain ] = TaskComponents[this.task];
