@@ -122,14 +122,10 @@ class HomePage extends React.Component {
           <tr><td>Round:</td><td>{task.cur_round}</td></tr>
           <tr><td>Verified/Collected</td><td>{task.round.total_verified}/{task.round.total_collected}</td></tr>
           <tr><td>(Model error rate):</td><td>({task.round.total_collected > 0 ? (task.round.total_verified / task.round.total_collected).toFixed(2) : '0.00'}%)</td></tr>
+          <tr><td>Last update:</td><td><Moment utc fromNow>{task.last_updated}</Moment></td></tr>
           </tbody>
           </Table>
         </Card.Body>
-        <Card.Footer>
-          <small className="text-muted">
-           Last updated  <Moment utc fromNow>{task.last_updated}</Moment>
-          </small>
-        </Card.Footer>
       </Card>
       </Col>
     );
@@ -141,7 +137,7 @@ class HomePage extends React.Component {
             <Col lg={8}>
             <h1 className="mb-4">Rethinking AI Benchmarking</h1>
             <p>DynaBench is a research platform for dynamic adversarial data collection and benchmarking. Static benchmarks have well-known issues: they saturate quickly, are susceptible to overfitting, contain exploitable annotator artifacts and have unclear or imperfect evaluation metrics.<br></br><br></br> This platform essentially is a scientific experiment: can we make faster progress if we collect data dynamically, with humans and models in the loop, rather than in the old-fashioned static way?</p>
-            <Button className="button-ellipse" as={Link} to="/about" variant="primary">Read more</Button>
+            <Button className="blue-bg border-0 button-ellipse home-readmore-btn" as={Link} to="/about">Read more</Button>
             </Col>
           </Row>
         </Container>

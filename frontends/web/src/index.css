@@ -2,7 +2,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
   color: #6e6e6e;
-  font-family: -apple-system, BlinkMacSystemFont, 'OpenSansRegular', 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'OpenSansRegular', 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
 }
