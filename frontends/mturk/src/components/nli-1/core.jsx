@@ -33,7 +33,7 @@ class NLITaskMain extends React.Component {
     console.log(props);
   }
   render() {
-    return <CreateInterface api={this.api} />;
+    return <CreateInterface api={this.api} {...this.props} />;
   }
 }
 
