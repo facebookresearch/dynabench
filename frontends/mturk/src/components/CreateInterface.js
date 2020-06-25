@@ -11,16 +11,62 @@ import {
   InputGroup
 } from 'react-bootstrap';
 
+// import UserContext from './UserContext';
+import { TokenAnnotator, TextAnnotator } from 'react-text-annotate'
+
+import C3Chart from 'react-c3js';
+
+class Explainer extends React.Component {
+  render() {
+    return (
+      <Row>
+        <h2 className="text-uppercase">Find examples that fool the model - {this.props.taskName}</h2> <small style={{ marginTop: 40, marginLeft: 20, fontSize: 10 }}>(<a href="#" className="btn-link">Need an explainer?</a>)</small>
+      </Row>
+    );
+  }
+}
+
+class ContextInfo extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+  render() {
+    return (
+      this.props.taskType == 'QA' ?
+        <>
+          <TokenAnnotator
+            style={{
+              lineHeight: 1.5,
+            }}
+            className='context'
+            tokens={this.props.text.split(' ')}
+            value={this.props.answer}
+            onChange={this.props.updateAnswer}
+            getSpan={span => ({
+              ...span,
+              tag: 'ANS',
+            })}
+          />
+          <small>Your goal: enter a question and select an answer in the context, such that the model is fooled.</small>
+        </>
+        :
+        <><div className='context'>{this.props.text}</div><small>Your goal: enter a <strong>{this.props.targets[this.props.curTarget]}</strong> statement that fools the model.</small></>
+    );
+  }
+}
+
 class CreateInterface extends React.Component {
   constructor(props) {
     super(props);
     this.api = props.api;
     this.state = {
-      taskId: 1,
+      answer: [],
+      taskId: props.taskId,
       task: {},
       context: null,
       target: 0,
-      modelPred: null,
+      modelPredIdx: null,
+      modelPredStr: '',
       hypothesis: "",
       content: [],
       submitDisabled: true,
@@ -74,18 +120,40 @@ class CreateInterface extends React.Component {
         this.setState({submitDisabled: false, refreshDisabled: false});
         return;
       }
-
-      this.api.getModelResponse(this.state.task.round.url, this.state.context.context, this.state.hypothesis)
-      .then(result => {
+      if (this.state.task.shortname == 'QA' && this.state.answer.length == 0) {
+        this.setState({submitDisabled: false, refreshDisabled: false});
+        return;
+      }
+      let modelInputs = {
+        context: this.state.context.context,
+        hypothesis: this.state.hypothesis,
+        answer: this.state.task.shortname == 'QA' ? this.state.answer : null
+      };
+      this.api.getModelResponse(this.state.task.round.url, modelInputs)
+        .then(result => {
+          if (this.state.task.shortname != 'QA') {
+            var modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
+            var modelPredStr = this.state.task.targets[modelPredIdx];
+            var modelFooled = result.prob.indexOf(Math.max(...result.prob)) !== this.state.target;
+          } else {
+            var modelPredIdx = null;
+            var modelPredStr = result.text;
+            var modelFooled = (this.state.answer !== result.text);
+            // TODO: Handle this more elegantly:
+            result.prob = [result.prob, 1 - result.prob];
+            this.state.task.targets = ['confidence', 'uncertainty'];
+          }
+          console.log(this.props)
         this.setState({
           content: [...this.state.content, {
             cls: 'hypothesis',
-            modelPred: result.prob.indexOf(Math.max(...result.prob)),
-            fooled: result.prob.indexOf(Math.max(...result.prob)) !== this.state.target,
+            modelPredIdx: modelPredIdx,
+            modelPredStr: modelPredStr,
+            fooled: modelFooled,
             text: this.state.hypothesis,
             retracted: false,
             response: result}
-        ]}, function() {
+          ]}, function() {
           this.api.storeExample(
             this.state.task.id,
             this.state.task.cur_round,
@@ -133,8 +201,17 @@ class CreateInterface extends React.Component {
   render() {
     const content = this.state.content.map((item, index) =>
       item.cls == 'context' ?
-          <div key={index}><div className={item.cls}>{item.text}</div><small>Your goal: enter a <strong>{this.state.task.targets[this.state.target]}</strong> statement that fools the model.</small></div>
-          :
+        <ContextInfo key={index}
+          index={index}
+          text={item.text}
+          targets={this.state.task.targets}
+          curTarget={this.state.target}
+          taskType={this.state.task.shortname}
+          answer={this.state.answer}
+          updateAnswer={this.updateAnswer}
+        />
+        // <div key={index}><div className={item.cls}>{item.text}</div><small>Your goal: enter a <strong>{this.state.task.targets[this.state.target]}</strong> statement that fools the model.</small></div>
+        :
           <div key={index} className={item.cls + ' rounded border ' + (item.retracted ? 'border-warning' : (item.fooled ? 'border-success' : 'border-danger'))}  style={{ minHeight: 120 }}>
             <Row>
               <div className="col-sm-9">
@@ -142,19 +219,19 @@ class CreateInterface extends React.Component {
                 <small>{
                   item.retracted ?
                   <>
-                  <span><strong>Example retracted</strong> - thanks. The model predicted <strong>{this.state.task.targets[item.modelPred]}</strong>. Please try again!</span>
+                    <span><strong>Example retracted</strong> - thanks. The model predicted <strong>{this.state.task.targets[item.modelPredStr]}</strong>. Please try again!</span>
                   </>
                   :
                   (item.fooled ?
-                  <>
-                  <span><strong>Well done!</strong> You fooled the model. The model predicted <strong>{this.state.task.targets[item.modelPred]}</strong> instead. </span><br/>
-                  <span>Made a mistake? You can still <a href="#" data-index={index} onClick={this.retractExample} className="btn-link">retract this example</a>. Otherwise, we will have it verified.</span>
-                  </>
-                  :
-                  <>
-                  <span><strong>Bad luck!</strong> The model correctly predicted <strong>{this.state.task.targets[item.modelPred]}</strong>. Try again.</span>
-                  <span>We will still store this as an example that the model got right. You can <a href="#" data-index={index} onClick={this.retractExample} className="btn-link">retract this example</a> if you don't want it saved.</span>
-                  </>
+                    <>
+                      <span><strong>Well done!</strong> You fooled the model. The model predicted <strong>{this.state.task.targets[item.modelPredStr]}</strong> instead. </span><br />
+                      <span>Made a mistake? You can still <a href="#" data-index={index} onClick={this.retractExample} className="btn-link">retract this example</a>. Otherwise, we will have it verified.</span>
+                    </>
+                    :
+                    <>
+                      <span><strong>Bad luck!</strong> The model correctly predicted <strong>{this.state.task.targets[item.modelPredStr]}</strong>. Try again.</span>
+                      <span>We will still store this as an example that the model got right. You can <a href="#" data-index={index} onClick={this.retractExample} className="btn-link">retract this example</a> if you don't want it saved.</span>
+                    </>
                   )
                 }</small>
               </div>
@@ -182,7 +259,13 @@ class CreateInterface extends React.Component {
             </Card>
           </CardGroup>
           <InputGroup>
-            <FormControl style={{width: '100%', margin: 2}} placeholder="Enter hypothesis.." value={this.state.hypothesis} onChange={this.handleResponseChange} />
+            <FormControl
+              style={{ width: '100%', margin: 2 }}
+              placeholder={this.state.task.shortname == 'QA' ? 'Enter question..' : 'Enter hypothesis..'}
+              value={this.state.hypothesis}
+              onChange={this.handleResponseChange}
+            />
+            {/* <FormControl style={{width: '100%', margin: 2}} placeholder="Enter hypothesis.." value={this.state.hypothesis} onChange={this.handleResponseChange} /> */}
           </InputGroup>
           <InputGroup>
             <small className="form-text text-muted">Please enter your input. Remember, the goal is to find an example that the model gets wrong but that another person would get right. Load time may be slow; please be patient.</small>
