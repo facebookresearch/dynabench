@@ -20,9 +20,8 @@
   font-family: OpenSansSemiBold;
 }
 
-.navbar-dark .navbar-toggler {
-  border: none;
-  margin-right: 8px;
+.navbar-dark .dropdown-menu {
+  padding: 0;
 }
 
 .navbar-dark .dropdown-item:focus,
@@ -73,7 +72,6 @@
 
 .footer {
   background-color: #000;
-  color: #fff;
   font-size: 12px;
   padding: 20px;
 }
@@ -82,12 +80,7 @@
   margin-left: 25px;
 }
 
-.footer-nav-link .btn-link,
-.footer-nav-link .btn-link:hover {
-  color: inherit;
-}
-
-@media (min-width: 1024px) {
+@media (min-width: 992px) {
   .navbar .nav-item + .nav-item {
     margin-left: 32px;
   }

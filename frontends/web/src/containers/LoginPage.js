@@ -17,9 +17,9 @@ class LoginPage extends React.Component {
       {props => (
           <Container>
             <Row>
-              <div className="wrapper fadeInDown">
-              <div id="formContent" className="loginForm text-center">
-                <h2>LOG IN</h2>
+              <div className="wrapper fade-in-down">
+              <div id="formContent" className="login-form text-center">
+                <h2 className="text-uppercase">Log In</h2>
                 <p className="msg">{query.msg}</p>
                 <Formik
                   initialValues={{ email: '', password: '', src: query.src ? query.src : '/' }}
@@ -59,7 +59,7 @@ class LoginPage extends React.Component {
                       <input
                         type="email"
                         name="email"
-                        className="fadeIn first text-left"
+                        className="fade-in first text-left"
                         placeholder="Email"
                         onChange={handleChange}
                         onBlur={handleBlur}
@@ -69,7 +69,7 @@ class LoginPage extends React.Component {
                       <input
                         type="password"
                         name="password"
-                        className="fadeIn second text-left"
+                        className="fade-in second text-left"
                         placeholder="Password"
                         onChange={handleChange}
                         onBlur={handleBlur}
@@ -77,11 +77,11 @@ class LoginPage extends React.Component {
                       />
                       <small className="form-text text-muted">{errors.password && touched.password && errors.password}</small>
                       <small className="form-text text-muted">{errors.general}</small>
-                      <Button type="submit" variant="primary" type="submit" className="fadeIn third submitBtn button-ellipse" disabled={isSubmitting}>SUBMIT</Button>
+                      <Button type="submit" variant="primary" type="submit" className="fade-in third submit-btn button-ellipse" disabled={isSubmitting}>SUBMIT</Button>
                     </form>
-                    <div className="formFooter">
-                      <p>Don't have an account? <Link className="btn-link underlineHover" to="/register">Sign up</Link></p>
-                      <p><Link className="btn-link underlineHover" to="/forgot">Forgot Password?</Link></p>
+                    <div className="form-footer">
+                      <p>Don't have an account? <Link className="btn-link underline-hover" to="/register">Sign up</Link></p>
+                      <p><Link className="btn-link underline-hover" to="/forgot">Forgot Password?</Link></p>
                     </div>
                     </>
                   )}
