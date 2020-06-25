@@ -10,13 +10,13 @@
   background-color: #f5f5f5;
 }
 
+.task-card .card-body {
+  padding: 0px;
+}
+
 .task-card .card-text {
   margin: 10px;
   min-height: 120px;
-}
-
-.task-card .card-body {
-  padding: 0px;
 }
 
 .task-card .table td:last-child {

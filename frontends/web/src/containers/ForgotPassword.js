@@ -14,8 +14,8 @@ class ForgotPassword extends React.Component {
           <Container>
             <Row>
               <div className="wrapper fade-in-down">
-                <div id="formContent" className="login-form text-center">
-                  <h2>Forgot Password</h2>
+                <div id="form-content" className="login-form text-center">
+                  <h2 className="text-uppercase">Forgot Password</h2>
                   <Formik
                     initialValues={{
                       email: "",

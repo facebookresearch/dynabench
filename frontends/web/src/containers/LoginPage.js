@@ -18,7 +18,7 @@ class LoginPage extends React.Component {
           <Container>
             <Row>
               <div className="wrapper fade-in-down">
-              <div id="formContent" className="login-form text-center">
+              <div id="form-content" className="login-form text-center">
                 <h2 className="text-uppercase">Log In</h2>
                 <p className="msg">{query.msg}</p>
                 <Formik
