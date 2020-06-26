@@ -12,15 +12,7 @@ import {
 } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import UserContext from './UserContext';
-import {
-  Legend,
-  LineChart,
-  Line,
-  ResponsiveContainer,
-  Tooltip as ChartTooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import Rechart from '../components/Rechart';
 import Moment from 'react-moment';
 
 class TaskMainPage extends React.Component {
@@ -30,7 +22,6 @@ class TaskMainPage extends React.Component {
   render() {
     return (
       <>
-        <Col className="p-0" xs={12} sm={12} md={8} lg={10} xl={10}>
         <Card className="my-4">
           <Card.Header className="p-3 light-gray-bg">
             <h2 className="text-uppercase m-0 text-reset">Trend</h2>
@@ -54,7 +45,6 @@ class TaskMainPage extends React.Component {
             </Col>
           </Card.Body>
         </Card>
-        </Col>
         <Card className="my-4">
           <Card.Header className="p-3 light-gray-bg">
             <h2 className="text-uppercase m-0 text-reset">Overall Model Leaderboard</h2>
@@ -254,63 +244,6 @@ class TaskPage extends React.Component {
     );
   }
 }
-
-// Defaults for mobile
-const Rechart = ({
-  size: {
-    align = 'center',
-    fontSize = 10,
-    height = 250,
-    left = -40,
-    legendAlign = null,
-    right = 10,
-    verticalAlign = 'bottom',
-    width = '100%',
-    xAxisLeftPadding = 25,
-  },
-  data,
-}) => {
-  const globalColors = ['#6fb98f', '#075756', '#66a5ad'];
-  const dataset = Object.keys(data[0]).filter((item) => item != 'name');
-  return (
-    <ResponsiveContainer width={width} height={height}>
-      <LineChart margin={{ left, right }} data={data}>
-        <XAxis
-          allowDecimals={false}
-          dataKey="name"
-          padding={{ left: xAxisLeftPadding }}
-          tick={{ fontSize }}
-          tickLine={false}
-        />
-        <YAxis
-          interval="preserveStartEnd"
-          tick={false}
-          padding={{ top: 10 }}
-          tick={{ fontSize }}
-        />
-        <ChartTooltip />
-        <Legend
-          align={align}
-          layout={verticalAlign == 'top' ? 'vertical' : 'horizontal'}
-          wrapperStyle={{
-            fontSize,
-            right: legendAlign,
-          }}
-          verticalAlign={verticalAlign}
-        />
-        {dataset.map((item, index) => (
-          <Line
-            dataKey={item}
-            dot={{ fill: globalColors[index] }}
-            stroke={globalColors[index]}
-            strokeWidth={2}
-            type="linear"
-          />
-        ))}
-      </LineChart>
-    </ResponsiveContainer>
-  );
-};
 
 const chartSizes = {
   xs: { fontSize: 10, legendAlign: -10 },
