@@ -8,7 +8,18 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-
+/**
+ * API Documentation for Recharts Line Chart - {@link https://recharts.org/en-US/api/LineChart}
+ * @param align - For the legend, center works well when the verticalAlign is bottom
+ * @param fontSize - Size of font for legend, x axis and y axis labels
+ * @param height - height for chart
+ * @param left - margin left for chart
+ * @param legendAlign - right positioning for legend
+ * @param right - margin right for chart
+ * @param verticalAlign - position of legend, whether it should be below graph, above, in middle
+ * @param width - width of the chart, can be % or px
+ * @param xAxisLeftPadding - left padding for x axis ticks
+ */
 // Defaults for mobile
 const Rechart = ({
   size: {
