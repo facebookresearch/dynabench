@@ -13,14 +13,13 @@ import {
 import { Link } from 'react-router-dom';
 import UserContext from './UserContext';
 import {
+  Legend,
   LineChart,
   Line,
-  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip as ChartTooltip,
   XAxis,
   YAxis,
-  Tooltip as ChartTooltip,
-  Legend,
-  ResponsiveContainer,
 } from 'recharts';
 import Moment from 'react-moment';
 
@@ -31,29 +30,31 @@ class TaskMainPage extends React.Component {
   render() {
     return (
       <>
+        <Col className="p-0" xs={12} sm={12} md={8} lg={10} xl={10}>
         <Card className="my-4">
           <Card.Header className="p-3 light-gray-bg">
             <h2 className="text-uppercase m-0 text-reset">Trend</h2>
           </Card.Header>
           <Card.Body className="p-3">
             {/* Mobile / Tablet / Desktop charts */}
-            <div className="col-sm-12 d-block d-sm-none">
+            <Col xs={12} className="d-block d-sm-none">
               <Rechart size={chartSizes.xs} data={this.props.task.scores} />
-            </div>
-            <div className="col-12 d-none d-sm-block d-md-none">
+            </Col>
+            <Col sm={12} className="d-none d-sm-block d-md-none">
               <Rechart size={chartSizes.sm} data={this.props.task.scores} />
-            </div>
-            <div className="col-12 d-none d-md-block d-lg-none">
+            </Col>
+            <Col md={12} className="d-none d-md-block d-lg-none">
               <Rechart size={chartSizes.md} data={this.props.task.scores} />
-            </div>
-            <div className="col-12 d-none d-lg-block d-xl-none">
+            </Col>
+            <Col lg={12} className="d-none d-lg-block d-xl-none">
               <Rechart size={chartSizes.lg} data={this.props.task.scores} />
-            </div>
-            <div className="col-12 d-none d-xl-block">
+            </Col>
+            <Col xl={12} className="d-none d-xl-block">
               <Rechart size={chartSizes.xl} data={this.props.task.scores} />
-            </div>
+            </Col>
           </Card.Body>
         </Card>
+        </Col>
         <Card className="my-4">
           <Card.Header className="p-3 light-gray-bg">
             <h2 className="text-uppercase m-0 text-reset">Overall Model Leaderboard</h2>
@@ -272,47 +273,42 @@ const Rechart = ({
   const globalColors = ['#6fb98f', '#075756', '#66a5ad'];
   const dataset = Object.keys(data[0]).filter((item) => item != 'name');
   return (
-    <Card>
-      <Card.Header>Trend</Card.Header>
-      <Card.Body>
-        <ResponsiveContainer width={width} height={height}>
-          <LineChart margin={{ left, right }} data={data}>
-            <XAxis
-              allowDecimals={false}
-              dataKey="name"
-              padding={{ left: xAxisLeftPadding }}
-              tick={{ fontSize }}
-              tickLine={false}
-            />
-            <YAxis
-              interval="preserveStartEnd"
-              tick={false}
-              padding={{ top: 10 }}
-              tick={{ fontSize }}
-            />
-            <ChartTooltip />
-            <Legend
-              align={align}
-              layout={verticalAlign == 'top' ? 'vertical' : 'horizontal'}
-              wrapperStyle={{
-                fontSize,
-                right: legendAlign,
-              }}
-              verticalAlign={verticalAlign}
-            />
-            {dataset.map((item, index) => (
-              <Line
-                dataKey={item}
-                dot={{ fill: globalColors[index] }}
-                stroke={globalColors[index]}
-                strokeWidth={2}
-                type="linear"
-              />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </Card.Body>
-    </Card>
+    <ResponsiveContainer width={width} height={height}>
+      <LineChart margin={{ left, right }} data={data}>
+        <XAxis
+          allowDecimals={false}
+          dataKey="name"
+          padding={{ left: xAxisLeftPadding }}
+          tick={{ fontSize }}
+          tickLine={false}
+        />
+        <YAxis
+          interval="preserveStartEnd"
+          tick={false}
+          padding={{ top: 10 }}
+          tick={{ fontSize }}
+        />
+        <ChartTooltip />
+        <Legend
+          align={align}
+          layout={verticalAlign == 'top' ? 'vertical' : 'horizontal'}
+          wrapperStyle={{
+            fontSize,
+            right: legendAlign,
+          }}
+          verticalAlign={verticalAlign}
+        />
+        {dataset.map((item, index) => (
+          <Line
+            dataKey={item}
+            dot={{ fill: globalColors[index] }}
+            stroke={globalColors[index]}
+            strokeWidth={2}
+            type="linear"
+          />
+        ))}
+      </LineChart>
+    </ResponsiveContainer>
   );
 };
 
@@ -340,7 +336,7 @@ const chartSizes = {
     height: 492,
     left: -20,
     legendAlign: -35,
-    width: 700,
+    width: "90%",
     verticalAlign: 'top',
     align: 'right',
     xAxisLeftPadding: 50,
@@ -351,7 +347,7 @@ const chartSizes = {
     height: 492,
     left: -20,
     legendAlign: -100,
-    width: 700,
+    width: "80%",
     verticalAlign: 'top',
     xAxisLeftPadding: 50,
   },
