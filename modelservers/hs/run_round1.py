@@ -42,9 +42,8 @@ async def get_model_preds(inputString):
     )
     model.eval()
     with torch.no_grad():
-        # TODO: I am sure we can do better than this instead of setting max_length so high
         batch_encoding = tokenizer.batch_encode_plus(
-            [(inputString, )], max_length=512, pad_to_max_length=True,
+            [inputString], max_length=512, pad_to_max_length=True,
         )
         input_ids = torch.tensor(batch_encoding['input_ids'], dtype=torch.long)
         attention_mask = torch.tensor(batch_encoding['attention_mask'], dtype=torch.long)
