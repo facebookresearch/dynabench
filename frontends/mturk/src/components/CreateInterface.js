@@ -14,8 +14,6 @@ import {
 // import UserContext from './UserContext';
 import { TokenAnnotator, TextAnnotator } from 'react-text-annotate'
 
-import C3Chart from 'react-c3js';
-
 class Explainer extends React.Component {
   render() {
     return (
@@ -210,7 +208,6 @@ class CreateInterface extends React.Component {
           answer={this.state.answer}
           updateAnswer={this.updateAnswer}
         />
-        // <div key={index}><div className={item.cls}>{item.text}</div><small>Your goal: enter a <strong>{this.state.task.targets[this.state.target]}</strong> statement that fools the model.</small></div>
         :
           <div key={index} className={item.cls + ' rounded border ' + (item.retracted ? 'border-warning' : (item.fooled ? 'border-success' : 'border-danger'))}  style={{ minHeight: 120 }}>
             <Row>
@@ -265,7 +262,6 @@ class CreateInterface extends React.Component {
               value={this.state.hypothesis}
               onChange={this.handleResponseChange}
             />
-            {/* <FormControl style={{width: '100%', margin: 2}} placeholder="Enter hypothesis.." value={this.state.hypothesis} onChange={this.handleResponseChange} /> */}
           </InputGroup>
           <InputGroup>
             <small className="form-text text-muted">Please enter your input. Remember, the goal is to find an example that the model gets wrong but that another person would get right. Load time may be slow; please be patient.</small>
