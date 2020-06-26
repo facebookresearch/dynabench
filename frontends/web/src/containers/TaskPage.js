@@ -26,7 +26,7 @@ class TaskMainPage extends React.Component {
           <Card.Header className="p-3 light-gray-bg">
             <h2 className="text-uppercase m-0 text-reset">Trend</h2>
           </Card.Header>
-          <Card.Body className="p-3">
+          <Card.Body className="px-1 py-5">
             {/* Mobile / Tablet / Desktop charts */}
             <Col xs={12} className="d-block d-sm-none">
               <Rechart size={chartSizes.xs} data={this.props.task.scores} />
@@ -259,7 +259,7 @@ const chartSizes = {
     fontSize: 14,
     height: 332,
     left: -20,
-    legendAlign: -35,
+    legendAlign: -65,
     verticalAlign: 'top',
     width: '90%',
     xAxisLeftPadding: 50,
@@ -268,7 +268,7 @@ const chartSizes = {
     fontSize: 14,
     height: 492,
     left: -20,
-    legendAlign: -35,
+    legendAlign: -65,
     width: "90%",
     verticalAlign: 'top',
     align: 'right',
@@ -279,7 +279,7 @@ const chartSizes = {
     fontSize: 14,
     height: 492,
     left: -20,
-    legendAlign: -100,
+    legendAlign: -140,
     width: "80%",
     verticalAlign: 'top',
     xAxisLeftPadding: 50,

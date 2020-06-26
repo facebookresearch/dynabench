@@ -67,8 +67,6 @@ const Rechart = ({
           tickLine={false}
         />
         <YAxis
-          interval="preserveStartEnd"
-          tick={false}
           padding={{ top: 10 }}
           tick={{ fontSize }}
         />
