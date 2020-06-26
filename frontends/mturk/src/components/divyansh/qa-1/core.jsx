@@ -2,7 +2,7 @@ import React from "react";
 
 import { CreateInterface } from '../../CreateInterface.js';
 
-class QATaskPreview extends React.Component {
+class DivyanshQATaskPreview extends React.Component {
   constructor(props) {
     super(props);
   }
@@ -14,7 +14,7 @@ class QATaskPreview extends React.Component {
   }
 }
 
-class QATaskOnboarder extends React.Component {
+class DivyanshQATaskOnboarder extends React.Component {
   constructor(props) {
     super(props);
   }
@@ -26,7 +26,7 @@ class QATaskOnboarder extends React.Component {
   }
 }
 
-class QATaskMain extends React.Component {
+class DivyanshQATaskMain extends React.Component {
   constructor(props) {
     super(props);
     this.api = props.api;
@@ -36,4 +36,4 @@ class QATaskMain extends React.Component {
   }
 }
 
-export { QATaskPreview, QATaskOnboarder, QATaskMain };
+export { DivyanshQATaskPreview, DivyanshQATaskOnboarder, DivyanshQATaskMain };
