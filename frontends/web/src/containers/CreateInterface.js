@@ -1,12 +1,10 @@
 import React from 'react';
 import {
   Container,
-  Row, Col,
+  Row,
+  Col,
   Card,
-  CardGroup,
   Button,
-  Nav,
-  Table,
   FormControl,
   InputGroup
 } from 'react-bootstrap';
@@ -24,15 +22,17 @@ const PieChart = ({ size, data, labels }) =>
   }
 }} />;
 
-class Explainer extends React.Component {
-  render() {
-    return (
-      <Row>
-        <h2 className="text-uppercase">Find examples that fool the model - {this.props.taskName}</h2> <small style={{marginTop: 40, marginLeft: 20, fontSize: 10}}>(<a href="#" className="btn-link">Need an explainer?</a>)</small>
-      </Row>
-    );
-  }
-}
+const Explainer = (props) => (
+  <div className="mt-4 mb-5 pt-3">
+    <p className="text-uppercase font-weight-bold">
+      {props.taskName}
+    </p>
+    <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
+      Find examples that fool the model
+    </h2>
+    <p>The goal is to enter a entailing statement that fools the model. Find an example that the model gets wrong but that another person would get right.</p>
+  </div>
+);
 
 class ContextInfo extends React.Component {
   constructor(props) {
@@ -58,7 +58,10 @@ class ContextInfo extends React.Component {
             <small>Your goal: enter a question and select an answer in the context, such that the model is fooled.</small>
           </>
         :
-          <><div className='context'>{this.props.text}</div><small>Your goal: enter a <strong>{this.props.targets[this.props.curTarget]}</strong> statement that fools the model.</small></>
+          <>
+            <div className="mb-1 p-3 light-gray-bg">{this.props.text}</div>
+            <p className="mt-3 px-3">Your goal: enter a <strong>{this.props.targets[this.props.curTarget]}</strong> statement that fools the model.</p>
+          </>
     );
   }
 }
@@ -256,31 +259,31 @@ class CreateInterface extends React.Component {
         />
     );
     return (
-      <Container>
+      <Container className="mb-5 pb-5">
+        <Col className="m-auto" lg={9}>
         <Explainer taskName={this.state.task.name} />
-        <Row>
-          <CardGroup style={{marginTop: 20, width: '100%'}}>
-            <Card border='dark'>
-              <Card.Body style={{height: 400, overflowY: 'scroll'}}>
-                {content}
-              </Card.Body>
-            </Card>
-          </CardGroup>
+        <Card className="profile-card overflow-hidden">
+          <Card.Body className="overflow-auto" style={{height: 300}}>
+            {content}
+          </Card.Body>
           <InputGroup>
             <FormControl
-              style={{width: '100%', margin: 2}}
+              className="border-left-0 border-right-0 rounded-0 p-3 h-auto"
               placeholder={this.state.task.shortname == 'QA' ? 'Enter question..' : 'Enter hypothesis..'}
               value={this.state.hypothesis}
               onChange={this.handleResponseChange}
             />
           </InputGroup>
-          <InputGroup>
-            <small className="form-text text-muted">Please enter your input. Remember, the goal is to find an example that the model gets wrong but that another person would get right. Load time may be slow; please be patient.</small>
+          <InputGroup className="d-flex justify-content-end p-3">
+            <Button className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn" onClick={this.getNewContext} disabled={this.state.refreshDisabled}>
+              Switch to next context
+            </Button>
+            <Button className="font-weight-bold blue-bg border-0 task-action-btn" onClick={this.handleResponse} disabled={this.state.submitDisabled}>
+              Submit <i className={this.state.submitDisabled ? "fa fa-cog fa-spin" : ""} />
+            </Button>
           </InputGroup>
-          <InputGroup>
-            <Button className="btn btn-primary" style={{marginRight: 2}} onClick={this.handleResponse} disabled={this.state.submitDisabled}>Submit <i className={this.state.submitDisabled ? "fa fa-cog fa-spin" : ""} /></Button> <Button className="btn btn-secondary" onClick={this.getNewContext} disabled={this.state.refreshDisabled}>Switch to next context</Button>
-          </InputGroup>
-        </Row>
+        </Card>
+        </Col>
       </Container>
     );
   }
