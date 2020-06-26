@@ -1,23 +1,19 @@
 import React from 'react';
 import {
   Container,
-  Row, Col,
+  Row,
+  Col,
   Card,
   Button,
   Nav,
   Table,
   Tooltip,
-  OverlayTrigger
+  OverlayTrigger,
 } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-
 import UserContext from './UserContext';
-
-import C3Chart from 'react-c3js';
-//import 'c3/c3.css';
+import Rechart from '../components/Rechart';
 import Moment from 'react-moment';
-
-const LineChart = ({ data }) => <C3Chart data={{ json: data }} />;
 
 class TaskMainPage extends React.Component {
   constructor(props) {
@@ -30,8 +26,23 @@ class TaskMainPage extends React.Component {
           <Card.Header className="p-3 light-gray-bg">
             <h2 className="text-uppercase m-0 text-reset">Trend</h2>
           </Card.Header>
-          <Card.Body className="p-3">
-            <LineChart data={this.props.task.scores} />
+          <Card.Body className="px-1 py-5">
+            {/* Mobile / Tablet / Desktop charts */}
+            <Col xs={12} className="d-block d-sm-none">
+              <Rechart size={chartSizes.xs} data={this.props.task.scores} />
+            </Col>
+            <Col sm={12} className="d-none d-sm-block d-md-none">
+              <Rechart size={chartSizes.sm} data={this.props.task.scores} />
+            </Col>
+            <Col md={12} className="d-none d-md-block d-lg-none">
+              <Rechart size={chartSizes.md} data={this.props.task.scores} />
+            </Col>
+            <Col lg={12} className="d-none d-lg-block d-xl-none">
+              <Rechart size={chartSizes.lg} data={this.props.task.scores} />
+            </Col>
+            <Col xl={12} className="d-none d-xl-block">
+              <Rechart size={chartSizes.xl} data={this.props.task.scores} />
+            </Col>
           </Card.Body>
         </Card>
         <Card className="my-4">
@@ -98,25 +109,47 @@ class TaskPage extends React.Component {
     this.state = {
       taskId: null,
       task: {
-        scores: {
-          data1: [30, 20, 50, 40],
-          data2: [23, 45, 56, 68],
-          data3: [22, 23, 21, 43]
-        }
-      }
+        scores: [
+          {
+            name: 0,
+            data1: 30,
+            data2: 23,
+            data3: 22,
+          },
+          {
+            name: 1,
+            data1: 20,
+            data2: 45,
+            data3: 23,
+          },
+          {
+            name: 2,
+            data1: 50,
+            data2: 56,
+            data3: 21,
+          },
+          {
+            name: 3,
+            data1: 40,
+            data2: 68,
+            data3: 43,
+          },
+        ],
+      },
     };
   }
   componentDidMount() {
-    const { match: { params } } = this.props;
-    this.setState(params, function() {
-      this.context.api.getTask(this.state.taskId)
-      .then(result => {
-        this.setState({task: result});
-      })
-      .catch(error => {
-        console.log(error);
-      });
-    });
+    // const { match: { params } } = this.props;
+    // this.setState(params, function() {
+    //   this.context.api.getTask(this.state.taskId)
+    //   .then(result => {
+    //     console.log(result);
+    //     this.setState({task: result});
+    //   })
+    //   .catch(error => {
+    //     console.log(error);
+    //   });
+    // });
   }
   render() {
     function renderTooltip(props, text) {
@@ -127,13 +160,16 @@ class TaskPage extends React.Component {
       );
     }
     function renderCreateTooltip(props) {
-      return renderTooltip(props, "Create new examples where the model fails")
+      return renderTooltip(props, 'Create new examples where the model fails');
     }
     function renderVerifyTooltip(props) {
-      return renderTooltip(props, "Verify examples where we think the model failed")
+      return renderTooltip(
+        props,
+        'Verify examples where we think the model failed'
+      );
     }
     function renderSubmitTooltip(props) {
-      return renderTooltip(props, "Submit model predictions on this task")
+      return renderTooltip(props, 'Submit model predictions on this task');
     }
     return (
       <Container fluid>
@@ -208,5 +244,46 @@ class TaskPage extends React.Component {
     );
   }
 }
+
+const chartSizes = {
+  xs: { fontSize: 10, legendAlign: -10 },
+  sm: {
+    align: 'center',
+    fontSize: 14,
+    height: 300,
+    left: -30,
+    xAxisLeftPadding: 50,
+  },
+  md: {
+    align: 'right',
+    fontSize: 14,
+    height: 332,
+    left: -20,
+    legendAlign: -65,
+    verticalAlign: 'top',
+    width: '90%',
+    xAxisLeftPadding: 50,
+  },
+  lg: {
+    fontSize: 14,
+    height: 492,
+    left: -20,
+    legendAlign: -65,
+    width: "90%",
+    verticalAlign: 'top',
+    align: 'right',
+    xAxisLeftPadding: 50,
+  },
+  xl: {
+    align: 'right',
+    fontSize: 14,
+    height: 492,
+    left: -20,
+    legendAlign: -140,
+    width: "80%",
+    verticalAlign: 'top',
+    xAxisLeftPadding: 50,
+  },
+};
 
 export default TaskPage;
