@@ -38,18 +38,18 @@ When you interact with us through the Website, we collect or receive from you th
 <ul>
 <li>
 <strong>Identifiers.</strong> This includes information such as your:
-
+<br/>
 -	Contact information: Any data you provide us that would allow us to contact you, such as your name or email address. We collect this data directly from you.
-
+<br/>
 -	Account login information: Any data required for access to and management of your account, such as your user name (which need not be your real name), email address and password. For some areas of website, you will need to create an account on our Website in order to participate. We collect this data directly from you.
-
--	Device data: Data about your computer system or other device that you use to access our Website including device attributes (information such as the operating system, hardware and software versions), device operations (information about operations and behaviors performed on the device), device identifiers (such as device IDs and other identifiers) and your IP address.
-
+<br/>
+-	Device data: Data about your computer system or other device that you use to access our Website including device attributes (information such as the operating system, hardware and software versions), device operations (information about operations and behaviors performed on the device), device identifiers (such as device IDs and other identifiers) and your IP address. We collect this data automatically.
+<br/>
 We use the data to allow you to participate in the testing and benchmarking of the AI models, as well as to manage your account and ensure its security.
 </li>
 
 <li>
-<strong>Internet or Other Similar Network Activity.</strong> This includes usage data such as which pages or content on our Website you view and for how long, and other similar data and statistics about your interactions, such as content response times, download errors, and length of visits to certain pages on our Website, as well as your operating system type and web browser type and version. We use this data for account management, personalization and security purposes.
+<strong>Internet or Other Similar Network Activity.</strong> This includes usage data such as which pages or content on our Website you view and for how long, and other similar data and statistics about your interactions, such as content response times, download errors, and length of visits to certain pages on our Website, as well as your operating system type and web browser type and version. We use this data for account management, personalization and security purposes. We collect this information automatically when you use the Website.
 </li>
 
 <li>
