@@ -85,16 +85,16 @@ class App extends React.Component {
                 </Nav.Link>
             </Nav.Item>
               <NavDropdown title="Tasks" id="basic-nav-dropdown">
-                <NavDropdown.Item href="/tasks/1" className="py-3">
+                <NavDropdown.Item href="/tasks/1" className="gray-color py-3">
                   Natural Language Inference
                 </NavDropdown.Item>
-                <NavDropdown.Item href="/tasks/2" className="py-3">
+                <NavDropdown.Item href="/tasks/2" className="gray-color py-3">
                   Question Answering
                 </NavDropdown.Item>
-                <NavDropdown.Item href="/tasks/3" className="py-3">
+                <NavDropdown.Item href="/tasks/3" className="gray-color py-3">
                   Sentiment Analysis
                 </NavDropdown.Item>
-                <NavDropdown.Item href="/tasks/5" className="py-3">
+                <NavDropdown.Item href="/tasks/5" className="gray-color py-3">
                   Hate Speech
                 </NavDropdown.Item>
               </NavDropdown>

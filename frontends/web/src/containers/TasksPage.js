@@ -43,14 +43,10 @@ class TasksPage extends React.Component {
             <tr><td>Round:</td><td>{task.cur_round}</td></tr>
             <tr><td>Verified/Collected</td><td>{task.round.total_verified}/{task.round.total_collected}</td></tr>
             <tr><td>(Model error rate):</td><td>({task.round.total_collected > 0 ? (task.round.total_verified / task.round.total_collected).toFixed(2) : '0.00'}%)</td></tr>
+            <tr><td>Last update:</td><td><Moment utc fromNow>{task.last_updated}</Moment></td></tr>
             </tbody>
             </Table>
           </Card.Body>
-          <Card.Footer>
-            <small className="text-muted">
-             Last updated  <Moment utc fromNow>{task.last_updated}</Moment>
-            </small>
-          </Card.Footer>
         </Card>
       </Col>
     );
