@@ -4,7 +4,7 @@ import {
   LineChart,
   Line,
   ResponsiveContainer,
-  Tooltip as ChartTooltip,
+  Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
@@ -49,6 +49,13 @@ const Rechart = ({
     '#314dbd',
   ];
   const dataset = Object.keys(data[0]).filter((item) => item != 'name');
+  if (dataset.length > 10) {
+    const difference = dataset.length - 10;
+    for (let i = 0; i < difference; i++) {
+      const newColor = generateColors();
+      globalColors.push(newColor);
+    }
+  }
   return (
     <ResponsiveContainer width={width} height={height}>
       <LineChart margin={{ left, right }} data={data}>
@@ -65,7 +72,10 @@ const Rechart = ({
           padding={{ top: 10 }}
           tick={{ fontSize }}
         />
-        <ChartTooltip />
+        <Tooltip
+          allowEscapeViewBox={{ x: false, y: true }}
+          wrapperStyle={{ zIndex: 10 }}
+        />
         <Legend
           align={align}
           layout={verticalAlign == 'top' ? 'vertical' : 'horizontal'}
@@ -87,6 +97,24 @@ const Rechart = ({
       </LineChart>
     </ResponsiveContainer>
   );
+};
+
+/**
+ * Generates colors between blue and green ranges if the dataset needs to plot more than 10 lines
+ * #46 is set as R value so that the green and blue values aren't too light or dark
+ */
+const generateColors = () => {
+  let hex = '#46';
+  for (let i = 0; i < 2; i++) {
+    let colorValue = Number(
+      Math.floor(Math.round((Math.random() * 255) / 10) * 10)
+    ).toString(16);
+    if (colorValue.length < 2) {
+      colorValue = '0' + colorValue;
+    }
+    hex += colorValue;
+  }
+  return hex;
 };
 
 export default Rechart;
