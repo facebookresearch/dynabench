@@ -342,27 +342,6 @@ const Rechart = ({
                 type="linear"
               />
             ))}
-            {/* <Line
-              dataKey="data1"
-              dot={{ fill: '#6fb98f' }}
-              stroke="#6fb98f"
-              strokeWidth={2}
-              type="linear"
-            />
-            <Line
-              dataKey="data2"
-              dot={{ fill: '#075756' }}
-              stroke="#075756"
-              strokeWidth={2}
-              type="linear"
-            />
-            <Line
-              dataKey="data3"
-              dot={{ fill: '#66a5ad' }}
-              stroke="#66a5ad"
-              strokeWidth={2}
-              type="linear"
-            /> */}
           </LineChart>
         </ResponsiveContainer>
       </Card.Body>
