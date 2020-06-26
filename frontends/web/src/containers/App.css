@@ -101,9 +101,3 @@
     border-radius: 20px;
   }
 }
-
-div.recharts-wrapper
-  .recharts-layer.recharts-cartesian-axis.recharts-yAxis.yAxis
-  g.recharts-layer.recharts-cartesian-axis-tick:first-child {
-  display: none;
-}
