@@ -22,22 +22,15 @@
   padding: 0 30px;
 }
 
-.login-form .form-footer {
-  background-color: #f6f6f6;
-  border-top: 1px solid #dce8f1;
-  padding: 25px;
-}
-
 /* FORM TYPOGRAPHY*/
 
 .submit-btn {
-  background-color: #56baed;
+  background-color: #1283d8;
   border: none;
-  box-shadow: 0 10px 30px 0 rgba(95,186,233,0.4);
   font-size: 13px;
-  margin: 5px 20px 40px 20px;
   padding: 15px 80px;
   transition: all 0.3s ease-in-out;
+  width: 100%;
 }
 
 .submit-btn:hover {
@@ -61,10 +54,9 @@
   border: 2px solid #f6f6f6;
   border-radius: 5px;
   color: #0d0d0d;
-  margin: 5px;
   padding: 15px 32px;
   transition: all 0.5s ease-in-out;
-  width: 85%;
+  width: 100%;
 }
 
 .login-form input:focus {
@@ -115,6 +107,10 @@
 }
 
 /* Simple CSS3 Underline Animation */
+.underline-hover {
+  display: inline-block;
+}
+
 .underline-hover::after {
   background-color: #56baed;
   content: "";

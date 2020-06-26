@@ -170,7 +170,7 @@ class HomePage extends React.Component {
                 <Button
                   variant="primary"
                   as={Link}
-                  className="third submit-btn button-ellipse"
+                  className="button-ellipse blue-bg home-readmore-btn border-0"
                   to="/about"
                 >
                   Read more

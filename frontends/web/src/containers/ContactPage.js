@@ -1,35 +1,16 @@
 import React from 'react';
 import {
   Container,
-  Row,
-  Card,
-  CardGroup
+  Col,
 } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
 
-import UserContext from './UserContext';
-
-class ContactPage extends React.Component {
-  render() {
-    return (
-      <Container>
-        <Row>
-          <h2 className="text-uppercase">Contact</h2>
-        </Row>
-        <Row>
-          <CardGroup style={{marginTop: 20, width: '100%'}}>
-            <Card>
-              <Card.Body>
-                <Card.Text>
-                  Please contact <a href="mailto:dynabench@fb.com">dynabench@fb.com</a>.
-                </Card.Text>
-              </Card.Body>
-            </Card>
-          </CardGroup>
-        </Row>
-      </Container>
-    );
-  }
-}
+const ContactPage = () => (
+  <Container>
+    <Col className="m-auto" lg={9}>
+      <h1 className="my-4 pt-3 text-uppercase">Contact</h1>
+      <p>Please contact <a href="mailto:dynabench@fb.com">dynabench@fb.com</a>.</p>
+    </Col>
+  </Container>
+);
 
 export default ContactPage;

@@ -14,7 +14,8 @@ class RegisterPage extends React.Component {
             <Row>
               <div className="wrapper fade-in-down">
               <div id="form-content" className="login-form text-center">
-                <h2 className="text-uppercase">Register</h2>
+                <h2 className="d-block my-4 text-uppercase text-reset">Register</h2>
+                <hr className="mb-4" />
                 <Formik
                   initialValues={{ email: '', username: '', password: '', accept: false }}
                   validate={values => {
@@ -65,7 +66,7 @@ class RegisterPage extends React.Component {
                     /* and other goodies */
                   }) => (
                     <>
-                    <form onSubmit={handleSubmit}>
+                    <form className="px-4" onSubmit={handleSubmit}>
                       <input
                         type="email"
                         name="email"
@@ -96,22 +97,23 @@ class RegisterPage extends React.Component {
                         value={values.password}
                       />
                       <small className="form-text text-muted">{errors.password && touched.password && errors.password}</small>
-                      <input
-                        type="checkbox"
-                        name="accept"
-                        className="fade-in third"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        value={values.accept}
-                        checked={values.accept}
-                      /> I accept the <Link className="btn-link" to="/termsofuse">Terms of Use</Link> and <Link className="btn-link" to="/datapolicy">Data Policy</Link>.
+                      <div className="fade-in third mt-4">
+                        <input
+                          type="checkbox"
+                          name="accept"
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          value={values.accept}
+                          checked={values.accept}
+                        /> I accept the <Link className="underline-hover" to="/termsofuse">Terms of Use</Link> and <Link className="underline-hover" to="/datapolicy">Data Policy</Link>.
+                      </div>
                       <small className="form-text text-muted">{errors.accept && touched.accept && errors.accept}</small>
-                      <Button type="submit" variant="primary" className="fade-in third submit-btn" disabled={isSubmitting}>
+                      <Button type="submit" variant="primary" className="fade-in third submit-btn button-ellipse text-uppercase my-4" disabled={isSubmitting}>
                         Register
                       </Button>
                     </form>
-                    <div id="form-footer">
-                      <p>Already have an account? <Link className="underline-hover btn-link" to="/login">Login</Link></p>
+                    <div className="mb-5">
+                      <p>Already have an account? <Link className="underline-hover" to="/login">Login</Link></p>
                     </div>
                     </>
                   )}
