@@ -104,7 +104,7 @@ class RegisterPage extends React.Component {
                         onBlur={handleBlur}
                         value={values.accept}
                         checked={values.accept}
-                      /> I accept the <Link className="btn-link" to="/terms">Terms and conditions</Link>.
+                      /> I accept the <Link className="btn-link" to="/termsofuse">Terms of Use</Link> and <Link className="btn-link" to="/datapolicy">Data Policy</Link>.
                       <small className="form-text text-muted">{errors.accept && touched.accept && errors.accept}</small>
                       <Button type="submit" variant="primary" className="fade-in third submit-btn" disabled={isSubmitting}>
                         Register
