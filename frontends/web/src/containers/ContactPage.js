@@ -21,7 +21,7 @@ class ContactPage extends React.Component {
             <Card>
               <Card.Body>
                 <Card.Text>
-                  TBD
+                  Please contact <a href="mailto:dynabench@fb.com">dynabench@fb.com</a>.
                 </Card.Text>
               </Card.Body>
             </Card>
