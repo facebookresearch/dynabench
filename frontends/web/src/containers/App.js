@@ -21,7 +21,7 @@ import TaskPage from "./TaskPage";
 import TasksPage from "./TasksPage";
 import ContactPage from "./ContactPage";
 import TermsPage from "./TermsPage";
-import PrivacyPage from "./PrivacyPage";
+import DataPolicyPage from "./DataPolicyPage";
 import UserContext from "./UserContext";
 import UserPage from "./UserPage";
 import ModelPage from "./ModelPage";
@@ -134,8 +134,8 @@ class App extends React.Component {
         <Switch>
           <Route path="/about" component={AboutPage} />
           <Route path="/contact" component={ContactPage} />
-          <Route path="/terms" component={TermsPage} />
-          <Route path="/privacy" component={PrivacyPage} />
+          <Route path="/termsofuse" component={TermsPage} />
+          <Route path="/datapolicy" component={DataPolicyPage} />
           <Route path="/tasks/:taskId/create" component={CreateInterface} />
           <Route path="/tasks/:taskId/verify" component={VerifyInterface} />
           <Route path="/tasks/:taskId" component={TaskPage} />
@@ -162,13 +162,13 @@ class App extends React.Component {
                   </Link>
                 </div>
                 <div className="footer-nav-link">
-                  <Link to="/terms" className="text-reset">
-                    Terms and conditions
+                  <Link to="/termsofuse" className="text-reset">
+                    Terms of Use
                   </Link>
                 </div>
                 <div className="footer-nav-link">
-                  <Link to="/privacy" className="text-reset">
-                    Privacy policy
+                  <Link to="/datapolicy" className="text-reset">
+                    Data Policy
                   </Link>
                 </div>
             </Row>
