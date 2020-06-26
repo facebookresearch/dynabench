@@ -19,29 +19,14 @@
   min-height: 120px;
 }
 
-.task-card table {
-  color: #6e6e66;
-  margin: 0px;
-}
-
-.task-card table td {
-  border: none;
-  padding: 5px 10px;
-}
-
-.task-card table td:last-child {
+.task-card .table td:last-child {
+  font-weight: 700;
   text-align: right;
 }
 
 .task-card .task-header {
   height: 30px;
   margin: 20px 10px;
-}
-
-.task-card .card-footer {
-  background: none;
-  border-top: 0px;
-  padding: 0 10px 10px;
 }
 
 .jumbo-slider {
@@ -56,6 +41,20 @@
 }
 
 .home-cardgroup-header {
+  font-family: OpenSansLight;
   font-size: 32px;
   line-height: 44px;
+}
+
+.home-readmore-btn {
+  padding: 10px 12px;
+}
+
+.task-page-header {
+  font-size: 24px;
+  line-height: 33px;
+}
+
+.task-action-btn + .task-action-btn {
+  margin-left: 16px;
 }
