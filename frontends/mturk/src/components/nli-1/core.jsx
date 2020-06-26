@@ -2,7 +2,7 @@ import React from "react";
 
 import { CreateInterface } from '../CreateInterface.js';
 
-class DivyanshNLITaskPreview extends React.Component {
+class NLITaskPreview extends React.Component {
   constructor(props) {
     super(props);
   }
@@ -14,7 +14,7 @@ class DivyanshNLITaskPreview extends React.Component {
   }
 }
 
-class DivyanshNLITaskOnboarder extends React.Component {
+class NLITaskOnboarder extends React.Component {
   constructor(props) {
     super(props);
   }
@@ -26,7 +26,7 @@ class DivyanshNLITaskOnboarder extends React.Component {
   }
 }
 
-class DivyanshNLITaskMain extends React.Component {
+class NLITaskMain extends React.Component {
   constructor(props) {
     super(props);
     this.api = props.api;
@@ -37,4 +37,4 @@ class DivyanshNLITaskMain extends React.Component {
   }
 }
 
-export { DivyanshNLITaskPreview, DivyanshNLITaskOnboarder, DivyanshNLITaskMain };
+export { NLITaskPreview, NLITaskOnboarder, NLITaskMain };
