@@ -32,7 +32,7 @@ class NLITaskMain extends React.Component {
     this.api = props.api;
   }
   render() {
-    return <CreateInterface api={this.api} taskId={1} {...this.props} />;
+    return <CreateInterface api={this.api} taskId={6} {...this.props} />;
   }
 }
 
