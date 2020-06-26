@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Col,
   Container,
@@ -7,72 +7,97 @@ import {
   Table,
   Button,
   Card,
-  CardGroup
-} from 'react-bootstrap';
-import { Link } from 'react-router-dom';
-import UserContext from './UserContext';
-import './HomePage.css';
-import Moment from 'react-moment';
+  CardGroup,
+} from "react-bootstrap";
+import { Link } from "react-router-dom";
+import UserContext from "./UserContext";
+import TasksContext from "./TasksContext";
+import "./HomePage.css";
+import Moment from "react-moment";
 
 class HomePageTable extends React.Component {
   render() {
-    return <>
+    return (
+      <>
       <h2 className="text-uppercase">{this.props.title}</h2>
       <Table striped bordered hover>
-        <thead>
-          {this.props.th}
-        </thead>
-        <tbody>
-          {this.props.items}
-        </tbody>
+          <thead>{this.props.th}</thead>
+          <tbody>{this.props.items}</tbody>
       </Table>
       </>
+    );
   }
 }
 
 class TaskTable extends React.Component {
   static contextType = UserContext;
   state = {
-    tasks: []
-  }
+    tasks: [],
+  };
   componentDidMount() {
-    this.context.api.getTasks()
-    .then(result => {
-      this.setState({tasks: result.tasks})
+    this.context.api
+      .getTasks()
+      .then((result) => {
+        this.setState({ tasks: result.tasks });
     })
-    .catch(error => {
+      .catch((error) => {
       console.log(error);
     });
   }
   render() {
-    const headItems = <tr><th>Task</th><th>Stats</th></tr>;
-    const taskItems = this.state.tasks.map((task) =>
-      <tr key={task.id}><td><Link className="btn-link" to={'/tasks/' + task.id}>{task.name}</Link></td><td>{task.stats}</td></tr>
+    const headItems = (
+      <tr>
+        <th>Task</th>
+        <th>Stats</th>
+      </tr>
     );
-    return <HomePageTable title='Tasks' th={headItems} items={taskItems} />
+    const taskItems = this.state.tasks.map((task) => (
+      <tr key={task.id}>
+        <td>
+          <Link className="btn-link" to={"/tasks/" + task.id}>
+            {task.name}
+          </Link>
+        </td>
+        <td>{task.stats}</td>
+      </tr>
+    ));
+    return <HomePageTable title="Tasks" th={headItems} items={taskItems} />;
   }
 }
 
 class UserTable extends React.Component {
   static contextType = UserContext;
   state = {
-    users: []
-  }
+    users: [],
+  };
   componentDidMount() {
-    this.context.api.getUsers()
-    .then(result => {
-      this.setState({users: result})
+    this.context.api
+      .getUsers()
+      .then((result) => {
+        this.setState({ users: result });
     })
-    .catch(error => {
+      .catch((error) => {
       console.log(error);
     });
   }
   render() {
-    const headItems = <tr><th>User</th><th>Stats</th></tr>;
-    const userItems = this.state.users.map((user) =>
-      <tr key={user.id}><td><Link className="btn-link" to={'/users/' + user.id}>{user.username}</Link></td><td>n/a</td></tr>
+    const headItems = (
+      <tr>
+        <th>User</th>
+        <th>Stats</th>
+      </tr>
     );
-    return <HomePageTable title='Users' th={headItems} items={userItems} />
+    const userItems = this.state.users.map((user) => (
+      <tr key={user.id}>
+        <td>
+          <Link className="btn-link" to={"/users/" + user.id}>
+            {user.username}
+          </Link>
+        </td>
+        <td>n/a</td>
+      </tr>
+    ));
+    return <HomePageTable title="Users" th={headItems} items={userItems} />;
   }
 }
 
@@ -82,21 +107,12 @@ class HomePage extends React.Component {
     super(props);
     this.state = {
       showjumbo: true,
-      tasks: []
+      tasks: [],
     };
     this.hideJumbo = this.hideJumbo.bind(this);
   }
   hideJumbo() {
-    this.setState({showjumbo: false});
-  }
-  componentDidMount() {
-    this.context.api.getTasks()
-    .then(result => {
-      this.setState({tasks: result})
-    })
-    .catch(error => {
-      console.log(error);
-    });
+    this.setState({ showjumbo: false });
   }
   render() {
     /*
@@ -108,14 +124,22 @@ class HomePage extends React.Component {
       {id: 5, name: 'HATE SPEECH', desc: 'Hate speech detection is classifying one or more sentences by whether or not they constitute hate speech.', round: 1, examples: 123, verified: 123, tries_per: 8, time_per: 120}
     ];
     */
-    const taskCards = !this.state.tasks ? <p>No tasks found</p> : this.state.tasks.map((task, index) =>
+    const taskCards = (tasks) =>
+      !tasks ? (
+        <p>No tasks found</p>
+      ) : (
+        tasks.map((task, index) => (
       <Col sm={6} lg={3}>
-      <Card key={task.id} className="task-card" onClick={() => this.props.history.push("/tasks/" + task.id)}>
-        <h2 className="task-header blue-color text-uppercase text-center">{task.name}</h2>
+            <Card
+              key={task.id}
+              className="task-card"
+              onClick={() => this.props.history.push("/tasks/" + task.id)}
+            >
+              <h2 className="task-header blue-color text-uppercase text-center">
+                {task.name}
+              </h2>
         <Card.Body>
-          <Card.Text className="text-center">
-            {task.desc}
-          </Card.Text>
+                <Card.Text className="text-center">{task.desc}</Card.Text>
           <Table>
           <thead></thead>
           <tbody>
@@ -128,24 +152,41 @@ class HomePage extends React.Component {
         </Card.Body>
       </Card>
       </Col>
+        ))
     );
     return (
       <>
-      <Jumbotron className={"pb-0 bg-white jumbo-slider " + (this.state.showjumbo ? "" : "hide-jumbo")}>
+        <Jumbotron
+          className={
+            "pb-0 bg-white jumbo-slider " +
+            (this.state.showjumbo ? "" : "hide-jumbo")
+          }
+        >
         <Container>
           <Row className="justify-content-center text-center">
             <Col lg={8}>
             <h1 className="mb-4">Rethinking AI Benchmarking</h1>
             <p>DynaBench is a research platform for dynamic adversarial data collection and benchmarking. Static benchmarks have well-known issues: they saturate quickly, are susceptible to overfitting, contain exploitable annotator artifacts and have unclear or imperfect evaluation metrics.<br></br><br></br> This platform essentially is a scientific experiment: can we make faster progress if we collect data dynamically, with humans and models in the loop, rather than in the old-fashioned static way?</p>
-            <Button className="blue-bg border-0 button-ellipse home-readmore-btn" as={Link} to="/about">Read more</Button>
+                <Button
+                  variant="primary"
+                  as={Link}
+                  className="third submit-btn button-ellipse"
+                  to="/about"
+                >
+                  Read more
+                </Button>
             </Col>
           </Row>
         </Container>
       </Jumbotron>
       <Container className="pb-4 pb-sm-5">
-        <h2 className="home-cardgroup-header text-reset mt-0 mb-4 font-weight-light d-block text-center">Tasks</h2>
+          <h2 className="home-cardgroup-header text-reset mt-0 mb-4 font-weight-light d-block text-center">
+            Tasks
+          </h2>
         <CardGroup>
-          {taskCards}
+            <TasksContext.Consumer>
+              {({ tasks }) => (tasks.length ? taskCards(tasks) : "")}
+            </TasksContext.Consumer>
         </CardGroup>
       </Container>
       </>
