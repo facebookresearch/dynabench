@@ -87,6 +87,7 @@ const Rechart = ({
         />
         {dataset.map((item, index) => (
           <Line
+            key={index}
             dataKey={item}
             dot={{ fill: globalColors[index] }}
             stroke={globalColors[index]}
