@@ -30,7 +30,7 @@ const Explainer = (props) => (
     <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
       Find examples that fool the model
     </h2>
-    <p>The goal is to enter a entailing statement that fools the model. Find an example that the model gets wrong but that another person would get right.</p>
+    <p>Find an example that the model gets wrong but that another person would get right.</p>
   </div>
 );
 
