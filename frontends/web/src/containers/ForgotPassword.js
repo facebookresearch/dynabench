@@ -15,7 +15,8 @@ class ForgotPassword extends React.Component {
             <Row>
               <div className="wrapper fade-in-down">
                 <div id="form-content" className="login-form text-center">
-                  <h2 className="text-uppercase">Forgot Password</h2>
+                  <h2 className="d-block my-4 text-uppercase text-reset">Forgot Password</h2>
+                  <hr className="mb-4" />
                   <Formik
                     initialValues={{
                       email: "",
@@ -50,7 +51,7 @@ class ForgotPassword extends React.Component {
                       isSubmitting,
                     }) => (
                       <>
-                        <form onSubmit={handleSubmit}>
+                        <form className="px-4" onSubmit={handleSubmit}>
                           <input
                             type="email"
                             name="email"
@@ -67,29 +68,23 @@ class ForgotPassword extends React.Component {
                             type="submit"
                             variant="primary"
                             type="submit"
-                            className="fade-in third submit-btn button-ellipse"
+                            className="fade-in second submit-btn button-ellipse text-uppercase my-4"
                             disabled={isSubmitting}
                           >
-                            SEND RESET LINK
+                            Send Reset Link
                           </Button>
                         </form>
-                        <div className="form-footer">
+                        <div className="mb-5">
                           <p>
                             Don't have an account?{" "}
-                            <Link
-                              className="btn-link underline-hover"
-                              to="/register"
-                            >
+                            <Link className="underline-hover" to="/register">
                               Sign up
                             </Link>
                           </p>
                           <p>
                             Remember your password?{" "}
-                            <Link
-                              className="btn-link underline-hover"
-                              to="/login"
-                            >
-                              Login
+                            <Link className="underline-hover" to="/login">
+                            Login
                             </Link>
                           </p>
                         </div>

@@ -19,8 +19,9 @@ class LoginPage extends React.Component {
             <Row>
               <div className="wrapper fade-in-down">
               <div id="form-content" className="login-form text-center">
-                <h2 className="text-uppercase">Log In</h2>
-                <p className="msg">{query.msg}</p>
+                <h2 className="d-block my-4 text-uppercase text-reset">Log In</h2>
+                <p className="msg mb-0">{query.msg}</p>
+                <hr className="mb-4" />
                 <Formik
                   initialValues={{ email: '', password: '', src: query.src ? query.src : '/' }}
                   validate={values => {
@@ -55,7 +56,7 @@ class LoginPage extends React.Component {
                     isSubmitting,
                   }) => (
                     <>
-                    <form onSubmit={handleSubmit}>
+                    <form className="px-4" onSubmit={handleSubmit}>
                       <input
                         type="email"
                         name="email"
@@ -77,11 +78,13 @@ class LoginPage extends React.Component {
                       />
                       <small className="form-text text-muted">{errors.password && touched.password && errors.password}</small>
                       <small className="form-text text-muted">{errors.general}</small>
-                      <Button type="submit" variant="primary" type="submit" className="fade-in third submit-btn button-ellipse" disabled={isSubmitting}>SUBMIT</Button>
+                      <Button type="submit" variant="primary" type="submit" className="fade-in third submit-btn button-ellipse text-uppercase my-4" disabled={isSubmitting}>
+                        Submit
+                      </Button>
                     </form>
-                    <div className="form-footer">
-                      <p>Don't have an account? <Link className="btn-link underline-hover" to="/register">Sign up</Link></p>
-                      <p><Link className="btn-link underline-hover" to="/forgot">Forgot Password?</Link></p>
+                    <div className="mb-5">
+                      <p>Don't have an account? <Link className="underline-hover" to="/register">Sign up</Link></p>
+                      <p><Link className="underline-hover" to="/forgot">Forgot Password?</Link></p>
                     </div>
                     </>
                   )}

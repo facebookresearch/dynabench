@@ -81,26 +81,22 @@ class TaskMainPage extends React.Component {
   }
 }
 
-class TaskNav extends React.Component {
-  render(props) {
-    return (
-      <Nav defaultActiveKey="#overall" className="flex-lg-column sidebar-wrapper sticky-top">
-        <Nav.Item>
-          <Nav.Link href="#overall" className="gray-color p-3 px-lg-5">Overall</Nav.Link>
-        </Nav.Item>
-        <Nav.Item>
-          <Nav.Link href="#1" className="gray-color p-3 px-lg-5">Round 1</Nav.Link>
-        </Nav.Item>
-        <Nav.Item>
-          <Nav.Link href="#2" className="gray-color p-3 px-lg-5">Round 2</Nav.Link>
-        </Nav.Item>
-        <Nav.Item>
-          <Nav.Link href="#3" className="gray-color p-3 px-lg-5">Round 3</Nav.Link>
-        </Nav.Item>
-      </Nav>
-    );
-  }
-}
+const TaskNav = () => (
+  <Nav defaultActiveKey="#overall" className="flex-lg-column sidebar-wrapper sticky-top">
+    <Nav.Item>
+      <Nav.Link href="#overall" className="gray-color p-3 px-lg-5">Overall</Nav.Link>
+    </Nav.Item>
+    <Nav.Item>
+      <Nav.Link href="#1" className="gray-color p-3 px-lg-5">Round 1</Nav.Link>
+    </Nav.Item>
+    <Nav.Item>
+      <Nav.Link href="#2" className="gray-color p-3 px-lg-5">Round 2</Nav.Link>
+    </Nav.Item>
+    <Nav.Item>
+      <Nav.Link href="#3" className="gray-color p-3 px-lg-5">Round 3</Nav.Link>
+    </Nav.Item>
+  </Nav>
+);
 
 class TaskPage extends React.Component {
   static contextType = UserContext;
@@ -139,17 +135,20 @@ class TaskPage extends React.Component {
     };
   }
   componentDidMount() {
-    // const { match: { params } } = this.props;
-    // this.setState(params, function() {
-    //   this.context.api.getTask(this.state.taskId)
-    //   .then(result => {
-    //     console.log(result);
-    //     this.setState({task: result});
-    //   })
-    //   .catch(error => {
-    //     console.log(error);
-    //   });
-    // });
+    const { match: { params } } = this.props;
+    this.setState(params, function() {
+      this.context.api.getTask(this.state.taskId)
+      .then(result => {
+        console.log(result);
+        this.setState({task: {
+          scores: this.state.task.scores,
+          ...result,
+        }});
+      })
+      .catch(error => {
+        console.log(error);
+      });
+    });
   }
   render() {
     function renderTooltip(props, text) {

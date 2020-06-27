@@ -55,12 +55,6 @@
   border-bottom-width: 1px;
 }
 
-.context {
-  background-color: rgba(108, 117, 125, 0.1);
-  margin-bottom: 4px;
-  padding: 10px;
-}
-
 .hypothesis {
   margin-bottom: 4px;
   padding: 10px;

@@ -1,38 +1,29 @@
 import React from 'react';
 import {
   Container,
-  Row,
+  Col,
   Card,
-  CardGroup
+  Table,
 } from 'react-bootstrap';
 
 import UserContext from './UserContext';
 
-class UserInfoCard extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-  render() {
-    return (<UserContext.Consumer>
-      {props => (
-        <CardGroup style={{marginTop: 20, width: '100%'}}>
-        <Card>
-          <Card.Header>{this.props.user.username}</Card.Header>
-          <Card.Body>
-            <Card.Title></Card.Title>
-            <Card.Text>Email: {this.props.user.email}</Card.Text>
-            <Card.Text>Real name: {this.props.user.realname}</Card.Text>
-            <Card.Text>Affiliation: {this.props.user.affiliation}</Card.Text>
-          </Card.Body>
-          <Card.Footer>
-            <small className="text-muted"></small>
-          </Card.Footer>
-        </Card>
-        </CardGroup>
-      )}
-    </UserContext.Consumer>);
-  }
-}
+const UserInfoCard = ({ user }) => (
+  <Card className="profile-card">
+    <Card.Body>
+      <Card.Text className="task-page-header mb-0 mx-4 mt-4">Profile</Card.Text>
+      <Table className="mb-0">
+        <thead />
+        <tbody>
+          <tr><td>Username</td><td>{user.username}</td></tr>
+          <tr><td>Email</td><td>{user.email}</td></tr>
+          <tr><td>Real name</td><td>{user.realname}</td></tr>
+          <tr><td>Affiliation</td><td>{user.affiliation}</td></tr>
+        </tbody>
+      </Table>
+    </Card.Body>
+  </Card>
+);
 
 class ProfilePage extends React.Component {
   static contextType = UserContext;
@@ -58,13 +49,13 @@ class ProfilePage extends React.Component {
   }
   render() {
       return (
-        <Container>
-          <Row>
-            <h2 className="text-uppercase">Your Profile</h2>
-          </Row>
-          <Row>
+        <Container className="mb-5 pb-5">
+          <h1 className="my-4 pt-3 text-uppercase text-center">
+            Your Profile
+          </h1>
+          <Col className="m-auto" lg={8}>
             <UserInfoCard user={this.state.user} />
-          </Row>
+          </Col>
         </Container>
       );
   }
