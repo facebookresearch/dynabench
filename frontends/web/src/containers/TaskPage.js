@@ -1,67 +1,85 @@
 import React from 'react';
 import {
   Container,
-  Row, Col,
+  Row,
+  Col,
   Card,
   Button,
   Nav,
   Table,
   Tooltip,
-  OverlayTrigger
+  OverlayTrigger,
 } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-
 import UserContext from './UserContext';
-
-import C3Chart from 'react-c3js';
-//import 'c3/c3.css';
+import Rechart from '../components/Rechart';
 import Moment from 'react-moment';
 
-const LineChart = ({ data }) => <C3Chart data={{ json: data }} />;
-
-const TaskMainPage = ({ task }) => (
-  <>
-    <Card className="my-4">
-      <Card.Header className="p-3 light-gray-bg">
-        <h2 className="text-uppercase m-0 text-reset">Trend</h2>
-      </Card.Header>
-      <Card.Body className="p-3">
-        <LineChart data={task.scores} />
-      </Card.Body>
-    </Card>
-    <Card className="my-4">
-      <Card.Header className="p-3 light-gray-bg">
-        <h2 className="text-uppercase m-0 text-reset">Overall Model Leaderboard</h2>
-      </Card.Header>
-      <Card.Body className="p-0">
-        <Table hover>
-          <thead>
-            <tr><th>Model</th><th>Mean accuracy</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><Link to="/models/1" className="btn-link">RoBERTa AllNLI</Link></td><td>89%</td></tr>
-            <tr><td><Link to="/models/2" className="btn-link">XLNet AllNLI</Link></td><td>89%</td></tr>
-          </tbody>
-        </Table>
-      </Card.Body>
-    </Card>
-    <Card className="my-4">
-      <Card.Header className="p-3 light-gray-bg">
-        <h2 className="text-uppercase m-0 text-reset">Overall User Leaderboard</h2>
-      </Card.Header>
-      <Card.Body className="p-0">
-        <Table hover>
-          <thead>
-            <tr><th>Model</th><th>Mean MER</th><th>Total</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><Link to="/users/1" className="btn-link">Douwe</Link></td><td>7%</td><td>3410</td></tr>
-          </tbody>
-        </Table>
-      </Card.Body>
-    </Card>
-  </>
-);
+class TaskMainPage extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+  render() {
+    return (
+      <>
+        <Card className="my-4">
+          <Card.Header className="p-3 light-gray-bg">
+            <h2 className="text-uppercase m-0 text-reset">Trend</h2>
+          </Card.Header>
+          <Card.Body className="px-1 py-5">
+            {/* Mobile / Tablet / Desktop charts */}
+            <Col xs={12} className="d-block d-sm-none">
+              <Rechart size={chartSizes.xs} data={this.props.task.scores} />
+            </Col>
+            <Col sm={12} className="d-none d-sm-block d-md-none">
+              <Rechart size={chartSizes.sm} data={this.props.task.scores} />
+            </Col>
+            <Col md={12} className="d-none d-md-block d-lg-none">
+              <Rechart size={chartSizes.md} data={this.props.task.scores} />
+            </Col>
+            <Col lg={12} className="d-none d-lg-block d-xl-none">
+              <Rechart size={chartSizes.lg} data={this.props.task.scores} />
+            </Col>
+            <Col xl={12} className="d-none d-xl-block">
+              <Rechart size={chartSizes.xl} data={this.props.task.scores} />
+            </Col>
+          </Card.Body>
+        </Card>
+        <Card className="my-4">
+          <Card.Header className="p-3 light-gray-bg">
+            <h2 className="text-uppercase m-0 text-reset">Overall Model Leaderboard</h2>
+          </Card.Header>
+          <Card.Body className="p-0">
+            <Table hover>
+              <thead>
+                <tr><th>Model</th><th>Mean accuracy</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><Link to="/models/1" className="btn-link">RoBERTa AllNLI</Link></td><td>89%</td></tr>
+                <tr><td><Link to="/models/2" className="btn-link">XLNet AllNLI</Link></td><td>89%</td></tr>
+              </tbody>
+            </Table>
+          </Card.Body>
+        </Card>
+        <Card className="my-4">
+          <Card.Header className="p-3 light-gray-bg">
+            <h2 className="text-uppercase m-0 text-reset">Overall User Leaderboard</h2>
+          </Card.Header>
+          <Card.Body className="p-0">
+            <Table hover>
+              <thead>
+                <tr><th>Model</th><th>Mean MER</th><th>Total</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><Link to="/users/1" className="btn-link">Douwe</Link></td><td>7%</td><td>3410</td></tr>
+              </tbody>
+            </Table>
+          </Card.Body>
+        </Card>
+      </>
+    );
+  }
+}
 
 const TaskNav = () => (
   <Nav defaultActiveKey="#overall" className="flex-lg-column sidebar-wrapper sticky-top">
@@ -87,12 +105,33 @@ class TaskPage extends React.Component {
     this.state = {
       taskId: null,
       task: {
-        scores: {
-          data1: [30, 20, 50, 40],
-          data2: [23, 45, 56, 68],
-          data3: [22, 23, 21, 43]
-        }
-      }
+        scores: [
+          {
+            name: 0,
+            data1: 30,
+            data2: 23,
+            data3: 22,
+          },
+          {
+            name: 1,
+            data1: 20,
+            data2: 45,
+            data3: 23,
+          },
+          {
+            name: 2,
+            data1: 50,
+            data2: 56,
+            data3: 21,
+          },
+          {
+            name: 3,
+            data1: 40,
+            data2: 68,
+            data3: 43,
+          },
+        ],
+      },
     };
   }
   componentDidMount() {
@@ -100,7 +139,11 @@ class TaskPage extends React.Component {
     this.setState(params, function() {
       this.context.api.getTask(this.state.taskId)
       .then(result => {
-        this.setState({task: result});
+        console.log(result);
+        this.setState({task: {
+          scores: this.state.task.scores,
+          ...result,
+        }});
       })
       .catch(error => {
         console.log(error);
@@ -116,13 +159,16 @@ class TaskPage extends React.Component {
       );
     }
     function renderCreateTooltip(props) {
-      return renderTooltip(props, "Create new examples where the model fails")
+      return renderTooltip(props, 'Create new examples where the model fails');
     }
     function renderVerifyTooltip(props) {
-      return renderTooltip(props, "Verify examples where we think the model failed")
+      return renderTooltip(
+        props,
+        'Verify examples where we think the model failed'
+      );
     }
     function renderSubmitTooltip(props) {
-      return renderTooltip(props, "Submit model predictions on this task")
+      return renderTooltip(props, 'Submit model predictions on this task');
     }
     return (
       <Container fluid>
@@ -197,5 +243,46 @@ class TaskPage extends React.Component {
     );
   }
 }
+
+const chartSizes = {
+  xs: { fontSize: 10, legendAlign: -10 },
+  sm: {
+    align: 'center',
+    fontSize: 14,
+    height: 300,
+    left: -30,
+    xAxisLeftPadding: 50,
+  },
+  md: {
+    align: 'right',
+    fontSize: 14,
+    height: 332,
+    left: -20,
+    legendAlign: -65,
+    verticalAlign: 'top',
+    width: '90%',
+    xAxisLeftPadding: 50,
+  },
+  lg: {
+    fontSize: 14,
+    height: 492,
+    left: -20,
+    legendAlign: -65,
+    width: "90%",
+    verticalAlign: 'top',
+    align: 'right',
+    xAxisLeftPadding: 50,
+  },
+  xl: {
+    align: 'right',
+    fontSize: 14,
+    height: 492,
+    left: -20,
+    legendAlign: -140,
+    width: "80%",
+    verticalAlign: 'top',
+    xAxisLeftPadding: 50,
+  },
+};
 
 export default TaskPage;

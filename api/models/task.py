@@ -23,6 +23,8 @@ class Task(Base):
     #cur_round = db.Column(db.Integer, db.ForeignKey("rounds.id"), nullable=False)
     cur_round = db.Column(db.Integer, nullable=False)
 
+    hidden = db.Column(db.Boolean, default=False)
+
     has_context = db.Column(db.Boolean, default=True)
 
     def __repr__(self):
@@ -42,8 +44,11 @@ class TaskModel(BaseModel):
             return self.dbs.query(Task).filter(Task.shortname == shortname).one()
         except db.orm.exc.NoResultFound:
             return False
-    def listWithRounds(self):
-        rows = self.dbs.query(Task, Round).join(Round, (Round.tid == Task.id) & (Round.rid == Task.cur_round)).all()
+    def listWithRounds(self, exclude_hidden=True):
+        rows = self.dbs.query(Task, Round).join(Round, (Round.tid == Task.id) & (Round.rid == Task.cur_round))
+        if exclude_hidden:
+            rows = rows.filter(Task.hidden.is_(False))
+        rows = rows.all()
         tasks = [x[0].to_dict() for x in rows]
         for ii, r in enumerate([x[1] for x in rows]):
             tasks[ii]['round'] = r.to_dict()
