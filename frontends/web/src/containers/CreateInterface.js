@@ -43,10 +43,7 @@ class ContextInfo extends React.Component {
         this.props.taskType == 'QA' ?
           <>
             <TokenAnnotator
-              style={{
-                lineHeight: 1.5,
-              }}
-              className='context'
+              className='mb-1 p-3 light-gray-bg'
               tokens={this.props.text.split(' ')}
               value={this.props.answer}
               onChange={this.props.updateAnswer}
@@ -55,7 +52,7 @@ class ContextInfo extends React.Component {
                 tag: 'ANS',
               })}
             />
-            <small>Your goal: enter a question and select an answer in the context, such that the model is fooled.</small>
+            <p class="mt-3 px-3">Your goal: enter a question and select an answer in the context, such that the model is fooled.</p>
           </>
         :
           <>
@@ -263,7 +260,7 @@ class CreateInterface extends React.Component {
         <Col className="m-auto" lg={9}>
         <Explainer taskName={this.state.task.name} />
         <Card className="profile-card overflow-hidden">
-          <Card.Body className="overflow-auto" style={{height: 300}}>
+          <Card.Body className="overflow-auto" style={{height: 400}}>
             {content}
           </Card.Body>
           <InputGroup>
