@@ -1,6 +1,7 @@
 import React from "react";
 
 import { CreateInterface } from '../../CreateInterface.js';
+import { CreateInterfaceNoModel } from '../../CreateInterfaceNoModel.js';
 
 class DivyanshQATaskPreview extends React.Component {
   constructor(props) {
@@ -8,7 +9,7 @@ class DivyanshQATaskPreview extends React.Component {
   }
   render() {
     return <>
-        <h1>Adversarial Natural Language Inference</h1>
+        <h1>Adversarial Question Answering</h1>
         <p>In this task, you will be asked to find examples that fool an AI model into making the wrong prediction.</p>
       </>;
   }
@@ -32,7 +33,9 @@ class DivyanshQATaskMain extends React.Component {
     this.api = props.api;
   }
   render() {
-    return <CreateInterface api={this.api} taskId={7} {...this.props} />;
+    if (this.props.mephistoWorkerId % 2 == 0) {
+      return <CreateInterface api={this.api} taskId={7} {...this.props} />;}
+    else {return <CreateInterfaceNoModel api={this.api} taskId={7} {...this.props} />;}
   }
 }
 

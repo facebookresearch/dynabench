@@ -1,6 +1,7 @@
 import React from "react";
 
 import { CreateInterface } from '../../CreateInterface.js';
+import { CreateInterfaceNoModel } from '../../CreateInterfaceNoModel.js';
 
 class DivyanshNLITaskPreview extends React.Component {
   constructor(props) {
@@ -32,7 +33,9 @@ class DivyanshNLITaskMain extends React.Component {
     this.api = props.api;
   }
   render() {
-    return <CreateInterface api={this.api} taskId={6} {...this.props} />;
+    if (this.props.mephistoWorkerId % 2 == 0) {
+    return <CreateInterface api={this.api} taskId={6} {...this.props} />;}
+    else { return <CreateInterfaceNoModel api={this.api} taskId={6} {...this.props} />; }
   }
 }
 
