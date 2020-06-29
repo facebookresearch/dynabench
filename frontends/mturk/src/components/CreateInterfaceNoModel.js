@@ -52,7 +52,7 @@ class ContextInfo extends React.Component {
   }
 }
 
-class CreateInterface extends React.Component {
+class CreateInterfaceNoModel extends React.Component {
   constructor(props) {
     super(props);
     this.api = props.api;
@@ -245,4 +245,4 @@ class CreateInterface extends React.Component {
   }
 }
 
-export { CreateInterface };
+export { CreateInterfaceNoModel };
