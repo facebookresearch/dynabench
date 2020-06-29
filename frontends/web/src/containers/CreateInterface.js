@@ -40,7 +40,7 @@ class ContextInfo extends React.Component {
   }
   render() {
     return (
-        this.props.taskType == 'QA' ?
+        this.props.taskType == 'extract' ?
           <>
             <TokenAnnotator
               className='mb-1 p-3 light-gray-bg'
@@ -156,18 +156,18 @@ class CreateInterface extends React.Component {
         this.setState({submitDisabled: false, refreshDisabled: false});
         return;
       }
-      if (this.state.task.shortname == 'QA' && this.state.answer.length == 0) {
+      if (this.state.task.type == 'extract' && this.state.answer.length == 0) {
         this.setState({submitDisabled: false, refreshDisabled: false});
         return;
       }
       let modelInputs = {
         context: this.state.context.context,
         hypothesis: this.state.hypothesis,
-        answer: this.state.task.shortname == 'QA' ? this.state.answer : null
+        answer: this.state.task.type == 'extract' ? this.state.answer : null
       };
       this.context.api.getModelResponse(this.state.task.round.url, modelInputs)
       .then(result => {
-        if (this.state.task.shortname != 'QA') {
+        if (this.state.task.type != 'extract') {
           var modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
           var modelPredStr = this.state.task.targets[modelPredIdx];
           var modelFooled = result.prob.indexOf(Math.max(...result.prob)) !== this.state.target;
@@ -241,7 +241,7 @@ class CreateInterface extends React.Component {
           text={item.text}
           targets={this.state.task.targets}
           curTarget={this.state.target}
-          taskType={this.state.task.shortname}
+          taskType={this.state.task.type}
           answer={this.state.answer}
           updateAnswer={this.updateAnswer}
         />
@@ -266,7 +266,7 @@ class CreateInterface extends React.Component {
           <InputGroup>
             <FormControl
               className="border-left-0 border-right-0 rounded-0 p-3 h-auto"
-              placeholder={this.state.task.shortname == 'QA' ? 'Enter question..' : 'Enter hypothesis..'}
+              placeholder={this.state.task.type == 'extract' ? 'Enter question..' : 'Enter hypothesis..'}
               value={this.state.hypothesis}
               onChange={this.handleResponseChange}
             />

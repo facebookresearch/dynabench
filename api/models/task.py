@@ -11,6 +11,9 @@ class Task(Base):
     name = db.Column(db.String(length=255), nullable=False, unique=True)
     shortname = db.Column(db.String(length=255), nullable=False, unique=True)
 
+    # Task type is either 'clf' or 'extract' for now
+    type = db.Column(db.String(length=255), nullable=False, default='clf')
+
     desc = db.Column(db.String(length=255))
     longdesc = db.Column(db.Text)
     targets = db.Column(db.Text) # ordered list of target labels

@@ -115,15 +115,6 @@ class HomePage extends React.Component {
     this.setState({ showjumbo: false });
   }
   render() {
-    /*
-    const tasks = [
-      {id: 1, name: 'NLI', desc: 'Natural Language Inference is classifying context-hypothesis pairs into whether they entail, contradict or are neutral.', round: 4, examples: 123, verified: 123, tries_per: 8, time_per: 120},
-      {id: 2, name: 'QA', desc: 'Question answering and machine reading comprehension is answering a question given a context.', round: 1, examples: 123, verified: 123, tries_per: 8, time_per: 120},
-      {id: 3, name: 'SENTIMENT', desc: 'Sentiment analysis is classifying one or more sentences by their positive or negative sentiment.', round: 1, examples: 123, verified: 123, tries_per: 8, time_per: 120},
-      {id: 4, name: 'NLVR', desc: 'Natural language and visual reasoning is deciding if an image and sentence or caption belong together or not.', round: 1, examples: 123, verified: 123, tries_per: 8, time_per: 120},
-      {id: 5, name: 'HATE SPEECH', desc: 'Hate speech detection is classifying one or more sentences by whether or not they constitute hate speech.', round: 1, examples: 123, verified: 123, tries_per: 8, time_per: 120}
-    ];
-    */
     const taskCards = (tasks) =>
       !tasks ? (
         <p>No tasks found</p>
