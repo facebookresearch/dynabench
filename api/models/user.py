@@ -15,6 +15,7 @@ class User(Base):
     affiliation = db.Column(db.String(length=255))
 
     refresh_token = db.Column(db.String(length=255))
+    forgot_password_token = db.Column(db.String(length=255))
 
     examples_verified_correct = db.Column(db.Integer, default=0)
     examples_submitted = db.Column(db.Integer, default=0)
@@ -68,6 +69,11 @@ class UserModel(BaseModel):
     def getByRefreshToken(self, refresh_token):
         try:
             return self.dbs.query(User).filter(User.refresh_token == refresh_token).one()
+        except db.orm.exc.NoResultFound:
+            return False
+    def getByForgotPasswordToken(self, forgot_password_token):
+        try:
+            return self.dbs.query(User).filter(User.forgot_password_token == forgot_password_token).one()
         except db.orm.exc.NoResultFound:
             return False
 

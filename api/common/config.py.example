@@ -7,4 +7,12 @@ config = { \
         'db_name': '',
         'db_user': '',
         'db_password': '',
+        'jwtforgotexp': 4, # in hours,
+        'forgot_pass_template': 'common/forgot_password.txt',
+        'server_host': 'dynabench.org:3000',
+        'host': '',
+        'port': 587,
+        'smtp_secret': '',
+        'smtp_user': '',
+        'from_email_address': ''
         }

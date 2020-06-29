@@ -63,3 +63,42 @@ def create_user():
     token = _auth.get_token({'id': user.id, 'username': user.username})
     logging.info('Registration and authentication successful for %s' % (user.username))
     return {'user': user.to_dict(), 'token': token}
+
+@bottle.post('/resetPassword/<forgot_token>')
+def reset_password(forgot_token):
+    data = bottle.request.json
+    # validate forgot password token
+    try:
+        token_dtl = _auth.get_payload(forgot_token)
+        logging.info('Forgot password token detail (%s)' %(token_dtl))
+    except Exception as e:
+        print(str(e))
+        logging.exception('Forgot password token invalid (%s)' % (e))
+        bottle.abort(401, 'Invalid token')
+
+    if not data or 'password' not in data or 'email' not in data:
+        logging.info('Missing data')
+        bottle.abort(400, 'Missing data')
+
+    try:
+        u = UserModel()
+        user = u.getByForgotPasswordToken(forgot_password_token=forgot_token)
+        if not user:
+            raise AssertionError('Invalid token')
+        if user.email != data['email']:
+            raise AssertionError('Invalid user')
+
+        user.set_password(data['password'])
+        logging.info("Password checksum (%s)" % (user.password))
+        u.update(user.id, {'forgot_password_token': None,
+                           'password': user.password})
+    except AssertionError as e:
+        logging.exception('Invalid token : %s' % (e))
+        bottle.abort(401, str(e))
+    except Exception as error_message:
+        logging.exception('Could not reset user password: %s' % (error_message))
+        bottle.abort(400, 'Could not reset user password: %s' % (error_message))
+
+    logging.info('User password reset successful for %s' % (user.username))
+    return {'status': 'successful'}
+

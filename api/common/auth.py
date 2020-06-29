@@ -89,3 +89,9 @@ def get_expired_token_payload():
     payload = jwt.decode(token, app.config['jwtsecret'], \
             algorithms=[app.config['jwtalgo']], verify=False, verify_signature=False, verify_exp=False)
     return payload
+
+def get_forgot_token(payload):
+    app = bottle.default_app()
+    payload['exp'] = datetime.datetime.utcnow() + \
+        datetime.timedelta(hours=app.config['jwtforgotexp'])
+    return jwt.encode(payload, app.config['jwtsecret'], algorithm=app.config['jwtalgo']).decode('utf-8')
