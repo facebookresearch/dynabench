@@ -54,19 +54,19 @@ def recover_password():
     u = UserModel()
     user = u.getByEmail(email=data['email'])
     if not user:
-        bottle.abort(404, 'Account not found')
+        return bottle.HTTPResponse(status=200, body='If you have an account, we will have sent you an email')
     try:
         # issue new forgot password token
         forgot_password_token = _auth.get_forgot_token({})
         u.update(user.id, {'forgot_password_token': forgot_password_token})
 
         #  send email
-        subject = '[Dynabench] Please reset your password'
-        msg = { 'server_host': bottle.default_app().config['server_host'], 'token':  forgot_password_token }
-        is_mail_send = mail.send(server=bottle.default_app().config['mail'],   contacts=['ramachandran@ideas2it.com'],
+        subject = 'Password reset link requested'
+        msg = { 'ui_server_host': bottle.default_app().config['ui_server_host'], 'token':  forgot_password_token }
+        is_mail_send = mail.send(server=bottle.default_app().config['mail'],   contacts=[user.email],
                   template_name= bottle.default_app().config['forgot_pass_template'], msg_dict=msg, subject=subject)
         if not is_mail_send:
-            return bottle.abort(403, 'Reset password failed ')
+            return bottle.abort(403, 'Reset password failed')
         return {'status': 'success'}
     except Exception as error_message:
         logging.exception("Reset password failure (%s)" % (data['email']))

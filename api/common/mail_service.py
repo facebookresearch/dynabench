@@ -57,23 +57,17 @@ def send(server=None, contacts = [], template_name = '', msg_dict = {}, subject 
         message_template = read_template(template_name)
         for contact in contacts:
             msg = MIMEMultipart()  # create a message
-
             # add in the actual person name to the message template
             message = message_template.substitute(msg_dict)
-
             # setup the parameters of the message
-            msg['From'] = app.config['from_email_address']
+            msg['From'] = app.config['smtp_from_email_address']
             msg['To'] = contact
             msg['Subject'] = subject
-
             # add in the message body
             msg.attach(MIMEText(message, 'plain'))
-
             # send the message via the server set up earlier.
             server.send_message(msg)
             del msg
-
-
         logging.info('Email send successful (%s)', contacts)
         return True
 

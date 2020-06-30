@@ -15,11 +15,11 @@ init_logger(running_mode)
 
 app = bottle.default_app()
 for k in ['jwtsecret', 'jwtexp', 'jwtalgo', 'cookie_secret', 'refreshexp', 'jwtforgotexp', 'forgot_pass_template',
-          'server_host', 'from_email_address']:
+          'ui_server_host', 'smtp_from_email_address']:
     app.config[k] = config[k]
 
 # Mail service
-mail = get_mail_session(host=config['host'], port=config['port'], smtp_user=config['smtp_user'],
+mail = get_mail_session(host=config['smtp_host'], port=config['smtp_port'], smtp_user=config['smtp_user'],
                         smtp_secret=config['smtp_secret'])
 # added mail service in application context
 app.config['mail'] = mail
