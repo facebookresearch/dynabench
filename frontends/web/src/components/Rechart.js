@@ -51,11 +51,11 @@ const Rechart = ({
     }
   }
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <ResponsiveContainer width='100%' height={height}>
       <LineChart margin={{ left, right }} data={data}>
         <XAxis
           allowDecimals={false}
-          dataKey="name"
+          dataKey='name'
           padding={{ left: xAxisLeftPadding }}
           tick={{ fontSize }}
           tickLine={false}
@@ -70,11 +70,11 @@ const Rechart = ({
         />
         <Legend
           align='center'
-          layout="horizontal"
+          layout='horizontal'
           wrapperStyle={{
             fontSize,
           }}
-          verticalAlign="bottom"
+          verticalAlign='bottom'
         />
         {dataset.map((item, index) => (
           <Line
@@ -83,7 +83,7 @@ const Rechart = ({
             dot={{ fill: globalColors[index] }}
             stroke={globalColors[index]}
             strokeWidth={2}
-            type="linear"
+            type='linear'
           />
         ))}
       </LineChart>

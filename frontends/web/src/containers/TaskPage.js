@@ -22,7 +22,7 @@ class TaskMainPage extends React.Component {
   render() {
     return (
       <Row>
-        <Col xs={12} sm={6}>
+        <Col xs={12} md={6}>
         <Card className="my-4">
           <Card.Header className="p-3 light-gray-bg">
             <h2 className="text-uppercase m-0 text-reset">Overall Model Leaderboard</h2>
@@ -55,7 +55,7 @@ class TaskMainPage extends React.Component {
           </Card.Body>
         </Card>
         </Col>
-        <Col xs={12} sm={6}>
+        <Col xs={12} md={6}>
         <Card className="my-4">
           <Card.Header className="p-3 light-gray-bg">
             <h2 className="text-uppercase m-0 text-reset">Trend</h2>
