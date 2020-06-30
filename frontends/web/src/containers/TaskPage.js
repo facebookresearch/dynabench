@@ -21,30 +21,8 @@ class TaskMainPage extends React.Component {
   }
   render() {
     return (
-      <>
-        <Card className="my-4">
-          <Card.Header className="p-3 light-gray-bg">
-            <h2 className="text-uppercase m-0 text-reset">Trend</h2>
-          </Card.Header>
-          <Card.Body className="px-1 py-5">
-            {/* Mobile / Tablet / Desktop charts */}
-            <Col xs={12} className="d-block d-sm-none">
-              <Rechart size={chartSizes.xs} data={this.props.task.scores} />
-            </Col>
-            <Col sm={12} className="d-none d-sm-block d-md-none">
-              <Rechart size={chartSizes.sm} data={this.props.task.scores} />
-            </Col>
-            <Col md={12} className="d-none d-md-block d-lg-none">
-              <Rechart size={chartSizes.md} data={this.props.task.scores} />
-            </Col>
-            <Col lg={12} className="d-none d-lg-block d-xl-none">
-              <Rechart size={chartSizes.lg} data={this.props.task.scores} />
-            </Col>
-            <Col xl={12} className="d-none d-xl-block">
-              <Rechart size={chartSizes.xl} data={this.props.task.scores} />
-            </Col>
-          </Card.Body>
-        </Card>
+      <Row>
+        <Col xs={12} sm={6}>
         <Card className="my-4">
           <Card.Header className="p-3 light-gray-bg">
             <h2 className="text-uppercase m-0 text-reset">Overall Model Leaderboard</h2>
@@ -76,7 +54,33 @@ class TaskMainPage extends React.Component {
             </Table>
           </Card.Body>
         </Card>
-      </>
+        </Col>
+        <Col xs={12} sm={6}>
+        <Card className="my-4">
+          <Card.Header className="p-3 light-gray-bg">
+            <h2 className="text-uppercase m-0 text-reset">Trend</h2>
+          </Card.Header>
+          <Card.Body className="px-1 py-5">
+            {/* Mobile / Tablet / Desktop charts */}
+            <Col xs={12} className="d-block d-sm-none">
+              <Rechart size={chartSizes.xs} data={this.props.task.scores} />
+            </Col>
+            <Col sm={12} className="d-none d-sm-block d-md-none">
+              <Rechart size={chartSizes.sm} data={this.props.task.scores} />
+            </Col>
+            <Col md={12} className="d-none d-md-block d-lg-none">
+              <Rechart size={chartSizes.md} data={this.props.task.scores} />
+            </Col>
+            <Col lg={12} className="d-none d-lg-block d-xl-none">
+              <Rechart size={chartSizes.lg} data={this.props.task.scores} />
+            </Col>
+            <Col xl={12} className="d-none d-xl-block">
+              <Rechart size={chartSizes.xl} data={this.props.task.scores} />
+            </Col>
+          </Card.Body>
+        </Card>
+        </Col>
+      </Row>
     );
   }
 }
@@ -245,42 +249,30 @@ class TaskPage extends React.Component {
 }
 
 const chartSizes = {
-  xs: { fontSize: 10, legendAlign: -10 },
+  xs: { fontSize: 10 },
   sm: {
-    align: 'center',
     fontSize: 14,
     height: 300,
     left: -30,
-    xAxisLeftPadding: 50,
+    xAxisLeftPadding: 30,
   },
   md: {
-    align: 'right',
     fontSize: 14,
-    height: 332,
+    height: 300,
     left: -20,
-    legendAlign: -65,
-    verticalAlign: 'top',
-    width: '90%',
-    xAxisLeftPadding: 50,
+    xAxisLeftPadding: 30,
   },
   lg: {
+    align: 'center',
     fontSize: 14,
-    height: 492,
+    height: 302,
     left: -20,
-    legendAlign: -65,
-    width: "90%",
-    verticalAlign: 'top',
-    align: 'right',
     xAxisLeftPadding: 50,
   },
   xl: {
-    align: 'right',
     fontSize: 14,
-    height: 492,
+    height: 300,
     left: -20,
-    legendAlign: -140,
-    width: "80%",
-    verticalAlign: 'top',
     xAxisLeftPadding: 50,
   },
 };
