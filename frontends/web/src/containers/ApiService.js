@@ -76,6 +76,37 @@ export default class ApiService {
     })
   }
 
+  submitModel(data) {
+    const formData = new FormData();
+    formData.append("file", data.file);
+    formData.append("type", data.roundType);
+    formData.append("taskId", data.taskId);
+    const token = this.getToken();
+    var f = this.fetch(`${this.domain}/models/upload`, {
+      method: "POST",
+      body: formData,
+      headers: {
+        Authorization: token ? "Bearer " + token : "None",
+      },
+    });
+    return f.then((res) => {
+      return Promise.resolve(res);
+    });
+  }
+
+  publishModel({ modelId, name, description }) {
+    var f = this.fetch(`${this.domain}/models/${modelId}/publish`, {
+      method: "PUT",
+      body: JSON.stringify({
+        name,
+        description,
+      }),
+    });
+    return f.then((res) => {
+      return Promise.resolve(res);
+    });
+  }
+
   getUser(id) {
     var f = this.fetch(`${this.domain}/users/${id}`, {
       method: 'GET'
