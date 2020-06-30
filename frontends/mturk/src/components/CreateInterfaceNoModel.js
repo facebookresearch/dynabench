@@ -11,14 +11,13 @@ import {
   InputGroup
 } from 'react-bootstrap';
 
-// import UserContext from './UserContext';
 import { TokenAnnotator, TextAnnotator } from 'react-text-annotate'
 
 class Explainer extends React.Component {
   render() {
     return (
       <Row>
-        <h2 className="text-uppercase">Find examples that fool the model - {this.props.taskName}</h2> <small style={{ marginTop: 40, marginLeft: 20, fontSize: 10 }}>(<a href="#" className="btn-link">Need an explainer?</a>)</small>
+        <h2 className="text-uppercase">Find examples for - {this.props.taskName}</h2> <small style={{ marginTop: 40, marginLeft: 20, fontSize: 10 }}>(<a href="#" className="btn-link">Need an explainer?</a>)</small>
       </Row>
     );
   }
@@ -45,15 +44,15 @@ class ContextInfo extends React.Component {
               tag: 'ANS',
             })}
           />
-          <small>Your goal: enter a question and select an answer in the context, such that the model is fooled.</small>
+          <small>Your goal: enter a question and select an answer in the context in accordance with the instructions.</small>
         </>
         :
-        <><div className='context'>{this.props.text}</div><small>Your goal: enter a <strong>{this.props.targets[this.props.curTarget]}</strong> statement that fools the model.</small></>
+        <><div className='context'>{this.props.text}</div><small>Your goal: enter a <strong>{this.props.targets[this.props.curTarget]}</strong> statement in accordance with the instructions.</small></>
     );
   }
 }
 
-class CreateInterface extends React.Component {
+class CreateInterfaceNoModel extends React.Component {
   constructor(props) {
     super(props);
     this.api = props.api;
@@ -71,7 +70,6 @@ class CreateInterface extends React.Component {
       refreshDisabled: true,
       mapKeyToExampleId: {},
       tries: 0,
-      total_tries: 10, // NOTE: Set this to your preferred value
       taskCompleted: false
     };
     this.getNewContext = this.getNewContext.bind(this);
@@ -128,26 +126,9 @@ class CreateInterface extends React.Component {
         answer: this.state.task.type == 'extract' ? this.state.answer : null
       };
       this.api.getModelResponse(this.state.task.round.url, modelInputs)
-        .then(result => {
-          if (this.state.task.type != 'extract') {
-            var modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
-            var modelPredStr = this.state.task.targets[modelPredIdx];
-            var modelFooled = result.prob.indexOf(Math.max(...result.prob)) !== this.state.target;
-          } else {
-            var modelPredIdx = null;
-            var modelPredStr = result.text;
-            var modelFooled = (this.state.answer !== result.text);
-            // TODO: Handle this more elegantly:
-            result.prob = [result.prob, 1 - result.prob];
-            this.state.task.targets = ['confidence', 'uncertainty'];
-          }
-          console.log(this.props)
-        this.setState({
+        .then(result => {this.setState({
           content: [...this.state.content, {
             cls: 'hypothesis',
-            modelPredIdx: modelPredIdx,
-            modelPredStr: modelPredStr,
-            fooled: modelFooled,
             text: this.state.hypothesis,
             retracted: false,
             response: result}
@@ -165,10 +146,8 @@ class CreateInterface extends React.Component {
             this.state.tries += 1;
             this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false, mapKeyToExampleId: {...this.state.mapKeyToExampleId, [key]: result.id}},
               function () {
-                if (this.state.content[this.state.content.length-1].fooled || this.state.tries >= this.state.total_tries) {
                   console.log('Success! You can submit HIT');
                   this.setState({taskCompleted: true});
-                }
               });
           })
           .catch(error => {
@@ -204,32 +183,25 @@ class CreateInterface extends React.Component {
           text={item.text}
           targets={this.state.task.targets}
           curTarget={this.state.target}
-          taskType={this.state.task.type}
+          taskType={this.state.task.shortname}
           answer={this.state.answer}
           updateAnswer={this.updateAnswer}
         />
         :
-          <div key={index} className={item.cls + ' rounded border ' + (item.retracted ? 'border-warning' : (item.fooled ? 'border-success' : 'border-danger'))}  style={{ minHeight: 120 }}>
+          <div key={index} className={item.cls + ' rounded border ' + (item.retracted ? 'border-warning' : 'border-success')}  style={{ minHeight: 120 }}>
             <Row>
               <div className="col-sm-9">
                 <div>{item.text}</div>
                 <small>{
                   item.retracted ?
                   <>
-                    <span><strong>Example retracted</strong> - thanks. The model predicted <strong>{this.state.task.targets[item.modelPredStr]}</strong>. Please try again!</span>
+                    <span><strong>Example retracted</strong> - thanks. Please try again!</span>
                   </>
                   :
-                  (item.fooled ?
-                    <>
-                      <span><strong>Well done!</strong> You fooled the model. The model predicted <strong>{this.state.task.targets[item.modelPredStr]}</strong> instead. </span><br />
-                      <span>Made a mistake? You can still <a href="#" data-index={index} onClick={this.retractExample} className="btn-link">retract this example</a>. Otherwise, we will have it verified.</span>
-                    </>
-                    :
-                    <>
-                      <span><strong>Bad luck!</strong> The model correctly predicted <strong>{this.state.task.targets[item.modelPredStr]}</strong>. Try again.</span>
-                      <span>We will still store this as an example that the model got right. You can <a href="#" data-index={index} onClick={this.retractExample} className="btn-link">retract this example</a> if you don't want it saved.</span>
-                    </>
-                  )
+                  <>
+                  <span><strong>Thanks!</strong></span><br />
+                  <span>Made a mistake? You can still <a href="#" data-index={index} onClick={this.retractExample} className="btn-link">retract this example</a>. Otherwise, we will have it verified.</span>
+                  </>
                 }</small>
               </div>
               <div className="col-sm-3" style={{textAlign: 'right'}}>
@@ -237,15 +209,11 @@ class CreateInterface extends React.Component {
             </Row>
           </div>
     );
-    if (this.state.taskCompleted) {
-      var taskTracker = <Button className="btn btn-primary btn-success" onClick={this.handleTaskSubmit}>Submit HIT</Button>;
-    } else {
-      var taskTracker = <small style={{padding: 7}}>Tries: {this.state.tries} / {this.state.total_tries}</small>;
-    }
+    var taskTracker = <Button className="btn btn-primary btn-success" onClick={this.handleTaskSubmit}>Submit HIT</Button>;
     return (
       <Container>
         <Row>
-          <h2>Find examples that fool the model - {this.state.task.name}</h2> <small style={{marginTop: 40, marginLeft: 20, fontSize: 10}}></small>
+          <h2>Find examples for - {this.state.task.name}</h2> <small style={{marginTop: 40, marginLeft: 20, fontSize: 10}}></small>
         </Row>
         <Row>
           <CardGroup style={{marginTop: 20, width: '100%'}}>
@@ -264,7 +232,7 @@ class CreateInterface extends React.Component {
             />
           </InputGroup>
           <InputGroup>
-            <small className="form-text text-muted">Please enter your input. Remember, the goal is to find an example that the model gets wrong but that another person would get right. Load time may be slow; please be patient.</small>
+            <small className="form-text text-muted">Please enter your input. Remember, the goal is to generate an example in accordance with the instructions. Load time may be slow; please be patient.</small>
           </InputGroup>
           <InputGroup>
             <Button className="btn btn-primary" style={{marginRight: 2}} onClick={this.handleResponse} disabled={this.state.submitDisabled}>Submit <i className={this.state.submitDisabled ? "fa fa-cog fa-spin" : ""} /></Button>
@@ -277,4 +245,4 @@ class CreateInterface extends React.Component {
   }
 }
 
-export { CreateInterface };
+export { CreateInterfaceNoModel };

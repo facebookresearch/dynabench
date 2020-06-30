@@ -3,20 +3,20 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import sys
 sys.path.append('..')
-from models.base import dbs
+from models.base import DBSession as dbs
 from models.task import Task
 from models.round import Round
 import secrets
 
 tasks = [ \
-        {'name': 'Natural Language Inference', 'shortname': 'NLI', 'desc': 'Natural Language Inference is classifying context-hypothesis pairs into whether they entail, contradict or are neutral.', 'targets': 'entailing|neutral|contradictory', 'has_context': True}, \
-        {'name': 'Question Answering', 'shortname': 'QA', 'desc': 'Question answering and machine reading comprehension is answering a question given a context.', 'targets': 'na', 'has_context': True}, \
-        {'name': 'Sentiment Analysis', 'shortname': 'Sentiment', 'desc': 'Sentiment analysis is classifying one or more sentences by their positive/negative sentiment.', 'targets': 'positive|negative', 'has_context': False}, \
-        {'name': 'Hate Speech', 'shortname': 'Hate Speech', 'desc': 'Hate speech detection is classifying one or more sentences by whether or not they are hateful.', 'targets': 'hateful|not-hateful', 'has_context': False} \
+        {'name': 'Natural Language Inference', 'shortname': 'NLI', 'desc': 'Natural Language Inference is classifying context-hypothesis pairs into whether they entail, contradict or are neutral.', 'targets': 'entailing|neutral|contradictory', 'has_context': True, 'type': 'clf'}, \
+        {'name': 'Question Answering', 'shortname': 'QA', 'desc': 'Question answering and machine reading comprehension is answering a question given a context.', 'targets': 'na', 'has_context': True, 'type': 'extract'}, \
+        {'name': 'Sentiment Analysis', 'shortname': 'Sentiment', 'desc': 'Sentiment analysis is classifying one or more sentences by their positive/negative sentiment.', 'targets': 'positive|negative', 'has_context': False, 'type': 'clf'}, \
+        {'name': 'Hate Speech', 'shortname': 'Hate Speech', 'desc': 'Hate speech detection is classifying one or more sentences by whether or not they are hateful.', 'targets': 'hateful|not-hateful', 'has_context': False, 'type':'clf'} \
         ]
 
 for task in tasks:
-    t = Task(name=task['name'], shortname=task['shortname'], desc=task['desc'], cur_round=1, last_updated=db.sql.func.now(), targets=task['targets'], has_context=task['has_context'])
+    t = Task(name=task['name'], shortname=task['shortname'], desc=task['desc'], cur_round=1, last_updated=db.sql.func.now(), targets=task['targets'], has_context=task['has_context'], type=task['type'])
     dbs.add(t)
     dbs.flush()
     r = Round(task=t, rid=1, secret=secrets.token_hex(), url='https://TBD')
