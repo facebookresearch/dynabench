@@ -160,24 +160,36 @@ class CreateInterface extends React.Component {
         this.setState({submitDisabled: false, refreshDisabled: false});
         return;
       }
+
+      if (this.state.task.type == 'extract') {
+        var answer_text = '';
+        if (this.state.answer.length > 0) {
+          var last_answer = this.state.answer[this.state.answer.length - 1];
+          var answer_text = last_answer.tokens.join(' ');
+        }
+
+      } else {
+        var answer_text = null;
+      }
+
       let modelInputs = {
         context: this.state.context.context,
         hypothesis: this.state.hypothesis,
-        answer: this.state.task.type == 'extract' ? this.state.answer : null
+        answer: answer_text
       };
       this.context.api.getModelResponse(this.state.task.round.url, modelInputs)
       .then(result => {
-        if (this.state.task.type != 'extract') {
+        if (this.state.task.type == 'extract') {
+          var modelPredIdx = null;
+          var modelPredStr = result.text;
+          var modelFooled = !result.model_is_correct;
+          // TODO: handle this more elegantly
+          result.prob = [result.prob, 1 - result.prob];
+          this.state.task.targets = ['confidence', 'uncertainty'];
+        } else {
           var modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
           var modelPredStr = this.state.task.targets[modelPredIdx];
           var modelFooled = result.prob.indexOf(Math.max(...result.prob)) !== this.state.target;
-        } else {
-          var modelPredIdx = null;
-          var modelPredStr = result.text;
-          var modelFooled = (this.state.answer !== result.text);
-          // TODO: Handle this more elegantly:
-          result.prob = [result.prob, 1 - result.prob];
-          this.state.task.targets = ['confidence', 'uncertainty'];
         }
         this.setState({
           content: [...this.state.content, {
@@ -230,7 +242,12 @@ class CreateInterface extends React.Component {
     });
   }
   updateAnswer(value) {
-    this.setState({answer: value});
+    // Only keep the last answer annotated
+    if (value.length > 0) {
+      this.setState({answer: [value[value.length - 1]]});
+    } else {
+      this.setState({answer: value});
+    }
   }
   render() {
     const content = this.state.content.map((item, index) =>

@@ -59,7 +59,6 @@ def post_example(credentials):
     elif data['uid'] != credentials['id']:
             bottle.abort(403, 'Access denied')
     em = ExampleModel()
-    # TODO: Make this accept anything instead of forcing it to be 'prob' (e.g. for QA)
     eid = em.create( \
             tid=data['tid'], \
             rid=data['rid'], \
@@ -67,7 +66,7 @@ def post_example(credentials):
             cid=data['cid'], \
             hypothesis=data['hypothesis'], \
             tgt=data['target'], \
-            pred=data['response']['prob'], \
+            response=data['response'], \
             signed=data['response']['signed'], \
             annotator_id=data['annotator_id'] if credentials['id'] == 'turk' else '' \
             )

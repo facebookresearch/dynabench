@@ -22,11 +22,13 @@ from transformers import (
     AutoTokenizer
 )
 from transformers.data.processors.squad import squad_convert_examples_to_features, SquadResult
+from transformers.data.metrics.squad_metrics import compute_f1, compute_exact
 
 import torch
 from torch.utils.data import DataLoader, SequentialSampler
 
 
+THRESHOLD_F1 = 0.4
 QA_CONFIG = {
     'max_seq_length': 512,
     'max_query_length': 64,
@@ -125,7 +127,7 @@ async def handle_submit_post(request):
 
     post_data = await request.json()
     response = {}
-    required_fields = ['context', 'hypothesis']
+    required_fields = ['context', 'hypothesis', 'answer']
     if any(field not in post_data or len(post_data[field]) <= 0 for field in required_fields):
         raise web.HTTPBadRequest(reason='Missing data')
 
@@ -138,8 +140,14 @@ async def handle_submit_post(request):
         }
         model_preds = await get_model_preds([example])
         model_pred = model_preds[0]
-        response = model_pred
-        response['prob'] = response['model_conf'] # this is what the frontend expects
+        response['text'] = model_pred['text']
+        response['prob'] = max(1.0, min(0.0, model_pred['model_conf']))  # this is what the frontend expects
+
+        # Evaluate the model prediction against the human answer
+        human_ans = str(post_data['answer']).strip()
+        response['eval_f1'] = compute_f1(human_ans, response['text'])
+        response['eval_exact'] = compute_exact(human_ans, response['text'])
+        response['model_is_correct'] = response['eval_f1'] > THRESHOLD_F1
 
     except Exception as e:
         logging.exception(f'Error: {e}')
@@ -149,8 +157,8 @@ async def handle_submit_post(request):
             my_task_id, \
             my_round_id, \
             my_secret, \
-            # TODO: Make this use the response['text'] instead
-            [str(response['prob']) + '|' + str(1 - response['prob']), post_data['context'], post_data['hypothesis']] \
+            [str(response['model_is_correct']) + '|' + str(response['text']),
+             post_data['context'], post_data['hypothesis']] \
             )
 
     cors_url = request.headers.get('origin')
