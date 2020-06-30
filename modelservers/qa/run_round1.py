@@ -127,11 +127,10 @@ async def handle_submit_post(request):
 
     post_data = await request.json()
     response = {}
-    required_fields = ['context', 'hypothesis']
+    required_fields = ['context', 'hypothesis', 'answer']
     if any(field not in post_data or len(post_data[field]) <= 0 for field in required_fields):
         raise web.HTTPBadRequest(reason='Missing data')
 
-    human_ans = ''
     try:
         logging.info("Passage: {}".format(post_data['context']))
         logging.info("Question: {}".format(post_data['hypothesis']))
@@ -145,11 +144,10 @@ async def handle_submit_post(request):
         response['prob'] = model_pred['model_conf'] # this is what the frontend expects
 
         # Evaluate the model prediction against the human answer
-        if 'answer' in post_data:
-            human_ans = post_data['answer'].strip()
-            response['eval_f1'] = compute_f1(human_ans, response['text'])
-            response['eval_exact'] = compute_exact(human_ans, response['text'])
-            response['model_is_correct'] = response['eval_f1'] > THRESHOLD_F1
+        human_ans = str(post_data['answer']).strip()
+        response['eval_f1'] = compute_f1(human_ans, response['text'])
+        response['eval_exact'] = compute_exact(human_ans, response['text'])
+        response['model_is_correct'] = response['eval_f1'] > THRESHOLD_F1
 
     except Exception as e:
         logging.exception(f'Error: {e}')
@@ -159,8 +157,8 @@ async def handle_submit_post(request):
             my_task_id, \
             my_round_id, \
             my_secret, \
-            [str(response['prob']) + '|' + str(response['text']),
-             post_data['context'], post_data['hypothesis'], human_ans] \
+            [str(response['model_is_correct']) + '|' + str(response['text']),
+             post_data['context'], post_data['hypothesis']] \
             )
 
     cors_url = request.headers.get('origin')

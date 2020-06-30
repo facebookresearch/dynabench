@@ -9,10 +9,10 @@ from models.round import Round
 import secrets
 
 tasks = [ \
-        {'name': 'Natural Language Inference', 'shortname': 'NLI', 'desc': 'Natural Language Inference is classifying context-hypothesis pairs into whether they entail, contradict or are neutral.', 'targets': 'entailing|neutral|contradictory', 'has_context': True, 'type': 'clf'}, \
-        {'name': 'Question Answering', 'shortname': 'QA', 'desc': 'Question answering and machine reading comprehension is answering a question given a context.', 'targets': 'na', 'has_context': True, 'type': 'extract'}, \
-        {'name': 'Sentiment Analysis', 'shortname': 'Sentiment', 'desc': 'Sentiment analysis is classifying one or more sentences by their positive/negative sentiment.', 'targets': 'positive|negative', 'has_context': False, 'type': 'clf'}, \
-        {'name': 'Hate Speech', 'shortname': 'Hate Speech', 'desc': 'Hate speech detection is classifying one or more sentences by whether or not they are hateful.', 'targets': 'hateful|not-hateful', 'has_context': False, 'type':'clf'} \
+        {'name': 'Natural Language Inference', 'shortname': 'NLI', 'desc': 'Natural Language Inference is classifying context-hypothesis pairs into whether they entail, contradict or are neutral.', 'targets': 'entailing|neutral|contradictory', 'has_context': True, 'type': 'clf', 'has_answer': False}, \
+        {'name': 'Question Answering', 'shortname': 'QA', 'desc': 'Question answering and machine reading comprehension is answering a question given a context.', 'targets': 'na', 'has_context': True, 'type': 'extract', 'has_answer': True}, \
+        {'name': 'Sentiment Analysis', 'shortname': 'Sentiment', 'desc': 'Sentiment analysis is classifying one or more sentences by their positive/negative sentiment.', 'targets': 'positive|negative', 'has_context': False, 'type': 'clf', 'has_answer': False}, \
+        {'name': 'Hate Speech', 'shortname': 'Hate Speech', 'desc': 'Hate speech detection is classifying one or more sentences by whether or not they are hateful.', 'targets': 'hateful|not-hateful', 'has_context': False, 'type':'clf', 'has_answer': False} \
         ]
 
 for task in tasks:

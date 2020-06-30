@@ -31,7 +31,7 @@ class ApiService {
     return this.fetch(modelUrl, {
       method: 'POST',
       body: JSON.stringify(
-        { 'context': modelInputs.context, 'hypothesis': modelInputs.hypothesis }
+        { 'context': modelInputs.context, 'hypothesis': modelInputs.hypothesis, 'answer': modelInputs.answer }
       )
     }).then(res => {
       return Promise.resolve(res);
