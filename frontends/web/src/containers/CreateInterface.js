@@ -162,8 +162,12 @@ class CreateInterface extends React.Component {
       }
 
       if (this.state.task.type == 'extract') {
-        var last_answer = this.state.answer[this.state.answer.length - 1];
-        var answer_text = last_answer.tokens.join(' ');
+        var answer_text = '';
+        if (this.state.answer.length > 0) {
+          var last_answer = this.state.answer[this.state.answer.length - 1];
+          var answer_text = last_answer.tokens.join(' ');
+        }
+
       } else {
         var answer_text = null;
       }
@@ -239,7 +243,11 @@ class CreateInterface extends React.Component {
   }
   updateAnswer(value) {
     // Only keep the last answer annotated
-    this.setState({answer: [value[value.length - 1]]});
+    if (value.length > 0) {
+      this.setState({answer: [value[value.length - 1]]});
+    } else {
+      this.setState({answer: value});
+    }
   }
   render() {
     const content = this.state.content.map((item, index) =>
