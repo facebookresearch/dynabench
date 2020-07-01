@@ -1,8 +1,15 @@
 import logging
 import sqlalchemy as db
+from sqlalchemy import case
 from .base import Base, BaseModel
 from .context import ContextModel
 from .user import UserModel
+
+from models.user import User
+from models.context import Context
+from models.round import Round
+from models.task import Task
+
 import numpy as np
 
 class Example(Base):
@@ -124,3 +131,17 @@ class ExampleModel(BaseModel):
                 )
             ).limit(n).all()
 
+    def getUserLeaderByTid(self, tid, n=5, offset=0):
+        # mer = (db.sql.func.sum(Example.model_wrong == 1) / db.func.count(1).over()).label('MER')
+        cnt = db.sql.func.sum(case([(Example.model_wrong == 1, 1)], else_=0)).label('cnt')
+        return self.dbs.query(User.id, User.username, cnt, (cnt / db.func.count()) ,  db.func.count().over()).join(
+            Example, User.id == Example.uid).join(Context, Example.cid == Context.id).join(
+            Round, Context.r_realid == Round.id).join(Task, Round.tid == Task.id).filter(
+            Task.id == tid).group_by(User.id).having(cnt > 0).order_by( (cnt / db.func.count()).desc()).limit(n).offset(n * offset)
+
+    def getUserLeaderByTidAndRid(self, tid, rid, n=5, offset=0):
+        cnt = db.sql.func.sum(case([(Example.model_wrong == 1, 1)], else_=0)).label('cnt')
+        return self.dbs.query(User.id, User.username, cnt, (cnt / db.func.count()), db.func.count().over()).join(
+            Example, User.id == Example.uid).join(Context, Example.cid == Context.id).join(
+            Round, Context.r_realid == Round.id).join(Task, Round.tid == Task.id).filter(Task.id == tid).filter(
+            Round.rid == rid).group_by(User.id).having(cnt > 0).order_by( (cnt / db.func.count()).desc()).limit(n).offset(n * offset)
