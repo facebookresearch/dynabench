@@ -7,4 +7,7 @@ config = { \
         'db_name': '',
         'db_user': '',
         'db_password': '',
+	'test_file_round_1': 'anli_v0.1/R1/test.jsonl',
+        'test_file_round_2': 'anli_v0.1/R2/test.jsonl',
+        'test_file_round_3': 'anli_v0.1/R3/test.jsonl',
         }

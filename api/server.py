@@ -1,4 +1,5 @@
 import bottle
+import os
 
 import sys
 assert len(sys.argv) == 2, "Missing arg (prod or dev?)"
@@ -9,12 +10,20 @@ running_mode = sys.argv[1]
 from common.cors import *
 from common.config import *
 from common.logging import *
+from common.helpers import *
 
 init_logger(running_mode)
 
 app = bottle.default_app()
 for k in ['jwtsecret', 'jwtexp', 'jwtalgo', 'cookie_secret', 'refreshexp']:
     app.config[k] = config[k]
+
+# add the nli test file in app context
+ROOT_PATH = os.path.dirname(os.path.realpath('__file__'))
+nli_r1_test_file, nli_r2_test_file, nli_r3_test_file = load_nli_test_files(config, ROOT_PATH)
+app.config['nli_r1_test_file'] = nli_r1_test_file
+app.config['nli_r2_test_file'] = nli_r2_test_file
+app.config['nli_r3_test_file'] = nli_r3_test_file
 
 from controllers.index import *
 from controllers.auth import *
