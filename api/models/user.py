@@ -1,5 +1,6 @@
 import sqlalchemy as db
 from .base import Base, BaseModel
+import secrets
 
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -16,6 +17,7 @@ class User(Base):
 
     refresh_token = db.Column(db.String(length=255))
     forgot_password_token = db.Column(db.String(length=255))
+    forgot_password_token_expiry_date = db.Column(db.DateTime)
 
     examples_verified_correct = db.Column(db.Integer, default=0)
     examples_submitted = db.Column(db.Integer, default=0)
@@ -76,6 +78,8 @@ class UserModel(BaseModel):
             return self.dbs.query(User).filter(User.forgot_password_token == forgot_password_token).one()
         except db.orm.exc.NoResultFound:
             return False
+    def generate_password_reset_token(self):
+        return secrets.token_hex(64)
 
     def exists(self, email=None, username=None):
         if email is not None:
