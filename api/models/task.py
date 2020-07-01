@@ -29,6 +29,7 @@ class Task(Base):
     hidden = db.Column(db.Boolean, default=False)
 
     has_context = db.Column(db.Boolean, default=True)
+    has_answer = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         return '<Task {}>'.format(self.name)

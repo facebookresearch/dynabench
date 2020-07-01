@@ -23,7 +23,7 @@ class Example(Base):
     text = db.Column(db.Text)
     explanation = db.Column(db.Text)
 
-    target_pred = db.Column(db.Integer)
+    target_pred = db.Column(db.Text)
     model_preds = db.Column(db.Text)
     verifier_preds = db.Column(db.Text)
 
@@ -49,7 +49,7 @@ class ExampleModel(BaseModel):
     def __init__(self):
         super(ExampleModel, self).__init__(Example)
 
-    def create(self, tid, rid, uid, cid, hypothesis, tgt, pred, signed, annotator_id=None):
+    def create(self, tid, rid, uid, cid, hypothesis, tgt, response, signed, annotator_id=None):
         if uid == 'turk' and annotator_id is None:
             logging.error('Annotator id not specified but received Turk example')
             return False
@@ -60,7 +60,13 @@ class ExampleModel(BaseModel):
             logging.error('Task id ({}={}) or round id ({}={}) do not match context'.format(tid, c.round.task.id, rid, c.round.rid))
             return False
 
-        # TODO: If task has_answer, handle here (specifically target_pred and model_wrong)
+        # If task has_answer, handle here (specifically target_pred and model_wrong)
+        if c.round.task.has_answer:
+            pred = str(response['model_is_correct']) + '|' + str(response['text'])
+            model_wrong = not response['model_is_correct']
+        else:
+            pred = response['prob']
+            model_wrong = (tgt != np.argmax(pred))
 
         import hashlib
         h = hashlib.sha1()
@@ -83,7 +89,7 @@ class ExampleModel(BaseModel):
         try:
             e = Example(context=c, \
                     text=hypothesis, target_pred=tgt, model_preds=pred_str, \
-                    model_wrong=(tgt != np.argmax(pred)),
+                    model_wrong=model_wrong,
                     generated_datetime=db.sql.func.now())
 
             # store uid/annotator_id and anon_id
