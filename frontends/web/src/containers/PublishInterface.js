@@ -27,11 +27,7 @@ class PublishInterface extends React.Component {
   componentDidMount() {
     if (!this.context.api.loggedIn()) {
       this.props.history.push(
-        "/login?msg=" +
-          encodeURIComponent(
-            "Please log in or sign up so that you can get credit for your generated examples."
-          ) +
-          "&src=" +
+        "/login?&src=" +
           encodeURIComponent("/tasks/" + this.state.taskId + "/submit")
       );
     }
@@ -61,13 +57,11 @@ class PublishInterface extends React.Component {
     };
     this.context.api
       .publishModel(reqObj)
-      .then((result) => {
-        this.props.history.push({
-          pathname: `/tasks/${this.state.taskId}`,
-        });
+      .then(() => {
+        this.props.history.push(`/tasks/${this.state.taskId}#overall`);
       })
       .catch((error) => {
-        console.log("error", error);
+        console.log(error);
       });
   };
 
@@ -156,10 +150,10 @@ class PublishInterface extends React.Component {
                             className="fadeIn third submitBtn button-ellipse"
                             disabled={isSubmitting}
                           >
-                            PUBLISH
+                            Publish
                           </Button>
                         ) : (
-                          ""
+                          null
                         )}
                       </form>
                     </>

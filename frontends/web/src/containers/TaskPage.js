@@ -30,7 +30,7 @@ const chartSizes = {
     xAxisLeftPadding: 30,
   },
   lg: {
-    align: 'center',
+    align: "center",
     fontSize: 14,
     height: 302,
     left: -20,
@@ -42,7 +42,7 @@ const chartSizes = {
     left: -20,
     xAxisLeftPadding: 50,
   },
-};;
+};
 
 const TaskNav = (props) => {
   const rounds = (props.taskDetail.round && props.taskDetail.round.rid) || 0;

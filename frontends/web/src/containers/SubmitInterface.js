@@ -24,11 +24,7 @@ class SubmitInterface extends React.Component {
   componentDidMount() {
     if (!this.context.api.loggedIn()) {
       this.props.history.push(
-        "/login?msg=" +
-          encodeURIComponent(
-            "Please log in or sign up so that you can get credit for your generated examples."
-          ) +
-          "&src=" +
+        "/login?&src=" +
           encodeURIComponent("/tasks/" + this.state.taskId + "/submit")
       );
     }
@@ -55,14 +51,13 @@ class SubmitInterface extends React.Component {
     this.context.api
       .submitModel(reqObj)
       .then((result) => {
-        console.log("result", result);
         this.props.history.push({
           pathname: `/tasks/${this.state.taskId}/${result.model_id}/publish`,
           state: { detail: result },
         });
       })
       .catch((error) => {
-        console.log("error", error);
+        console.log(error);
       });
   };
   render() {
@@ -95,11 +90,8 @@ class SubmitInterface extends React.Component {
                   {({
                     values,
                     errors,
-                    touched,
                     handleChange,
                     setFieldValue,
-                    setErrors,
-                    handleBlur,
                     handleSubmit,
                     isSubmitting,
                   }) => (
@@ -176,7 +168,7 @@ class SubmitInterface extends React.Component {
                             className="fadeIn third submitBtn button-ellipse"
                             disabled={isSubmitting}
                           >
-                            EVALUATE
+                            Evaluate
                           </Button>
                         </Container>
                       </form>
