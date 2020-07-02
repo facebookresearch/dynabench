@@ -1,8 +1,11 @@
 import React from 'react';
 import {
+  Cell,
   Legend,
   LineChart,
   Line,
+  Pie,
+  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -18,30 +21,17 @@ import {
  * @param xAxisLeftPadding - left padding for x axis ticks
  */
 // Defaults for mobile
-const Rechart = ({
+export const LineRechart = ({
   size: {
     fontSize = 10,
     height = 250,
     left = -40,
     right = 10,
-    verticalAlign = 'bottom',
     xAxisLeftPadding = 25,
   },
   data,
 }) => {
   // This only handles up to 10 chart lines, not sure what we can do if there's more.
-  const globalColors = [
-    '#6fb98f',
-    '#075756',
-    '#66a5ad',
-    '#31bdb5',
-    '#91d8d3',
-    '#90b96f',
-    '#a1de72',
-    '#8ce882',
-    '#1283d8',
-    '#314dbd',
-  ];
   const dataset = Object.keys(data[0]).filter((item) => item != 'name');
   if (dataset.length > 10) {
     const difference = dataset.length - 10;
@@ -60,10 +50,7 @@ const Rechart = ({
           tick={{ fontSize }}
           tickLine={false}
         />
-        <YAxis
-          padding={{ top: 10 }}
-          tick={{ fontSize }}
-        />
+        <YAxis padding={{ top: 10 }} tick={{ fontSize }} />
         <Tooltip
           allowEscapeViewBox={{ x: false, y: true }}
           wrapperStyle={{ zIndex: 10 }}
@@ -91,6 +78,65 @@ const Rechart = ({
   );
 };
 
+
+/**
+ * API Documentation for Recharts Line Chart - {@link https://recharts.org/en-US/api/PieChart}
+ * Disabled animation for now, it bugs out the labels
+ * Custom label to only show text if the value is greater than 5
+ * Any less makes the labels overlap
+ * Hover to see the name and value of the area you're hovering
+ * Amount of labels should always match the amount of data given
+ */
+export const PieRechart = ({ data, labels }) => {
+  const chartData = labels.map((item, index) => {
+    return { name: item, value: Math.round(data[index] * 100) };
+  });
+  return (
+    <ResponsiveContainer width='100%' height={150}>
+      <PieChart>
+        <Tooltip payload={chartData} />
+        <Pie
+          isAnimationActive={false}
+          data={chartData}
+          dataKey='value'
+          labelLine={false}
+          nameKey='name'
+          outerRadius={50}
+          label={({
+            cx,
+            cy,
+            midAngle,
+            innerRadius,
+            outerRadius,
+            value,
+            index,
+          }) => {
+            const RADIAN = Math.PI / 180;
+            const radius = 5 + innerRadius + (outerRadius - innerRadius);
+            const x = cx + radius * Math.cos(-midAngle * RADIAN);
+            const y = cy + radius * Math.sin(-midAngle * RADIAN);
+            return value > 5 ? (
+              <text
+                x={x}
+                y={y}
+                fill={globalColors[index]}
+                textAnchor={x > cx ? 'start' : 'end'}
+                dominantBaseline='central'
+              >
+                {value}%
+              </text>
+            ) : null;
+          }}
+        >
+          {chartData.map((entry, index) => (
+            <Cell fill={globalColors[index]} key={`cell-${index}`} />
+          ))}
+        </Pie>
+      </PieChart>
+    </ResponsiveContainer>
+  );
+};
+
 /**
  * Generates colors between blue and green ranges if the dataset needs to plot more than 10 lines
  * #46 is set as R value so that the green and blue values aren't too light or dark
@@ -109,4 +155,15 @@ const generateColors = () => {
   return hex;
 };
 
-export default Rechart;
+const globalColors = [
+  '#6fb98f',
+  '#075756',
+  '#66a5ad',
+  '#31bdb5',
+  '#91d8d3',
+  '#90b96f',
+  '#a1de72',
+  '#8ce882',
+  '#1283d8',
+  '#314dbd',
+];
