@@ -29,7 +29,9 @@ import ModelPage from "./ModelPage";
 import ApiService from "./ApiService";
 import ScrollToTop from "./ScrollToTop.js";
 import CreateInterface from "./CreateInterface.js";
-import VerifyInterface from "./VerifyInterface.js";
+// import VerifyInterface from "./VerifyInterface.js";
+import SubmitInterface from "./SubmitInterface.js";
+import PublishInterface from "./PublishInterface.js";
 
 class App extends React.Component {
   constructor(props) {
@@ -67,7 +69,7 @@ class App extends React.Component {
     const NavItems = this.state.tasks.map((task, index) => (
       <NavDropdown.Item
         key={task.id}
-        href={`/tasks/${task.id}`}
+        href={`/tasks/${task.id}#overall`}
         className="py-3"
       >
         {task.name}
@@ -160,9 +162,17 @@ class App extends React.Component {
                   path="/tasks/:taskId/create"
                   component={CreateInterface}
                 />
-                <Route
+                {/* <Route
                   path="/tasks/:taskId/verify"
                   component={VerifyInterface}
+                /> */}
+                <Route
+                  path="/tasks/:taskId/submit"
+                  component={SubmitInterface}
+                />
+                <Route
+                  path="/tasks/:taskId/:modelId/publish"
+                  component={PublishInterface}
                 />
                 <Route path="/tasks/:taskId" component={TaskPage} />
                 <Route path="/tasks" component={TasksPage} />
