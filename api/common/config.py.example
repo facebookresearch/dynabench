@@ -7,4 +7,7 @@ config = { \
         'db_name': '',
         'db_user': '',
         'db_password': '',
+        'sagemaker_aws_access_key_id': '',
+        'sagemaker_aws_secret_access_key': '',
+        'sagemaker_aws_region': '',
         }

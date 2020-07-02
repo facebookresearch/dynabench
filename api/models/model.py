@@ -20,6 +20,8 @@ class Model(Base):
 
     overall_perf = db.Column(db.Text)
 
+    is_published = db.Column(db.BOOLEAN, default=False)
+
     def __repr__(self):
         return '<Model {}>'.format(self.id)
 
