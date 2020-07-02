@@ -120,11 +120,11 @@ class HomePage extends React.Component {
         <p>No tasks found</p>
       ) : (
         tasks.map((task, index) => (
-      <Col sm={6} lg={3}>
+          <Col sm={6} lg={3} key={task.id}>
             <Card
               key={task.id}
               className="task-card"
-              onClick={() => this.props.history.push("/tasks/" + task.id)}
+              onClick={() => this.props.history.push(`/tasks/${task.id}#overall`)}
             >
               <h2 className="task-header blue-color text-uppercase text-center">
                 {task.name}
