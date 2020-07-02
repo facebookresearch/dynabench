@@ -42,7 +42,7 @@ class SubmitInterface extends React.Component {
     }
     return errors;
   };
-  handleSubmit = (values) => {
+  handleSubmit = (values, { setSubmitting }) => {
     const reqObj = {
       taskId: this.state.taskId,
       roundType: values.roundType,
@@ -57,6 +57,7 @@ class SubmitInterface extends React.Component {
         });
       })
       .catch((error) => {
+        setSubmitting(false);
         console.log(error);
       });
   };
