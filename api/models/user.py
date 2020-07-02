@@ -35,7 +35,8 @@ class User(Base):
     def to_dict(self, safe=True):
         d = {}
         for column in self.__table__.columns:
-            if safe and column.name in ['password', 'refresh_token']: continue
+            if safe and column.name in ['password', 'refresh_token', 'forgot_password_token',
+                                        'forgot_password_token_expiry_date']: continue
             d[column.name] = str(getattr(self, column.name))
         return d
 

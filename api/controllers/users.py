@@ -2,6 +2,7 @@ import bottle
 from datetime import datetime, timedelta
 
 import common.auth as _auth
+import common.helpers as util
 import common.mail_service as mail
 
 from models.user import UserModel
@@ -68,11 +69,17 @@ def create_user():
 
 @bottle.post('/resetPassword/<forgot_token>')
 def reset_password(forgot_token):
+    """
+    Validate forgot password token and update new password in user
+    In token validation we used the forgot password token expiry date and time column
+    :param forgot_token:
+    :return: Success or Error
+    """
+
     data = bottle.request.json
     if not data or 'password' not in data or 'email' not in data:
         logging.info('Missing data')
         bottle.abort(400, 'Missing data')
-
     try:
         u = UserModel()
         user = u.getByForgotPasswordToken(forgot_password_token=forgot_token)
@@ -99,6 +106,12 @@ def reset_password(forgot_token):
 
 @bottle.post('/recover/initiate')
 def recover_password():
+    """
+    Generate forgot password token and send email to respective user
+    The reset password host reads from  requested url
+    :return: Success if true else raise exception
+    """
+
     data = bottle.request.json
     if not data or 'email' not in data :
         bottle.abort(400, 'Missing email')
@@ -111,16 +124,13 @@ def recover_password():
         # issuing new forgot password token
         forgot_password_token = u.generate_password_reset_token()
         expiry_datetime = datetime.now() + timedelta(hours=bottle.default_app().config['jwtforgotexp'])
-        u.update(user.id, {'forgot_password_token': forgot_password_token ,
-                           'forgot_password_token_expiry_date': expiry_datetime })
-
+        u.update(user.id, {'forgot_password_token': forgot_password_token,
+                           'forgot_password_token_expiry_date': expiry_datetime})
         #  send email
         subject = 'Password reset link requested'
-        msg = { 'ui_server_host': bottle.default_app().config['ui_server_host'], 'token':  forgot_password_token }
-        is_mail_send = mail.send(server=bottle.default_app().config['mail'],   contacts=[user.email],
+        msg = {'ui_server_host': util.parse_url(bottle.request.url), 'token':  forgot_password_token}
+        mail.send(server=bottle.default_app().config['mail'],   contacts=[user.email],
                   template_name= bottle.default_app().config['forgot_pass_template'], msg_dict=msg, subject=subject)
-        if not is_mail_send:
-            return bottle.abort(403, 'Reset password failed')
         return {'status': 'success'}
     except Exception as error_message:
         logging.exception("Reset password failure (%s)" % (data['email']))

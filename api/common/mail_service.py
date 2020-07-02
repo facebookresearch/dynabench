@@ -23,7 +23,7 @@ def get_mail_session(host, port, smtp_user, smtp_secret):
     """
     try:
         # set up the SMTP server
-        server = smtplib.SMTP(host=host, port=port)
+        server = smtplib.SMTP(host=host, port=port, timeout=1000)
         server.ehlo()
         server.starttls()
         server.ehlo()
@@ -32,6 +32,13 @@ def get_mail_session(host, port, smtp_user, smtp_secret):
     except Exception as e:
         logging.exception('Mail session create failure : (%s)', e)
         return None
+
+def test_SMTP_conn_open(conn):
+    try:
+        status = conn.noop()[0]
+    except:  # smtplib.SMTPServerDisconnected
+        status = -1
+    return True if status == 250 else False
 
 def close_mail_session(server):
     """
@@ -47,13 +54,12 @@ def send(server=None, contacts = [], template_name = '', msg_dict = {}, subject 
 
     """
     app = bottle.default_app()
-    if not server:
-        logging.error('SMTP service not empty')
+    if not test_SMTP_conn_open(server):
+        logging.error('SMTP service session closed. Reconnecting the server')
         # create another smtp server handler
-        server = get_mail_session(host=app.config['host'], port=app.config['port'], smtp_user=app.config['smtp_user'],
-                                smtp_secret=app.config['smtp_secret'])
+        server = get_mail_session(host=app.config['smtp_host'], port=app.config['smtp_port'], smtp_user=app.config['smtp_user'],
+                                    smtp_secret=app.config['smtp_secret'])
     try:
-        server.connect()
         message_template = read_template(template_name)
         for contact in contacts:
             msg = MIMEMultipart()  # create a message
