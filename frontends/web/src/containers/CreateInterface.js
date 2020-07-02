@@ -8,19 +8,9 @@ import {
   FormControl,
   InputGroup
 } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
 import UserContext from './UserContext';
-import { TokenAnnotator, TextAnnotator } from 'react-text-annotate'
-
-import C3Chart from 'react-c3js';
-//import 'c3/c3.css';
-
-const PieChart = ({ size, data, labels }) =>
-  <C3Chart size={{ width: 100, height: 100 }} data={{ json: data, type: 'pie', names: labels }} legend={{ show: false}} tooltip={{
-  position: function (data, width, height, element) {
-    return {top: 80, left: 20};
-  }
-}} />;
+import { TokenAnnotator } from 'react-text-annotate'
+import { PieRechart } from '../components/Rechart';
 
 const Explainer = (props) => (
   <div className="mt-4 mb-5 pt-3">
@@ -86,7 +76,7 @@ class ResponseInfo extends React.Component {
   render() {
     return (<div className={this.props.obj.cls + ' rounded border ' + (this.props.obj.retracted ? 'border-warning' : (this.props.obj.fooled ? 'border-success' : 'border-danger'))}  style={{ minHeight: 120 }}>
       <Row>
-        <div className="col-sm-9">
+        <Col xs={12} md={8}>
           <div>{this.props.obj.text}</div>
           <small>{
             this.props.obj.retracted ?
@@ -106,10 +96,10 @@ class ResponseInfo extends React.Component {
             </>
             )
           }</small>
-        </div>
-        <div className="col-sm-3" style={{textAlign: 'right'}}>
-          <PieChart data={this.props.obj.response.prob} labels={this.props.targets} />
-        </div>
+        </Col>
+        <Col xs={12} md={4}>
+          <PieRechart data={this.props.obj.response.prob} labels={this.props.targets} />
+        </Col>
       </Row>
     </div>);
   }
@@ -272,6 +262,7 @@ class CreateInterface extends React.Component {
           content={this.state.content}
         />
     );
+
     return (
       <Container className="mb-5 pb-5">
         <Col className="m-auto" lg={9}>
