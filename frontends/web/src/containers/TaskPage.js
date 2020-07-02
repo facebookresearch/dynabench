@@ -12,7 +12,7 @@ import {
 } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import UserContext from './UserContext';
-import Rechart from '../components/Rechart';
+import { LineRechart } from '../components/Rechart';
 import Moment from 'react-moment';
 
 class TaskMainPage extends React.Component {
@@ -63,19 +63,19 @@ class TaskMainPage extends React.Component {
           <Card.Body className="px-1 py-5">
             {/* Mobile / Tablet / Desktop charts */}
             <Col xs={12} className="d-block d-sm-none">
-              <Rechart size={chartSizes.xs} data={this.props.task.scores} />
+              <LineRechart size={chartSizes.xs} data={this.props.task.scores} />
             </Col>
             <Col sm={12} className="d-none d-sm-block d-md-none">
-              <Rechart size={chartSizes.sm} data={this.props.task.scores} />
+              <LineRechart size={chartSizes.sm} data={this.props.task.scores} />
             </Col>
             <Col md={12} className="d-none d-md-block d-lg-none">
-              <Rechart size={chartSizes.md} data={this.props.task.scores} />
+              <LineRechart size={chartSizes.md} data={this.props.task.scores} />
             </Col>
             <Col lg={12} className="d-none d-lg-block d-xl-none">
-              <Rechart size={chartSizes.lg} data={this.props.task.scores} />
+              <LineRechart size={chartSizes.lg} data={this.props.task.scores} />
             </Col>
             <Col xl={12} className="d-none d-xl-block">
-              <Rechart size={chartSizes.xl} data={this.props.task.scores} />
+              <LineRechart size={chartSizes.xl} data={this.props.task.scores} />
             </Col>
           </Card.Body>
         </Card>
