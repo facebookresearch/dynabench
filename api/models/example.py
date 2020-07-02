@@ -132,16 +132,22 @@ class ExampleModel(BaseModel):
             ).limit(n).all()
 
     def getUserLeaderByTid(self, tid, n=5, offset=0):
-        # mer = (db.sql.func.sum(Example.model_wrong == 1) / db.func.count(1).over()).label('MER')
         cnt = db.sql.func.sum(case([(Example.model_wrong == 1, 1)], else_=0)).label('cnt')
-        return self.dbs.query(User.id, User.username, cnt, (cnt / db.func.count()) ,  db.func.count().over()).join(
-            Example, User.id == Example.uid).join(Context, Example.cid == Context.id).join(
-            Round, Context.r_realid == Round.id).join(Task, Round.tid == Task.id).filter(
-            Task.id == tid).group_by(User.id).having(cnt > 0).order_by( (cnt / db.func.count()).desc()).limit(n).offset(n * offset)
+        return self.dbs.query(User.id, User.username, cnt, (cnt / db.func.count()) ,  db.func.count().over()).\
+            join(Example, User.id == Example.uid)\
+            .join(Context, Example.cid == Context.id)\
+            .join(Round, Context.r_realid == Round.id)\
+            .join(Task, Round.tid == Task.id).filter(Task.id == tid)\
+            .group_by(User.id).having(cnt > 0).\
+            order_by( (cnt / db.func.count()).desc()).limit(n).offset(n * offset)
 
     def getUserLeaderByTidAndRid(self, tid, rid, n=5, offset=0):
         cnt = db.sql.func.sum(case([(Example.model_wrong == 1, 1)], else_=0)).label('cnt')
-        return self.dbs.query(User.id, User.username, cnt, (cnt / db.func.count()), db.func.count().over()).join(
-            Example, User.id == Example.uid).join(Context, Example.cid == Context.id).join(
-            Round, Context.r_realid == Round.id).join(Task, Round.tid == Task.id).filter(Task.id == tid).filter(
-            Round.rid == rid).group_by(User.id).having(cnt > 0).order_by( (cnt / db.func.count()).desc()).limit(n).offset(n * offset)
+        return self.dbs.query(User.id, User.username, cnt, (cnt / db.func.count()), db.func.count().over())\
+            .join(Example, User.id == Example.uid)\
+            .join(Context, Example.cid == Context.id)\
+            .join(Round, Context.r_realid == Round.id)\
+            .join(Task, Round.tid == Task.id)\
+            .filter(Task.id == tid).filter(Round.rid == rid)\
+            .group_by(User.id).having(cnt > 0)\
+            .order_by( (cnt / db.func.count()).desc()).limit(n).offset(n * offset)
