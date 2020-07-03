@@ -39,7 +39,8 @@
 .navbar-dark .dropdown-item:focus,
 .navbar-dark .dropdown-item:hover,
 .sidebar-wrapper .nav-link:focus,
-.sidebar-wrapper .nav-link:hover {
+.sidebar-wrapper .nav-link:hover,
+.sidebar-wrapper .nav-link.active {
   background-color: rgba(18, 131, 216, 0.1);
   color: #1283d8;
 }

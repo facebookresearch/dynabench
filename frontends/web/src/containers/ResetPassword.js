@@ -5,56 +5,62 @@ import { Link } from "react-router-dom";
 import "./LoginPage.css";
 import UserContext from "./UserContext";
 
-import qs from "qs";
+class ResetPassword extends React.Component {
+  static contextType = UserContext;
 
-class LoginPage extends React.Component {
-  construct() {}
+  handleValidation = (values) => {
+    const errors = {};
+    if (!values.email || values.email === "") {
+      errors.email = "Required";
+    }
+    if (!values.password || values.password === "") {
+      errors.password = "Required";
+    }
+    if (!values.confirmPassword || values.confirmPassword === "") {
+      errors.confirmPassword = "Required";
+    } else if (values.password !== values.confirmPassword) {
+      errors.confirmPassword = "Make sure both passwords entered are same";
+    }
+    return errors;
+  };
+
+  handleSubmit = (values, { setFieldError, setSubmitting }) => {
+    const {
+      match: { params },
+    } = this.props;
+    this.context.api
+      .resetPassword({
+        email: values.email,
+        password: values.password,
+        token: params.token,
+      })
+      .then((result) => {
+        this.props.history.push("/login");
+      })
+      .catch((error) => {
+        this.setState({ error });
+        setSubmitting(false);
+      });
+  };
+
   render() {
-    var query = qs.parse(this.props.location.search, {
-      ignoreQueryPrefix: true,
-    });
     return (
       <UserContext.Consumer>
         {(props) => (
           <Container>
             <Row>
               <div className="wrapper fade-in-down">
-                <div id="form-content" className="login-form text-center">
+                <div id="formContent" className="login-form text-center">
                   <h2 className="d-block my-4 text-uppercase text-reset">
-                    Log In
+                    Reset Password
                   </h2>
-                  <p className="msg mb-0">{query.msg}</p>
                   <hr className="mb-4" />
                   <Formik
                     initialValues={{
                       email: "",
-                      password: "",
-                      src: query.src ? query.src : "/",
                     }}
-                    validate={(values) => {
-                      const errors = {};
-                      if (!values.email) {
-                        errors.email = "Required";
-                      }
-                      return errors;
-                    }}
-                    onSubmit={(values, { setFieldError, setSubmitting }) => {
-                      props.api
-                        .login(values.email, values.password)
-                        .then((result) => {
-                          console.log(result);
-                          props.updateState({
-                            user: props.api.getCredentials(),
-                          });
-                          this.props.history.push(values.src);
-                        })
-                        .catch((error) => {
-                          console.log(error);
-                          this.setState({ error });
-                          setSubmitting(false);
-                          setFieldError("general", "Authentication failed");
-                        });
-                    }}
+                    validate={this.handleValidation}
+                    onSubmit={this.handleSubmit}
                   >
                     {({
                       values,
@@ -82,43 +88,55 @@ class LoginPage extends React.Component {
                           <input
                             type="password"
                             name="password"
-                            className="fade-in second text-left"
+                            className="fade-in first text-left"
                             placeholder="Password"
                             onChange={handleChange}
                             onBlur={handleBlur}
-                            value={values.password}
                           />
                           <small className="form-text text-muted">
                             {errors.password &&
                               touched.password &&
                               errors.password}
                           </small>
+                          <input
+                            type="password"
+                            name="confirmPassword"
+                            className="fade-in first text-left"
+                            placeholder="Confirm Password"
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                          />
                           <small className="form-text text-muted">
-                            {errors.general}
+                            {errors.confirmPassword &&
+                              touched.confirmPassword &&
+                              errors.confirmPassword}
                           </small>
                           <Button
                             type="submit"
                             variant="primary"
-                            type="submit"
                             className="fade-in third submit-btn button-ellipse text-uppercase my-4"
                             disabled={isSubmitting}
                           >
-                            Submit
+                            Reset
                           </Button>
                         </form>
-                        <div className="mb-5">
+                        <div className="form-footer">
                           <p>
                             Don't have an account?{" "}
-                            <Link className="underline-hover" to="/register">
+                            <Link
+                              className="btn-link underline-hover"
+                              to="/register"
+                            >
                               Sign up
                             </Link>
                           </p>
                           <p>
+                            Remember your password?{" "}
                             <Link
-                              className="underline-hover"
-                              to="/forgot-password"
+                              className="btn-link underline-hover"
+                              to="/login"
                             >
-                              Forgot Password?
+                              Login
                             </Link>
                           </p>
                         </div>
@@ -135,4 +153,4 @@ class LoginPage extends React.Component {
   }
 }
 
-export default LoginPage;
+export default ResetPassword;

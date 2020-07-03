@@ -1,6 +1,9 @@
 import bottle
+from datetime import datetime, timedelta
 
 import common.auth as _auth
+import common.helpers as util
+import common.mail_service as mail
 
 from models.user import UserModel
 
@@ -63,3 +66,71 @@ def create_user():
     token = _auth.get_token({'id': user.id, 'username': user.username})
     logging.info('Registration and authentication successful for %s' % (user.username))
     return {'user': user.to_dict(), 'token': token}
+
+@bottle.post('/recover/resolve/<forgot_token>')
+def reset_password(forgot_token):
+    """
+    Validate forgot password token and update new password in user
+    In token validation we used the forgot password token expiry date and time column
+    :param forgot_token:
+    :return: Success or Error
+    """
+
+    data = bottle.request.json
+    if not data or 'password' not in data or 'email' not in data:
+        logging.info('Missing data')
+        bottle.abort(400, 'Missing data')
+    try:
+        u = UserModel()
+        user = u.getByForgotPasswordToken(forgot_password_token=forgot_token)
+        if not user:
+            raise AssertionError('Invalid token')
+        if datetime.now() > user.forgot_password_token_expiry_date:
+            raise AssertionError('Invalid token')
+        if user.email != data['email']:
+            raise AssertionError('Invalid user')
+
+        user.set_password(data['password'])
+        u.update(user.id, {'forgot_password_token': None, 'forgot_password_token_expiry_date': None,
+                           'password': user.password})
+    except AssertionError as e:
+        logging.exception('Invalid token : %s' % (e))
+        bottle.abort(401, str(e))
+    except Exception as error_message:
+        logging.exception('Could not reset user password: %s' % (error_message))
+        bottle.abort(400, 'Could not reset user password: %s' % (error_message))
+
+    logging.info('User password reset successful for %s' % (user.username))
+    return {'status': 'successful'}
+
+@bottle.post('/recover/initiate')
+def recover_password():
+    """
+    Generate forgot password token and send email to respective user
+    The reset password host reads from  requested url
+    :return: Success if true else raise exception
+    """
+
+    data = bottle.request.json
+    if not data or 'email' not in data:
+        bottle.abort(400, 'Missing email')
+
+    u = UserModel()
+    user = u.getByEmail(email=data['email'])
+    if not user:
+        return {'status': 'success'}
+    try:
+        # issuing new forgot password token
+        forgot_password_token = u.generate_password_reset_token()
+        expiry_datetime = datetime.now() + timedelta(hours=4)
+        u.update(user.id, {'forgot_password_token': forgot_password_token,
+                           'forgot_password_token_expiry_date': expiry_datetime})
+        #  send email
+        subject = 'Password reset link requested'
+        msg = {'ui_server_host': util.parse_url(bottle.request.url), 'token': forgot_password_token}
+        mail.send(server=bottle.default_app().config['mail'], contacts=[user.email],
+                  template_name=bottle.default_app().config['forgot_pass_template'], msg_dict=msg, subject=subject)
+        return {'status': 'success'}
+    except Exception as error_message:
+        logging.exception("Reset password failure (%s)" % (data['email']))
+        bottle.abort(403, 'Reset password failed : %s' % (error_message))
