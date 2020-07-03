@@ -6,9 +6,9 @@ import common.helpers as util
 import common.mail_service as mail
 
 from models.user import UserModel
+from models.model import ModelModel
 
 import json
-
 import logging
 
 @bottle.get('/users')
@@ -134,3 +134,76 @@ def recover_password():
     except Exception as error_message:
         logging.exception("Reset password failure (%s)" % (data['email']))
         bottle.abort(403, 'Reset password failed : %s' % (error_message))
+
+@bottle.get('/users/<uid:int>/models')
+def get_user_models(uid):
+    """
+    Fetch all user models based on user id
+    :param uid:
+    :return: Json Object
+    """
+    # check the current user and request user id are same
+    is_current_user = util.is_current_user(uid=uid)
+    logging.info('Current user validation status (%s) for %s' %(is_current_user, uid))
+    limit, offset = util.get_limit_and_offset_from_request()
+    try:
+        model = ModelModel()
+        results = model.getUserModelsByUid(uid=uid, is_current_user=is_current_user, n=limit, offset=offset)
+        dicts = [model_obj.to_dict() for model_obj in results]
+        if dicts:
+            return json.dumps(dicts)
+        return []
+    except Exception as e:
+        logging.exception('Could not fetch user model(s) : %s' % (e))
+        bottle.abort(400, 'Could not fetch user model(s)')
+
+@bottle.get('/users/<uid:int>/models/<model_id:int>')
+def get_user_models(uid, model_id):
+    """
+    Get users specific model detail
+    :param uid: User Id
+    :param model_id: Model Id
+    :return: Json Object
+    """
+    # check the current user and request user id are same
+    is_current_user = util.is_current_user(uid= uid)
+    logging.info('Current user validation status (%s) for %s' %(is_current_user, uid))
+    try:
+        model = ModelModel()
+        model_obj = model.getUserModelsByUidAndMid(uid=uid, mid=model_id, is_current_user=is_current_user)
+        dicts = model_obj.to_dict()
+        if dicts:
+            return json.dumps(dicts)
+    except Exception as e:
+        logging.exception('Could not fetch user model: %s' % (e))
+        bottle.abort(400, 'Could not fetch user model')
+
+    bottle.abort(204, 'No models found')
+
+@bottle.put('/users/<id:int>/profileUpdate')
+@_auth.requires_auth
+def update_user_profile(credentials, id):
+    """
+    Update user profile details like  real name, affiliation  and user name
+    :param credentials: Authentication detail
+    :param id: User id
+    :return: Json Object
+    """
+    data = bottle.request.json
+    user = UserModel()
+    if not util.check_fields(data, ['username', 'affiliation', 'realname']):
+        bottle.abort(400, 'Missing data')
+
+    # validate user detail
+    if not util.is_current_user(uid=id, credentials=credentials):
+        bottle.abort(403, 'Not authorized to update profile')
+    try:
+        u = user.get(id)
+        user.update(u.id, {'username': data['username'], 'affiliation': data['affiliation'],
+                        'realname': data['realname']})
+        return json.dumps(u.to_dict())
+    except db.orm.exc.NoResultFound as ex:
+        bottle.abort(404, 'User Not found')
+    except Exception as ex:
+        logging.exception('Could not update profile: %s' % (ex))
+        bottle.abort(400, 'Could not update profile: %s' % (ex))
