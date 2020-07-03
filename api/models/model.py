@@ -61,3 +61,17 @@ class ModelModel(BaseModel):
 
     def getByTid(self, tid):
         return self.dbs.query(Model).filter(Model.tid == tid).all()
+
+    def getUserModelsByUid(self, uid, is_current_user=False, n=5, offset=0):
+        if is_current_user:
+            return self.dbs.query(Model).filter(Model.uid == uid).limit(n).offset(offset * n)
+        else:
+            return self.dbs.query(Model).filter(Model.uid == uid).filter(Model.is_published == True).\
+                limit(n).offset(offset * n)
+
+    def getUserModelsByUidAndMid(self, uid, mid, is_current_user=False):
+        if is_current_user:
+            return self.dbs.query(Model).filter(Model.uid == uid).filter(Model.id == mid).one()
+        else:
+            return self.dbs.query(Model).filter(Model.uid == uid).filter(Model.id == mid).\
+                filter(Model.is_published == True).one()

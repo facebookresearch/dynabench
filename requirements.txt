@@ -9,4 +9,4 @@ SQLAlchemy
 torch
 transformers
 werkzeug
-pandas
+boto3

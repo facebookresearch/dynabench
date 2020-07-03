@@ -1,12 +1,12 @@
 import bottle
-import pandas as pd
-import numpy as np
 import os
+from urllib.parse import urlparse
 
 import common.auth as _auth
 from models.user import UserModel
 
 import logging
+import json
 
 def check_fields(data, fields):
     if not data:
@@ -17,44 +17,79 @@ def check_fields(data, fields):
     return True
 
 # TODO need to change it in future - to read the test data from db of config files
-def load_nli_test_files(config, root_path):
-    nli_r1_test_file = pd.read_json(os.path.join(root_path, config['test_file_round_1']), lines=True)
-    nli_r2_test_file = pd.read_json(os.path.join(root_path, config['test_file_round_2']), lines=True)
-    nli_r3_test_file = pd.read_json(os.path.join(root_path, config['test_file_round_3']), lines=True)
-    return nli_r1_test_file, nli_r2_test_file, nli_r3_test_file
+def read_nli_round_labels(root_path):
+    """
+    Load the files from NLI directory and label them automatically
+    :param root_path: We assume anli_v0.1 test set present in api folder
+    :return: Dict object
+    """
 
-def calculate_accuracy(r_objects, target_df, source_key, target_key):
+    full_path = root_path + '/nli'
+    r_file_paths = [name for name in os.listdir(full_path) if os.path.isdir(os.path.join(full_path, name ))]
+    nli_labels = {}
+    for r_file_path in r_file_paths:
+        r_num = r_file_path[len(r_file_path)-1:len(r_file_path)]
+        r_file_path = full_path + '/' + r_file_path
+        nli_labels[int(r_num)] = [json.loads(l)['label'].lower() for l in open(f'{r_file_path}/test.jsonl').read().splitlines()]
+    return nli_labels
+
+def get_accuracy(prediction, target):
+    """
+    Calculate accuracy compared with target label and prediction label
+    :param prediction: model predicted label
+    :param target: correctly labeled set
+    :return: int accuracy value
+    """
+
+    if len(prediction) < len(target):
+        raise AssertionError('Prediction and target file length mismatch')
+    return sum(1 if prediction[index] == target[index] else 0 for index in range(len(target))) / len(target)
+
+def calculate_accuracy(r_objects, prediction):
+    """
+    Function help as calculated the accuracy and convert them into scores object
+    :param r_objects: Rounds object
+    :param prediction: Prediction result
+    :return: Score objects, ui response object and overall accuracy
+    """
+
     app = bottle.default_app()
-    accuracy_int_list = []
+    target_labels = app.config['nli_labels']
+    if len(r_objects) > 1 and len(prediction) < len(sum(target_labels.values(), [])):
+        raise AssertionError('Prediction and target file length mismatch')
+    overall_accuracy = 0
     score_obj_list = []
     split_up = {}
     start_index = 0
     end_index =0
-    target_df[target_key + '_lower'] = target_df[target_key].str.lower()
-    target_df = target_df.reset_index()
     for r_obj in r_objects:
         obj = {}
         obj['round_id'] = r_obj.id
         obj['desc'] = None
         obj['longdesc'] = None
-        source_df = app.config['nli_r' + str(r_obj.rid) + '_test_file']
-        end_index = end_index + source_df.shape[0]
-        final_df = target_df.iloc[start_index:end_index]
+        end_index = end_index + len(target_labels[r_obj.rid])
+        r_prediction = prediction[start_index: end_index]
         start_index = end_index
-        final_df[source_key + '_lower'] = source_df[source_key].str.lower()
-        final_df = final_df[~final_df[target_key].isnull()]
-        matched_count = final_df[final_df[target_key + '_lower'] == final_df[source_key + '_lower']].shape[0]
-        obj['pretty_perf'] = str(round((matched_count/source_df.shape[0])*100, 2))+' %'
-        obj['perf'] = round((matched_count/source_df.shape[0])*100, 2)
-        accuracy_int_list.append(round((matched_count/source_df.shape[0])*100, 2))
-        split_up[r_obj.rid] =round((matched_count/source_df.shape[0])*100, 2)
+        r_accuracy = get_accuracy(r_prediction, target_labels[r_obj.rid])
+        obj['pretty_perf'] = str(round(r_accuracy*100, 2))+' %'
+        obj['perf'] = round(r_accuracy*100, 2)
+        overall_accuracy = overall_accuracy + round(r_accuracy*100, 2)
+        split_up[r_obj.rid] =round(r_accuracy*100, 2)
         score_obj_list.append(obj)
-    return split_up, score_obj_list, round(np.average(accuracy_int_list), 2)
+    print('Final Accuracy === ', overall_accuracy)
+    return split_up, score_obj_list, round(overall_accuracy/len(r_objects), 2)
 
-def is_current_user(uid):
+def is_current_user(uid, credentials=None):
+    """
+    Validate the user id is currently logged in one.
+    :param uid: User id
+    :param credentials: Authorization detail
+    :return: Boolean
+    """
     try:
-        token = _auth.jwt_token_from_header()
-        credentials = _auth.get_payload(token)
+        if not credentials:
+            token = _auth.jwt_token_from_header()
+            credentials = _auth.get_payload(token)
         u = UserModel()
         user = u.get(uid)
         if not user:
@@ -65,3 +100,41 @@ def is_current_user(uid):
     except Exception as ex:
         logging.exception('Current user  verification failed  for (%s) exception : %s ' %(uid, ex))
         return False
+
+def get_limit_and_offset_from_request():
+    """
+    Extract the limit and offset value from request
+    which is help to design the pagination
+    :return: limit, offset
+    """
+
+    try:
+        limit = bottle.request.query.get('limit')
+        offset = bottle.request.query.get('offset')
+        if not limit:
+            limit = 5
+        if not offset:
+            offset = 0
+        # handle if limit in string like ss
+        limit = int(limit)
+        offset = int(offset)
+    except Exception as ex:
+        logging.exception('Query param parsing issue :(%s)' %(ex))
+        limit = 5
+        offset = 0
+
+    return limit, offset
+
+def parse_url(url):
+    """
+    parse and extract the host name and server scheme from request url
+    :param url:
+    :return: url hostname {https://dynabench.org}
+    """
+
+    try:
+        parsed_uri = urlparse(url)
+        formed_url = '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
+        return formed_url
+    except Exception as ex:
+        return "https://dynabench.org"

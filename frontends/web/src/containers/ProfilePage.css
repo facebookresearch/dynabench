@@ -1,0 +1,5 @@
+form.profileForm input[disabled] {
+    background: #fff;
+    border: 0;
+    margin-top: -10px;
+}
