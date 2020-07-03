@@ -1,30 +1,31 @@
-import React from 'react';
-import {
-  Container,
-  Col,
-  Card,
-  Button,
-  Table
-} from 'react-bootstrap';
+import React from "react";
+import { Container, Col, Card, Button, Table } from "react-bootstrap";
+import UserContext from "./UserContext";
 
 class ModelPage extends React.Component {
+  static contextType = UserContext;
   constructor(props) {
     super(props);
     this.state = {
-      modelId: null,
+      modelId: this.props.match.params.modelId,
       model: {
-        name: 'RoBERTa',
+        name: "",
         user: {
-          username: 'douwe',
-        }
+          username: "",
+        },
       },
-      scores: {
-      }
+      scores: {},
     };
   }
   componentDidMount() {
-    const { match: { params } } = this.props;
-    this.setState(params);
+    this.context.api
+      .getModel(this.state.modelId)
+      .then((result) => {
+        this.setState({ model: result });
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   }
   render() {
     return (
@@ -39,15 +40,27 @@ class ModelPage extends React.Component {
                 <Card.Text className="task-page-header m-0">
                   {this.state.model.name}
                 </Card.Text>
-                <Button className="blue-bg border-0 font-weight-bold" aria-label="Back" onClick={this.props.history.goBack}>
-                  {'< Back'}
+                <Button
+                  className="blue-bg border-0 font-weight-bold"
+                  aria-label="Back"
+                  onClick={this.props.history.goBack}
+                >
+                  {"< Back"}
                 </Button>
               </div>
               <Table className="mb-0">
                 <thead />
                 <tbody>
-                  <tr><td>Owner</td><td>{this.state.model.user.username}</td></tr>
-                  <tr><td>Badges</td><td>Rockstar</td></tr>
+                  <tr>
+                    <td>Owner</td>
+                    <td>
+                      {this.state.model.user && this.state.model.user.username}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Badges</td>
+                    <td>Rockstar</td>
+                  </tr>
                 </tbody>
               </Table>
             </Card.Body>

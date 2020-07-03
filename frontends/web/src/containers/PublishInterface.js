@@ -49,7 +49,7 @@ class PublishInterface extends React.Component {
     }
     return errors;
   };
-  handleSubmit = (values) => {
+  handleSubmit = (values, { setSubmitting }) => {
     const reqObj = {
       modelId: this.state.modelId,
       name: values.name,
@@ -62,6 +62,7 @@ class PublishInterface extends React.Component {
       })
       .catch((error) => {
         console.log(error);
+        setSubmitting(false);
       });
   };
 
@@ -152,9 +153,7 @@ class PublishInterface extends React.Component {
                           >
                             Publish
                           </Button>
-                        ) : (
-                          null
-                        )}
+                        ) : null}
                       </form>
                     </>
                   )}

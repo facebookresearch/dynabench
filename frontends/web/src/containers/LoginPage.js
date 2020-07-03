@@ -84,7 +84,7 @@ class LoginPage extends React.Component {
                     </form>
                     <div className="mb-5">
                       <p>Don't have an account? <Link className="underline-hover" to="/register">Sign up</Link></p>
-                      <p><Link className="underline-hover" to="/forgot">Forgot Password?</Link></p>
+                      <p><Link className="underline-hover" to="/forgot-password">Forgot Password?</Link></p>
                     </div>
                     </>
                   )}

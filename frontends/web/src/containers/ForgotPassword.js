@@ -6,7 +6,6 @@ import "./LoginPage.css";
 import UserContext from "./UserContext";
 
 class ForgotPassword extends React.Component {
-  construct() {}
   render() {
     return (
       <UserContext.Consumer>
@@ -15,11 +14,14 @@ class ForgotPassword extends React.Component {
             <Row>
               <div className="wrapper fade-in-down">
                 <div id="form-content" className="login-form text-center">
-                  <h2 className="d-block my-4 text-uppercase text-reset">Forgot Password</h2>
+                  <h2 className="d-block my-4 text-uppercase text-reset">
+                    Forgot Password
+                  </h2>
                   <hr className="mb-4" />
                   <Formik
                     initialValues={{
                       email: "",
+                      isSubmitted: false,
                     }}
                     validate={(values) => {
                       const errors = {};
@@ -28,15 +30,17 @@ class ForgotPassword extends React.Component {
                       }
                       return errors;
                     }}
-                    onSubmit={(values, { setFieldError, setSubmitting }) => {
+                    onSubmit={(values, { setFieldValue, setSubmitting }) => {
                       props.api
                         .forgotPassword(values.email)
                         .then((result) => {
-                          console.log(result);
+                          setFieldValue("isSubmitted", "true");
+                          setSubmitting(false);
                         })
                         .catch((error) => {
                           console.log(error);
                           this.setState({ error });
+                          setFieldValue("isSubmitted", "true");
                           setSubmitting(false);
                         });
                     }}
@@ -51,29 +55,35 @@ class ForgotPassword extends React.Component {
                       isSubmitting,
                     }) => (
                       <>
-                        <form className="px-4" onSubmit={handleSubmit}>
-                          <input
-                            type="email"
-                            name="email"
-                            className="fade-in first text-left"
-                            placeholder="Email"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.email}
-                          />
-                          <small className="form-text text-muted">
-                            {errors.email && touched.email && errors.email}
-                          </small>
-                          <Button
-                            type="submit"
-                            variant="primary"
-                            type="submit"
-                            className="fade-in second submit-btn button-ellipse text-uppercase my-4"
-                            disabled={isSubmitting}
-                          >
-                            Send Reset Link
-                          </Button>
-                        </form>
+                        {!values.isSubmitted ? (
+                          <form className="px-4" onSubmit={handleSubmit}>
+                            <input
+                              type="email"
+                              name="email"
+                              className="fade-in first text-left"
+                              placeholder="Email"
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                              value={values.email}
+                            />
+                            <small className="form-text text-muted">
+                              {errors.email && touched.email && errors.email}
+                            </small>
+                            <Button
+                              type="submit"
+                              variant="primary"
+                              className="fade-in second submit-btn button-ellipse text-uppercase my-4"
+                              disabled={isSubmitting}
+                            >
+                              Send Reset Link
+                            </Button>
+                          </form>
+                        ) : (
+                          <p className="my-5">
+                            If you have an account, we will have sent you an
+                            email!
+                          </p>
+                        )}
                         <div className="mb-5">
                           <p>
                             Don't have an account?{" "}
@@ -84,7 +94,7 @@ class ForgotPassword extends React.Component {
                           <p>
                             Remember your password?{" "}
                             <Link className="underline-hover" to="/login">
-                            Login
+                              Login
                             </Link>
                           </p>
                         </div>
