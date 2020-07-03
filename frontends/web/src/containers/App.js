@@ -1,19 +1,11 @@
 import React from "react";
 import "./App.css";
-import {
-  Navbar,
-  Nav,
-  NavDropdown,
-  Card,
-  CardGroup,
-  Row,
-  Col,
-  Container,
-} from "react-bootstrap";
+import { Navbar, Nav, NavDropdown, Row, Container } from "react-bootstrap";
 import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 import HomePage from "./HomePage";
 import LoginPage from "./LoginPage";
 import ForgotPassword from "./ForgotPassword";
+import ResetPassword from "./ResetPassword";
 import RegisterPage from "./RegisterPage";
 import ProfilePage from "./ProfilePage";
 import AboutPage from "./AboutPage";
@@ -41,7 +33,7 @@ class App extends React.Component {
       tasks: [],
     };
     this.updateState = this.updateState.bind(this);
-    this.api = new ApiService();
+    this.api = new ApiService(process.env.REACT_APP_API_HOST);
   }
   updateState(value) {
     this.setState(value);
@@ -174,10 +166,19 @@ class App extends React.Component {
                   path="/tasks/:taskId/:modelId/publish"
                   component={PublishInterface}
                 />
+                <Route path="/tasks/:taskId/:modelId" component={ModelPage} />
+                <Route
+                  path="/tasks/:taskId/round/:roundId"
+                  component={TaskPage}
+                />
                 <Route path="/tasks/:taskId" component={TaskPage} />
                 <Route path="/tasks" component={TasksPage} />
                 <Route path="/login" component={LoginPage} />
-                <Route path="/forgot" component={ForgotPassword} />
+                <Route path="/forgot-password" component={ForgotPassword} />
+                <Route
+                  path="/reset-password/:token"
+                  component={ResetPassword}
+                />
                 <Route path="/logout" component={Logout} />
                 <Route path="/profile" component={ProfilePage} />
                 <Route path="/register" component={RegisterPage} />
