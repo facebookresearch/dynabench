@@ -17,11 +17,11 @@ class TasksPage extends React.Component {
                 <h2 className="task-header text-uppercase text-center blue-color">
                   {task.name} ({task.shortname})
                 </h2>
-          <Card.Body>
+                <Card.Body>
                   <Card.Text className="text-center">{task.desc}</Card.Text>
-            <Table>
-            <thead></thead>
-            <tbody>
+                  <Table>
+                    <thead></thead>
+                    <tbody>
                       <tr>
                         <td>Round:</td>
                         <td>{task.cur_round}</td>
@@ -54,11 +54,11 @@ class TasksPage extends React.Component {
                           </Moment>
                         </td>
                       </tr>
-            </tbody>
-            </Table>
-          </Card.Body>
-        </Card>
-      </Col>
+                    </tbody>
+                  </Table>
+                </Card.Body>
+              </Card>
+            </Col>
           ))
         : "";
     return (
