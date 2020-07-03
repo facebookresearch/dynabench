@@ -1,14 +1,8 @@
-import React from 'react';
-import {
-  Container,
-  Col,
-  Card,
-  Button,
-  Table
-} from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import React from "react";
+import { Container, Col, Card, Button, Table } from "react-bootstrap";
+import { Link } from "react-router-dom";
 
-import UserContext from './UserContext';
+import UserContext from "./UserContext";
 
 class UserPage extends React.Component {
   static contextType = UserContext;
@@ -16,19 +10,22 @@ class UserPage extends React.Component {
     super(props);
     this.state = {
       userId: null,
-      user: {}
+      user: {},
     };
   }
   componentDidMount() {
-    const { match: { params } } = this.props;
-    this.setState(params, function() {
-      this.context.api.getUser(this.state.userId)
-      .then(result => {
-        this.setState({user: result});
-      })
-      .catch(error => {
-        console.log(error);
-      });
+    const {
+      match: { params },
+    } = this.props;
+    this.setState(params, function () {
+      this.context.api
+        .getUser(this.state.userId)
+        .then((result) => {
+          this.setState({ user: result });
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     });
   }
   render() {
@@ -43,18 +40,30 @@ class UserPage extends React.Component {
             <Card.Body>
               <div className="d-flex justify-content-between mx-4 mt-4">
                 <Card.Text className="task-page-header m-0">
-                  {this.state.user.id ? this.state.user.username : 'User unknown'}
+                  {this.state.user.id
+                    ? this.state.user.username
+                    : "User unknown"}
                 </Card.Text>
-                <Button className="blue-bg border-0 font-weight-bold" aria-label="Back" onClick={this.props.history.goBack}>
-                  {'< Back'}
+                <Button
+                  className="blue-bg border-0 font-weight-bold"
+                  aria-label="Back"
+                  onClick={this.props.history.goBack}
+                >
+                  {"< Back"}
                 </Button>
               </div>
-              {this.state.user.id == this.context.user.id && <Link className="ml-4" to="/profile">Looking for your profile?</Link>}
+              {this.state.user.id == this.context.user.id && (
+                <Link className="ml-4" to="/profile">
+                  Looking for your profile?
+                </Link>
+              )}
               <Table className="mb-0">
                 <thead />
                 <tbody>
-                  <tr><td>Affiliation</td><td>{this.state.user.affiliation}</td></tr>
-                  <tr><td>Badges</td><td>Rockstar</td></tr>
+                  <tr>
+                    <td>Affiliation</td>
+                    <td>{this.state.user.affiliation}</td>
+                  </tr>
                 </tbody>
               </Table>
             </Card.Body>

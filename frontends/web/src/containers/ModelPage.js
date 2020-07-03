@@ -57,10 +57,6 @@ class ModelPage extends React.Component {
                       {this.state.model.user && this.state.model.user.username}
                     </td>
                   </tr>
-                  <tr>
-                    <td>Badges</td>
-                    <td>Rockstar</td>
-                  </tr>
                 </tbody>
               </Table>
             </Card.Body>
