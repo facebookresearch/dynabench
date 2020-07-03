@@ -42,7 +42,7 @@ class ScoreModel(BaseModel):
         self.dbs.add_all([
             Score(
                 rid=score_obj['round_id'], mid=model_id, desc=score_obj['desc'],
-                longdesc = score_obj['longdesc'], pretty_perf=score_obj['pretty_perf'], perf=score_obj['perf']
+                longdesc=score_obj['longdesc'], pretty_perf=score_obj['pretty_perf'], perf=score_obj['perf']
             )
             for score_obj in score_objs
         ])

@@ -27,7 +27,7 @@ mail = get_mail_session(host=config['smtp_host'], port=config['smtp_port'], smtp
 # added mail service in application context
 app.config['mail'] = mail
 
-# add the nli test file in app context -to reduce the turnaround time
+# add the nli test labels in app context -to reduce the turnaround time
 ROOT_PATH = os.path.dirname(os.path.realpath('__file__'))
 nli_labels = read_nli_round_labels(ROOT_PATH)
 app.config['nli_labels'] = nli_labels

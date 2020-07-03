@@ -25,7 +25,7 @@ def read_nli_round_labels(root_path):
     """
 
     full_path = root_path + '/nli'
-    r_file_paths = [name for name in os.listdir(full_path) if os.path.isdir(os.path.join(full_path, name ))]
+    r_file_paths = [name for name in os.listdir(full_path) if os.path.isdir(os.path.join(full_path, name))]
     nli_labels = {}
     for r_file_path in r_file_paths:
         r_num = r_file_path[len(r_file_path)-1:len(r_file_path)]
@@ -41,11 +41,9 @@ def get_accuracy(prediction, target):
     :return: int accuracy value
     """
 
-    if len(prediction) < len(target):
-        raise AssertionError('Prediction and target file length mismatch')
     return sum(1 if prediction[index] == target[index] else 0 for index in range(len(target))) / len(target)
 
-def calculate_accuracy(r_objects, prediction):
+def validate_prediction(r_objects, prediction):
     """
     Function help as calculated the accuracy and convert them into scores object
     :param r_objects: Rounds object
@@ -55,28 +53,34 @@ def calculate_accuracy(r_objects, prediction):
 
     app = bottle.default_app()
     target_labels = app.config['nli_labels']
-    if len(r_objects) > 1 and len(prediction) < len(sum(target_labels.values(), [])):
+    # validate prediction and target labels length
+    if len(r_objects) > 1 and len(prediction) != len(sum(target_labels.values(), [])):
         raise AssertionError('Prediction and target file length mismatch')
+    elif len(r_objects) == 1 and len(target_labels[r_objects[0].rid]) != len(prediction):
+        raise AssertionError('Prediction and target file length mismatch')
+
     overall_accuracy = 0
     score_obj_list = []
     split_up = {}
     start_index = 0
-    end_index =0
+    end_index = 0
     for r_obj in r_objects:
-        obj = {}
-        obj['round_id'] = r_obj.id
-        obj['desc'] = None
-        obj['longdesc'] = None
+        score_obj = {}
+        score_obj['round_id'] = r_obj.id
+        score_obj['desc'] = None
+        score_obj['longdesc'] = None
+        # slice and extract round specific prediction
         end_index = end_index + len(target_labels[r_obj.rid])
         r_prediction = prediction[start_index: end_index]
         start_index = end_index
         r_accuracy = get_accuracy(r_prediction, target_labels[r_obj.rid])
-        obj['pretty_perf'] = str(round(r_accuracy*100, 2))+' %'
-        obj['perf'] = round(r_accuracy*100, 2)
+        score_obj['pretty_perf'] = str(round(r_accuracy*100, 2))+' %'
+        score_obj['perf'] = round(r_accuracy*100, 2)
+        # sum rounds accuracy and generate score object list
         overall_accuracy = overall_accuracy + round(r_accuracy*100, 2)
-        split_up[r_obj.rid] =round(r_accuracy*100, 2)
-        score_obj_list.append(obj)
-    print('Final Accuracy === ', overall_accuracy)
+        split_up[r_obj.rid] = round(r_accuracy*100, 2)
+        score_obj_list.append(score_obj)
+
     return split_up, score_obj_list, round(overall_accuracy/len(r_objects), 2)
 
 def is_current_user(uid, credentials=None):

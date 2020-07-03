@@ -1,6 +1,5 @@
 import sqlalchemy as db
 import bottle
-import pandas as pd
 
 import common.auth as _auth
 import common.helpers as  util
@@ -26,6 +25,12 @@ def get_model(mid):
 @bottle.post('/models/upload')
 @_auth.requires_auth
 def do_upload(credentials):
+    """
+    Upload the result file fpr overall round or specified round like 1,2,3
+    and save those result into models and scores table
+    :param credentials:
+    :return: Models scores detail
+    """
     user = UserModel()
     user_id = credentials['id']
     u = user.get(user_id)
@@ -36,9 +41,9 @@ def do_upload(credentials):
     round_id = bottle.request.forms.get('type')
     upload = bottle.request.files.get('file')
     task_id = bottle.request.forms.get('taskId')
-    test_df = None
+
     try:
-        test_df = pd.read_csv(upload.file, names=['predicted_label'])
+        test_raw_data = upload.file.read().decode('utf-8').lower().splitlines()
     except Exception as ex:
         logging.exception(ex)
         bottle.abort(400, 'Upload valid model result file')
@@ -50,31 +55,29 @@ def do_upload(credentials):
         r_objects = [round.getByTidAndRid(task_id, round_id)]
     if not r_objects:
         bottle.abort(400, 'Model evaluation  failed')
-    #Model file accuracy calculate and score object save into db
-    m = None
-    if test_df.shape[0] > 0:
+    # Model result validate and score object save into db
+    if len(test_raw_data) > 0:
         try:
-            split_up, score_obj_list, overall_accuracy = util.calculate_accuracy(r_objects, test_df, 'label', 'predicted_label')
+            split_up, score_obj_list, overall_accuracy = util.validate_prediction(r_objects, test_raw_data)
             model = ModelModel()
             m = model.create(task_id=task_id, user_id=user_id, name='', shortname='', overall_perf=str(overall_accuracy))
             score = ScoreModel()
-            s = score.bulk_create(model_id = m.id, score_objs= score_obj_list)
+            s = score.bulk_create(model_id=m.id, score_objs=score_obj_list)
             #Construct response object
             response = {
-                "model_id" : m.id,
+                "model_id": m.id,
                 "scores": split_up,
-                "is_published" : False,
+                "is_published": False,
                 "accuracy": overall_accuracy
             }
             return json.dumps(response)
+        except AssertionError:
+            bottle.abort(400, 'Submission file length mismatch')
         except Exception as error_message:
-            # Remove the model from  db if score not saved
-            if m :
-                model.delete(m)
             logging.exception('Model evaluation failed: %s' % (error_message))
             bottle.abort(400, 'Model evaluation failed: %s'% (error_message))
     else:
-        bottle.abort(400, 'Invalid test results')
+        bottle.abort(400, 'Invalid file submitted')
 
 @bottle.put('/models/<model_id>/publish')
 @_auth.requires_auth
@@ -85,10 +88,10 @@ def publish_model(credentials, model_id):
         bottle.abort(400, 'Missing data')
 
     try:
-        m = model.getByMid(model_id)
+        m = model.getUnpublishedModelByMid(id=model_id)
         if m.uid != credentials['id']:
             logging.error('Original user (%s) and the modification tried by (%s)' % (m.uid, credentials['id']))
-            bottle.abort(401, 'Not authorized operation')
+            bottle.abort(401, 'Operation not authorized')
 
         m = model.update(id=m.id, name=data['name'], longdesc=data['description'], is_published=True)
 

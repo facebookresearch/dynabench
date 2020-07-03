@@ -52,7 +52,7 @@ class ModelModel(BaseModel):
         u.update(kwargs)
         self.dbs.commit()
 
-    def getByMid(self, id):
+    def getUnpublishedModelByMid(self, id):
         # Model owner to fetch by id
        return self.dbs.query(Model).filter(Model.id == id).one()
 
