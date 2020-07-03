@@ -1,4 +1,5 @@
 import bottle
+import boto3
 
 import sys
 assert len(sys.argv) == 2, "Missing arg (prod or dev?)"
@@ -31,6 +32,13 @@ from controllers.models import *
 from controllers.contexts import *
 from controllers.tasks import *
 from controllers.examples import *
+
+#Initialize sagemaker endpoint
+sagemaker_client = boto3.client('runtime.sagemaker', aws_access_key_id=config['sagemaker_aws_access_key_id'],
+                       aws_secret_access_key=config['sagemaker_aws_secret_access_key'],
+                       region_name=config['sagemaker_aws_region'])
+
+app.config['sagemaker_client'] = sagemaker_client
 
 if running_mode == 'dev':
     app.config['mode'] = 'dev'
