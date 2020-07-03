@@ -62,13 +62,16 @@ def get_limit_and_offset_from_request():
 def parse_url(url):
     """
     parse and extract the host name and server scheme from request url
-    :param url: 
+    :param url:
     :return: url hostname {https://dynabench.org}
     """
 
     try:
-        parsed_uri = urlparse(url)
-        formed_url = '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
-        return formed_url
+        host_name = bottle.request.get_header('origin')
+        if not host_name:
+            parsed_uri = urlparse(url)
+            formed_url = '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
+            return formed_url
+        return host_name
     except Exception as ex:
         return "https://dynabench.org"

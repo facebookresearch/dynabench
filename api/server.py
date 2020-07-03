@@ -16,7 +16,7 @@ init_logger(running_mode)
 
 app = bottle.default_app()
 for k in ['jwtsecret', 'jwtexp', 'jwtalgo', 'cookie_secret', 'refreshexp', 'forgot_pass_template',
-          'smtp_from_email_address', 'smtp_host', 'smtp_port', 'smtp_secret', 'smtp_user']:
+          'smtp_from_email_address', 'smtp_host', 'smtp_port', 'smtp_secret', 'smtp_user', 'email_sender_name']:
     app.config[k] = config[k]
 
 # Mail service
@@ -32,6 +32,7 @@ from controllers.models import *
 from controllers.contexts import *
 from controllers.tasks import *
 from controllers.examples import *
+from controllers.endpoints import *
 
 #Initialize sagemaker endpoint
 sagemaker_client = boto3.client('runtime.sagemaker', aws_access_key_id=config['sagemaker_aws_access_key_id'],
