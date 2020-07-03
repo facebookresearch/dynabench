@@ -63,7 +63,7 @@ class ProfilePage extends React.Component {
           <Card>
             <h1 className="task-page-header mb-0 mx-4 mt-4">
               Profile
-              {this.state.isDisabled ? (
+              {this.state.isDisabled && this.state.user.email ? (
                 <Button onClick={this.handleToggle} className="float-right">
                   Edit
                 </Button>

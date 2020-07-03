@@ -21,7 +21,6 @@ class ResetPassword extends React.Component {
     } else if (values.password !== values.confirmPassword) {
       errors.confirmPassword = "Make sure both passwords entered are same";
     }
-
     return errors;
   };
 
