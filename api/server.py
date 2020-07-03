@@ -14,7 +14,7 @@ from common.mail_service import *
 init_logger(running_mode)
 
 app = bottle.default_app()
-for k in ['jwtsecret', 'jwtexp', 'jwtalgo', 'cookie_secret', 'refreshexp', 'jwtforgotexp', 'forgot_pass_template',
+for k in ['jwtsecret', 'jwtexp', 'jwtalgo', 'cookie_secret', 'refreshexp', 'forgot_pass_template',
           'smtp_from_email_address', 'smtp_host', 'smtp_port', 'smtp_secret', 'smtp_user']:
     app.config[k] = config[k]
 
