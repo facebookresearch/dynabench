@@ -33,6 +33,7 @@ class Example(Base):
     target_pred = db.Column(db.Text)
     model_preds = db.Column(db.Text)
     verifier_preds = db.Column(db.Text)
+    target_model = db.Column(db.Text)
 
     model_wrong = db.Column(db.Boolean)
     retracted = db.Column(db.Boolean, default=False)
@@ -56,7 +57,7 @@ class ExampleModel(BaseModel):
     def __init__(self):
         super(ExampleModel, self).__init__(Example)
 
-    def create(self, tid, rid, uid, cid, hypothesis, tgt, response, signed, annotator_id=None):
+    def create(self, tid, rid, uid, cid, hypothesis, tgt, response, signed, annotator_id=None, model=''):
         if uid == 'turk' and annotator_id is None:
             logging.error('Annotator id not specified but received Turk example')
             return False
@@ -97,7 +98,7 @@ class ExampleModel(BaseModel):
             e = Example(context=c, \
                     text=hypothesis, target_pred=tgt, model_preds=pred_str, \
                     model_wrong=model_wrong,
-                    generated_datetime=db.sql.func.now())
+                    generated_datetime=db.sql.func.now(), target_model=model)
 
             # store uid/annotator_id and anon_id
             anon_id = hashlib.sha1()
@@ -133,21 +134,23 @@ class ExampleModel(BaseModel):
 
     def getUserLeaderByTid(self, tid, n=5, offset=0):
         cnt = db.sql.func.sum(case([(Example.model_wrong == 1, 1)], else_=0)).label('cnt')
-        return self.dbs.query(User.id, User.username, cnt, (cnt / db.func.count()) ,  db.func.count().over()).\
+        return self.dbs.query(User.id, User.username, cnt, (cnt / db.func.count()) ,
+                              db.func.count(), db.func.count().over()).\
             join(Example, User.id == Example.uid)\
             .join(Context, Example.cid == Context.id)\
             .join(Round, Context.r_realid == Round.id)\
             .join(Task, Round.tid == Task.id).filter(Task.id == tid)\
-            .group_by(User.id).having(cnt > 0).\
+            .group_by(User.id).having(db.func.count() > 0).\
             order_by( (cnt / db.func.count()).desc()).limit(n).offset(n * offset)
 
     def getUserLeaderByTidAndRid(self, tid, rid, n=5, offset=0):
         cnt = db.sql.func.sum(case([(Example.model_wrong == 1, 1)], else_=0)).label('cnt')
-        return self.dbs.query(User.id, User.username, cnt, (cnt / db.func.count()), db.func.count().over())\
+        return self.dbs.query(User.id, User.username, cnt, (cnt / db.func.count()),
+                              db.func.count(), db.func.count().over())\
             .join(Example, User.id == Example.uid)\
             .join(Context, Example.cid == Context.id)\
             .join(Round, Context.r_realid == Round.id)\
             .join(Task, Round.tid == Task.id)\
             .filter(Task.id == tid).filter(Round.rid == rid)\
-            .group_by(User.id).having(cnt > 0)\
+            .group_by(User.id).having(db.func.count() > 0)\
             .order_by( (cnt / db.func.count()).desc()).limit(n).offset(n * offset)
