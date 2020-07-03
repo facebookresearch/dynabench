@@ -9,12 +9,20 @@ running_mode = sys.argv[1]
 from common.cors import *
 from common.config import *
 from common.logging import *
+from common.mail_service import *
 
 init_logger(running_mode)
 
 app = bottle.default_app()
-for k in ['jwtsecret', 'jwtexp', 'jwtalgo', 'cookie_secret', 'refreshexp']:
+for k in ['jwtsecret', 'jwtexp', 'jwtalgo', 'cookie_secret', 'refreshexp', 'forgot_pass_template',
+          'smtp_from_email_address', 'smtp_host', 'smtp_port', 'smtp_secret', 'smtp_user']:
     app.config[k] = config[k]
+
+# Mail service
+mail = get_mail_session(host=config['smtp_host'], port=config['smtp_port'], smtp_user=config['smtp_user'],
+                        smtp_secret=config['smtp_secret'])
+# added mail service in application context
+app.config['mail'] = mail
 
 from controllers.index import *
 from controllers.auth import *
