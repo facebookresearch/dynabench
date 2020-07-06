@@ -137,8 +137,11 @@ def parse_url(url):
     """
 
     try:
-        parsed_uri = urlparse(url)
-        formed_url = '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
-        return formed_url
+        host_name = bottle.request.get_header('origin')
+        if not host_name:
+            parsed_uri = urlparse(url)
+            formed_url = '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
+            return formed_url
+        return host_name
     except Exception as ex:
         return "https://dynabench.org"

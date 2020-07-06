@@ -22,6 +22,18 @@ def get_model(mid):
     # Also get this model's scores?
     return json.dumps(model.to_dict())
 
+@bottle.get('/models/<mid:int>/details')
+def get_model_detail(mid):
+    try:
+        m = ModelModel()
+        query_result = m.getModelUserByMid(mid)
+        model = query_result[0].to_dict()
+        model['user'] = query_result[1].to_dict()
+        return json.dumps(model)
+    except Exception as ex:
+        logging.exception('Model detail exception : (%s)' %(ex))
+        bottle.abort(404, 'Not found')
+
 @bottle.post('/models/upload')
 @_auth.requires_auth
 def do_upload(credentials):
@@ -101,4 +113,3 @@ def publish_model(credentials, model_id):
     except Exception as e:
         logging.exception('Could not update model details: %s' % (e))
         bottle.abort(400, 'Could not update model details: %s' % (e))
-

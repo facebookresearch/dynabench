@@ -50,7 +50,7 @@ def update_example(credentials, eid):
 def post_example(credentials):
     data = bottle.request.json
     logging.info(data)
-    if not check_fields(data, ['tid', 'rid', 'uid', 'cid', 'hypothesis', 'target', 'response']):
+    if not check_fields(data, ['tid', 'rid', 'uid', 'cid', 'hypothesis', 'target', 'response', 'model']):
         bottle.abort(400, 'Missing data')
 
     if credentials['id'] == 'turk' and data['uid'].startswith('turk|'):
@@ -68,7 +68,8 @@ def post_example(credentials):
             tgt=data['target'], \
             response=data['response'], \
             signed=data['response']['signed'], \
-            annotator_id=data['annotator_id'] if credentials['id'] == 'turk' else '' \
+            annotator_id=data['annotator_id'] if credentials['id'] == 'turk' else '', \
+            model=data['model']
             )
     if not eid:
         bottle.abort(400, 'Could not create example')

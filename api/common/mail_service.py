@@ -1,6 +1,7 @@
 import bottle
 
 import smtplib
+import email.utils
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from string import Template
@@ -66,7 +67,8 @@ def send(server=None, contacts = [], template_name = '', msg_dict = {}, subject 
             # add in the actual person name to the message template
             message = message_template.substitute(msg_dict)
             # setup the parameters of the message
-            msg['From'] = app.config['smtp_from_email_address']
+            msg['From'] = email.utils.formataddr((app.config['email_sender_name'],
+                                                                app.config['smtp_from_email_address']))
             msg['To'] = contact
             msg['Subject'] = subject
             # add in the message body

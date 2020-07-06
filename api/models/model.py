@@ -1,6 +1,8 @@
 import sqlalchemy as db
 from .base import Base, BaseModel
 
+from models.user import User
+
 class Model(Base):
     __tablename__ = 'models'
     __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
@@ -75,3 +77,7 @@ class ModelModel(BaseModel):
         else:
             return self.dbs.query(Model).filter(Model.uid == uid).filter(Model.id == mid).\
                 filter(Model.is_published == True).one()
+
+    def getModelUserByMid(self, id):
+        return self.dbs.query(Model, User).join(User, User.id == Model.uid)\
+                .filter(Model.id == id).filter(Model.is_published == True).one()
