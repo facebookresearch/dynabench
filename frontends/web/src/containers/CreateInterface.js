@@ -52,7 +52,7 @@ class ContextInfo extends React.Component {
                 tag: 'ANS',
               })}
             />
-            <p class="mt-3 px-3">Your goal: enter a question and select an answer in the context, such that the model is fooled.</p>
+            <p className="mt-3 px-3">Your goal: enter a question and select an answer in the context, such that the model is fooled.</p>
           </>
         :
           <>
