@@ -31,7 +31,7 @@ def get_mail_session(host, port, smtp_user, smtp_secret):
         server.login(smtp_user, smtp_secret)
         return server
     except Exception as e:
-        logging.exception('Mail session create failure : (%s)', e)
+        logging.exception('Mail session could not be created - you will not be able to send mail: (%s)', e)
         return None
 
 def test_SMTP_conn_open(conn):
