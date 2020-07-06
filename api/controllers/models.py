@@ -43,10 +43,10 @@ def do_upload(credentials):
     :param credentials:
     :return: Models scores detail
     """
-    user = UserModel()
+    u = UserModel()
     user_id = credentials['id']
-    u = user.get(user_id)
-    if not u:
+    user = u.get(user_id)
+    if not user:
         logging.error('Invalid user detail for id (%s)' %(user_id))
         bottle.abort(404, 'User information not found')
 
@@ -60,24 +60,24 @@ def do_upload(credentials):
         logging.exception(ex)
         bottle.abort(400, 'Upload valid model result file')
     # Round object fetch from DB
-    round = RoundModel()
+    r = RoundModel()
     if round_id == 'overall':
-        r_objects = round.getByTid(task_id)
+        rounds = r.getByTid(task_id)
     else:
-        r_objects = [round.getByTidAndRid(task_id, round_id)]
-    if not r_objects:
+        rounds = [r.getByTidAndRid(task_id, round_id)]
+    if not rounds:
         bottle.abort(400, 'Model evaluation  failed')
     # Model result validate and score object save into db
     if len(test_raw_data) > 0:
         try:
-            split_up, score_obj_list, overall_accuracy = util.validate_prediction(r_objects, test_raw_data)
-            model = ModelModel()
-            m = model.create(task_id=task_id, user_id=user_id, name='', shortname='', overall_perf=str(overall_accuracy))
-            score = ScoreModel()
-            s = score.bulk_create(model_id=m.id, score_objs=score_obj_list)
+            split_up, score_obj_list, overall_accuracy = util.validate_prediction(rounds, test_raw_data)
+            m = ModelModel()
+            model = m.create(task_id=task_id, user_id=user_id, name='', shortname='', overall_perf=str(overall_accuracy))
+            s = ScoreModel()
+            scores = s.bulk_create(model_id=model.id, score_objs=score_obj_list)
             #Construct response object
             response = {
-                "model_id": m.id,
+                "model_id": model.id,
                 "scores": split_up,
                 "is_published": False,
                 "accuracy": overall_accuracy
@@ -91,21 +91,21 @@ def do_upload(credentials):
     else:
         bottle.abort(400, 'Invalid file submitted')
 
-@bottle.put('/models/<model_id>/publish')
+@bottle.put('/models/<mid:int>/publish')
 @_auth.requires_auth
-def publish_model(credentials, model_id):
-    model = ModelModel()
+def publish_model(credentials, mid):
+    m = ModelModel()
     data = bottle.request.json
     if not check_fields(data, ['name', 'description']):
         bottle.abort(400, 'Missing data')
 
     try:
-        m = model.getUnpublishedModelByMid(id=model_id)
-        if m.uid != credentials['id']:
-            logging.error('Original user (%s) and the modification tried by (%s)' % (m.uid, credentials['id']))
+        model = m.getUnpublishedModelByMid(mid)
+        if model.uid != credentials['id']:
+            logging.error('Original user (%s) and the modification tried by (%s)' % (model.uid, credentials['id']))
             bottle.abort(401, 'Operation not authorized')
 
-        m = model.update(id=m.id, name=data['name'], longdesc=data['description'], is_published=True)
+        model = m.update(model.id, name=data['name'], longdesc=data['description'], is_published=True)
 
         return {'status': 'success'}
     except db.orm.exc.NoResultFound as ex:
