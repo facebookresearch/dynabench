@@ -32,6 +32,22 @@ class Score(Base):
 class ScoreModel(BaseModel):
     def __init__(self):
         super(ScoreModel, self).__init__(Score)
+
+    def create(self, round_id, model_id, **kwargs):
+        m = Score(rid=round_id, mid=model_id, **kwargs)
+        self.dbs.add(m)
+        return self.dbs.commit()
+
+    def bulk_create(self, model_id, score_objs=[]):
+        self.dbs.add_all([
+            Score(
+                rid=score_obj['round_id'], mid=model_id, desc=score_obj['desc'],
+                longdesc=score_obj['longdesc'], pretty_perf=score_obj['pretty_perf'], perf=score_obj['perf']
+            )
+            for score_obj in score_objs
+        ])
+        return self.dbs.commit()
+
     def getOverallPerfByTask(self, tid, n=5):
         try:
             return self.dbs.query(Score.id,db.sql.func.avg(Score.perf).label('avg_perf')).filter(Score.tid == tid).group_by(Score.rid).order_by(db.sql.func.avg(Score.perf).desc()).limit(n)

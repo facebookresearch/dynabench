@@ -37,8 +37,30 @@ class ModelModel(BaseModel):
     def __init__(self):
         super(ModelModel, self).__init__(Model)
 
-    #def get(self, id):
-    #    return dbs.query(Model).filter(Model.id == id).one()
+    def create(self, task_id, user_id, **kwargs):
+        m = Model(tid=task_id, uid=user_id, **kwargs)
+        self.dbs.add(m)
+        self.dbs.flush()
+        self.dbs.commit()
+        return m
+
+    def delete(self, model):
+        self.dbs.delete(model)
+        self.dbs.commit()
+        return True
+
+    def update(self, id, **kwargs):
+        u = self.dbs.query(Model).filter(Model.id == id)
+        u.update(kwargs)
+        self.dbs.commit()
+
+    def getUnpublishedModelByMid(self, id):
+        # Model owner to fetch by id
+       return self.dbs.query(Model).filter(Model.id == id).one()
+
+    def get(self, id):
+       return self.dbs.query(Model).filter(Model.id == id).filter(Model.is_published == True).one()
+
     def getByTid(self, tid):
         return self.dbs.query(Model).filter(Model.tid == tid).all()
 

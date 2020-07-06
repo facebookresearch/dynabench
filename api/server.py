@@ -1,5 +1,6 @@
 import bottle
 import boto3
+import os
 
 import sys
 assert len(sys.argv) == 2, "Missing arg (prod or dev?)"
@@ -11,6 +12,7 @@ from common.cors import *
 from common.config import *
 from common.logging import *
 from common.mail_service import *
+from common.helpers import *
 
 init_logger(running_mode)
 
@@ -24,6 +26,11 @@ mail = get_mail_session(host=config['smtp_host'], port=config['smtp_port'], smtp
                         smtp_secret=config['smtp_secret'])
 # added mail service in application context
 app.config['mail'] = mail
+
+# add the nli test labels in app context -to reduce the turnaround time
+ROOT_PATH = os.path.dirname(os.path.realpath('__file__'))
+nli_labels = read_nli_round_labels(ROOT_PATH)
+app.config['nli_labels'] = nli_labels
 
 from controllers.index import *
 from controllers.auth import *
