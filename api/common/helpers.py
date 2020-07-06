@@ -24,7 +24,7 @@ def read_nli_round_labels(root_path):
     :return: Dict object
     """
 
-    full_path = root_path + '/nli'
+    full_path = root_path + '/data/anli_v1.0'
     r_file_paths = [name for name in os.listdir(full_path) if os.path.isdir(os.path.join(full_path, name))]
     nli_labels = {}
     for r_file_path in r_file_paths:
