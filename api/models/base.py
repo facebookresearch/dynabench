@@ -1,12 +1,14 @@
 import sqlalchemy as db
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
+from common.config import *
 
 Base = declarative_base()
 
 # now this is very ugly..
 def connect_db():
-    engine = db.create_engine('mysql+pymysql://dynabench:dynabench@localhost:3306/dynabench', pool_pre_ping=True, pool_recycle=3600)
+    engine_url = 'mysql+pymysql://{}:{}@localhost:3306/{}'.format(config['db_user'], config['db_password'], config['db_name'])
+    engine = db.create_engine(engine_url, pool_pre_ping=True, pool_recycle=3600)
     connection = engine.connect()
     Base.metadata.bind = engine
     Session = scoped_session( sessionmaker() )

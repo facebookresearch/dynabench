@@ -1,6 +1,12 @@
+import sys
+
+sys.path.append('..')
+from common.config import *
+
 #! /usr/bin/env python
 import MySQLdb
 
+dbname = config['db_name']
 db = MySQLdb.connect(host='localhost', user=config['db_user'], passwd=config['db_password'], db=config['db_name'])
 cursor = db.cursor()
 

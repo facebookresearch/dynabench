@@ -50,7 +50,7 @@ def update_example(credentials, eid):
 def post_example(credentials):
     data = bottle.request.json
     logging.info(data)
-    if not check_fields(data, ['tid', 'rid', 'uid', 'cid', 'hypothesis', 'target', 'response']):
+    if not check_fields(data, ['tid', 'rid', 'uid', 'cid', 'hypothesis', 'target', 'response', 'model']):
         bottle.abort(400, 'Missing data')
 
     if credentials['id'] == 'turk' and data['uid'].startswith('turk|'):
@@ -59,7 +59,6 @@ def post_example(credentials):
     elif data['uid'] != credentials['id']:
             bottle.abort(403, 'Access denied')
     em = ExampleModel()
-    # TODO: Make this accept anything instead of forcing it to be 'prob' (e.g. for QA)
     eid = em.create( \
             tid=data['tid'], \
             rid=data['rid'], \
@@ -67,9 +66,10 @@ def post_example(credentials):
             cid=data['cid'], \
             hypothesis=data['hypothesis'], \
             tgt=data['target'], \
-            pred=data['response']['prob'], \
+            response=data['response'], \
             signed=data['response']['signed'], \
-            annotator_id=data['annotator_id'] if credentials['id'] == 'turk' else '' \
+            annotator_id=data['annotator_id'] if credentials['id'] == 'turk' else '', \
+            model=data['model']
             )
     if not eid:
         bottle.abort(400, 'Could not create example')

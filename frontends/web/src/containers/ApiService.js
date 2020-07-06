@@ -76,6 +76,72 @@ export default class ApiService {
     })
   }
 
+  submitModel(data) {
+    const formData = new FormData();
+    formData.append("file", data.file);
+    formData.append("type", data.roundType);
+    formData.append("taskId", data.taskId);
+    const token = this.getToken();
+    var f = this.fetch(`${this.domain}/models/upload`, {
+      method: "POST",
+      body: formData,
+      headers: {
+        Authorization: token ? "Bearer " + token : "None",
+      },
+    });
+    return f.then((res) => {
+      return Promise.resolve(res);
+    });
+  }
+
+  publishModel({ modelId, name, description }) {
+    var f = this.fetch(`${this.domain}/models/${modelId}/publish`, {
+      method: "PUT",
+      body: JSON.stringify({
+        name,
+        description,
+      }),
+    });
+    return f.then((res) => {
+      return Promise.resolve(res);
+    });
+  }
+
+  getTrends(taskId) {
+    var f = this.fetch(`${this.domain}/tasks/${taskId}/trends`, {
+      method: "GET",
+    });
+    return f.then((res) => {
+      return Promise.resolve(res);
+    });
+  }
+
+  getOverallModelLeaderboard(taskId, round, limit, offset) {
+    const url =
+      round === "overall"
+        ? `/models?limit=${limit || 10}&offset=${offset || 0}`
+        : `/rounds/${round}/models?limit=${limit || 10}&offset=${offset || 0}`;
+    var f = this.fetch(`${this.domain}/tasks/${taskId}${url}`, {
+      method: "GET",
+    });
+    return f.then((res) => {
+      return Promise.resolve(res);
+    });
+  }
+
+  getOverallUserLeaderboard(taskId, round, limit, offset) {
+    const url =
+      round === "overall"
+        ? `/users?limit=${limit || 10}&offset=${offset || 0}`
+        : `/rounds/${round}/users?limit=${limit || 10}&offset=${offset || 0}`;
+    var f = this.fetch(`${this.domain}/tasks/${taskId}${url}`, {
+      method: "GET",
+    });
+    return f.then((res) => {
+      return Promise.resolve(res);
+    });
+  }
+
   getUser(id) {
     var f = this.fetch(`${this.domain}/users/${id}`, {
       method: 'GET'
@@ -113,7 +179,7 @@ export default class ApiService {
     return this.fetch(modelUrl, {
       method: 'POST',
       body: JSON.stringify(
-        {'context': modelInputs.context, 'hypothesis': modelInputs.hypothesis}
+        {'context': modelInputs.context, 'hypothesis': modelInputs.hypothesis, 'answer': modelInputs.answer}
       )
     }).then(res => {
       return Promise.resolve(res);

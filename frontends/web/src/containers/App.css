@@ -2,6 +2,10 @@
   min-height: 88vh;
 }
 
+.sidebar-wrapper {
+  padding: 0px;
+}
+
 .blue-bg {
   background-color: #1283d8;
 }
@@ -35,7 +39,8 @@
 .navbar-dark .dropdown-item:focus,
 .navbar-dark .dropdown-item:hover,
 .sidebar-wrapper .nav-link:focus,
-.sidebar-wrapper .nav-link:hover {
+.sidebar-wrapper .nav-link:hover,
+.sidebar-wrapper .nav-link.active {
   background-color: rgba(18, 131, 216, 0.1);
   color: #1283d8;
 }
@@ -100,4 +105,10 @@
     border: 1px solid #fff;
     border-radius: 20px;
   }
+}
+
+div.recharts-wrapper
+  .recharts-layer.recharts-cartesian-axis.recharts-yAxis.yAxis
+  g.recharts-layer.recharts-cartesian-axis-tick:first-child {
+  display: none;
 }
