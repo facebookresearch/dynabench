@@ -253,14 +253,11 @@ class CreateInterface extends React.Component {
             result.prob = [result.prob, 1 - result.prob];
             this.state.task.targets = ["confidence", "uncertainty"];
           } else {
-            var modelPredIdx = isNaN(result.prob)
-              ? result.prob.indexOf(Math.max(...result.prob))
-              : result.prob;
+            var modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
             var modelPredStr = this.state.task.targets[modelPredIdx];
             var modelFooled =
-              (isNaN(result.prob)
-                ? result.prob.indexOf(Math.max(...result.prob))
-                : result.prob) !== this.state.target;
+              result.prob.indexOf(Math.max(...result.prob)) !==
+              this.state.target;
           }
           this.setState(
             {
