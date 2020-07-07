@@ -46,7 +46,7 @@ const chartSizes = {
 };
 
 const TaskNav = (props) => {
-  const rounds = (props.taskDetail.round && props.taskDetail.round.rid) || 0;
+  const rounds = (props.taskDetail.round && props.taskDetail.cur_round) || 0;
   const roundNavs = [];
   const currentHash = props.location.hash;
   for (let i = 1; i <= rounds; i++) {
@@ -124,10 +124,13 @@ const OverallModelLeaderBoard = (props) => {
           return (
             <tr key={data.model_id}>
               <td>
-                <Link to="/models/1" className="btn-link">
+                <Link to={`/models/${data.model_id}`} className="btn-link">
                   {data.model_name}
                 </Link>{" "}
-                <Link to={`/users/${data.owner_id}`} className="btn-link">
+                <Link
+                  to={`/users/${data.owner_id}#profile`}
+                  className="btn-link"
+                >
                   ({data.owner})
                 </Link>
               </td>
@@ -153,14 +156,14 @@ const OverallUserLeaderBoard = (props) => {
       <tbody>
         {props.data.map((data) => {
           return (
-            <tr key={data.id}>
+            <tr key={data.uid}>
               <td>
-                <Link to={`/users/${data.id}`} className="btn-link">
+                <Link to={`/users/${data.uid}#profile`} className="btn-link">
                   {data.username}
                 </Link>
               </td>
               <td>{data.MER}%</td>
-              <td>{data.count}</td>
+              <td>{data.total}</td>
             </tr>
           );
         })}
@@ -305,7 +308,7 @@ class TaskPage extends React.Component {
         </Tooltip>
       );
     }
-    
+
     function renderCreateTooltip(props) {
       return renderTooltip(props, "Create new examples where the model fails");
     }
@@ -400,21 +403,23 @@ class TaskPage extends React.Component {
                     </Button>
                   </OverlayTrigger>
                 </Nav.Item> */}
-                <Nav.Item className="task-action-btn">
-                  <OverlayTrigger
-                    placement="bottom"
-                    delay={{ show: 250, hide: 400 }}
-                    overlay={renderSubmitTooltip}
-                  >
-                    <Button
-                      as={Link}
-                      className="border-0 blue-color font-weight-bold light-gray-bg"
-                      to={"/tasks/" + this.state.taskId + "/submit"}
+                {parseInt(this.state.task.id) === 1 ? (
+                  <Nav.Item className="task-action-btn">
+                    <OverlayTrigger
+                      placement="bottom"
+                      delay={{ show: 250, hide: 400 }}
+                      overlay={renderSubmitTooltip}
                     >
-                      Submit
-                    </Button>
-                  </OverlayTrigger>
-                </Nav.Item>
+                      <Button
+                        as={Link}
+                        className="border-0 blue-color font-weight-bold light-gray-bg"
+                        to={"/tasks/" + this.state.taskId + "/submit"}
+                      >
+                        Submit
+                      </Button>
+                    </OverlayTrigger>
+                  </Nav.Item>
+                ) : null}
               </Nav>
             ) : null}
             <Row>

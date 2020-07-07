@@ -60,6 +60,24 @@ export default class ApiService {
     })
   }
 
+  resetPassword({ email, password, token }) {
+    return this.fetch(`${this.domain}/recover/resolve/${token}`, {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }).then((res) => {
+      return Promise.resolve(res);
+    });
+  }
+
+  updateUser(userId, body) {
+    return this.fetch(`${this.domain}/users/${userId}/profileUpdate`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }).then((res) => {
+      return Promise.resolve(res);
+    });
+  }
+
   getUsers() {
     return this.fetch(`${this.domain}/users`, {
       method: 'GET'
@@ -87,6 +105,7 @@ export default class ApiService {
       body: formData,
       headers: {
         Authorization: token ? "Bearer " + token : "None",
+        Origin: this.domain,
       },
     });
     return f.then((res) => {
@@ -304,10 +323,11 @@ export default class ApiService {
   doFetch(url, options) {
     const token = this.getToken();
     const headers = {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'Authorization': token ? ('Bearer ' + token ) : 'None',
-    }
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Authorization: token ? "Bearer " + token : "None",
+      Origin: this.domain,
+    };
     return fetch(url, {
       headers,
       credentials: 'include', // not sure if we always need this?
