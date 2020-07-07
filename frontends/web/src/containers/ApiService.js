@@ -105,7 +105,6 @@ export default class ApiService {
       body: formData,
       headers: {
         Authorization: token ? "Bearer " + token : "None",
-        Origin: this.domain,
       },
     });
     return f.then((res) => {

@@ -403,7 +403,7 @@ class TaskPage extends React.Component {
                     </Button>
                   </OverlayTrigger>
                 </Nav.Item> */}
-                {parseInt(this.state.task.id) === 1 ? (
+                {this.state.task.shortname === "NLI" ? (
                   <Nav.Item className="task-action-btn">
                     <OverlayTrigger
                       placement="bottom"
