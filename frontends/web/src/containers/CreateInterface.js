@@ -207,6 +207,13 @@ class CreateInterface extends React.Component {
         });
     });
   }
+
+  pickModel = (modelsStr) => {
+    const models = modelsStr.split("|");
+    const model = models[Math.floor(Math.random() * models.length)];
+    return model;
+  };
+
   handleResponse() {
     this.setState({ submitDisabled: true, refreshDisabled: true }, () => {
       if (this.state.hypothesis.length == 0) {
@@ -233,8 +240,10 @@ class CreateInterface extends React.Component {
         hypothesis: this.state.hypothesis,
         answer: answer_text,
       };
+
+      const randomModel = this.pickModel(this.state.task.round.url);
       this.context.api
-        .getModelResponse(this.state.task.round.url, modelInputs)
+        .getModelResponse(randomModel, modelInputs)
         .then((result) => {
           if (this.state.task.type == "extract") {
             var modelPredIdx = null;
@@ -274,7 +283,8 @@ class CreateInterface extends React.Component {
                   this.state.context.id,
                   this.state.hypothesis,
                   this.state.target,
-                  result
+                  result,
+                  randomModel
                 )
                 .then((result) => {
                   var key = this.state.content.length - 1;
@@ -290,12 +300,20 @@ class CreateInterface extends React.Component {
                 })
                 .catch((error) => {
                   console.log(error);
+                  this.setState({
+                    submitDisabled: false,
+                    refreshDisabled: false,
+                  });
                 });
             }
           );
         })
         .catch((error) => {
           console.log(error);
+          this.setState({
+            submitDisabled: false,
+            refreshDisabled: false,
+          });
         });
     });
   }

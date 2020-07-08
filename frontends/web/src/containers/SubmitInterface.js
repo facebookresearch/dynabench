@@ -29,6 +29,7 @@ class SubmitInterface extends React.Component {
       );
     }
   }
+
   handleValidation = (values) => {
     const errors = {};
     const allowedExtensions = /(\.txt)$/i;
@@ -42,7 +43,8 @@ class SubmitInterface extends React.Component {
     }
     return errors;
   };
-  handleSubmit = (values, { setSubmitting }) => {
+
+  handleSubmit = (values, { setFieldValue, setSubmitting }) => {
     const reqObj = {
       taskId: this.state.taskId,
       roundType: values.roundType,
@@ -58,9 +60,11 @@ class SubmitInterface extends React.Component {
       })
       .catch((error) => {
         setSubmitting(false);
+        setFieldValue("failed", "Failed To Submit. Plese try again");
         console.log(error);
       });
   };
+
   render() {
     return (
       <Container>
@@ -84,6 +88,7 @@ class SubmitInterface extends React.Component {
                   initialValues={{
                     file: null,
                     roundType: "overall",
+                    failed: "",
                   }}
                   validate={this.handleValidation}
                   onSubmit={this.handleSubmit}
@@ -131,6 +136,7 @@ class SubmitInterface extends React.Component {
                                               variant="outline-danger"
                                               size="sm"
                                               onClick={(event) => {
+                                                setFieldValue("failed", "");
                                                 setFieldValue("file", null);
                                               }}
                                             >
@@ -150,6 +156,7 @@ class SubmitInterface extends React.Component {
                                         "file",
                                         event.currentTarget.files[0]
                                       );
+                                      setFieldValue("failed", "");
                                     }}
                                     required={errors.file}
                                     name="file"
@@ -160,6 +167,7 @@ class SubmitInterface extends React.Component {
                               )}
                               <small className="form-text text-muted">
                                 {errors.file}
+                                {values.failed}
                               </small>
                             </Form.Group>
                           </Row>

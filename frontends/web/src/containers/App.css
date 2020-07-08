@@ -4,6 +4,7 @@
 
 .sidebar-wrapper {
   padding: 0px;
+  z-index: 2;
 }
 
 .blue-bg {
