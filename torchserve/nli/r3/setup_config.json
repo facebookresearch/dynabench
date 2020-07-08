@@ -1,0 +1,8 @@
+{
+ "model_name":"roberta.large",
+ "mode":"NLI",
+ "do_lower_case":"True",
+ "num_labels":3,
+ "save_mode":"pretrained",
+ "max_length":512
+}
