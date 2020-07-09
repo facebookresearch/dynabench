@@ -10,7 +10,7 @@ export default class ApiService {
   constructor(domain) {
     if (!process.env.NODE_ENV || process.env.NODE_ENV === "development") {
       //this.domain = domain || 'https://54.187.22.210:8081'
-      this.domain = domain || "https://www.dynabench.org:8081";
+      this.domain = domain || "https://dev.dynabench.org:8081";
     } else {
       //this.domain = domain || 'https://54.187.22.210:8080'
       this.domain = domain || "https://www.dynabench.org:8080";
@@ -308,25 +308,28 @@ export default class ApiService {
   }
 
   refreshToken() {
-    return this.doFetch(`${this.domain}/authenticate/refresh`).then(
+    return this.doFetch(`${this.domain}/authenticate/refresh`, {}, true).then(
       (result) => {
         this.setToken(result.token);
       }
     );
   }
 
-  doFetch(url, options) {
+  doFetch(url, options, includeCredentials = false) {
     const token = this.getToken();
     const headers = {
       Accept: "application/json",
       "Content-Type": "application/json",
       Authorization: token ? "Bearer " + token : "None",
     };
-    return fetch(url, {
+    options = {
       headers,
-      credentials: "include", // not sure if we always need this?
       ...options,
-    })
+    };
+    if (includeCredentials) {
+      options.credentials = "include";
+    }
+    return fetch(url, options)
       .then(this._checkStatus)
       .then((response) => response.json());
   }
