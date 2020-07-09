@@ -1,6 +1,6 @@
 {
  "model_name":"bert-large-uncased",
- "mode":"NLI",
+ "mode":"nli",
  "do_lower_case":"True",
  "num_labels":"2",
  "save_mode":"pretrained",

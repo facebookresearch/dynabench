@@ -27,7 +27,7 @@ import tqdm
 
 class NliTransformerHandler(BaseHandler, ABC):
     """
-    Transformers handler class for sequence, token classification and question answering.
+    Transformers handler class for NLI.
     """
 
     def is_validate(self, example):

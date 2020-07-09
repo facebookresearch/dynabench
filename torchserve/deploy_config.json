@@ -1,8 +1,8 @@
 {
     "task": "nli",
     "round_id": 2,
-    "model_no":1,
-    "model_url": "http://dl.fbaipublicfiles.com/dynabench/nli/roberta_round3_1.pt",
+    "model_no":3,
+    "model_url": "nli/r2/roberta_round2_3.pt",
     "initial_instance_count" : 1,
 	"gateway_url": "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict"
     

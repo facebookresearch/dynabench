@@ -13,26 +13,20 @@ from ts.torch_handler.base_handler import BaseHandler
 from settings import my_secret,my_task_id,my_round_id
 logger = logging.getLogger(__name__)
 import time
-# ==================== cusotm import ===============
+# ================== Round 3 imports =================
 import uuid
 import sys
-#sys.path.append("/Users/Chiffon/Documents/Technical/Ideas2It/Facebook project/dynabench/dynabench-old/modelservers/anli/src")
 sys.path.append("/home/model-server/anli/src")
 
-
-from bert_model.modeling import BertMultiLayerSeqClassification
 from data_utils.exvocab import ExVocabulary
-from data_utils.readers.bert_nli_reader import BertNLIReader
-from pytorch_pretrained_bert import BertTokenizer, BertModel, BertAdam
-from flint import torch_util
 import tqdm
-# ================== Round 3 imports =================
+
 from roberta_model.nli_training import RoBertaSeqClassification
 from data_utils.readers.roberta_nli_reader import RoBertaNLIReader
 from fairseq.models.roberta import RobertaModel
 class NliTransformerHandler(BaseHandler, ABC):
     """
-    Transformers handler class for sequence, token classification and question answering.
+    Transformers handler class for NLI.
     """
 
     def __init__(self):

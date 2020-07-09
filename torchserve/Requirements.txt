@@ -1,3 +1,4 @@
 torch
 transformers
 torch-model-archiver
+boto3

@@ -74,10 +74,6 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
         logger.info("In preprocess, hypothesis's value: '%s'",input_text)   
         #preprocessing text for sequence_classification and token_classification.
         if self.setup_config["mode"]== "sequence_classification" :
-            # inputs = self.tokenizer.encode_plus([input_text],max_length = int(max_length), add_special_tokens = True, return_tensors = 'pt', return_attention_mask= True)
-            # logger.info("Inputs after encode_plus: '%s'", inputs)
-            # input_ids= inputs['input_ids']
-            # attention_mask = inputs['attention_mask']
             batch_encoding = self.tokenizer.batch_encode_plus(
             [input_text], max_length=int(max_length), pad_to_max_length=True)
             input_ids = torch.tensor(batch_encoding['input_ids'], dtype=torch.long)

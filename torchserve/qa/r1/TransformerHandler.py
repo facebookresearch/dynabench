@@ -20,21 +20,10 @@ from transformers.data.metrics.squad_metrics import compute_f1, compute_exact
 logger = logging.getLogger(__name__)
 
 THRESHOLD_F1 = 0.4
-QA_CONFIG = {
-    'max_seq_length': 512,
-    'max_query_length': 64,
-    'max_answer_length': 30,
-    'do_lower_case': False,
-    'doc_stride': 128,
-    'eval_batch_size': 8,
-    'n_best_size': 1,
-    'n_best_per_passage_size': 1
-}
-
 
 class TransformersSeqClassifierHandler(BaseHandler, ABC):
     """
-    Transformers handler class for sequence classification
+    Transformers handler class for question answering
     """
     def __init__(self):
         super(TransformersSeqClassifierHandler, self).__init__()
