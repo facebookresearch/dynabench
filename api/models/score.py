@@ -68,17 +68,18 @@ class ScoreModel(BaseModel):
             return False
 
     def getOverallModelPerfByTask(self, tid, n=5, offset=0):
-        return self.dbs.query(Model.id, Model.name, User.username, User.id,
-                db.sql.func.avg(Score.perf).label('avg_perg'), db.sql.func.count(Model.id).over().label('total'))\
+                #db.sql.func.avg(Score.perf).label('avg_perf'), db.sql.func.count(Model.id).over().label('total'))\
+                #.filter(Model.tid == tid).filter(Model.is_published == True)\
+                #.group_by(Model.id).order_by(db.sql.func.avg(Score.perf).desc())\
+        return self.dbs.query(Model.id, Model.name, User.username, User.id) \
                 .join(Score, Score.mid == Model.id)\
                 .join(User, User.id == Model.uid)\
-                .filter(Model.tid == tid).filter(Model.is_published == True)\
-                .group_by(Model.id).order_by(db.sql.func.avg(Score.perf).desc())\
                 .limit(n).offset(offset * n)
 
     def getModelPerfByTidAndRid(self, tid, rid, n=5, offset=0):
-        return self.dbs.query(Model.id, Model.name, User.username, User.id, Score.perf,
-                db.sql.func.count(Model.id).over().label('total'))\
+
+        #db.sql.func.count(Model.id).over().label('total'))\
+        return self.dbs.query(Model.id, Model.name, User.username, User.id, Score.perf) \
                 .join(Score, Score.mid == Model.id, isouter=True)\
                 .join(User, User.id == Model.uid, isouter=True)\
                 .join(Round, Round.id == Score.rid, isouter=True).filter(Model.tid == tid).\

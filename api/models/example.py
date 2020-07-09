@@ -28,15 +28,21 @@ class Example(Base):
     anon_id = db.Column(db.Text)
 
     text = db.Column(db.Text)
-    explanation = db.Column(db.Text)
+    example_explanation = db.Column(db.Text) # why is X the label for this example
+    model_explanation = db.Column(db.Text) # why do you think the model got it wrong
+
+    metadata_json = db.Column(db.Text)
 
     target_pred = db.Column(db.Text)
     model_preds = db.Column(db.Text)
     verifier_preds = db.Column(db.Text)
     target_model = db.Column(db.Text)
 
+    split = db.Column(db.String(length=255), default='undecided')
+
     model_wrong = db.Column(db.Boolean)
     retracted = db.Column(db.Boolean, default=False)
+    flagged = db.Column(db.Boolean, default=False)
     verified_correct = db.Column(db.Boolean, default=False)
 
     generated_datetime = db.Column(db.DateTime)
@@ -132,25 +138,21 @@ class ExampleModel(BaseModel):
                 )
             ).limit(n).all()
 
-    def getUserLeaderByTid(self, tid, n=5, offset=0):
+    def getUserLeaderByTid(self, tid, n=5, offset=0, min_cnt=0, downstream=False):
         cnt = db.sql.func.sum(case([(Example.model_wrong == 1, 1)], else_=0)).label('cnt')
-        return self.dbs.query(User.id, User.username, cnt, (cnt / db.func.count()) ,
-                              db.func.count(), db.func.count().over()).\
-            join(Example, User.id == Example.uid)\
-            .join(Context, Example.cid == Context.id)\
-            .join(Round, Context.r_realid == Round.id)\
-            .join(Task, Round.tid == Task.id).filter(Task.id == tid)\
-            .group_by(User.id).having(db.func.count() > 0).\
-            order_by( (cnt / db.func.count()).desc()).limit(n).offset(n * offset)
+        res = self.dbs.query(User.id, User.username, cnt, (cnt / db.func.count()), db.func.count()) \
+            .join(Example, User.id == Example.uid) \
+            .join(Context, Example.cid == Context.id) \
+            .join(Round, Context.r_realid == Round.id) \
+            .join(Task, Round.tid == Task.id).filter(Task.id == tid) \
+            .group_by(User.id).having(db.func.count() > min_cnt) \
+            .order_by( (cnt / db.func.count()).desc())
+        if not downstream:
+            res = res \
+            .limit(n).offset(n * offset)
+        return res
 
-    def getUserLeaderByTidAndRid(self, tid, rid, n=5, offset=0):
-        cnt = db.sql.func.sum(case([(Example.model_wrong == 1, 1)], else_=0)).label('cnt')
-        return self.dbs.query(User.id, User.username, cnt, (cnt / db.func.count()),
-                              db.func.count(), db.func.count().over())\
-            .join(Example, User.id == Example.uid)\
-            .join(Context, Example.cid == Context.id)\
-            .join(Round, Context.r_realid == Round.id)\
-            .join(Task, Round.tid == Task.id)\
-            .filter(Task.id == tid).filter(Round.rid == rid)\
-            .group_by(User.id).having(db.func.count() > 0)\
-            .order_by( (cnt / db.func.count()).desc()).limit(n).offset(n * offset)
+    def getUserLeaderByTidAndRid(self, tid, rid, n=5, offset=0, min_cnt=0):
+        return self.getUserLeaderByTid(tid, n, offset, min_cnt, downstream=True) \
+                .filter(Round.rid == rid) \
+                .limit(n).offset(n * offset)

@@ -12,7 +12,7 @@ class Context(Base):
 
     context = db.Column(db.Text)
 
-    tags = db.Column(db.Text) # e.g. source, or whatever
+    metadata_json = db.Column(db.Text) # e.g. source, or whatever
 
     total_used = db.Column(db.Integer, default=0)
 

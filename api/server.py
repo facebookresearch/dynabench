@@ -22,9 +22,10 @@ for k in ['jwtsecret', 'jwtexp', 'jwtalgo', 'cookie_secret', 'refreshexp', 'forg
     app.config[k] = config[k]
 
 # set up mail service
-mail = get_mail_session(host=config['smtp_host'], port=config['smtp_port'], smtp_user=config['smtp_user'],
-                        smtp_secret=config['smtp_secret'])
-app.config['mail'] = mail
+if 'smtp_user' in config and config['smtp_user'] != '':
+    mail = get_mail_session(host=config['smtp_host'], port=config['smtp_port'], smtp_user=config['smtp_user'],
+                            smtp_secret=config['smtp_secret'])
+    app.config['mail'] = mail
 
 # add the nli test labels in app context -to reduce the turnaround time
 ROOT_PATH = os.path.dirname(os.path.realpath('__file__'))
