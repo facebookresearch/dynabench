@@ -215,7 +215,7 @@ export default class ApiService {
     });
   }
 
-  storeExample(tid, rid, uid, cid, hypothesis, target, response) {
+  storeExample(tid, rid, uid, cid, hypothesis, target, response, model) {
     return this.fetch(`${this.domain}/examples`, {
       method: "POST",
       body: JSON.stringify({
@@ -228,6 +228,7 @@ export default class ApiService {
         // TODO: make this more specific later to reduce latency:
         // Only .prob and .signed?
         response: response,
+        model: model
       }),
     }).then((res) => {
       return Promise.resolve(res);

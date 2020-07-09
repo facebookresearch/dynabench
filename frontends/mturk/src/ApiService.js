@@ -63,7 +63,8 @@ class ApiService {
           'cid': cid,
           'uid': uid, // MECHANICAL TURK WORKER ID
           'target': target,
-          'response': response
+          'response': response,
+          'model': 'blank' // TODO: Make this use the correct model url
         }
       )
     }).then(res => {
