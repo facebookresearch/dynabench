@@ -135,7 +135,7 @@ const OverallModelLeaderBoard = (props) => {
                   ({data.owner})
                 </Link>
               </td>
-              <td>{data.accuracy}%</td>
+              <td>{parseFloat(data.accuracy).toFixed(2)}%</td>
             </tr>
           );
         })}

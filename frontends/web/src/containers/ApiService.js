@@ -83,9 +83,6 @@ export default class ApiService {
     var f = this.fetch(`${this.domain}/users/uploadprofile`, {
       method: "POST",
       body: formData,
-      headers: {
-        Authorization: token ? "Bearer " + token : "None",
-      },
     });
     return f.then((res) => {
       return Promise.resolve(res);

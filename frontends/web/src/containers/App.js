@@ -16,7 +16,7 @@ import TermsPage from "./TermsPage";
 import DataPolicyPage from "./DataPolicyPage";
 import UserContext from "./UserContext";
 import TasksContext from "./TasksContext";
-import User from "./User";
+import UserPage from "./UserPage";
 import ModelPage from "./ModelPage";
 import ApiService from "./ApiService";
 import ScrollToTop from "./ScrollToTop.js";
@@ -193,7 +193,7 @@ class App extends React.Component {
                 <Route path="/logout" component={Logout} />
                 <Route path="/account" component={ProfilePage} />
                 <Route path="/register" component={RegisterPage} />
-                <Route path="/users/:userId" component={User} />
+                <Route path="/users/:userId" component={UserPage} />
                 <Route path="/models/:modelId" component={ModelPage} />
                 <Route path="/" component={HomePage} />
               </Switch>

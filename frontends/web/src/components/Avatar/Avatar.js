@@ -1,14 +1,14 @@
 import React, { useContext } from "react";
-import UserContext from "../../containers/UserContext";
-import './Avatar.css'
+import "./Avatar.css";
+
 export const Avatar = ({
   profile_img,
   username,
   isEditable,
   theme = "light",
   isThumbnail,
+  handleUpdate,
 }) => {
-  const { api } = useContext(UserContext);
   const getInitial = (name) => {
     return (
       name &&
@@ -20,17 +20,6 @@ export const Avatar = ({
     );
   };
 
-  const handleAvatarChange = (e) => {
-    const files = e.target.files;
-    api
-      .updateProfilePic(files[0])
-      .then((result) => {
-        this.setState({ user: result });
-      })
-      .catch((error) => {
-        console.log("error", error);
-      });
-  };
   return (
     <>
       {profile_img && !profile_img !== "" ? (
@@ -51,7 +40,7 @@ export const Avatar = ({
                 className="pic-file-upload"
                 type="file"
                 title="Click here to upload your profile picture"
-                onChange={(e) => handleAvatarChange(e)}
+                onChange={(e) => handleUpdate(e)}
               />
             </div>
           ) : null}
@@ -64,7 +53,7 @@ export const Avatar = ({
         >
           <span
             className={`initials ${
-              theme === "light" ? "blue-color" : "white-color"
+              theme === "light" ? "blue-bg" : "white-color"
             }`}
           >
             {getInitial(username)}
@@ -76,7 +65,7 @@ export const Avatar = ({
                 className="pic-file-upload"
                 type="file"
                 title="Click here to upload your profile picture"
-                onChange={(e) => handleAvatarChange(e)}
+                onChange={(e) => handleUpdate(e)}
               />
             </div>
           ) : null}

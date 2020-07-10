@@ -127,6 +127,18 @@ class ProfilePage extends React.Component {
       });
   };
 
+  handleAvatarChange = (e) => {
+    const files = e.target.files;
+    this.context.api
+      .updateProfilePic(files[0])
+      .then((result) => {
+        this.setState({ user: result });
+      })
+      .catch((error) => {
+        console.log("error", error);
+      });
+  };
+
   render() {
     return (
       <div className="container-area">
@@ -172,6 +184,7 @@ class ProfilePage extends React.Component {
                           username={this.state.user.username}
                           isEditable={true}
                           theme="blue"
+                          handleUpdate={this.handleAvatarChange}
                         />
                       </Col>
                     </Row>
