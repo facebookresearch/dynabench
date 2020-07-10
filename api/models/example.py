@@ -12,6 +12,8 @@ from models.task import Task
 
 import numpy as np
 
+from common import helpers as util
+
 class Example(Base):
     __tablename__ = 'examples'
     __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
@@ -140,19 +142,18 @@ class ExampleModel(BaseModel):
 
     def getUserLeaderByTid(self, tid, n=5, offset=0, min_cnt=0, downstream=False):
         cnt = db.sql.func.sum(case([(Example.model_wrong == 1, 1)], else_=0)).label('cnt')
-        res = self.dbs.query(User.id, User.username, cnt, (cnt / db.func.count()), db.func.count()) \
+        query_res = self.dbs.query(User.id, User.username, cnt, (cnt / db.func.count()), db.func.count()) \
             .join(Example, User.id == Example.uid) \
             .join(Context, Example.cid == Context.id) \
             .join(Round, Context.r_realid == Round.id) \
             .join(Task, Round.tid == Task.id).filter(Task.id == tid) \
             .group_by(User.id).having(db.func.count() > min_cnt) \
-            .order_by( (cnt / db.func.count()).desc())
+            .order_by((cnt / db.func.count()).desc())
         if not downstream:
-            res = res \
-            .limit(n).offset(n * offset)
-        return res
+            return query_res.limit(n).offset(n * offset), util.get_query_count(query_res)
+        return query_res
 
     def getUserLeaderByTidAndRid(self, tid, rid, n=5, offset=0, min_cnt=0):
-        return self.getUserLeaderByTid(tid, n, offset, min_cnt, downstream=True) \
-                .filter(Round.rid == rid) \
-                .limit(n).offset(n * offset)
+        query_res = self.getUserLeaderByTid(tid, n, offset, min_cnt, downstream=True) \
+                .filter(Round.rid == rid).limit(n).offset(n * offset)
+        return query_res, util.get_query_count(query_res)

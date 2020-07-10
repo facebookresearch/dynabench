@@ -8,6 +8,9 @@ from models.user import UserModel
 import logging
 import json
 
+import sqlalchemy as db
+from sqlalchemy.orm import lazyload
+
 def check_fields(data, fields):
     if not data:
         return False
@@ -145,3 +148,35 @@ def parse_url(url):
         return host_name
     except Exception as ex:
         return "https://dynabench.org"
+
+def get_query_count(query):
+    """
+    Function used to fetch total select in query count
+    which is relatively faster than the  sub-query and query.count() build function
+    :param query:  query which is created to execute at run time
+    :return count: return scalar total count value
+    """
+
+    disable_group_by = False
+    entity = query._entities[0]
+    if hasattr(entity, 'column'):
+        # _ColumnEntity has column attr - on case: query(Model.column)...
+        col = entity.column
+        if query._group_by and query._distinct:
+            # which query can have both?
+            raise NotImplementedError
+        if query._group_by or query._distinct:
+            col = db.distinct(col)
+        if query._group_by:
+            # need to disable group_by and enable distinct - we can do this because we have only 1 entity
+            disable_group_by = True
+        count_func = db.func.count(col)
+    else:
+        # _MapperEntity doesn't have column attr - on case: query(Model)...
+        count_func = db.func.count()
+    if query._group_by and not disable_group_by:
+        count_func = count_func.over(None)
+    count_q = query.options(lazyload('*')).statement.with_only_columns([count_func]).order_by(None)
+    if disable_group_by:
+        count_q = count_q.group_by(None)
+    return query.session.execute(count_q).scalar()

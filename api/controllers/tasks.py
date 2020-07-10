@@ -42,8 +42,8 @@ def get_user_leaderboard(tid):
     e = ExampleModel()
     limit, offset = util.get_limit_and_offset_from_request()
     try:
-        query_result = e.getUserLeaderByTid(tid=tid, n=limit, offset=offset)
-        return construct_user_board_response_json(query_result=query_result)
+        query_result, total_count = e.getUserLeaderByTid(tid=tid, n=limit, offset=offset)
+        return construct_user_board_response_json(query_result=query_result, total_count=total_count)
     except Exception as ex:
         logging.exception('User leader board data loading failed: (%s)' % (ex))
         bottle.abort(400, 'Invalid task detail')
@@ -59,13 +59,13 @@ def get_leaderboard_by_task_and_round(tid, rid):
     e = ExampleModel()
     limit, offset = util.get_limit_and_offset_from_request()
     try:
-        query_result = e.getUserLeaderByTidAndRid(tid=tid, rid=rid, n=limit, offset=offset)
-        return construct_user_board_response_json(query_result=query_result)
+        query_result, total_count = e.getUserLeaderByTidAndRid(tid=tid, rid=rid, n=limit, offset=offset)
+        return construct_user_board_response_json(query_result=query_result, total_count=total_count)
     except Exception as ex:
         logging.exception('User leader board data loading failed: (%s)' % (ex))
         bottle.abort(400, 'Invalid task/round detail')
 
-def construct_user_board_response_json(query_result):
+def construct_user_board_response_json(query_result, total_count=0):
     list_objs = []
     # converting query result into json object
     for result in query_result:
@@ -73,11 +73,11 @@ def construct_user_board_response_json(query_result):
         obj['uid'] = result[0]
         obj['username'] = result[1]
         obj['count'] = int(result[2])
-        obj['MER'] = str(round(result[3] * 100, 2)) + '%'
+        obj['MER'] = str(round(result[3] * 100, 2))
         obj['total'] = str(result[2]) + '/' + str(result[4])
         list_objs.append(obj)
     if list_objs:
-        total_count = query_result[0][len(query_result[0]) - 1]
+        # total_count = query_result[0][len(query_result[0]) - 1]
         resp_obj = {'count': total_count, 'data': list_objs}
         return json.dumps(resp_obj)
     else:
@@ -94,8 +94,8 @@ def get_model_leaderboard(tid):
     try:
         score = ScoreModel()
         limit, offset = util.get_limit_and_offset_from_request()
-        query_result = score.getOverallModelPerfByTask(tid=tid, n=limit, offset=offset)
-        return construct_model_board_response_json(query_result=query_result)
+        query_result, total_count = score.getOverallModelPerfByTask(tid=tid, n=limit, offset=offset)
+        return construct_model_board_response_json(query_result=query_result, total_count=total_count)
     except Exception as ex:
         logging.exception('Model leader board data loading failed: (%s)' % (ex))
         bottle.abort(400, 'Invalid task detail')
@@ -111,8 +111,8 @@ def get_model_leaderboard_round(tid, rid):
     score = ScoreModel()
     try:
         limit, offset = util.get_limit_and_offset_from_request()
-        query_result = score.getModelPerfByTidAndRid(tid=tid, rid=rid, n=limit, offset=offset)
-        return construct_model_board_response_json(query_result=query_result)
+        query_result, total_count = score.getModelPerfByTidAndRid(tid=tid, rid=rid, n=limit, offset=offset)
+        return construct_model_board_response_json(query_result=query_result, total_count=total_count)
     except Exception as ex:
         logging.exception('Model leader board data loading failed: (%s)' %(ex))
         bottle.abort(400, 'Invalid task/round detail')
@@ -134,11 +134,10 @@ def get_task_trends(tid):
         logging.exception('User trends data loading failed: (%s)' % (ex))
         bottle.abort(400, 'Invalid task detail')
 
-def construct_model_board_response_json(query_result):
-    fields = ['model_id', 'model_name', 'owner', 'owner_id', 'accuracy', 'total_counts']
+def construct_model_board_response_json(query_result, total_count):
+    fields = ['model_id', 'model_name', 'owner', 'owner_id', 'accuracy']
     dicts = [dict(zip(fields, d)) for d in query_result]
     if dicts:
-        total_count = query_result[0][len(fields) - 1]
         resp_obj = {'count': total_count, 'data': dicts}
         return json.dumps(resp_obj)
     else:

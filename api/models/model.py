@@ -2,6 +2,7 @@ import sqlalchemy as db
 from .base import Base, BaseModel
 
 from models.user import User
+from common import helpers as util
 
 class Model(Base):
     __tablename__ = 'models'
@@ -66,10 +67,12 @@ class ModelModel(BaseModel):
 
     def getUserModelsByUid(self, uid, is_current_user=False, n=5, offset=0):
         if is_current_user:
-            return self.dbs.query(Model).filter(Model.uid == uid).limit(n).offset(offset * n)
+            query_res = self.dbs.query(Model).filter(Model.uid == uid).limit(n).offset(offset * n)
+            return query_res, util.get_query_count(query_res)
         else:
-            return self.dbs.query(Model).filter(Model.uid == uid).filter(Model.is_published == True).\
+            query_res = self.dbs.query(Model).filter(Model.uid == uid).filter(Model.is_published == True).\
                 limit(n).offset(offset * n)
+            return query_res, util.get_query_count(query_res)
 
     def getUserModelsByUidAndMid(self, uid, mid, is_current_user=False):
         if is_current_user:

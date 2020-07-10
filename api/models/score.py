@@ -4,6 +4,8 @@ from .model import Model
 from models.user import User
 from models.round import Round
 
+from common import helpers as util
+
 class Score(Base):
     __tablename__ = 'scores'
     __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
@@ -68,23 +70,26 @@ class ScoreModel(BaseModel):
             return False
 
     def getOverallModelPerfByTask(self, tid, n=5, offset=0):
-                #db.sql.func.avg(Score.perf).label('avg_perf'), db.sql.func.count(Model.id).over().label('total'))\
-                #.filter(Model.tid == tid).filter(Model.is_published == True)\
-                #.group_by(Model.id).order_by(db.sql.func.avg(Score.perf).desc())\
-        return self.dbs.query(Model.id, Model.name, User.username, User.id) \
+        # Main query to fetch the model details
+        query_res = self.dbs.query(Model.id, Model.name, User.username, User.id,
+                db.sql.func.avg(Score.perf).label('avg_perf')) \
                 .join(Score, Score.mid == Model.id)\
-                .join(User, User.id == Model.uid)\
-                .limit(n).offset(offset * n)
+                .join(User, User.id == Model.uid) \
+                .filter(Model.tid == tid).filter(Model.is_published == True) \
+                .group_by(Model.id).order_by(db.sql.func.avg(Score.perf).desc()).limit(n).offset(offset * n)
+
+        return query_res, util.get_query_count(query_res)
 
     def getModelPerfByTidAndRid(self, tid, rid, n=5, offset=0):
-
-        #db.sql.func.count(Model.id).over().label('total'))\
-        return self.dbs.query(Model.id, Model.name, User.username, User.id, Score.perf) \
+        # main query to fetch the model details
+        query_res = self.dbs.query(Model.id, Model.name, User.username, User.id, Score.perf) \
                 .join(Score, Score.mid == Model.id, isouter=True)\
                 .join(User, User.id == Model.uid, isouter=True)\
-                .join(Round, Round.id == Score.rid, isouter=True).filter(Model.tid == tid).\
-                filter(Round.rid == rid).filter(Model.is_published == True).\
-                order_by((Score.perf).desc()).limit(n).offset(offset * n)
+                .join(Round, Round.id == Score.rid, isouter=True).filter(Model.tid == tid)\
+                .filter(Round.rid == rid).filter(Model.is_published == True)\
+                .order_by((Score.perf).desc()).limit(n).offset(offset * n)
+
+        return query_res, util.get_query_count(query_res)
 
     def getTrendsByTid(self, tid, n=10, offset=0):
         # subquery to get the top performance model
