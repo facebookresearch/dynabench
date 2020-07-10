@@ -14,6 +14,7 @@ import {
 import { Link } from "react-router-dom";
 import UserContext from "./UserContext";
 import { LineRechart } from "../components/Rechart";
+import { Avatar } from "../components/Avatar/Avatar";
 import Moment from "react-moment";
 
 const chartSizes = {
@@ -158,6 +159,12 @@ const OverallUserLeaderBoard = (props) => {
           return (
             <tr key={data.uid}>
               <td>
+                <Avatar
+                  profile_img={data.profile_img}
+                  username={data.username}
+                  isThumbnail={true}
+                  theme="blue"
+                />
                 <Link to={`/users/${data.uid}#profile`} className="btn-link">
                   {data.username}
                 </Link>
