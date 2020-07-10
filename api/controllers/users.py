@@ -30,10 +30,10 @@ def get_user(credentials, id):
 
     if id != credentials['id']:
         # only copy some sub fields if this is not us
-        nu, u = {}, u.to_dict()
+        nu, u = {}, user.to_dict()
         for f in ['id', 'username', 'affiliation']:
             nu[f] = u[f]
-        return json.dump(nu)
+        return json.dumps(nu)
     else:
         return json.dumps(user.to_dict())
 
