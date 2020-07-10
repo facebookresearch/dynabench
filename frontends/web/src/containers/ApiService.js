@@ -80,7 +80,7 @@ export default class ApiService {
     const formData = new FormData();
     formData.append("file", file);
     const token = this.getToken();
-    var f = this.fetch(`${this.domain}/profilepic`, {
+    var f = this.fetch(`${this.domain}/users/uploadprofile`, {
       method: "POST",
       body: formData,
       headers: {
@@ -328,7 +328,7 @@ export default class ApiService {
 
   getCredentials() {
     console.log(this.getToken());
-    return decode(this.getToken());
+    return this.getToken() ? decode(this.getToken()) : {};
   }
 
   refreshTokenWrapper(callback, error) {
