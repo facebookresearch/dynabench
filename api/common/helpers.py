@@ -68,7 +68,7 @@ def get_f1(prediction, target):
     :return: int sum of f1 values
     """
 
-    return sum(compute_f1(prediction[index], target[index]) for index in range(len(target))) / len(target)
+    return sum(compute_f1(target[index], prediction[index]) for index in range(len(target))) / len(target)
 
 def validate_prediction(r_objects, prediction, task='nli'):
     """
