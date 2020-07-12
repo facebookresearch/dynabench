@@ -1,6 +1,7 @@
 import bottle
 import os
 from urllib.parse import urlparse
+from transformers.data.metrics.squad_metrics import compute_f1
 
 import common.auth as _auth
 from models.user import UserModel
@@ -33,6 +34,22 @@ def read_nli_round_labels(root_path):
         nli_labels[int(r_num)] = [json.loads(l)['label'].lower() for l in open(f'{r_file_path}/test.jsonl').read().splitlines()]
     return nli_labels
 
+def read_qa_round_labels(root_path):
+    """
+    Load the files from QA directory and label them automatically
+    :param root_path: We assume aqa_v1.0 test set present in api folder
+    :return: Dict object
+    """
+
+    full_path = root_path + '/data/aqa_v1.0'
+    r_file_paths = [name for name in os.listdir(full_path) if os.path.isdir(os.path.join(full_path, name))]
+    qa_labels = {}
+    for r_file_path in r_file_paths:
+        r_num = r_file_path[len(r_file_path)-1:len(r_file_path)]
+        r_file_path = full_path + '/' + r_file_path
+        qa_labels[int(r_num)] = [json.loads(l)['answers'][0]['text'].lower() for l in open(f'{r_file_path}/test.jsonl').read().splitlines()]
+    return qa_labels
+
 def get_accuracy(prediction, target):
     """
     Calculate accuracy compared with target label and prediction label
@@ -43,7 +60,17 @@ def get_accuracy(prediction, target):
 
     return sum(1 if prediction[index] == target[index] else 0 for index in range(len(target))) / len(target)
 
-def validate_prediction(r_objects, prediction):
+def get_f1(prediction, target):
+    """
+    Calculate word-overlap f1 score between target label and prediction label
+    :param prediction: (list of) model predicted label
+    :param target: (list of) correctly labeled set
+    :return: int sum of f1 values
+    """
+
+    return sum(compute_f1(prediction[index], target[index]) for index in range(len(target))) / len(target)
+
+def validate_prediction(r_objects, prediction, task='nli'):
     """
     Function help as calculated the accuracy and convert them into scores object
     :param r_objects: Rounds object
@@ -52,7 +79,13 @@ def validate_prediction(r_objects, prediction):
     """
 
     app = bottle.default_app()
-    target_labels = app.config['nli_labels']
+    if task == 'nli':
+        target_labels = app.config['nli_labels']
+        eval_fn = get_accuracy
+    elif task == 'qa':
+        target_labels = app.config['qa_labels']
+        eval_fn = get_f1
+
     # validate prediction and target labels length
     if len(r_objects) > 1 and len(prediction) != len(sum(target_labels.values(), [])):
         raise AssertionError('Prediction and target file length mismatch')
@@ -73,7 +106,7 @@ def validate_prediction(r_objects, prediction):
         end_index = end_index + len(target_labels[r_obj.rid])
         r_prediction = prediction[start_index: end_index]
         start_index = end_index
-        r_accuracy = get_accuracy(r_prediction, target_labels[r_obj.rid])
+        r_accuracy = eval_fn(r_prediction, target_labels[r_obj.rid])
         score_obj['pretty_perf'] = str(round(r_accuracy*100, 2))+' %'
         score_obj['perf'] = round(r_accuracy*100, 2)
         # sum rounds accuracy and generate score object list

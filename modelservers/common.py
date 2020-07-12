@@ -10,7 +10,7 @@ def get_cors_headers(cors_url):
                         ['http://dynabench.org:3001', 'http://www.dynabench.org:3001', 'http://localhost:3000', 'http://localhost:3001'] + \
                         ['https://workersandbox.mturk.com', 'https://sandbox.mturk.com']
     # TODO: Fix this, ugly hack to get Mephisto to work
-    if cors_url.endswith('herokuapp.com'):
+    if str(cors_url).endswith('herokuapp.com'):
         pass
     elif cors_url not in valid_cors_urls:
         cors_url = 'http://dynabench.org'
