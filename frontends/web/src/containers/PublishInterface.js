@@ -70,8 +70,10 @@ class PublishInterface extends React.Component {
   };
 
   render() {
-    const { accuracy, scores, isPublished } = this.state;
-    let orderedScores = (scores || []).sort((a, b) => a.round_id - b.round_id);
+    const { accuracy, scores, isPublished, model } = this.state;
+    let orderedScores = (model.scores || []).sort(
+      (a, b) => a.round_id - b.round_id
+    );
     return (
       <Container>
         <Row>
@@ -87,7 +89,7 @@ class PublishInterface extends React.Component {
                       <b>Your Accuracy</b>
                     </Col>
                     <Col sm="8">
-                      <b>{accuracy}%</b>
+                      <b>{model.overall_perf}%</b>
                     </Col>
                   </Row>
                   {orderedScores.map((data) => {
@@ -103,8 +105,8 @@ class PublishInterface extends React.Component {
                 </Container>
                 <Formik
                   initialValues={{
-                    name: this.state.model.name || "",
-                    description: this.state.model.description || "",
+                    name: model.name || "",
+                    description: model.description || "",
                   }}
                   validate={this.handleValidation}
                   onSubmit={this.handleSubmit}
@@ -144,7 +146,7 @@ class PublishInterface extends React.Component {
                             onChange={handleChange}
                           />
                         </Form.Group>
-                        {!isPublished ? (
+                        {!model.is_published == 'False' ? (
                           <Button
                             type="submit"
                             variant="primary"
