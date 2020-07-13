@@ -66,20 +66,16 @@ class ModelModel(BaseModel):
         return self.dbs.query(Model).filter(Model.tid == tid).all()
 
     def getUserModelsByUid(self, uid, is_current_user=False, n=5, offset=0):
-        if is_current_user:
-            query_res = self.dbs.query(Model).filter(Model.uid == uid).limit(n).offset(offset * n)
-            return query_res, util.get_query_count(query_res)
-        else:
-            query_res = self.dbs.query(Model).filter(Model.uid == uid).filter(Model.is_published == True).\
-                limit(n).offset(offset * n)
-            return query_res, util.get_query_count(query_res)
+        query_res = self.dbs.query(Model).filter(Model.uid == uid)
+        if not is_current_user:
+            query_res = query_res.filter(Model.is_published == True)
+        return query_res.limit(n).offset(offset * n), util.get_query_count(query_res)
 
     def getUserModelsByUidAndMid(self, uid, mid, is_current_user=False):
-        if is_current_user:
-            return self.dbs.query(Model).filter(Model.uid == uid).filter(Model.id == mid).one()
-        else:
-            return self.dbs.query(Model).filter(Model.uid == uid).filter(Model.id == mid).\
-                filter(Model.is_published == True).one()
+        query_res = self.dbs.query(Model).filter(Model.uid == uid).filter(Model.id == mid)
+        if not is_current_user:
+            return query_res.filter(Model.is_published == True).one()
+        return query_res.one()
 
     def getModelUserByMid(self, id):
         return self.dbs.query(Model, User).join(User, User.id == Model.uid)\
