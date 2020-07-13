@@ -54,7 +54,7 @@ class PublishInterface extends React.Component {
   };
   handleSubmit = (values, { setSubmitting }) => {
     const reqObj = {
-      modelId: this.state.modelId,
+      modelId: this.state.model.id,
       name: values.name,
       description: values.description,
     };
