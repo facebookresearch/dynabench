@@ -208,8 +208,8 @@ class CreateInterface extends React.Component {
     });
   }
 
-  pickModel = (modelsStr) => {
-    const models = modelsStr.split("|");
+  pickModel = (modelUrls) => {
+    const models = modelUrls.split("|");
     const model = models[Math.floor(Math.random() * models.length)];
     return model;
   };

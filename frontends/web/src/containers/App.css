@@ -7,8 +7,20 @@
   z-index: 2;
 }
 
+.width-auto {
+  width: auto !important;
+}
+
+.inline-block {
+  display: inline-block;
+}
+
 .blue-bg {
   background-color: #1283d8;
+}
+
+.white-bg {
+  background-color: #fff;
 }
 
 .light-gray-bg {
@@ -19,8 +31,20 @@
   color: #1283d8;
 }
 
+.white-color {
+  color: #fff;
+}
+
+.no-chevron a::after {
+  display: none;
+}
+
 .gray-color {
   color: #6e6e6e;
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }
 
 .button-ellipse {
