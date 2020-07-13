@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Cell,
   Legend,
@@ -10,7 +10,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-} from 'recharts';
+} from "recharts";
 /**
  * API Documentation for Recharts Line Chart - {@link https://recharts.org/en-US/api/LineChart}
  * @param fontSize - Size of font for legend, x axis and y axis labels
@@ -31,8 +31,9 @@ export const LineRechart = ({
   },
   data,
 }) => {
+  const mergedObject = Object.assign({}, ...data);
   // This only handles up to 10 chart lines, not sure what we can do if there's more.
-  const dataset = Object.keys(data[0]).filter((item) => item != "round");
+  const dataset = Object.keys(mergedObject).filter((item) => item != "round");
   if (dataset.length > 10) {
     const difference = dataset.length - 10;
     for (let i = 0; i < difference; i++) {
@@ -41,7 +42,7 @@ export const LineRechart = ({
     }
   }
   return (
-    <ResponsiveContainer width='100%' height={height}>
+    <ResponsiveContainer width="100%" height={height}>
       <LineChart margin={{ left, right }} data={data}>
         <XAxis
           allowDecimals={false}
@@ -56,12 +57,12 @@ export const LineRechart = ({
           wrapperStyle={{ zIndex: 10 }}
         />
         <Legend
-          align='center'
-          layout='horizontal'
+          align="center"
+          layout="horizontal"
           wrapperStyle={{
             fontSize,
           }}
-          verticalAlign='bottom'
+          verticalAlign="bottom"
         />
         {dataset.map((item, index) => (
           <Line
@@ -70,14 +71,13 @@ export const LineRechart = ({
             dot={{ fill: globalColors[index] }}
             stroke={globalColors[index]}
             strokeWidth={2}
-            type='linear'
+            type="linear"
           />
         ))}
       </LineChart>
     </ResponsiveContainer>
   );
 };
-
 
 /**
  * API Documentation for Recharts Line Chart - {@link https://recharts.org/en-US/api/PieChart}
@@ -92,15 +92,15 @@ export const PieRechart = ({ data, labels }) => {
     return { name: item, value: Math.round(data[index] * 100) };
   });
   return (
-    <ResponsiveContainer width='100%' height={150}>
+    <ResponsiveContainer width="100%" height={150}>
       <PieChart>
         <Tooltip payload={chartData} />
         <Pie
           isAnimationActive={false}
           data={chartData}
-          dataKey='value'
+          dataKey="value"
           labelLine={false}
-          nameKey='name'
+          nameKey="name"
           outerRadius={50}
           label={({
             cx,
@@ -120,8 +120,8 @@ export const PieRechart = ({ data, labels }) => {
                 x={x}
                 y={y}
                 fill={globalColors[index]}
-                textAnchor={x > cx ? 'start' : 'end'}
-                dominantBaseline='central'
+                textAnchor={x > cx ? "start" : "end"}
+                dominantBaseline="central"
               >
                 {value}%
               </text>
@@ -142,13 +142,13 @@ export const PieRechart = ({ data, labels }) => {
  * #46 is set as R value so that the green and blue values aren't too light or dark
  */
 const generateColors = () => {
-  let hex = '#46';
+  let hex = "#46";
   for (let i = 0; i < 2; i++) {
     let colorValue = Number(
       Math.floor(Math.round((Math.random() * 255) / 10) * 10)
     ).toString(16);
     if (colorValue.length < 2) {
-      colorValue = '0' + colorValue;
+      colorValue = "0" + colorValue;
     }
     hex += colorValue;
   }
@@ -156,14 +156,14 @@ const generateColors = () => {
 };
 
 const globalColors = [
-  '#6fb98f',
-  '#075756',
-  '#66a5ad',
-  '#31bdb5',
-  '#91d8d3',
-  '#90b96f',
-  '#a1de72',
-  '#8ce882',
-  '#1283d8',
-  '#314dbd',
+  "#6fb98f",
+  "#075756",
+  "#66a5ad",
+  "#31bdb5",
+  "#91d8d3",
+  "#90b96f",
+  "#a1de72",
+  "#8ce882",
+  "#1283d8",
+  "#314dbd",
 ];

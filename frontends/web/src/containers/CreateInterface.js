@@ -34,7 +34,7 @@ class ContextInfo extends React.Component {
       <>
         <TokenAnnotator
           className="mb-1 p-3 light-gray-bg"
-          tokens={this.props.text.split(" ")}
+          tokens={this.props.text.split(/\b/)}
           value={this.props.answer}
           onChange={this.props.updateAnswer}
           getSpan={(span) => ({
@@ -208,8 +208,8 @@ class CreateInterface extends React.Component {
     });
   }
 
-  pickModel = (modelsStr) => {
-    const models = modelsStr.split("|");
+  pickModel = (modelUrls) => {
+    const models = modelUrls.split("|");
     const model = models[Math.floor(Math.random() * models.length)];
     return model;
   };
@@ -229,7 +229,9 @@ class CreateInterface extends React.Component {
         var answer_text = "";
         if (this.state.answer.length > 0) {
           var last_answer = this.state.answer[this.state.answer.length - 1];
-          var answer_text = last_answer.tokens.join(" ");
+          var answer_text = last_answer.tokens.join("");  // NOTE: no spaces required as tokenising by word boundaries
+          // Update the target with the answer text since this is defined by the annotator in QA (unlike NLI)
+          this.setState({ target: answer_text });
         }
       } else {
         var answer_text = null;

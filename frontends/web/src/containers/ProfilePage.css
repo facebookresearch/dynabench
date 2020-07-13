@@ -1,5 +1,15 @@
 form.profileForm input[disabled] {
-    background: #fff;
-    border: 0;
-    margin-top: -10px;
+  background: #fff;
+  border: 0;
+  margin-top: -10px;
 }
+
+.publishStatus {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.modelTable tr:hover {
+background-color: #f7f7f7;
+}
+

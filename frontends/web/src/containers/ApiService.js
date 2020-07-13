@@ -50,9 +50,9 @@ export default class ApiService {
   }
 
   forgotPassword(email) {
-    return this.fetch(`${this.domain}/forgotPassword`, {
+    return this.fetch(`${this.domain}/recover/initiate`, {
       method: "POST",
-      body: JSON.stringify({ email: email }),
+      body: JSON.stringify({ email }),
     }).then((res) => {
       return Promise.resolve(res);
     });
@@ -72,6 +72,19 @@ export default class ApiService {
       method: "PUT",
       body: JSON.stringify(body),
     }).then((res) => {
+      return Promise.resolve(res);
+    });
+  }
+
+  updateProfilePic(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    const token = this.getToken();
+    var f = this.fetch(`${this.domain}/users/uploadprofile`, {
+      method: "POST",
+      body: formData,
+    });
+    return f.then((res) => {
       return Promise.resolve(res);
     });
   }
@@ -97,13 +110,9 @@ export default class ApiService {
     formData.append("file", data.file);
     formData.append("type", data.roundType);
     formData.append("taskId", data.taskId);
-    const token = this.getToken();
     var f = this.fetch(`${this.domain}/models/upload`, {
       method: "POST",
       body: formData,
-      headers: {
-        Authorization: token ? "Bearer " + token : "None",
-      },
     });
     return f.then((res) => {
       return Promise.resolve(res);
@@ -117,6 +126,16 @@ export default class ApiService {
         name,
         description,
       }),
+    });
+    return f.then((res) => {
+      return Promise.resolve(res);
+    });
+  }
+
+  updateModel(modelId, data) {
+    var f = this.fetch(`${this.domain}/models/${modelId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
     });
     return f.then((res) => {
       return Promise.resolve(res);
@@ -187,6 +206,27 @@ export default class ApiService {
     return this.fetch(`${this.domain}/contexts/${tid}/${rid}`, {
       method: "GET",
     }).then((res) => {
+      return Promise.resolve(res);
+    });
+  }
+
+  getModel(modelId) {
+    return this.fetch(`${this.domain}/models/${modelId}/details`, {
+      method: "GET",
+    }).then((res) => {
+      return Promise.resolve(res);
+    });
+  }
+
+  getUserModels(userId, limit, offset) {
+    return this.fetch(
+      `${this.domain}/users/${userId}/models?limit=${limit || 10}&offset=${
+        offset || 0
+      }`,
+      {
+        method: "GET",
+      }
+    ).then((res) => {
       return Promise.resolve(res);
     });
   }
@@ -285,7 +325,7 @@ export default class ApiService {
 
   getCredentials() {
     console.log(this.getToken());
-    return decode(this.getToken());
+    return this.getToken() ? decode(this.getToken()) : {};
   }
 
   refreshTokenWrapper(callback, error) {

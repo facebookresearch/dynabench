@@ -141,7 +141,7 @@ async def handle_submit_post(request):
         model_preds = await get_model_preds([example])
         model_pred = model_preds[0]
         response['text'] = model_pred['text']
-        response['prob'] = max(1.0, min(0.0, model_pred['model_conf']))  # this is what the frontend expects
+        response['prob'] = max(0.0, min(1.0, model_pred['model_conf']))  # this is what the frontend expects
 
         # Evaluate the model prediction against the human answer
         human_ans = str(post_data['answer']).strip()

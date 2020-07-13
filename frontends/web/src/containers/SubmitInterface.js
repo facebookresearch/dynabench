@@ -100,6 +100,7 @@ class SubmitInterface extends React.Component {
                     setFieldValue,
                     handleSubmit,
                     isSubmitting,
+                    setValues,
                   }) => (
                     <>
                       <form
@@ -152,11 +153,11 @@ class SubmitInterface extends React.Component {
                                 <>
                                   <DragAndDrop
                                     handleChange={(event) => {
-                                      setFieldValue(
-                                        "file",
-                                        event.currentTarget.files[0]
-                                      );
-                                      setFieldValue("failed", "");
+                                      setValues({
+                                        ...values,
+                                        file: event.currentTarget.files[0],
+                                        failed: "",
+                                      });
                                     }}
                                     required={errors.file}
                                     name="file"

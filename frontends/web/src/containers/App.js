@@ -24,6 +24,7 @@ import CreateInterface from "./CreateInterface.js";
 // import VerifyInterface from "./VerifyInterface.js";
 import SubmitInterface from "./SubmitInterface.js";
 import PublishInterface from "./PublishInterface.js";
+import { Avatar } from "../components/Avatar/Avatar";
 
 class App extends React.Component {
   constructor(props) {
@@ -112,16 +113,26 @@ class App extends React.Component {
                 <Nav className="justify-content-end">
                   {this.state.user.id ? (
                     <>
-                      <Nav.Item>
-                        <Nav.Link as={Link} to={"/profile"}>
-                          {this.state.user.username}
-                        </Nav.Link>
-                      </Nav.Item>
-                      <Nav.Item>
-                        <Nav.Link as={Link} to={"/logout"}>
+                      <NavDropdown
+                        alignRight
+                        className="no-chevron"
+                        title={
+                          <Avatar
+                            profile_img={this.state.user.profile_img}
+                            username={this.state.user.username}
+                            isThumbnail={true}
+                            theme="light"
+                          />
+                        }
+                        id="collasible-nav-dropdown"
+                      >
+                        <NavDropdown.Item href="/account#profile">
+                          Profile
+                        </NavDropdown.Item>
+                        <NavDropdown.Item href="/logout">
                           Logout
-                        </Nav.Link>
-                      </Nav.Item>
+                        </NavDropdown.Item>
+                      </NavDropdown>
                     </>
                   ) : (
                     <>
@@ -180,7 +191,7 @@ class App extends React.Component {
                   component={ResetPassword}
                 />
                 <Route path="/logout" component={Logout} />
-                <Route path="/profile" component={ProfilePage} />
+                <Route path="/account" component={ProfilePage} />
                 <Route path="/register" component={RegisterPage} />
                 <Route path="/users/:userId" component={UserPage} />
                 <Route path="/models/:modelId" component={ModelPage} />
