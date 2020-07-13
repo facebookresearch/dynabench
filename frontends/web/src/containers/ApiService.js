@@ -79,9 +79,13 @@ export default class ApiService {
   updateProfilePic(userId, file) {
     const formData = new FormData();
     formData.append("file", file);
+    const token = this.getToken();
     var f = this.fetch(`${this.domain}/users/${userId}/avatar/upload`, {
       method: "POST",
       body: formData,
+      headers: {
+        Authorization: token ? "Bearer " + token : "None",
+      },
     });
     return f.then((res) => {
       return Promise.resolve(res);
@@ -113,9 +117,9 @@ export default class ApiService {
     var f = this.fetch(`${this.domain}/models/upload`, {
       method: "POST",
       body: formData,
-      // headers: {
-      //   Authorization: token ? "Bearer " + token : "None",
-      // },
+      headers: {
+        Authorization: token ? "Bearer " + token : "None",
+      },
     });
     return f.then((res) => {
       return Promise.resolve(res);

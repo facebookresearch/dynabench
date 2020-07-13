@@ -147,7 +147,7 @@ class UserPage extends React.Component {
                         <Row>
                           <Col>
                             <Avatar
-                              profile_img={this.state.user.profile_img}
+                              avatar_url={this.state.user.avatar_url}
                               username={this.state.user.username}
                               theme="blue"
                             />

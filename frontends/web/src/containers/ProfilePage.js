@@ -181,7 +181,7 @@ class ProfilePage extends React.Component {
                     <Row>
                       <Col>
                         <Avatar
-                          profile_img={this.state.user.profile_img}
+                          avatar_url={this.state.user.avatar_url}
                           username={this.state.user.username}
                           isEditable={true}
                           theme="blue"

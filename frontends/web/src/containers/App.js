@@ -118,7 +118,7 @@ class App extends React.Component {
                         className="no-chevron"
                         title={
                           <Avatar
-                            profile_img={this.state.user.profile_img}
+                            avatar_url={this.state.user.avatar_url}
                             username={this.state.user.username}
                             isThumbnail={true}
                             theme="light"

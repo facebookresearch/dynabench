@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 import "./Avatar.css";
 
 export const Avatar = ({
-  profile_img,
+  avatar_url,
   username,
   isEditable,
   theme = "light",
@@ -22,13 +22,13 @@ export const Avatar = ({
 
   return (
     <>
-      {profile_img && !profile_img !== "" ? (
+      {avatar_url && !avatar_url !== "" ? (
         <div
           className={`avatar-circle ${
             isThumbnail ? "sm inline-block mr-1" : null
           }`}
         >
-          <img className="profile-pic" src="profile_img" />
+          <img className="profile-pic" src="avatar_url" />
           {isEditable ? (
             <div
               className={`editPic ${
