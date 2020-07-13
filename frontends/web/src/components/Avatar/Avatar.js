@@ -28,7 +28,7 @@ export const Avatar = ({
             isThumbnail ? "sm inline-block mr-1" : null
           }`}
         >
-          <img className="profile-pic" src="avatar_url" />
+          <img className="profile-pic" src={avatar_url} />
           {isEditable ? (
             <div
               className={`editPic ${
