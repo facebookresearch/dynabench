@@ -53,7 +53,7 @@ export const Avatar = ({
         >
           <span
             className={`initials ${
-              theme === "light" ? "blue-bg" : "white-color"
+              theme === "light" ? "blue-color" : "white-color"
             }`}
           >
             {getInitial(username)}

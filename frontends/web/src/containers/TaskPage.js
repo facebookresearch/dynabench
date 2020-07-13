@@ -149,7 +149,7 @@ const OverallUserLeaderBoard = (props) => {
     <Table hover className="mb-0">
       <thead>
         <tr>
-          <th>Model</th>
+          <th>User</th>
           <th>Mean MER</th>
           <th>Total</th>
         </tr>

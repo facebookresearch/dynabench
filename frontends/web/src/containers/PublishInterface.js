@@ -19,8 +19,9 @@ class PublishInterface extends React.Component {
     this.state = {
       taskId: props.match.params.taskId,
       modelId: props.match.params.modelId,
+      model: {},
       accuracy: "",
-      scores: {},
+      scores: [],
       isPublished: false,
     };
   }
@@ -32,13 +33,15 @@ class PublishInterface extends React.Component {
       );
     }
     const propState = this.props.location.state;
+    console.log("propState------------", propState);
     if (!propState) {
       this.props.history.push("/");
       return;
     }
     this.setState({
-      accuracy: (propState.detail && propState.detail.accuracy) || "",
-      scores: (propState.detail && propState.detail.scores) || {},
+      model: propState.detail,
+      accuracy: (propState.detail && propState.detail.overall_perf) || "",
+      scores: (propState.detail && propState.detail.scores) || [],
       isPublished: (propState.detail && propState.detail.isPublished) || false,
     });
   }
@@ -68,10 +71,7 @@ class PublishInterface extends React.Component {
 
   render() {
     const { accuracy, scores, isPublished } = this.state;
-    let orderedScores = Object.keys(scores).sort((a, b) => a - b);
-    orderedScores = orderedScores.map((round) => {
-      return { round: round, score: scores[round] };
-    });
+    let orderedScores = (scores || []).sort((a, b) => a.round_id - b.round_id);
     return (
       <Container>
         <Row>
@@ -92,19 +92,19 @@ class PublishInterface extends React.Component {
                   </Row>
                   {orderedScores.map((data) => {
                     return (
-                      <Row key={data.round}>
-                        <Col sm="4" className="row-wise">
-                          Round {data.round}
+                      <Row key={data.round_id}>
+                        <Col sm="5" className="row-wise">
+                          Round {data.round_id}
                         </Col>
-                        <Col sm="8">{data.score}%</Col>
+                        <Col sm="7">{data.accuracy}%</Col>
                       </Row>
                     );
                   })}
                 </Container>
                 <Formik
                   initialValues={{
-                    name: "",
-                    description: "",
+                    name: this.state.model.name || "",
+                    description: this.state.model.description || "",
                   }}
                   validate={this.handleValidation}
                   onSubmit={this.handleSubmit}

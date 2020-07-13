@@ -128,9 +128,10 @@ class ProfilePage extends React.Component {
   };
 
   handleAvatarChange = (e) => {
+    const user = this.context.api.getCredentials();
     const files = e.target.files;
     this.context.api
-      .updateProfilePic(files[0])
+      .updateProfilePic(user.id, files[0])
       .then((result) => {
         this.setState({ user: result });
       })

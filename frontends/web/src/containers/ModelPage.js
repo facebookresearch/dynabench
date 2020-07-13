@@ -46,19 +46,15 @@ class ModelPage extends React.Component {
   };
 
   handlePublish = () => {
-    return this.context.api
-      .updateModel(this.state.modelId, { is_published: true })
-      .then(() => {
-        this.fetchModel();
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+    this.props.history.push({
+      pathname: `/tasks/${this.state.model.tid}/models/${this.state.model.id}/publish`,
+      state: { detail: this.state.model },
+    });
   };
 
   handleUnpublish = () => {
     return this.context.api
-      .updateModel(this.state.modelId, { is_published: false })
+      .unpublishModel(this.state.modelId)
       .then(() => {
         this.fetchModel();
       })
@@ -72,10 +68,7 @@ class ModelPage extends React.Component {
       parseInt(this.state.model.user.id) === parseInt(this.state.ctxUserId);
     const { model } = this.state;
     const { scores } = this.state.model;
-    let orderedScores = Object.keys(scores || []).sort((a, b) => a - b);
-    orderedScores = orderedScores.map((round) => {
-      return { round: round, score: scores[round] };
-    });
+    let orderedScores = (scores || []).sort((a, b) => a.round_id - b.round_id);
     return (
       <Container>
         <h1 className="my-4 pt-3 text-uppercase text-center">Model Overview</h1>
@@ -84,7 +77,7 @@ class ModelPage extends React.Component {
             <Card.Body>
               <div className="d-flex justify-content-between mx-4 mt-4">
                 <h5>
-                  {model.name}
+                  <span className="blue-color">{model.name}</span>
                   {isModelOwner && model.is_published === "True" ? (
                     <Badge variant="success" className="ml-2">
                       Published
@@ -150,7 +143,7 @@ class ModelPage extends React.Component {
                     </tr>
                     <tr>
                       <td colSpan="2">
-                        <div>Performance</div>
+                        <h6 className="blue-color">Performance</h6>
                         <Container>
                           <Row className="mt-4">
                             <Col sm="5" className="mb-2 ">
@@ -160,11 +153,11 @@ class ModelPage extends React.Component {
                           </Row>
                           {orderedScores.map((data) => {
                             return (
-                              <Row key={data.round}>
+                              <Row key={data.round_id}>
                                 <Col sm="5" className="row-wise">
-                                  Round {data.round}
+                                  Round {data.round_id}
                                 </Col>
-                                <Col sm="7">{data.score}%</Col>
+                                <Col sm="7">{data.accuracy}%</Col>
                               </Row>
                             );
                           })}

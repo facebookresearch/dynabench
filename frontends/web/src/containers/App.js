@@ -174,10 +174,10 @@ class App extends React.Component {
                   component={SubmitInterface}
                 />
                 <Route
-                  path="/tasks/:taskId/:modelId/publish"
+                  path="/tasks/:taskId/models/:modelId/publish"
                   component={PublishInterface}
                 />
-                <Route path="/tasks/:taskId/:modelId" component={ModelPage} />
+                <Route path="/tasks/:taskId/models/:modelId" component={ModelPage} />
                 <Route
                   path="/tasks/:taskId/round/:roundId"
                   component={TaskPage}

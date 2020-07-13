@@ -76,11 +76,10 @@ export default class ApiService {
     });
   }
 
-  updateProfilePic(file) {
+  updateProfilePic(userId, file) {
     const formData = new FormData();
     formData.append("file", file);
-    const token = this.getToken();
-    var f = this.fetch(`${this.domain}/users/uploadprofile`, {
+    var f = this.fetch(`${this.domain}/users/${userId}/avatar/upload`, {
       method: "POST",
       body: formData,
     });
@@ -106,6 +105,7 @@ export default class ApiService {
   }
 
   submitModel(data) {
+    const token = this.getToken();
     const formData = new FormData();
     formData.append("file", data.file);
     formData.append("type", data.roundType);
@@ -113,6 +113,9 @@ export default class ApiService {
     var f = this.fetch(`${this.domain}/models/upload`, {
       method: "POST",
       body: formData,
+      // headers: {
+      //   Authorization: token ? "Bearer " + token : "None",
+      // },
     });
     return f.then((res) => {
       return Promise.resolve(res);
@@ -126,6 +129,15 @@ export default class ApiService {
         name,
         description,
       }),
+    });
+    return f.then((res) => {
+      return Promise.resolve(res);
+    });
+  }
+
+  unpublishModel(modelId) {
+    var f = this.fetch(`${this.domain}/models/${modelId}/unpublish`, {
+      method: "PUT",
     });
     return f.then((res) => {
       return Promise.resolve(res);
@@ -268,7 +280,7 @@ export default class ApiService {
         // TODO: make this more specific later to reduce latency:
         // Only .prob and .signed?
         response: response,
-        model: model
+        model: model,
       }),
     }).then((res) => {
       return Promise.resolve(res);
