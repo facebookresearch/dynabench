@@ -22,7 +22,7 @@ export const Avatar = ({
 
   return (
     <>
-      {avatar_url && !avatar_url !== "" ? (
+      {avatar_url && !avatar_url !== "" && avatar_url !== "None" ? (
         <div
           className={`avatar-circle ${
             isThumbnail ? "sm inline-block mr-1" : null
