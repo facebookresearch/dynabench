@@ -248,14 +248,18 @@ export default class ApiService {
   }
 
   getModelResponse(modelUrl, modelInputs) {
-    return this.fetch(modelUrl, {
-      method: "POST",
-      body: JSON.stringify({
-        context: modelInputs.context,
-        hypothesis: modelInputs.hypothesis,
-        answer: modelInputs.answer,
-      }),
-    }).then((res) => {
+    return this.doFetch(
+      modelUrl,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          context: modelInputs.context,
+          hypothesis: modelInputs.hypothesis,
+          answer: modelInputs.answer,
+        }),
+      },
+      false
+    ).then((res) => {
       return Promise.resolve(res);
     });
   }
@@ -401,7 +405,7 @@ export default class ApiService {
       return this.refreshTokenWrapper(
         (res) => {
           console.log("Our token was refreshed (fetch callback)");
-          return this.doFetch(url, options);
+          return this.doFetch(url, options, {}, true);
         },
         (res) => {
           console.log("Could not refresh token (fetch)");
@@ -411,7 +415,7 @@ export default class ApiService {
         }
       );
     }
-    return this.doFetch(url, options);
+    return this.doFetch(url, options, {}, true);
   }
 
   _checkStatus(response) {

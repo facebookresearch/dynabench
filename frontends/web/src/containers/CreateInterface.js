@@ -195,6 +195,7 @@ class CreateInterface extends React.Component {
             Math.random() * this.state.task.targets.length
           );
           this.setState({
+            hypothesis: "",
             target: randomTarget,
             context: result,
             content: [{ cls: "context", text: result.context }],

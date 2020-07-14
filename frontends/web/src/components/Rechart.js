@@ -89,7 +89,7 @@ export const LineRechart = ({
  */
 export const PieRechart = ({ data, labels }) => {
   const chartData = labels.map((item, index) => {
-    return { name: item, value: Math.round(data[index] * 100) };
+    return { name: item, value: Number((data[index] * 100).toFixed(2)) };
   });
   return (
     <ResponsiveContainer width="100%" height={150}>
