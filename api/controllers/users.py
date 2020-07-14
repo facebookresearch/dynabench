@@ -149,11 +149,11 @@ def get_user_models(uid):
     limit, offset = util.get_limit_and_offset_from_request()
     try:
         model = ModelModel()
-        results = model.getUserModelsByUid(uid=uid, is_current_user=is_current_user, n=limit, offset=offset)
+        results, total_count = model.getUserModelsByUid(uid=uid, is_current_user=is_current_user, n=limit, offset=offset)
         dicts = [model_obj.to_dict() for model_obj in results]
         if dicts:
-            return json.dumps(dicts)
-        return []
+            return json.dumps({'count': total_count, 'data': dicts})
+        return json.dumps({'count': 0, 'data': []})
     except Exception as e:
         logging.exception('Could not fetch user model(s) : %s' % (e))
         bottle.abort(400, 'Could not fetch user model(s)')
