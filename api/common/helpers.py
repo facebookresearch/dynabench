@@ -64,11 +64,12 @@ def validate_prediction(r_objects, prediction):
 
     overall_accuracy = 0
     score_obj_list = []
-    split_up = {}
+    split_up_list = []
     start_index = 0
     end_index = 0
     for r_obj in r_objects:
         score_obj = {}
+        split_up = {}
         score_obj['round_id'] = r_obj.id
         score_obj['desc'] = None
         score_obj['longdesc'] = None
@@ -81,10 +82,12 @@ def validate_prediction(r_objects, prediction):
         score_obj['perf'] = round(r_accuracy*100, 2)
         # sum rounds accuracy and generate score object list
         overall_accuracy = overall_accuracy + round(r_accuracy*100, 2)
-        split_up[r_obj.rid] = round(r_accuracy*100, 2)
+        split_up['round_id'] = r_obj.rid
+        split_up['accuracy'] = round(r_accuracy*100, 2)
+        split_up_list.append(split_up)
         score_obj_list.append(score_obj)
 
-    return split_up, score_obj_list, round(overall_accuracy/len(r_objects), 2)
+    return split_up_list, score_obj_list, round(overall_accuracy/len(r_objects), 2)
 
 def is_current_user(uid, credentials=None):
     """
@@ -180,3 +183,26 @@ def get_query_count(query):
     if disable_group_by:
         count_q = count_q.group_by(None)
     return query.session.execute(count_q).scalar()
+
+def get_credentials_from_header():
+    """
+    Get logged in user detail from header
+    :param credentials: Authorization detail
+    :return: uid
+    """
+
+    try:
+        token = _auth.jwt_token_from_header()
+        credentials = _auth.get_payload(token)
+        if not credentials['id']:
+            return False
+        return credentials
+    except Exception as ex:
+        logging.exception('Logged in user detail fetch from header exception  : %s ' %(ex))
+        return False
+
+def is_fields_blank(data, fields):
+    for f in fields:
+        if data[f] in (None, ''):
+            return True
+    return False

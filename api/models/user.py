@@ -23,6 +23,8 @@ class User(Base):
     examples_submitted = db.Column(db.Integer, default=0)
     examples_verified = db.Column(db.Integer, default=0)
 
+    avatar_url = db.Column(db.Text)
+
     def __repr__(self):
         return '<User {}>'.format(self.username)
 

@@ -79,4 +79,4 @@ class ModelModel(BaseModel):
 
     def getModelUserByMid(self, id):
         return self.dbs.query(Model, User).join(User, User.id == Model.uid)\
-                .filter(Model.id == id).filter(Model.is_published == True).one()
+                .filter(Model.id == id).one()
