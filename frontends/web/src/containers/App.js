@@ -42,14 +42,18 @@ class App extends React.Component {
   componentDidMount() {
     if (this.api.loggedIn()) {
       const currentUser = this.api.getCredentials();
-      this.api
-        .getUser(currentUser.id)
-        .then((result) => {
-          this.setState({ user: result });
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+      this.setState({ user: currentUser }, () => {
+        this.api
+          .getUser(currentUser.id)
+          .then((result) => {
+            this.setState({
+              user: { ...this.state.user, avatar_url: result.avatar_url },
+            });
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      });
     }
     this.api
       .getTasks()
@@ -185,7 +189,10 @@ class App extends React.Component {
                   path="/tasks/:taskId/models/:modelId/publish"
                   component={PublishInterface}
                 />
-                <Route path="/tasks/:taskId/models/:modelId" component={ModelPage} />
+                <Route
+                  path="/tasks/:taskId/models/:modelId"
+                  component={ModelPage}
+                />
                 <Route
                   path="/tasks/:taskId/round/:roundId"
                   component={TaskPage}
