@@ -11,6 +11,7 @@ import {
 import UserContext from "./UserContext";
 import { TokenAnnotator } from "react-text-annotate";
 import { PieRechart } from "../components/Rechart";
+import { formatWordImportances } from "../utils/color";
 
 const Explainer = (props) => (
   <div className="mt-4 mb-5 pt-3">
@@ -60,6 +61,22 @@ class ContextInfo extends React.Component {
   }
 }
 
+const TextFeature = ({ data }) => {
+  const template = formatWordImportances(data);
+  return (
+    <table className="inspectModel">
+      <thead>
+        <tr>
+          <td>Model Inspector</td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr dangerouslySetInnerHTML={{ __html: template }}></tr>
+      </tbody>
+    </table>
+  );
+};
+
 class ResponseInfo extends React.Component {
   static contextType = UserContext;
   constructor(props) {
@@ -81,6 +98,33 @@ class ResponseInfo extends React.Component {
         console.log(error);
       });
   }
+  inspectExample = (e) => {
+    const { content, targets, curTarget, answer } = this.props;
+    e.preventDefault();
+    var idx = e.target.getAttribute("data-index");
+    let target = "None";
+    if (!isNaN(parseInt(curTarget))) {
+      target = targets.map((t, i) => Number(i === curTarget));
+    }
+    const selectedAnswer =
+      answer && answer.length ? answer[answer.length - 1].tokens.join("") : "";
+    this.context.api
+      .inspectModel(content[idx].url, {
+        answer: selectedAnswer,
+        context: content[0].text,
+        hypothesis: content[1].cls == "hypothesis" ? content[idx].text : "",
+        insight: true,
+        target,
+      })
+      .then((result) => {
+        const newContent = this.props.content.slice();
+        newContent[idx].inspect = result;
+        this.setState({ content: newContent });
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
   render() {
     return (
       <div
@@ -115,7 +159,7 @@ class ResponseInfo extends React.Component {
                     instead.{" "}
                   </span>
                   <br />
-                  <span>
+                  <div>
                     Made a mistake? You can still{" "}
                     <a
                       href="#"
@@ -125,8 +169,23 @@ class ResponseInfo extends React.Component {
                     >
                       retract this example
                     </a>
-                    . Otherwise, we will have it verified.
-                  </span>
+                    . Otherwise, we will have it verified.{" "}
+                  </div>
+                  <div>
+                    Need insight? You can see the{" "}
+                    <a
+                      href="#"
+                      data-index={this.props.index}
+                      onClick={this.inspectExample}
+                      className="btn-link"
+                    >
+                      word importance{" "}
+                    </a>
+                    that resulted in this prediction.
+                  </div>
+                  {this.props.obj.inspect ? (
+                    <TextFeature data={this.props.obj.inspect} />
+                  ) : null}
                 </>
               ) : (
                 <>
@@ -134,7 +193,7 @@ class ResponseInfo extends React.Component {
                     <strong>Bad luck!</strong> The model correctly predicted{" "}
                     <strong>{this.props.obj.modelPredStr}</strong>. Try again.
                   </span>
-                  <span>
+                  <div>
                     We will still store this as an example that the model got
                     right. You can{" "}
                     <a
@@ -146,7 +205,22 @@ class ResponseInfo extends React.Component {
                       retract this example
                     </a>{" "}
                     if you don't want it saved.
-                  </span>
+                  </div>
+                  <div>
+                    Need insight? You can see the{" "}
+                    <a
+                      href="#"
+                      data-index={this.props.index}
+                      onClick={this.inspectExample}
+                      className="btn-link"
+                    >
+                      word importance{" "}
+                    </a>
+                    that resulted in this prediction.
+                  </div>
+                  {this.props.obj.inspect ? (
+                    <TextFeature data={this.props.obj.inspect} />
+                  ) : null}
                 </>
               )}
             </small>
@@ -230,7 +304,7 @@ class CreateInterface extends React.Component {
         var answer_text = "";
         if (this.state.answer.length > 0) {
           var last_answer = this.state.answer[this.state.answer.length - 1];
-          var answer_text = last_answer.tokens.join("");  // NOTE: no spaces required as tokenising by word boundaries
+          var answer_text = last_answer.tokens.join(""); // NOTE: no spaces required as tokenising by word boundaries
           // Update the target with the answer text since this is defined by the annotator in QA (unlike NLI)
           this.setState({ target: answer_text });
         }
@@ -272,6 +346,7 @@ class CreateInterface extends React.Component {
                   modelPredStr: modelPredStr,
                   fooled: modelFooled,
                   text: this.state.hypothesis,
+                  url: randomModel,
                   retracted: false,
                   response: result,
                 },
@@ -378,6 +453,9 @@ class CreateInterface extends React.Component {
           key={index}
           index={index}
           targets={this.state.task.targets}
+          curTarget={this.state.target}
+          taskType={this.state.task.type}
+          answer={this.state.answer}
           obj={item}
           mapKeyToExampleId={this.state.mapKeyToExampleId}
           content={this.state.content}

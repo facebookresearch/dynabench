@@ -275,6 +275,19 @@ export default class ApiService {
     });
   }
 
+  inspectModel(modelUrl, data) {
+    return this.doFetch(
+      modelUrl,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+      false
+    ).then((res) => {
+      return Promise.resolve(res);
+    });
+  }
+
   storeExample(tid, rid, uid, cid, hypothesis, target, response, model) {
     return this.fetch(`${this.domain}/examples`, {
       method: "POST",
