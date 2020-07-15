@@ -30,9 +30,17 @@ class UserPage extends React.Component {
   }
 
   componentDidMount() {
-    this.props.location.hash === "#profile"
-      ? this.fetchUser()
-      : this.fetchModel(0);
+    if (!this.context.api.loggedIn()) {
+      this.props.history.push(
+        "/login?msg=" +
+          encodeURIComponent("Please login first.") +
+          `&src=/users/${this.props.match.params.userId}#profile`
+      );
+    } else {
+      this.props.location.hash === "#profile" || this.props.location.hash === ""
+        ? this.fetchUser()
+        : this.fetchModel(0);
+    }
   }
 
   fetchUser = () => {

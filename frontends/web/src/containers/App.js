@@ -41,19 +41,7 @@ class App extends React.Component {
   }
   componentDidMount() {
     if (this.api.loggedIn()) {
-      const currentUser = this.api.getCredentials();
-      this.setState({ user: currentUser }, () => {
-        this.api
-          .getUser(currentUser.id)
-          .then((result) => {
-            this.setState({
-              user: { ...this.state.user, avatar_url: result.avatar_url },
-            });
-          })
-          .catch((error) => {
-            console.log(error);
-          });
-      });
+      this.setState({ user: this.api.getCredentials() });
     }
     this.api
       .getTasks()

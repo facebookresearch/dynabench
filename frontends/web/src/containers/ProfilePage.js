@@ -38,7 +38,7 @@ class ProfilePage extends React.Component {
       this.props.history.push(
         "/login?msg=" +
           encodeURIComponent("Please login first.") +
-          "&src=/profile"
+          "&src=/account#profile"
       );
     } else {
       const user = this.context.api.getCredentials();
@@ -47,7 +47,8 @@ class ProfilePage extends React.Component {
           ctxUserId: user.id,
         },
         () => {
-          this.props.location.hash === "#profile"
+          this.props.location.hash === "#profile" ||
+          this.props.location.hash === ""
             ? this.fetchUser()
             : this.fetchModels(0);
         }
