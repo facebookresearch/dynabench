@@ -139,8 +139,8 @@ export default class ApiService {
     });
   }
 
-  unpublishModel(modelId) {
-    var f = this.fetch(`${this.domain}/models/${modelId}/unpublish`, {
+  toggleModelStatus(modelId) {
+    var f = this.fetch(`${this.domain}/models/${modelId}/revertstatus`, {
       method: "PUT",
     });
     return f.then((res) => {

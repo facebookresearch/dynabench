@@ -20,7 +20,7 @@ export const formatWordImportances = ({ words, importances }) => {
 
 const formatSpecialTokens = (word) => {
   if (word[0] === "<" && word[word.length - 1] === ">")
-    return `#${word.substring(1, word.length - 1)}`;
+    return "";
   return word;
 };
 

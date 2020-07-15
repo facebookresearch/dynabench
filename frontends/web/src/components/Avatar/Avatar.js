@@ -8,6 +8,7 @@ export const Avatar = ({
   theme = "light",
   isThumbnail,
   handleUpdate,
+  loader,
 }) => {
   const getInitial = (name) => {
     return (
@@ -51,6 +52,7 @@ export const Avatar = ({
             theme === "light" ? "white-bg" : "blue-bg"
           } ${isThumbnail ? "sm inline-block mr-1" : null}`}
         >
+          {loader && <img className="upload-loader" src="/loader.gif" />}
           <span
             className={`initials ${
               theme === "light" ? "blue-color" : "white-color"

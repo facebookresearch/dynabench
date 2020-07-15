@@ -37,7 +37,10 @@ class UserPage extends React.Component {
           `&src=/users/${this.props.match.params.userId}#profile`
       );
     } else {
-      this.props.location.hash === "#profile" || this.props.location.hash === ""
+      if (this.props.location.hash === "") {
+        this.props.location.hash = "#profile";
+      }
+      this.props.location.hash === "#profile"
         ? this.fetchUser()
         : this.fetchModel(0);
     }

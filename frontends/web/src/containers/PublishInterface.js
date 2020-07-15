@@ -158,7 +158,16 @@ class PublishInterface extends React.Component {
                             >
                               Publish
                             </Button>
-                          ) : null}
+                          ) : (
+                            <Button
+                              type="submit"
+                              variant="primary"
+                              className="fadeIn third submitBtn button-ellipse"
+                              disabled={isSubmitting}
+                            >
+                              Update
+                            </Button>
+                          )}
                         </form>
                       </>
                     )}

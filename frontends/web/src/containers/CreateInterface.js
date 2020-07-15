@@ -82,6 +82,14 @@ class ResponseInfo extends React.Component {
   constructor(props) {
     super(props);
     this.retractExample = this.retractExample.bind(this);
+    this.state = {
+      loader: true,
+    };
+  }
+  componentDidMount() {
+    this.setState({
+      loader: false,
+    });
   }
   retractExample(e) {
     e.preventDefault();
@@ -101,6 +109,9 @@ class ResponseInfo extends React.Component {
   inspectExample = (e) => {
     const { content, targets, curTarget, answer } = this.props;
     e.preventDefault();
+    this.setState({
+      loader: true,
+    });
     var idx = e.target.getAttribute("data-index");
     let target = "None";
     if (!isNaN(parseInt(curTarget))) {
@@ -119,7 +130,7 @@ class ResponseInfo extends React.Component {
       .then((result) => {
         const newContent = this.props.content.slice();
         newContent[idx].inspect = result;
-        this.setState({ content: newContent });
+        this.setState({ content: newContent, loader: false });
       })
       .catch((error) => {
         console.log(error);
@@ -183,6 +194,9 @@ class ResponseInfo extends React.Component {
                     </a>
                     that resulted in this prediction.
                   </div>
+                  {this.state.loader ? (
+                    <img src="/loader.gif" className="loader" />
+                  ) : null}
                   {this.props.obj.inspect ? (
                     <TextFeature data={this.props.obj.inspect} />
                   ) : null}
@@ -218,6 +232,9 @@ class ResponseInfo extends React.Component {
                     </a>
                     that resulted in this prediction.
                   </div>
+                  {this.state.loader ? (
+                    <img src="/loader.gif" className="loader" />
+                  ) : null}
                   {this.props.obj.inspect ? (
                     <TextFeature data={this.props.obj.inspect} />
                   ) : null}

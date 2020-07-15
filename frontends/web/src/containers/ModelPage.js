@@ -45,16 +45,16 @@ class ModelPage extends React.Component {
       });
   };
 
-  handlePublish = () => {
+  handleEdit = () => {
     this.props.history.push({
       pathname: `/tasks/${this.state.model.tid}/models/${this.state.model.id}/publish`,
       state: { detail: this.state.model },
     });
   };
 
-  handleUnpublish = () => {
+  togglePublish = () => {
     return this.context.api
-      .unpublishModel(this.state.modelId)
+      .toggleModelStatus(this.state.modelId)
       .then(() => {
         this.fetchModel();
       })
@@ -76,33 +76,28 @@ class ModelPage extends React.Component {
           <Card className="profile-card">
             <Card.Body>
               <div className="d-flex justify-content-between mx-4 mt-4">
-                <h5>
-                  <span className="blue-color">{model.name}</span>
-                  {isModelOwner && model.is_published === "True" ? (
-                    <Badge variant="success" className="ml-2">
-                      Published
-                    </Badge>
-                  ) : null}
-                  {isModelOwner && model.is_published === "False" ? (
-                    <Badge variant="danger" className="ml-2">
-                      Unpublished
-                    </Badge>
-                  ) : null}
-                </h5>
+                <Button
+                  className={`blue-bg border-0 font-weight-bold ${
+                    isModelOwner ? "mr-2" : null
+                  }`}
+                  aria-label="Back"
+                  onClick={this.props.history.goBack}
+                >
+                  {"< Back"}
+                </Button>
                 <div>
-                  <Button
-                    className={`blue-bg border-0 font-weight-bold ${
-                      isModelOwner ? "mr-2" : null
-                    }`}
-                    aria-label="Back"
-                    onClick={this.props.history.goBack}
-                  >
-                    {"< Back"}
-                  </Button>
+                  {isModelOwner && (
+                    <Button
+                      variant="outline-primary mr-2"
+                      onClick={() => this.handleEdit()}
+                    >
+                      Edit
+                    </Button>
+                  )}
                   {isModelOwner && model.is_published === "True" ? (
                     <Button
                       variant="outline-danger"
-                      onClick={() => this.handleUnpublish(model)}
+                      onClick={() => this.togglePublish()}
                     >
                       Unpublish
                     </Button>
@@ -110,7 +105,7 @@ class ModelPage extends React.Component {
                   {isModelOwner && model.is_published === "False" ? (
                     <Button
                       variant="outline-success"
-                      onClick={() => this.handlePublish(model)}
+                      onClick={() => this.togglePublish()}
                     >
                       Publish
                     </Button>
@@ -121,6 +116,23 @@ class ModelPage extends React.Component {
                 <Table className="mb-0">
                   <thead />
                   <tbody>
+                    <tr>
+                      <td colSpan="2">
+                        <h5 className="mx-0">
+                          <span className="blue-color">{model.name}</span>
+                          {isModelOwner && model.is_published === "True" ? (
+                            <Badge variant="success" className="ml-2">
+                              Published
+                            </Badge>
+                          ) : null}
+                          {isModelOwner && model.is_published === "False" ? (
+                            <Badge variant="danger" className="ml-2">
+                              Unpublished
+                            </Badge>
+                          ) : null}
+                        </h5>
+                      </td>
+                    </tr>
                     <tr>
                       <td>
                         <b>Owner</b>
