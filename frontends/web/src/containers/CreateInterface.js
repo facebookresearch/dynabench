@@ -62,7 +62,9 @@ class ContextInfo extends React.Component {
 }
 
 const TextFeature = ({ data }) => {
-  const template = formatWordImportances(data);
+  const { words, importances } = data;
+  if (!words || !importances) return "";
+  const template = formatWordImportances({ words, importances });
   return (
     <table className="inspectModel">
       <thead>
