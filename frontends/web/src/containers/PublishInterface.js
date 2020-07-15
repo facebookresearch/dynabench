@@ -33,7 +33,6 @@ class PublishInterface extends React.Component {
       );
     }
     const propState = this.props.location.state;
-    console.log("propState------------", propState);
     if (!propState) {
       this.props.history.push("/");
       return;
