@@ -30,6 +30,7 @@ class ProfilePage extends React.Component {
       userModelsPage: 0,
       pageLimit: 10,
       isEndOfUserModelsPage: true,
+      invalidFileUpload: false,
     };
   }
 
@@ -131,13 +132,21 @@ class ProfilePage extends React.Component {
   handleAvatarChange = (e) => {
     const user = this.context.api.getCredentials();
     const files = e.target.files;
+    var allowedExtensions = /(\.jpg|\.jpeg|\.png)$/i;
+    if (!allowedExtensions.exec(files[0].name)) {
+      this.setState({
+        invalidFileUpload: true,
+      });
+      return;
+    }
     this.context.api
       .updateProfilePic(user.id, files[0])
       .then((result) => {
-        this.setState({ user: result });
+        this.setState({ user: result, invalidFileUpload: true });
       })
       .catch((error) => {
         console.log("error", error);
+        this.setState({ invalidFileUpload: true });
       });
   };
 
@@ -188,6 +197,11 @@ class ProfilePage extends React.Component {
                           theme="blue"
                           handleUpdate={this.handleAvatarChange}
                         />
+                        {this.state.invalidFileUpload ? (
+                          <div className="text-center mt-4">
+                            *Upload a valid file
+                          </div>
+                        ) : null}
                       </Col>
                     </Row>
                   </Container>
