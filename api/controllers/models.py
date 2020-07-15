@@ -53,6 +53,7 @@ def do_upload(credentials):
     round_id = bottle.request.forms.get('type')
     upload = bottle.request.files.get('file')
     task_id = bottle.request.forms.get('taskId')
+    #TODO: get some task reference and pass that to validate_prediction()
 
     try:
         test_raw_data = upload.file.read().decode('utf-8').lower().splitlines()
