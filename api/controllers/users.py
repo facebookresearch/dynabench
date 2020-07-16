@@ -23,14 +23,14 @@ def users():
     return json.dumps(users)
 
 @bottle.get('/users/<id:int>')
-# @_auth.requires_auth
-def get_user(id):
+@_auth.requires_auth
+def get_user(credentials, id):
     u = UserModel()
     user = u.get(id)
     if not user:
         bottle.abort(404, 'Not found')
 
-    if not util.is_current_user(uid=id):
+    if id != credentials['id']:
         # only copy some sub fields if this is not us
         nu, u = {}, user.to_dict()
         for f in ['id', 'username', 'affiliation']:
@@ -226,9 +226,13 @@ def upload_user_profile_picture(credentials, id):
     app = bottle.default_app()
     s3_service = app.config['s3_service']
     file_name, ext = os.path.splitext(upload.filename)
+
     # validating file extension
     if ext not in ('.png', '.jpg', '.jpeg'):
         bottle.abort(400, 'File extension not allowed.')
+    # validate and read the file
+    img_byte_str = util.read_file_content(upload.file, app.config['profile_img_max_size'])
+
     # validate user detail
     if not util.is_current_user(uid=id, credentials=credentials):
         bottle.abort(403, 'Not authorized to update profile')
@@ -239,21 +243,13 @@ def upload_user_profile_picture(credentials, id):
         pic_url = user.avatar_url
         # removing old avatar picture from s3 bucket
         if pic_url and pic_url != '':
-            old_file_name = pic_url.split('/')[len(pic_url.split('/'))-1]
-            s3_service.delete_object(Bucket=app.config['aws_s3_bucket_name'], Key='profile/' + old_file_name)
+            s3_service.delete_object(Bucket=app.config['aws_s3_bucket_name'], Key='profile/' + pic_url.split('/')[-1])
         # upload new avatar picture with new uuid into s3 bucket
         file_name = str(uuid.uuid4()) + ext
-        s3_service.upload_fileobj(
-            upload.file,
-            app.config['aws_s3_bucket_name'],
-            'profile/'+file_name,
-            ExtraArgs={
-                "ACL": 'public-read',
-                "ContentType": upload.content_type
-            }
-        )
+        s3_service.put_object(Body=img_byte_str, Bucket=app.config['aws_s3_bucket_name'], Key='profile/' + file_name,
+                              ACL='public-read', ContentType=upload.content_type)
         # update avatar s3 ur in user object
-        base_url = app.config['aws_s3_profile_base_url'] + '/profile/'+file_name
+        base_url = app.config['aws_s3_profile_base_url'] + '/profile/' + file_name
         u.update(user.id, {'avatar_url': base_url})
         return json.dumps(user.to_dict())
     except db.orm.exc.NoResultFound as ex:

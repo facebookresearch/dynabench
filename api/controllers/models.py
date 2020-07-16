@@ -23,18 +23,15 @@ def get_model(mid):
     return json.dumps(model.to_dict())
 
 @bottle.get('/models/<mid:int>/details')
-def get_model_detail(mid):
+@_auth.requires_auth_or_optional
+def get_model_detail(credentials, mid):
+    m = ModelModel()
+    s = ScoreModel()
     try:
-        m = ModelModel()
-        s = ScoreModel()
-        # Secure to read unpublished model detail for only owner
-        credentials = util.get_credentials_from_header()
-        logged_uid = None
-        if credentials:
-            logged_uid = credentials['id']
         query_result = m.getModelUserByMid(mid)
         model = query_result[0].to_dict()
-        if not query_result[0].is_published and query_result[0].uid != logged_uid:
+        # Secure to read unpublished model detail for only owner
+        if not query_result[0].is_published and query_result[0].uid != credentials['id']:
             raise AssertionError()
         model['user'] = query_result[1].to_dict()
         # Construct Score information based on model id
@@ -86,15 +83,16 @@ def do_upload(credentials):
     # Model result validate and score object save into db
     if len(test_raw_data) > 0:
         try:
-            split_up_list, score_obj_list, overall_accuracy = util.validate_prediction(rounds, test_raw_data)
+            rounds_accuracy_list, score_obj_list, overall_accuracy = util.validate_prediction(rounds, test_raw_data)
             m = ModelModel()
-            model = m.create(task_id=task_id, user_id=user_id, name='', shortname='', overall_perf=str(overall_accuracy))
+            model = m.create(task_id=task_id, user_id=user_id, name='', shortname='', longdesc='', desc='',
+                             overall_perf=str(overall_accuracy))
             s = ScoreModel()
             scores = s.bulk_create(model_id=model.id, score_objs=score_obj_list)
             #Construct response object
             response = model.to_dict()
             response['user'] = user.to_dict()
-            response['scores'] = split_up_list
+            response['scores'] = rounds_accuracy_list
             return json.dumps(response)
         except AssertionError:
             bottle.abort(400, 'Submission file length mismatch')
@@ -127,9 +125,9 @@ def publish_model(credentials, mid):
         logging.exception('Could not update model details: %s' % (e))
         bottle.abort(400, 'Could not update model details: %s' % (e))
 
-@bottle.put('/models/<mid:int>/unpublish')
+@bottle.put('/models/<mid:int>/revertstatus')
 @_auth.requires_auth
-def unpublish_model(credentials, mid):
+def revert_model_status(credentials, mid):
     m = ModelModel()
     try:
         model = m.getUnpublishedModelByMid(mid)
@@ -137,7 +135,7 @@ def unpublish_model(credentials, mid):
             logging.error('Original user (%s) and the modification tried by (%s)' % (model.uid, credentials['id']))
             bottle.abort(401, 'Operation not authorized')
 
-        model = m.update(model.id, is_published=False)
+        model = m.update(model.id, is_published=not model.is_published)
 
         return {'status': 'success'}
     except db.orm.exc.NoResultFound as ex:

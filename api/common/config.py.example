@@ -18,5 +18,6 @@ config = { \
         'aws_secret_access_key': '',
         'aws_region': '',
         'aws_s3_bucket_name': '',
-        'aws_s3_profile_base_url': ''
+        'aws_s3_profile_base_url': '',
+        'profile_img_max_size': 5 * 1024 * 1024 # 5 MB
         }
