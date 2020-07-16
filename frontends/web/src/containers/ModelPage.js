@@ -53,6 +53,14 @@ class ModelPage extends React.Component {
   };
 
   togglePublish = () => {
+    const modelName = this.state.model.name;
+    if (!modelName || modelName === "") {
+      this.props.history.push({
+        pathname: `/tasks/${this.state.model.tid}/models/${this.state.model.id}/publish`,
+        state: { detail: this.state.model },
+      });
+      return;
+    }
     return this.context.api
       .toggleModelStatus(this.state.modelId)
       .then(() => {
@@ -102,7 +110,9 @@ class ModelPage extends React.Component {
                       Unpublish
                     </Button>
                   ) : null}
-                  {isModelOwner && model.is_published === "False" ? (
+                  {isModelOwner &&
+                  model.is_published === "False" &&
+                  model.name ? (
                     <Button
                       variant="outline-success"
                       onClick={() => this.togglePublish()}
@@ -119,7 +129,9 @@ class ModelPage extends React.Component {
                     <tr>
                       <td colSpan="2">
                         <h5 className="mx-0">
-                          <span className="blue-color">{model.name}</span>
+                          <span className="blue-color">
+                            {model.name || "Unknown"}
+                          </span>
                           {isModelOwner && model.is_published === "True" ? (
                             <Badge variant="success" className="ml-2">
                               Published

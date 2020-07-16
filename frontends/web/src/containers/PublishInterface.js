@@ -46,7 +46,7 @@ class PublishInterface extends React.Component {
   }
   handleValidation = (values) => {
     const errors = {};
-    if (!values.name) {
+    if (!values.name || values.name.trim() === '') {
       errors.name = "Required";
     }
     return errors;

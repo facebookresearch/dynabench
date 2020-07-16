@@ -296,7 +296,7 @@ export default class ApiService {
         tid: tid,
         rid: rid,
         cid: cid,
-        uid: uid,
+        uid: Number(uid),
         target: target,
         // TODO: make this more specific later to reduce latency:
         // Only .prob and .signed?
