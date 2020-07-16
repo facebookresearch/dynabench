@@ -117,7 +117,7 @@ class ResponseInfo extends React.Component {
     var idx = e.target.getAttribute("data-index");
     let target = "None";
     if (!isNaN(parseInt(curTarget))) {
-      target = targets.map((t, i) => Number(i === curTarget));
+      target = curTarget;
     }
     const selectedAnswer =
       answer && answer.length ? answer[answer.length - 1].tokens.join("") : "";
