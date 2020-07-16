@@ -247,15 +247,16 @@ export default class ApiService {
     });
   }
 
-  getModelResponse(modelUrl, modelInputs) {
+  getModelResponse(modelUrl, { context, hypothesis, answer, insight }) {
     return this.doFetch(
       modelUrl,
       {
         method: "POST",
         body: JSON.stringify({
-          context: modelInputs.context,
-          hypothesis: modelInputs.hypothesis,
-          answer: modelInputs.answer,
+          context,
+          hypothesis,
+          answer,
+          insight,
         }),
       },
       false
