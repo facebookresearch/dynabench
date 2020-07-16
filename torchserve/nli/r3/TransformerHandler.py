@@ -2,7 +2,7 @@
 This is a handler passed to the torchserve to serve the model. 
 It loads up the model and handles requests. This code is specific for NLI round 3
 """
-from abc import ABC
+
 import json
 import logging
 import os
@@ -21,7 +21,7 @@ import torch
 import torch.nn.functional as F
 from ts.torch_handler.base_handler import BaseHandler
 from settings import my_secret
-from TransformerUtils import generate_response_signature, check_fields
+from TransformerUtils import generate_response_signature, check_fields, remove_sp_chars, handler_initialize
 
 # ================== Round 2 imports =================
 from data_utils.exvocab import ExVocabulary
@@ -29,7 +29,7 @@ from roberta_model.nli_training import RoBertaSeqClassification
 from data_utils.readers.roberta_nli_reader import RoBertaNLIReader
 from fairseq.models.roberta import RobertaModel
 
-class NliTransformerHandler(BaseHandler, ABC):
+class NliTransformerHandler(BaseHandler):
     """
     Transformers handler class for NLI.
     """
@@ -39,30 +39,11 @@ class NliTransformerHandler(BaseHandler, ABC):
         self.initialized = False
 
     def initialize(self, ctx):
-
-        self.manifest = ctx.manifest
-        properties = ctx.system_properties
-        model_dir = properties.get("model_dir")
-        logger.info(f"Model Directory  {model_dir}")
-        logger.info(f"Self.manifest  {self.manifest}")
-        serialized_file = self.manifest["model"]["serializedFile"]
-
-        model_pt_path = os.path.join(model_dir, serialized_file)
-        self.device = torch.device("cuda:" + str(properties.get("gpu_id")) \
-            if torch.cuda.is_available() else "cpu")
-    
-        # read configs for the mode, model_name, etc. from setup_config.json
-        setup_config_path = os.path.join(model_dir, "setup_config.json")
-        if os.path.isfile(setup_config_path):
-            with open(setup_config_path) as setup_config_file:
-                self.setup_config = json.load(setup_config_file)
-        else:
-            logger.warning("Missing the setup_config.json file.")
-
-        attribute_list = ["my_task_id", "my_round_id", "model_name", "mode", "do_lower_case", \
-            "num_labels", "max_length", "save_mode"]
-        if not check_fields(self.setup_config, attribute_list):
-            logger.warning("Attributes missing in setup_config file")
+        """
+        Initializes the model and tokenizer during server start up 
+        """
+        model_dir, model_pt_path, self.device, self.setup_config \
+                  = handler_initialize(self,ctx)
 
         ## NLI Custom codes
         self.input_list = True
@@ -76,7 +57,6 @@ class NliTransformerHandler(BaseHandler, ABC):
         self.my_task_id = self.setup_config["my_task_id"]
         self.my_round_id = self.setup_config["my_round_id"]
         self.device_num = device_num
-        bert_pretrain_path = model_dir
 
         logger.info("--------------- Stage 1 ------------------- ")
         self.cur_roberta = torch.hub.load("pytorch/fairseq", self.roberta_model_name)
@@ -117,33 +97,24 @@ class NliTransformerHandler(BaseHandler, ABC):
         """
         logger.info("--------------- Preprocess satge 1 ------------------- ")
         logger.info(f"In preprocess, Recieved data '{data}'")
-        body = data[0].get("body")
-
+        body = data[0]["body"]
+        if not body:
+            raise AttributeError("No 'body' found in the request") 
         # Checks if the request contains the necessary attributes
-        attribute_list = ["answer", "context", "hypothesis", "insight", "target"]
-        if not check_fields(body, attribute_list):
-            logger.warning("Attributes missing in the request")
+        attribute_list = ["context", "hypothesis", "insight"]
+        check_fields(body, attribute_list)
 
-        context_encoded = body["context"].encode("ascii", "ignore")
-        hypothesis_encoded = body["hypothesis"].encode("ascii", "ignore")
-        context_decoded = context_encoded.decode()
-        hypothesis_decoded = hypothesis_encoded.decode()
+        context_decoded = remove_sp_chars(body["context"])
+        hypothesis_decoded = remove_sp_chars(body["hypothesis"])
 
-        bert_input = {"s1": context_decoded, "s2": hypothesis_decoded}
-
-        example = bert_input
-        if "s1" in example and "s2" in example:
-            if "y" not in example:
-                example["y"] = "h"
-            if "uid" not in example:
-                example["uid"] = str(uuid.uuid4())
-        else:
-            example["status"] = "invalid"
+        example = {"s1": context_decoded, "s2": hypothesis_decoded}
+        example["y"] = "h"
+        example["uid"] = str(uuid.uuid4())
         logger.info(f"In preprocess , example: '{example}'")
 
         return example
 
-    def inference(self, examples, show_progress=False):
+    def inference(self, examples):
         """ 
         Predict the class (or classes) of the received text using the serialized 
         transformers checkpoint.
@@ -240,7 +211,8 @@ class NliTransformerHandler(BaseHandler, ABC):
         """
 
         inference_output = inference_output[0]
-
+        
+        # The input and the output probabilities are concatenated to generate signature
         pred_str = "|".join(str(x) for x in inference_output["prob"])
         stringlist = [pred_str, data["s1"], data["s2"]]
 
@@ -265,6 +237,12 @@ _service = NliTransformerHandler()
 def handle(data, context):
     """   
     This function handles the requests for the model and returns a postprocessed response 
+    # Sample input {
+        "context": "Please pretend you are reviewing a place, product, book or movie",
+        "hypothesis": "pretend you are reviewing a place",
+        "insight": true
+        "target": [1,0,0]
+    } and output response is probabilities
     """
     try:
         if not _service.initialized:
@@ -278,5 +256,9 @@ def handle(data, context):
         logger.info(response)
 
         return response
+    except AttributeError as e:
+        raise e
+    except FileNotFoundError as e:
+        raise e
     except Exception as e:
         raise e
