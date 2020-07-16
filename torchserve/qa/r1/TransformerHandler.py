@@ -8,6 +8,7 @@ import logging
 import os
 import ast
 import hashlib
+import sys
 logger = logging.getLogger(__name__)
 
 from transformers import AutoConfig, AutoModelForSequenceClassification, AutoTokenizer,AutoModelForQuestionAnswering, RobertaTokenizer
@@ -15,7 +16,9 @@ import torch
 import torch.nn.functional as F
 from ts.torch_handler.base_handler import BaseHandler
 from settings import my_secret
-from TransformerUtils import generate_response_signature, check_fields
+from TransformerUtils import generate_response_signature, check_fields, \
+    construct_input_ref_pair, captum_qa_forward, summarize_attributions, get_word_token
+from captum.attr import LayerIntegratedGradients
 
 # QA specific libraries
 from qa_utils import convert_to_squad_example, compute_predictions_logits
@@ -60,7 +63,7 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
                 self.setup_config = json.load(setup_config_file)
         else:
             logger.warning("Missing the setup_config.json file.")
-        
+
         attribute_list = ["my_task_id", "my_round_id", "model_name", "mode", "do_lower_case", \
             "num_labels", "max_length", "save_mode"]
         if not check_fields(self.setup_config, attribute_list):
@@ -97,10 +100,13 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
         self.model.to(self.device)
         self.model.eval()
         logger.debug("Transformer model from path {0} loaded successfully".format(model_dir))
+
+        # ------------------------------- Captum initialization ----------------------------#
+        self.lig = LayerIntegratedGradients(captum_qa_forward, self.model.roberta.embeddings)
         self.initialized = True
 
     def preprocess(self, data):
-        """ 
+        """
         Basic text preprocessing
         """
         max_length = self.setup_config["max_length"]
@@ -115,6 +121,8 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
         passage = body.get("context")
         question = body.get("hypothesis")
         answer = body.get("answer")
+        insight = body.get("insight")
+        target = body.get("target")
         logger.info("In preprocess, body's value: '%s'", body)
         logger.info("In preprocess, passage's value: '%s'", passage)
         logger.info("In preprocess, questions's value: '%s'", question)
@@ -122,11 +130,11 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
 
         example = {"passage": passage.strip(), "question": question.strip()}
 
-        return [example], answer
+        return [example], answer, insight, target
 
     def inference(self, examples):
-        """ 
-        Predict the class (or classes) of the received text using the serialized 
+        """
+        Predict the class (or classes) of the received text using the serialized
         transformers checkpoint.
         """
         # Handling inference for question answering
@@ -180,8 +188,8 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
             return predictions_by_example
 
     def postprocess(self, predictions_by_example, example, answer):
-        """ 
-        Post-processing of the model predictions to handle signature 
+        """
+        Post-processing of the model predictions to handle signature
         """
         contx = example[0]["passage"]
         data = example[0]["question"]
@@ -189,7 +197,7 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
 
         logger.info("response without sign '%s'", response)
         response["text"] = predictions_by_example["text"]
-        response["prob"] = max(1.0, min(0.0, predictions_by_example["model_conf"]))  
+        response["prob"] = max(1.0, min(0.0, predictions_by_example["model_conf"]))
         # this is what the frontend expects
 
         # Evaluate the model prediction against the human answer
@@ -211,9 +219,35 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
 
 _service = TransformersSeqClassifierHandler()
 
+def get_insights(example, target, tokenizer, device, lig, model):
+    """
+    This function calls the layer integrated gradient to get word importance
+    of the question and the passage. The word importance is created for
+    start and end position of the prediction
+    """
+    input_ids, ref_input_ids, attention_mask = construct_input_ref_pair(\
+                example[0]["question"], example[0]["passage"], tokenizer, device)
+    all_tokens = get_word_token(input_ids, tokenizer)
+    attributions_start, delta_start = lig.attribute(inputs=input_ids,
+                                  baselines=ref_input_ids,
+                                  additional_forward_args=(attention_mask, 0, model),
+                                  return_convergence_delta=True)
+
+    attributions_end, delta_end = lig.attribute(inputs=input_ids, baselines=ref_input_ids,
+                                additional_forward_args=(attention_mask, 1, model),
+                                return_convergence_delta=True)
+
+    attributions_start_sum = summarize_attributions(attributions_start)
+    attributions_end_sum = summarize_attributions(attributions_end)
+    response = {}
+    #WIP based on the UI response format
+    response["importances"] = attributions_start_sum.tolist()
+    response["words"] = all_tokens
+    return [response]
+
 def handle(data, context):
-    """   
-    This function handles the requests for the model and returns a postprocessed response 
+    """
+    This function handles the requests for the model and returns a postprocessed response
     """
     try:
         if not _service.initialized:
@@ -222,10 +256,15 @@ def handle(data, context):
         if data is None:
             return None
 
-        example, answer = _service.preprocess(data)
-        predictions_by_example = _service.inference(example)
-        response = _service.postprocess(predictions_by_example, example, answer)
-        return response
+        example, answer, insight, target = _service.preprocess(data)
+        if not insight:
+            predictions_by_example = _service.inference(example)
+            response = _service.postprocess(predictions_by_example, example, answer)
+            return response
+        else:
+            response = get_insights(example, target, _service.tokenizer, _service.device, _service.lig, _service.model)
+            return response
+
     except Exception as e:
         raise e
 

@@ -1,6 +1,6 @@
 """ 
 This is a handler passed to the torchserve to serve the model. 
-It loads up the model and handles requests. This code is specific for specific for hatespeech
+It loads up the model and handles requests. This code is specific for specific for sentiment
 """
 from abc import ABC
 import json
@@ -8,17 +8,20 @@ import logging
 import os
 import hashlib
 import ast
+import sys
 logger = logging.getLogger(__name__)
 
 from transformers import AutoConfig, AutoModelForSequenceClassification, \
     AutoTokenizer, AutoModelForQuestionAnswering, AutoModelForTokenClassification,\
          RobertaForSequenceClassification, RobertaTokenizer
+from captum.attr import LayerIntegratedGradients
 import torch
 import torch.nn.functional as F
 from ts.torch_handler.base_handler import BaseHandler
 
 from settings import my_secret
-from TransformerUtils import generate_response_signature, check_fields
+from TransformerUtils import generate_response_signature, check_fields, \
+    construct_input_ref, captum_sequence_forward, summarize_attributions, get_word_token
 
 class TransformersSeqClassifierHandler(BaseHandler, ABC):
     """
@@ -36,9 +39,7 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
         model_pt_path = os.path.join(model_dir, serialized_file)
         self.device = torch.device(
             "cuda:" + str(properties.get("gpu_id"))
-            if torch.cuda.is_available()
-            else "cpu"
-        )
+            if torch.cuda.is_available() else "cpu")
         # read configs for the mode, model_name, etc. from setup_config.json
         setup_config_path = os.path.join(model_dir, "setup_config.json")
 
@@ -47,7 +48,7 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
                 self.setup_config = json.load(setup_config_file)
         else:
             logger.warning("Missing the setup_config.json file.")
-        
+
         attribute_list = ["my_task_id", "my_round_id", "model_name", "mode", "do_lower_case", \
             "num_labels", "max_length", "save_mode"]
         if not check_fields(self.setup_config, attribute_list):
@@ -80,16 +81,18 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
         self.model.to(self.device)
         self.model.eval()
         logger.debug("Transformer model from path {0} loaded successfully".format(model_dir))
+
+        # ------------------------------- Captum initialization ----------------------------#
+        self.lig = LayerIntegratedGradients(captum_sequence_forward, self.model.roberta.embeddings)
         self.initialized = True
 
     def preprocess(self, data):
-        """ 
+        """
         Basic text preprocessing
         """
         max_length = self.setup_config["max_length"]
-        logger.info(f"In preprocess, data's value: '{data}'")
+        logger.info("In preprocess, data's value: '%s'", data)
         body = data[0].get("body")
-
         # Checks if the request contains the necessary attributes
         attribute_list = ["answer", "context", "hypothesis", "insight", "target"]
         if not check_fields(body, attribute_list):
@@ -97,6 +100,8 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
 
         context = body.get("context")
         input_text = body.get("hypothesis")
+        insight = body.get("insight")
+        target = body.get("target")
         logger.info("In preprocess, body's value: '%s'", body)
         logger.info("In preprocess, context's value: '%s'", context)
         logger.info("In preprocess, hypothesis's value: '%s'", input_text)
@@ -107,10 +112,10 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
             input_ids = torch.tensor(batch_encoding["input_ids"], dtype=torch.long)
             attention_mask = torch.tensor(batch_encoding["attention_mask"], dtype=torch.long)
 
-        return input_text, input_ids, attention_mask, context
+        return input_text, input_ids, attention_mask, context, insight, target
 
     def inference(self, inputs, attention_mask):
-        """ 
+        """
         Predict the class (or classes) of the received text using the serialized transformers checkpoint.
         """
         # Handling inference for sequence_classification.
@@ -127,7 +132,7 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
         return predictions
 
     def postprocess(self, inference_output, data, contx):
-        """ 
+        """
         Post-processing of the model predictions to handle signature
         """
         pred_str = "|".join(str(x) for x in inference_output)
@@ -143,9 +148,28 @@ class TransformersSeqClassifierHandler(BaseHandler, ABC):
 
 _service = TransformersSeqClassifierHandler()
 
+def get_insights(text, target, tokenizer, device, lig, model):
+    """
+    This function calls the layer integrated gradient to get word importance
+    of the input text
+    """
+    input_ids, ref_input_ids, attention_mask = construct_input_ref(text, tokenizer, device)
+    all_tokens = get_word_token(input_ids, tokenizer)
+    attributions, delta = lig.attribute(inputs=input_ids,
+                                        baselines=ref_input_ids,
+                                        target=target,
+                                        additional_forward_args=(attention_mask, 0, model),
+                                        return_convergence_delta=True)
+
+    attributions_sum = summarize_attributions(attributions)
+    response = {}
+    response["importances"] = attributions_sum.tolist()
+    response["words"] = all_tokens
+    return [response]
+
 def handle(data, context):
-    """   
-    This function handles the requests for the model and returns a postprocessed response 
+    """
+    This function handles the requests for the model and returns a postprocessed response
     """
     try:
         if not _service.initialized:
@@ -154,9 +178,14 @@ def handle(data, context):
         if data is None:
             return None
 
-        input_text, inputs, attention_mask, contx = _service.preprocess(data)
-        output = _service.inference(inputs, attention_mask)
-        response = _service.postprocess(output, input_text, contx)
-        return response
+        input_text, inputs, attention_mask, contx, insight, target = _service.preprocess(data)
+        if not insight:
+            output = _service.inference(inputs, attention_mask)
+            response = _service.postprocess(output, input_text, contx)
+            return response
+        else:
+            response = get_insights(input_text, target, _service.tokenizer, _service.device, _service.lig, _service.model)
+            return response
+
     except Exception as e:
         raise e
