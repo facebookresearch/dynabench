@@ -43,8 +43,7 @@ QA_CONFIG = {
 
 device = 'cpu'
 model_paths = {
-    'round1_bert': '/home/ubuntu/models/qa/qa_round1_bert',
-    'round1_roberta': '/home/ubuntu/models/qa/qa_round1_roberta'
+    'round2_roberta': '/home/ubuntu/models/qa/roberta-squad_plus_harderqs-run_6'
 }
 
 configs, tokenizers, model_ids, models = {}, {}, {}, {}
@@ -181,7 +180,7 @@ if __name__ == '__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
     # Launch HTTP server
-    url_secret = 'b7a65254215340ae976e3e19ae87c4eaa0d10e30f7424c72888df7086a8a6846'
+    url_secret = 'cce63f4d8238fc8061a2e3a268afe1c14c0e2135580bc1680aec62dc20f68e79'
 
     url_port = 8097
     launch_modelserver(url_secret, url_port, handle_submit_post)

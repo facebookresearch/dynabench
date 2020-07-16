@@ -80,6 +80,8 @@ class ExampleModel(BaseModel):
         if c.round.task.has_answer:
             pred = str(response['model_is_correct']) + '|' + str(response['text'])
             model_wrong = not response['model_is_correct']
+            if response.get('model_id', ''):
+                model += '|' + response['model_id']
         else:
             pred = response['prob']
             model_wrong = (tgt != np.argmax(pred))

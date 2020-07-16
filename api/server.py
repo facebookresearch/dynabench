@@ -42,6 +42,7 @@ if 'smtp_user' in config and config['smtp_user'] != '':
 ROOT_PATH = os.path.dirname(os.path.realpath('__file__'))
 nli_labels = read_nli_round_labels(ROOT_PATH)
 app.config['nli_labels'] = nli_labels
+app.config['qa_labels'] = read_qa_round_labels(ROOT_PATH)
 
 # initialize sagemaker endpoint if set
 if 'aws_access_key_id' in config and config['aws_access_key_id'] != '':
