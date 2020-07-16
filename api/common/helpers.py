@@ -241,7 +241,7 @@ def read_file_content(file_obj, max_limit):
         byte_count += len(buf)
         # Check file size
         if byte_count > max_limit:
-            raise bottle.HTTPError(413, 'Request entity too large (max: {} bytes)'.format(max_limit))
+            raise AssertionError('Request entity too large (max: {} bytes)'.format(max_limit))
 
         data_blocks.append(buf)
         buf = file_obj.read(BUF_SIZE)
