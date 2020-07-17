@@ -98,11 +98,13 @@ class ResponseInfo extends React.Component {
     this.retractExample = this.retractExample.bind(this);
     this.state = {
       loader: true,
+      inspectError: false,
     };
   }
   componentDidMount() {
     this.setState({
       loader: false,
+      inspectError: false,
     });
   }
   retractExample(e) {
@@ -125,6 +127,7 @@ class ResponseInfo extends React.Component {
     e.preventDefault();
     this.setState({
       loader: true,
+      inspectError: false,
     });
     var idx = e.target.getAttribute("data-index");
     let target = "None";
@@ -142,21 +145,25 @@ class ResponseInfo extends React.Component {
         target,
       })
       .then((result) => {
-        const qaInspect = ["start_importances", "end_importances"];
-        const isQA = qaInspect.some(
-          (k) => Object.keys(result).indexOf(k) !== -1
-        );
         let inspectors = [];
-        if (isQA) {
-          inspectors = qaInspect.map((imp) => {
-            return {
-              name: imp,
-              importances: result[imp],
-              words: result.words,
-            };
-          });
+        if (result.errorMessage) {
+          this.setState({ inspectError: true });
         } else {
-          inspectors = [result];
+          const qaInspect = ["start_importances", "end_importances"];
+          const isQA = qaInspect.some(
+            (k) => Object.keys(result).indexOf(k) !== -1
+          );
+          if (isQA) {
+            inspectors = qaInspect.map((imp) => {
+              return {
+                name: imp,
+                importances: result[imp],
+                words: result.words,
+              };
+            });
+          } else {
+            inspectors = [result];
+          }
         }
         const newContent = this.props.content.slice();
         newContent[idx].inspect = inspectors;
@@ -227,6 +234,11 @@ class ResponseInfo extends React.Component {
                   {this.state.loader ? (
                     <img src="/loader.gif" className="loader" />
                   ) : null}
+                  {this.state.inspectError && (
+                    <span style={{ color: "#e65959" }}>
+                      *Unable to fetch results. Please try again after sometime.
+                    </span>
+                  )}
                   {this.props.obj.inspect &&
                     this.props.obj.inspect.map((inspectData) => {
                       return (
@@ -497,7 +509,6 @@ class CreateInterface extends React.Component {
     });
   }
   updateAnswer(value) {
-    console.log("value---------", value);
     // Only keep the last answer annotated
     if (value.length > 0) {
       this.setState({
