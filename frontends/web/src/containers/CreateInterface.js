@@ -322,26 +322,29 @@ class CreateInterface extends React.Component {
     this.updateAnswer = this.updateAnswer.bind(this);
   }
   getNewContext() {
-    this.setState({ submitDisabled: true, refreshDisabled: true }, () => {
-      this.context.api
-        .getRandomContext(this.state.taskId, this.state.task.cur_round)
-        .then((result) => {
-          var randomTarget = Math.floor(
-            Math.random() * this.state.task.targets.length
-          );
-          this.setState({
-            hypothesis: "",
-            target: randomTarget,
-            context: result,
-            content: [{ cls: "context", text: result.context }],
-            submitDisabled: false,
-            refreshDisabled: false,
+    this.setState(
+      { answer: [], submitDisabled: true, refreshDisabled: true },
+      () => {
+        this.context.api
+          .getRandomContext(this.state.taskId, this.state.task.cur_round)
+          .then((result) => {
+            var randomTarget = Math.floor(
+              Math.random() * this.state.task.targets.length
+            );
+            this.setState({
+              hypothesis: "",
+              target: randomTarget,
+              context: result,
+              content: [{ cls: "context", text: result.context }],
+              submitDisabled: false,
+              refreshDisabled: false,
+            });
+          })
+          .catch((error) => {
+            console.log(error);
           });
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    });
+      }
+    );
   }
 
   pickModel = (modelUrls) => {
@@ -494,6 +497,7 @@ class CreateInterface extends React.Component {
     });
   }
   updateAnswer(value) {
+    console.log("value---------", value);
     // Only keep the last answer annotated
     if (value.length > 0) {
       this.setState({
