@@ -157,5 +157,5 @@ class ExampleModel(BaseModel):
 
     def getUserLeaderByTidAndRid(self, tid, rid, n=5, offset=0, min_cnt=0):
         query_res = self.getUserLeaderByTid(tid, n, offset, min_cnt, downstream=True) \
-                .filter(Round.rid == rid).limit(n).offset(n * offset)
-        return query_res, util.get_query_count(query_res)
+                .filter(Round.rid == rid)
+        return query_res.limit(n).offset(n * offset), util.get_query_count(query_res)

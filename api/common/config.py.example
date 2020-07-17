@@ -14,7 +14,10 @@ config = { \
         'smtp_user': '',
         'smtp_from_email_address': 'no-reply@dynabench.org',
         'email_sender_name': 'DynaBench',
-        'sagemaker_aws_access_key_id': '',
-        'sagemaker_aws_secret_access_key': '',
-        'sagemaker_aws_region': '',
+        'aws_access_key_id': '',
+        'aws_secret_access_key': '',
+        'aws_region': '',
+        'aws_s3_bucket_name': '',
+        'aws_s3_profile_base_url': '',
+        'profile_img_max_size': 5 * 1024 * 1024 # 5 MB
         }

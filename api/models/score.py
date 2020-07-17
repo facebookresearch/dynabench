@@ -76,9 +76,9 @@ class ScoreModel(BaseModel):
                 .join(Score, Score.mid == Model.id)\
                 .join(User, User.id == Model.uid) \
                 .filter(Model.tid == tid).filter(Model.is_published == True) \
-                .group_by(Model.id).order_by(db.sql.func.avg(Score.perf).desc()).limit(n).offset(offset * n)
+                .group_by(Model.id).order_by(db.sql.func.avg(Score.perf).desc())
 
-        return query_res, util.get_query_count(query_res)
+        return query_res.limit(n).offset(offset * n), util.get_query_count(query_res)
 
     def getModelPerfByTidAndRid(self, tid, rid, n=5, offset=0):
         # main query to fetch the model details
@@ -87,9 +87,9 @@ class ScoreModel(BaseModel):
                 .join(User, User.id == Model.uid, isouter=True)\
                 .join(Round, Round.id == Score.rid, isouter=True).filter(Model.tid == tid)\
                 .filter(Round.rid == rid).filter(Model.is_published == True)\
-                .order_by((Score.perf).desc()).limit(n).offset(offset * n)
+                .order_by((Score.perf).desc())
 
-        return query_res, util.get_query_count(query_res)
+        return query_res.limit(n).offset(offset * n), util.get_query_count(query_res)
 
     def getTrendsByTid(self, tid, n=10, offset=0):
         # subquery to get the top performance model
@@ -102,3 +102,7 @@ class ScoreModel(BaseModel):
         return self.dbs.query(sub_query.c.m_id, sub_query.c.name,  Score.perf.label('avg_perg'),
                      Round.rid).join(Score, Round.id == Score.rid).\
                     filter(Score.mid == sub_query.c.m_id)
+
+    def getByMid(self, mid):
+        return self.dbs.query(Score.perf, Round.rid).join(Round, Round.id == Score.rid, isouter=True)\
+            .filter(Score.mid == mid).all()

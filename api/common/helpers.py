@@ -97,11 +97,12 @@ def validate_prediction(r_objects, prediction, task='nli'):
 
     overall_accuracy = 0
     score_obj_list = []
-    split_up = {}
+    rounds_accuracy_list = []
     start_index = 0
     end_index = 0
     for r_obj in r_objects:
         score_obj = {}
+        round_accuracy = {}
         score_obj['round_id'] = r_obj.id
         score_obj['desc'] = None
         score_obj['longdesc'] = None
@@ -110,14 +111,16 @@ def validate_prediction(r_objects, prediction, task='nli'):
         r_prediction = prediction[start_index: end_index]
         start_index = end_index
         r_accuracy = eval_fn(r_prediction, target_labels[r_obj.rid])
-        score_obj['pretty_perf'] = str(round(r_accuracy*100, 2))+' %'
-        score_obj['perf'] = round(r_accuracy*100, 2)
+        score_obj['pretty_perf'] = str(round(r_accuracy * 100, 2)) + ' %'
+        score_obj['perf'] = round(r_accuracy * 100, 2)
         # sum rounds accuracy and generate score object list
-        overall_accuracy = overall_accuracy + round(r_accuracy*100, 2)
-        split_up[r_obj.rid] = round(r_accuracy*100, 2)
+        overall_accuracy = overall_accuracy + round(r_accuracy * 100, 2)
+        round_accuracy['round_id'] = r_obj.rid
+        round_accuracy['accuracy'] = round(r_accuracy * 100, 2)
+        rounds_accuracy_list.append(round_accuracy)
         score_obj_list.append(score_obj)
 
-    return split_up, score_obj_list, round(overall_accuracy/len(r_objects), 2)
+    return rounds_accuracy_list, score_obj_list, round(overall_accuracy / len(r_objects), 2)
 
 def is_current_user(uid, credentials=None):
     """
@@ -213,3 +216,34 @@ def get_query_count(query):
     if disable_group_by:
         count_q = count_q.group_by(None)
     return query.session.execute(count_q).scalar()
+
+def is_fields_blank(data, fields):
+    for f in fields:
+        if data[f] in (None, ''):
+            return True
+    return False
+
+def read_file_content(file_obj, max_limit):
+    """
+    Function to read the file block by block and validate the file size not exceed 5 MB
+    :input - file_object
+    :return - byte str
+    """
+
+    # static buffer size to read content from file object
+    BUF_SIZE = 1 * 1024 * 1024
+
+    data_blocks = []
+    byte_count = 0
+
+    buf = file_obj.read(BUF_SIZE)
+    while buf:
+        byte_count += len(buf)
+        # Check file size
+        if byte_count > max_limit:
+            raise AssertionError('Request entity too large (max: {} bytes)'.format(max_limit))
+
+        data_blocks.append(buf)
+        buf = file_obj.read(BUF_SIZE)
+
+    return b''.join(data_blocks)
