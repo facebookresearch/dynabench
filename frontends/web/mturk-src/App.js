@@ -7,7 +7,7 @@ import './App.css';
 import { useMephistoTask, getBlockedExplanation } from "mephisto-task";
 import { TaskFrontend } from "./components/core.jsx";
 
-import { ApiService } from './ApiService.js';
+import ApiService from '../src/common/ApiService.js';
 
 function App() {
   const {
@@ -30,6 +30,7 @@ function App() {
   }
 
   let api = new ApiService();
+  api.setMturkMode();
 
   if (isLoading) {
     return <h1>Loading</h1>;

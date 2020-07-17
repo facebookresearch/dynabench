@@ -9,10 +9,8 @@ function delay(t, v) {
 export default class ApiService {
   constructor(domain) {
     if (!process.env.NODE_ENV || process.env.NODE_ENV === "development") {
-      //this.domain = domain || 'https://54.187.22.210:8081'
       this.domain = domain || "https://dev.dynabench.org:8081";
     } else {
-      //this.domain = domain || 'https://54.187.22.210:8080'
       this.domain = domain || "https://www.dynabench.org:8080";
     }
 
@@ -22,7 +20,13 @@ export default class ApiService {
     this.login = this.login.bind(this);
     this.register = this.register.bind(this);
     this.getCredentials = this.getCredentials.bind(this);
+    this.setMturkMode = this.setMturkMode.bind(this);
     this.updating_already = false;
+    this.mode = 'normal';
+  }
+
+  setMturkMode() {
+    this.mode = 'mturk';
   }
 
   login(email, password) {
@@ -265,12 +269,14 @@ export default class ApiService {
     });
   }
 
-  retractExample(id) {
+  retractExample(id, uid = null) {
+    let obj = {retracted: true};
+    if (this.mode == 'mturk') {
+      obj.uid = uid;
+    }
     return this.fetch(`${this.domain}/examples/${id}`, {
       method: "PUT",
-      body: JSON.stringify({
-        retracted: true,
-      }),
+      body: JSON.stringify(obj),
     }).then((res) => {
       return Promise.resolve(res);
     });
@@ -297,10 +303,8 @@ export default class ApiService {
         tid: tid,
         rid: rid,
         cid: cid,
-        uid: Number(uid),
+        uid: uid,
         target: target,
-        // TODO: make this more specific later to reduce latency:
-        // Only .prob and .signed?
         response: response,
         model: model,
       }),
@@ -393,9 +397,10 @@ export default class ApiService {
   doFetch(url, options, includeCredentials = false) {
     const token = this.getToken();
     const headers = {
-      Accept: "application/json",
+      "Accept": "application/json",
       "Content-Type": "application/json",
-      Authorization: token ? "Bearer " + token : "None",
+      "Authorization": token ? "Bearer " + token :
+        (this.mode == "mturk" ? "turk" : "None"),
     };
     options = {
       headers,

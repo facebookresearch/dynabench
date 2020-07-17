@@ -62,10 +62,7 @@ def requires_auth_or_turk(f):
         return f(*args, **kwargs)
     return decorated
 
-def requires_auth_or_optional(f):
-    """
-    Decorate used to the api required authentication as optional
-    """
+def auth_optional(f):
     def decorated(*args, **kwargs):
         try:
             token = jwt_token_from_header()

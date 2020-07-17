@@ -23,7 +23,7 @@ def get_model(mid):
     return json.dumps(model.to_dict())
 
 @bottle.get('/models/<mid:int>/details')
-@_auth.requires_auth_or_optional
+@_auth.auth_optional
 def get_model_detail(credentials, mid):
     m = ModelModel()
     s = ScoreModel()

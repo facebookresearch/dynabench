@@ -12,7 +12,7 @@ $ npm install
 ```
 
 ## Setup
-Create a file named `.env` in the folder `frontends/web` with the copy the .env.example file.
+Create a file named `.env` in the folder `frontends/web` with a copy the .env.example file.
 
 
 ## Development
@@ -25,4 +25,10 @@ $ npm start
 Make sure to you have updated the .env file and build the current application.
 ```sh
 $ npm run build
+```
+
+## MTurk
+For building the MTurk interface, run
+```sh
+$ npm run mturk
 ```

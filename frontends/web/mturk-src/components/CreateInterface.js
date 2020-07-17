@@ -155,11 +155,13 @@ class CreateInterface extends React.Component {
           this.api.storeExample(
             this.state.task.id,
             this.state.task.cur_round,
+            // TODO: Handle this as metadata
             'turk|' + this.props.providerWorkerId + '|' + this.props.mephistoWorkerId,
             this.state.context.id,
             this.state.hypothesis,
             this.state.target,
-            result
+            result,
+            'model-name-unknown' // TODO: Fix this
           ).then(result => {
             var key = this.state.content.length-1;
             this.state.tries += 1;

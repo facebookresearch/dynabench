@@ -2,7 +2,7 @@ var path = require("path");
 var webpack = require("webpack");
 
 module.exports = {
-  entry: "./src/index.js",
+  entry: "./mturk-src/index.js",
   output: {
     path: __dirname,
     filename: "build/bundle.js",
