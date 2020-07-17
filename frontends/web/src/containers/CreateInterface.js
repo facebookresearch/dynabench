@@ -121,7 +121,7 @@ class ResponseInfo extends React.Component {
       });
   }
   inspectExample = (e) => {
-    const { content, targets, curTarget, answer } = this.props;
+    const { content, curTarget, answer } = this.props;
     e.preventDefault();
     this.setState({
       loader: true,
@@ -137,7 +137,7 @@ class ResponseInfo extends React.Component {
       .inspectModel(content[idx].url, {
         answer: selectedAnswer,
         context: content[0].text,
-        hypothesis: content[1].cls == "hypothesis" ? content[idx].text : "",
+        hypothesis: content[idx].cls == "hypothesis" ? content[idx].text : "",
         insight: true,
         target,
       })
