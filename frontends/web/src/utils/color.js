@@ -8,7 +8,7 @@ export const formatWordImportances = ({ words, importances }) => {
   let tags = ["<td>"];
   words.map((word, i) => {
     const formatedWord = formatSpecialTokens(word);
-    const color = getColor(importances[i]);
+    const color = getColor(importances[i], word);
     const unwrapped_tag = `<mark style="background-color: ${color}; opacity:1.0; 
                     line-height:1.75"><font color="black"> ${formatedWord}
                     </font></mark>`;
@@ -24,8 +24,10 @@ const formatSpecialTokens = (word) => {
   return word;
 };
 
-const getColor = (attr) => {
+const getColor = (attr, word) => {
+  // console.log("attr bef", attr);
   attr = Math.max(-1, Math.min(1, attr));
+  console.log(`${word} --------- ${attr}`);
   let hue = 0,
     sat = 0,
     lig = 0;

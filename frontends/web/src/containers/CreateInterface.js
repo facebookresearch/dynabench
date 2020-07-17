@@ -61,7 +61,7 @@ class ContextInfo extends React.Component {
   }
 }
 
-const TextFeature = ({ data }) => {
+const TextFeature = ({ data, curTarget, targets }) => {
   const { words, importances } = data;
   if (!words || !importances) return "";
   const template = formatWordImportances({ words, importances });
@@ -200,7 +200,11 @@ class ResponseInfo extends React.Component {
                     <img src="/loader.gif" className="loader" />
                   ) : null}
                   {this.props.obj.inspect ? (
-                    <TextFeature data={this.props.obj.inspect} />
+                    <TextFeature
+                      data={this.props.obj.inspect}
+                      curTarget={this.props.curTarget}
+                      targets={this.props.targets}
+                    />
                   ) : null}
                 </>
               ) : (
@@ -238,7 +242,11 @@ class ResponseInfo extends React.Component {
                     <img src="/loader.gif" className="loader" />
                   ) : null}
                   {this.props.obj.inspect ? (
-                    <TextFeature data={this.props.obj.inspect} />
+                    <TextFeature
+                      data={this.props.obj.inspect}
+                      curTarget={this.props.curTarget}
+                      targets={this.props.targets}
+                    />
                   ) : null}
                 </>
               )}
@@ -315,7 +323,11 @@ class CreateInterface extends React.Component {
         return;
       }
       if (this.state.task.type == "extract" && this.state.answer.length == 0) {
-        this.setState({ submitDisabled: false, refreshDisabled: false });
+        this.setState({
+          submitDisabled: false,
+          refreshDisabled: false,
+          answerNotSelected: true,
+        });
         return;
       }
 
@@ -450,9 +462,12 @@ class CreateInterface extends React.Component {
   updateAnswer(value) {
     // Only keep the last answer annotated
     if (value.length > 0) {
-      this.setState({ answer: [value[value.length - 1]] });
+      this.setState({
+        answer: [value[value.length - 1]],
+        answerNotSelected: false,
+      });
     } else {
-      this.setState({ answer: value });
+      this.setState({ answer: value, answerNotSelected: false });
     }
   }
   render() {
@@ -524,6 +539,11 @@ class CreateInterface extends React.Component {
                 />
               </Button>
             </InputGroup>
+            <div className="p-2">
+              {this.state.answerNotSelected === true
+                ? "*Please select an answer in the context"
+                : null}
+            </div>
           </Card>
         </Col>
       </Container>
