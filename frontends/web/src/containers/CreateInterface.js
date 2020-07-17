@@ -61,15 +61,27 @@ class ContextInfo extends React.Component {
   }
 }
 
-const TextFeature = ({ data }) => {
+const TextFeature = ({ data, curTarget, targets }) => {
+  const capitalize = (s) => {
+    if (typeof s !== "string") return "";
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  };
   const { words, importances } = data;
+  const target = targets[curTarget];
   if (!words || !importances) return "";
-  const template = formatWordImportances({ words, importances });
+  let inspectorTitle = data.name
+    ? "- " +
+      data.name
+        .split("_")
+        .map((s) => capitalize(s))
+        .join(" ")
+    : "";
+  const template = formatWordImportances({ words, importances }, target);
   return (
     <table className="inspectModel">
       <thead>
         <tr>
-          <td>Model Inspector</td>
+          <td>Model Inspector {`${inspectorTitle}`}</td>
         </tr>
       </thead>
       <tbody>
@@ -86,11 +98,13 @@ class ResponseInfo extends React.Component {
     this.retractExample = this.retractExample.bind(this);
     this.state = {
       loader: true,
+      inspectError: false,
     };
   }
   componentDidMount() {
     this.setState({
       loader: false,
+      inspectError: false,
     });
   }
   retractExample(e) {
@@ -109,10 +123,11 @@ class ResponseInfo extends React.Component {
       });
   }
   inspectExample = (e) => {
-    const { content, targets, curTarget, answer } = this.props;
+    const { content, curTarget, answer } = this.props;
     e.preventDefault();
     this.setState({
       loader: true,
+      inspectError: false,
     });
     var idx = e.target.getAttribute("data-index");
     let target = "None";
@@ -125,13 +140,33 @@ class ResponseInfo extends React.Component {
       .inspectModel(content[idx].url, {
         answer: selectedAnswer,
         context: content[0].text,
-        hypothesis: content[1].cls == "hypothesis" ? content[idx].text : "",
+        hypothesis: content[idx].cls == "hypothesis" ? content[idx].text : "",
         insight: true,
         target,
       })
       .then((result) => {
+        let inspectors = [];
+        if (result.errorMessage) {
+          this.setState({ inspectError: true });
+        } else {
+          const qaInspect = ["start_importances", "end_importances"];
+          const isQA = qaInspect.some(
+            (k) => Object.keys(result).indexOf(k) !== -1
+          );
+          if (isQA) {
+            inspectors = qaInspect.map((imp) => {
+              return {
+                name: imp,
+                importances: result[imp],
+                words: result.words,
+              };
+            });
+          } else {
+            inspectors = [result];
+          }
+        }
         const newContent = this.props.content.slice();
-        newContent[idx].inspect = result;
+        newContent[idx].inspect = inspectors;
         this.setState({ content: newContent, loader: false });
       })
       .catch((error) => {
@@ -199,9 +234,21 @@ class ResponseInfo extends React.Component {
                   {this.state.loader ? (
                     <img src="/loader.gif" className="loader" />
                   ) : null}
-                  {this.props.obj.inspect ? (
-                    <TextFeature data={this.props.obj.inspect} />
-                  ) : null}
+                  {this.state.inspectError && (
+                    <span style={{ color: "#e65959" }}>
+                      *Unable to fetch results. Please try again after sometime.
+                    </span>
+                  )}
+                  {this.props.obj.inspect &&
+                    this.props.obj.inspect.map((inspectData) => {
+                      return (
+                        <TextFeature
+                          data={inspectData}
+                          curTarget={this.props.curTarget}
+                          targets={this.props.targets}
+                        />
+                      );
+                    })}
                 </>
               ) : (
                 <>
@@ -237,9 +284,16 @@ class ResponseInfo extends React.Component {
                   {this.state.loader ? (
                     <img src="/loader.gif" className="loader" />
                   ) : null}
-                  {this.props.obj.inspect ? (
-                    <TextFeature data={this.props.obj.inspect} />
-                  ) : null}
+                  {this.props.obj.inspect &&
+                    this.props.obj.inspect.map((inspectData) => {
+                      return (
+                        <TextFeature
+                          data={inspectData}
+                          curTarget={this.props.curTarget}
+                          targets={this.props.targets}
+                        />
+                      );
+                    })}
                 </>
               )}
             </small>
@@ -280,26 +334,29 @@ class CreateInterface extends React.Component {
     this.updateAnswer = this.updateAnswer.bind(this);
   }
   getNewContext() {
-    this.setState({ submitDisabled: true, refreshDisabled: true }, () => {
-      this.context.api
-        .getRandomContext(this.state.taskId, this.state.task.cur_round)
-        .then((result) => {
-          var randomTarget = Math.floor(
-            Math.random() * this.state.task.targets.length
-          );
-          this.setState({
-            hypothesis: "",
-            target: randomTarget,
-            context: result,
-            content: [{ cls: "context", text: result.context }],
-            submitDisabled: false,
-            refreshDisabled: false,
+    this.setState(
+      { answer: [], submitDisabled: true, refreshDisabled: true },
+      () => {
+        this.context.api
+          .getRandomContext(this.state.taskId, this.state.task.cur_round)
+          .then((result) => {
+            var randomTarget = Math.floor(
+              Math.random() * this.state.task.targets.length
+            );
+            this.setState({
+              hypothesis: "",
+              target: randomTarget,
+              context: result,
+              content: [{ cls: "context", text: result.context }],
+              submitDisabled: false,
+              refreshDisabled: false,
+            });
+          })
+          .catch((error) => {
+            console.log(error);
           });
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    });
+      }
+    );
   }
 
   pickModel = (modelUrls) => {
@@ -315,7 +372,11 @@ class CreateInterface extends React.Component {
         return;
       }
       if (this.state.task.type == "extract" && this.state.answer.length == 0) {
-        this.setState({ submitDisabled: false, refreshDisabled: false });
+        this.setState({
+          submitDisabled: false,
+          refreshDisabled: false,
+          answerNotSelected: true,
+        });
         return;
       }
 
@@ -450,9 +511,12 @@ class CreateInterface extends React.Component {
   updateAnswer(value) {
     // Only keep the last answer annotated
     if (value.length > 0) {
-      this.setState({ answer: [value[value.length - 1]] });
+      this.setState({
+        answer: [value[value.length - 1]],
+        answerNotSelected: false,
+      });
     } else {
-      this.setState({ answer: value });
+      this.setState({ answer: value, answerNotSelected: false });
     }
   }
   render() {
@@ -524,6 +588,11 @@ class CreateInterface extends React.Component {
                 />
               </Button>
             </InputGroup>
+            <div className="p-2">
+              {this.state.answerNotSelected === true
+                ? "*Please select an answer in the context"
+                : null}
+            </div>
           </Card>
         </Col>
       </Container>

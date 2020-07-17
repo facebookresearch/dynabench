@@ -1,4 +1,4 @@
-export const formatWordImportances = ({ words, importances }) => {
+export const formatWordImportances = ({ words, importances }, target) => {
   if (importances && !importances.length) return "<td></td>";
   if (
     (words && !words.length) ||
@@ -8,7 +8,7 @@ export const formatWordImportances = ({ words, importances }) => {
   let tags = ["<td>"];
   words.map((word, i) => {
     const formatedWord = formatSpecialTokens(word);
-    const color = getColor(importances[i]);
+    const color = getColor(importances[i], target);
     const unwrapped_tag = `<mark style="background-color: ${color}; opacity:1.0; 
                     line-height:1.75"><font color="black"> ${formatedWord}
                     </font></mark>`;
@@ -19,24 +19,21 @@ export const formatWordImportances = ({ words, importances }) => {
 };
 
 const formatSpecialTokens = (word) => {
-  if (word[0] === "<" && word[word.length - 1] === ">")
-    return "";
+  if (word[0] === "<" && word[word.length - 1] === ">") return "";
   return word;
 };
 
-const getColor = (attr) => {
+const getColor = (attr, target) => {
   attr = Math.max(-1, Math.min(1, attr));
   let hue = 0,
-    sat = 0,
+    sat = 75,
     lig = 0;
-  if (attr > 0) {
-    hue = 120;
-    sat = 75;
-    lig = 100 - parseInt(50 * attr);
+  if (target === "negative" || target === "hateful") {
+    hue = attr > 0 ? 0 : 120;
+    lig = 100 - parseInt((attr > 0 ? 40 : -50) * attr);
   } else {
-    hue = 0;
-    sat = 75;
-    lig = 100 - parseInt(-40 * attr);
+    hue = attr > 0 ? 120 : 0;
+    lig = 100 - parseInt((attr > 0 ? 50 : -40) * attr);
   }
   return `hsl(${hue}, ${sat}%, ${lig}%)`;
 };

@@ -60,7 +60,10 @@ class PublishInterface extends React.Component {
     this.context.api
       .publishModel(reqObj)
       .then(() => {
-        this.props.history.push(`/tasks/${this.state.taskId}#overall`);
+        this.props.history.push({
+          pathname: `/models/${this.state.model.id}`,
+          state: { src: 'publish' },
+        });
       })
       .catch((error) => {
         console.log(error);
@@ -95,10 +98,10 @@ class PublishInterface extends React.Component {
                   {orderedScores.map((data) => {
                     return (
                       <Row key={data.round_id}>
-                        <Col sm="5" className="row-wise">
+                        <Col sm="4" className="row-wise">
                           Round {data.round_id}
                         </Col>
-                        <Col sm="7">{data.accuracy}%</Col>
+                        <Col sm="7">{Number(data.accuracy).toFixed(2)}%</Col>
                       </Row>
                     );
                   })}

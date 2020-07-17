@@ -71,6 +71,15 @@ class ModelPage extends React.Component {
       });
   };
 
+  handleBack = () => {
+    const propState = this.props.location.state;
+    if (propState && propState.src === "publish") {
+      this.props.history.push("/account#models");
+    } else {
+      this.props.history.goBack();
+    }
+  };
+
   render() {
     const isModelOwner =
       parseInt(this.state.model.user.id) === parseInt(this.state.ctxUserId);
@@ -89,7 +98,7 @@ class ModelPage extends React.Component {
                     isModelOwner ? "mr-2" : null
                   }`}
                   aria-label="Back"
-                  onClick={this.props.history.goBack}
+                  onClick={this.handleBack}
                 >
                   {"< Back"}
                 </Button>
@@ -181,7 +190,9 @@ class ModelPage extends React.Component {
                                 <Col sm="5" className="row-wise">
                                   Round {data.round_id}
                                 </Col>
-                                <Col sm="7">{data.accuracy}%</Col>
+                                <Col sm="7">
+                                  {Number(data.accuracy).toFixed(2)}%
+                                </Col>
                               </Row>
                             );
                           })}
