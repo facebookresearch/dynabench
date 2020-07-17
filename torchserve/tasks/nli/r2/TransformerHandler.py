@@ -1,6 +1,6 @@
 """ 
 This is a handler passed to the torchserve to serve the model. 
-It loads up the model and handles requests. This code is specific for NLI round 3
+It loads up the model and handles requests. This code is specific for NLI round 2
 """
 
 import json
@@ -43,7 +43,7 @@ class NliTransformerHandler(BaseHandler):
         Initializes the model and tokenizer during server start up 
         """
         model_dir, model_pt_path, self.device, self.setup_config \
-                  = handler_initialize(self,ctx)
+                  = handler_initialize(ctx)
 
         ## NLI Custom codes
         self.input_list = True
@@ -112,7 +112,7 @@ class NliTransformerHandler(BaseHandler):
         example["uid"] = str(uuid.uuid4())
         logger.info(f"In preprocess , example: '{example}'")
 
-        return example
+        return [example]
 
     def inference(self, examples):
         """ 
@@ -120,11 +120,6 @@ class NliTransformerHandler(BaseHandler):
         transformers checkpoint.
         """
         start_time = time.time()
-        logger.info("----------------- Inference -------------------")
-        self.input_list = True  # if input is list, we return list, else we return instance.
-        if not isinstance(examples, list):
-            self.input_list = False
-            examples = [examples]
 
         logger.info(f"----------------- Inference ------------------- {examples}")
 
@@ -211,13 +206,13 @@ class NliTransformerHandler(BaseHandler):
         """
 
         inference_output = inference_output[0]
-        
+        data = data[0]
         # The input and the output probabilities are concatenated to generate signature
         pred_str = "|".join(str(x) for x in inference_output["prob"])
         stringlist = [pred_str, data["s1"], data["s2"]]
 
-        inference_output["s1"] = data["s1"]
-        inference_output["s2"] = data["s2"]
+        inference_output["s1"] = remove_sp_chars(data["s1"])
+        inference_output["s2"] = remove_sp_chars(data["s2"])
         inference_output["y"] = data["y"]
         inference_output["status"] = "finished"
         inference_output["model_name"] = self.model_name
@@ -241,8 +236,8 @@ def handle(data, context):
         "context": "Please pretend you are reviewing a place, product, book or movie",
         "hypothesis": "pretend you are reviewing a place",
         "insight": true
-        "target": [1,0,0]
-    } and output response is probabilities
+        "target": 0 or 1 or 2 (0 - entail, 1 - neutral, 2 - contradict)
+    } and output response is probabilities.
     """
     try:
         if not _service.initialized:

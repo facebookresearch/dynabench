@@ -1,13 +1,13 @@
 {
     "task": "nli",
-    "task_id":1,
+    "task_id": 1,
     "round_id": 1,
     "model_no": 1,
     "model_url": "http://dl.fbaipublicfiles.com/dynabench/nli/bert_round1.pt",
     "initial_instance_count" : 1,
     "gateway_url": "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict",
-    "sagemaker_role":"AmazonSageMaker-ExecutionRole-20200629T161149",
-    "redeploy":false
+    "sagemaker_role": "AmazonSageMaker-ExecutionRole-20200629T161149",
+    "redeploy": false
     
     
     

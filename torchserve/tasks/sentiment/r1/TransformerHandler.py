@@ -32,7 +32,7 @@ class TransformersSeqClassifierHandler(BaseHandler):
         Initializes the model and tokenizer during server start up 
         """
         model_dir, model_pt_path, self.device, self.setup_config \
-                  = handler_initialize(self,ctx)
+                  = handler_initialize(ctx)
 
         self.my_task_id = self.setup_config["my_task_id"]
         self.my_round_id = self.setup_config["my_round_id"]
@@ -133,7 +133,7 @@ def handle(data, context):
         "context": "Please pretend you a reviewing a place, product, book or movie.",
         "hypothesis": "It is a good day",
         "insight": true,
-        "target": [0,1]
+        "target": 0 or 1 (0 - negative, 1 - positive)
     } and output response is probabilities
     """
     try:
