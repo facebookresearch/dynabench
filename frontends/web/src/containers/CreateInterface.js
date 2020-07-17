@@ -62,15 +62,26 @@ class ContextInfo extends React.Component {
 }
 
 const TextFeature = ({ data, curTarget, targets }) => {
+  const capitalize = (s) => {
+    if (typeof s !== "string") return "";
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  };
   const { words, importances } = data;
   const target = targets[curTarget];
   if (!words || !importances) return "";
+  let inspectorTitle = data.name
+    ? "- " +
+      data.name
+        .split("_")
+        .map((s) => capitalize(s))
+        .join(" ")
+    : "";
   const template = formatWordImportances({ words, importances }, target);
   return (
     <table className="inspectModel">
       <thead>
         <tr>
-          <td>Model Inspector</td>
+          <td>Model Inspector {`${inspectorTitle}`}</td>
         </tr>
       </thead>
       <tbody>
@@ -131,8 +142,24 @@ class ResponseInfo extends React.Component {
         target,
       })
       .then((result) => {
+        const qaInspect = ["start_importances", "end_importances"];
+        const isQA = qaInspect.some(
+          (k) => Object.keys(result).indexOf(k) !== -1
+        );
+        let inspectors = [];
+        if (isQA) {
+          inspectors = qaInspect.map((imp) => {
+            return {
+              name: imp,
+              importances: result[imp],
+              words: result.words,
+            };
+          });
+        } else {
+          inspectors = [result];
+        }
         const newContent = this.props.content.slice();
-        newContent[idx].inspect = result;
+        newContent[idx].inspect = inspectors;
         this.setState({ content: newContent, loader: false });
       })
       .catch((error) => {
@@ -200,13 +227,16 @@ class ResponseInfo extends React.Component {
                   {this.state.loader ? (
                     <img src="/loader.gif" className="loader" />
                   ) : null}
-                  {this.props.obj.inspect ? (
-                    <TextFeature
-                      data={this.props.obj.inspect}
-                      curTarget={this.props.curTarget}
-                      targets={this.props.targets}
-                    />
-                  ) : null}
+                  {this.props.obj.inspect &&
+                    this.props.obj.inspect.map((inspectData) => {
+                      return (
+                        <TextFeature
+                          data={inspectData}
+                          curTarget={this.props.curTarget}
+                          targets={this.props.targets}
+                        />
+                      );
+                    })}
                 </>
               ) : (
                 <>
@@ -242,13 +272,16 @@ class ResponseInfo extends React.Component {
                   {this.state.loader ? (
                     <img src="/loader.gif" className="loader" />
                   ) : null}
-                  {this.props.obj.inspect ? (
-                    <TextFeature
-                      data={this.props.obj.inspect}
-                      curTarget={this.props.curTarget}
-                      targets={this.props.targets}
-                    />
-                  ) : null}
+                  {this.props.obj.inspect &&
+                    this.props.obj.inspect.map((inspectData) => {
+                      return (
+                        <TextFeature
+                          data={inspectData}
+                          curTarget={this.props.curTarget}
+                          targets={this.props.targets}
+                        />
+                      );
+                    })}
                 </>
               )}
             </small>

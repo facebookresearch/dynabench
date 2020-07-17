@@ -33,7 +33,7 @@ const getColor = (attr, target) => {
     lig = 100 - parseInt((attr > 0 ? 40 : -50) * attr);
   } else {
     hue = attr > 0 ? 120 : 0;
-    lig = 100 - parseInt((attr > 0 ? 40 : -50) * attr);
+    lig = 100 - parseInt((attr > 0 ? 50 : -40) * attr);
   }
   return `hsl(${hue}, ${sat}%, ${lig}%)`;
 };
