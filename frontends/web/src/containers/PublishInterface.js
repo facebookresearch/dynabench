@@ -101,7 +101,7 @@ class PublishInterface extends React.Component {
                         <Col sm="4" className="row-wise">
                           Round {data.round_id}
                         </Col>
-                        <Col sm="7">{Math.round(data.accuracy).toFixed(2)}%</Col>
+                        <Col sm="7">{Number(data.accuracy).toFixed(2)}%</Col>
                       </Row>
                     );
                   })}

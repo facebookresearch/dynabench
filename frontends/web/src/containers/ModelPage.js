@@ -191,7 +191,7 @@ class ModelPage extends React.Component {
                                   Round {data.round_id}
                                 </Col>
                                 <Col sm="7">
-                                  {Math.round(data.accuracy).toFixed(2)}%
+                                  {Number(data.accuracy).toFixed(2)}%
                                 </Col>
                               </Row>
                             );
