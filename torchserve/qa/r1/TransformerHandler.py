@@ -222,12 +222,13 @@ _service = TransformersSeqClassifierHandler()
 def get_insights(example, target, tokenizer, device, lig, model):
     """
     This function calls the layer integrated gradient to get word importance
-    of the question and the passage. The word importance is created for
-    start and end position of the prediction
+    of the question and the passage. The word importance is obtained for
+    start and end position of the predicted answer
     """
     input_ids, ref_input_ids, attention_mask = construct_input_ref_pair(\
                 example[0]["question"], example[0]["passage"], tokenizer, device)
     all_tokens = get_word_token(input_ids, tokenizer)
+    logger.info("Word Tokens = ", all_tokens)
     attributions_start, delta_start = lig.attribute(inputs=input_ids,
                                   baselines=ref_input_ids,
                                   additional_forward_args=(attention_mask, 0, model),
@@ -240,8 +241,8 @@ def get_insights(example, target, tokenizer, device, lig, model):
     attributions_start_sum = summarize_attributions(attributions_start)
     attributions_end_sum = summarize_attributions(attributions_end)
     response = {}
-    #WIP based on the UI response format
-    response["importances"] = attributions_start_sum.tolist()
+    response["start_importances"] = attributions_start_sum.tolist()
+    response["end_importances"] = attributions_end_sum.tolist()
     response["words"] = all_tokens
     return [response]
 

@@ -1,6 +1,6 @@
 """ 
 This is a handler passed to the torchserve to serve the model. 
-It loads up the model and handles requests. This code is specific for specific for sentiment
+It loads up the model and handles requests. This code is specific for hatespeech
 """
 from abc import ABC
 import json
