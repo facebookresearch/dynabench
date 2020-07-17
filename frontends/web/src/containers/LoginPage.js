@@ -44,7 +44,10 @@ class LoginPage extends React.Component {
                         .then((result) => {
                           console.log(result);
                           props.updateState({
-                            user: props.api.getCredentials(),
+                            user: {
+                              ...props.api.getCredentials(),
+                              avatar_url: result.user.avatar_url,
+                            },
                           });
                           this.props.history.push(values.src);
                         })

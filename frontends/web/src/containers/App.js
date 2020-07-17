@@ -41,7 +41,17 @@ class App extends React.Component {
   }
   componentDidMount() {
     if (this.api.loggedIn()) {
-      this.setState({ user: this.api.getCredentials() });
+      const userCredentials = this.api.getCredentials();
+      this.setState({ user: userCredentials }, () => {
+        this.api
+          .getUser(userCredentials.id)
+          .then((result) => {
+            this.setState({ user: result });
+          })
+          .catch((error) => {
+            console.log("error", error);
+          });
+      });
     }
     this.api
       .getTasks()
@@ -118,7 +128,7 @@ class App extends React.Component {
                         className="no-chevron"
                         title={
                           <Avatar
-                            profile_img={this.state.user.profile_img}
+                            avatar_url={this.state.user.avatar_url}
                             username={this.state.user.username}
                             isThumbnail={true}
                             theme="light"
@@ -174,10 +184,13 @@ class App extends React.Component {
                   component={SubmitInterface}
                 />
                 <Route
-                  path="/tasks/:taskId/:modelId/publish"
+                  path="/tasks/:taskId/models/:modelId/publish"
                   component={PublishInterface}
                 />
-                <Route path="/tasks/:taskId/:modelId" component={ModelPage} />
+                <Route
+                  path="/tasks/:taskId/models/:modelId"
+                  component={ModelPage}
+                />
                 <Route
                   path="/tasks/:taskId/round/:roundId"
                   component={TaskPage}

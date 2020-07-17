@@ -30,9 +30,20 @@ class UserPage extends React.Component {
   }
 
   componentDidMount() {
-    this.props.location.hash === "#profile"
-      ? this.fetchUser()
-      : this.fetchModel(0);
+    if (!this.context.api.loggedIn()) {
+      this.props.history.push(
+        "/login?msg=" +
+          encodeURIComponent("Please login first.") +
+          `&src=/users/${this.props.match.params.userId}#profile`
+      );
+    } else {
+      if (this.props.location.hash === "") {
+        this.props.location.hash = "#profile";
+      }
+      this.props.location.hash === "#profile"
+        ? this.fetchUser()
+        : this.fetchModel(0);
+    }
   }
 
   fetchUser = () => {
@@ -147,7 +158,7 @@ class UserPage extends React.Component {
                         <Row>
                           <Col>
                             <Avatar
-                              profile_img={this.state.user.profile_img}
+                              avatar_url={this.state.user.avatar_url}
                               username={this.state.user.username}
                               theme="blue"
                             />

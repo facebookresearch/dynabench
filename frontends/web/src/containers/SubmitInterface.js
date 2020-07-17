@@ -54,7 +54,7 @@ class SubmitInterface extends React.Component {
       .submitModel(reqObj)
       .then((result) => {
         this.props.history.push({
-          pathname: `/tasks/${this.state.taskId}/${result.model_id}/publish`,
+          pathname: `/tasks/${this.state.taskId}/models/${result.model_id}/publish`,
           state: { detail: result },
         });
       })

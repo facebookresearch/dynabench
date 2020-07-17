@@ -30,6 +30,8 @@ class ProfilePage extends React.Component {
       userModelsPage: 0,
       pageLimit: 10,
       isEndOfUserModelsPage: true,
+      invalidFileUpload: false,
+      loader: true,
     };
   }
 
@@ -38,7 +40,7 @@ class ProfilePage extends React.Component {
       this.props.history.push(
         "/login?msg=" +
           encodeURIComponent("Please login first.") +
-          "&src=/profile"
+          "&src=/account#profile"
       );
     } else {
       const user = this.context.api.getCredentials();
@@ -47,6 +49,9 @@ class ProfilePage extends React.Component {
           ctxUserId: user.id,
         },
         () => {
+          if (this.props.location.hash === "") {
+            this.props.location.hash = "#profile";
+          }
           this.props.location.hash === "#profile"
             ? this.fetchUser()
             : this.fetchModels(0);
@@ -60,7 +65,7 @@ class ProfilePage extends React.Component {
     this.context.api
       .getUser(ctxUserId)
       .then((result) => {
-        this.setState({ user: result });
+        this.setState({ user: result, loader: false });
       })
       .catch((error) => {
         console.log("error", error);
@@ -127,15 +132,42 @@ class ProfilePage extends React.Component {
       });
   };
 
-  handleAvatarChange = (e) => {
+  handleAvatarChange = (e, props) => {
+    console.log("props-----", props);
+    const user = this.context.api.getCredentials();
     const files = e.target.files;
+    var allowedExtensions = /(\.jpg|\.jpeg|\.png)$/i;
+    if (!allowedExtensions.exec(files[0].name)) {
+      this.setState({
+        invalidFileUpload: true,
+      });
+      return;
+    }
+    this.setState({
+      invalidFileUpload: false,
+      loader: true,
+      user: { ...this.state.user, avatar_url: "" },
+    });
     this.context.api
-      .updateProfilePic(files[0])
+      .updateProfilePic(user.id, files[0])
       .then((result) => {
-        this.setState({ user: result });
+        props.updateState({
+          user: {
+            ...props.api.getCredentials(),
+            avatar_url: result.avatar_url,
+          },
+        });
+        this.setState({
+          user: result,
+          invalidFileUpload: false,
+          loader: false,
+          loader: false,
+        });
       })
       .catch((error) => {
         console.log("error", error);
+        this.setState({ invalidFileUpload: true, loader: false });
+        this.setState({ invalidFileUpload: true, loader: false });
       });
   };
 
@@ -179,13 +211,25 @@ class ProfilePage extends React.Component {
                   <Container className="mt-3">
                     <Row>
                       <Col>
-                        <Avatar
-                          profile_img={this.state.user.profile_img}
-                          username={this.state.user.username}
-                          isEditable={true}
-                          theme="blue"
-                          handleUpdate={this.handleAvatarChange}
-                        />
+                        <UserContext.Consumer>
+                          {(props) => (
+                            <Avatar
+                              avatar_url={this.state.user.avatar_url}
+                              username={this.state.user.username}
+                              isEditable={true}
+                              theme="blue"
+                              loader={true}
+                              handleUpdate={(e) =>
+                                this.handleAvatarChange(e, props)
+                              }
+                            />
+                          )}
+                        </UserContext.Consumer>
+                        {this.state.invalidFileUpload ? (
+                          <div className="text-center mt-4">
+                            *Upload a valid file
+                          </div>
+                        ) : null}
                       </Col>
                     </Row>
                   </Container>

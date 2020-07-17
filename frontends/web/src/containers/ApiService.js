@@ -76,13 +76,16 @@ export default class ApiService {
     });
   }
 
-  updateProfilePic(file) {
+  updateProfilePic(userId, file) {
     const formData = new FormData();
     formData.append("file", file);
     const token = this.getToken();
-    var f = this.fetch(`${this.domain}/users/uploadprofile`, {
+    var f = this.fetch(`${this.domain}/users/${userId}/avatar/upload`, {
       method: "POST",
       body: formData,
+      headers: {
+        Authorization: token ? "Bearer " + token : "None",
+      },
     });
     return f.then((res) => {
       return Promise.resolve(res);
@@ -106,6 +109,7 @@ export default class ApiService {
   }
 
   submitModel(data) {
+    const token = this.getToken();
     const formData = new FormData();
     formData.append("file", data.file);
     formData.append("type", data.roundType);
@@ -113,6 +117,9 @@ export default class ApiService {
     var f = this.fetch(`${this.domain}/models/upload`, {
       method: "POST",
       body: formData,
+      headers: {
+        Authorization: token ? "Bearer " + token : "None",
+      },
     });
     return f.then((res) => {
       return Promise.resolve(res);
@@ -126,6 +133,15 @@ export default class ApiService {
         name,
         description,
       }),
+    });
+    return f.then((res) => {
+      return Promise.resolve(res);
+    });
+  }
+
+  toggleModelStatus(modelId) {
+    var f = this.fetch(`${this.domain}/models/${modelId}/revertstatus`, {
+      method: "PUT",
     });
     return f.then((res) => {
       return Promise.resolve(res);
@@ -231,15 +247,20 @@ export default class ApiService {
     });
   }
 
-  getModelResponse(modelUrl, modelInputs) {
-    return this.fetch(modelUrl, {
-      method: "POST",
-      body: JSON.stringify({
-        context: modelInputs.context,
-        hypothesis: modelInputs.hypothesis,
-        answer: modelInputs.answer,
-      }),
-    }).then((res) => {
+  getModelResponse(modelUrl, { context, hypothesis, answer, insight }) {
+    return this.doFetch(
+      modelUrl,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          context,
+          hypothesis,
+          answer,
+          insight,
+        }),
+      },
+      false
+    ).then((res) => {
       return Promise.resolve(res);
     });
   }
@@ -255,6 +276,19 @@ export default class ApiService {
     });
   }
 
+  inspectModel(modelUrl, data) {
+    return this.doFetch(
+      modelUrl,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+      false
+    ).then((res) => {
+      return Promise.resolve(res);
+    });
+  }
+
   storeExample(tid, rid, uid, cid, hypothesis, target, response, model) {
     return this.fetch(`${this.domain}/examples`, {
       method: "POST",
@@ -263,12 +297,12 @@ export default class ApiService {
         tid: tid,
         rid: rid,
         cid: cid,
-        uid: uid,
+        uid: Number(uid),
         target: target,
         // TODO: make this more specific later to reduce latency:
         // Only .prob and .signed?
         response: response,
-        model: model
+        model: model,
       }),
     }).then((res) => {
       return Promise.resolve(res);
@@ -385,7 +419,7 @@ export default class ApiService {
       return this.refreshTokenWrapper(
         (res) => {
           console.log("Our token was refreshed (fetch callback)");
-          return this.doFetch(url, options);
+          return this.doFetch(url, options, {}, true);
         },
         (res) => {
           console.log("Could not refresh token (fetch)");
@@ -395,7 +429,7 @@ export default class ApiService {
         }
       );
     }
-    return this.doFetch(url, options);
+    return this.doFetch(url, options, {}, true);
   }
 
   _checkStatus(response) {
