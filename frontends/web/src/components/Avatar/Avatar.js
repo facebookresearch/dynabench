@@ -23,6 +23,7 @@ export const Avatar = ({
 
   return (
     <>
+      {loader && <img className="upload-loader pic" src="/loader.gif" />}
       {avatar_url && !avatar_url !== "" && avatar_url !== "None" ? (
         <div
           className={`avatar-circle ${
@@ -52,7 +53,6 @@ export const Avatar = ({
             theme === "light" ? "white-bg" : "blue-bg"
           } ${isThumbnail ? "sm inline-block mr-1" : null}`}
         >
-          {loader && <img className="upload-loader" src="/loader.gif" />}
           <span
             className={`initials ${
               theme === "light" ? "blue-color" : "white-color"

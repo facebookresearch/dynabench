@@ -438,7 +438,7 @@ class CreateInterface extends React.Component {
                 .storeExample(
                   this.state.task.id,
                   this.state.task.cur_round,
-                  this.context.user.id,
+                  Number(this.context.user.id),
                   this.state.context.id,
                   this.state.hypothesis,
                   this.state.target,
