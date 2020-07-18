@@ -87,7 +87,7 @@ def do_upload(credentials):
             rounds_accuracy_list, score_obj_list, overall_accuracy = util.validate_prediction(rounds, test_raw_data)
             m = ModelModel()
             model = m.create(task_id=task_id, user_id=user_id, name='', shortname='', longdesc='', desc='',
-                             overall_perf=str(overall_accuracy))
+                             overall_perf='{:.2f}'.format(overall_accuracy))
             s = ScoreModel()
             scores = s.bulk_create(model_id=model.id, score_objs=score_obj_list)
             #Construct response object

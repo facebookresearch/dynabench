@@ -72,9 +72,10 @@ def construct_user_board_response_json(query_result, total_count=0):
         obj = {}
         obj['uid'] = result[0]
         obj['username'] = result[1]
-        obj['count'] = int(result[2])
-        obj['MER'] = str(round(result[3] * 100, 2))
-        obj['total'] = str(result[2]) + '/' + str(result[4])
+        obj['avatar_url'] = result[2] if result[2] is not None else ''
+        obj['count'] = int(result[3])
+        obj['MER'] = str(round(result[4] * 100, 2))
+        obj['total'] = str(result[3]) + '/' + str(result[5])
         list_objs.append(obj)
     if list_objs:
         # total_count = query_result[0][len(query_result[0]) - 1]
