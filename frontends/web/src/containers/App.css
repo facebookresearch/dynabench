@@ -137,3 +137,17 @@ div.recharts-wrapper
   g.recharts-layer.recharts-cartesian-axis-tick:first-child {
   display: none;
 }
+
+table.inspectModel {
+    width: 100%;
+    border: 1px solid #ddd;
+    margin-top: 20px;
+}
+
+table.inspectModel thead td {
+    background: #efefef;
+}
+
+table.inspectModel td {
+  padding: 5px;
+}

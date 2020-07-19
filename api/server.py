@@ -18,7 +18,8 @@ init_logger(running_mode)
 
 app = bottle.default_app()
 for k in ['jwtsecret', 'jwtexp', 'jwtalgo', 'cookie_secret', 'refreshexp', 'forgot_pass_template',
-          'smtp_from_email_address', 'smtp_host', 'smtp_port', 'smtp_secret', 'smtp_user', 'email_sender_name']:
+          'smtp_from_email_address', 'smtp_host', 'smtp_port', 'smtp_secret', 'smtp_user', 'email_sender_name',
+          'aws_s3_bucket_name', 'aws_s3_profile_base_url', 'profile_img_max_size']:
     app.config[k] = config[k]
 
 # set up mail service
@@ -34,11 +35,17 @@ app.config['nli_labels'] = nli_labels
 app.config['qa_labels'] = read_qa_round_labels(ROOT_PATH)
 
 # initialize sagemaker endpoint if set
-if 'sagemaker_aws_access_key_id' in config and config['sagemaker_aws_access_key_id'] != '':
-    sagemaker_client = boto3.client('runtime.sagemaker', aws_access_key_id=config['sagemaker_aws_access_key_id'],
-                           aws_secret_access_key=config['sagemaker_aws_secret_access_key'],
-                           region_name=config['sagemaker_aws_region'])
+if 'aws_access_key_id' in config and config['aws_access_key_id'] != '':
+    sagemaker_client = boto3.client('runtime.sagemaker', aws_access_key_id=config['aws_access_key_id'],
+                           aws_secret_access_key=config['aws_secret_access_key'],
+                           region_name=config['aws_region'])
     app.config['sagemaker_client'] = sagemaker_client
+
+    #setup s3 service for profile picture upload
+    s3_service = boto3.client('s3', aws_access_key_id=config['aws_access_key_id'],
+                 aws_secret_access_key=config['aws_secret_access_key'],
+                 region_name=config['aws_region'])
+    app.config['s3_service'] = s3_service
 
 from controllers.index import *
 from controllers.auth import *
@@ -53,5 +60,14 @@ if running_mode == 'dev':
     app.config['mode'] = 'dev'
     bottle.run(host='0.0.0.0', port=8081, debug=True, server='cheroot', reloader=True, certfile='/home/ubuntu/.ssl/dynabench.org.crt', keyfile='/home/ubuntu/.ssl/dynabench.org-key.pem')
 elif running_mode == 'prod':
+    # Assertion for necessary configuration
+    if not check_fields(config, ['smtp_user', 'smtp_host', 'smtp_port', 'smtp_secret']) or \
+            is_fields_blank(config, ['smtp_user', 'smtp_host', 'smtp_port', 'smtp_secret']):
+        raise AssertionError('Config SMTP server detail')
+
+    if not check_fields(config, ['aws_access_key_id', 'aws_secret_access_key', 'aws_region', 'aws_s3_bucket_name']) or \
+            is_fields_blank(config, ['aws_access_key_id', 'aws_secret_access_key', 'aws_region', 'aws_s3_bucket_name']):
+        raise AssertionError('Config AWS service detail')
+
     app.config['mode'] = 'prod'
     bottle.run(host='0.0.0.0', port=8080, debug=True, server='cheroot') # , certfile='', keyfile=''

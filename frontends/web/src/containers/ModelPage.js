@@ -45,9 +45,24 @@ class ModelPage extends React.Component {
       });
   };
 
-  handlePublish = () => {
+  handleEdit = () => {
+    this.props.history.push({
+      pathname: `/tasks/${this.state.model.tid}/models/${this.state.model.id}/publish`,
+      state: { detail: this.state.model },
+    });
+  };
+
+  togglePublish = () => {
+    const modelName = this.state.model.name;
+    if (!modelName || modelName === "") {
+      this.props.history.push({
+        pathname: `/tasks/${this.state.model.tid}/models/${this.state.model.id}/publish`,
+        state: { detail: this.state.model },
+      });
+      return;
+    }
     return this.context.api
-      .updateModel(this.state.modelId, { is_published: true })
+      .toggleModelStatus(this.state.modelId)
       .then(() => {
         this.fetchModel();
       })
@@ -56,15 +71,13 @@ class ModelPage extends React.Component {
       });
   };
 
-  handleUnpublish = () => {
-    return this.context.api
-      .updateModel(this.state.modelId, { is_published: false })
-      .then(() => {
-        this.fetchModel();
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+  handleBack = () => {
+    const propState = this.props.location.state;
+    if (propState && propState.src === "publish") {
+      this.props.history.push("/account#models");
+    } else {
+      this.props.history.goBack();
+    }
   };
 
   render() {
@@ -72,10 +85,7 @@ class ModelPage extends React.Component {
       parseInt(this.state.model.user.id) === parseInt(this.state.ctxUserId);
     const { model } = this.state;
     const { scores } = this.state.model;
-    let orderedScores = Object.keys(scores || []).sort((a, b) => a - b);
-    orderedScores = orderedScores.map((round) => {
-      return { round: round, score: scores[round] };
-    });
+    let orderedScores = (scores || []).sort((a, b) => a.round_id - b.round_id);
     return (
       <Container>
         <h1 className="my-4 pt-3 text-uppercase text-center">Model Overview</h1>
@@ -83,41 +93,38 @@ class ModelPage extends React.Component {
           <Card className="profile-card">
             <Card.Body>
               <div className="d-flex justify-content-between mx-4 mt-4">
-                <h5>
-                  {model.name}
-                  {isModelOwner && model.is_published === "True" ? (
-                    <Badge variant="success" className="ml-2">
-                      Published
-                    </Badge>
-                  ) : null}
-                  {isModelOwner && model.is_published === "False" ? (
-                    <Badge variant="danger" className="ml-2">
-                      Unpublished
-                    </Badge>
-                  ) : null}
-                </h5>
+                <Button
+                  className={`blue-bg border-0 font-weight-bold ${
+                    isModelOwner ? "mr-2" : null
+                  }`}
+                  aria-label="Back"
+                  onClick={this.handleBack}
+                >
+                  {"< Back"}
+                </Button>
                 <div>
-                  <Button
-                    className={`blue-bg border-0 font-weight-bold ${
-                      isModelOwner ? "mr-2" : null
-                    }`}
-                    aria-label="Back"
-                    onClick={this.props.history.goBack}
-                  >
-                    {"< Back"}
-                  </Button>
+                  {isModelOwner && (
+                    <Button
+                      variant="outline-primary mr-2"
+                      onClick={() => this.handleEdit()}
+                    >
+                      Edit
+                    </Button>
+                  )}
                   {isModelOwner && model.is_published === "True" ? (
                     <Button
                       variant="outline-danger"
-                      onClick={() => this.handleUnpublish(model)}
+                      onClick={() => this.togglePublish()}
                     >
                       Unpublish
                     </Button>
                   ) : null}
-                  {isModelOwner && model.is_published === "False" ? (
+                  {isModelOwner &&
+                  model.is_published === "False" &&
+                  model.name ? (
                     <Button
                       variant="outline-success"
-                      onClick={() => this.handlePublish(model)}
+                      onClick={() => this.togglePublish()}
                     >
                       Publish
                     </Button>
@@ -128,6 +135,25 @@ class ModelPage extends React.Component {
                 <Table className="mb-0">
                   <thead />
                   <tbody>
+                    <tr>
+                      <td colSpan="2">
+                        <h5 className="mx-0">
+                          <span className="blue-color">
+                            {model.name || "Unknown"}
+                          </span>
+                          {isModelOwner && model.is_published === "True" ? (
+                            <Badge variant="success" className="ml-2">
+                              Published
+                            </Badge>
+                          ) : null}
+                          {isModelOwner && model.is_published === "False" ? (
+                            <Badge variant="danger" className="ml-2">
+                              Unpublished
+                            </Badge>
+                          ) : null}
+                        </h5>
+                      </td>
+                    </tr>
                     <tr>
                       <td>
                         <b>Owner</b>
@@ -150,7 +176,7 @@ class ModelPage extends React.Component {
                     </tr>
                     <tr>
                       <td colSpan="2">
-                        <div>Performance</div>
+                        <h6 className="blue-color">Performance</h6>
                         <Container>
                           <Row className="mt-4">
                             <Col sm="5" className="mb-2 ">
@@ -160,11 +186,13 @@ class ModelPage extends React.Component {
                           </Row>
                           {orderedScores.map((data) => {
                             return (
-                              <Row key={data.round}>
+                              <Row key={data.round_id}>
                                 <Col sm="5" className="row-wise">
-                                  Round {data.round}
+                                  Round {data.round_id}
                                 </Col>
-                                <Col sm="7">{data.score}%</Col>
+                                <Col sm="7">
+                                  {Number(data.accuracy).toFixed(2)}%
+                                </Col>
                               </Row>
                             );
                           })}

@@ -1,6 +1,8 @@
 import bottle
 import sqlalchemy as db
 from datetime import datetime, timedelta
+import uuid
+import os
 
 import common.auth as _auth
 import common.helpers as util
@@ -208,3 +210,56 @@ def update_user_profile(credentials, id):
     except Exception as ex:
         logging.exception('Could not update profile: %s' % (ex))
         bottle.abort(400, 'Could not update profile: %s' % (ex))
+
+@bottle.post('/users/<id:int>/avatar/upload')
+@_auth.requires_auth
+def upload_user_profile_picture(credentials, id):
+    """
+    Update user profile details like  real name, affiliation  and user name
+    :param credentials: Authentication detail
+    :param id: User id
+    :return: Json Object
+    """
+
+    u = UserModel()
+    upload = bottle.request.files.get('file')
+    app = bottle.default_app()
+    s3_service = app.config['s3_service']
+    file_name, ext = os.path.splitext(upload.filename)
+
+    # validating file extension
+    if ext not in ('.png', '.jpg', '.jpeg'):
+        bottle.abort(400, 'File extension not allowed.')
+    # validate user detail
+    if not util.is_current_user(uid=id, credentials=credentials):
+        bottle.abort(403, 'Not authorized to update profile')
+
+    try:
+        # validate and read the file
+        img_byte_str = util.read_file_content(upload.file, app.config['profile_img_max_size'])
+        user = u.get(id)
+        if not user:
+            bottle.abort(403, 'Not authorized to update profile picture')
+
+        # upload new avatar picture with new uuid into s3 bucket
+        file_name = str(uuid.uuid4()) + ext
+        response = s3_service.put_object(Body=img_byte_str, Bucket=app.config['aws_s3_bucket_name'],
+                                         Key='profile/' + file_name, ACL='public-read', ContentType=upload.content_type)
+        if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+            # removing old avatar picture from s3 bucket
+            pic_url = user.avatar_url
+            if pic_url and pic_url != '':
+                s3_service.delete_object(Bucket=app.config['aws_s3_bucket_name'], Key='profile/' + pic_url.split('/')[-1])
+            # update avatar s3 ur in user object
+            base_url = app.config['aws_s3_profile_base_url'] + '/profile/' + file_name
+            u.update(user.id, {'avatar_url': base_url})
+            return json.dumps(user.to_dict())
+        else:
+            raise Exception('Avatar S3 upload failed')
+    except db.orm.exc.NoResultFound as ex:
+        bottle.abort(404, 'User Not found')
+    except AssertionError as ex:
+        bottle.abort(413, str(ex))
+    except Exception as ex:
+        logging.exception('Could not upload user profile picture: %s' % (ex))
+        bottle.abort(400, 'Could not upload user profile picture: %s' % (ex))

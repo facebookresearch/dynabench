@@ -11,6 +11,7 @@ import {
 import UserContext from "./UserContext";
 import { TokenAnnotator } from "react-text-annotate";
 import { PieRechart } from "../components/Rechart";
+import { formatWordImportances } from "../utils/color";
 
 const Explainer = (props) => (
   <div className="mt-4 mb-5 pt-3">
@@ -60,11 +61,51 @@ class ContextInfo extends React.Component {
   }
 }
 
+const TextFeature = ({ data, curTarget, targets }) => {
+  const capitalize = (s) => {
+    if (typeof s !== "string") return "";
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  };
+  const { words, importances } = data;
+  const target = targets[curTarget];
+  if (!words || !importances) return "";
+  let inspectorTitle = data.name
+    ? "- " +
+      data.name
+        .split("_")
+        .map((s) => capitalize(s))
+        .join(" ")
+    : "";
+  const template = formatWordImportances({ words, importances }, target);
+  return (
+    <table className="inspectModel">
+      <thead>
+        <tr>
+          <td>Model Inspector {`${inspectorTitle}`}</td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr dangerouslySetInnerHTML={{ __html: template }}></tr>
+      </tbody>
+    </table>
+  );
+};
+
 class ResponseInfo extends React.Component {
   static contextType = UserContext;
   constructor(props) {
     super(props);
     this.retractExample = this.retractExample.bind(this);
+    this.state = {
+      loader: true,
+      inspectError: false,
+    };
+  }
+  componentDidMount() {
+    this.setState({
+      loader: false,
+      inspectError: false,
+    });
   }
   retractExample(e) {
     e.preventDefault();
@@ -81,6 +122,57 @@ class ResponseInfo extends React.Component {
         console.log(error);
       });
   }
+  inspectExample = (e) => {
+    const { content, curTarget, answer } = this.props;
+    e.preventDefault();
+    this.setState({
+      loader: true,
+      inspectError: false,
+    });
+    var idx = e.target.getAttribute("data-index");
+    let target = "None";
+    if (!isNaN(parseInt(curTarget))) {
+      target = curTarget;
+    }
+    const selectedAnswer =
+      answer && answer.length ? answer[answer.length - 1].tokens.join("") : "";
+    this.context.api
+      .inspectModel(content[idx].url, {
+        answer: selectedAnswer,
+        context: content[0].text,
+        hypothesis: content[idx].cls == "hypothesis" ? content[idx].text : "",
+        insight: true,
+        target,
+      })
+      .then((result) => {
+        let inspectors = [];
+        if (result.errorMessage) {
+          this.setState({ inspectError: true });
+        } else {
+          const qaInspect = ["start_importances", "end_importances"];
+          const isQA = qaInspect.some(
+            (k) => Object.keys(result).indexOf(k) !== -1
+          );
+          if (isQA) {
+            inspectors = qaInspect.map((imp) => {
+              return {
+                name: imp,
+                importances: result[imp],
+                words: result.words,
+              };
+            });
+          } else {
+            inspectors = [result];
+          }
+        }
+        const newContent = this.props.content.slice();
+        newContent[idx].inspect = inspectors;
+        this.setState({ content: newContent, loader: false });
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
   render() {
     return (
       <div
@@ -115,7 +207,7 @@ class ResponseInfo extends React.Component {
                     instead.{" "}
                   </span>
                   <br />
-                  <span>
+                  <div>
                     Made a mistake? You can still{" "}
                     <a
                       href="#"
@@ -125,8 +217,38 @@ class ResponseInfo extends React.Component {
                     >
                       retract this example
                     </a>
-                    . Otherwise, we will have it verified.
-                  </span>
+                    . Otherwise, we will have it verified.{" "}
+                  </div>
+                  <div>
+                    Need insight? You can see the{" "}
+                    <a
+                      href="#"
+                      data-index={this.props.index}
+                      onClick={this.inspectExample}
+                      className="btn-link"
+                    >
+                      word importance{" "}
+                    </a>
+                    that resulted in this prediction.
+                  </div>
+                  {this.state.loader ? (
+                    <img src="/loader.gif" className="loader" />
+                  ) : null}
+                  {this.state.inspectError && (
+                    <span style={{ color: "#e65959" }}>
+                      *Unable to fetch results. Please try again after sometime.
+                    </span>
+                  )}
+                  {this.props.obj.inspect &&
+                    this.props.obj.inspect.map((inspectData) => {
+                      return (
+                        <TextFeature
+                          data={inspectData}
+                          curTarget={this.props.curTarget}
+                          targets={this.props.targets}
+                        />
+                      );
+                    })}
                 </>
               ) : (
                 <>
@@ -134,7 +256,7 @@ class ResponseInfo extends React.Component {
                     <strong>Bad luck!</strong> The model correctly predicted{" "}
                     <strong>{this.props.obj.modelPredStr}</strong>. Try again.
                   </span>
-                  <span>
+                  <div>
                     We will still store this as an example that the model got
                     right. You can{" "}
                     <a
@@ -146,7 +268,32 @@ class ResponseInfo extends React.Component {
                       retract this example
                     </a>{" "}
                     if you don't want it saved.
-                  </span>
+                  </div>
+                  <div>
+                    Need insight? You can see the{" "}
+                    <a
+                      href="#"
+                      data-index={this.props.index}
+                      onClick={this.inspectExample}
+                      className="btn-link"
+                    >
+                      word importance{" "}
+                    </a>
+                    that resulted in this prediction.
+                  </div>
+                  {this.state.loader ? (
+                    <img src="/loader.gif" className="loader" />
+                  ) : null}
+                  {this.props.obj.inspect &&
+                    this.props.obj.inspect.map((inspectData) => {
+                      return (
+                        <TextFeature
+                          data={inspectData}
+                          curTarget={this.props.curTarget}
+                          targets={this.props.targets}
+                        />
+                      );
+                    })}
                 </>
               )}
             </small>
@@ -187,25 +334,29 @@ class CreateInterface extends React.Component {
     this.updateAnswer = this.updateAnswer.bind(this);
   }
   getNewContext() {
-    this.setState({ submitDisabled: true, refreshDisabled: true }, () => {
-      this.context.api
-        .getRandomContext(this.state.taskId, this.state.task.cur_round)
-        .then((result) => {
-          var randomTarget = Math.floor(
-            Math.random() * this.state.task.targets.length
-          );
-          this.setState({
-            target: randomTarget,
-            context: result,
-            content: [{ cls: "context", text: result.context }],
-            submitDisabled: false,
-            refreshDisabled: false,
+    this.setState(
+      { answer: [], submitDisabled: true, refreshDisabled: true },
+      () => {
+        this.context.api
+          .getRandomContext(this.state.taskId, this.state.task.cur_round)
+          .then((result) => {
+            var randomTarget = Math.floor(
+              Math.random() * this.state.task.targets.length
+            );
+            this.setState({
+              hypothesis: "",
+              target: randomTarget,
+              context: result,
+              content: [{ cls: "context", text: result.context }],
+              submitDisabled: false,
+              refreshDisabled: false,
+            });
+          })
+          .catch((error) => {
+            console.log(error);
           });
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    });
+      }
+    );
   }
 
   pickModel = (modelUrls) => {
@@ -221,7 +372,11 @@ class CreateInterface extends React.Component {
         return;
       }
       if (this.state.task.type == "extract" && this.state.answer.length == 0) {
-        this.setState({ submitDisabled: false, refreshDisabled: false });
+        this.setState({
+          submitDisabled: false,
+          refreshDisabled: false,
+          answerNotSelected: true,
+        });
         return;
       }
 
@@ -229,7 +384,7 @@ class CreateInterface extends React.Component {
         var answer_text = "";
         if (this.state.answer.length > 0) {
           var last_answer = this.state.answer[this.state.answer.length - 1];
-          var answer_text = last_answer.tokens.join("");  // NOTE: no spaces required as tokenising by word boundaries
+          var answer_text = last_answer.tokens.join(""); // NOTE: no spaces required as tokenising by word boundaries
           // Update the target with the answer text since this is defined by the annotator in QA (unlike NLI)
           this.setState({ target: answer_text });
         }
@@ -241,6 +396,7 @@ class CreateInterface extends React.Component {
         context: this.state.context.context,
         hypothesis: this.state.hypothesis,
         answer: answer_text,
+        insight: false,
       };
 
       const randomModel = this.pickModel(this.state.task.round.url);
@@ -271,6 +427,7 @@ class CreateInterface extends React.Component {
                   modelPredStr: modelPredStr,
                   fooled: modelFooled,
                   text: this.state.hypothesis,
+                  url: randomModel,
                   retracted: false,
                   response: result,
                 },
@@ -354,9 +511,12 @@ class CreateInterface extends React.Component {
   updateAnswer(value) {
     // Only keep the last answer annotated
     if (value.length > 0) {
-      this.setState({ answer: [value[value.length - 1]] });
+      this.setState({
+        answer: [value[value.length - 1]],
+        answerNotSelected: false,
+      });
     } else {
-      this.setState({ answer: value });
+      this.setState({ answer: value, answerNotSelected: false });
     }
   }
   render() {
@@ -377,6 +537,9 @@ class CreateInterface extends React.Component {
           key={index}
           index={index}
           targets={this.state.task.targets}
+          curTarget={this.state.target}
+          taskType={this.state.task.type}
+          answer={this.state.answer}
           obj={item}
           mapKeyToExampleId={this.state.mapKeyToExampleId}
           content={this.state.content}
@@ -425,6 +588,11 @@ class CreateInterface extends React.Component {
                 />
               </Button>
             </InputGroup>
+            <div className="p-2">
+              {this.state.answerNotSelected === true
+                ? "*Please select an answer in the context"
+                : null}
+            </div>
           </Card>
         </Col>
       </Container>

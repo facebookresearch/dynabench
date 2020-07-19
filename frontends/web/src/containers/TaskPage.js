@@ -149,7 +149,7 @@ const OverallUserLeaderBoard = (props) => {
     <Table hover className="mb-0">
       <thead>
         <tr>
-          <th>Model</th>
+          <th>User</th>
           <th>Mean MER</th>
           <th>Total</th>
         </tr>
@@ -160,7 +160,7 @@ const OverallUserLeaderBoard = (props) => {
             <tr key={data.uid}>
               <td>
                 <Avatar
-                  profile_img={data.profile_img}
+                  avatar_url={data.avatar_url}
                   username={data.username}
                   isThumbnail={true}
                   theme="blue"

@@ -14,7 +14,7 @@ db = LocalMephistoDB()
 
 operator = Operator(db)
 
-TASK_DIRECTORY = '../frontends/mturk/'
+TASK_DIRECTORY = '../frontends/web/'
 
 # ARG_STRING goes through shlex.split twice, hence be careful if these
 # strings contain anything which needs quoting.

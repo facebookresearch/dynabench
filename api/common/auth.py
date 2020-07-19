@@ -62,6 +62,22 @@ def requires_auth_or_turk(f):
         return f(*args, **kwargs)
     return decorated
 
+def auth_optional(f):
+    def decorated(*args, **kwargs):
+        try:
+            token = jwt_token_from_header()
+            credentials = get_payload(token)
+        except AuthorizationError as e:
+            # by default in the UI side setting None if user not logged in
+            if bottle.request.headers.get('Authorization') == 'None':
+                credentials = {'id': ''}
+            else:
+                bottle.abort(403, 'Access denied (%s)' % e.message['description'])
+        args = list(args)
+        args.insert(0, credentials)
+        return f(*args, **kwargs)
+    return decorated
+
 def get_token(payload):
     app = bottle.default_app()
     payload['exp'] = datetime.datetime.utcnow() + \

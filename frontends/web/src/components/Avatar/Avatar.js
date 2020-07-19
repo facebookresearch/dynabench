@@ -1,13 +1,14 @@
-import React, { useContext } from "react";
+import React from "react";
 import "./Avatar.css";
 
 export const Avatar = ({
-  profile_img,
+  avatar_url,
   username,
   isEditable,
   theme = "light",
   isThumbnail,
   handleUpdate,
+  loader,
 }) => {
   const getInitial = (name) => {
     return (
@@ -22,13 +23,13 @@ export const Avatar = ({
 
   return (
     <>
-      {profile_img && !profile_img !== "" ? (
+      {avatar_url && !avatar_url !== "" && avatar_url !== "None" ? (
         <div
           className={`avatar-circle ${
             isThumbnail ? "sm inline-block mr-1" : null
           }`}
         >
-          <img className="profile-pic" src="profile_img" />
+          <img className="profile-pic" src={avatar_url} />
           {isEditable ? (
             <div
               className={`editPic ${
@@ -51,9 +52,10 @@ export const Avatar = ({
             theme === "light" ? "white-bg" : "blue-bg"
           } ${isThumbnail ? "sm inline-block mr-1" : null}`}
         >
+          {loader && <img className="upload-loader" src="/loader.gif" />}
           <span
             className={`initials ${
-              theme === "light" ? "blue-bg" : "white-color"
+              theme === "light" ? "blue-color" : "white-color"
             }`}
           >
             {getInitial(username)}

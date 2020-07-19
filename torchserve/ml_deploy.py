@@ -2,7 +2,7 @@
 This is a script to automatically deploy the models in SageMaker for hs,sentiment
 ,qa and nli.After execution an endpoint to access the model will be printed. 
 Before running this script, install the Requirements.txt, place create_torchscript.py 
-and deploy_config.json files in the same directory, place the secrets.json in the commons folder.
+and deploy_config.json files in the same directory, place the secrets.json in the common folder.
 """
 import os
 from os import listdir
@@ -19,7 +19,7 @@ import sagemaker
 from sagemaker.model import Model
 from sagemaker.predictor import RealTimePredictor
 #import create_torchscript as ts
-from commons import TransformerUtils
+from common import TransformerUtils
 
 def setup_env(sagemaker_role):
     """  
@@ -45,6 +45,7 @@ def handle_existing_endpoints(client, sm_model_name, redeploy):
     response = client.list_endpoints( SortBy="Name", SortOrder="Ascending", MaxResults=100, \
         StatusEquals="InService", NameContains =sm_model_name )
     # print(f'Endpoints are {response}')
+    skip_deployment = False
     endpoints = response["Endpoints"]
     for endpoint in endpoints:
         if endpoint["EndpointName"] == sm_model_name:
@@ -52,22 +53,26 @@ def handle_existing_endpoints(client, sm_model_name, redeploy):
                 print(f"Deleting the endpoint {sm_model_name:} to redeploy")
                 client.delete_endpoint(EndpointName=sm_model_name)
             else:
-                raise AttributeError(f"----- Endpoint with the name {sm_model_name} already \
-                    exists, set redeploy = true to redeploy the endpoint.\
-                     Moving to the next model -----")
+                skip_deployment = True
+                print(f"----- Endpoint with the name {sm_model_name} already exists")
+                print("Set redeploy = true to redeploy the endpoint. Moving to the next model -----")
+                break
 
-    model_response = client.list_models(SortBy="Name", SortOrder="Ascending", MaxResults=100,\
-        NameContains = sm_model_name)
-    sm_models = model_response["Models"]
-    for sm_model in sm_models:
-        if sm_model["ModelName"] == sm_model_name:
-            if redeploy:
-                print(f"Deleting the model {sm_model_name:} to redeploy")
-                model_response = client.delete_model(ModelName=sm_model_name)
-            else:
-                raise AttributeError(f"----- Model with the name {sm_model_name} already exists,\
-                     set redeploy = true to redeploy the endpoint. Moving to the \
-                              next model -----------")
+    if not skip_deployment:
+        model_response = client.list_models(SortBy="Name", SortOrder="Ascending", MaxResults=100,\
+            NameContains = sm_model_name)
+        sm_models = model_response["Models"]
+        for sm_model in sm_models:
+            if sm_model["ModelName"] == sm_model_name:
+                if redeploy:
+                    print(f"Deleting the model {sm_model_name:} to redeploy")
+                    model_response = client.delete_model(ModelName=sm_model_name)
+                else:
+                    skip_deployment = True
+                    print(f"----- Model with the name {sm_model_name} already exists,\
+                    set redeploy = true to redeploy the endpoint. Moving to the \
+                    next model -----------")
+    return skip_deployment
 
 def edit_setup_config(setup_config_path, task_id, round_id):
     """ 
@@ -83,9 +88,9 @@ def edit_setup_config(setup_config_path, task_id, round_id):
 
 def generate_settings(task_id, round_id, round_path):
     """ 
-    Generates settings.py file from the secrets.json file in commons folder
+    Generates settings.py file from the secrets.json file in common folder
     """
-    secrets_path = join(os.getcwd(), join("commons", "secrets.json"))
+    secrets_path = join(os.getcwd(), join("common", "secrets.json"))
 
     with open(secrets_path) as secrets_file:
         secret_config = json.load(secrets_file)
@@ -106,12 +111,13 @@ def generate_settings(task_id, round_id, round_path):
     with open(settings_path, "w") as settings_file:
         settings_file.write(f'my_secret = "{my_secret}"')
 
-def archive_model(sagemaker_model_name, model_path, round_path, task):
+def archive_model(sagemaker_model_name, model_path, round_path, task, task_path):
     """
     Archives the model file to mar file
     """
+    
     handler_path = os.path.join(os.getcwd(), round_path, "TransformerHandler.py")
-    utils_path = join(os.getcwd(), join("commons", "TransformerUtils.py"))
+    utils_path = join(os.getcwd(), join("common", "TransformerUtils.py"))
     round_path = join(os.getcwd(), round_path)
     model_path = join(os.getcwd(), model_path)
     # -------------------------------------- Archive -------------------------------------#
@@ -119,18 +125,17 @@ def archive_model(sagemaker_model_name, model_path, round_path, task):
     archiver_command_extra_files_nli = f'--extra-files "{round_path}/settings.py,{round_path}/setup_config.json,{utils_path}'
     archiver_command_extra_files = f'{round_path}/special_tokens_map.json,{round_path}/settings.py,{round_path}/tokenizer_config.json,{round_path}/merges.txt,{round_path}/config.json'
     if task == "nli":
-        print(f"----- nli is archiving -----")
+        print(f"----- {task} is archiving -----")
         archiver_command = f'{archiver_command_front} {archiver_command_extra_files_nli}"'
 
     elif task == "hs" or task == "sentiment":
-        print(f"----- hs is archiving -----")
+        print(f"----- {task} is archiving -----")
         archiver_command = f'{archiver_command_front} {archiver_command_extra_files_nli},{archiver_command_extra_files}"'
 
     elif task == "qa":
-        print("----- qa is archiving -----")
+        print(f"----- {task} is archiving -----")
         archiver_command = f'{archiver_command_front} {archiver_command_extra_files_nli},{archiver_command_extra_files},{round_path}/qa_utils.py"'
         
-
     process = subprocess.run(archiver_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         universal_newlines=True, check=True, shell=True,)
     print(process.stdout)
@@ -141,18 +146,18 @@ def archive_model(sagemaker_model_name, model_path, round_path, task):
     print(process.stdout)
 
     print("----- Mar file moved to mars folder -----")
-    shutil.move(f"{sagemaker_model_name}.tar.gz", f"{task}/mars/{sagemaker_model_name}.tar.gz")
-    shutil.move(f"{sagemaker_model_name}.mar", f"{task}/mars/{sagemaker_model_name}.mar")
+    shutil.move(f"{sagemaker_model_name}.tar.gz", f"{task_path}/mars/{sagemaker_model_name}.tar.gz")
+    shutil.move(f"{sagemaker_model_name}.mar", f"{task_path}/mars/{sagemaker_model_name}.mar")
 
 def setup_model(model_dir, model_path, model_url_path, given_model_name, extension,
- round_path, task):
+round_path, task, task_path):
     """
     Creates the necessary directory structure for the task and downloads the model if needed
     """
     os.makedirs(model_dir, exist_ok=True)
     print(f"Successfully created the directory {model_dir}")
-    os.makedirs(os.path.join(task, "mars"), exist_ok=True)
-    print(f'Successfully created the directory {os.path.join(task,"mars")}')
+    os.makedirs(os.path.join(task_path, "mars"), exist_ok=True)
+    print(f'Successfully created the directory {os.path.join(task_path,"mars")}')
 
     """ if the model is present in the round's model number folder with the given name, use it, \
         rename it to pytorch_model.*"""
@@ -191,7 +196,7 @@ def load_validate_deploy_config(deploy_config_path):
     
     # Check if all the attributes are present
     attributes_list = ["task", "task_id", "round_id", "model_no", "model_url",\
-        "initial_instance_count", "gateway_url", "sagemaker_role", "redeploy"]
+        "initial_instance_count", "gateway_url", "sagemaker_role"]
     if not TransformerUtils.check_fields(deploy_config, attributes_list):
         raise AttributeError("Attributes missing in deploy_config file")
     
@@ -203,8 +208,12 @@ def load_validate_deploy_config(deploy_config_path):
     initial_instance_count = deploy_config["initial_instance_count"]
     gateway_url = deploy_config["gateway_url"]
     sagemaker_role = deploy_config["sagemaker_role"]
-    redeploy = deploy_config["redeploy"]
-
+    """ If the redeploy attribute is present in the config, it is set accordingly otherwise \
+    redeploy has the default value of False"""
+    if "redeploy" in deploy_config:
+        redeploy = deploy_config["redeploy"]
+    else :
+        redeploy = False
     return (task, round_id, model_no, model_url_path, initial_instance_count, \
         gateway_url, sagemaker_role, task_id, redeploy,)
 
@@ -221,6 +230,7 @@ if __name__ == "__main__":
     # Process each deploy_config.json file in deploy_configs folder and launch an endpoint
     for deploy_config_path in deploy_config_paths:
         round_path = None
+        
         try:
             print(f"----- New model deployment -----")
             task, round_id, model_no, model_url_path, initial_instance_count, gateway_url, sagemaker_role,\
@@ -235,9 +245,10 @@ if __name__ == "__main__":
             given_model_name = model_url_path.split("/")[-1]
             extension = given_model_name.split(".")[-1]
             model_name = "pytorch_model." + extension
-            model_dir = f"{task}/r{str(round_id)}/r{str(round_id)}_{str(model_no)}"
+            task_path = f"tasks/{task}"
+            model_dir = f"{task_path}/r{str(round_id)}/r{str(round_id)}_{str(model_no)}"
             model_path = os.path.join(model_dir, model_name)
-            round_path = f"{task}/r{str(round_id)}"
+            round_path = f"{task_path}/r{str(round_id)}"
 
             print("----- Generate settings.py -----")
 
@@ -246,9 +257,12 @@ if __name__ == "__main__":
             print("----- Setup sagemaker variables -----")
             region, account, prefix, registry_name, role, bucket_name, client = setup_env(sagemaker_role)
             print("----- Handle existing endpoints -----")
-            handle_existing_endpoints(client, sm_model_name, redeploy)
+            skip_deployment = handle_existing_endpoints(client, sm_model_name, redeploy)
+            # The deployment of the model is skipped if the endpoint or the model already present.
+            if skip_deployment:
+                continue
 
-            # Add my_task_id and my_round_id in setup_config.json of the particular round
+            # Adds my_task_id and my_round_id in setup_config.json of the particular round
             print("----- Edit setup_config -----")
             setup_config_path = join(round_path, "setup_config.json")
             edit_setup_config(setup_config_path, task_id, round_id)
@@ -260,17 +274,16 @@ if __name__ == "__main__":
 
             s3_folder = task
             tar_file_path = f"{task}/mars/{sagemaker_model_name}.tar.gz"
-            # If tar.gz file is present in the mars folder, then we can directly push it to s3
-            if not os.path.exists(tar_file_path):
-                print("----- Set up the model  -----")
-                ts_model_path = setup_model(model_dir, model_path, model_url_path, given_model_name,\
-                    extension, round_path, task)
-                print("------ Archive model -----")
-                archive_model(sagemaker_model_name, ts_model_path, round_path, task)
+
+            print("----- Set up the model  -----")
+            ts_model_path = setup_model(model_dir, model_path, model_url_path, given_model_name,\
+                extension, round_path, task, task_path)
+            print("------ Archive model -----")
+            archive_model(sagemaker_model_name, ts_model_path, round_path, task, task_path)
 
             print("----- Tar file copied to s3 -----")
             s3_client = boto3.client("s3")
-            response = s3_client.upload_file(f"{task}/mars/{sagemaker_model_name}.tar.gz",bucket_name,\
+            response = s3_client.upload_file(f"{task_path}/mars/{sagemaker_model_name}.tar.gz",bucket_name,\
                 f"{prefix}/models/{task}/{sagemaker_model_name}.tar.gz")
 
             print(f"Response from the mar file upload to s3 {response}")
