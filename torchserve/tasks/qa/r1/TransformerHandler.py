@@ -210,7 +210,7 @@ def get_insights(example, tokenizer, device, lig, model):
     input_ids, ref_input_ids, attention_mask = construct_input_ref_pair(\
                 example[0]["question"], example[0]["passage"], tokenizer, device)
     all_tokens = get_word_token(input_ids, tokenizer)
-    logger.info("Word Tokens = ", all_tokens)
+    logger.info("Word Tokens = '%s'", all_tokens)
     attributions_start, delta_start = lig.attribute(inputs=input_ids,
                                   baselines=ref_input_ids,
                                   additional_forward_args=(attention_mask, 0, model),
