@@ -82,7 +82,6 @@ def construct_input_ref(text, tokenizer, device):
     attention_mask = torch.ones_like(input_ids)
     return input_ids, ref_input_ids, attention_mask
 
-
 def construct_input_ref_pair(text_seq_1, text_seq_2, tokenizer, device):
     """
     For a given pair of text, this function creates token id, reference id
@@ -102,7 +101,6 @@ def construct_input_ref_pair(text_seq_1, text_seq_2, tokenizer, device):
     attention_mask = torch.ones_like(input_ids)
     return input_ids, ref_input_ids, attention_mask
 
-
 def get_word_token(input_ids, tokenizer):
     """
     constructs word tokens from token id
@@ -112,7 +110,6 @@ def get_word_token(input_ids, tokenizer):
     # Remove unicode space character from BPE Tokeniser
     tokens = [token.replace("Ġ", "") for token in tokens]
     return tokens
-
 
 def get_nli_word_token(paired_sequence, model):
     """
