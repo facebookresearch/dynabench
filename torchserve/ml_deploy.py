@@ -217,6 +217,11 @@ def load_validate_deploy_config(deploy_config_path):
     return (task, round_id, model_no, model_url_path, initial_instance_count, \
         gateway_url, sagemaker_role, task_id, redeploy,)
 
+def clean_mar_file(sagemaker_model_name):
+    if join(os.getcwd(),sagemaker_model_name):
+        os.remove(join(os.getcwd(),f"{sagemaker_model_name}.mar"))
+        print("Existing mar file in the torchserve folder is removed")
+
 if __name__ == "__main__":
 
     # user arguments loaded from deploy_config folder
@@ -238,8 +243,10 @@ if __name__ == "__main__":
 
             sagemaker_model_name = f"{task}_r{round_id}_{model_no}"
             sm_model_name = f"{task}-r{str(round_id)}-{model_no}"
+            
             print(f"----- Starting the deployment of the model {sm_model_name}-----")
-
+            #cleans the unnecessary mar files
+            clean_mar_file(sagemaker_model_name)
             # ----- Model name and model path construction-----
 
             given_model_name = model_url_path.split("/")[-1]
@@ -285,8 +292,8 @@ if __name__ == "__main__":
             s3_client = boto3.client("s3")
             response = s3_client.upload_file(f"{task_path}/mars/{sagemaker_model_name}.tar.gz",bucket_name,\
                 f"{prefix}/models/{task}/{sagemaker_model_name}.tar.gz")
-
-            print(f"Response from the mar file upload to s3 {response}")
+            if response:
+                print(f"Response from the mar file upload to s3 {response}")
 
             print("----- Setup deployment variables -----")
             image_label = "v1"
