@@ -171,7 +171,7 @@ class ResponseInfo extends React.Component {
       })
       .catch((error) => {
         console.log(error);
-        this.setState({ inspectError: true });
+        this.setState({ inspectError: true, loader: false });
       });
   };
   render() {
