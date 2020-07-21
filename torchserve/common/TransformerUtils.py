@@ -111,14 +111,27 @@ def get_word_token(input_ids, tokenizer):
     tokens = [token.replace("Ġ", "") for token in tokens]
     return tokens
 
-def get_nli_word_token(paired_sequence, model):
+def get_nli_word_token(input_ids, model):
     """
-    constructs word tokens from token id. Iteratore and decode to get individual
-    token words instead of complete sentence
+    constructs word tokens from token ids to show captum word importance.
+    Iteratore and decode each token id to get individual token words
+    instead of complete sentence from roberta decoder
     """
-    all_tokens = []
-    for token in paired_sequence.squeeze(0).tolist():
-        all_tokens.append(model.decode(torch.Tensor([token]).long()))
+    all_tokens=[]
+    sentence_start=True
+    #Token id to find start and end of sentence
+    separator_token=[0,2]
+    for token in input_ids.squeeze(0).tolist():
+        if token in separator_token:
+            #Change start and end token word for better visibility. Default is invisible
+            if sentence_start:
+                all_tokens.append("<s>")
+                sentence_start = False
+            else:
+                all_tokens.append("</s>")
+                sentence_start = True
+        else:
+            all_tokens.append(model.decode(torch.Tensor([token]).long()))
     return all_tokens
 
 def captum_nli_forward_func(paired_sequence, paired_segments_ids, attention_mask, model=None, mode=None):

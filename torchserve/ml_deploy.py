@@ -218,7 +218,7 @@ def load_validate_deploy_config(deploy_config_path):
         gateway_url, sagemaker_role, task_id, redeploy,)
 
 def clean_mar_file(sagemaker_model_name):
-    if join(os.getcwd(),sagemaker_model_name):
+    if os.path.exists(join(os.getcwd(),f"{sagemaker_model_name}.mar")):
         os.remove(join(os.getcwd(),f"{sagemaker_model_name}.mar"))
         print("Existing mar file in the torchserve folder is removed")
 
