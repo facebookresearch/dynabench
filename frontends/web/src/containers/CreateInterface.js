@@ -404,69 +404,82 @@ class CreateInterface extends React.Component {
       this.context.api
         .getModelResponse(randomModel, modelInputs)
         .then((result) => {
-          if (this.state.task.type == "extract") {
-            var modelPredIdx = null;
-            var modelPredStr = result.text;
-            var modelFooled = !result.model_is_correct;
-            // TODO: handle this more elegantly
-            result.prob = [result.prob, 1 - result.prob];
-            this.state.task.targets = ["confidence", "uncertainty"];
+          if (result.errorMessage) {
+            this.setState({
+              submitDisabled: false,
+              refreshDisabled: false,
+              fetchPredictionError: true,
+            });
           } else {
-            var modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
-            var modelPredStr = this.state.task.targets[modelPredIdx];
-            var modelFooled =
-              result.prob.indexOf(Math.max(...result.prob)) !==
-              this.state.target;
-          }
-          this.setState(
-            {
-              content: [
-                ...this.state.content,
-                {
-                  cls: "hypothesis",
-                  modelPredIdx: modelPredIdx,
-                  modelPredStr: modelPredStr,
-                  fooled: modelFooled,
-                  text: this.state.hypothesis,
-                  url: randomModel,
-                  retracted: false,
-                  response: result,
-                },
-              ],
-            },
-            function () {
-              this.context.api
-                .storeExample(
-                  this.state.task.id,
-                  this.state.task.cur_round,
-                  Number(this.context.user.id),
-                  this.state.context.id,
-                  this.state.hypothesis,
-                  this.state.target,
-                  result,
-                  randomModel
-                )
-                .then((result) => {
-                  var key = this.state.content.length - 1;
-                  this.setState({
-                    hypothesis: "",
-                    submitDisabled: false,
-                    refreshDisabled: false,
-                    mapKeyToExampleId: {
-                      ...this.state.mapKeyToExampleId,
-                      [key]: result.id,
-                    },
-                  });
-                })
-                .catch((error) => {
-                  console.log(error);
-                  this.setState({
-                    submitDisabled: false,
-                    refreshDisabled: false,
-                  });
-                });
+            if (this.state.fetchPredictionError) {
+              this.setState({
+                fetchPredictionError: false,
+              });
             }
-          );
+            if (this.state.task.type == "extract") {
+              var modelPredIdx = null;
+              var modelPredStr = result.text;
+              var modelFooled = !result.model_is_correct;
+              // TODO: handle this more elegantly
+              result.prob = [result.prob, 1 - result.prob];
+              this.state.task.targets = ["confidence", "uncertainty"];
+            } else {
+              var modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
+              var modelPredStr = this.state.task.targets[modelPredIdx];
+              var modelFooled =
+                result.prob.indexOf(Math.max(...result.prob)) !==
+                this.state.target;
+            }
+            this.setState(
+              {
+                content: [
+                  ...this.state.content,
+                  {
+                    cls: "hypothesis",
+                    modelPredIdx: modelPredIdx,
+                    modelPredStr: modelPredStr,
+                    fooled: modelFooled,
+                    text: this.state.hypothesis,
+                    url: randomModel,
+                    retracted: false,
+                    response: result,
+                  },
+                ],
+              },
+              function () {
+                this.context.api
+                  .storeExample(
+                    this.state.task.id,
+                    this.state.task.cur_round,
+                    Number(this.context.user.id),
+                    this.state.context.id,
+                    this.state.hypothesis,
+                    this.state.target,
+                    result,
+                    randomModel
+                  )
+                  .then((result) => {
+                    var key = this.state.content.length - 1;
+                    this.setState({
+                      hypothesis: "",
+                      submitDisabled: false,
+                      refreshDisabled: false,
+                      mapKeyToExampleId: {
+                        ...this.state.mapKeyToExampleId,
+                        [key]: result.id,
+                      },
+                    });
+                  })
+                  .catch((error) => {
+                    console.log(error);
+                    this.setState({
+                      submitDisabled: false,
+                      refreshDisabled: false,
+                    });
+                  });
+              }
+            );
+          }
         })
         .catch((error) => {
           console.log(error);
@@ -593,6 +606,11 @@ class CreateInterface extends React.Component {
               {this.state.answerNotSelected === true
                 ? "*Please select an answer in the context"
                 : null}
+              {this.state.fetchPredictionError && (
+                <span style={{ color: "#e65959" }}>
+                  *Unable to fetch results. Please try again after sometime.
+                </span>
+              )}
             </div>
           </Card>
         </Col>
