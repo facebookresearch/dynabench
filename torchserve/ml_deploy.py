@@ -72,6 +72,21 @@ def handle_existing_endpoints(client, sm_model_name, redeploy):
                     print(f"----- Model with the name {sm_model_name} already exists,\
                     set redeploy = true to redeploy the endpoint. Moving to the \
                     next model -----------")
+
+    if not skip_deployment:
+        config_response = client.list_endpoint_configs(SortBy="Name", SortOrder="Ascending", MaxResults=100,\
+            NameContains = sm_model_name)
+        endpoint_configs = config_response["EndpointConfigs"]
+        for endpoint_config in endpoint_configs:
+            if endpoint_config["EndpointConfigName"] == sm_model_name:
+                if redeploy:
+                    print(f"Deleting the endpoint config {sm_model_name:} to redeploy")
+                    client.delete_endpoint_config(EndpointConfigName=sm_model_name)
+                else:
+                    skip_deployment = True
+                    print(f"----- Endpoint config with the name {sm_model_name} already exists")
+                    print("Set redeploy = true to redeploy the endpoint. Moving to the next model -----")
+                    break
     return skip_deployment
 
 def edit_setup_config(setup_config_path, task_id, round_id):
@@ -196,7 +211,7 @@ def load_validate_deploy_config(deploy_config_path):
     
     # Check if all the attributes are present
     attributes_list = ["task", "task_id", "round_id", "model_no", "model_url",\
-        "initial_instance_count", "gateway_url", "sagemaker_role"]
+        "initial_instance_count", "gateway_url", "sagemaker_role", "instance_type"]
     if not TransformerUtils.check_fields(deploy_config, attributes_list):
         raise AttributeError("Attributes missing in deploy_config file")
     
@@ -208,6 +223,8 @@ def load_validate_deploy_config(deploy_config_path):
     initial_instance_count = deploy_config["initial_instance_count"]
     gateway_url = deploy_config["gateway_url"]
     sagemaker_role = deploy_config["sagemaker_role"]
+    instance_type = deploy_config["instance_type"]
+
     """ If the redeploy attribute is present in the config, it is set accordingly otherwise \
     redeploy has the default value of False"""
     if "redeploy" in deploy_config:
@@ -215,7 +232,7 @@ def load_validate_deploy_config(deploy_config_path):
     else :
         redeploy = False
     return (task, round_id, model_no, model_url_path, initial_instance_count, \
-        gateway_url, sagemaker_role, task_id, redeploy,)
+        gateway_url, sagemaker_role, task_id, redeploy, instance_type)
 
 def clean_mar_file(sagemaker_model_name):
     if os.path.exists(join(os.getcwd(),f"{sagemaker_model_name}.mar")):
@@ -230,8 +247,10 @@ if __name__ == "__main__":
     if isfile(join(config_path, f))]
 
     if not deploy_config_paths:
-        sys.exit("The deploy_configs directory is empty")
-
+        raise FileNotFoundError("The deploy_configs directory is empty")
+    
+    deploy_config_paths.sort()
+    
     # Process each deploy_config.json file in deploy_configs folder and launch an endpoint
     for deploy_config_path in deploy_config_paths:
         round_path = None
@@ -239,7 +258,7 @@ if __name__ == "__main__":
         try:
             print(f"----- New model deployment -----")
             task, round_id, model_no, model_url_path, initial_instance_count, gateway_url, sagemaker_role,\
-                task_id, redeploy = load_validate_deploy_config(deploy_config_path)
+                task_id, redeploy, instance_type = load_validate_deploy_config(deploy_config_path)
 
             sagemaker_model_name = f"{task}_r{round_id}_{model_no}"
             sm_model_name = f"{task}-r{str(round_id)}-{model_no}"
@@ -307,7 +326,7 @@ if __name__ == "__main__":
 
             endpoint_name = sm_model_name
             # Change the initial_instance_count to the number of instances you want to be launched.
-            predictor = torchserve_model.deploy(instance_type="ml.c5.2xlarge",\
+            predictor = torchserve_model.deploy(instance_type=instance_type,\
                 initial_instance_count=initial_instance_count, endpoint_name=endpoint_name)
             exposed_endpoint = f"{gateway_url}?model={sm_model_name}"
             print("Model endpoint url = ", exposed_endpoint)

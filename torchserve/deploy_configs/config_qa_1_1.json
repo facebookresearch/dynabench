@@ -4,11 +4,10 @@
     "round_id": 1,
     "model_no": 1,
     "model_url": "http://dl.fbaipublicfiles.com/dynabench/qa/roberta_round1.bin",
-    "initial_instance_count" : 1,
+    "initial_instance_count" : 2,
     "gateway_url": "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict",
     "sagemaker_role": "AmazonSageMaker-ExecutionRole-20200629T161149",
-    "redeploy": false
-    
-    
-    
+    "redeploy": false,
+	"instance_type": "ml.m5.2xlarge"
 }
+
