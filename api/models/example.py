@@ -10,6 +10,8 @@ from models.context import Context
 from models.round import Round
 from models.task import Task
 
+import hashlib
+import json
 import numpy as np
 
 from common import helpers as util
@@ -26,7 +28,6 @@ class Example(Base):
     uid = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
     user = db.orm.relationship("User", foreign_keys="Example.uid")
 
-    annotator_id = db.Column(db.Text)
     anon_id = db.Column(db.Text)
 
     text = db.Column(db.Text)
@@ -65,8 +66,8 @@ class ExampleModel(BaseModel):
     def __init__(self):
         super(ExampleModel, self).__init__(Example)
 
-    def create(self, tid, rid, uid, cid, hypothesis, tgt, response, signed, annotator_id=None, model=''):
-        if uid == 'turk' and annotator_id is None:
+    def create(self, tid, rid, uid, cid, hypothesis, tgt, response, signed, metadata):
+        if uid == 'turk' and 'annotator_id' not in metadata:
             logging.error('Annotator id not specified but received Turk example')
             return False
 
@@ -86,42 +87,26 @@ class ExampleModel(BaseModel):
             pred = response['prob']
             model_wrong = (tgt != np.argmax(pred))
 
-        import hashlib
-        h = hashlib.sha1()
         if isinstance(pred, list):
             pred_str = '|'.join([str(x) for x in pred])
         else:
             pred_str = pred
-        h.update(pred_str.encode('utf-8'))
-        if c.round.task.has_context:
-            # no context for e.g. sentiment
-            h.update(c.context.encode('utf-8'))
-        h.update(hypothesis.encode('utf-8'))
-        h.update("{}{}{}".format(tid, rid, c.round.secret).encode('utf-8'))
-        if h.hexdigest() != signed:
-            rawstr = pred_str.encode('utf-8') + c.context.encode('utf-8') + hypothesis.encode('utf-8') + "{}{}{}".format(tid, rid, c.round.secret).encode('utf-8')
-            logging.error("Signature does not match (received %s, expected %s [%s])" %
-                    (h.hexdigest(), signed, rawstr))
+
+        if not self.verify_signature(signed, c, hypothesis, pred_str):
             return False
 
         try:
             e = Example(context=c, \
                     text=hypothesis, target_pred=tgt, model_preds=pred_str, \
                     model_wrong=model_wrong,
-                    generated_datetime=db.sql.func.now(), target_model=model)
+                    generated_datetime=db.sql.func.now(), metadata_json=json.dumps(metadata))
 
             # store uid/annotator_id and anon_id
-            anon_id = hashlib.sha1()
-            anon_id.update(c.round.secret.encode('utf-8'))
-            if uid == 'turk':
-                e.annotator_id = annotator_id
-                anon_id.update(e.annotator_id.encode('utf-8'))
-            else:
+            e.anon_id = self.get_anon_id(c.round.secret, uid if uid != 'turk' else metadata['annotator_id'])
+            if uid != 'turk':
                 um = UserModel()
                 user = um.get(uid)
                 e.user = user
-                anon_id.update(str(uid).encode('utf-8'))
-            e.anon_id = anon_id.hexdigest()
 
             self.dbs.add(e)
             self.dbs.flush()
@@ -131,6 +116,32 @@ class ExampleModel(BaseModel):
             logging.error('Could not create example (%s)' % error_message)
             return False
         return e.id
+
+    def verify_signature(self, signature, context, hypothesis, pred_str):
+        tid = context.round.task.id
+        rid = context.round.rid
+        secret = context.round.secret
+        context_str = context.context
+
+        h = hashlib.sha1()
+        h.update(pred_str.encode('utf-8'))
+        if context.round.task.has_context:
+            # no context for e.g. sentiment
+            h.update(context_str.encode('utf-8'))
+        h.update(hypothesis.encode('utf-8'))
+        h.update("{}{}{}".format(tid, rid, secret).encode('utf-8'))
+        if h.hexdigest() != signature:
+            rawstr = pred_str.encode('utf-8') + context_str.encode('utf-8') + hypothesis.encode('utf-8') + "{}{}{}".format(tid, rid, secret).encode('utf-8')
+            logging.error("Signature does not match (received %s, expected %s [%s])" %
+                    (h.hexdigest(), signed, rawstr))
+            return False
+        return True
+
+    def get_anon_id(self, secret, uid):
+        anon_id = hashlib.sha1()
+        anon_id.update(secret.encode('utf-8'))
+        anon_id.update(str(uid).encode('utf-8'))
+        return anon_id.hexdigest()
 
     def getRandomToVerify(tid, n=1):
         # https://stackoverflow.com/questions/60805/getting-random-row-through-sqlalchemy

@@ -97,7 +97,7 @@ class CreateInterface extends React.Component {
     var idx = e.target.getAttribute("data-index");
     this.api.retractExample(
       this.state.mapKeyToExampleId[idx],
-      'turk|' + this.props.providerWorkerId + '|' + this.props.mephistoWorkerId
+      this.props.providerWorkerId
     )
     .then(result => {
       const newContent = this.state.content.slice();
@@ -152,16 +152,20 @@ class CreateInterface extends React.Component {
             retracted: false,
             response: result}
           ]}, function() {
+          const metadata = {
+            'annotator_id': this.props.providerWorkerId,
+            'mephisto_id': this.props.mephistoWorkerId,
+            'model': 'model-name-unknown'
+          };
           this.api.storeExample(
             this.state.task.id,
             this.state.task.cur_round,
-            // TODO: Handle this as metadata
-            'turk|' + this.props.providerWorkerId + '|' + this.props.mephistoWorkerId,
+            'turk',
             this.state.context.id,
             this.state.hypothesis,
             this.state.target,
             result,
-            'model-name-unknown' // TODO: Fix this
+            metadata
           ).then(result => {
             var key = this.state.content.length-1;
             this.state.tries += 1;

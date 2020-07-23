@@ -434,6 +434,7 @@ class CreateInterface extends React.Component {
               ],
             },
             function () {
+              const metadata = {'model': randomModel}
               this.context.api
                 .storeExample(
                   this.state.task.id,
@@ -443,7 +444,7 @@ class CreateInterface extends React.Component {
                   this.state.hypothesis,
                   this.state.target,
                   result,
-                  randomModel
+                  metadata
                 )
                 .then((result) => {
                   var key = this.state.content.length - 1;
