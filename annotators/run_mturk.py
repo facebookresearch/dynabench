@@ -8,39 +8,16 @@ from mephisto.core.local_database import LocalMephistoDB
 from mephisto.core.operator import Operator
 from mephisto.utils.scripts import MephistoRunScriptParser
 
+from util import arg_handler, get_qualifications
+
 parser = MephistoRunScriptParser()
-parser.add_argument(
-    "-uo",
-    "--use-onboarding",
-    default=False,
-    help="Launch task with onboarding requirement",
-    action='store_true'
-)
-parser.add_argument(
-    "-t",
-    "--task",
-    required=True,
-    help="Task configuration file",
-    type=str
-)
-parser.add_argument(
-    "-n",
-    "--num-jobs",
-    required=True,
-    help="Number of jobs",
-    type=int
-)
-parser.add_argument(
-    "--port",
-    default=3001,
-    help="Port to launch interface on",
-    type=int
-)
-architect_type, requester_name, db, args = parser.parse_launch_arguments()
+architect_type, requester_name, db, args = arg_handler(parser)
 task_config = json.load(open(args['task']))
+
 extra_args = {
     'static_task_data': [{} for _ in range(args['num_jobs'])],
-    'task_config': task_config
+    'task_config': task_config,
+    'mturk_specific_qualifications': get_qualifications(task_config['qualifications'])
 }
 
 ARG_STRING = (

@@ -6,5 +6,6 @@
     "task_description": "Your job is to find examples that fool AI models",
     "reward_in_dollars": 0.3,
     "tags": "testing",
-    "onboarding_qualification_name": "nli-1-qualification"
+    "onboarding_qualification_name": "nli-1-qualification",
+    "qualifications": ["100_hits_approved", "english_only"]
 }
