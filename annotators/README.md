@@ -18,6 +18,7 @@ In order to add a new task, do the following:
 3. Build your bundle using `npm run mturk` from anywhere in frontends/web.
 3. Create a JSON config file e.g. in `configs/divyansh/pilot-1.json`. See examples in that dir - should be straightforward - and make sure the task_name field is the same as your task identifier.
 4. Run `run_mturk.py -t [your-task-name] -n [number-of-jobs]`, follow any account setup instructions from Mephisto, and go to the corresponding URL to see the task running.
+5. If you want to enable onboarding, add the `-uo` argument to the above.
 
 If this is a completely new task for the DynaBench backend, you also need to:
 

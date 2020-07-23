@@ -6,7 +6,7 @@ import sys
 sys.path.append('./Mephisto')
 from mephisto.core.local_database import LocalMephistoDB
 from mephisto.core.operator import Operator
-from mephisto.utils.scripts import MephistoRunScriptParser, str2bool
+from mephisto.utils.scripts import MephistoRunScriptParser
 
 parser = MephistoRunScriptParser()
 parser.add_argument(
@@ -14,7 +14,7 @@ parser.add_argument(
     "--use-onboarding",
     default=False,
     help="Launch task with onboarding requirement",
-    type=str2bool,
+    action='store_true'
 )
 parser.add_argument(
     "-t",
@@ -54,8 +54,11 @@ ARG_STRING = (
     f'--task-source "../frontends/web/build/bundle.js" '
     f"--units-per-assignment 1 "
     f"--task-name {task_config['task_name']} "
-    f"--port {args['port']}"
+    f"--port {args['port']} "
 )
+
+if args['use_onboarding']:
+    ARG_STRING += f"--onboarding-qualification {task_config['onboarding_qualification_name']}"
 
 operator = Operator(db)
 operator.parse_and_launch_run_wrapper(shlex.split(ARG_STRING), extra_args=extra_args)

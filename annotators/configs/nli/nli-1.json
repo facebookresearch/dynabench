@@ -5,5 +5,6 @@
     "task_title": "Fool the model - Natural Language Inference",
     "task_description": "Your job is to find examples that fool AI models",
     "reward_in_dollars": 0.3,
-    "tags": "testing"
+    "tags": "testing",
+    "onboarding_qualification_name": "nli-1-qualification"
 }
