@@ -34,8 +34,8 @@ class DivyanshQATaskMain extends React.Component {
   }
   render() {
     if (this.props.mephistoWorkerId % 2 == 0) {
-      return <CreateInterface api={this.api} taskId={7} {...this.props} />;}
-    else {return <CreateInterfaceNoModel api={this.api} taskId={7} {...this.props} />;}
+      return <CreateInterface api={this.api} {...this.props} />;}
+    else {return <CreateInterfaceNoModel api={this.api} {...this.props} />;}
   }
 }
 

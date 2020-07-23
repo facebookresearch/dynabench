@@ -59,7 +59,7 @@ class CreateInterface extends React.Component {
     this.api = props.api;
     this.state = {
       answer: [],
-      taskId: props.taskId,
+      taskId: props.taskConfig.task_id,
       task: {},
       context: null,
       target: 0,
