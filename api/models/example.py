@@ -155,7 +155,7 @@ class ExampleModel(BaseModel):
 
     def getUserLeaderByTid(self, tid, n=5, offset=0, min_cnt=0, downstream=False):
         cnt = db.sql.func.sum(case([(Example.model_wrong == 1, 1)], else_=0)).label('cnt')
-        query_res = self.dbs.query(User.id, User.username, cnt, (cnt / db.func.count()), db.func.count()) \
+        query_res = self.dbs.query(User.id, User.username, User.avatar_url, cnt, (cnt / db.func.count()), db.func.count()) \
             .join(Example, User.id == Example.uid) \
             .join(Context, Example.cid == Context.id) \
             .join(Round, Context.r_realid == Round.id) \

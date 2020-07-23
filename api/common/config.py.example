@@ -4,6 +4,7 @@ config = { \
         'jwtalgo': '',
         'cookie_secret': '',
         'refreshexp': 90, # in days
+        'db_host': 'localhost', # Change as required (aws rds)
         'db_name': '',
         'db_user': '',
         'db_password': '',
@@ -19,5 +20,7 @@ config = { \
         'aws_region': '',
         'aws_s3_bucket_name': '',
         'aws_s3_profile_base_url': '',
-        'profile_img_max_size': 5 * 1024 * 1024 # 5 MB
+        'profile_img_max_size': 5 * 1024 * 1024, # 5 MB
+        'ssl_cert_file_path': '', # Configuring the ssl certificate path
+        'ssl_org_pem_file_path': ''
         }

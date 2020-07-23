@@ -171,6 +171,7 @@ class ResponseInfo extends React.Component {
       })
       .catch((error) => {
         console.log(error);
+        this.setState({ inspectError: true, loader: false });
       });
   };
   render() {
@@ -403,22 +404,35 @@ class CreateInterface extends React.Component {
       this.context.api
         .getModelResponse(randomModel, modelInputs)
         .then((result) => {
-          if (this.state.task.type == "extract") {
-            var modelPredIdx = null;
-            var modelPredStr = result.text;
-            var modelFooled = !result.model_is_correct;
-            // TODO: handle this more elegantly
-            result.prob = [result.prob, 1 - result.prob];
-            this.state.task.targets = ["confidence", "uncertainty"];
+          if (result.errorMessage) {
+            this.setState({
+              submitDisabled: false,
+              refreshDisabled: false,
+              fetchPredictionError: true,
+            });
           } else {
-            var modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
-            var modelPredStr = this.state.task.targets[modelPredIdx];
-            var modelFooled =
-              result.prob.indexOf(Math.max(...result.prob)) !==
-              this.state.target;
-          }
-          this.setState(
-            {
+            if (this.state.fetchPredictionError) {
+              this.setState({
+                fetchPredictionError: false,
+              });
+            }
+
+            if (this.state.task.type == "extract") {
+              var modelPredIdx = null;
+              var modelPredStr = result.text;
+              var modelFooled = !result.model_is_correct;
+              // TODO: handle this more elegantly
+              result.prob = [result.prob, 1 - result.prob];
+              this.state.task.targets = ["confidence", "uncertainty"];
+            } else {
+              var modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
+              var modelPredStr = this.state.task.targets[modelPredIdx];
+              var modelFooled =
+                result.prob.indexOf(Math.max(...result.prob)) !==
+                this.state.target;
+            }
+
+            this.setState({
               content: [
                 ...this.state.content,
                 {
@@ -465,8 +479,8 @@ class CreateInterface extends React.Component {
                     refreshDisabled: false,
                   });
                 });
-            }
-          );
+              });
+          }
         })
         .catch((error) => {
           console.log(error);
@@ -593,6 +607,11 @@ class CreateInterface extends React.Component {
               {this.state.answerNotSelected === true
                 ? "*Please select an answer in the context"
                 : null}
+              {this.state.fetchPredictionError && (
+                <span style={{ color: "#e65959" }}>
+                  *Unable to fetch results. Please try again after sometime.
+                </span>
+              )}
             </div>
           </Card>
         </Col>
