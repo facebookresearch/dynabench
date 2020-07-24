@@ -29,7 +29,7 @@ function App() {
     return <h1>{getBlockedExplanation(blockedReason)}</h1>;
   }
 
-  let api = new ApiService();
+  let api = new ApiService(process.env.REACT_APP_API_HOST);
   api.setMturkMode();
 
   if (isLoading) {
