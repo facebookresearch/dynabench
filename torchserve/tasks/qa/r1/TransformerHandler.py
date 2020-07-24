@@ -7,6 +7,7 @@ import logging
 import os
 import ast
 import hashlib
+import sys
 logger = logging.getLogger(__name__)
 
 from transformers import AutoConfig, AutoModelForSequenceClassification, AutoTokenizer,AutoModelForQuestionAnswering, RobertaTokenizer
@@ -14,7 +15,9 @@ import torch
 import torch.nn.functional as F
 from ts.torch_handler.base_handler import BaseHandler
 from settings import my_secret
-from TransformerUtils import generate_response_signature, check_fields, handler_initialize, remove_sp_chars
+from TransformerUtils import generate_response_signature, check_fields, handler_initialize, remove_sp_chars, \
+    construct_input_ref_pair, captum_qa_forward, summarize_attributions, get_word_token
+from captum.attr import LayerIntegratedGradients
 
 # QA specific libraries
 from qa_utils import convert_to_squad_example, compute_predictions_logits
@@ -77,10 +80,13 @@ class TransformersSeqClassifierHandler(BaseHandler):
         self.model.to(self.device)
         self.model.eval()
         logger.debug("Transformer model from path {0} loaded successfully".format(model_dir))
+
+        # ------------------------------- Captum initialization ----------------------------#
+        self.lig = LayerIntegratedGradients(captum_qa_forward, self.model.roberta.embeddings)
         self.initialized = True
 
     def preprocess(self, data):
-        """ 
+        """
         Basic text preprocessing
         """
         max_length = self.setup_config["max_length"]
@@ -95,6 +101,7 @@ class TransformersSeqClassifierHandler(BaseHandler):
         passage = body["context"]
         question = body["hypothesis"]
         answer = body["answer"]
+        insight = body["insight"]
         logger.info("In preprocess, body's value: '%s'", body)
         logger.info("In preprocess, passage's value: '%s'", passage)
         logger.info("In preprocess, questions's value: '%s'", question)
@@ -102,11 +109,11 @@ class TransformersSeqClassifierHandler(BaseHandler):
 
         example = {"passage": passage.strip(), "question": question.strip()}
 
-        return [example], answer
+        return [example], answer, insight
 
     def inference(self, examples):
-        """ 
-        Predict the class (or classes) of the received text using the serialized 
+        """
+        Predict the class (or classes) of the received text using the serialized
         transformers checkpoint.
         """
         def to_list(tensor):
@@ -162,8 +169,8 @@ class TransformersSeqClassifierHandler(BaseHandler):
             return predictions_by_example
 
     def postprocess(self, predictions_by_example, example, answer):
-        """ 
-        Post-processing of the model predictions to handle signature 
+        """
+        Post-processing of the model predictions to handle signature
         """
         contx = example[0]["passage"]
         data = example[0]["question"]
@@ -171,7 +178,7 @@ class TransformersSeqClassifierHandler(BaseHandler):
 
         logger.info("response without sign '%s'", response)
         response["text"] = predictions_by_example["text"]
-        response["prob"] = max(1.0, min(0.0, predictions_by_example["model_conf"]))  
+        response["prob"] = max(1.0, min(0.0, predictions_by_example["model_conf"]))
         # this is what the frontend expects
 
         # Evaluate the model prediction against the human answer
@@ -194,9 +201,36 @@ class TransformersSeqClassifierHandler(BaseHandler):
 
 _service = TransformersSeqClassifierHandler()
 
+def get_insights(example, tokenizer, device, lig, model):
+    """
+    This function calls the layer integrated gradient to get word importance
+    of the question and the passage. The word importance is obtained for
+    start and end position of the predicted answer
+    """
+    input_ids, ref_input_ids, attention_mask = construct_input_ref_pair(\
+                example[0]["question"], example[0]["passage"], tokenizer, device)
+    all_tokens = get_word_token(input_ids, tokenizer)
+    logger.info("Word Tokens = '%s'", all_tokens)
+    attributions_start, delta_start = lig.attribute(inputs=input_ids,
+                                  baselines=ref_input_ids,
+                                  additional_forward_args=(attention_mask, 0, model),
+                                  return_convergence_delta=True)
+
+    attributions_end, delta_end = lig.attribute(inputs=input_ids, baselines=ref_input_ids,
+                                additional_forward_args=(attention_mask, 1, model),
+                                return_convergence_delta=True)
+
+    attributions_start_sum = summarize_attributions(attributions_start)
+    attributions_end_sum = summarize_attributions(attributions_end)
+    response = {}
+    response["start_importances"] = attributions_start_sum.tolist()
+    response["end_importances"] = attributions_end_sum.tolist()
+    response["words"] = all_tokens
+    return [response]
+
 def handle(data, context):
-    """   
-    This function handles the requests for the model and returns a postprocessed response 
+    """
+    This function handles the requests for the model and returns a postprocessed response
     #sample input {
         "answer": "pretend you are reviewing a place",
         "context": "Please pretend you are reviewing a place, product, book or movie",
@@ -211,11 +245,14 @@ def handle(data, context):
         if data is None:
             return None
 
-        example, answer = _service.preprocess(data)
-        predictions_by_example = _service.inference(example)
-        response = _service.postprocess(predictions_by_example, example, answer)
-        return response
+        example, answer, insight = _service.preprocess(data)
+        if not insight:
+            predictions_by_example = _service.inference(example)
+            response = _service.postprocess(predictions_by_example, example, answer)
+            return response
+        else:
+            response = get_insights(example, _service.tokenizer, _service.device, _service.lig, _service.model)
+            return response
+
     except Exception as e:
         raise e
-
-
