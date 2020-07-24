@@ -12,6 +12,8 @@ def get_cors_headers(cors_url):
     # TODO: Fix this, ugly hack to get Mephisto to work
     if cors_url.endswith('herokuapp.com'):
         pass
+    elif cors_url.endswith('dynabench.org'):
+        pass
     elif cors_url not in valid_cors_urls:
         cors_url = 'http://dynabench.org'
     headers['Access-Control-Allow-Origin'] = cors_url
