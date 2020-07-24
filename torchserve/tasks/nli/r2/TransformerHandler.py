@@ -16,12 +16,13 @@ sys.path.append("/home/model-server/anli/src")
 
 from allennlp.data.iterators import BasicIterator
 from allennlp.nn.util import move_to_device
-
 import torch
 import torch.nn.functional as F
 from ts.torch_handler.base_handler import BaseHandler
 from settings import my_secret
-from TransformerUtils import generate_response_signature, check_fields, remove_sp_chars, handler_initialize
+from TransformerUtils import generate_response_signature, check_fields, remove_sp_chars, handler_initialize, \
+    summarize_attributions, get_nli_word_token, captum_nli_forward_func
+from captum.attr import LayerIntegratedGradients
 
 # ================== Round 2 imports =================
 from data_utils.exvocab import ExVocabulary
@@ -40,13 +41,12 @@ class NliTransformerHandler(BaseHandler):
 
     def initialize(self, ctx):
         """
-        Initializes the model and tokenizer during server start up 
+        Initializes the model and tokenizer during server start up
         """
         model_dir, model_pt_path, self.device, self.setup_config \
                   = handler_initialize(ctx)
 
         ## NLI Custom codes
-        self.input_list = True
         device_num = -1
         self.model_name = "roberta_1"
 
@@ -89,124 +89,71 @@ class NliTransformerHandler(BaseHandler):
         self.biterator = BasicIterator(batch_size=32)
         self.biterator.index_with(vocab)
         logger.info("--------------- Stage 5 ------------------- ")
+        # ------------------------------- Captum initialization ----------------------------#
+        self.lig = LayerIntegratedGradients(captum_nli_forward_func,\
+                                       self.model.roberta.model.decoder.sentence_encoder.embed_tokens)
         self.initialized = True
 
     def preprocess(self, data):
-        """ 
+        """
         Basic text preprocessing, based on the user's chocie of application mode.
         """
         logger.info("--------------- Preprocess satge 1 ------------------- ")
         logger.info(f"In preprocess, Recieved data '{data}'")
         body = data[0]["body"]
         if not body:
-            raise AttributeError("No 'body' found in the request") 
+            raise AttributeError("No 'body' found in the request")
         # Checks if the request contains the necessary attributes
         attribute_list = ["context", "hypothesis", "insight"]
         check_fields(body, attribute_list)
 
-        context_decoded = remove_sp_chars(body["context"])
-        hypothesis_decoded = remove_sp_chars(body["hypothesis"])
-
-        example = {"s1": context_decoded, "s2": hypothesis_decoded}
+        context = body["context"]
+        hypothesis = body["hypothesis"]
+        insight = body["insight"]
+        target=0
+        if insight:
+            target = body['target']
+        example = {"s1": context.strip(), "s2": hypothesis.strip()}
         example["y"] = "h"
         example["uid"] = str(uuid.uuid4())
-        logger.info(f"In preprocess , example: '{example}'")
+        #logger.info(f"In preprocess , example: '{example}'")
+        #Generate tokens
+        input_ids = self.cs_reader.read([example])[0]
+        paired_sequence = torch.Tensor(input_ids['paired_sequence'].array).long().unsqueeze(0)
+        paired_segments_ids = torch.Tensor(input_ids['paired_segments_ids'].array).long().unsqueeze(0)
+        attention_mask = torch.Tensor(input_ids['paired_mask'].array).long().unsqueeze(0)
 
-        return [example]
+        return input_ids, example, insight, target, paired_sequence, paired_segments_ids, attention_mask
 
-    def inference(self, examples):
-        """ 
-        Predict the class (or classes) of the received text using the serialized 
-        transformers checkpoint.
+    def inference(self, paired_sequence, paired_segments_ids, attention_mask, input_ids):
+        """ Predict the class (or classes) of the received text using the serialized transformers checkpoint.
         """
-        start_time = time.time()
+        id2label = {
+            0: "e",
+            1: "n",
+            2: "c"
+        }
+        self.model.eval()
+        output = self.model(input_ids=paired_sequence, attention_mask=attention_mask,
+                    token_type_ids=paired_segments_ids,
+                    mode=RoBertaSeqClassification.ForwardMode.EVAL)
 
-        logger.info(f"----------------- Inference ------------------- {examples}")
+        result = dict()
+        result['uid'] = input_ids['uid'].metadata
+        result['fid'] = input_ids['fid'].metadata
+        result['element'] = input_ids['item'].metadata
+        result['predicted_label'] = id2label[int(torch.max(output, 1)[1])]
+        result['logits'] = output.tolist()
+        result['prob'] = F.softmax(output, dim=1).squeeze(0).tolist()
 
-        instances = self.cs_reader.read(examples)
-        logger.info(f"In inference, instances '{instances}'")
 
-        data_iter = self.biterator(instances, num_epochs=1, shuffle=True)
-        logger.info(f"In inference, e_iter data '{data_iter}'")
-
-        with_probs = True
-        make_int = False
-        model = self.model
-
-        id2label = {0: "e", 1: "n", 2: "c"}
-
-        # logger.info("Evaluating ...")
-        with torch.no_grad():
-            model.eval()
-            total_size = 0
-
-            y_pred_list = []
-            y_fid_list = []
-            y_pid_list = []
-            y_element_list = []
-
-            y_logits_list = []
-            y_probs_list = []
-
-            for batch_idx, batch in enumerate(data_iter):
-                batch = move_to_device(batch, self.device_num)
-
-                eval_paired_sequence = batch["paired_sequence"]
-                eval_paired_segments_ids = batch["paired_segments_ids"]
-                eval_labels_ids = batch["label"]
-                eval_att_mask = batch["paired_mask"]
-                output = model(input_ids=eval_paired_sequence, attention_mask=eval_att_mask,\
-                     token_type_ids=eval_paired_segments_ids, mode=RoBertaSeqClassification.ForwardMode.EVAL)
-                # We give label is None then the first output is logits
-                out = output
-
-                y_pid_list.extend(list(batch["uid"]))
-                y_fid_list.extend(list(batch["fid"]))
-                y_element_list.extend(list(batch["item"]))
-
-                y_pred_list.extend(torch.max(out, 1)[1].view(out.size(0)).tolist())
-                y_logits_list.extend(out.tolist())
-
-                if with_probs:
-                    y_probs_list.extend(F.softmax(out, dim=1).tolist())
-
-                total_size += out.size(0)
-
-        result_items_list = []
-        assert len(y_pred_list) == len(y_fid_list)
-        assert len(y_pred_list) == len(y_pid_list)
-        assert len(y_pred_list) == len(y_element_list)
-
-        assert len(y_pred_list) == len(y_logits_list)
-
-        if with_probs:
-            assert len(y_pred_list) == len(y_probs_list)
-
-        for i in range(len(y_pred_list)):
-            r_item = dict()
-            r_item["fid"] = y_fid_list[i]
-            r_item["uid"] = y_pid_list[i] if not make_int else int(y_pid_list[i])
-            r_item["logits"] = y_logits_list[i]
-            r_item["element"] = y_element_list[i]
-            r_item["predicted_label"] = id2label[y_pred_list[i]]
-
-            if with_probs:
-                r_item["prob"] = y_probs_list[i]
-
-            result_items_list.append(r_item)
-        logger.info(f"inference time --------------- {(time.time() - start_time)}\
-             seconds  ----------------")
-        logger.info(f"----------------- Inference returns ------------------- \
-            {result_items_list}")
-        return result_items_list
+        print('----------------- Inference returns -------------------', result)
+        return result
 
     def postprocess(self, inference_output, data):
-        """ 
-        Post-processing of the model predictions to handle signature 
         """
-
-        inference_output = inference_output[0]
-        data = data[0]
+        Post-processing of the model predictions to handle signature
+        """
         # The input and the output probabilities are concatenated to generate signature
         pred_str = "|".join(str(x) for x in inference_output["prob"])
         stringlist = [pred_str, data["s1"], data["s2"]]
@@ -221,23 +168,41 @@ class NliTransformerHandler(BaseHandler):
             self.my_round_id, my_secret, stringlist)
         logger.info(inference_output)
         logger.info(f"response before json '{inference_output}'" )
-
-        if self.input_list:
-            inference_output = [inference_output]
-
         return [inference_output]
 
 _service = NliTransformerHandler()
 
+
+def get_insights(paired_sequence, paired_segments_ids, attention_mask, target, _service):
+    """
+    This function calls the layer integrated gradient to get word importance
+    of the input text
+    """
+    ref_input_ids = torch.Tensor([1 if token_id not in [0,2] else token_id for token_id in paired_sequence.tolist()])
+    ref_input_ids = ref_input_ids.long().unsqueeze(0)
+    all_tokens = get_nli_word_token(paired_sequence, _service.cur_roberta)
+    attributions, delta = _service.lig.attribute(inputs=paired_sequence,
+                                  baselines=ref_input_ids,
+                                  additional_forward_args=(attention_mask, paired_segments_ids, _service.model, \
+                                                          RoBertaSeqClassification.ForwardMode.EVAL),
+                                  target=target,
+                                  return_convergence_delta=True)
+
+    attributions_sum = summarize_attributions(attributions)
+    response = {}
+    response["importances"] = attributions_sum.tolist()
+    response["words"] = all_tokens
+    return [response]
+
 def handle(data, context):
-    """   
-    This function handles the requests for the model and returns a postprocessed response 
+    """
+    This function handles the requests for the model and returns a postprocessed response
     # Sample input {
         "context": "Please pretend you are reviewing a place, product, book or movie",
         "hypothesis": "pretend you are reviewing a place",
         "insight": true
         "target": 0 or 1 or 2 (0 - entail, 1 - neutral, 2 - contradict)
-    } and output response is probabilities.
+    } and output response is probabilities
     """
     try:
         if not _service.initialized:
@@ -245,9 +210,14 @@ def handle(data, context):
 
         if data is None:
             return None
-        input_text = _service.preprocess(data)
-        output = _service.inference(input_text)
-        response = _service.postprocess(output, input_text)
+        input_ids, input_text, insight, target, paired_sequence, paired_segments_ids,\
+            attention_mask = _service.preprocess(data)
+        if insight:
+            response = get_insights(paired_sequence, paired_segments_ids, attention_mask,\
+                                    target, _service)
+        else:
+            output = _service.inference(paired_sequence, paired_segments_ids, attention_mask, input_ids)
+            response = _service.postprocess(output, input_text)
         logger.info(response)
 
         return response

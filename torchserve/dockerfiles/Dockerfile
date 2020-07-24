@@ -25,7 +25,7 @@ RUN pip install allennlp==0.8.4
 RUN pip install zmq
 RUN pip install pytorch_transformers
 RUN pip install fairseq
-
+RUN pip install captum
 
 
 RUN pip install --no-cache-dir psutil \

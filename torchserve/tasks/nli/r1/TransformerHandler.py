@@ -109,13 +109,11 @@ class NliTransformerHandler(BaseHandler):
         # Checks if the request contains the necessary attributes
         attribute_list = ["context", "hypothesis", "insight"]
         check_fields(body, attribute_list)
-
+        context = body["context"]
+        hypothesis = body["hypothesis"]
         example = {"s1": context, "s2": hypothesis}
         example["y"] = "h"
         example["uid"] = str(uuid.uuid4())
-
-        #logger.info(f"In preprocess , example: '{example}'")
-
         return [example]
 
     def inference(self, examples):
