@@ -1,10 +1,10 @@
 import hashlib
 import logging
 logger = logging.getLogger(__name__)
-import os 
+import os
 import json
 
-import torch 
+import torch
 
 def generate_response_signature(my_task_id, my_round_id, my_secret, stringlist):
     """ 
@@ -51,9 +51,9 @@ def handler_initialize(ctx):
             setup_config = json.load(setup_config_file)
     else:
         raise FileNotFoundError("Missing the setup_config.json file.")
-    
+
     attribute_list = ["my_task_id", "my_round_id", "model_name", "mode", "do_lower_case", \
-        "num_labels", "max_length", "save_mode"]
+                      "num_labels", "max_length", "save_mode"]
     if not check_fields(setup_config, attribute_list):
         raise AttributeError("Attributes missing in setup_config file")
 
@@ -110,6 +110,38 @@ def get_word_token(input_ids, tokenizer):
     # Remove unicode space character from BPE Tokeniser
     tokens = [token.replace("Ġ", "") for token in tokens]
     return tokens
+
+def get_nli_word_token(input_ids, model):
+    """
+    constructs word tokens from token ids to show captum word importance.
+    Iteratore and decode each token id to get individual token words
+    instead of complete sentence from roberta decoder
+    """
+    all_tokens=[]
+    sentence_start=True
+    #Token id to find start and end of sentence
+    separator_token=[0,2]
+    for token in input_ids.squeeze(0).tolist():
+        if token in separator_token:
+            #Change start and end token word for better visibility. Default is invisible
+            if sentence_start:
+                all_tokens.append("<s>")
+                sentence_start = False
+            else:
+                all_tokens.append("</s>")
+                sentence_start = True
+        else:
+            all_tokens.append(model.decode(torch.Tensor([token]).long()))
+    return all_tokens
+
+def captum_nli_forward_func(paired_sequence, paired_segments_ids, attention_mask, model=None, mode=None):
+    """
+    A custom forward function to access different positions of the predictions
+    """
+    pred = model(input_ids=paired_sequence, attention_mask=attention_mask,
+                 token_type_ids=paired_segments_ids,
+                 mode=mode)
+    return pred
 
 def captum_sequence_forward(inputs, attention_mask=None, position=0, model=None):
     """
