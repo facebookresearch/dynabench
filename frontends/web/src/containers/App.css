@@ -4,10 +4,23 @@
 
 .sidebar-wrapper {
   padding: 0px;
+  z-index: 2;
+}
+
+.width-auto {
+  width: auto !important;
+}
+
+.inline-block {
+  display: inline-block;
 }
 
 .blue-bg {
   background-color: #1283d8;
+}
+
+.white-bg {
+  background-color: #fff;
 }
 
 .light-gray-bg {
@@ -18,8 +31,20 @@
   color: #1283d8;
 }
 
+.white-color {
+  color: #fff;
+}
+
+.no-chevron a::after {
+  display: none;
+}
+
 .gray-color {
   color: #6e6e6e;
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }
 
 .button-ellipse {
@@ -39,7 +64,8 @@
 .navbar-dark .dropdown-item:focus,
 .navbar-dark .dropdown-item:hover,
 .sidebar-wrapper .nav-link:focus,
-.sidebar-wrapper .nav-link:hover {
+.sidebar-wrapper .nav-link:hover,
+.sidebar-wrapper .nav-link.active {
   background-color: rgba(18, 131, 216, 0.1);
   color: #1283d8;
 }
@@ -110,4 +136,18 @@ div.recharts-wrapper
   .recharts-layer.recharts-cartesian-axis.recharts-yAxis.yAxis
   g.recharts-layer.recharts-cartesian-axis-tick:first-child {
   display: none;
+}
+
+table.inspectModel {
+    width: 100%;
+    border: 1px solid #ddd;
+    margin-top: 20px;
+}
+
+table.inspectModel thead td {
+    background: #efefef;
+}
+
+table.inspectModel td {
+  padding: 5px;
 }

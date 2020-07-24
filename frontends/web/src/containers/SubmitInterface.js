@@ -29,6 +29,7 @@ class SubmitInterface extends React.Component {
       );
     }
   }
+
   handleValidation = (values) => {
     const errors = {};
     const allowedExtensions = /(\.txt)$/i;
@@ -42,7 +43,8 @@ class SubmitInterface extends React.Component {
     }
     return errors;
   };
-  handleSubmit = (values) => {
+
+  handleSubmit = (values, { setFieldValue, setSubmitting }) => {
     const reqObj = {
       taskId: this.state.taskId,
       roundType: values.roundType,
@@ -52,14 +54,17 @@ class SubmitInterface extends React.Component {
       .submitModel(reqObj)
       .then((result) => {
         this.props.history.push({
-          pathname: `/tasks/${this.state.taskId}/${result.model_id}/publish`,
+          pathname: `/tasks/${this.state.taskId}/models/${result.model_id}/publish`,
           state: { detail: result },
         });
       })
       .catch((error) => {
+        setSubmitting(false);
+        setFieldValue("failed", "Failed To Submit. Plese try again");
         console.log(error);
       });
   };
+
   render() {
     return (
       <Container>
@@ -83,6 +88,7 @@ class SubmitInterface extends React.Component {
                   initialValues={{
                     file: null,
                     roundType: "overall",
+                    failed: "",
                   }}
                   validate={this.handleValidation}
                   onSubmit={this.handleSubmit}
@@ -94,6 +100,7 @@ class SubmitInterface extends React.Component {
                     setFieldValue,
                     handleSubmit,
                     isSubmitting,
+                    setValues,
                   }) => (
                     <>
                       <form
@@ -130,6 +137,7 @@ class SubmitInterface extends React.Component {
                                               variant="outline-danger"
                                               size="sm"
                                               onClick={(event) => {
+                                                setFieldValue("failed", "");
                                                 setFieldValue("file", null);
                                               }}
                                             >
@@ -145,10 +153,11 @@ class SubmitInterface extends React.Component {
                                 <>
                                   <DragAndDrop
                                     handleChange={(event) => {
-                                      setFieldValue(
-                                        "file",
-                                        event.currentTarget.files[0]
-                                      );
+                                      setValues({
+                                        ...values,
+                                        file: event.currentTarget.files[0],
+                                        failed: "",
+                                      });
                                     }}
                                     required={errors.file}
                                     name="file"
@@ -159,6 +168,7 @@ class SubmitInterface extends React.Component {
                               )}
                               <small className="form-text text-muted">
                                 {errors.file}
+                                {values.failed}
                               </small>
                             </Form.Group>
                           </Row>

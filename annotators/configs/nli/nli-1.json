@@ -1,0 +1,11 @@
+{
+    "task_name": "nli-1",
+    "task_id": 1,
+    "round_id": 1,
+    "task_title": "Fool the model - Natural Language Inference",
+    "task_description": "Your job is to find examples that fool AI models",
+    "reward_in_dollars": 0.3,
+    "tags": "testing",
+    "onboarding_qualification_name": "nli-1-qualification",
+    "qualifications": ["100_hits_approved", "english_only"]
+}

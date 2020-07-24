@@ -19,8 +19,9 @@ class PublishInterface extends React.Component {
     this.state = {
       taskId: props.match.params.taskId,
       modelId: props.match.params.modelId,
+      model: {},
       accuracy: "",
-      scores: {},
+      scores: [],
       isPublished: false,
     };
   }
@@ -37,40 +38,45 @@ class PublishInterface extends React.Component {
       return;
     }
     this.setState({
-      accuracy: (propState.detail && propState.detail.accuracy) || "",
-      scores: (propState.detail && propState.detail.scores) || {},
+      model: propState.detail,
+      accuracy: (propState.detail && propState.detail.overall_perf) || "",
+      scores: (propState.detail && propState.detail.scores) || [],
       isPublished: (propState.detail && propState.detail.isPublished) || false,
     });
   }
   handleValidation = (values) => {
     const errors = {};
-    if (!values.name) {
+    if (!values.name || values.name.trim() === '') {
       errors.name = "Required";
     }
     return errors;
   };
-  handleSubmit = (values) => {
+  handleSubmit = (values, { setSubmitting }) => {
     const reqObj = {
-      modelId: this.state.modelId,
+      modelId: this.state.model.id,
       name: values.name,
       description: values.description,
     };
     this.context.api
       .publishModel(reqObj)
       .then(() => {
-        this.props.history.push(`/tasks/${this.state.taskId}#overall`);
+        this.props.history.push({
+          pathname: `/models/${this.state.model.id}`,
+          state: { src: 'publish' },
+        });
       })
       .catch((error) => {
         console.log(error);
+        setSubmitting(false);
       });
   };
 
   render() {
-    const { accuracy, scores, isPublished } = this.state;
-    let orderedScores = Object.keys(scores).sort((a, b) => a - b);
-    orderedScores = orderedScores.map((round) => {
-      return { round: round, score: scores[round] };
-    });
+    const { model } = this.state;
+    let orderedScores = (model.scores || []).sort(
+      (a, b) => a.round_id - b.round_id
+    );
+
     return (
       <Container>
         <Row>
@@ -86,79 +92,90 @@ class PublishInterface extends React.Component {
                       <b>Your Accuracy</b>
                     </Col>
                     <Col sm="8">
-                      <b>{accuracy}%</b>
+                      <b>{model.overall_perf}%</b>
                     </Col>
                   </Row>
                   {orderedScores.map((data) => {
                     return (
-                      <Row key={data.round}>
+                      <Row key={data.round_id}>
                         <Col sm="4" className="row-wise">
-                          Round {data.round}
+                          Round {data.round_id}
                         </Col>
-                        <Col sm="8">{data.score}%</Col>
+                        <Col sm="7">{Number(data.accuracy).toFixed(2)}%</Col>
                       </Row>
                     );
                   })}
                 </Container>
-                <Formik
-                  initialValues={{
-                    name: "",
-                    description: "",
-                  }}
-                  validate={this.handleValidation}
-                  onSubmit={this.handleSubmit}
-                >
-                  {({
-                    values,
-                    errors,
-                    handleChange,
-                    handleSubmit,
-                    isSubmitting,
-                  }) => (
-                    <>
-                      <form onSubmit={handleSubmit} className="mt-5 ml-2">
-                        <Form.Group>
-                          <Form.Label>
-                            <b>Model Name</b>
-                          </Form.Label>
-                          <Form.Control
-                            name="name"
-                            type="text"
-                            style={{
-                              borderColor: errors.name ? "red" : null,
-                            }}
-                            placeholder="Provide a name for your model"
-                            onChange={handleChange}
-                            value={values.name}
-                          />
-                        </Form.Group>
-                        <Form.Group>
-                          <Form.Label>
-                            <b>Description</b>
-                          </Form.Label>
-                          <Form.Control
-                            as="textarea"
-                            name="description"
-                            rows="3"
-                            onChange={handleChange}
-                          />
-                        </Form.Group>
-                        {!isPublished ? (
-                          <Button
-                            type="submit"
-                            variant="primary"
-                            className="fadeIn third submitBtn button-ellipse"
-                            disabled={isSubmitting}
-                          >
-                            Publish
-                          </Button>
-                        ) : (
-                          null
-                        )}
-                      </form>
-                    </>
-                  )}
-                </Formik>
+                {Object.keys(model).length ? (
+                  <Formik
+                    initialValues={{
+                      name: model.name || "",
+                      description: model.longdesc || "",
+                    }}
+                    validate={this.handleValidation}
+                    onSubmit={this.handleSubmit}
+                  >
+                    {({
+                      values,
+                      errors,
+                      handleChange,
+                      handleSubmit,
+                      isSubmitting,
+                    }) => (
+                      <>
+                        <form onSubmit={handleSubmit} className="mt-5 ml-2">
+                          <Form.Group>
+                            <Form.Label>
+                              <b>Model Name</b>
+                            </Form.Label>
+                            <Form.Control
+                              name="name"
+                              type="text"
+                              style={{
+                                borderColor: errors.name ? "red" : null,
+                              }}
+                              placeholder="Provide a name for your model"
+                              onChange={handleChange}
+                              value={values.name}
+                            />
+                          </Form.Group>
+                          <Form.Group>
+                            <Form.Label>
+                              <b>Description</b>
+                            </Form.Label>
+                            <Form.Control
+                              as="textarea"
+                              name="description"
+                              defaultValue={values.description}
+                              rows="3"
+                              onChange={handleChange}
+                            />
+                          </Form.Group>
+
+                          {model.is_published == "False" ? (
+                            <Button
+                              type="submit"
+                              variant="primary"
+                              className="fadeIn third submitBtn button-ellipse"
+                              disabled={isSubmitting}
+                            >
+                              Publish
+                            </Button>
+                          ) : (
+                            <Button
+                              type="submit"
+                              variant="primary"
+                              className="fadeIn third submitBtn button-ellipse"
+                              disabled={isSubmitting}
+                            >
+                              Update
+                            </Button>
+                          )}
+                        </form>
+                      </>
+                    )}
+                  </Formik>
+                ) : null}
               </Card.Body>
             </Card>
           </CardGroup>

@@ -1,19 +1,11 @@
 import React from "react";
 import "./App.css";
-import {
-  Navbar,
-  Nav,
-  NavDropdown,
-  Card,
-  CardGroup,
-  Row,
-  Col,
-  Container,
-} from "react-bootstrap";
+import { Navbar, Nav, NavDropdown, Row, Container } from "react-bootstrap";
 import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 import HomePage from "./HomePage";
 import LoginPage from "./LoginPage";
 import ForgotPassword from "./ForgotPassword";
+import ResetPassword from "./ResetPassword";
 import RegisterPage from "./RegisterPage";
 import ProfilePage from "./ProfilePage";
 import AboutPage from "./AboutPage";
@@ -26,12 +18,13 @@ import UserContext from "./UserContext";
 import TasksContext from "./TasksContext";
 import UserPage from "./UserPage";
 import ModelPage from "./ModelPage";
-import ApiService from "./ApiService";
+import ApiService from "../common/ApiService";
 import ScrollToTop from "./ScrollToTop.js";
 import CreateInterface from "./CreateInterface.js";
 // import VerifyInterface from "./VerifyInterface.js";
 import SubmitInterface from "./SubmitInterface.js";
 import PublishInterface from "./PublishInterface.js";
+import { Avatar } from "../components/Avatar/Avatar";
 
 class App extends React.Component {
   constructor(props) {
@@ -41,14 +34,24 @@ class App extends React.Component {
       tasks: [],
     };
     this.updateState = this.updateState.bind(this);
-    this.api = new ApiService();
+    this.api = new ApiService(process.env.REACT_APP_API_HOST);
   }
   updateState(value) {
     this.setState(value);
   }
   componentDidMount() {
     if (this.api.loggedIn()) {
-      this.setState({ user: this.api.getCredentials() });
+      const userCredentials = this.api.getCredentials();
+      this.setState({ user: userCredentials }, () => {
+        this.api
+          .getUser(userCredentials.id)
+          .then((result) => {
+            this.setState({ user: result });
+          })
+          .catch((error) => {
+            console.log("error", error);
+          });
+      });
     }
     this.api
       .getTasks()
@@ -120,16 +123,26 @@ class App extends React.Component {
                 <Nav className="justify-content-end">
                   {this.state.user.id ? (
                     <>
-                      <Nav.Item>
-                        <Nav.Link as={Link} to={"/profile"}>
-                          {this.state.user.username}
-                        </Nav.Link>
-                      </Nav.Item>
-                      <Nav.Item>
-                        <Nav.Link as={Link} to={"/logout"}>
+                      <NavDropdown
+                        alignRight
+                        className="no-chevron"
+                        title={
+                          <Avatar
+                            avatar_url={this.state.user.avatar_url}
+                            username={this.state.user.username}
+                            isThumbnail={true}
+                            theme="light"
+                          />
+                        }
+                        id="collasible-nav-dropdown"
+                      >
+                        <NavDropdown.Item href="/account#profile">
+                          Profile
+                        </NavDropdown.Item>
+                        <NavDropdown.Item href="/logout">
                           Logout
-                        </Nav.Link>
-                      </Nav.Item>
+                        </NavDropdown.Item>
+                      </NavDropdown>
                     </>
                   ) : (
                     <>
@@ -171,15 +184,27 @@ class App extends React.Component {
                   component={SubmitInterface}
                 />
                 <Route
-                  path="/tasks/:taskId/:modelId/publish"
+                  path="/tasks/:taskId/models/:modelId/publish"
                   component={PublishInterface}
+                />
+                <Route
+                  path="/tasks/:taskId/models/:modelId"
+                  component={ModelPage}
+                />
+                <Route
+                  path="/tasks/:taskId/round/:roundId"
+                  component={TaskPage}
                 />
                 <Route path="/tasks/:taskId" component={TaskPage} />
                 <Route path="/tasks" component={TasksPage} />
                 <Route path="/login" component={LoginPage} />
-                <Route path="/forgot" component={ForgotPassword} />
+                <Route path="/forgot-password" component={ForgotPassword} />
+                <Route
+                  path="/reset-password/:token"
+                  component={ResetPassword}
+                />
                 <Route path="/logout" component={Logout} />
-                <Route path="/profile" component={ProfilePage} />
+                <Route path="/account" component={ProfilePage} />
                 <Route path="/register" component={RegisterPage} />
                 <Route path="/users/:userId" component={UserPage} />
                 <Route path="/models/:modelId" component={ModelPage} />

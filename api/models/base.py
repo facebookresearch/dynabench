@@ -7,7 +7,8 @@ Base = declarative_base()
 
 # now this is very ugly..
 def connect_db():
-    engine_url = 'mysql+pymysql://{}:{}@localhost:3306/{}'.format(config['db_user'], config['db_password'], config['db_name'])
+    engine_url = 'mysql+pymysql://{}:{}@{}:3306/{}'.format(config['db_user'], config['db_password'], config['db_host'],
+                                                           config['db_name'])
     engine = db.create_engine(engine_url, pool_pre_ping=True, pool_recycle=3600)
     connection = engine.connect()
     Base.metadata.bind = engine

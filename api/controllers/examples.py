@@ -32,9 +32,8 @@ def update_example(credentials, eid):
         if credentials['id'] == 'turk':
             if not check_fields(data, ['uid']):
                 bottle.abort(400, 'Missing data');
-            if data['uid'].startswith('turk|'):
-                _, data['annotator_id'], _ = data['uid'].split('|')
-            if example.annotator_id != data['annotator_id']:
+            metadata = json.loads(example.metadata_json)
+            if 'annotator_id' not in metadata or metadata['annotator_id'] != data['uid']:
                 bottle.abort(403, 'Access denied')
             del data['uid'] # don't store this
 
@@ -49,15 +48,16 @@ def update_example(credentials, eid):
 @_auth.requires_auth_or_turk
 def post_example(credentials):
     data = bottle.request.json
-    logging.info(data)
-    if not check_fields(data, ['tid', 'rid', 'uid', 'cid', 'hypothesis', 'target', 'response']):
+
+    if not check_fields(data, ['tid', 'rid', 'uid', 'cid', 'hypothesis', 'target', 'response', 'metadata']):
         bottle.abort(400, 'Missing data')
 
-    if credentials['id'] == 'turk' and data['uid'].startswith('turk|'):
-        logging.info(data['uid'])
-        _, data['annotator_id'], _ = data['uid'].split('|')
-    elif data['uid'] != credentials['id']:
-            bottle.abort(403, 'Access denied')
+    if credentials['id'] == 'turk':
+        if 'annotator_id' not in data['metadata']:
+            bottle.abort(400, 'Missing annotator data')
+    elif int(data['uid']) != credentials['id']:
+        bottle.abort(403, 'Access denied')
+
     em = ExampleModel()
     eid = em.create( \
             tid=data['tid'], \
@@ -68,7 +68,7 @@ def post_example(credentials):
             tgt=data['target'], \
             response=data['response'], \
             signed=data['response']['signed'], \
-            annotator_id=data['annotator_id'] if credentials['id'] == 'turk' else '' \
+            metadata=data['metadata']
             )
     if not eid:
         bottle.abort(400, 'Could not create example')

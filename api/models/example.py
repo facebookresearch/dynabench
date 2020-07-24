@@ -1,9 +1,20 @@
 import logging
 import sqlalchemy as db
+from sqlalchemy import case
 from .base import Base, BaseModel
 from .context import ContextModel
 from .user import UserModel
+
+from models.user import User
+from models.context import Context
+from models.round import Round
+from models.task import Task
+
+import hashlib
+import json
 import numpy as np
+
+from common import helpers as util
 
 class Example(Base):
     __tablename__ = 'examples'
@@ -17,18 +28,24 @@ class Example(Base):
     uid = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
     user = db.orm.relationship("User", foreign_keys="Example.uid")
 
-    annotator_id = db.Column(db.Text)
     anon_id = db.Column(db.Text)
 
     text = db.Column(db.Text)
-    explanation = db.Column(db.Text)
+    example_explanation = db.Column(db.Text) # why is X the label for this example
+    model_explanation = db.Column(db.Text) # why do you think the model got it wrong
+
+    metadata_json = db.Column(db.Text)
 
     target_pred = db.Column(db.Text)
     model_preds = db.Column(db.Text)
     verifier_preds = db.Column(db.Text)
+    target_model = db.Column(db.Text)
+
+    split = db.Column(db.String(length=255), default='undecided')
 
     model_wrong = db.Column(db.Boolean)
     retracted = db.Column(db.Boolean, default=False)
+    flagged = db.Column(db.Boolean, default=False)
     verified_correct = db.Column(db.Boolean, default=False)
 
     generated_datetime = db.Column(db.DateTime)
@@ -49,8 +66,8 @@ class ExampleModel(BaseModel):
     def __init__(self):
         super(ExampleModel, self).__init__(Example)
 
-    def create(self, tid, rid, uid, cid, hypothesis, tgt, response, signed, annotator_id=None):
-        if uid == 'turk' and annotator_id is None:
+    def create(self, tid, rid, uid, cid, hypothesis, tgt, response, signed, metadata):
+        if uid == 'turk' and 'annotator_id' not in metadata:
             logging.error('Annotator id not specified but received Turk example')
             return False
 
@@ -64,46 +81,32 @@ class ExampleModel(BaseModel):
         if c.round.task.has_answer:
             pred = str(response['model_is_correct']) + '|' + str(response['text'])
             model_wrong = not response['model_is_correct']
+            if response.get('model_id', ''):
+                model += '|' + response['model_id']
         else:
             pred = response['prob']
             model_wrong = (tgt != np.argmax(pred))
 
-        import hashlib
-        h = hashlib.sha1()
         if isinstance(pred, list):
             pred_str = '|'.join([str(x) for x in pred])
         else:
             pred_str = pred
-        h.update(pred_str.encode('utf-8'))
-        if c.round.task.has_context:
-            # no context for e.g. sentiment
-            h.update(c.context.encode('utf-8'))
-        h.update(hypothesis.encode('utf-8'))
-        h.update("{}{}{}".format(tid, rid, c.round.secret).encode('utf-8'))
-        if h.hexdigest() != signed:
-            rawstr = pred_str.encode('utf-8') + c.context.encode('utf-8') + hypothesis.encode('utf-8') + "{}{}{}".format(tid, rid, c.round.secret).encode('utf-8')
-            logging.error("Signature does not match (received %s, expected %s [%s])" %
-                    (h.hexdigest(), signed, rawstr))
+
+        if not self.verify_signature(signed, c, hypothesis, pred_str):
             return False
 
         try:
             e = Example(context=c, \
                     text=hypothesis, target_pred=tgt, model_preds=pred_str, \
                     model_wrong=model_wrong,
-                    generated_datetime=db.sql.func.now())
+                    generated_datetime=db.sql.func.now(), metadata_json=json.dumps(metadata))
 
             # store uid/annotator_id and anon_id
-            anon_id = hashlib.sha1()
-            anon_id.update(c.round.secret.encode('utf-8'))
-            if uid == 'turk':
-                e.annotator_id = annotator_id
-                anon_id.update(e.annotator_id.encode('utf-8'))
-            else:
+            e.anon_id = self.get_anon_id(c.round.secret, uid if uid != 'turk' else metadata['annotator_id'])
+            if uid != 'turk':
                 um = UserModel()
                 user = um.get(uid)
                 e.user = user
-                anon_id.update(str(uid).encode('utf-8'))
-            e.anon_id = anon_id.hexdigest()
 
             self.dbs.add(e)
             self.dbs.flush()
@@ -113,6 +116,32 @@ class ExampleModel(BaseModel):
             logging.error('Could not create example (%s)' % error_message)
             return False
         return e.id
+
+    def verify_signature(self, signature, context, hypothesis, pred_str):
+        tid = context.round.task.id
+        rid = context.round.rid
+        secret = context.round.secret
+        context_str = context.context
+
+        h = hashlib.sha1()
+        h.update(pred_str.encode('utf-8'))
+        if context.round.task.has_context:
+            # no context for e.g. sentiment
+            h.update(context_str.encode('utf-8'))
+        h.update(hypothesis.encode('utf-8'))
+        h.update("{}{}{}".format(tid, rid, secret).encode('utf-8'))
+        if h.hexdigest() != signature:
+            rawstr = pred_str.encode('utf-8') + context_str.encode('utf-8') + hypothesis.encode('utf-8') + "{}{}{}".format(tid, rid, secret).encode('utf-8')
+            logging.error("Signature does not match (received %s, expected %s [%s])" %
+                    (h.hexdigest(), signed, rawstr))
+            return False
+        return True
+
+    def get_anon_id(self, secret, uid):
+        anon_id = hashlib.sha1()
+        anon_id.update(secret.encode('utf-8'))
+        anon_id.update(str(uid).encode('utf-8'))
+        return anon_id.hexdigest()
 
     def getRandomToVerify(tid, n=1):
         # https://stackoverflow.com/questions/60805/getting-random-row-through-sqlalchemy
@@ -124,3 +153,20 @@ class ExampleModel(BaseModel):
                 )
             ).limit(n).all()
 
+    def getUserLeaderByTid(self, tid, n=5, offset=0, min_cnt=0, downstream=False):
+        cnt = db.sql.func.sum(case([(Example.model_wrong == 1, 1)], else_=0)).label('cnt')
+        query_res = self.dbs.query(User.id, User.username, User.avatar_url, cnt, (cnt / db.func.count()), db.func.count()) \
+            .join(Example, User.id == Example.uid) \
+            .join(Context, Example.cid == Context.id) \
+            .join(Round, Context.r_realid == Round.id) \
+            .join(Task, Round.tid == Task.id).filter(Task.id == tid) \
+            .group_by(User.id).having(db.func.count() > min_cnt) \
+            .order_by((cnt / db.func.count()).desc())
+        if not downstream:
+            return query_res.limit(n).offset(n * offset), util.get_query_count(query_res)
+        return query_res
+
+    def getUserLeaderByTidAndRid(self, tid, rid, n=5, offset=0, min_cnt=0):
+        query_res = self.getUserLeaderByTid(tid, n, offset, min_cnt, downstream=True) \
+                .filter(Round.rid == rid)
+        return query_res.limit(n).offset(n * offset), util.get_query_count(query_res)

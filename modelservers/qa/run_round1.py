@@ -8,6 +8,7 @@
 import sys
 sys.path.append('..')
 
+import random
 import logging
 from multiprocessing import Process
 from aiohttp import web
@@ -40,25 +41,29 @@ QA_CONFIG = {
     'n_best_per_passage_size': 1
 }
 
-model_path = '/home/ubuntu/models/qa/roberta-squad_plus_harderqs-run_6'
 device = 'cpu'
+model_paths = {
+    'round1_bert': '/home/ubuntu/models/qa/qa_round1_bert',
+    'round1_roberta': '/home/ubuntu/models/qa/qa_round1_roberta'
+}
 
-config = AutoConfig.from_pretrained(model_path)
-
-tokenizer = AutoTokenizer.from_pretrained(model_path)
-
-model = AutoModelForQuestionAnswering.from_pretrained(
-    model_path,
-    config=config
-)
-model.to(device)
+configs, tokenizers, model_ids, models = {}, {}, {}, {}
+for i, (model_id, model_path) in enumerate(model_paths.items()):
+    model_ids[i] = model_id
+    configs[i] = AutoConfig.from_pretrained(model_path)
+    tokenizers[i] = AutoTokenizer.from_pretrained(model_path)
+    models[i] = AutoModelForQuestionAnswering.from_pretrained(
+        model_path,
+        config=configs[i]
+    )
+    models[i].to(device)
 
 
 def to_list(tensor):
     return tensor.detach().cpu().tolist()
 
 
-async def get_model_preds(examples: list):
+async def get_model_preds(model, tokenizer, examples: list):
     model.eval()
     with torch.no_grad():
         # Convert all to SQuAD Examples
@@ -138,15 +143,21 @@ async def handle_submit_post(request):
             'passage': post_data['context'].strip(),
             'question': post_data['hypothesis'].strip()
         }
-        model_preds = await get_model_preds([example])
+
+        random_model_index = random.randint(0, len(model_paths)-1)
+        model = models[random_model_index]
+        tokenizer = tokenizers[random_model_index]
+
+        model_preds = await get_model_preds(model, tokenizer, [example])
         model_pred = model_preds[0]
         response['text'] = model_pred['text']
-        response['prob'] = max(1.0, min(0.0, model_pred['model_conf']))  # this is what the frontend expects
+        response['prob'] = max(0.0, min(1.0, model_pred['model_conf']))  # this is what the frontend expects
 
         # Evaluate the model prediction against the human answer
         human_ans = str(post_data['answer']).strip()
         response['eval_f1'] = compute_f1(human_ans, response['text'])
         response['eval_exact'] = compute_exact(human_ans, response['text'])
+        response['model_id'] = model_ids[random_model_index]
         response['model_is_correct'] = response['eval_f1'] > THRESHOLD_F1
 
     except Exception as e:
@@ -163,6 +174,7 @@ async def handle_submit_post(request):
 
     cors_url = request.headers.get('origin')
     return web.json_response(response, headers=get_cors_headers(cors_url))
+
 
 if __name__ == '__main__':
     # Set up logger
