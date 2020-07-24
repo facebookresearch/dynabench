@@ -295,7 +295,7 @@ export default class ApiService {
     });
   }
 
-  storeExample(tid, rid, uid, cid, hypothesis, target, response, model) {
+  storeExample(tid, rid, uid, cid, hypothesis, target, response, metadata) {
     return this.fetch(`${this.domain}/examples`, {
       method: "POST",
       body: JSON.stringify({
@@ -306,7 +306,7 @@ export default class ApiService {
         uid: uid,
         target: target,
         response: response,
-        model: model,
+        metadata: metadata,
       }),
     }).then((res) => {
       return Promise.resolve(res);
@@ -370,6 +370,9 @@ export default class ApiService {
     if (this.updating_already) {
       // TODO: Make this actually wait for an event?
       return delay(1000).then(() => {
+        if (this.updating_already) {
+          return this.refreshTokenWrapper(callback, error);
+        }
         return callback();
       });
     } else {

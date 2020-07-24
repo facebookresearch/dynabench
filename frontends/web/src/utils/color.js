@@ -19,7 +19,8 @@ export const formatWordImportances = ({ words, importances }, target) => {
 };
 
 const formatSpecialTokens = (word) => {
-  if (word[0] === "<" && word[word.length - 1] === ">") return "";
+  if (word[0] === "<" && word[word.length - 1] === ">")
+    return `#${word.slice(1, -1)}`;
   return word;
 };
 

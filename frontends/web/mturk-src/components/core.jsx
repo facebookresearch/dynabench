@@ -15,10 +15,13 @@ class TaskFrontend extends React.Component {
   constructor(props) {
     super(props);
     this.api = props.api;
-    if (props.initialTaskData) {
-      this.task = props.initialTaskData.task_id;
+    if (props.taskConfig.task_name) {
+      this.task = props.taskConfig.task_name;
+      if (!this.task in TaskComponents) {
+        throw "Unknown task ID specified"
+      }
     } else {
-      this.task = 'divyansh-nli-1';
+      throw "No task ID specified";
     }
   }
   render() {

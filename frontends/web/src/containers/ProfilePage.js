@@ -133,7 +133,6 @@ class ProfilePage extends React.Component {
   };
 
   handleAvatarChange = (e, props) => {
-    console.log("props-----", props);
     const user = this.context.api.getCredentials();
     const files = e.target.files;
     var allowedExtensions = /(\.jpg|\.jpeg|\.png)$/i;
@@ -161,12 +160,10 @@ class ProfilePage extends React.Component {
           user: result,
           invalidFileUpload: false,
           loader: false,
-          loader: false,
         });
       })
       .catch((error) => {
         console.log("error", error);
-        this.setState({ invalidFileUpload: true, loader: false });
         this.setState({ invalidFileUpload: true, loader: false });
       });
   };
@@ -218,7 +215,7 @@ class ProfilePage extends React.Component {
                               username={this.state.user.username}
                               isEditable={true}
                               theme="blue"
-                              loader={true}
+                              loader={this.state.loader}
                               handleUpdate={(e) =>
                                 this.handleAvatarChange(e, props)
                               }

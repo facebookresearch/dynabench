@@ -1,6 +1,7 @@
 import React from "react";
 
 import { CreateInterface } from '../CreateInterface.js';
+import { Button } from 'react-bootstrap';
 
 class NLITaskPreview extends React.Component {
   constructor(props) {
@@ -17,11 +18,16 @@ class NLITaskPreview extends React.Component {
 class NLITaskOnboarder extends React.Component {
   constructor(props) {
     super(props);
+    this.completeOnboarding = this.completeOnboarding.bind(this);
+  }
+  completeOnboarding() {
+    this.props.onSubmit({ success: true }); // if they failed, set to false
   }
   render() {
     return <>
       <h1>Onboarding</h1>
       <p>Task onboarding</p>
+      <Button className="btn btn-primary btn-success" onClick={this.completeOnboarding}>Complete Onboarding</Button>
       </>;
   }
 }
@@ -33,7 +39,7 @@ class NLITaskMain extends React.Component {
     console.log(props);
   }
   render() {
-    return <CreateInterface api={this.api} {...this.props} taskId={1} />;
+    return <CreateInterface api={this.api} {...this.props} />;
   }
 }
 
