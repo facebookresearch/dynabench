@@ -16,10 +16,10 @@ task_config = json.load(open(args['task']))
 
 extra_args = {
     'static_task_data': [{} for _ in range(args['num_jobs'])],
-    'task_config': task_config,
+    'task_config': task_config
+}
 # TODO: Fix this once Mephisto fixes it:
 #    'mturk_specific_qualifications': get_qualifications(task_config['qualifications'])
-}
 
 ARG_STRING = (
     "--blueprint-type static_react_task "

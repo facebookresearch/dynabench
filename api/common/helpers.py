@@ -4,7 +4,6 @@ from urllib.parse import urlparse
 from transformers.data.metrics.squad_metrics import compute_f1
 
 import common.auth as _auth
-from models.user import UserModel
 
 import logging
 import json
@@ -133,6 +132,7 @@ def is_current_user(uid, credentials=None):
         if not credentials:
             token = _auth.jwt_token_from_header()
             credentials = _auth.get_payload(token)
+        from models.user import UserModel
         u = UserModel()
         user = u.get(uid)
         if not user:

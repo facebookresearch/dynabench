@@ -9,8 +9,7 @@ from models.round import Round
 import secrets
 
 tasks = [ \
-        {'name': 'Divyansh Natural Language Inference', 'shortname': 'DK_NLI', 'desc': 'Natural Language Inference is classifying context-hypothesis pairs into whether they entail, contradict or are neutral.', 'targets': 'entailing|neutral|contradictory', 'has_context': True, 'hidden':True, 'type': 'clf'}, \
-        {'name': 'Divyansh Question Answering', 'shortname': 'DK_QA', 'desc': 'Question answering and machine reading comprehension is answering a question given a context.', 'targets': 'na', 'has_context': True, 'hidden':True, 'type': 'extract'}, \
+        {'name': 'Yixin', 'shortname': 'YN', 'desc': 'Yixin', 'targets': 'na', 'has_context': False, 'hidden': True, 'type': 'clf'}, \
         ]
 
 for task in tasks:
