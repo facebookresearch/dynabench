@@ -9,6 +9,7 @@ module.exports = {
     library: "mephisto-task",
     libraryTarget: "umd",
   },
+  devtool: 'source-map',
   resolve: {
     modules: [
       path.resolve('./'),

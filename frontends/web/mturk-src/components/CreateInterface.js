@@ -79,6 +79,7 @@ class CreateInterface extends React.Component {
     this.handleResponse = this.handleResponse.bind(this);
     this.handleResponseChange = this.handleResponseChange.bind(this);
     this.retractExample = this.retractExample.bind(this);
+    this.updateAnswer = this.updateAnswer.bind(this);
   }
   getNewContext() {
     this.setState({submitDisabled: true, refreshDisabled: true}, function () {
@@ -201,6 +202,17 @@ class CreateInterface extends React.Component {
     .catch(error => {
       console.log(error);
     });
+  }
+  updateAnswer(value) {
+    // Only keep the last answer annotated
+    if (value.length > 0) {
+      this.setState({
+        answer: [value[value.length - 1]],
+        answerNotSelected: false,
+      });
+    } else {
+      this.setState({ answer: value, answerNotSelected: false });
+    }
   }
   render() {
     const content = this.state.content.map((item, index) =>
