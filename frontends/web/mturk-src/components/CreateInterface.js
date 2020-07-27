@@ -14,21 +14,12 @@ import {
 // import UserContext from './UserContext';
 import { TokenAnnotator, TextAnnotator } from 'react-text-annotate'
 
-class Explainer extends React.Component {
-  render() {
-    return (
-      <Row>
-        <h2 className="text-uppercase">Find examples that fool the model - {this.props.taskName}</h2> <small style={{ marginTop: 40, marginLeft: 20, fontSize: 10 }}>(<a href="#" className="btn-link">Need an explainer?</a>)</small>
-      </Row>
-    );
-  }
-}
-
 class ContextInfo extends React.Component {
   constructor(props) {
     super(props);
   }
   render() {
+    {/*console.log(this.props);*/}
     return (
       this.props.taskType == 'extract' ?
         <>
@@ -156,7 +147,8 @@ class CreateInterface extends React.Component {
           const metadata = {
             'annotator_id': this.props.providerWorkerId,
             'mephisto_id': this.props.mephistoWorkerId,
-            'model': 'model-name-unknown'
+            'model': 'model-name-unknown',
+	    'answer': this.state.task.type == 'extract' ? this.state.answer : null
           };
           this.api.storeExample(
             this.state.task.id,
@@ -172,7 +164,8 @@ class CreateInterface extends React.Component {
             this.state.tries += 1;
             this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false, mapKeyToExampleId: {...this.state.mapKeyToExampleId, [key]: result.id}},
               function () {
-                if (this.state.content[this.state.content.length-1].fooled || this.state.tries >= this.state.total_tries) {
+                console.log(this.state.content);
+		if (this.state.content[this.state.content.length-1].fooled || this.state.tries >= this.state.total_tries) {
                   console.log('Success! You can submit HIT');
                   this.setState({taskCompleted: true});
                 }
@@ -263,7 +256,7 @@ class CreateInterface extends React.Component {
     return (
       <Container>
         <Row>
-          <h2>Find examples that fool the model - {this.state.task.name}</h2> <small style={{marginTop: 40, marginLeft: 20, fontSize: 10}}></small>
+          <h2>Find examples for - {this.state.task.name}</h2>
         </Row>
         <Row>
           <CardGroup style={{marginTop: 20, width: '100%'}}>
