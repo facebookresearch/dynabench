@@ -4,6 +4,7 @@ from common.helpers import check_fields
 
 from models.example import ExampleModel
 from models.round import RoundModel
+from models.context import ContextModel
 
 import json
 
@@ -74,5 +75,7 @@ def post_example(credentials):
 
     rm = RoundModel()
     rm.incrementExampleCount(data['tid'], data['rid'])
+    cm = ContextModel()
+    cm.incrementCountDate(data['cid'])
 
     return json.dumps({'success': 'ok', 'id': eid})
