@@ -18,7 +18,6 @@ class ContextInfo extends React.Component {
     super(props);
   }
   render() {
-    {/*console.log(this.props);*/}
     return (
       this.props.taskType == 'extract' ?
         <>
@@ -121,13 +120,13 @@ class CreateInterfaceNoModel extends React.Component {
           content: [...this.state.content, {
             cls: 'hypothesis',
             text: this.state.hypothesis,
-            retracted: false}
-          ]}, function() {
-	  const metadata = {
+            retracted: false
+          }]}, function() {
+          const metadata = {
             'annotator_id': this.props.providerWorkerId,
             'mephisto_id': this.props.mephistoWorkerId,
             'model': 'no-model',
-	    'answer': this.state.task.type == 'extract' ? this.state.answer : null
+            'answer': this.state.task.type == 'extract' ? this.state.answer : null
           };
           this.api.storeExample(
             this.state.task.id,
@@ -136,18 +135,17 @@ class CreateInterfaceNoModel extends React.Component {
             this.state.context.id,
             this.state.hypothesis,
             this.state.target,
-	    [],
+            {},
             metadata
           ).then(metadata => {
             var key = this.state.content.length-1;
             this.state.tries += 1;
             this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false},
               function () {
-                  console.log(this,state.answer);
-		  console.log('Success! You can submit HIT');
+                  console.log('Success! You can submit HIT');
                   this.setState({taskCompleted: true});
                   this.handleTaskSubmit();
-	      });
+	    });
           })
           .catch(error => {
             console.log(error);
