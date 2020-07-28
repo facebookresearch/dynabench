@@ -13,16 +13,6 @@ import {
 
 import { TokenAnnotator, TextAnnotator } from 'react-text-annotate'
 
-class Explainer extends React.Component {
-  render() {
-    return (
-      <Row>
-        <h2 className="text-uppercase">Find examples for - {this.props.taskName}</h2> <small style={{ marginTop: 40, marginLeft: 20, fontSize: 10 }}>(<a href="#" className="btn-link">Need an explainer?</a>)</small>
-      </Row>
-    );
-  }
-}
-
 class ContextInfo extends React.Component {
   constructor(props) {
     super(props);
@@ -77,6 +67,7 @@ class CreateInterfaceNoModel extends React.Component {
     this.handleResponse = this.handleResponse.bind(this);
     this.handleResponseChange = this.handleResponseChange.bind(this);
     this.retractExample = this.retractExample.bind(this);
+    this.updateAnswer = this.updateAnswer.bind(this);
   }
   getNewContext() {
     this.setState({submitDisabled: true, refreshDisabled: true}, function () {
@@ -125,38 +116,39 @@ class CreateInterfaceNoModel extends React.Component {
         hypothesis: this.state.hypothesis,
         answer: this.state.task.type == 'extract' ? this.state.answer : null
       };
-      this.api.getModelResponse(this.state.task.round.url, modelInputs)
-        .then(result => {this.setState({
+      this.setState({
           content: [...this.state.content, {
             cls: 'hypothesis',
             text: this.state.hypothesis,
-            retracted: false,
-            response: result}
-          ]}, function() {
+            retracted: false
+          }]}, function() {
+          const metadata = {
+            'annotator_id': this.props.providerWorkerId,
+            'mephisto_id': this.props.mephistoWorkerId,
+            'model': 'no-model'
+          };
           this.api.storeExample(
             this.state.task.id,
             this.state.task.cur_round,
-            'turk|' + this.props.providerWorkerId + '|' + this.props.mephistoWorkerId,
+            'turk',
             this.state.context.id,
             this.state.hypothesis,
-            this.state.target,
-            result
-          ).then(result => {
+            this.state.task.type == 'extract' ? this.state.answer : this.state.target,
+            {},
+            metadata
+          ).then(metadata => {
             var key = this.state.content.length-1;
             this.state.tries += 1;
-            this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false, mapKeyToExampleId: {...this.state.mapKeyToExampleId, [key]: result.id}},
+            this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false},
               function () {
                   console.log('Success! You can submit HIT');
                   this.setState({taskCompleted: true});
-              });
+                  this.handleTaskSubmit();
+	    });
           })
           .catch(error => {
             console.log(error);
           });
-        });
-      })
-      .catch(error => {
-        console.log(error);
       });
     });
   }
@@ -175,6 +167,17 @@ class CreateInterfaceNoModel extends React.Component {
       console.log(error);
     });
   }
+  updateAnswer(value) {
+    // Only keep the last answer annotated
+    if (value.length > 0) {
+      this.setState({
+        answer: [value[value.length - 1]],
+        answerNotSelected: false,
+      });
+    } else {
+      this.setState({ answer: value, answerNotSelected: false });
+    }
+  }
   render() {
     const content = this.state.content.map((item, index) =>
       item.cls == 'context' ?
@@ -183,7 +186,7 @@ class CreateInterfaceNoModel extends React.Component {
           text={item.text}
           targets={this.state.task.targets}
           curTarget={this.state.target}
-          taskType={this.state.task.shortname}
+          taskType={this.state.task.type}
           answer={this.state.answer}
           updateAnswer={this.updateAnswer}
         />
@@ -199,8 +202,8 @@ class CreateInterfaceNoModel extends React.Component {
                   </>
                   :
                   <>
-                  <span><strong>Thanks!</strong></span><br />
-                  <span>Made a mistake? You can still <a href="#" data-index={index} onClick={this.retractExample} className="btn-link">retract this example</a>. Otherwise, we will have it verified.</span>
+                  <span><strong>Thanks! We will have this example verified.</strong></span><br />
+		  {/*<span>Made a mistake? You can still <a href="#" data-index={index} onClick={this.retractExample} className="btn-link">retract this example</a>. Otherwise, we will have it verified.</span>*/}
                   </>
                 }</small>
               </div>
@@ -209,12 +212,12 @@ class CreateInterfaceNoModel extends React.Component {
             </Row>
           </div>
     );
-    var taskTracker = <Button className="btn btn-primary btn-success" onClick={this.handleTaskSubmit}>Submit HIT</Button>;
+    var taskTracker = <Button className="btn btn-primary btn-success" disabled={this.state.submitDisabled} onClick={this.handleResponse}>Submit HIT</Button>;
     return (
       <Container>
         <Row>
-          <h2>Find examples for - {this.state.task.name}</h2> <small style={{marginTop: 40, marginLeft: 20, fontSize: 10}}></small>
-        </Row>
+          <h2>Find examples for - {this.state.task.name}</h2>
+	</Row>
         <Row>
           <CardGroup style={{marginTop: 20, width: '100%'}}>
             <Card border='dark'>
@@ -235,7 +238,7 @@ class CreateInterfaceNoModel extends React.Component {
             <small className="form-text text-muted">Please enter your input. Remember, the goal is to generate an example in accordance with the instructions. Load time may be slow; please be patient.</small>
           </InputGroup>
           <InputGroup>
-            <Button className="btn btn-primary" style={{marginRight: 2}} onClick={this.handleResponse} disabled={this.state.submitDisabled}>Submit <i className={this.state.submitDisabled ? "fa fa-cog fa-spin" : ""} /></Button>
+	    {/*<Button className="btn btn-primary" style={{marginRight: 2}} onClick={this.handleResponse} disabled={this.state.submitDisabled}>Submit <i className={this.state.submitDisabled ? "fa fa-cog fa-spin" : ""} /></Button>*/}
             <Button className="btn btn-secondary" style={{marginRight: 2}} onClick={this.getNewContext} disabled={this.state.refreshDisabled}>Switch to next context</Button>
             {taskTracker}
           </InputGroup>
