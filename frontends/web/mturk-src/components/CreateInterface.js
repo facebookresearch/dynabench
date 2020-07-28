@@ -145,8 +145,7 @@ class CreateInterface extends React.Component {
           const metadata = {
             'annotator_id': this.props.providerWorkerId,
             'mephisto_id': this.props.mephistoWorkerId,
-            'model': 'model-name-unknown',
-            'answer': this.state.task.type == 'extract' ? this.state.answer : null
+            'model': 'model-name-unknown' 
           };
           this.api.storeExample(
             this.state.task.id,
@@ -154,7 +153,7 @@ class CreateInterface extends React.Component {
             'turk',
             this.state.context.id,
             this.state.hypothesis,
-            this.state.target,
+            this.state.task.type == 'extract' ? this.state.answer : this.state.target,
             result,
             metadata
           ).then(result => {
