@@ -19,7 +19,6 @@ class ContextInfo extends React.Component {
     super(props);
   }
   render() {
-    {/*console.log(this.props);*/}
     return (
       this.props.taskType == 'extract' ?
         <>
@@ -133,7 +132,6 @@ class CreateInterface extends React.Component {
             result.prob = [result.prob, 1 - result.prob];
             this.state.task.targets = ['confidence', 'uncertainty'];
           }
-          console.log(this.props)
         this.setState({
           content: [...this.state.content, {
             cls: 'hypothesis',
@@ -148,7 +146,7 @@ class CreateInterface extends React.Component {
             'annotator_id': this.props.providerWorkerId,
             'mephisto_id': this.props.mephistoWorkerId,
             'model': 'model-name-unknown',
-	    'answer': this.state.task.type == 'extract' ? this.state.answer : null
+            'answer': this.state.task.type == 'extract' ? this.state.answer : null
           };
           this.api.storeExample(
             this.state.task.id,
@@ -164,7 +162,6 @@ class CreateInterface extends React.Component {
             this.state.tries += 1;
             this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false, mapKeyToExampleId: {...this.state.mapKeyToExampleId, [key]: result.id}},
               function () {
-                console.log(this.state.content);
 		if (this.state.content[this.state.content.length-1].fooled || this.state.tries >= this.state.total_tries) {
                   console.log('Success! You can submit HIT');
                   this.setState({taskCompleted: true});
