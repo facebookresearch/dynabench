@@ -134,7 +134,7 @@ class CreateInterfaceNoModel extends React.Component {
             'turk',
             this.state.context.id,
             this.state.hypothesis,
-            this.state.target,
+            this.state.task.type == 'extract' ? this.state.answer : this.state.target,
             {},
             metadata
           ).then(metadata => {
