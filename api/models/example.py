@@ -92,7 +92,7 @@ class ExampleModel(BaseModel):
         else:
             pred_str = pred
 
-        if uid == 'turk' and metadata['model'] == 'no-model':
+        if uid == 'turk' and 'model' in metadata and metadata['model'] == 'no-model':
             pass # ignore signature when we don't have a model in the loop with turkers
         else:
             if not self.verify_signature(response['signed'], c, hypothesis, pred_str):
