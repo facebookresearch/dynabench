@@ -66,7 +66,7 @@ class ExampleModel(BaseModel):
     def __init__(self):
         super(ExampleModel, self).__init__(Example)
 
-    def create(self, tid, rid, uid, cid, hypothesis, tgt, response, signed, metadata):
+    def create(self, tid, rid, uid, cid, hypothesis, tgt, response, metadata):
         if uid == 'turk' and 'annotator_id' not in metadata:
             logging.error('Annotator id not specified but received Turk example')
             return False
@@ -81,8 +81,8 @@ class ExampleModel(BaseModel):
         if c.round.task.has_answer:
             pred = str(response['model_is_correct']) + '|' + str(response['text'])
             model_wrong = not response['model_is_correct']
-            if response.get('model_id', ''):
-                model += '|' + response['model_id']
+            if 'model_id' in response:
+                pred += '|' + str(response['model_id'])
         else:
             pred = response['prob']
             model_wrong = (tgt != np.argmax(pred))
@@ -92,8 +92,11 @@ class ExampleModel(BaseModel):
         else:
             pred_str = pred
 
-        if not self.verify_signature(signed, c, hypothesis, pred_str):
-            return False
+        if uid == 'turk' and metadata['model'] == 'no-model':
+            pass # ignore signature when we don't have a model in the loop with turkers
+        else:
+            if not self.verify_signature(response['signed'], c, hypothesis, pred_str):
+                return False
 
         try:
             e = Example(context=c, \
@@ -123,17 +126,21 @@ class ExampleModel(BaseModel):
         secret = context.round.secret
         context_str = context.context
 
-        h = hashlib.sha1()
-        h.update(pred_str.encode('utf-8'))
+        fields_to_sign = []
+        fields_to_sign.append(pred_str.encode('utf-8'))
         if context.round.task.has_context:
             # no context for e.g. sentiment
-            h.update(context_str.encode('utf-8'))
-        h.update(hypothesis.encode('utf-8'))
-        h.update("{}{}{}".format(tid, rid, secret).encode('utf-8'))
+            fields_to_sign.append(context_str.encode('utf-8'))
+        fields_to_sign.append(hypothesis.encode('utf-8'))
+        fields_to_sign.append("{}{}{}".format(tid, rid, secret).encode('utf-8'))
+
+        h = hashlib.sha1()
+        for f in fields_to_sign:
+            h.update(f)
+
         if h.hexdigest() != signature:
-            rawstr = pred_str.encode('utf-8') + context_str.encode('utf-8') + hypothesis.encode('utf-8') + "{}{}{}".format(tid, rid, secret).encode('utf-8')
             logging.error("Signature does not match (received %s, expected %s [%s])" %
-                    (h.hexdigest(), signed, rawstr))
+                    (h.hexdigest(), signature, ''.join(fields_to_sign)))
             return False
         return True
 

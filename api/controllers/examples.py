@@ -67,7 +67,6 @@ def post_example(credentials):
             hypothesis=data['hypothesis'], \
             tgt=data['target'], \
             response=data['response'], \
-            signed=data['response']['signed'], \
             metadata=data['metadata']
             )
     if not eid:
