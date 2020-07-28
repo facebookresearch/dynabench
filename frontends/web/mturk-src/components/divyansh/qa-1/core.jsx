@@ -62,7 +62,7 @@ class DivyanshQATaskMain extends React.Component {
   constructor(props) {
     super(props);
     this.api = props.api;
-    this.state={showInstructions:true};
+    this.state = {showInstructions:true};
     this.showInstructions = this.showInstructions.bind(this);
   }
   showInstructions() {
@@ -70,24 +70,29 @@ class DivyanshQATaskMain extends React.Component {
   }
   render() {
     if (this.props.mephistoWorkerId % 2 == 0) {
-      return <>
+      return 
+	<>
           <Container>
-	  <Row>
-	  <Button className="btn" onClick={() => this.showInstructions()}> Show/hide instructions </Button>
-	  </Row>
+          <Row>
+          <Button className="btn" onClick={this.showInstructions}>{this.state.showInstructions ? "Hide" : "Show" } instructions </Button>
+          </Row>
           {this.state.showInstructions && <Row> <TaskModelInstructions /> </Row>}
-	  </Container> 
-	  <CreateInterface api={this.api} {...this.props} />
-	  </>;}
-    else {return <>
-	  <Container>
+          </Container> 
+          <CreateInterface api={this.api} {...this.props} />
+	</>;
+    }
+    else {
+      return 
+	<>
+          <Container>
           <Row> 
-          <Button className="btn" onClick={() => this.showInstructions()}> Show/hide instructions </Button>
+          <Button className="btn" onClick={this.showInstructions}>{this.state.showInstructions ? "Hide" : "Show" } instructions </Button>
           </Row>
           {this.state.showInstructions && <Row> <TaskNoModelInstructions /> </Row>}
           </Container> 
-	  <CreateInterfaceNoModel api={this.api} {...this.props} />
-	  </>;}
+          <CreateInterfaceNoModel api={this.api} {...this.props} />
+	</>;
+    }
   }
 }
 
