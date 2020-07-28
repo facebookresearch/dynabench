@@ -125,8 +125,7 @@ class CreateInterfaceNoModel extends React.Component {
           const metadata = {
             'annotator_id': this.props.providerWorkerId,
             'mephisto_id': this.props.mephistoWorkerId,
-            'model': 'no-model',
-            'answer': this.state.task.type == 'extract' ? this.state.answer : null
+            'model': 'no-model'
           };
           this.api.storeExample(
             this.state.task.id,
