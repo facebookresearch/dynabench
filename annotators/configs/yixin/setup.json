@@ -1,0 +1,11 @@
+{
+    "task_name": "yixin-1",
+    "task_id": 11,
+    "round_id": 1,
+    "task_title": "Yixin's job",
+    "task_description": "Your job is ...",
+    "reward_in_dollars": 0.3,
+    "tags": "testing",
+    "onboarding_qualification_name": "yixin-qualification",
+    "qualifications": ["100_hits_approved", "english_only"]
+}

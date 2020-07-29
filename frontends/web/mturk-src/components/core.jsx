@@ -1,10 +1,12 @@
 import React from "react";
 
+import { YixinTaskPreview, YixinTaskOnboarder, YixinTaskMain } from './yixin/core.jsx';
 import { DivyanshNLITaskPreview, DivyanshNLITaskOnboarder, DivyanshNLITaskMain } from './divyansh/nli-1/core.jsx';
 import { DivyanshQATaskPreview, DivyanshQATaskOnboarder, DivyanshQATaskMain } from './divyansh/qa-1/core.jsx';
 import { NLITaskPreview, NLITaskOnboarder, NLITaskMain } from './nli-1/core.jsx';
 
 const TaskComponents = {
+  'yixin-1': [YixinTaskPreview, YixinTaskOnboarder, YixinTaskMain],
   'divyansh-nli-1': [DivyanshNLITaskPreview, DivyanshNLITaskOnboarder, DivyanshNLITaskMain],
   'divyansh-qa-1': [DivyanshQATaskPreview, DivyanshQATaskOnboarder, DivyanshQATaskMain],
   'nli-1': [NLITaskPreview, NLITaskOnboarder, NLITaskMain]

@@ -14,16 +14,6 @@ import {
 // import UserContext from './UserContext';
 import { TokenAnnotator, TextAnnotator } from 'react-text-annotate'
 
-class Explainer extends React.Component {
-  render() {
-    return (
-      <Row>
-        <h2 className="text-uppercase">Find examples that fool the model - {this.props.taskName}</h2> <small style={{ marginTop: 40, marginLeft: 20, fontSize: 10 }}>(<a href="#" className="btn-link">Need an explainer?</a>)</small>
-      </Row>
-    );
-  }
-}
-
 class ContextInfo extends React.Component {
   constructor(props) {
     super(props);
@@ -79,6 +69,7 @@ class CreateInterface extends React.Component {
     this.handleResponse = this.handleResponse.bind(this);
     this.handleResponseChange = this.handleResponseChange.bind(this);
     this.retractExample = this.retractExample.bind(this);
+    this.updateAnswer = this.updateAnswer.bind(this);
   }
   getNewContext() {
     this.setState({submitDisabled: true, refreshDisabled: true}, function () {
@@ -141,7 +132,6 @@ class CreateInterface extends React.Component {
             result.prob = [result.prob, 1 - result.prob];
             this.state.task.targets = ['confidence', 'uncertainty'];
           }
-          console.log(this.props)
         this.setState({
           content: [...this.state.content, {
             cls: 'hypothesis',
@@ -155,7 +145,7 @@ class CreateInterface extends React.Component {
           const metadata = {
             'annotator_id': this.props.providerWorkerId,
             'mephisto_id': this.props.mephistoWorkerId,
-            'model': 'model-name-unknown'
+            'model': 'model-name-unknown' 
           };
           this.api.storeExample(
             this.state.task.id,
@@ -163,7 +153,7 @@ class CreateInterface extends React.Component {
             'turk',
             this.state.context.id,
             this.state.hypothesis,
-            this.state.target,
+            this.state.task.type == 'extract' ? this.state.answer : this.state.target,
             result,
             metadata
           ).then(result => {
@@ -171,7 +161,7 @@ class CreateInterface extends React.Component {
             this.state.tries += 1;
             this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false, mapKeyToExampleId: {...this.state.mapKeyToExampleId, [key]: result.id}},
               function () {
-                if (this.state.content[this.state.content.length-1].fooled || this.state.tries >= this.state.total_tries) {
+		if (this.state.content[this.state.content.length-1].fooled || this.state.tries >= this.state.total_tries) {
                   console.log('Success! You can submit HIT');
                   this.setState({taskCompleted: true});
                 }
@@ -201,6 +191,17 @@ class CreateInterface extends React.Component {
     .catch(error => {
       console.log(error);
     });
+  }
+  updateAnswer(value) {
+    // Only keep the last answer annotated
+    if (value.length > 0) {
+      this.setState({
+        answer: [value[value.length - 1]],
+        answerNotSelected: false,
+      });
+    } else {
+      this.setState({ answer: value, answerNotSelected: false });
+    }
   }
   render() {
     const content = this.state.content.map((item, index) =>
@@ -251,7 +252,7 @@ class CreateInterface extends React.Component {
     return (
       <Container>
         <Row>
-          <h2>Find examples that fool the model - {this.state.task.name}</h2> <small style={{marginTop: 40, marginLeft: 20, fontSize: 10}}></small>
+          <h2>Find examples for - {this.state.task.name}</h2>
         </Row>
         <Row>
           <CardGroup style={{marginTop: 20, width: '100%'}}>

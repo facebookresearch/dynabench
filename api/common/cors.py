@@ -10,9 +10,9 @@ def enable_cors_after_request_hook():
     add_cors_headers()
 def add_cors_headers():
     parsed_origin_url = urllib.parse.urlparse(bottle.request.get_header('origin'))
-    if parsed_origin_url.hostname.endswith('dynabench.org') or \
+    if hasattr(parsed_origin_url, 'hostname') and (parsed_origin_url.hostname.endswith('dynabench.org') or \
             parsed_origin_url.hostname.endswith('herokuapp.com') or \
-            parsed_origin_url.hostname == 'localhost':
+            parsed_origin_url.hostname == 'localhost'):
         origin = bottle.request.get_header('origin')
     else:
         origin = 'https://dynabench.org'
