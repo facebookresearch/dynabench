@@ -70,8 +70,7 @@ class DivyanshQATaskMain extends React.Component {
   }
   render() {
     if (this.props.mephistoWorkerId % 2 == 0) {
-      return 
-	<>
+      return <>
           <Container>
           <Row>
           <Button className="btn" onClick={this.showInstructions}>{this.state.showInstructions ? "Hide" : "Show" } instructions </Button>
@@ -82,8 +81,7 @@ class DivyanshQATaskMain extends React.Component {
 	</>;
     }
     else {
-      return 
-	<>
+      return <>
           <Container>
           <Row> 
           <Button className="btn" onClick={this.showInstructions}>{this.state.showInstructions ? "Hide" : "Show" } instructions </Button>

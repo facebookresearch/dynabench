@@ -133,13 +133,13 @@ class CreateInterfaceNoModel extends React.Component {
             'turk',
             this.state.context.id,
             this.state.hypothesis,
-            this.state.task.type == 'extract' ? this.state.answer : this.state.target,
+            this.state.task.type == 'extract' ? JSON.stringify(this.state.answer) : this.state.target,
             {},
             metadata
-          ).then(metadata => {
+          ).then(result => {
             var key = this.state.content.length-1;
             this.state.tries += 1;
-            this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false},
+            this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false, mapKeyToExampleId: {...this.state.mapKeyToExampleId, [key]: result.id}},
               function () {
                   console.log('Success! You can submit HIT');
                   this.setState({taskCompleted: true});
@@ -147,6 +147,7 @@ class CreateInterfaceNoModel extends React.Component {
 	    });
           })
           .catch(error => {
+            console.log(result);
             console.log(error);
           });
       });

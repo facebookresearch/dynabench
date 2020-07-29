@@ -113,10 +113,21 @@ class CreateInterface extends React.Component {
         this.setState({submitDisabled: false, refreshDisabled: false});
         return;
       }
+      if (this.state.task.type == "extract") {
+        var answer_text = "";
+        if (this.state.answer.length > 0) {
+          var last_answer = this.state.answer[this.state.answer.length - 1];
+          var answer_text = last_answer.tokens.join(""); // NOTE: no spaces required as tokenising by word boundaries
+          // Update the target with the answer text since this is defined by the annotator in QA (unlike NLI)
+          this.setState({ target: answer_text });
+        }
+      } else {
+        var answer_text = null;
+      }
       let modelInputs = {
         context: this.state.context.context,
         hypothesis: this.state.hypothesis,
-        answer: this.state.task.type == 'extract' ? this.state.answer : null
+        answer: answer_text
       };
       this.api.getModelResponse(this.state.task.round.url, modelInputs)
         .then(result => {
@@ -127,7 +138,7 @@ class CreateInterface extends React.Component {
           } else {
             var modelPredIdx = null;
             var modelPredStr = result.text;
-            var modelFooled = (this.state.answer !== result.text);
+            var modelFooled = !result.model_is_correct;
             // TODO: Handle this more elegantly:
             result.prob = [result.prob, 1 - result.prob];
             this.state.task.targets = ['confidence', 'uncertainty'];
@@ -153,7 +164,7 @@ class CreateInterface extends React.Component {
             'turk',
             this.state.context.id,
             this.state.hypothesis,
-            this.state.task.type == 'extract' ? this.state.answer : this.state.target,
+            this.state.task.type == 'extract' ? JSON.stringify(this.state.answer) : this.state.target,
             result,
             metadata
           ).then(result => {
@@ -223,17 +234,17 @@ class CreateInterface extends React.Component {
                 <small>{
                   item.retracted ?
                   <>
-                    <span><strong>Example retracted</strong> - thanks. The model predicted <strong>{this.state.task.targets[item.modelPredStr]}</strong>. Please try again!</span>
+                    <span><strong>Example retracted</strong> - thanks. The model predicted <strong>{item.modelPredStr}</strong>. Please try again!</span>
                   </>
                   :
                   (item.fooled ?
                     <>
-                      <span><strong>Well done!</strong> You fooled the model. The model predicted <strong>{this.state.task.targets[item.modelPredStr]}</strong> instead. </span><br />
+                      <span><strong>Well done!</strong> You fooled the model. The model predicted <strong>{item.modelPredStr}</strong> instead. </span><br />
                       <span>Made a mistake? You can still <a href="#" data-index={index} onClick={this.retractExample} className="btn-link">retract this example</a>. Otherwise, we will have it verified.</span>
                     </>
                     :
                     <>
-                      <span><strong>Bad luck!</strong> The model correctly predicted <strong>{this.state.task.targets[item.modelPredStr]}</strong>. Try again.</span>
+                      <span><strong>Bad luck!</strong> The model correctly predicted <strong>{item.modelPredStr}</strong>. Try again.</span>
                       <span>We will still store this as an example that the model got right. You can <a href="#" data-index={index} onClick={this.retractExample} className="btn-link">retract this example</a> if you don't want it saved.</span>
                     </>
                   )
