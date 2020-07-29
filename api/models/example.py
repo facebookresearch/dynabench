@@ -140,7 +140,7 @@ class ExampleModel(BaseModel):
 
         if h.hexdigest() != signature:
             logging.error("Signature does not match (received %s, expected %s [%s])" %
-                    (h.hexdigest(), signature, ''.join(fields_to_sign)))
+                    (h.hexdigest(), signature, ''.join([str(x) for x in fields_to_sign])))
             return False
         return True
 

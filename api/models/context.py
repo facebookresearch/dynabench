@@ -47,6 +47,6 @@ class ContextModel(BaseModel):
     def incrementCountDate(self, cid):
         c = self.get(cid)
         if c:
-            c.total_used = c.total_used+1
+            c.total_used = (c.total_used + 1) if c.total_used is not None else 1
             c.last_used = db.sql.func.now()
             self.dbs.commit()
