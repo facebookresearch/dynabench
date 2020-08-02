@@ -39,7 +39,7 @@ class User(Base):
         for column in self.__table__.columns:
             if safe and column.name in ['password', 'refresh_token', 'forgot_password_token',
                                         'forgot_password_token_expiry_date']: continue
-            d[column.name] = str(getattr(self, column.name))
+            d[column.name] = getattr(self, column.name)
         return d
 
 class UserModel(BaseModel):

@@ -261,16 +261,16 @@ export default class ApiService {
   loggedIn() {
     const token = this.getToken();
     if (!token) {
-      console.log("We do not have a token");
+      //console.log("We do not have a token");
       return false;
     } else if (!!token && !this.isTokenExpired(token)) {
-      console.log("We have a valid token");
+      //console.log("We have a valid token");
       return true;
     } else {
-      console.log("We have a token that is not longer valid - refreshing");
+      //console.log("We have a token that is not longer valid - refreshing");
       return this.refreshTokenWrapper(
         function () {
-          console.log("Our token was refreshed (loggedIn)");
+          //console.log("Token refreshed");
           return true;
         },
         function () {
@@ -307,7 +307,7 @@ export default class ApiService {
   }
 
   getCredentials() {
-    console.log(this.getToken());
+    //console.log(this.getToken());
     return this.getToken() ? decode(this.getToken()) : {};
   }
 
@@ -370,7 +370,7 @@ export default class ApiService {
     ) {
       return this.refreshTokenWrapper(
         (res) => {
-          console.log("Our token was refreshed (fetch callback)");
+          //console.log("Our token was refreshed (fetch callback)");
           return this.doFetch(url, options, {}, true);
         },
         (res) => {

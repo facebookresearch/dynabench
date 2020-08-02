@@ -59,7 +59,7 @@ class Example(Base):
         d = {}
         for column in self.__table__.columns:
             if safe and column.name in ['secret']: continue
-            d[column.name] = str(getattr(self, column.name))
+            d[column.name] = getattr(self, column.name)
         return d
 
 class ExampleModel(BaseModel):

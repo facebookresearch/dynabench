@@ -14,7 +14,7 @@ import json
 def tasks():
     t = TaskModel()
     tasks = t.listWithRounds()
-    return json.dumps(tasks)
+    return util.json_encode(tasks)
 
 @bottle.get('/tasks/<tid:int>')
 def get_task(tid):
@@ -22,7 +22,7 @@ def get_task(tid):
     task = t.getWithRound(tid)
     if not task:
         bottle.abort(404, 'Not found')
-    return json.dumps(task)
+    return util.json_encode(task)
 
 @bottle.get('/tasks/<tid:int>/<rid:int>')
 def get_task_round(tid, rid):
@@ -30,7 +30,7 @@ def get_task_round(tid, rid):
     round = rm.getByTidAndRid(tid, rid)
     if not round:
         bottle.abort(404, 'Not found')
-    return json.dumps(round.to_dict())
+    return util.json_encode(round.to_dict())
 
 @bottle.get('/tasks/<tid:int>/users')
 def get_user_leaderboard(tid):
@@ -80,10 +80,10 @@ def construct_user_board_response_json(query_result, total_count=0):
     if list_objs:
         # total_count = query_result[0][len(query_result[0]) - 1]
         resp_obj = {'count': total_count, 'data': list_objs}
-        return json.dumps(resp_obj)
+        return util.json_encode(resp_obj)
     else:
         resp_obj = {'count': 0, 'data': []}
-        return json.dumps(resp_obj)
+        return util.json_encode(resp_obj)
 
 @bottle.get('/tasks/<tid:int>/models')
 def get_model_leaderboard(tid):
@@ -140,10 +140,10 @@ def construct_model_board_response_json(query_result, total_count):
     dicts = [dict(zip(fields, d)) for d in query_result]
     if dicts:
         resp_obj = {'count': total_count, 'data': dicts}
-        return json.dumps(resp_obj)
+        return util.json_encode(resp_obj)
     else:
         resp_obj = {'count': 0, 'data': []}
-        return json.dumps(resp_obj)
+        return util.json_encode(resp_obj)
 
 def construct_trends_response_json(query_result):
     # construct response to support UI render
@@ -156,6 +156,6 @@ def construct_trends_response_json(query_result):
         else:
             response_obj[reslt[3]] = {'round': reslt[3], reslt[1] + '_' + str(reslt[0]): reslt[2]}
     if response_obj:
-        return json.dumps(list(response_obj.values()))
+        return util.json_encode(list(response_obj.values()))
     else:
-        return json.dumps([])
+        return util.json_encode([])

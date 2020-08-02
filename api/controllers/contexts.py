@@ -1,5 +1,6 @@
 import bottle
 import common.auth as _auth
+import common.helpers as util
 
 from models.round import RoundModel
 from models.context import ContextModel
@@ -26,4 +27,4 @@ def _getContext(tid, rid, method='min'):
     if not context:
         bottle.abort(500, f'No contexts available ({round.id})')
     context = context[0].to_dict()
-    return json.dumps(context)
+    return util.json_encode(context)

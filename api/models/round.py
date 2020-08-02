@@ -32,7 +32,7 @@ class Round(Base):
         d = {}
         for column in self.__table__.columns:
             if safe and column.name in ['secret']: continue
-            d[column.name] = str(getattr(self, column.name))
+            d[column.name] = getattr(self, column.name)
         return d
 
 class RoundModel(BaseModel):

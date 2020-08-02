@@ -3,7 +3,6 @@ import bottle
 
 import common.auth as _auth
 import common.helpers as  util
-from common.helpers import check_fields
 
 from models.model import ModelModel
 from models.score import ScoreModel
@@ -20,7 +19,7 @@ def get_model(mid):
     if not model:
         bottle.abort(404, 'Not found')
     # Also get this model's scores?
-    return json.dumps(model.to_dict())
+    return util.json_encode(model.to_dict())
 
 @bottle.get('/models/<mid:int>/details')
 @_auth.auth_optional
@@ -39,7 +38,7 @@ def get_model_detail(credentials, mid):
         fields = ['accuracy', 'round_id']
         s_dicts = [dict(zip(fields, d)) for d in scores]
         model['scores'] = s_dicts
-        return json.dumps(model)
+        return util.json_encode(model)
     except AssertionError as ex:
         logging.exception('Not authorized to access unpublished model detail')
         bottle.abort(403, 'Not authorized to access model detail')
@@ -94,7 +93,7 @@ def do_upload(credentials):
             response = model.to_dict()
             response['user'] = user.to_dict()
             response['scores'] = rounds_accuracy_list
-            return json.dumps(response)
+            return util.json_encode(response)
         except AssertionError:
             bottle.abort(400, 'Submission file length mismatch')
         except Exception as error_message:
@@ -108,7 +107,7 @@ def do_upload(credentials):
 def publish_model(credentials, mid):
     m = ModelModel()
     data = bottle.request.json
-    if not check_fields(data, ['name', 'description']):
+    if not util.check_fields(data, ['name', 'description']):
         bottle.abort(400, 'Missing data')
 
     try:

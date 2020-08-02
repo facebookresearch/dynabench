@@ -20,7 +20,7 @@ import logging
 def users():
     u = UserModel()
     users = u.list()
-    return json.dumps(users)
+    return util.json_encode(users)
 
 @bottle.get('/users/<id:int>')
 @_auth.requires_auth
@@ -35,9 +35,9 @@ def get_user(credentials, id):
         nu, u = {}, user.to_dict()
         for f in ['id', 'username', 'affiliation']:
             nu[f] = u[f]
-        return json.dumps(nu)
+        return util.json_encode(nu)
     else:
-        return json.dumps(user.to_dict())
+        return util.json_encode(user.to_dict())
 
 @bottle.post('/users')
 def create_user():
@@ -155,8 +155,8 @@ def get_user_models(uid):
         results, total_count = model.getUserModelsByUid(uid=uid, is_current_user=is_current_user, n=limit, offset=offset)
         dicts = [model_obj.to_dict() for model_obj in results]
         if dicts:
-            return json.dumps({'count': total_count, 'data': dicts})
-        return json.dumps({'count': 0, 'data': []})
+            return util.json_encode({'count': total_count, 'data': dicts})
+        return util.json_encode({'count': 0, 'data': []})
     except Exception as e:
         logging.exception('Could not fetch user model(s) : %s' % (e))
         bottle.abort(400, 'Could not fetch user model(s)')
@@ -177,7 +177,7 @@ def get_user_models(uid, model_id):
         model_obj = model.getUserModelsByUidAndMid(uid=uid, mid=model_id, is_current_user=is_current_user)
         dicts = model_obj.to_dict()
         if dicts:
-            return json.dumps(dicts)
+            return util.json_encode(dicts)
     except Exception as e:
         logging.exception('Could not fetch user model: %s' % (e))
         bottle.abort(400, 'Could not fetch user model')
@@ -219,7 +219,7 @@ def update_user_profile(credentials, id):
             'affiliation': data['affiliation'], \
             'realname': data['realname'] \
             })
-        return json.dumps(user.to_dict())
+        return util.json_encode(user.to_dict())
     except Exception as ex:
         logging.exception('Could not update profile: %s' % (ex))
         bottle.abort(400, 'Could not update profile')
@@ -267,7 +267,7 @@ def upload_user_profile_picture(credentials, id):
             # update avatar s3 ur in user object
             base_url = app.config['aws_s3_profile_base_url'] + '/profile/' + file_name
             u.update(user.id, {'avatar_url': base_url})
-            return json.dumps(user.to_dict())
+            return util.json_encode(user.to_dict())
         else:
             raise Exception('Avatar S3 upload failed')
     except AssertionError as ex:

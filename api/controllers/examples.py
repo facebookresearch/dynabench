@@ -1,6 +1,6 @@
 import bottle
 import common.auth as _auth
-from common.helpers import check_fields
+import common.helpers as util
 
 from models.example import ExampleModel
 from models.round import RoundModel
@@ -17,7 +17,7 @@ def get_example(eid):
     example = em.get(eid)
     if not example:
         bottle.abort(404, 'Not found')
-    return json.dumps(example.to_dict())
+    return util.json_encode(example.to_dict())
 
 @bottle.put('/examples/<eid:int>')
 @_auth.requires_auth_or_turk
@@ -31,7 +31,7 @@ def update_example(credentials, eid):
             bottle.abort(403, 'Access denied')
         data = bottle.request.json
         if credentials['id'] == 'turk':
-            if not check_fields(data, ['uid']):
+            if not util.check_fields(data, ['uid']):
                 bottle.abort(400, 'Missing data');
             metadata = json.loads(example.metadata_json)
             if 'annotator_id' not in metadata or metadata['annotator_id'] != data['uid']:
@@ -40,7 +40,7 @@ def update_example(credentials, eid):
 
         logging.info("Updating example {} with {}".format(example.id, data))
         em.update(example.id, data)
-        return json.dumps({'success': 'ok'})
+        return util.json_encode({'success': 'ok'})
     except Exception as e:
         logging.error('Error updating example {}: {}'.format(eid, e))
         bottle.abort(500, {'error': str(e)})
@@ -50,7 +50,7 @@ def update_example(credentials, eid):
 def post_example(credentials):
     data = bottle.request.json
 
-    if not check_fields(data, ['tid', 'rid', 'uid', 'cid', 'hypothesis', 'target', 'response', 'metadata']):
+    if not util.check_fields(data, ['tid', 'rid', 'uid', 'cid', 'hypothesis', 'target', 'response', 'metadata']):
         bottle.abort(400, 'Missing data')
 
     if credentials['id'] == 'turk':
@@ -78,4 +78,4 @@ def post_example(credentials):
     cm = ContextModel()
     cm.incrementCountDate(data['cid'])
 
-    return json.dumps({'success': 'ok', 'id': eid})
+    return util.json_encode({'success': 'ok', 'id': eid})

@@ -11,6 +11,8 @@ import json
 import sqlalchemy as db
 from sqlalchemy.orm import lazyload
 
+import decimal, datetime
+
 def check_fields(data, fields):
     if not data:
         return False
@@ -18,6 +20,15 @@ def check_fields(data, fields):
         if f not in data:
             return False
     return True
+
+def _alchemyencoder(obj):
+    if isinstance(obj, datetime.date) or isinstance(obj, datetime.datetime) or isinstance(obj, datetime.time):
+        return obj.isoformat()
+    elif isinstance(obj, decimal.Decimal):
+        return float(obj)
+
+def json_encode(obj):
+    return json.dumps(obj, default=_alchemyencoder)
 
 # TODO need to change it in future - to read the test data from db of config files
 def read_nli_round_labels(root_path):
