@@ -117,7 +117,7 @@ class ProfilePage extends React.Component {
     }
   }
 
-  handleSubmit = (values, { setSubmitting }) => {
+  handleSubmit = (values, { setFieldError, setSubmitting }) => {
     const user = this.context.api.getCredentials();
     this.context.api
       .updateUser(user.id, values)
@@ -126,6 +126,8 @@ class ProfilePage extends React.Component {
         setSubmitting(false);
       }, (error) => {
         console.log(error);
+        setFieldError("accept", "Profile could not be updated (" + error.error + ")");
+        setSubmitting(false);
       });
   };
 
@@ -310,6 +312,17 @@ class ProfilePage extends React.Component {
                                       defaultValue={this.state.user.affiliation}
                                       onChange={handleChange}
                                     />
+                                  </Col>
+                                </Form.Group>
+                                <Form.Group
+                                  as={Row}
+                                  controlId="affiliation"
+                                  className="py-3 my-0"
+                                >
+                                  <Col sm="8">
+                                    <small className="form-text text-muted">
+                                      {errors.accept}
+                                    </small>
                                   </Col>
                                 </Form.Group>
                                 <Row className="justify-content-md-center">

@@ -62,6 +62,11 @@ class UserModel(BaseModel):
             return self.dbs.query(User).filter(User.email == email).one()
         except db.orm.exc.NoResultFound:
             return False
+    def getByUsername(self, username):
+        try:
+            return self.dbs.query(User).filter(User.username == username).one()
+        except db.orm.exc.NoResultFound:
+            return False
     def getByEmailAndPassword(self, email, password):
         try:
             user = self.dbs.query(User).filter(User.email == email).one()

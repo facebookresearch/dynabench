@@ -39,10 +39,6 @@ def get_user(credentials, id):
     else:
         return json.dumps(user.to_dict())
 
-@bottle.put('/users/<id:int>')
-def update_user(id):
-    return bottle.template('<b>Hello {{id}}</b>!', id=id)
-
 @bottle.post('/users')
 def create_user():
     u = UserModel()
@@ -64,7 +60,7 @@ def create_user():
         u.update(user.id, {'refresh_token': refresh_token})
     except Exception as error_message:
         logging.info('Could not create user: %s' % (error_message))
-        bottle.abort(400, 'Could not create user: %s' % (error_message))
+        bottle.abort(400, 'Could not create user')
 
     token = _auth.get_token({'id': user.id, 'username': user.username})
     logging.info('Registration and authentication successful for %s' % (user.username))
@@ -94,14 +90,17 @@ def reset_password(forgot_token):
             raise AssertionError('Invalid user')
 
         user.set_password(data['password'])
-        u.update(user.id, {'forgot_password_token': None, 'forgot_password_token_expiry_date': None,
-                           'password': user.password})
+        u.update(user.id, { \
+            'forgot_password_token': None, \
+            'forgot_password_token_expiry_date': None, \
+            'password': user.password \
+            })
     except AssertionError as e:
         logging.exception('Invalid token : %s' % (e))
         bottle.abort(401, str(e))
     except Exception as error_message:
         logging.exception('Could not reset user password: %s' % (error_message))
-        bottle.abort(400, 'Could not reset user password: %s' % (error_message))
+        bottle.abort(400, 'Could not reset user password')
 
     logging.info('User password reset successful for %s' % (user.username))
     return {'status': 'successful'}
@@ -126,8 +125,10 @@ def recover_password():
         # issuing new forgot password token
         forgot_password_token = u.generate_password_reset_token()
         expiry_datetime = datetime.now() + timedelta(hours=4)
-        u.update(user.id, {'forgot_password_token': forgot_password_token,
-                           'forgot_password_token_expiry_date': expiry_datetime})
+        u.update(user.id, { \
+            'forgot_password_token': forgot_password_token, \
+            'forgot_password_token_expiry_date': expiry_datetime \
+            })
         #  send email
         subject = 'Password reset link requested'
         msg = {'ui_server_host': util.parse_url(bottle.request.url), 'token': forgot_password_token}
@@ -135,8 +136,8 @@ def recover_password():
                   template_name=bottle.default_app().config['forgot_pass_template'], msg_dict=msg, subject=subject)
         return {'status': 'success'}
     except Exception as error_message:
-        logging.exception("Reset password failure (%s)" % (data['email']))
-        bottle.abort(403, 'Reset password failed : %s' % (error_message))
+        logging.exception("Reset password failure (%s): (%s)" % (data['email'], error_message))
+        bottle.abort(403, 'Reset password failed')
 
 @bottle.get('/users/<uid:int>/models')
 def get_user_models(uid):
@@ -183,33 +184,45 @@ def get_user_models(uid, model_id):
 
     bottle.abort(204, 'No models found')
 
-@bottle.put('/users/<id:int>/profileUpdate')
+@bottle.put('/users/<id:int>')
 @_auth.requires_auth
 def update_user_profile(credentials, id):
     """
-    Update user profile details like  real name, affiliation  and user name
+    Update user profile details
     :param credentials: Authentication detail
     :param id: User id
     :return: Json Object
     """
     data = bottle.request.json
-    user = UserModel()
+    u = UserModel()
     if not util.check_fields(data, ['username', 'affiliation', 'realname']):
         bottle.abort(400, 'Missing data')
 
     # validate user detail
     if not util.is_current_user(uid=id, credentials=credentials):
+        logging.error('Not authorized to update profile')
         bottle.abort(403, 'Not authorized to update profile')
+
+    user = u.get(id)
+    if not user:
+        logging.error('User does not exist (%s)' % id)
+        bottle.abort(404, 'User not found')
+
+    existing = u.getByUsername(data['username'])
+    if existing and user.id != existing.id:
+        logging.error('Username already exists (%s)' % data['username'])
+        bottle.abort(409, 'Username already exists')
+
     try:
-        u = user.get(id)
-        user.update(u.id, {'username': data['username'], 'affiliation': data['affiliation'],
-                        'realname': data['realname']})
-        return json.dumps(u.to_dict())
-    except db.orm.exc.NoResultFound as ex:
-        bottle.abort(404, 'User Not found')
+        u.update(user.id, { \
+            'username': data['username'], \
+            'affiliation': data['affiliation'], \
+            'realname': data['realname'] \
+            })
+        return json.dumps(user.to_dict())
     except Exception as ex:
         logging.exception('Could not update profile: %s' % (ex))
-        bottle.abort(400, 'Could not update profile: %s' % (ex))
+        bottle.abort(400, 'Could not update profile')
 
 @bottle.post('/users/<id:int>/avatar/upload')
 @_auth.requires_auth
@@ -234,12 +247,13 @@ def upload_user_profile_picture(credentials, id):
     if not util.is_current_user(uid=id, credentials=credentials):
         bottle.abort(403, 'Not authorized to update profile')
 
+    user = u.get(id)
+    if not user:
+        bottle.abort(403, 'Not authorized to update profile picture')
+
     try:
         # validate and read the file
         img_byte_str = util.read_file_content(upload.file, app.config['profile_img_max_size'])
-        user = u.get(id)
-        if not user:
-            bottle.abort(403, 'Not authorized to update profile picture')
 
         # upload new avatar picture with new uuid into s3 bucket
         file_name = str(uuid.uuid4()) + ext
@@ -256,10 +270,8 @@ def upload_user_profile_picture(credentials, id):
             return json.dumps(user.to_dict())
         else:
             raise Exception('Avatar S3 upload failed')
-    except db.orm.exc.NoResultFound as ex:
-        bottle.abort(404, 'User Not found')
     except AssertionError as ex:
         bottle.abort(413, str(ex))
     except Exception as ex:
         logging.exception('Could not upload user profile picture: %s' % (ex))
-        bottle.abort(400, 'Could not upload user profile picture: %s' % (ex))
+        bottle.abort(400, 'Could not upload user profile picture')

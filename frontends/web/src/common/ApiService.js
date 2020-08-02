@@ -68,7 +68,7 @@ export default class ApiService {
   }
 
   updateUser(userId, body) {
-    return this.fetch(`${this.domain}/users/${userId}/profileUpdate`, {
+    return this.fetch(`${this.domain}/users/${userId}`, {
       method: "PUT",
       body: JSON.stringify(body),
     });
