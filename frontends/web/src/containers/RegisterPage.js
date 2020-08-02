@@ -61,12 +61,10 @@ class RegisterPage extends React.Component {
                           console.log(result);
                           props.updateState({ user: result.user });
                           this.props.history.push("/");
-                        })
-                        .catch((error) => {
-                          console.log(error);
+                        }, (error) => {
                           this.setState({ error });
                           setSubmitting(false);
-                          setFieldError("general", "Registration failed");
+                          setFieldError("accept", "Registration failed (" + error.error + ")");
                         });
                     }}
                   >

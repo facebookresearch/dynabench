@@ -50,8 +50,7 @@ class LoginPage extends React.Component {
                             },
                           });
                           this.props.history.push(values.src);
-                        })
-                        .catch((error) => {
+                        }, (error) => {
                           console.log(error);
                           this.setState({ error });
                           setSubmitting(false);

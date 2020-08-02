@@ -57,8 +57,7 @@ class SubmitInterface extends React.Component {
           pathname: `/tasks/${this.state.taskId}/models/${result.model_id}/publish`,
           state: { detail: result },
         });
-      })
-      .catch((error) => {
+      }, (error) => {
         setSubmitting(false);
         setFieldValue("failed", "Failed To Submit. Plese try again");
         console.log(error);

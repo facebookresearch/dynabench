@@ -47,9 +47,8 @@ class App extends React.Component {
           .getUser(userCredentials.id)
           .then((result) => {
             this.setState({ user: result });
-          })
-          .catch((error) => {
-            console.log("error", error);
+          }, (error) => {
+            console.log(error);
           });
       });
     }
@@ -57,16 +56,9 @@ class App extends React.Component {
       .getTasks()
       .then((result) => {
         this.setState({ tasks: result });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
-    // else {
-    //  var token = this.api.getToken();
-    //  if (token) {
-    //    console.log('we have an expired token, we should refresh!');
-    //  }
-    //}
   }
   render() {
     const NavItems = this.state.tasks.map((task, index) => (

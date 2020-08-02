@@ -228,8 +228,7 @@ class TaskPage extends React.Component {
       .getTask(this.state.taskId)
       .then((result) => {
         this.setState({ task: result });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   }
@@ -241,8 +240,7 @@ class TaskPage extends React.Component {
         this.setState({
           trendScore: result,
         });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   }
@@ -261,8 +259,7 @@ class TaskPage extends React.Component {
           isEndOfModelLeaderPage: isEndOfPage,
           modelLeaderBoardData: result.data,
         });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   }
@@ -281,8 +278,7 @@ class TaskPage extends React.Component {
           isEndOfUserLeaderPage: isEndOfPage,
           userLeaderBoardData: result.data,
         });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   }

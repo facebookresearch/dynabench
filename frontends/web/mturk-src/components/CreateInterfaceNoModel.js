@@ -75,8 +75,7 @@ class CreateInterfaceNoModel extends React.Component {
       .then(result => {
         var randomTarget = Math.floor(Math.random() * this.state.task.targets.length);
         this.setState({target: randomTarget, context: result, content: [{cls: 'context', text: result.context}], submitDisabled: false, refreshDisabled: false});
-      })
-      .catch(error => {
+      }, error => {
         console.log(error);
       });
     });
@@ -93,8 +92,7 @@ class CreateInterfaceNoModel extends React.Component {
       newContent[idx].cls = 'retracted';
       newContent[idx].retracted = true;
       this.setState({content: newContent});
-    })
-    .catch(error => {
+    }, error => {
       console.log(error);
     });
   }
@@ -144,9 +142,9 @@ class CreateInterfaceNoModel extends React.Component {
                   console.log('Success! You can submit HIT');
                   this.setState({taskCompleted: true});
                   this.handleTaskSubmit();
-	    });
-          })
-          .catch(error => {
+	            }
+            );
+          }, error => {
             console.log(error);
           });
       });
@@ -162,8 +160,7 @@ class CreateInterfaceNoModel extends React.Component {
       this.setState({task: result}, function() {
         this.getNewContext();
       });
-    })
-    .catch(error => {
+    }, error => {
       console.log(error);
     });
   }

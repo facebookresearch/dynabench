@@ -66,9 +66,8 @@ class ProfilePage extends React.Component {
       .getUser(ctxUserId)
       .then((result) => {
         this.setState({ user: result, loader: false });
-      })
-      .catch((error) => {
-        console.log("error", error);
+      }, (error) => {
+        console.log(error);
       });
   };
 
@@ -97,8 +96,7 @@ class ProfilePage extends React.Component {
           isEndOfUserModelsPage: isEndOfPage,
           userModels: result.data || [],
         });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   };
@@ -126,9 +124,8 @@ class ProfilePage extends React.Component {
       .then((result) => {
         this.setState({ user: result });
         setSubmitting(false);
-      })
-      .catch((error) => {
-        console.log("error", error);
+      }, (error) => {
+        console.log(error);
       });
   };
 
@@ -161,9 +158,8 @@ class ProfilePage extends React.Component {
           invalidFileUpload: false,
           loader: false,
         });
-      })
-      .catch((error) => {
-        console.log("error", error);
+      }, (error) => {
+        console.log(error);
         this.setState({ invalidFileUpload: true, loader: false });
       });
   };

@@ -64,8 +64,7 @@ class PublishInterface extends React.Component {
           pathname: `/models/${this.state.model.id}`,
           state: { src: 'publish' },
         });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
         setSubmitting(false);
       });

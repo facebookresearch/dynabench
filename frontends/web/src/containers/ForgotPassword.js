@@ -36,8 +36,7 @@ class ForgotPassword extends React.Component {
                         .then((result) => {
                           setFieldValue("isSubmitted", "true");
                           setSubmitting(false);
-                        })
-                        .catch((error) => {
+                        }, (error) => {
                           console.log(error);
                           this.setState({ error });
                           setFieldValue("isSubmitted", "true");

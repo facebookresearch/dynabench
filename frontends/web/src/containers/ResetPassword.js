@@ -36,8 +36,7 @@ class ResetPassword extends React.Component {
       })
       .then((result) => {
         this.props.history.push("/login");
-      })
-      .catch((error) => {
+      }, (error) => {
         this.setState({ error });
         setSubmitting(false);
       });

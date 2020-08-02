@@ -39,8 +39,7 @@ class ModelPage extends React.Component {
       .getModel(this.state.modelId)
       .then((result) => {
         this.setState({ model: result });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   };
@@ -65,8 +64,7 @@ class ModelPage extends React.Component {
       .toggleModelStatus(this.state.modelId)
       .then(() => {
         this.fetchModel();
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   };

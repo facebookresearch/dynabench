@@ -51,8 +51,7 @@ class UserPage extends React.Component {
       .getUser(this.state.userId)
       .then((result) => {
         this.setState({ user: result });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   };
@@ -67,8 +66,7 @@ class UserPage extends React.Component {
           isEndOfUserModelsPage: isEndOfPage,
           userModels: result.data || [],
         });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   };

@@ -39,8 +39,7 @@ class TaskTable extends React.Component {
       .getTasks()
       .then((result) => {
         this.setState({ tasks: result.tasks });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   }
@@ -75,8 +74,7 @@ class UserTable extends React.Component {
       .getUsers()
       .then((result) => {
         this.setState({ users: result });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   }

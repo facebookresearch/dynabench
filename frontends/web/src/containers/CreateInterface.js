@@ -117,8 +117,7 @@ class ResponseInfo extends React.Component {
         newContent[idx].cls = "retracted";
         newContent[idx].retracted = true;
         this.setState({ content: newContent });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   }
@@ -168,8 +167,7 @@ class ResponseInfo extends React.Component {
         const newContent = this.props.content.slice();
         newContent[idx].inspect = inspectors;
         this.setState({ content: newContent, loader: false });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
         this.setState({ inspectError: true, loader: false });
       });
@@ -352,8 +350,7 @@ class CreateInterface extends React.Component {
               submitDisabled: false,
               refreshDisabled: false,
             });
-          })
-          .catch((error) => {
+          }, (error) => {
             console.log(error);
           });
       }
@@ -471,8 +468,7 @@ class CreateInterface extends React.Component {
                       [key]: result.id,
                     },
                   });
-                })
-                .catch((error) => {
+                }, (error) => {
                   console.log(error);
                   this.setState({
                     submitDisabled: false,
@@ -481,8 +477,7 @@ class CreateInterface extends React.Component {
                 });
               });
           }
-        })
-        .catch((error) => {
+        }, (error) => {
           console.log(error);
           this.setState({
             submitDisabled: false,
@@ -517,8 +512,7 @@ class CreateInterface extends React.Component {
           this.setState({ task: result }, function () {
             this.getNewContext();
           });
-        })
-        .catch((error) => {
+        }, (error) => {
           console.log(error);
         });
     });
