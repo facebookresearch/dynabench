@@ -27,9 +27,34 @@ import PublishInterface from "./PublishInterface.js";
 import { Avatar } from "../components/Avatar/Avatar";
 import ReactGA from "react-ga";
 
-import { createBrowserHistory } from 'history';
+class RouterMonitor extends React.Component {
+  constructor(props) {
+    super(props);
+    this.api = this.props.api;
+  }
+  render() {
+    if (process.env.REACT_APP_GA_ID) {
+      ReactGA.set({page: this.props.location.pathname})
+      ReactGA.pageview(this.props.location.pathname)
+    }
 
-
+    if (process.env.REACT_APP_BETA_LOGIN_REQUIRED) {
+      if (!this.api.loggedIn() && (
+        this.props.location.pathname !== "/login" &&
+        this.props.location.pathname !== "/register" &&
+        this.props.location.pathname !== "/termsofuse" &&
+        this.props.location.pathname !== "/datapolicy" &&
+        this.props.location.pathname !== "/forgot-password"
+      )) {
+        console.log("ERROR!");
+        this.props.history.push("/login?msg=" +
+          encodeURIComponent("You need to be logged in to access this beta.")
+        );
+      }
+    }
+    return null;
+  }
+}
 
 class App extends React.Component {
   constructor(props) {
@@ -42,11 +67,6 @@ class App extends React.Component {
     this.api = new ApiService(process.env.REACT_APP_API_HOST);
     if (process.env.REACT_APP_GA_ID) {
       ReactGA.initialize(process.env.REACT_APP_GA_ID);
-      this.ga = ({location}) => {
-        ReactGA.set({page: location.pathname})
-        ReactGA.pageview(location.pathname)
-        return null
-      }
     }
   }
   updateState(value) {
@@ -98,8 +118,7 @@ class App extends React.Component {
         >
           <BrowserRouter>
             <ScrollToTop />
-            { process.env.REACT_APP_GA_ID ?
-              <Route render={this.ga} /> : <></> }
+            <Route render={(props) => <RouterMonitor {...props} api={this.api}/>} />
             <Navbar
               expand="lg"
               variant="dark"

@@ -48,6 +48,16 @@ class RegisterPage extends React.Component {
                       if (!values.accept) {
                         errors.accept = "Required";
                       }
+                      if (process.env.REACT_APP_BETA_LOGIN_REQUIRED) {
+                        // NOTE: Nothing fancy, just to discourage sharing while we're in beta
+                        // TODO: Handle this in backend
+                        if (!values.invitecode) {
+                          errors.invitecode = "Required";
+                        }
+                        if (values.invitecode !== "DYN4B3NCH") {
+                          errors.invitecode = "Unknown invite code";
+                        }
+                      }
                       return errors;
                     }}
                     onSubmit={(values, { setFieldError, setSubmitting }) => {
@@ -120,6 +130,24 @@ class RegisterPage extends React.Component {
                               touched.password &&
                               errors.password}
                           </small>
+                          {process.env.REACT_APP_BETA_LOGIN_REQUIRED ?
+                            <>
+                            <input
+                              type="text"
+                              name="invitecode"
+                              className="fade-in third text-left"
+                              placeholder="Beta invitation code"
+                              onChange={handleChange}
+                              onBlur={handleBlur}
+                              value={values.invitecode}
+                            />
+                            <small className="form-text text-muted">
+                              {errors.invitecode &&
+                                touched.invitecode &&
+                                errors.invitecode}
+                            </small>
+                            </> : <></>
+                          }
                           <div className="fade-in third mt-4">
                             <input
                               type="checkbox"
