@@ -17,7 +17,7 @@ from common.helpers import *
 init_logger(running_mode)
 
 app = bottle.default_app()
-for k in ['jwtsecret', 'jwtexp', 'jwtalgo', 'cookie_secret', 'refreshexp', 'forgot_pass_template',
+for k in ['jwtsecret', 'jwtexp', 'jwtalgo', 'cookie_secret', 'refreshexp',
           'smtp_from_email_address', 'smtp_host', 'smtp_port', 'smtp_secret', 'smtp_user', 'email_sender_name',
           'aws_s3_bucket_name', 'aws_s3_profile_base_url', 'profile_img_max_size']:
     app.config[k] = config[k]
