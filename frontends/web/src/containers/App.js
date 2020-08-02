@@ -1,7 +1,7 @@
 import React from "react";
 import "./App.css";
 import { Navbar, Nav, NavDropdown, Row, Container } from "react-bootstrap";
-import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
+import { BrowserRouter, Switch, Route, Link } from "react-router-dom";
 import HomePage from "./HomePage";
 import LoginPage from "./LoginPage";
 import ForgotPassword from "./ForgotPassword";
@@ -25,6 +25,11 @@ import CreateInterface from "./CreateInterface.js";
 import SubmitInterface from "./SubmitInterface.js";
 import PublishInterface from "./PublishInterface.js";
 import { Avatar } from "../components/Avatar/Avatar";
+import ReactGA from "react-ga";
+
+import { createBrowserHistory } from 'history';
+
+
 
 class App extends React.Component {
   constructor(props) {
@@ -35,6 +40,14 @@ class App extends React.Component {
     };
     this.updateState = this.updateState.bind(this);
     this.api = new ApiService(process.env.REACT_APP_API_HOST);
+    if (process.env.REACT_APP_GA_ID) {
+      ReactGA.initialize(process.env.REACT_APP_GA_ID);
+      this.ga = ({location}) => {
+        ReactGA.set({page: location.pathname})
+        ReactGA.pageview(location.pathname)
+        return null
+      }
+    }
   }
   updateState(value) {
     this.setState(value);
@@ -83,8 +96,10 @@ class App extends React.Component {
             tasks: this.state.tasks,
           }}
         >
-          <Router>
+          <BrowserRouter>
             <ScrollToTop />
+            { process.env.REACT_APP_GA_ID ?
+              <Route render={this.ga} /> : <></> }
             <Navbar
               expand="lg"
               variant="dark"
@@ -227,7 +242,7 @@ class App extends React.Component {
                 </Row>
               </Container>
             </footer>
-          </Router>
+          </BrowserRouter>
         </TasksContext.Provider>
       </UserContext.Provider>
     );
