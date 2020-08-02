@@ -8,7 +8,6 @@ config = { \
         'db_name': '',
         'db_user': '',
         'db_password': '',
-        'forgot_pass_template': 'common/forgot_password.txt',
         'smtp_host': '',
         'smtp_port': 587,
         'smtp_secret': '',

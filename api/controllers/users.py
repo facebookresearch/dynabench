@@ -103,7 +103,7 @@ def reset_password(forgot_token):
         bottle.abort(400, 'Could not reset user password')
 
     logging.info('User password reset successful for %s' % (user.username))
-    return {'status': 'successful'}
+    return {'status': 'success'}
 
 @bottle.post('/recover/initiate')
 def recover_password():
@@ -130,10 +130,10 @@ def recover_password():
             'forgot_password_token_expiry_date': expiry_datetime \
             })
         #  send email
-        subject = 'Password reset link requested'
+        subject = 'Password Reset Request'
         msg = {'ui_server_host': util.parse_url(bottle.request.url), 'token': forgot_password_token}
         mail.send(server=bottle.default_app().config['mail'], contacts=[user.email],
-                  template_name=bottle.default_app().config['forgot_pass_template'], msg_dict=msg, subject=subject)
+                  template_name='templates/forgot_password.txt', msg_dict=msg, subject=subject)
         return {'status': 'success'}
     except Exception as error_message:
         logging.exception("Reset password failure (%s): (%s)" % (data['email'], error_message))
