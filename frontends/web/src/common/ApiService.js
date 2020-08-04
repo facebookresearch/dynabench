@@ -220,8 +220,35 @@ export default class ApiService {
     );
   }
 
+  explainExample(id, type, explanation, uid = null) {
+    var obj = {};
+    if (type == 'example') {
+      obj.example_explanation = explanation;
+    } else if (type == 'model') {
+      obj.model_explanation = explanation;
+    }
+    if (this.mode == 'mturk') {
+      obj.uid = uid;
+    }
+    return this.fetch(`${this.domain}/examples/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(obj),
+    });
+  }
+
   retractExample(id, uid = null) {
     let obj = {retracted: true};
+    if (this.mode == 'mturk') {
+      obj.uid = uid;
+    }
+    return this.fetch(`${this.domain}/examples/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(obj),
+    });
+  }
+
+  flagExample(id, uid = null) {
+    let obj = {flagged: true};
     if (this.mode == 'mturk') {
       obj.uid = uid;
     }

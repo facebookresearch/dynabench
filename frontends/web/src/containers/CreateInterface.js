@@ -31,6 +31,12 @@ class ContextInfo extends React.Component {
     super(props);
   }
   render() {
+    const otherTargets = []
+    for (const [index, value] of this.props.targets.entries()) {
+      if (this.props.curTarget === index) continue;
+      otherTargets.push(value)
+    }
+    const otherTargetStr = otherTargets.join(" or ");
     return this.props.taskType == "extract" ? (
       <>
         <TokenAnnotator
@@ -54,7 +60,7 @@ class ContextInfo extends React.Component {
         <p className="mt-3 px-3">
           Your goal: enter a{" "}
           <strong>{this.props.targets[this.props.curTarget]}</strong> statement
-          that fools the model.
+          that fools the model into predicting {otherTargetStr}.
         </p>
       </>
     );
@@ -96,6 +102,8 @@ class ResponseInfo extends React.Component {
   constructor(props) {
     super(props);
     this.retractExample = this.retractExample.bind(this);
+    this.flagExample = this.flagExample.bind(this);
+    this.explainExample = this.explainExample.bind(this);
     this.state = {
       loader: true,
       inspectError: false,
@@ -107,6 +115,18 @@ class ResponseInfo extends React.Component {
       inspectError: false,
     });
   }
+  explainExample(e) {
+    e.preventDefault();
+    var idx = e.target.getAttribute("data-index");
+    var type = e.target.getAttribute("data-type");
+    this.context.api
+      .explainExample(this.props.mapKeyToExampleId[idx], type, e.target.value)
+      .then((result) => {
+        // TODO: provide user feedback?
+      }, (error) => {
+        console.log(error);
+      });
+  }
   retractExample(e) {
     e.preventDefault();
     var idx = e.target.getAttribute("data-index");
@@ -116,6 +136,20 @@ class ResponseInfo extends React.Component {
         const newContent = this.props.content.slice();
         newContent[idx].cls = "retracted";
         newContent[idx].retracted = true;
+        this.setState({ content: newContent });
+      }, (error) => {
+        console.log(error);
+      });
+  }
+  flagExample(e) {
+    e.preventDefault();
+    var idx = e.target.getAttribute("data-index");
+    this.context.api
+      .flagExample(this.props.mapKeyToExampleId[idx])
+      .then((result) => {
+        const newContent = this.props.content.slice();
+        newContent[idx].cls = "flagged";
+        newContent[idx].flagged = true;
         this.setState({ content: newContent });
       }, (error) => {
         console.log(error);
@@ -173,128 +207,154 @@ class ResponseInfo extends React.Component {
       });
   };
   render() {
+    const selectedAnswer = this.props.taskType != "extract" ? "" : (
+      this.props.answer && this.props.answer.length ? this.props.answer[this.props.answer.length - 1].tokens.join("") : ""
+    );
+    var classNames = this.props.obj.cls + " rounded border";
+    var userFeedback = null;
+    if (this.props.obj.retracted) {
+      classNames += " border-warning";
+      userFeedback = <span>
+        <strong>Example retracted</strong> - thanks. The model
+        predicted <strong>{this.props.obj.modelPredStr}</strong>.
+        Please try again!
+      </span>;
+    } else if (this.props.obj.flagged) {
+      classNames += " border-warning";
+      userFeedback = <span>
+        <strong>Example flagged</strong> - thanks. The model
+        predicted <strong>{this.props.obj.modelPredStr}</strong>.
+      </span>;
+    } else if (this.props.obj.fooled) {
+      classNames += " border-success";
+      userFeedback = <>
+        <span>
+          <strong>Well done!</strong> You fooled the model. The model
+          predicted <strong>{this.props.obj.modelPredStr}</strong>{" "}
+          instead.{" "}
+        </span>
+        <br />
+        <div>
+          Made a mistake? You can still{" "}
+          <a
+            href="#"
+            data-index={this.props.index}
+            onClick={this.retractExample}
+            className="btn-link"
+          >
+            retract this example
+          </a>{" "}
+          if you think your label is wrong. Otherwise, we will have it verified. Optionally:{" "}
+        </div>
+        <div>
+        <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
+          "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is correct"}
+          data-index={this.props.index} data-type="example" onBlur={this.explainExample} />
+        </div>
+        <div>
+        <input type="text" style={{width: 100+'%'}} placeholder="Explain why you think the model made a mistake"
+          data-index={this.props.index} data-type="model" onBlur={this.explainExample} />
+        </div>
+        <div>
+          Want more insight? You can{" "}
+          <a
+            href="#"
+            data-index={this.props.index}
+            onClick={this.inspectExample}
+            className="btn-link"
+          >
+            inspect the model
+          </a>
+          .
+        </div>
+        {this.state.loader ? (
+          <img src="/loader.gif" className="loader" />
+        ) : null}
+        {this.state.inspectError && (
+          <span style={{ color: "#e65959" }}>
+            *Unable to fetch results. Please try again after sometime.
+          </span>
+        )}
+        {this.props.obj.inspect &&
+          this.props.obj.inspect.map((inspectData) => {
+            return (
+              <TextFeature
+                data={inspectData}
+                curTarget={this.props.curTarget}
+                targets={this.props.targets}
+              />
+            );
+          })}
+      </>;
+    } else {
+      classNames += " border-danger";
+      userFeedback = <>
+        <span>
+          <strong>Bad luck!</strong> The model correctly predicted{" "}
+          <strong>{this.props.obj.modelPredStr}</strong>. Try again.
+        </span>
+        <div>
+          We will still store this as an example that the model got
+          right.
+          You can{" "}
+          <a
+            href="#"
+            data-index={this.props.index}
+            onClick={this.retractExample}
+            className="btn-link"
+          >
+            retract this example
+          </a>{" "}
+          if you made a mistake.
+        </div>
+        <div>
+          Something wrong?{" "}
+          <a
+            href="#"
+            data-index={this.props.index}
+            onClick={this.flagExample}
+            className="btn-link"
+          >
+            Flag this example for review
+          </a>.
+        </div>
+        <div>
+          Want more insight? You can{" "}
+          <a
+            href="#"
+            data-index={this.props.index}
+            onClick={this.inspectExample}
+            className="btn-link"
+          >
+            inspect the model{" "}
+          </a>
+          .
+        </div>
+        {this.state.loader ? (
+          <img src="/loader.gif" className="loader" />
+        ) : null}
+        {this.props.obj.inspect &&
+          this.props.obj.inspect.map((inspectData) => {
+            return (
+              <TextFeature
+                data={inspectData}
+                curTarget={this.props.curTarget}
+                targets={this.props.targets}
+              />
+            );
+          })}
+      </>;
+    }
     return (
       <div
-        className={
-          this.props.obj.cls +
-          " rounded border " +
-          (this.props.obj.retracted
-            ? "border-warning"
-            : this.props.obj.fooled
-            ? "border-success"
-            : "border-danger")
-        }
+        className={classNames}
         style={{ minHeight: 120 }}
       >
         <Row>
           <Col xs={12} md={8}>
             <div>{this.props.obj.text}</div>
             <small>
-              {this.props.obj.retracted ? (
-                <>
-                  <span>
-                    <strong>Example retracted</strong> - thanks. The model
-                    predicted <strong>{this.props.obj.modelPredStr}</strong>.
-                    Please try again!
-                  </span>
-                </>
-              ) : this.props.obj.fooled ? (
-                <>
-                  <span>
-                    <strong>Well done!</strong> You fooled the model. The model
-                    predicted <strong>{this.props.obj.modelPredStr}</strong>{" "}
-                    instead.{" "}
-                  </span>
-                  <br />
-                  <div>
-                    Made a mistake? You can still{" "}
-                    <a
-                      href="#"
-                      data-index={this.props.index}
-                      onClick={this.retractExample}
-                      className="btn-link"
-                    >
-                      retract this example
-                    </a>
-                    . Otherwise, we will have it verified.{" "}
-                  </div>
-                  <div>
-                    Need insight? You can see the{" "}
-                    <a
-                      href="#"
-                      data-index={this.props.index}
-                      onClick={this.inspectExample}
-                      className="btn-link"
-                    >
-                      word importance{" "}
-                    </a>
-                    that resulted in this prediction.
-                  </div>
-                  {this.state.loader ? (
-                    <img src="/loader.gif" className="loader" />
-                  ) : null}
-                  {this.state.inspectError && (
-                    <span style={{ color: "#e65959" }}>
-                      *Unable to fetch results. Please try again after sometime.
-                    </span>
-                  )}
-                  {this.props.obj.inspect &&
-                    this.props.obj.inspect.map((inspectData) => {
-                      return (
-                        <TextFeature
-                          data={inspectData}
-                          curTarget={this.props.curTarget}
-                          targets={this.props.targets}
-                        />
-                      );
-                    })}
-                </>
-              ) : (
-                <>
-                  <span>
-                    <strong>Bad luck!</strong> The model correctly predicted{" "}
-                    <strong>{this.props.obj.modelPredStr}</strong>. Try again.
-                  </span>
-                  <div>
-                    We will still store this as an example that the model got
-                    right. You can{" "}
-                    <a
-                      href="#"
-                      data-index={this.props.index}
-                      onClick={this.retractExample}
-                      className="btn-link"
-                    >
-                      retract this example
-                    </a>{" "}
-                    if you don't want it saved.
-                  </div>
-                  <div>
-                    Need insight? You can see the{" "}
-                    <a
-                      href="#"
-                      data-index={this.props.index}
-                      onClick={this.inspectExample}
-                      className="btn-link"
-                    >
-                      word importance{" "}
-                    </a>
-                    that resulted in this prediction.
-                  </div>
-                  {this.state.loader ? (
-                    <img src="/loader.gif" className="loader" />
-                  ) : null}
-                  {this.props.obj.inspect &&
-                    this.props.obj.inspect.map((inspectData) => {
-                      return (
-                        <TextFeature
-                          data={inspectData}
-                          curTarget={this.props.curTarget}
-                          targets={this.props.targets}
-                        />
-                      );
-                    })}
-                </>
-              )}
+              {userFeedback}
             </small>
           </Col>
           <Col xs={12} md={4}>

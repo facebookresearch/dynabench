@@ -90,6 +90,12 @@
   padding: 10px;
 }
 
+.flagged {
+  margin-bottom: 4px;
+  opacity: 0.7;
+  padding: 10px;
+}
+
 .retracted {
   margin-bottom: 4px;
   opacity: 0.7;
