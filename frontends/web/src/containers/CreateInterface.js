@@ -276,9 +276,10 @@ class ResponseInfo extends React.Component {
           </span>
         )}
         {this.props.obj.inspect &&
-          this.props.obj.inspect.map((inspectData) => {
+          this.props.obj.inspect.map((inspectData, idx) => {
             return (
               <TextFeature
+                key={idx}
                 data={inspectData}
                 curTarget={this.props.curTarget}
                 targets={this.props.targets}
