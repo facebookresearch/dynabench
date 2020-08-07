@@ -1,7 +1,7 @@
 """
-This is a script to automatically deploy the models in SageMaker for hs,sentiment
-,qa and nli.After execution an endpoint to access the model will be printed. 
-Before running this script, install the Requirements.txt, place create_torchscript.py 
+This is a script to automatically deploy the models in SageMaker for hs, sentiment, qa and nli.
+After execution an endpoint to access the model will be printed.
+Before running this script, install the requirements.txt, place create_torchscript.py
 and deploy_config.json files in the same directory, place the secrets.json in the common folder.
 """
 import os
@@ -17,12 +17,12 @@ import shutil
 import boto3
 import sagemaker
 from sagemaker.model import Model
-from sagemaker.predictor import RealTimePredictor
+from sagemaker.predictor import Predictor # RealTimePredictor
 #import create_torchscript as ts
 from common import TransformerUtils
 
 def setup_env(sagemaker_role):
-    """  
+    """
     Sets the sagemaker environment required for deployment
     """
     session = boto3.Session()
@@ -90,7 +90,7 @@ def handle_existing_endpoints(client, sm_model_name, redeploy):
     return skip_deployment
 
 def edit_setup_config(setup_config_path, task_id, round_id):
-    """ 
+    """
     Adds task_id and round_id to the setup_config
     """
     with open(setup_config_path, "r+") as setup_config_file:
@@ -102,14 +102,14 @@ def edit_setup_config(setup_config_path, task_id, round_id):
         setup_config_file.truncate()
 
 def generate_settings(task_id, round_id, round_path):
-    """ 
+    """
     Generates settings.py file from the secrets.json file in common folder
     """
     secrets_path = join(os.getcwd(), join("common", "secrets.json"))
 
     with open(secrets_path) as secrets_file:
         secret_config = json.load(secrets_file)
-    
+
     secret_present = False
     for task in secret_config:
         if task["task_id"] == task_id:
@@ -130,7 +130,7 @@ def archive_model(sagemaker_model_name, model_path, round_path, task, task_path)
     """
     Archives the model file to mar file
     """
-    
+
     handler_path = os.path.join(os.getcwd(), round_path, "TransformerHandler.py")
     utils_path = join(os.getcwd(), join("common", "TransformerUtils.py"))
     round_path = join(os.getcwd(), round_path)
@@ -150,10 +150,13 @@ def archive_model(sagemaker_model_name, model_path, round_path, task, task_path)
     elif task == "qa":
         print(f"----- {task} is archiving -----")
         archiver_command = f'{archiver_command_front} {archiver_command_extra_files_nli},{archiver_command_extra_files},{round_path}/qa_utils.py"'
-        
-    process = subprocess.run(archiver_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        universal_newlines=True, check=True, shell=True,)
+
+    process = subprocess.run(archiver_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        universal_newlines=True, check=False, shell=True,)
     print(process.stdout)
+    print(process.stderr)
+    if process.returncode != 0:
+        raise ValueError('Error in archiving:' + process.stderr)
 
     print("----- Mar file tarred -----")
     process = subprocess.run(f"tar cvfz {sagemaker_model_name}.tar.gz {sagemaker_model_name}.mar", \
@@ -203,18 +206,18 @@ round_path, task, task_path):
     return model_path
 
 def load_validate_deploy_config(deploy_config_path):
-    """ 
+    """
     Loads the deploy_config and validates the values
     """
     with open(deploy_config_path) as deploy_config_file:
         deploy_config = json.load(deploy_config_file)
-    
+
     # Check if all the attributes are present
     attributes_list = ["task", "task_id", "round_id", "model_no", "model_url",\
         "initial_instance_count", "gateway_url", "sagemaker_role", "instance_type"]
     if not TransformerUtils.check_fields(deploy_config, attributes_list):
         raise AttributeError("Attributes missing in deploy_config file")
-    
+
     task = deploy_config["task"]
     task_id = deploy_config["task_id"]
     round_id = deploy_config["round_id"]
@@ -248,13 +251,13 @@ if __name__ == "__main__":
 
     if not deploy_config_paths:
         raise FileNotFoundError("The deploy_configs directory is empty")
-    
+
     deploy_config_paths.sort()
-    
+
     # Process each deploy_config.json file in deploy_configs folder and launch an endpoint
     for deploy_config_path in deploy_config_paths:
         round_path = None
-        
+
         try:
             print(f"----- New model deployment -----")
             task, round_id, model_no, model_url_path, initial_instance_count, gateway_url, sagemaker_role,\
@@ -262,7 +265,7 @@ if __name__ == "__main__":
 
             sagemaker_model_name = f"{task}_r{round_id}_{model_no}"
             sm_model_name = f"{task}-r{str(round_id)}-{model_no}"
-            
+
             print(f"----- Starting the deployment of the model {sm_model_name}-----")
             #cleans the unnecessary mar files
             clean_mar_file(sagemaker_model_name)
@@ -319,8 +322,8 @@ if __name__ == "__main__":
             image = f"{account}.dkr.ecr.{region}.amazonaws.com/{registry_name}:{image_label}"
             model_data = f"s3://{bucket_name}/{prefix}/models/{s3_folder}/{sagemaker_model_name}.tar.gz"
             # Create model in sagemaker by loading the archive in tar file
-            torchserve_model = Model(model_data=model_data, image=image, role=role, 
-            predictor_cls=RealTimePredictor, name=sm_model_name)
+            torchserve_model = Model(model_data=model_data, image_uri=image, role=role,
+            predictor_cls=Predictor, name=sm_model_name)
 
             print("----- Creating endpoint -----")
 
