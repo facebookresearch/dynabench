@@ -3,6 +3,7 @@ This is a handler passed to the torchserve to serve the model.
 It loads up the model and handles requests. This code is specific for NLI round 3
 """
 
+import traceback
 import json
 import logging
 import os
@@ -12,7 +13,7 @@ import uuid
 import sys
 logger = logging.getLogger(__name__)
 import time
-sys.path.append("/home/model-server/anli-public/src")
+sys.path.append("/home/model-server/anli/src")
 
 import torch
 from ts.torch_handler.base_handler import BaseHandler
@@ -21,16 +22,21 @@ from shared import generate_response_signature, check_fields, remove_sp_chars, h
     summarize_attributions, get_nli_word_token, captum_nli_forward_func
 from settings import my_secret
 
-# ================== Round 3 imports =================
-import config as config
-import flint
-from flint.data_utils.batchbuilder import move_to_device
-from flint.data_utils.fields import RawFlintField, LabelFlintField, ArrayIndexFlintField
-from utils import common, list_dict_data_tool, save_tool
-from nli.training import MODEL_CLASSES, registered_path, build_eval_dataset_loader_and_sampler, NLITransform, \
-    NLIDataset, count_acc, evaluation_dataset
-from nli.inference_debug import eval_model
-
+# ================== Round 4 imports =================
+try:
+    from flint.data_utils.batchbuilder import move_to_device
+    from flint.data_utils.fields import RawFlintField, LabelFlintField, ArrayIndexFlintField
+    from utils import common, list_dict_data_tool, save_tool
+    from nli.training import MODEL_CLASSES, registered_path, build_eval_dataset_loader_and_sampler, NLITransform, NLIDataset, count_acc, evaluation_dataset
+    from nli.inference_debug import eval_model
+except Exception as error:
+    print(" ".join(os.listdir("/home/model-server")))
+    print(error)
+    exc_type, exc_obj, exc_tb = sys.exc_info()
+    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+    print(exc_type, fname, exc_tb.tb_lineno)
+    print(traceback.format_exc())
+    quit()
 
 class Args(object):
     def __init__(self, model_class_name):
@@ -61,17 +67,17 @@ class NliTransformerHandler(BaseHandler):
         device_num = -1
         model_class_item = MODEL_CLASSES[args.model_class_name]
         model_name = model_class_item['model_name']
-        do_lower_case = model_class_item['do_lower_case'] if 'do_lower_case' in model_class_item else False
+        do_lower_case = model_class_item['do_lower_case'] \
+                if 'do_lower_case' in model_class_item else False
 
         self.tokenizer = model_class_item['tokenizer'].from_pretrained(model_name, \
-                                cache_dir=str(config.PRO_ROOT / "trans_cache"), \
                                 do_lower_case=do_lower_case)
 
-        self.model = model_class_item['sequence_classification'].from_pretrained(model_name,
-                                cache_dir=str(config.PRO_ROOT / "trans_cache"),
+        self.model = model_class_item['sequence_classification'].from_pretrained(model_name, \
                                 num_labels=num_labels)
 
-        self.model.load_state_dict(torch.load(model_checkpoint_path, map_location=torch.device('cpu')))
+        self.model.load_state_dict(torch.load(model_checkpoint_path, \
+                map_location=torch.device('cpu')))
         self.args = args
         self.model_name = model_name
         self.model_class_item = model_class_item
@@ -119,6 +125,7 @@ class NliTransformerHandler(BaseHandler):
     def inference(self, d_dataloader):
         result = eval_model(self.model, d_dataloader, -1, self.args)
         result[0]["prob"] = result[0]["probability"].tolist()
+        del result[0]["probability"]
         return result
 
     def postprocess(self, inference_output, data):
