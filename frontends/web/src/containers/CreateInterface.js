@@ -255,6 +255,7 @@ class ResponseInfo extends React.Component {
         <input type="text" style={{width: 100+'%'}} placeholder="Explain why you think the model made a mistake"
           data-index={this.props.index} data-type="model" onBlur={this.explainExample} />
         </div>
+        {(this.props.taskName == "Hate Speech" || this.props.taskName == "Sentiment") ?
         <div>
           Want more insight? You can{" "}
           <a
@@ -267,6 +268,9 @@ class ResponseInfo extends React.Component {
           </a>
           .
         </div>
+          :
+        <></>
+        }
         {this.state.loader ? (
           <img src="/loader.gif" className="loader" />
         ) : null}
@@ -319,6 +323,7 @@ class ResponseInfo extends React.Component {
             Flag this example for review
           </a>.
         </div>
+        {(this.props.taskName == "Hate Speech" || this.props.taskName == "Sentiment") ?
         <div>
           Want more insight? You can{" "}
           <a
@@ -331,13 +336,17 @@ class ResponseInfo extends React.Component {
           </a>
           .
         </div>
+          :
+        <></>
+        }
         {this.state.loader ? (
           <img src="/loader.gif" className="loader" />
         ) : null}
         {this.props.obj.inspect &&
-          this.props.obj.inspect.map((inspectData) => {
+          this.props.obj.inspect.map((inspectData, idx) => {
             return (
               <TextFeature
+                key={idx}
                 data={inspectData}
                 curTarget={this.props.curTarget}
                 targets={this.props.targets}
@@ -599,6 +608,7 @@ class CreateInterface extends React.Component {
           targets={this.state.task.targets}
           curTarget={this.state.target}
           taskType={this.state.task.type}
+          taskName={this.state.task.shortname}
           answer={this.state.answer}
           updateAnswer={this.updateAnswer}
         />
@@ -609,6 +619,7 @@ class CreateInterface extends React.Component {
           targets={this.state.task.targets}
           curTarget={this.state.target}
           taskType={this.state.task.type}
+          taskName={this.state.task.shortname}
           answer={this.state.answer}
           obj={item}
           mapKeyToExampleId={this.state.mapKeyToExampleId}
