@@ -45,7 +45,8 @@ COPY config.properties /home/model-server/config.properties
 WORKDIR /home/model-server
 ENV TEMP=/home/model-server/tmp
 
-ADD anli /home/model-server/anli
+ADD anli-private /home/model-server/anli-old
+ADD anli-public /home/model-server/anli
 
 ENTRYPOINT ["/usr/local/bin/dockerd-entrypoint.sh"]
 CMD ["serve"]

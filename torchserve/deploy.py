@@ -94,7 +94,7 @@ def setup_model(config):
         with open(config['model_path'], "wb") as f:
             f.write(r.content)
 
-def setup_sagemaker_env(sagemaker_role):
+def setup_sagemaker_env(config):
     env = {}
 
     session = boto3.Session()
@@ -103,9 +103,13 @@ def setup_sagemaker_env(sagemaker_role):
     env["client"] = boto3.client("sagemaker")
 
     sagemaker_session = sagemaker.Session(boto_session=session)
-    env["role"] = sagemaker_role
+    env["role"] = config['sagemaker_role']
     env["bucket_name"] = sagemaker_session.default_bucket()
-    env["registry_name"] = "torchserve"
+    if config['task'] == 'nli' and config['round_id'] == 4:
+        print("NLI round 4, using custom Docker")
+        env["registry_name"] = "torchserve2"
+    else:
+        env["registry_name"] = "torchserve"
     env["prefix"] = "torchserve"
 
     return env
@@ -179,7 +183,7 @@ if __name__ == "__main__":
             quit()
 
         config = load_config(config_path)
-        env = setup_sagemaker_env(config["sagemaker_role"])
+        env = setup_sagemaker_env(config)
         print(config)
         print(env)
 

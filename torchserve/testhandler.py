@@ -2,7 +2,6 @@ import argparse
 import os
 import sys
 sys.path.insert(0, 'common')
-sys.path.append('tasks/nli/anli/src')
 
 from deploy import load_config, setup_model, generate_settings_file
 
@@ -34,6 +33,11 @@ if __name__ == '__main__':
         generate_settings_file(config)
         print(config)
         sys.path.append(config['round_path'])
+        if config['task'] == 'nli' and config['round_id'] in [1,2,3]:
+            sys.path.append('tasks/nli/anli/src')
+        elif config['task'] == 'nli':
+            sys.path.append('tasks/nli/r4/anli-public/src')
+
         import handler
         if config['task'] == 'qa':
             data = [{"body": { \
