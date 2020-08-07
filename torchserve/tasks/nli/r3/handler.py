@@ -1,5 +1,5 @@
-""" 
-This is a handler passed to the torchserve to serve the model. 
+"""
+This is a handler passed to the torchserve to serve the model.
 It loads up the model and handles requests. This code is specific for NLI round 3
 """
 
@@ -19,10 +19,11 @@ from allennlp.nn.util import move_to_device
 import torch
 import torch.nn.functional as F
 from ts.torch_handler.base_handler import BaseHandler
-from settings import my_secret
-from TransformerUtils import generate_response_signature, check_fields, remove_sp_chars, handler_initialize, \
-    summarize_attributions, get_nli_word_token, captum_nli_forward_func
 from captum.attr import LayerIntegratedGradients
+
+from shared import generate_response_signature, check_fields, remove_sp_chars, handler_initialize, \
+    summarize_attributions, get_nli_word_token, captum_nli_forward_func
+from settings import my_secret
 
 # ================== Round 3 imports =================
 from data_utils.exvocab import ExVocabulary

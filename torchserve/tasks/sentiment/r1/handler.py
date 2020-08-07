@@ -1,5 +1,5 @@
-""" 
-This is a handler passed to the torchserve to serve the model. 
+"""
+This is a handler passed to the torchserve to serve the model.
 It loads up the model and handles requests. This code is specific for Sentiment
 """
 import json
@@ -19,7 +19,7 @@ import torch.nn.functional as F
 from ts.torch_handler.base_handler import BaseHandler
 
 from settings import my_secret
-from TransformerUtils import generate_response_signature, check_fields, handler_initialize, \
+from shared import generate_response_signature, check_fields, handler_initialize, \
     construct_input_ref, captum_sequence_forward, summarize_attributions, get_word_token
 
 class TransformersSeqClassifierHandler(BaseHandler):

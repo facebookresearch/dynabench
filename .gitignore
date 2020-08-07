@@ -1,3 +1,4 @@
 logs/
+*.py[cod]
 *.DS_Store
-frontends/web/package-lock.json
+__pycache__/
