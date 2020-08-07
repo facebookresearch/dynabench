@@ -51,6 +51,9 @@ class RoundModel(BaseModel):
     def incrementExampleCount(self, tid, rid):
         r = self.getByTidAndRid(tid, rid)
         if r:
-            r.total_collected = r.total_collected+1
+            prev = r.total_collected
+            if prev is None:
+                prev = 0
+            r.total_collected = prev+1
             r.task.last_updated = db.sql.func.now()
             self.dbs.commit()
