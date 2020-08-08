@@ -173,6 +173,12 @@ class ModelPage extends React.Component {
                       </td>
                     </tr>
                     <tr>
+                      <td>
+                        <b>Description</b>
+                      </td>
+                      <td>{model.longdesc}</td>
+                    </tr>
+                    <tr>
                       <td colSpan="2">
                         <h6 className="blue-color">Performance</h6>
                         <Container>
