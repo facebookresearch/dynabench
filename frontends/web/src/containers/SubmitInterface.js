@@ -77,11 +77,9 @@ class SubmitInterface extends React.Component {
             <Card>
               <Card.Body>
                 <p>
-                  Here goes the format of submission. -- Lorem Ipsum is simply
-                  dummy text of the printing and typesetting industry. Lorem
-                  Ipsum has been the industry's standard dummy text ever since
-                  the 1500s, when an unknown printer took a galley of type and
-                  scrambled it to make a type specimen book
+                  Concatenate with each example's prediction per line, labeled as in <a href="https://github.com/facebookresearch/anli">ANLI</a>'s predicted_label
+                  default output format (e=Entailment, c=Contradiction, n=Neutral). If you submit for multiple rounds in one go (i.e., overall),
+                  concatenate in order (so first the answers, one per line, for round 1; then for round 2; then for round 3; in order).
                 </p>
                 <Formik
                   initialValues={{
