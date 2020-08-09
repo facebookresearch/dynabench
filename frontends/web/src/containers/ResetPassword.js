@@ -35,7 +35,8 @@ class ResetPassword extends React.Component {
         token: params.token,
       })
       .then((result) => {
-        this.props.history.push("/login");
+        this.props.history.push("/login?msg=" +
+          encodeURIComponent("Password reset successful. Please login."));
       }, (error) => {
         this.setState({ error });
         setSubmitting(false);

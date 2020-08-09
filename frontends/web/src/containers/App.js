@@ -47,7 +47,6 @@ class RouterMonitor extends React.Component {
         this.props.location.pathname !== "/forgot-password" &&
         (!this.props.location.pathname.startsWith("/reset-password/") || this.props.location.pathname.length <= "/reset-password/".length)
       )) {
-        console.log("ERROR!");
         this.props.history.push("/login?msg=" +
           encodeURIComponent("You need to be logged in to access this beta.")
         );
