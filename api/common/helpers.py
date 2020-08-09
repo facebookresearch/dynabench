@@ -111,6 +111,7 @@ def validate_prediction(r_objects, prediction, task='nli'):
     start_index = 0
     end_index = 0
     for r_obj in r_objects:
+        if task == 'nli' and r_obj.rid > 3: continue
         score_obj = {}
         round_accuracy = {}
         score_obj['round_id'] = r_obj.id
@@ -152,7 +153,7 @@ def is_current_user(uid, credentials=None):
             return False
         return True
     except Exception as ex:
-        logging.exception('Current user  verification failed  for (%s) exception : %s ' %(uid, ex))
+        logging.exception('Current user verification failed for (%s) exception: %s' % (uid, ex))
         return False
 
 def get_limit_and_offset_from_request():
@@ -173,7 +174,7 @@ def get_limit_and_offset_from_request():
         limit = int(limit)
         offset = int(offset)
     except Exception as ex:
-        logging.exception('Query param parsing issue :(%s)' %(ex))
+        logging.exception('Query param parsing issue: (%s)' % (ex))
         limit = 5
         offset = 0
 

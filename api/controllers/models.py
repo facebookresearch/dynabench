@@ -50,8 +50,8 @@ def get_model_detail(credentials, mid):
 @_auth.requires_auth
 def do_upload(credentials):
     """
-    Upload the result file fpr overall round or specified round like 1,2,3
-    and save those result into models and scores table
+    Upload the result file for the overall task or specific rounds
+    and save those results into the models and scores table
     :param credentials:
     :return: Models scores detail
     """
@@ -72,15 +72,15 @@ def do_upload(credentials):
     except Exception as ex:
         logging.exception(ex)
         bottle.abort(400, 'Upload valid model result file')
-    # Round object fetch from DB
+
     r = RoundModel()
     if round_id == 'overall':
         rounds = r.getByTid(task_id)
     else:
         rounds = [r.getByTidAndRid(task_id, round_id)]
     if not rounds:
-        bottle.abort(400, 'Model evaluation  failed')
-    # Model result validate and score object save into db
+        bottle.abort(400, 'Model evaluation failed')
+
     if len(test_raw_data) > 0:
         try:
             rounds_accuracy_list, score_obj_list, overall_accuracy = util.validate_prediction(rounds, test_raw_data)
@@ -89,16 +89,16 @@ def do_upload(credentials):
                              overall_perf='{:.2f}'.format(overall_accuracy))
             s = ScoreModel()
             scores = s.bulk_create(model_id=model.id, score_objs=score_obj_list)
-            #Construct response object
+
             response = model.to_dict()
             response['user'] = user.to_dict()
             response['scores'] = rounds_accuracy_list
             return util.json_encode(response)
         except AssertionError:
             bottle.abort(400, 'Submission file length mismatch')
-        except Exception as error_message:
-            logging.exception('Model evaluation failed: %s' % (error_message))
-            bottle.abort(400, 'Model evaluation failed: %s'% (error_message))
+#        except Exception as error_message:
+#            logging.exception('Model evaluation failed: %s' % (error_message))
+#            bottle.abort(400, 'Model evaluation failed: %s' % (error_message))
     else:
         bottle.abort(400, 'Invalid file submitted')
 
