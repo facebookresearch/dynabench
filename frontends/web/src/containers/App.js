@@ -45,7 +45,7 @@ class RouterMonitor extends React.Component {
         this.props.location.pathname !== "/termsofuse" &&
         this.props.location.pathname !== "/datapolicy" &&
         this.props.location.pathname !== "/forgot-password" &&
-        this.props.location.pathname !== "/reset-password"
+        (!this.props.location.pathname.startsWith("/reset-password/") || this.props.location.pathname.length <= "/reset-password/".length)
       )) {
         console.log("ERROR!");
         this.props.history.push("/login?msg=" +

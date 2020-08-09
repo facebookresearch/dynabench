@@ -39,6 +39,7 @@ class ResetPassword extends React.Component {
       }, (error) => {
         this.setState({ error });
         setSubmitting(false);
+        setFieldError("general", "Reset failed (token invalid?)");
       });
   };
 
@@ -109,6 +110,9 @@ class ResetPassword extends React.Component {
                             {errors.confirmPassword &&
                               touched.confirmPassword &&
                               errors.confirmPassword}
+                          </small>
+                          <small className="form-text text-muted">
+                            {errors.general}
                           </small>
                           <Button
                             type="submit"
