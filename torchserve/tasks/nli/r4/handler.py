@@ -85,8 +85,10 @@ class NliTransformerHandler(BaseHandler):
 
     def preprocess(self, data):
         body = data[0]["body"]
-        attribute_list = ["context", "hypothesis", "insight"]
+        attribute_list = ["context", "hypothesis"]
         check_fields(body, attribute_list)
+        if "insight" not in body:
+            body["insight"] = False
 
         context = body["context"]
         hypothesis = body["hypothesis"]
