@@ -179,6 +179,35 @@ const OverallUserLeaderBoard = (props) => {
   );
 };
 
+class RoundDescription extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {};
+    this.getRoundInfo = this.getRoundInfo.bind(this);
+  }
+  componentDidMount() {
+    if (this.props.round_id === "overall") return;
+    this.getRoundInfo();
+  }
+  getRoundInfo() {
+    this.props.api.getTaskRound(this.props.task_id, this.props.round_id)
+      .then((result) => {
+        console.log(result);
+        this.setState({ round: result });
+      }, (error) => {
+        console.log(error);
+      });
+  }
+  componentDidUpdate(prevProps) {
+    if (prevProps.round_id !== this.props.round_id) {
+      this.getRoundInfo();
+    }
+  }
+  render() {
+    return <div dangerouslySetInnerHTML={{__html: this.state.round?.longdesc}}></div>;
+  }
+}
+
 class TaskPage extends React.Component {
   static contextType = UserContext;
   constructor(props) {
@@ -213,8 +242,10 @@ class TaskPage extends React.Component {
         isEndOfModelLeaderPage: true,
         userLeaderBoardPage: 0,
         isEndOfUserLeaderPage: true,
+        displayRoundId: this.props.location.hash.slice(1),
       },
       () => {
+        console.log(this.state);
         this.fetchTask();
         this.fetchOverallModelLeaderboard(this.state.modelLeaderBoardPage);
         this.fetchOverallUserLeaderboard(this.state.userLeaderBoardPage);
@@ -340,7 +371,7 @@ class TaskPage extends React.Component {
               <thead />
               <tbody>
                 <tr>
-                  <td>Round:</td>
+                  <td>Current round:</td>
                   <td>{this.state.task.cur_round}</td>
                 </tr>
                 <tr>
@@ -424,7 +455,16 @@ class TaskPage extends React.Component {
                   </Nav.Item>
                 ) : null}
               </Nav>
-            ) : null}
+            ) :
+            <Row>
+              <Col xs={12} md={10}>
+                <RoundDescription
+                  api={this.context.api}
+                  task_id={this.state.taskId}
+                  round_id={this.state.displayRoundId} />
+              </Col>
+            </Row>
+            }
             <Row>
               <Col xs={12} md={6}>
                 {this.state.modelLeaderBoardData.length ? (
