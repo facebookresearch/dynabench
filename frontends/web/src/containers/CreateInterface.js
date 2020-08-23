@@ -13,6 +13,8 @@ import {
   Button,
   FormControl,
   InputGroup,
+  DropdownButton,
+  Dropdown
 } from "react-bootstrap";
 import UserContext from "./UserContext";
 import { TokenAnnotator } from "react-text-annotate";
@@ -407,13 +409,14 @@ class CreateInterface extends React.Component {
     this.handleResponse = this.handleResponse.bind(this);
     this.handleResponseChange = this.handleResponseChange.bind(this);
     this.updateAnswer = this.updateAnswer.bind(this);
+    this.updateSelectedRound = this.updateSelectedRound.bind(this);
   }
   getNewContext() {
     this.setState(
       { answer: [], submitDisabled: true, refreshDisabled: true },
       () => {
         this.context.api
-          .getRandomContext(this.state.taskId, this.state.task.cur_round)
+          .getRandomContext(this.state.taskId, this.state.task.selected_round)
           .then((result) => {
             var randomTarget = Math.floor(
               Math.random() * this.state.task.targets.length
@@ -431,6 +434,23 @@ class CreateInterface extends React.Component {
           });
       }
     );
+  }
+
+  updateSelectedRound(e) {
+    const selected = e.target.getAttribute('index');
+    if (selected != this.state.task.selected_round) {
+      this.context.api.getTaskRound(this.state.task.id, selected)
+        .then((result) => {
+          var task = {...this.state.task};
+          task.round = result;
+          task.selected_round = selected;
+          this.setState({ task: task }, function() {
+            this.getNewContext();
+          });
+        }, (error) => {
+          console.log(error);
+        });
+    }
   }
 
   pickModel = (modelUrls) => {
@@ -525,7 +545,7 @@ class CreateInterface extends React.Component {
               this.context.api
                 .storeExample(
                   this.state.task.id,
-                  this.state.task.cur_round,
+                  this.state.task.selected_round,
                   this.context.user.id,
                   this.state.context.id,
                   this.state.hypothesis,
@@ -586,6 +606,7 @@ class CreateInterface extends React.Component {
         .then((result) => {
           result.targets = result.targets.split("|"); // split targets
           this.setState({ task: result }, function () {
+            this.state.task.selected_round = this.state.task.cur_round;
             this.getNewContext();
           });
         }, (error) => {
@@ -633,11 +654,29 @@ class CreateInterface extends React.Component {
         />
       )
     );
+    const rounds = (this.state.task.round && this.state.task.cur_round) || 0;
+    const roundNavs = [];
+    for (let i = rounds; i > 0; i--) {
+      let cur = '';
+      let active = false;
+      if (i == this.state.task.cur_round) {
+        cur = ' (active)';
+      }
+      if (i == this.state.task.selected_round) {
+        active = true;
+      }
+      roundNavs.push(
+        <Dropdown.Item key={i} index={i} onClick={this.updateSelectedRound} active={active}>Round {i}{cur}</Dropdown.Item>
+      );
+    }
 
     return (
       <Container className="mb-5 pb-5">
         <Col className="m-auto" lg={9}>
           <Explainer taskName={this.state.task.name} />
+          {(this.state.task.cur_round !== this.state.task.selected_round) ?
+            <p style={{'color': 'red'}}>WARNING: You are talking to an outdated model for a round that is no longer active. Examples you generate may be less useful.</p>
+          : ''}
           <Card className="profile-card overflow-hidden">
             <Card.Body className="overflow-auto" style={{ height: 400 }}>
               {content}
@@ -655,6 +694,11 @@ class CreateInterface extends React.Component {
               />
             </InputGroup>
             <InputGroup className="d-flex justify-content-end p-3">
+              {this.state.task.cur_round > 1 ?
+              <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" style={{marginRight: 10}} id="dropdown-basic-button" title="Switch Round">
+                {roundNavs}
+              </DropdownButton>
+                : null}
               <Button
                 className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"
                 onClick={this.getNewContext}
