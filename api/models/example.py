@@ -58,7 +58,7 @@ class Example(Base):
     def to_dict(self, safe=True):
         d = {}
         for column in self.__table__.columns:
-            if safe and column.name in ['secret']: continue
+            if safe and column.name in ['id', 'secret', 'uid', 'user']: continue
             d[column.name] = getattr(self, column.name)
         return d
 
@@ -177,3 +177,21 @@ class ExampleModel(BaseModel):
         query_res = self.getUserLeaderByTid(tid, n, offset, min_cnt, downstream=True) \
                 .filter(Round.rid == rid)
         return query_res.limit(n).offset(n * offset), util.get_query_count(query_res)
+
+    def getByTid(self, tid):
+        try:
+            return self.dbs.query(Example) \
+                    .join(Context, Example.cid == Context.id) \
+                    .join(Round, Context.r_realid == Round.id) \
+                    .filter(Round.tid == tid).all()
+        except db.orm.exc.NoResultFound:
+            return False
+    def getByTidAndRid(self, tid, rid):
+        try:
+            return self.dbs.query(Example) \
+                    .join(Context, Example.cid == Context.id) \
+                    .join(Round, Context.r_realid == Round.id) \
+                    .filter(Round.tid == tid).filter(Round.rid == rid).all()
+        except db.orm.exc.NoResultFound:
+            return False
+

@@ -1,4 +1,5 @@
 import decode from "jwt-decode";
+import * as download from 'downloadjs';
 
 function delay(t, v) {
   return new Promise(function (resolve) {
@@ -218,6 +219,20 @@ export default class ApiService {
       },
       false
     );
+  }
+
+  exportData(tid, rid = null) {
+    var export_link = `${this.domain}/tasks/${tid}`;
+    if (rid !== null) {
+      export_link += `/rounds/${rid}`;
+    }
+    export_link += '/export';
+    return this.fetch(export_link, {
+      method: "GET",
+    }).then((res) => {
+      res = JSON.stringify(res);
+      return download(res, "export.json", "text/json");
+    });
   }
 
   explainExample(id, type, explanation, uid = null) {

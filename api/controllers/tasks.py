@@ -1,5 +1,6 @@
 import bottle
 
+import common.auth as _auth
 import common.helpers as util
 
 from models.task import TaskModel
@@ -64,6 +65,28 @@ def get_leaderboard_by_task_and_round(tid, rid):
     except Exception as ex:
         logging.exception('User leader board data loading failed: (%s)' % (ex))
         bottle.abort(400, 'Invalid task/round detail')
+
+@bottle.get('/tasks/<tid:int>/rounds/<rid:int>/export')
+@_auth.requires_auth
+def export_current_round_data(credentials, tid, rid):
+    t = TaskModel()
+    task = t.get(tid)
+    if task.owner_uid != credentials['id']:
+        bottle.abort(403, 'Access denied')
+    e = ExampleModel()
+    examples = e.getByTidAndRid(tid, rid)
+    return util.json_encode([e.to_dict() for e in examples])
+
+@bottle.get('/tasks/<tid:int>/export')
+@_auth.requires_auth
+def export_task_data(credentials, tid):
+    t = TaskModel()
+    task = t.get(tid)
+    if task.owner_uid != credentials['id']:
+        bottle.abort(403, 'Access denied')
+    e = ExampleModel()
+    examples = e.getByTid(tid)
+    return util.json_encode([e.to_dict() for e in examples])
 
 def construct_user_board_response_json(query_result, total_count=0):
     list_objs = []

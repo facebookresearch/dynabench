@@ -14,6 +14,9 @@ class Task(Base):
     # Task type is either 'clf' or 'extract' for now
     type = db.Column(db.String(length=255), nullable=False, default='clf')
 
+    owner_uid = db.Column(db.Integer)
+    owner_str = db.Column(db.Text)
+
     desc = db.Column(db.String(length=255))
     longdesc = db.Column(db.Text)
     targets = db.Column(db.Text) # ordered list of target labels

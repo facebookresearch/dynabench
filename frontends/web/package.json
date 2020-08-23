@@ -8,6 +8,7 @@
     "@testing-library/user-event": "^7.2.1",
     "bootstrap": "^4.5.0",
     "css-loader": "^3.6.0",
+    "downloadjs": "^1.4.7",
     "formik": "^2.1.4",
     "jwt-decode": "^2.2.0",
     "mephisto-task": "^1.0.10",

@@ -10,6 +10,8 @@ import {
   Tooltip,
   OverlayTrigger,
   Pagination,
+  DropdownButton,
+  Dropdown
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import UserContext from "./UserContext";
@@ -192,7 +194,6 @@ class RoundDescription extends React.Component {
   getRoundInfo() {
     this.props.api.getTaskRound(this.props.task_id, this.props.round_id)
       .then((result) => {
-        console.log(result);
         this.setState({ round: result });
       }, (error) => {
         console.log(error);
@@ -224,6 +225,9 @@ class TaskPage extends React.Component {
       isEndOfUserLeaderPage: true,
       pageLimit: 5,
     };
+
+    this.exportAllTaskData = this.exportAllTaskData.bind(this);
+    this.exportCurrentRoundData = this.exportCurrentRoundData.bind(this);
   }
   componentDidMount() {
     this.refreshData();
@@ -245,13 +249,20 @@ class TaskPage extends React.Component {
         displayRoundId: this.props.location.hash.slice(1),
       },
       () => {
-        console.log(this.state);
         this.fetchTask();
         this.fetchOverallModelLeaderboard(this.state.modelLeaderBoardPage);
         this.fetchOverallUserLeaderboard(this.state.userLeaderBoardPage);
         if (this.props.location.hash === "#overall") this.fetchTrend();
       }
     );
+  }
+
+  exportAllTaskData() {
+    return this.context.api.exportData(this.state.task.id);
+  }
+
+  exportCurrentRoundData() {
+    return this.context.api.exportData(this.state.task.id, this.state.task.cur_round);
   }
 
   fetchTask() {
@@ -454,6 +465,14 @@ class TaskPage extends React.Component {
                     </OverlayTrigger>
                   </Nav.Item>
                 ) : null}
+                {this.context.user.id === this.state.task.owner_uid ?
+                  <Nav.Item className="task-action-btn">
+                    <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" id="dropdown-basic-button" title="Admin">
+                      <Dropdown.Item onClick={this.exportCurrentRoundData}>Export current round</Dropdown.Item>
+                      <Dropdown.Item onClick={this.exportAllTaskData}>Export all</Dropdown.Item>
+                    </DropdownButton>
+                  </Nav.Item>
+                  : null}
               </Nav>
             ) :
             <Row>

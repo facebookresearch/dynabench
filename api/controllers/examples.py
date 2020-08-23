@@ -12,11 +12,14 @@ import logging
 from datetime import datetime
 
 @bottle.get('/examples/<eid:int>')
-def get_example(eid):
+@_auth.requires_auth
+def get_example(credentials, eid):
     em = ExampleModel()
     example = em.get(eid)
     if not example:
         bottle.abort(404, 'Not found')
+    if example.uid != credentials['uid']:
+        bottle.abort(403, 'Access denied')
     return util.json_encode(example.to_dict())
 
 @bottle.put('/examples/<eid:int>')
