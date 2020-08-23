@@ -429,7 +429,7 @@ class TaskPage extends React.Component {
                       className="border-0 blue-color font-weight-bold light-gray-bg"
                       to={"/tasks/" + this.state.taskId + "/create"}
                     >
-                      Create
+                      Create Examples
                     </Button>
                   </OverlayTrigger>
                 </Nav.Item>
@@ -444,7 +444,7 @@ class TaskPage extends React.Component {
                       className="border-0 blue-color font-weight-bold light-gray-bg"
                       to={"/tasks/" + this.state.taskId + "/verify"}
                     >
-                      Verify
+                      Validate Examples
                     </Button>
                   </OverlayTrigger>
                 </Nav.Item> */}
@@ -460,7 +460,7 @@ class TaskPage extends React.Component {
                         className="border-0 blue-color font-weight-bold light-gray-bg"
                         to={"/tasks/" + this.state.taskId + "/submit"}
                       >
-                        Submit
+                        Submit Predictions
                       </Button>
                     </OverlayTrigger>
                   </Nav.Item>
