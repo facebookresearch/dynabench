@@ -56,7 +56,7 @@ class ContextInfo extends React.Component {
       </>
     ) : (
       <>
-        <div className="mb-1 p-3 light-gray-bg">{this.props.text}</div>
+        <div className="mb-1 p-3 light-gray-bg">{this.props.text.replace("<br>", "\n")}</div>
         <p className="mt-3 px-3">
           Your goal: enter a{" "}
           <strong>{this.props.targets[this.props.curTarget]}</strong> statement
