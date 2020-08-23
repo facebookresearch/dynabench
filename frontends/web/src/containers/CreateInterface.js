@@ -255,7 +255,7 @@ class ResponseInfo extends React.Component {
         <input type="text" style={{width: 100+'%'}} placeholder="Explain why you think the model made a mistake"
           data-index={this.props.index} data-type="model" onBlur={this.explainExample} />
         </div>
-        {(this.props.taskName == "Hate Speech" || this.props.taskName == "Sentiment") ?
+        {(this.props.taskName !== "NLI") ?
         <div>
           Want more insight? You can{" "}
           <a
@@ -323,7 +323,7 @@ class ResponseInfo extends React.Component {
             Flag this example for review
           </a>.
         </div>
-        {(this.props.taskName == "Hate Speech" || this.props.taskName == "Sentiment") ?
+        {(this.props.taskName !== "NLI") ?
         <div>
           Want more insight? You can{" "}
           <a

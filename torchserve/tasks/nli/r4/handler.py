@@ -89,9 +89,13 @@ class NliTransformerHandler(BaseHandler):
         check_fields(body, attribute_list)
         if "insight" not in body:
             body["insight"] = False
+        if "target" not in body:
+            body["target"] = 0
 
         context = body["context"]
         hypothesis = body["hypothesis"]
+        insight = body["insight"]
+        target = body["target"]
 
         padding_token_value = self.tokenizer.convert_tokens_to_ids([self.tokenizer.pad_token])[0]
         padding_segement_value = self.model_class_item["padding_segement_value"]
@@ -122,7 +126,14 @@ class NliTransformerHandler(BaseHandler):
                 batching_schema, \
                 batch_size_per_gpu_eval)
 
-        return d_dataloader
+        return d_dataloader, insight, target
+
+    def inspect(self, d_dataloader, target):
+        # TODO: TBD
+        # Easiest way to handle this is probably to defer to the model, so
+        # if we can define a inspect_model() in the ANLI codebase that returns
+        # the Captum scores, we're good
+        pass
 
     def inference(self, d_dataloader):
         result = eval_model(self.model, d_dataloader, -1, self.args)
@@ -171,11 +182,14 @@ def handle(data, context):
 
         if data is None:
             return None
-        dl = _service.preprocess(data)
-        output = _service.inference(dl)
-        response = _service.postprocess(output, data)
-        logger.info(response)
+        dl, insight, target = _service.preprocess(data)
+        if not insight:
+            output = _service.inference(dl)
+            response = _service.postprocess(output, data)
+        else:
+            response = _service.inspect(dl, target)
 
+        logger.info(response)
         return response
     except AttributeError as e:
         raise e

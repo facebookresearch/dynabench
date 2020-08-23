@@ -215,11 +215,11 @@ def get_insights(example, tokenizer, device, lig, model):
     attributions_start, delta_start = lig.attribute(inputs=input_ids,
                                   baselines=ref_input_ids,
                                   additional_forward_args=(attention_mask, 0, model),
-                                  return_convergence_delta=True)
+                                  return_convergence_delta=True, n_steps=20)
 
     attributions_end, delta_end = lig.attribute(inputs=input_ids, baselines=ref_input_ids,
                                 additional_forward_args=(attention_mask, 1, model),
-                                return_convergence_delta=True)
+                                return_convergence_delta=True, n_steps=20)
 
     attributions_start_sum = summarize_attributions(attributions_start)
     attributions_end_sum = summarize_attributions(attributions_end)

@@ -241,7 +241,7 @@ def handle(data, context):
         input_text = _service.preprocess(data)
         output = _service.inference(input_text)
         response = _service.postprocess(output, input_text)
-        print(response)
+        #print(response)
 
         return response
     except AttributeError as e:
