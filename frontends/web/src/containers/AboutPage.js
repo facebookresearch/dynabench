@@ -190,7 +190,8 @@ const AboutPage = () => (
           Won't this lead to unnatural distributions and distributional shift?
         </h2>
         <p>
-          It probably will. Another risk is catastrophic forgetting or cyclical
+          It probably will, if we use collected data for training (it could also only be used
+          for evaluation). Another risk is catastrophic forgetting or cyclical
           "progress", where improved models forget things that were relevant in
           an earlier round. Research is required in trying to understand these
           shifts better, in characterizing how it might impact learning and in

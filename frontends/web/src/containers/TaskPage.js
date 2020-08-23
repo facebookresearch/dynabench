@@ -466,8 +466,8 @@ class TaskPage extends React.Component {
                   </Nav.Item>
                 ) : null}
                 {this.context.user.id === this.state.task.owner_uid ?
-                  <Nav.Item className="task-action-btn">
-                    <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" id="dropdown-basic-button" title="Admin">
+                  <Nav.Item className="task-action-btn ml-auto">
+                    <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" id="dropdown-basic-button" title="Export">
                       <Dropdown.Item onClick={this.exportCurrentRoundData}>Export current round</Dropdown.Item>
                       <Dropdown.Item onClick={this.exportAllTaskData}>Export all</Dropdown.Item>
                     </DropdownButton>
