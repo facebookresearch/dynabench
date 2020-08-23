@@ -1,5 +1,9 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 """
-This is a util script called from the ml-deploy.py to create a torchscript model from the .bin file. 
+This is a util script called from the ml-deploy.py to create a torchscript model from the .bin file.
 """
 
 from pathlib import Path
@@ -58,7 +62,7 @@ def transformers_model_dowloader(mode, pretrained_model_name, num_labels, do_low
         logger.info("Inputs after encode_plus: '%s'", inputs)
         input_ids= inputs["input_ids"].to(device)
         attention_mask = inputs['attention_mask'].to(device)
-    
+
         model.to(device).eval()
         with torch.jit.optimized_execution(True):
             traced_model = torch.jit.trace(model, (input_ids, attention_mask))

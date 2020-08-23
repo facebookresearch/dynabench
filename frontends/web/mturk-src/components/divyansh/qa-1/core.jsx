@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import React from "react";
 import {Row, Container, Button } from 'react-bootstrap';
 
@@ -70,26 +76,26 @@ class DivyanshQATaskMain extends React.Component {
   }
   render() {
     if (this.props.mephistoWorkerId % 2 == 0) {
-      return 
+      return
 	<>
           <Container>
           <Row>
           <Button className="btn" onClick={this.showInstructions}>{this.state.showInstructions ? "Hide" : "Show" } instructions </Button>
           </Row>
           {this.state.showInstructions && <Row> <TaskModelInstructions /> </Row>}
-          </Container> 
+          </Container>
           <CreateInterface api={this.api} {...this.props} />
 	</>;
     }
     else {
-      return 
+      return
 	<>
           <Container>
-          <Row> 
+          <Row>
           <Button className="btn" onClick={this.showInstructions}>{this.state.showInstructions ? "Hide" : "Show" } instructions </Button>
           </Row>
           {this.state.showInstructions && <Row> <TaskNoModelInstructions /> </Row>}
-          </Container> 
+          </Container>
           <CreateInterfaceNoModel api={this.api} {...this.props} />
 	</>;
     }
