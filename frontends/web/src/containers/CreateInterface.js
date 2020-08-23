@@ -648,7 +648,7 @@ class CreateInterface extends React.Component {
                 placeholder={
                   this.state.task.type == "extract"
                     ? "Enter question.."
-                    : "Enter hypothesis.."
+                    : (this.state.task.shortname == "NLI" ? "Enter hypothesis.." : "Enter statement..")
                 }
                 value={this.state.hypothesis}
                 onChange={this.handleResponseChange}
