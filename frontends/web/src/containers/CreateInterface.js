@@ -14,12 +14,15 @@ import {
   FormControl,
   InputGroup,
   DropdownButton,
-  Dropdown
+  Dropdown,
+  OverlayTrigger,
+  Tooltip
 } from "react-bootstrap";
 import UserContext from "./UserContext";
 import { TokenAnnotator } from "react-text-annotate";
 import { PieRechart } from "../components/Rechart";
 import { formatWordImportances } from "../utils/color";
+import BootstrapSwitchButton from 'bootstrap-switch-button-react'
 
 const Explainer = (props) => (
   <div className="mt-4 mb-5 pt-3">
@@ -242,27 +245,29 @@ class ResponseInfo extends React.Component {
           instead.{" "}
         </span>
         <br />
-        <div>
-          Made a mistake? You can still{" "}
-          <a
-            href="#"
-            data-index={this.props.index}
-            onClick={this.retractExample}
-            className="btn-link"
-          >
-            retract this example
-          </a>{" "}
-          if you think your label is wrong. Otherwise, we will have it verified. Optionally:{" "}
-        </div>
-        <div>
-        <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
-          "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is correct"}
-          data-index={this.props.index} data-type="example" onBlur={this.explainExample} />
-        </div>
-        <div>
-        <input type="text" style={{width: 100+'%'}} placeholder="Explain why you think the model made a mistake"
-          data-index={this.props.index} data-type="model" onBlur={this.explainExample} />
-        </div>
+        {this.state.livemode ? <>
+          <div>
+            Made a mistake? You can still{" "}
+            <a
+              href="#"
+              data-index={this.props.index}
+              onClick={this.retractExample}
+              className="btn-link"
+            >
+              retract this example
+            </a>{" "}
+            if you think your label is wrong. Otherwise, we will have it verified. Optionally:{" "}
+          </div>
+          <div>
+          <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
+            "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is correct"}
+            data-index={this.props.index} data-type="example" onBlur={this.explainExample} />
+          </div>
+          <div>
+          <input type="text" style={{width: 100+'%'}} placeholder="Explain why you think the model made a mistake"
+            data-index={this.props.index} data-type="model" onBlur={this.explainExample} />
+          </div>
+        </> : <div>This example was not stored because you are in sandbox mode.</div>}
         {(this.props.taskName !== "NLI") ?
         <div>
           Want more insight? You can{" "}
@@ -306,31 +311,33 @@ class ResponseInfo extends React.Component {
           <strong>Bad luck!</strong> The model correctly predicted{" "}
           <strong>{this.props.obj.modelPredStr}</strong>. Try again.
         </span>
-        <div>
-          We will still store this as an example that the model got
-          right.
-          You can{" "}
-          <a
-            href="#"
-            data-index={this.props.index}
-            onClick={this.retractExample}
-            className="btn-link"
-          >
-            retract this example
-          </a>{" "}
-          if you made a mistake.
-        </div>
-        <div>
-          Something wrong?{" "}
-          <a
-            href="#"
-            data-index={this.props.index}
-            onClick={this.flagExample}
-            className="btn-link"
-          >
-            Flag this example for review
-          </a>.
-        </div>
+        {this.state.livemode ? <>
+          <div>
+            We will still store this as an example that the model got
+            right.
+            You can{" "}
+            <a
+              href="#"
+              data-index={this.props.index}
+              onClick={this.retractExample}
+              className="btn-link"
+            >
+              retract this example
+            </a>{" "}
+            if you made a mistake.
+          </div>
+          <div>
+            Something wrong?{" "}
+            <a
+              href="#"
+              data-index={this.props.index}
+              onClick={this.flagExample}
+              className="btn-link"
+            >
+              Flag this example for review
+            </a>.
+          </div>
+        </> : <div>This example was not stored because you are in sandbox mode.</div> }
         {(this.props.taskName !== "NLI") ?
         <div>
           Want more insight? You can{" "}
@@ -401,6 +408,7 @@ class CreateInterface extends React.Component {
       modelPredStr: "",
       hypothesis: "",
       content: [],
+      livemode: true,
       submitDisabled: true,
       refreshDisabled: true,
       mapKeyToExampleId: {},
@@ -541,6 +549,14 @@ class CreateInterface extends React.Component {
               ],
             },
             function () {
+              if (!this.state.livemode) {
+                // We are in sandbox
+                this.setState({
+                  submitDisabled: false,
+                  refreshDisabled: false,
+                });
+                return;
+              }
               const metadata = {'model': randomModel}
               this.context.api
                 .storeExample(
@@ -668,15 +684,34 @@ class CreateInterface extends React.Component {
       roundNavs.push(
         <Dropdown.Item key={i} index={i} onClick={this.updateSelectedRound} active={active}>Round {i}{cur}</Dropdown.Item>
       );
+      if (i == this.state.task.cur_round) {
+        roundNavs.push(
+          <Dropdown.Divider key={'div'+i} />
+        );
+      }
+    }
+
+    function renderTooltip(props, text) {
+      return (
+        <Tooltip id="button-tooltip" {...props}>
+          {text}
+        </Tooltip>
+      );
+    }
+    function renderSandboxTooltip(props) {
+      return renderTooltip(props, "Just playing? Switch to sandbox mode.");
+    }
+    function renderSwitchRoundTooltip(props) {
+      return renderTooltip(props, "Switch to other rounds of this task, including no longer active ones.");
+    }
+    function renderSwitchContextTooltip(props) {
+      return renderTooltip(props, "Don't like this context? Try another one.");
     }
 
     return (
       <Container className="mb-5 pb-5">
         <Col className="m-auto" lg={9}>
           <Explainer taskName={this.state.task.name} />
-          {(this.state.task.cur_round !== this.state.task.selected_round) ?
-            <p style={{'color': 'red'}}>WARNING: You are talking to an outdated model for a round that is no longer active. Examples you generate may be less useful.</p>
-          : ''}
           <Card className="profile-card overflow-hidden">
             <Card.Body className="overflow-auto" style={{ height: 400 }}>
               {content}
@@ -694,18 +729,51 @@ class CreateInterface extends React.Component {
               />
             </InputGroup>
             <InputGroup className="d-flex justify-content-end p-3">
-              {this.state.task.cur_round > 1 ?
-              <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" style={{marginRight: 10}} id="dropdown-basic-button" title="Switch Round">
-                {roundNavs}
-              </DropdownButton>
-                : null}
-              <Button
-                className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"
-                onClick={this.getNewContext}
-                disabled={this.state.refreshDisabled}
+              <OverlayTrigger
+                placement="bottom"
+                delay={{ show: 250, hide: 400 }}
+                overlay={renderSandboxTooltip}
               >
-                Switch to next context
-              </Button>
+                <span style={{marginRight: 10}}>
+                  <BootstrapSwitchButton
+                    checked={this.state.livemode}
+                    onlabel='Live Mode'
+                    onstyle='primary'
+                    offstyle='warning'
+                    offlabel='Sandbox'
+                    width={120}
+                    onChange={(checked: boolean) => {
+                      this.setState({ livemode: checked });
+                    }}
+                  />
+                </span>
+              </OverlayTrigger>
+
+              {this.state.task.cur_round > 1 ?
+              <OverlayTrigger
+                placement="bottom"
+                delay={{ show: 250, hide: 400 }}
+                overlay={renderSwitchRoundTooltip}
+              >
+                <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" style={{marginRight: 10}} id="dropdown-basic-button" title="Switch Round">
+                  {roundNavs}
+                </DropdownButton>
+              </OverlayTrigger>
+                : null}
+              <OverlayTrigger
+                placement="bottom"
+                delay={{ show: 250, hide: 400 }}
+                overlay={renderSwitchContextTooltip}
+              >
+
+                <Button
+                  className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"
+                  onClick={this.getNewContext}
+                  disabled={this.state.refreshDisabled}
+                >
+                  Switch to next context
+                </Button>
+              </OverlayTrigger>
               <Button
                 className="font-weight-bold blue-bg border-0 task-action-btn"
                 onClick={this.handleResponse}
@@ -720,6 +788,13 @@ class CreateInterface extends React.Component {
               </Button>
             </InputGroup>
             <div className="p-2">
+              {(this.state.task.cur_round !== this.state.task.selected_round) ?
+                <p style={{'color': 'red'}}>WARNING: You are talking to an outdated model for a round that is no longer active. Examples you generate may be less useful.</p>
+              : ''}
+              {!this.state.livemode ?
+                <p style={{'color': 'red'}}>WARNING: You are in "just playing" sandbox mode. Your examples are not saved!!</p>
+              : ''}
+
               {this.state.answerNotSelected === true
                 ? "*Please select an answer in the context"
                 : null}
