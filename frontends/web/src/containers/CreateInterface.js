@@ -37,46 +37,46 @@ const Explainer = (props) => (
   </div>
 );
 
-class ContextInfo extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-  render() {
-    const otherTargets = []
-    for (const [index, value] of this.props.targets.entries()) {
-      if (this.props.curTarget === index) continue;
-      otherTargets.push(value)
-    }
-    const otherTargetStr = otherTargets.join(" or ");
-    return this.props.taskType == "extract" ? (
-      <>
-        <TokenAnnotator
-          className="mb-1 p-3 light-gray-bg"
-          tokens={this.props.text.split(/\b/)}
-          value={this.props.answer}
-          onChange={this.props.updateAnswer}
-          getSpan={(span) => ({
-            ...span,
-            tag: "ANS",
-          })}
-        />
-        <p className="mt-3 px-3">
-          Your goal: enter a question and select an answer in the context, such
-          that the model is fooled.
-        </p>
-      </>
-    ) : (
-      <>
-        <div className="mb-1 p-3 light-gray-bg">{this.props.text.replace("<br>", "\n")}</div>
-        <p className="mt-3 px-3">
-          Your goal: enter a{" "}
-          <strong>{this.props.targets[this.props.curTarget]}</strong> statement
-          that fools the model into predicting {otherTargetStr}.
-        </p>
-      </>
-    );
-  }
+function ContextInfo({ taskType, text, answer, updateAnswer }) {
+  return taskType == "extract" ? (
+    <TokenAnnotator
+      className="mb-1 p-3 light-gray-bg"
+      tokens={text.split(/\b/)}
+      value={answer}
+      onChange={updateAnswer}
+      getSpan={(span) => ({
+        ...span,
+        tag: "ANS",
+      })}
+    />
+  ) : (
+    <div className="mb-1 p-3 light-gray-bg">
+      <h6 className="text-uppercase dark-blue-color spaced-header">Context:</h6>
+      {text.replace("<br>", "\n")}
+    </div>
+  );
 }
+
+const GoalMessage = ({ targets = [], curTarget, taskType }) => {
+  const otherTargets = targets.filter((_, index) => index !== curTarget);
+  const otherTargetStr = otherTargets.join(" or ");
+
+  const vowels = ["a", "e", "i", "o", "u"];
+  const indefiniteArticle = targets[curTarget] && vowels.indexOf(targets[curTarget][0]) >= 0 ? "an" : "a";
+
+  return (
+    <p className="mt-3 p-3 light-green-bg rounded">
+      <i class="fas fa-flag-checkered"></i>{" "}
+      {
+        taskType === "extract"
+          ? <span>Your goal: enter a question and select an answer in the context, such that
+      the model is fooled.</span>
+          : <span>Your goal: enter {indefiniteArticle} <strong>{targets[curTarget]}</strong> statement that
+      fools the model into predicting {otherTargetStr}.</span>
+      }
+    </p>
+  );
+};
 
 const TextFeature = ({ data, curTarget, targets }) => {
   const capitalize = (s) => {
@@ -712,13 +712,18 @@ class CreateInterface extends React.Component {
       <Container className="mb-5 pb-5">
         <Col className="m-auto" lg={9}>
           <Explainer taskName={this.state.task.name} />
+          <GoalMessage
+            targets={this.state.task.targets}
+            curTarget={this.state.target}
+            taskType={this.state.task.type}
+          />
           <Card className="profile-card overflow-hidden">
             <Card.Body className="overflow-auto" style={{ height: 400 }}>
               {content}
             </Card.Body>
             <InputGroup>
               <FormControl
-                className="border-left-0 border-right-0 rounded-0 p-3 h-auto"
+                className="m-3 p-3 rounded-1 thick-border h-auto light-gray-bg"
                 placeholder={
                   this.state.task.type == "extract"
                     ? "Enter question.."

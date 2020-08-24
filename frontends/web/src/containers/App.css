@@ -33,8 +33,16 @@
   background-color: #f0f2f5;
 }
 
+.light-green-bg {
+  background-color: #e9ffe8;
+}
+
 .blue-color {
   color: #1283d8;
+}
+
+.dark-blue-color {
+  color: #005798
 }
 
 .white-color {
@@ -151,15 +159,25 @@ div.recharts-wrapper
 }
 
 table.inspectModel {
-    width: 100%;
-    border: 1px solid #ddd;
-    margin-top: 20px;
+  width: 100%;
+  border: 1px solid #ddd;
+  margin-top: 20px;
 }
 
 table.inspectModel thead td {
-    background: #efefef;
+  background: #efefef;
 }
 
 table.inspectModel td {
   padding: 5px;
+}
+
+.spaced-header {
+  letter-spacing: 1px;
+  font-size: 0.75em;
+  font-weight: bold;
+}
+
+.thick-border {
+  border-width: 2px;
 }
