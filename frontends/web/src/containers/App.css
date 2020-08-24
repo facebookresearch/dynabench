@@ -183,6 +183,7 @@ table.inspectModel td {
 
 .thick-border {
   border-width: 2px;
+<<<<<<< HEAD
 }
 
 .response-warning {
@@ -200,3 +201,6 @@ table.inspectModel td {
   border-color: rgba(0,0,0,.125);
   color: inherit;
 }
+=======
+}
+>>>>>>> Move goal to top, add Context: label, change input field style
