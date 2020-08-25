@@ -643,8 +643,9 @@ class CreateInterface extends React.Component {
     }
   }
   render() {
-    const content = this.state.content.map((item, index) =>
-      item.cls == "context" ? (
+    const contextContent = this.state.content
+      .filter(item => item.cls === "context")
+      .map((item, index) => (
         <ContextInfo
           key={index}
           index={index}
@@ -656,7 +657,9 @@ class CreateInterface extends React.Component {
           answer={this.state.answer}
           updateAnswer={this.updateAnswer}
         />
-      ) : (
+      ));
+    const content = this.state.content.map((item, index) =>
+      item.cls === "context" ? undefined : (
         <ResponseInfo
           key={index}
           index={index}
@@ -671,7 +674,9 @@ class CreateInterface extends React.Component {
           content={this.state.content}
         />
       )
-    );
+    ).filter(item => item !== undefined);
+    // sentinel value of undefined filtered out after to preserve index values
+    
     const rounds = (this.state.task.round && this.state.task.cur_round) || 0;
     const roundNavs = [];
     for (let i = rounds; i > 0; i--) {
@@ -720,7 +725,8 @@ class CreateInterface extends React.Component {
             taskType={this.state.task.type}
           />
           <Card className="profile-card overflow-hidden">
-            <Card.Body className="overflow-auto" style={{ height: 400 }}>
+          {contextContent}
+            <Card.Body className="overflow-auto pt-2" style={{ height: 400 }}>
               {content}
             </Card.Body>
             <InputGroup>
