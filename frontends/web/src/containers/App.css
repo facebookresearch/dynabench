@@ -186,10 +186,6 @@ table.inspectModel td {
 }
 
 .response-warning {
-  background-color: #fffcf4;
-}
-
-.response-warning {
   background-color: #fff9eb;
   border: 1px solid #fbe5c8;
 }
