@@ -16,7 +16,8 @@ import {
   DropdownButton,
   Dropdown,
   OverlayTrigger,
-  Tooltip
+  Tooltip,
+  Spinner
 } from "react-bootstrap";
 import UserContext from "./UserContext";
 import { TokenAnnotator } from "react-text-annotate";
@@ -222,7 +223,7 @@ class ResponseInfo extends React.Component {
     const selectedAnswer = this.props.taskType != "extract" ? "" : (
       this.props.answer && this.props.answer.length ? this.props.answer[this.props.answer.length - 1].tokens.join("") : ""
     );
-    var classNames = this.props.obj.cls + " rounded border m-3 p-3";
+    var classNames = this.props.obj.cls + " rounded border m-3";
     var userFeedback = null;
     if (this.props.obj.retracted) {
       classNames += " response-warning";
@@ -246,37 +247,94 @@ class ResponseInfo extends React.Component {
       }
 
       userFeedback = <>
+        <div>Model prediction: <strong>{this.props.obj.modelPredStr}</strong></div>
         {this.props.obj.fooled
           ? <span>
-              <strong>Well done!</strong> You fooled the model. The model
-                predicted <strong>{this.props.obj.modelPredStr}</strong>{" "}
-                instead.
+              <strong>Well done!</strong> You fooled the model.
             </span>
           : <span>
-              <strong>Bad luck!</strong> The model correctly predicted{" "}
-              <strong>{this.props.obj.modelPredStr}</strong>. Try again.
+              <strong>Try again!</strong> The model wasn't fooled.
             </span> 
         }
         {!this.state.livemode
           ? <div>This example was not stored because you are in sandbox mode.</div>
-          : <div>
+          : this.props.obj.fooled
+            ? null
+            : <div className="mt-3">
               We will still store this as an example that the model got
               right.
-
-              <div class="btn-group" role="group" aria-label="response actions">
+            </div>
+        }
+        <div className="mb-3">
+          {this.state.inspectError ? (
+            <span style={{ color: "#e65959" }}>
+              *Unable to fetch results. Please try again after sometime.
+            </span>
+          ) : null}
+          {this.props.obj.inspect &&
+            this.props.obj.inspect.map((inspectData, idx) => {
+              return (
+                <TextFeature
+                  key={idx}
+                  data={inspectData}
+                  curTarget={this.props.curTarget}
+                  targets={this.props.targets}
+                />
+              );
+            })}
+        </div>
+      </>;
+    } 
+    return (
+      <Card
+        className={classNames}
+        style={{ minHeight: 120 }}
+      >
+        <Card.Body className="p-3">
+          <Row>
+            <Col xs={12} md={7}>
+              <div className="mb-3">{this.props.obj.text}</div>
+              <small>
+                {userFeedback}
+              </small>
+            </Col>
+            <Col xs={12} md={5}>
+              <PieRechart
+                data={this.props.obj.response.prob}
+                labels={this.props.targets}
+              />
+            </Col>
+          </Row>
+        </Card.Body>
+        {this.props.obj.retracted || this.props.obj.flagged
+          ? null
+          : <Card.Footer>
+            { <div class="btn-group" role="group" aria-label="response actions">
                 <OverlayTrigger
                   placement="top"
                   delay={{ show: 250, hide: 400 }}
                   overlay={(props) => <Tooltip {...props}>If you made a mistake, you can retract this entry from the dataset.</Tooltip>}
                 >
-                  <button data-index={this.props.index} onClick={this.retractExample} type="button" class="btn btn-outline-dark btn-sm">Retract example</button>
+                  <button
+                    data-index={this.props.index}
+                    onClick={this.retractExample}
+                    type="button"
+                    class="btn btn-light btn-sm">
+                      <i className="fas fa-undo-alt"></i> Retract
+                  </button>
                 </OverlayTrigger>
                 <OverlayTrigger
                   placement="top"
                   delay={{ show: 250, hide: 400 }}
                   overlay={(props) => <Tooltip {...props}>Something doesn't look right? Have someone look over this example.</Tooltip>}
                 >
-                  <button data-index={this.props.index} onClick={this.flagExample} type="button" class="btn btn-outline-dark btn-sm">Flag for review</button>
+                  <button
+                    data-index={this.props.index}
+                    onClick={this.flagExample}
+                    type="button"
+                    class="btn btn-light btn-sm">
+                      <i className="fas fa-flag"></i> Flag
+                  </button>
                 </OverlayTrigger>
                 { this.props.taskName !== "NLI" ?
                   <OverlayTrigger
@@ -284,54 +342,25 @@ class ResponseInfo extends React.Component {
                     delay={{ show: 250, hide: 400 }}
                     overlay={(props) => <Tooltip {...props}>Want more insight into how this decision was made?</Tooltip>}
                   >
-                    <button data-index={this.props.index} onClick={this.inspectExample} type="button" class="btn btn-outline-dark btn-sm">Inspect model</button>
+                    <button
+                      data-index={this.props.index}
+                      onClick={this.inspectExample}
+                      type="button"
+                      class="btn btn-light btn-sm">
+                        <i className="fas fa-search"></i> Inspect
+                        {this.state.loader ? (
+                          <Spinner className="ml-2" animation="border" role="status" size="sm">
+                            <span className="sr-only">Loading...</span>
+                          </Spinner>
+                        ) : null}
+                    </button>
                   </OverlayTrigger>
                   : null
                 }
               </div>
-            </div>
-        }
-        {this.state.loader ? (
-          <img src="/loader.gif" className="loader" />
-        ) : null}
-        {this.state.inspectError ? (
-          <span style={{ color: "#e65959" }}>
-            *Unable to fetch results. Please try again after sometime.
-          </span>
-        ) : null}
-        {this.props.obj.inspect &&
-          this.props.obj.inspect.map((inspectData, idx) => {
-            return (
-              <TextFeature
-                key={idx}
-                data={inspectData}
-                curTarget={this.props.curTarget}
-                targets={this.props.targets}
-              />
-            );
-          })}
-      </>;
-    } 
-    return (
-      <div
-        className={classNames}
-        style={{ minHeight: 120 }}
-      >
-        <Row>
-          <Col xs={12} md={7}>
-            <div className="mb-3">{this.props.obj.text}</div>
-            <small>
-              {userFeedback}
-            </small>
-          </Col>
-          <Col xs={12} md={5}>
-            <PieRechart
-              data={this.props.obj.response.prob}
-              labels={this.props.targets}
-            />
-          </Col>
-        </Row>
-      </div>
+            }
+        </Card.Footer>}
+      </Card>
     );
   }
 }

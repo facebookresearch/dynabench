@@ -101,7 +101,6 @@
 
 .hypothesis {
   margin-bottom: 4px;
-  padding: 10px;
 }
 
 .flagged {
@@ -183,11 +182,17 @@ table.inspectModel td {
 }
 
 .response-warning {
-  background-color: #fff9eb;
+  background-color: #fffcf4;
   border: 1px solid #fbe5c8;
 }
 
 .response-danger {
   background-color: #ffeff2;
   border: 1px solid #ffe5e7;
+}
+
+.card-footer .btn-light {
+  background-color: #f8f9fa85;
+  border-color: rgba(0,0,0,.125);
+  color: inherit;
 }
