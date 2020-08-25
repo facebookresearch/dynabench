@@ -118,6 +118,7 @@ class ResponseInfo extends React.Component {
     this.state = {
       loader: true,
       inspectError: false,
+      livemode: this.props.livemode
     };
   }
   componentDidMount() {
@@ -664,6 +665,7 @@ class CreateInterface extends React.Component {
           taskType={this.state.task.type}
           taskName={this.state.task.shortname}
           answer={this.state.answer}
+          livemode={this.state.livemode}
           obj={item}
           mapKeyToExampleId={this.state.mapKeyToExampleId}
           content={this.state.content}
