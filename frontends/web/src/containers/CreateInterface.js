@@ -67,11 +67,7 @@ const GoalMessage = ({ targets = [], curTarget, taskType }) => {
 
   return (
     <p className="mt-3 p-3 light-green-bg rounded">
-<<<<<<< HEAD
       <i className="fas fa-flag-checkered"></i>{" "}
-=======
-      <i class="fas fa-flag-checkered"></i>{" "}
->>>>>>> Move goal to top, add Context: label, change input field style
       {
         taskType === "extract"
           ? <span>Your goal: enter a question and select an answer in the context, such that
