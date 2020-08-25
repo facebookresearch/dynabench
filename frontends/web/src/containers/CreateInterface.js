@@ -727,7 +727,7 @@ class CreateInterface extends React.Component {
 
     return (
       <Container className="mb-5 pb-5">
-        <Col className="m-auto" lg={9}>
+        <Col className="m-auto" lg={12}>
           <Explainer taskName={this.state.task.name} />
           <GoalMessage
             targets={this.state.task.targets}
