@@ -237,126 +237,67 @@ class ResponseInfo extends React.Component {
         <strong>Example flagged</strong> - thanks. The model
         predicted <strong>{this.props.obj.modelPredStr}</strong>.
       </span>;
-    } else if (this.props.obj.fooled) {
-      classNames += " light-green-bg";
+    } else {
+
+      if (this.props.obj.fooled) {
+        classNames += " light-green-bg"
+      } else {
+        classNames += " response-warning"
+      }
+
       userFeedback = <>
-        <span>
-          <strong>Well done!</strong> You fooled the model. The model
-          predicted <strong>{this.props.obj.modelPredStr}</strong>{" "}
-          instead.{" "}
-        </span>
-        <br />
-        {this.state.livemode ? <>
-          <div>
-            Made a mistake? You can still{" "}
-            <a
-              href="#"
-              data-index={this.props.index}
-              onClick={this.retractExample}
-              className="btn-link"
-            >
-              retract this example
-            </a>{" "}
-            if you think your label is wrong. Otherwise, we will have it verified. Optionally:{" "}
-          </div>
-          <div>
-          <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
-            "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is correct"}
-            data-index={this.props.index} data-type="example" onBlur={this.explainExample} />
-          </div>
-          <div>
-          <input type="text" style={{width: 100+'%'}} placeholder="Explain why you think the model made a mistake"
-            data-index={this.props.index} data-type="model" onBlur={this.explainExample} />
-          </div>
-        </> : <div>This example was not stored because you are in sandbox mode.</div>}
-        {(this.props.taskName !== "NLI") ?
-        <div>
-          Want more insight? You can{" "}
-          <a
-            href="#"
-            data-index={this.props.index}
-            onClick={this.inspectExample}
-            className="btn-link"
-          >
-            inspect the model
-          </a>
-          .
-        </div>
-          :
-        <></>
+        {this.props.obj.fooled
+          ? <span>
+              <strong>Well done!</strong> You fooled the model. The model
+                predicted <strong>{this.props.obj.modelPredStr}</strong>{" "}
+                instead.
+            </span>
+          : <span>
+              <strong>Bad luck!</strong> The model correctly predicted{" "}
+              <strong>{this.props.obj.modelPredStr}</strong>. Try again.
+            </span> 
+        }
+        {!this.state.livemode
+          ? <div>This example was not stored because you are in sandbox mode.</div>
+          : <div>
+              We will still store this as an example that the model got
+              right.
+
+              <div class="btn-group" role="group" aria-label="response actions">
+                <OverlayTrigger
+                  placement="top"
+                  delay={{ show: 250, hide: 400 }}
+                  overlay={(props) => <Tooltip {...props}>If you made a mistake, you can retract this entry from the dataset.</Tooltip>}
+                >
+                  <button data-index={this.props.index} onClick={this.retractExample} type="button" class="btn btn-outline-dark btn-sm">Retract example</button>
+                </OverlayTrigger>
+                <OverlayTrigger
+                  placement="top"
+                  delay={{ show: 250, hide: 400 }}
+                  overlay={(props) => <Tooltip {...props}>Something doesn't look right? Have someone look over this example.</Tooltip>}
+                >
+                  <button data-index={this.props.index} onClick={this.flagExample} type="button" class="btn btn-outline-dark btn-sm">Flag for review</button>
+                </OverlayTrigger>
+                { this.props.taskName !== "NLI" ?
+                  <OverlayTrigger
+                    placement="top"
+                    delay={{ show: 250, hide: 400 }}
+                    overlay={(props) => <Tooltip {...props}>Want more insight into how this decision was made?</Tooltip>}
+                  >
+                    <button data-index={this.props.index} onClick={this.inspectExample} type="button" class="btn btn-outline-dark btn-sm">Inspect model</button>
+                  </OverlayTrigger>
+                  : null
+                }
+              </div>
+            </div>
         }
         {this.state.loader ? (
           <img src="/loader.gif" className="loader" />
         ) : null}
-        {this.state.inspectError && (
+        {this.state.inspectError ? (
           <span style={{ color: "#e65959" }}>
             *Unable to fetch results. Please try again after sometime.
           </span>
-        )}
-        {this.props.obj.inspect &&
-          this.props.obj.inspect.map((inspectData, idx) => {
-            return (
-              <TextFeature
-                key={idx}
-                data={inspectData}
-                curTarget={this.props.curTarget}
-                targets={this.props.targets}
-              />
-            );
-          })}
-      </>;
-    } else {
-      classNames += " response-warning";
-      userFeedback = <>
-        <span>
-          <strong>Bad luck!</strong> The model correctly predicted{" "}
-          <strong>{this.props.obj.modelPredStr}</strong>. Try again.
-        </span>
-        {this.state.livemode ? <>
-          <div>
-            We will still store this as an example that the model got
-            right.
-            You can{" "}
-            <a
-              href="#"
-              data-index={this.props.index}
-              onClick={this.retractExample}
-              className="btn-link"
-            >
-              retract this example
-            </a>{" "}
-            if you made a mistake.
-          </div>
-          <div>
-            Something wrong?{" "}
-            <a
-              href="#"
-              data-index={this.props.index}
-              onClick={this.flagExample}
-              className="btn-link"
-            >
-              Flag this example for review
-            </a>.
-          </div>
-        </> : <div>This example was not stored because you are in sandbox mode.</div> }
-        {(this.props.taskName !== "NLI") ?
-        <div>
-          Want more insight? You can{" "}
-          <a
-            href="#"
-            data-index={this.props.index}
-            onClick={this.inspectExample}
-            className="btn-link"
-          >
-            inspect the model{" "}
-          </a>
-          .
-        </div>
-          :
-        <></>
-        }
-        {this.state.loader ? (
-          <img src="/loader.gif" className="loader" />
         ) : null}
         {this.props.obj.inspect &&
           this.props.obj.inspect.map((inspectData, idx) => {
@@ -370,7 +311,7 @@ class ResponseInfo extends React.Component {
             );
           })}
       </>;
-    }
+    } 
     return (
       <div
         className={classNames}
