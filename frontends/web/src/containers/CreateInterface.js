@@ -322,7 +322,7 @@ class ResponseInfo extends React.Component {
             })}
         </div>
       </>;
-    }
+    } 
     return (
       <Card
         className={classNames}
