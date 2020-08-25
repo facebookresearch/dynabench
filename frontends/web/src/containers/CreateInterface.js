@@ -419,6 +419,7 @@ class CreateInterface extends React.Component {
     this.handleResponseChange = this.handleResponseChange.bind(this);
     this.updateAnswer = this.updateAnswer.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
+    this.chatContainerRef = React.createRef();
   }
   getNewContext() {
     this.setState(
@@ -467,6 +468,14 @@ class CreateInterface extends React.Component {
     const model = models[Math.floor(Math.random() * models.length)];
     return model;
   };
+
+  scrollToBottom() {
+    setTimeout(() => {
+      if (this.chatContainerRef.current)
+        this.chatContainerRef.current.scrollTop =
+          this.chatContainerRef.current.scrollHeight;
+    }, 0);
+  }
 
   handleResponse() {
     this.setState({ submitDisabled: true, refreshDisabled: true }, () => {
@@ -550,6 +559,7 @@ class CreateInterface extends React.Component {
               ],
             },
             function () {
+              this.scrollToBottom();
               if (!this.state.livemode) {
                 // We are in sandbox
                 this.setState({
@@ -726,7 +736,7 @@ class CreateInterface extends React.Component {
           />
           <Card className="profile-card overflow-hidden">
           {contextContent}
-            <Card.Body className="overflow-auto pt-2" style={{ height: 400 }}>
+            <Card.Body className="overflow-auto pt-2" style={{ height: 400 }} ref={this.chatContainerRef}>
               {content}
             </Card.Body>
             <InputGroup>
@@ -755,7 +765,7 @@ class CreateInterface extends React.Component {
                     offstyle='warning'
                     offlabel='Sandbox'
                     width={120}
-                    onChange={(checked: boolean) => {
+                    onChange={(checked) => {
                       this.setState({ livemode: checked });
                     }}
                   />
