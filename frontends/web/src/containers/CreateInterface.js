@@ -702,7 +702,6 @@ class CreateInterface extends React.Component {
       )
     ).filter(item => item !== undefined);
     // sentinel value of undefined filtered out after to preserve index values
-
     const rounds = (this.state.task.round && this.state.task.cur_round) || 0;
     const roundNavs = [];
     for (let i = rounds; i > 0; i--) {
