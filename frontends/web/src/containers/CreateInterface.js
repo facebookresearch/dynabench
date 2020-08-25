@@ -420,6 +420,8 @@ class CreateInterface extends React.Component {
     this.updateAnswer = this.updateAnswer.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
     this.chatContainerRef = React.createRef();
+    this.bottomAnchorRef = React.createRef();
+
   }
   getNewContext() {
     this.setState(
@@ -469,12 +471,18 @@ class CreateInterface extends React.Component {
     return model;
   };
 
-  scrollToBottom() {
+  instantlyScrollToBottom() {
     setTimeout(() => {
       if (this.chatContainerRef.current)
         this.chatContainerRef.current.scrollTop =
           this.chatContainerRef.current.scrollHeight;
     }, 0);
+  }
+
+  smoothlyAnimateToBottom() {
+    if (this.bottomAnchorRef.current) {
+      this.bottomAnchorRef.current.scrollIntoView({ block: "end", behavior: "smooth" });
+    }
   }
 
   handleResponse() {
@@ -559,7 +567,7 @@ class CreateInterface extends React.Component {
               ],
             },
             function () {
-              this.scrollToBottom();
+              this.smoothlyAnimateToBottom();
               if (!this.state.livemode) {
                 // We are in sandbox
                 this.setState({
@@ -738,6 +746,10 @@ class CreateInterface extends React.Component {
           {contextContent}
             <Card.Body className="overflow-auto pt-2" style={{ height: 400 }} ref={this.chatContainerRef}>
               {content}
+              <div
+                className="bottom-anchor"
+                ref={this.bottomAnchorRef}
+              />
             </Card.Body>
             <InputGroup>
               <FormControl

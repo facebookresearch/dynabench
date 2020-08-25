@@ -180,9 +180,6 @@ table.inspectModel td {
 
 .thick-border {
   border-width: 2px;
-<<<<<<< HEAD
-}
-=======
 }
 
 .response-warning {
@@ -194,4 +191,3 @@ table.inspectModel td {
   background-color: #ffeff2;
   border: 1px solid #ffe5e7;
 }
->>>>>>> response-info-tweaks
