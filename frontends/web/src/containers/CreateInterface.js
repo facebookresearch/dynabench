@@ -222,23 +222,23 @@ class ResponseInfo extends React.Component {
     const selectedAnswer = this.props.taskType != "extract" ? "" : (
       this.props.answer && this.props.answer.length ? this.props.answer[this.props.answer.length - 1].tokens.join("") : ""
     );
-    var classNames = this.props.obj.cls + " rounded border";
+    var classNames = this.props.obj.cls + " rounded border m-3 p-3";
     var userFeedback = null;
     if (this.props.obj.retracted) {
-      classNames += " border-warning";
+      classNames += " response-warning";
       userFeedback = <span>
         <strong>Example retracted</strong> - thanks. The model
         predicted <strong>{this.props.obj.modelPredStr}</strong>.
         Please try again!
       </span>;
     } else if (this.props.obj.flagged) {
-      classNames += " border-warning";
+      classNames += " response-warning";
       userFeedback = <span>
         <strong>Example flagged</strong> - thanks. The model
         predicted <strong>{this.props.obj.modelPredStr}</strong>.
       </span>;
     } else if (this.props.obj.fooled) {
-      classNames += " border-success";
+      classNames += " light-green-bg";
       userFeedback = <>
         <span>
           <strong>Well done!</strong> You fooled the model. The model
@@ -306,7 +306,7 @@ class ResponseInfo extends React.Component {
           })}
       </>;
     } else {
-      classNames += " border-danger";
+      classNames += " response-warning";
       userFeedback = <>
         <span>
           <strong>Bad luck!</strong> The model correctly predicted{" "}
@@ -377,13 +377,13 @@ class ResponseInfo extends React.Component {
         style={{ minHeight: 120 }}
       >
         <Row>
-          <Col xs={12} md={8}>
-            <div>{this.props.obj.text}</div>
+          <Col xs={12} md={7}>
+            <div className="mb-3">{this.props.obj.text}</div>
             <small>
               {userFeedback}
             </small>
           </Col>
-          <Col xs={12} md={4}>
+          <Col xs={12} md={5}>
             <PieRechart
               data={this.props.obj.response.prob}
               labels={this.props.targets}
