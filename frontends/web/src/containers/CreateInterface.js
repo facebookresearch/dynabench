@@ -27,7 +27,7 @@ import BootstrapSwitchButton from 'bootstrap-switch-button-react'
 
 const Explainer = (props) => (
   <div className="mt-4 mb-5 pt-3">
-    <p className="text-uppercase font-weight-bold">{props.taskName}</p>
+    <p className="text-uppercase mb-0 spaced-header">{props.taskName}</p>
     <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
       Find examples that fool the model
     </h2>
@@ -67,7 +67,7 @@ const GoalMessage = ({ targets = [], curTarget, taskType }) => {
 
   return (
     <p className="mt-3 p-3 light-green-bg rounded">
-      <i class="fas fa-flag-checkered"></i>{" "}
+      <i className="fas fa-flag-checkered"></i>{" "}
       {
         taskType === "extract"
           ? <span>Your goal: enter a question and select an answer in the context, such that
@@ -721,77 +721,85 @@ class CreateInterface extends React.Component {
                 ref={this.bottomAnchorRef}
               />
             </Card.Body>
-            <InputGroup>
-              <FormControl
-                className="m-3 p-3 rounded-1 thick-border h-auto light-gray-bg"
-                placeholder={
-                  this.state.task.type == "extract"
-                    ? "Enter question.."
-                    : (this.state.task.shortname == "NLI" ? "Enter hypothesis.." : "Enter statement..")
-                }
-                value={this.state.hypothesis}
-                onChange={this.handleResponseChange}
-              />
-            </InputGroup>
-            <InputGroup className="d-flex justify-content-end p-3">
-              <OverlayTrigger
-                placement="bottom"
-                delay={{ show: 250, hide: 400 }}
-                overlay={renderSandboxTooltip}
-              >
-                <span style={{marginRight: 10}}>
-                  <BootstrapSwitchButton
-                    checked={this.state.livemode}
-                    onlabel='Live Mode'
-                    onstyle='primary'
-                    offstyle='warning'
-                    offlabel='Sandbox'
-                    width={120}
-                    onChange={(checked) => {
-                      this.setState({ livemode: checked });
-                    }}
-                  />
-                </span>
-              </OverlayTrigger>
-
-              {this.state.task.cur_round > 1 ?
-              <OverlayTrigger
-                placement="bottom"
-                delay={{ show: 250, hide: 400 }}
-                overlay={renderSwitchRoundTooltip}
-              >
-                <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" style={{marginRight: 10}} id="dropdown-basic-button" title="Switch Round">
-                  {roundNavs}
-                </DropdownButton>
-              </OverlayTrigger>
-                : null}
-              <OverlayTrigger
-                placement="bottom"
-                delay={{ show: 250, hide: 400 }}
-                overlay={renderSwitchContextTooltip}
-              >
-
-                <Button
-                  className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"
-                  onClick={this.getNewContext}
-                  disabled={this.state.refreshDisabled}
-                >
-                  Switch to next context
-                </Button>
-              </OverlayTrigger>
-              <Button
-                className="font-weight-bold blue-bg border-0 task-action-btn"
-                onClick={this.handleResponse}
-                disabled={this.state.submitDisabled}
-              >
-                Submit{" "}
-                <i
-                  className={
-                    this.state.submitDisabled ? "fa fa-cog fa-spin" : ""
+              <InputGroup>
+                <FormControl
+                  className="m-3 p-3 rounded-1 thick-border h-auto light-gray-bg"
+                  placeholder={
+                    this.state.task.type == "extract"
+                      ? "Enter question.."
+                      : (this.state.task.shortname == "NLI" ? "Enter hypothesis.." : "Enter statement..")
                   }
+                  value={this.state.hypothesis}
+                  onChange={this.handleResponseChange}
                 />
-              </Button>
-            </InputGroup>
+              </InputGroup>
+              <Row className="p-3">
+                <Col xs={6}>
+                  <InputGroup>
+                    <OverlayTrigger
+                      placement="bottom"
+                      delay={{ show: 250, hide: 400 }}
+                      overlay={renderSandboxTooltip}
+                    >
+                      <span style={{marginRight: 10}}>
+                        <BootstrapSwitchButton
+                          checked={this.state.livemode}
+                          onlabel='Live Mode'
+                          onstyle='primary blue-bg'
+                          offstyle='warning'
+                          offlabel='Sandbox'
+                          width={120}
+                          onChange={(checked) => {
+                            this.setState({ livemode: checked });
+                          }}
+                        />
+                      </span>
+                    </OverlayTrigger>
+
+                    {this.state.task.cur_round > 1 ?
+                    <OverlayTrigger
+                      placement="bottom"
+                      delay={{ show: 250, hide: 400 }}
+                      overlay={renderSwitchRoundTooltip}
+                    >
+                      <DropdownButton variant="light" className="border-0 blue-color font-weight-bold light-gray-bg" style={{marginRight: 10}} id="dropdown-basic-button" title="Switch Round">
+                        {roundNavs}
+                      </DropdownButton>
+                    </OverlayTrigger>
+                      : null}
+                  </InputGroup>
+                </Col>
+                <Col xs={6}>
+                  <InputGroup className="d-flex justify-content-end">
+                  <OverlayTrigger
+                    placement="bottom"
+                    delay={{ show: 250, hide: 400 }}
+                    overlay={renderSwitchContextTooltip}
+                  >
+
+                    <Button
+                      className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"
+                      onClick={this.getNewContext}
+                      disabled={this.state.refreshDisabled}
+                    >
+                      Switch to next context
+                    </Button>
+                  </OverlayTrigger>
+                  <Button
+                    className="font-weight-bold blue-bg border-0 task-action-btn"
+                    onClick={this.handleResponse}
+                    disabled={this.state.submitDisabled}
+                  >
+                    Submit{" "}
+                    <i
+                      className={
+                        this.state.submitDisabled ? "fa fa-cog fa-spin" : ""
+                      }
+                    />
+                  </Button>
+                </InputGroup>
+              </Col>
+            </Row>
             <div className="p-2">
               {(this.state.task.cur_round !== this.state.task.selected_round) ?
                 <p style={{'color': 'red'}}>WARNING: You are talking to an outdated model for a round that is no longer active. Examples you generate may be less useful.</p>
