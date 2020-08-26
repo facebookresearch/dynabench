@@ -16,7 +16,8 @@ import {
   DropdownButton,
   Dropdown,
   OverlayTrigger,
-  Tooltip
+  Tooltip,
+  Spinner
 } from "react-bootstrap";
 import UserContext from "./UserContext";
 import { TokenAnnotator } from "react-text-annotate";
@@ -26,7 +27,7 @@ import BootstrapSwitchButton from 'bootstrap-switch-button-react'
 
 const Explainer = (props) => (
   <div className="mt-4 mb-5 pt-3">
-    <p className="text-uppercase font-weight-bold">{props.taskName}</p>
+    <p className="text-uppercase mb-0 spaced-header">{props.taskName}</p>
     <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
       Find examples that fool the model
     </h2>
@@ -37,46 +38,46 @@ const Explainer = (props) => (
   </div>
 );
 
-class ContextInfo extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-  render() {
-    const otherTargets = []
-    for (const [index, value] of this.props.targets.entries()) {
-      if (this.props.curTarget === index) continue;
-      otherTargets.push(value)
-    }
-    const otherTargetStr = otherTargets.join(" or ");
-    return this.props.taskType == "extract" ? (
-      <>
-        <TokenAnnotator
-          className="mb-1 p-3 light-gray-bg"
-          tokens={this.props.text.split(/\b/)}
-          value={this.props.answer}
-          onChange={this.props.updateAnswer}
-          getSpan={(span) => ({
-            ...span,
-            tag: "ANS",
-          })}
-        />
-        <p className="mt-3 px-3">
-          Your goal: enter a question and select an answer in the context, such
-          that the model is fooled.
-        </p>
-      </>
-    ) : (
-      <>
-        <div className="mb-1 p-3 light-gray-bg">{this.props.text.replace("<br>", "\n")}</div>
-        <p className="mt-3 px-3">
-          Your goal: enter a{" "}
-          <strong>{this.props.targets[this.props.curTarget]}</strong> statement
-          that fools the model into predicting {otherTargetStr}.
-        </p>
-      </>
-    );
-  }
+function ContextInfo({ taskType, text, answer, updateAnswer }) {
+  return taskType == "extract" ? (
+    <TokenAnnotator
+      className="mb-1 p-3 light-gray-bg"
+      tokens={text.split(/\b/)}
+      value={answer}
+      onChange={updateAnswer}
+      getSpan={(span) => ({
+        ...span,
+        tag: "ANS",
+      })}
+    />
+  ) : (
+    <div className="mb-1 p-3 light-gray-bg">
+      <h6 className="text-uppercase dark-blue-color spaced-header">Context:</h6>
+      {text.replace("<br>", "\n")}
+    </div>
+  );
 }
+
+const GoalMessage = ({ targets = [], curTarget, taskType }) => {
+  const otherTargets = targets.filter((_, index) => index !== curTarget);
+  const otherTargetStr = otherTargets.join(" or ");
+
+  const vowels = ["a", "e", "i", "o", "u"];
+  const indefiniteArticle = targets[curTarget] && vowels.indexOf(targets[curTarget][0]) >= 0 ? "an" : "a";
+
+  return (
+    <p className="mt-3 p-3 light-green-bg rounded">
+      <i className="fas fa-flag-checkered"></i>{" "}
+      {
+        taskType === "extract"
+          ? <span>Your goal: enter a question and select an answer in the context, such that
+      the model is fooled.</span>
+          : <span>Your goal: enter {indefiniteArticle} <strong>{targets[curTarget]}</strong> statement that
+      fools the model into predicting {otherTargetStr}.</span>
+      }
+    </p>
+  );
+};
 
 const TextFeature = ({ data, curTarget, targets }) => {
   const capitalize = (s) => {
@@ -222,175 +223,144 @@ class ResponseInfo extends React.Component {
     const selectedAnswer = this.props.taskType != "extract" ? "" : (
       this.props.answer && this.props.answer.length ? this.props.answer[this.props.answer.length - 1].tokens.join("") : ""
     );
-    var classNames = this.props.obj.cls + " rounded border";
+    var classNames = this.props.obj.cls + " rounded border m-3";
     var userFeedback = null;
     if (this.props.obj.retracted) {
-      classNames += " border-warning";
+      classNames += " response-warning";
       userFeedback = <span>
         <strong>Example retracted</strong> - thanks. The model
         predicted <strong>{this.props.obj.modelPredStr}</strong>.
         Please try again!
       </span>;
     } else if (this.props.obj.flagged) {
-      classNames += " border-warning";
+      classNames += " response-warning";
       userFeedback = <span>
         <strong>Example flagged</strong> - thanks. The model
         predicted <strong>{this.props.obj.modelPredStr}</strong>.
       </span>;
-    } else if (this.props.obj.fooled) {
-      classNames += " border-success";
-      userFeedback = <>
-        <span>
-          <strong>Well done!</strong> You fooled the model. The model
-          predicted <strong>{this.props.obj.modelPredStr}</strong>{" "}
-          instead.{" "}
-        </span>
-        <br />
-        {this.state.livemode ? <>
-          <div>
-            Made a mistake? You can still{" "}
-            <a
-              href="#"
-              data-index={this.props.index}
-              onClick={this.retractExample}
-              className="btn-link"
-            >
-              retract this example
-            </a>{" "}
-            if you think your label is wrong. Otherwise, we will have it verified. Optionally:{" "}
-          </div>
-          <div>
-          <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
-            "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is correct"}
-            data-index={this.props.index} data-type="example" onBlur={this.explainExample} />
-          </div>
-          <div>
-          <input type="text" style={{width: 100+'%'}} placeholder="Explain why you think the model made a mistake"
-            data-index={this.props.index} data-type="model" onBlur={this.explainExample} />
-          </div>
-        </> : <div>This example was not stored because you are in sandbox mode.</div>}
-        {(this.props.taskName !== "NLI") ?
-        <div>
-          Want more insight? You can{" "}
-          <a
-            href="#"
-            data-index={this.props.index}
-            onClick={this.inspectExample}
-            className="btn-link"
-          >
-            inspect the model
-          </a>
-          .
-        </div>
-          :
-        <></>
-        }
-        {this.state.loader ? (
-          <img src="/loader.gif" className="loader" />
-        ) : null}
-        {this.state.inspectError && (
-          <span style={{ color: "#e65959" }}>
-            *Unable to fetch results. Please try again after sometime.
-          </span>
-        )}
-        {this.props.obj.inspect &&
-          this.props.obj.inspect.map((inspectData, idx) => {
-            return (
-              <TextFeature
-                key={idx}
-                data={inspectData}
-                curTarget={this.props.curTarget}
-                targets={this.props.targets}
-              />
-            );
-          })}
-      </>;
     } else {
-      classNames += " border-danger";
+
+      if (this.props.obj.fooled) {
+        classNames += " light-green-bg"
+      } else {
+        classNames += " response-warning"
+      }
+
       userFeedback = <>
-        <span>
-          <strong>Bad luck!</strong> The model correctly predicted{" "}
-          <strong>{this.props.obj.modelPredStr}</strong>. Try again.
-        </span>
-        {this.state.livemode ? <>
-          <div>
-            We will still store this as an example that the model got
-            right.
-            You can{" "}
-            <a
-              href="#"
-              data-index={this.props.index}
-              onClick={this.retractExample}
-              className="btn-link"
-            >
-              retract this example
-            </a>{" "}
-            if you made a mistake.
-          </div>
-          <div>
-            Something wrong?{" "}
-            <a
-              href="#"
-              data-index={this.props.index}
-              onClick={this.flagExample}
-              className="btn-link"
-            >
-              Flag this example for review
-            </a>.
-          </div>
-        </> : <div>This example was not stored because you are in sandbox mode.</div> }
-        {(this.props.taskName !== "NLI") ?
-        <div>
-          Want more insight? You can{" "}
-          <a
-            href="#"
-            data-index={this.props.index}
-            onClick={this.inspectExample}
-            className="btn-link"
-          >
-            inspect the model{" "}
-          </a>
-          .
-        </div>
-          :
-        <></>
+        <div>Model prediction: <strong>{this.props.obj.modelPredStr}</strong></div>
+        {this.props.obj.fooled
+          ? <span>
+              <strong>Well done!</strong> You fooled the model.
+            </span>
+          : <span>
+              <strong>Try again!</strong> The model wasn't fooled.
+            </span> 
         }
-        {this.state.loader ? (
-          <img src="/loader.gif" className="loader" />
-        ) : null}
-        {this.props.obj.inspect &&
-          this.props.obj.inspect.map((inspectData, idx) => {
-            return (
-              <TextFeature
-                key={idx}
-                data={inspectData}
-                curTarget={this.props.curTarget}
-                targets={this.props.targets}
-              />
-            );
-          })}
+        {!this.state.livemode
+          ? <div>This example was not stored because you are in sandbox mode.</div>
+          : this.props.obj.fooled
+            ? null
+            : <div className="mt-3">
+              We will still store this as an example that the model got
+              right.
+            </div>
+        }
+        <div className="mb-3">
+          {this.state.inspectError ? (
+            <span style={{ color: "#e65959" }}>
+              *Unable to fetch results. Please try again after sometime.
+            </span>
+          ) : null}
+          {this.props.obj.inspect &&
+            this.props.obj.inspect.map((inspectData, idx) => {
+              return (
+                <TextFeature
+                  key={idx}
+                  data={inspectData}
+                  curTarget={this.props.curTarget}
+                  targets={this.props.targets}
+                />
+              );
+            })}
+        </div>
       </>;
-    }
+    } 
     return (
-      <div
+      <Card
         className={classNames}
         style={{ minHeight: 120 }}
       >
-        <Row>
-          <Col xs={12} md={8}>
-            <div>{this.props.obj.text}</div>
-            <small>
-              {userFeedback}
-            </small>
-          </Col>
-          <Col xs={12} md={4}>
-            <PieRechart
-              data={this.props.obj.response.prob}
-              labels={this.props.targets}
-            />
-          </Col>
-        </Row>
-      </div>
+        <Card.Body className="p-3">
+          <Row>
+            <Col xs={12} md={7}>
+              <div className="mb-3">{this.props.obj.text}</div>
+              <small>
+                {userFeedback}
+              </small>
+            </Col>
+            <Col xs={12} md={5}>
+              <PieRechart
+                data={this.props.obj.response.prob}
+                labels={this.props.targets}
+              />
+            </Col>
+          </Row>
+        </Card.Body>
+        {this.props.obj.retracted || this.props.obj.flagged
+          ? null
+          : <Card.Footer>
+            { <div class="btn-group" role="group" aria-label="response actions">
+                <OverlayTrigger
+                  placement="top"
+                  delay={{ show: 250, hide: 400 }}
+                  overlay={(props) => <Tooltip {...props}>If you made a mistake, you can retract this entry from the dataset.</Tooltip>}
+                >
+                  <button
+                    data-index={this.props.index}
+                    onClick={this.retractExample}
+                    type="button"
+                    class="btn btn-light btn-sm">
+                      <i className="fas fa-undo-alt"></i> Retract
+                  </button>
+                </OverlayTrigger>
+                <OverlayTrigger
+                  placement="top"
+                  delay={{ show: 250, hide: 400 }}
+                  overlay={(props) => <Tooltip {...props}>Something doesn't look right? Have someone look over this example.</Tooltip>}
+                >
+                  <button
+                    data-index={this.props.index}
+                    onClick={this.flagExample}
+                    type="button"
+                    class="btn btn-light btn-sm">
+                      <i className="fas fa-flag"></i> Flag
+                  </button>
+                </OverlayTrigger>
+                { this.props.taskName !== "NLI" ?
+                  <OverlayTrigger
+                    placement="top"
+                    delay={{ show: 250, hide: 400 }}
+                    overlay={(props) => <Tooltip {...props}>Want more insight into how this decision was made?</Tooltip>}
+                  >
+                    <button
+                      data-index={this.props.index}
+                      onClick={this.inspectExample}
+                      type="button"
+                      class="btn btn-light btn-sm">
+                        <i className="fas fa-search"></i> Inspect
+                        {this.state.loader ? (
+                          <Spinner className="ml-2" animation="border" role="status" size="sm">
+                            <span className="sr-only">Loading...</span>
+                          </Spinner>
+                        ) : null}
+                    </button>
+                  </OverlayTrigger>
+                  : null
+                }
+              </div>
+            }
+        </Card.Footer>}
+      </Card>
     );
   }
 }
@@ -419,6 +389,9 @@ class CreateInterface extends React.Component {
     this.handleResponseChange = this.handleResponseChange.bind(this);
     this.updateAnswer = this.updateAnswer.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
+    this.chatContainerRef = React.createRef();
+    this.bottomAnchorRef = React.createRef();
+
   }
   getNewContext() {
     this.setState(
@@ -467,6 +440,20 @@ class CreateInterface extends React.Component {
     const model = models[Math.floor(Math.random() * models.length)];
     return model;
   };
+
+  instantlyScrollToBottom() {
+    setTimeout(() => {
+      if (this.chatContainerRef.current)
+        this.chatContainerRef.current.scrollTop =
+          this.chatContainerRef.current.scrollHeight;
+    }, 0);
+  }
+
+  smoothlyAnimateToBottom() {
+    if (this.bottomAnchorRef.current) {
+      this.bottomAnchorRef.current.scrollIntoView({ block: "end", behavior: "smooth" });
+    }
+  }
 
   handleResponse() {
     this.setState({ submitDisabled: true, refreshDisabled: true }, () => {
@@ -550,6 +537,7 @@ class CreateInterface extends React.Component {
               ],
             },
             function () {
+              this.smoothlyAnimateToBottom();
               if (!this.state.livemode) {
                 // We are in sandbox
                 this.setState({
@@ -643,8 +631,9 @@ class CreateInterface extends React.Component {
     }
   }
   render() {
-    const content = this.state.content.map((item, index) =>
-      item.cls == "context" ? (
+    const contextContent = this.state.content
+      .filter(item => item.cls === "context")
+      .map((item, index) => (
         <ContextInfo
           key={index}
           index={index}
@@ -656,7 +645,9 @@ class CreateInterface extends React.Component {
           answer={this.state.answer}
           updateAnswer={this.updateAnswer}
         />
-      ) : (
+      ));
+    const content = this.state.content.map((item, index) =>
+      item.cls === "context" ? undefined : (
         <ResponseInfo
           key={index}
           index={index}
@@ -671,7 +662,9 @@ class CreateInterface extends React.Component {
           content={this.state.content}
         />
       )
-    );
+    ).filter(item => item !== undefined);
+    // sentinel value of undefined filtered out after to preserve index values
+    
     const rounds = (this.state.task.round && this.state.task.cur_round) || 0;
     const roundNavs = [];
     for (let i = rounds; i > 0; i--) {
@@ -712,83 +705,101 @@ class CreateInterface extends React.Component {
 
     return (
       <Container className="mb-5 pb-5">
-        <Col className="m-auto" lg={9}>
+        <Col className="m-auto" lg={12}>
           <Explainer taskName={this.state.task.name} />
+          <GoalMessage
+            targets={this.state.task.targets}
+            curTarget={this.state.target}
+            taskType={this.state.task.type}
+          />
           <Card className="profile-card overflow-hidden">
-            <Card.Body className="overflow-auto" style={{ height: 400 }}>
+          {contextContent}
+            <Card.Body className="overflow-auto pt-2" style={{ height: 400 }} ref={this.chatContainerRef}>
               {content}
-            </Card.Body>
-            <InputGroup>
-              <FormControl
-                className="border-left-0 border-right-0 rounded-0 p-3 h-auto"
-                placeholder={
-                  this.state.task.type == "extract"
-                    ? "Enter question.."
-                    : (this.state.task.shortname == "NLI" ? "Enter hypothesis.." : "Enter statement..")
-                }
-                value={this.state.hypothesis}
-                onChange={this.handleResponseChange}
+              <div
+                className="bottom-anchor"
+                ref={this.bottomAnchorRef}
               />
-            </InputGroup>
-            <InputGroup className="d-flex justify-content-end p-3">
-              <OverlayTrigger
-                placement="bottom"
-                delay={{ show: 250, hide: 400 }}
-                overlay={renderSandboxTooltip}
-              >
-                <span style={{marginRight: 10}}>
-                  <BootstrapSwitchButton
-                    checked={this.state.livemode}
-                    onlabel='Live Mode'
-                    onstyle='primary'
-                    offstyle='warning'
-                    offlabel='Sandbox'
-                    width={120}
-                    onChange={(checked: boolean) => {
-                      this.setState({ livemode: checked });
-                    }}
-                  />
-                </span>
-              </OverlayTrigger>
-
-              {this.state.task.cur_round > 1 ?
-              <OverlayTrigger
-                placement="bottom"
-                delay={{ show: 250, hide: 400 }}
-                overlay={renderSwitchRoundTooltip}
-              >
-                <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" style={{marginRight: 10}} id="dropdown-basic-button" title="Switch Round">
-                  {roundNavs}
-                </DropdownButton>
-              </OverlayTrigger>
-                : null}
-              <OverlayTrigger
-                placement="bottom"
-                delay={{ show: 250, hide: 400 }}
-                overlay={renderSwitchContextTooltip}
-              >
-
-                <Button
-                  className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"
-                  onClick={this.getNewContext}
-                  disabled={this.state.refreshDisabled}
-                >
-                  Switch to next context
-                </Button>
-              </OverlayTrigger>
-              <Button
-                className="font-weight-bold blue-bg border-0 task-action-btn"
-                onClick={this.handleResponse}
-                disabled={this.state.submitDisabled}
-              >
-                Submit{" "}
-                <i
-                  className={
-                    this.state.submitDisabled ? "fa fa-cog fa-spin" : ""
+            </Card.Body>
+              <InputGroup>
+                <FormControl
+                  className="m-3 p-3 rounded-1 thick-border h-auto light-gray-bg"
+                  placeholder={
+                    this.state.task.type == "extract"
+                      ? "Enter question.."
+                      : (this.state.task.shortname == "NLI" ? "Enter hypothesis.." : "Enter statement..")
                   }
+                  value={this.state.hypothesis}
+                  onChange={this.handleResponseChange}
                 />
-              </Button>
-            </InputGroup>
+              </InputGroup>
+              <Row className="p-3">
+                <Col xs={6}>
+                  <InputGroup>
+                    <OverlayTrigger
+                      placement="bottom"
+                      delay={{ show: 250, hide: 400 }}
+                      overlay={renderSandboxTooltip}
+                    >
+                      <span style={{marginRight: 10}}>
+                        <BootstrapSwitchButton
+                          checked={this.state.livemode}
+                          onlabel='Live Mode'
+                          onstyle='primary blue-bg'
+                          offstyle='warning'
+                          offlabel='Sandbox'
+                          width={120}
+                          onChange={(checked) => {
+                            this.setState({ livemode: checked });
+                          }}
+                        />
+                      </span>
+                    </OverlayTrigger>
+
+                    {this.state.task.cur_round > 1 ?
+                    <OverlayTrigger
+                      placement="bottom"
+                      delay={{ show: 250, hide: 400 }}
+                      overlay={renderSwitchRoundTooltip}
+                    >
+                      <DropdownButton variant="light" className="border-0 blue-color font-weight-bold light-gray-bg" style={{marginRight: 10}} id="dropdown-basic-button" title="Switch Round">
+                        {roundNavs}
+                      </DropdownButton>
+                    </OverlayTrigger>
+                      : null}
+                  </InputGroup>
+                </Col>
+                <Col xs={6}>
+                  <InputGroup className="d-flex justify-content-end">
+                  <OverlayTrigger
+                    placement="bottom"
+                    delay={{ show: 250, hide: 400 }}
+                    overlay={renderSwitchContextTooltip}
+                  >
+
+                    <Button
+                      className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"
+                      onClick={this.getNewContext}
+                      disabled={this.state.refreshDisabled}
+                    >
+                      Switch to next context
+                    </Button>
+                  </OverlayTrigger>
+                  <Button
+                    className="font-weight-bold blue-bg border-0 task-action-btn"
+                    onClick={this.handleResponse}
+                    disabled={this.state.submitDisabled}
+                  >
+                    Submit{" "}
+                    <i
+                      className={
+                        this.state.submitDisabled ? "fa fa-cog fa-spin" : ""
+                      }
+                    />
+                  </Button>
+                </InputGroup>
+              </Col>
+            </Row>
             <div className="p-2">
               {(this.state.task.cur_round !== this.state.task.selected_round) ?
                 <p style={{'color': 'red'}}>WARNING: You are talking to an outdated model for a round that is no longer active. Examples you generate may be less useful.</p>
