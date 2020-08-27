@@ -24,13 +24,17 @@ function OverlayProvider({ children, initial=false }) {
 function Annotation({children, placement="right", tooltip, ...props}) {
   return (<div>
     <OverlayContext.Consumer>
-      {context => <OverlayTrigger
+      {({hidden}) => <OverlayTrigger
         {...props}
         placement={placement}
         delay={{ show: 250, hide: 400 }}
-        show={!context.hidden}
+        show={!hidden}
         overlay={(props) => <Tooltip {...props}>{tooltip}</Tooltip>}
-      >{children}</OverlayTrigger>}
+      >
+        <div style={{outline: hidden ? null : "5px dotted rgba(0,0,0,0.4)"}}>
+          {children}
+        </div>
+      </OverlayTrigger>}
     </OverlayContext.Consumer>
   </div>);
 }
