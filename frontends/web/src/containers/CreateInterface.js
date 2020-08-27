@@ -24,10 +24,14 @@ import { TokenAnnotator } from "react-text-annotate";
 import { PieRechart } from "../components/Rechart";
 import { formatWordImportances } from "../utils/color";
 import BootstrapSwitchButton from 'bootstrap-switch-button-react'
+import {
+  OverlayProvider,
+  Annotation
+} from "./Overlay"
 
 const Explainer = (props) => (
   <div className="mt-4 mb-5 pt-3">
-    <p className="text-uppercase mb-0 spaced-header">{props.taskName}</p>
+    <p className="text-uppercase mb-0 spaced-header">{props.taskName || <span>&nbsp;</span>}</p>
     <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
       Find examples that fool the model
     </h2>
@@ -741,9 +745,12 @@ class CreateInterface extends React.Component {
     }
 
     return (
+      <OverlayProvider>
       <Container className="mb-5 pb-5">
         <Col className="m-auto" lg={12}>
-          <Explainer taskName={this.state.task.name} />
+          <Annotation tooltip="test">
+            <Explainer taskName={this.state.task.name} />
+          </Annotation>
           <GoalMessage
             targets={this.state.task.targets}
             curTarget={this.state.target}
@@ -857,6 +864,7 @@ class CreateInterface extends React.Component {
           </Card>
         </Col>
       </Container>
+      </OverlayProvider>
     );
   }
 }
