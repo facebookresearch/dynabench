@@ -31,9 +31,9 @@ function Annotation({children, placement="right", tooltip, ...props}) {
         show={!hidden}
         overlay={(props) => <Tooltip {...props}>{tooltip}</Tooltip>}
       >
-        <div style={{outline: hidden ? null : "5px dotted rgba(0,0,0,0.4)"}}>
+        {/* <div style={{outline: hidden ? null : "5px dotted rgba(0,0,0,0.4)"}}> */}
           {children}
-        </div>
+        {/* </div> */}
       </OverlayTrigger>}
     </OverlayContext.Consumer>
   </div>);
