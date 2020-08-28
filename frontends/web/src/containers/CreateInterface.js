@@ -26,7 +26,8 @@ import { formatWordImportances } from "../utils/color";
 import BootstrapSwitchButton from 'bootstrap-switch-button-react'
 import {
   OverlayProvider,
-  Annotation
+  Annotation,
+  OverlayContext
 } from "./Overlay"
 
 const Explainer = (props) => (
@@ -748,7 +749,18 @@ class CreateInterface extends React.Component {
       <OverlayProvider>
       <Container className="mb-5 pb-5">
         <Col className="m-auto" lg={12}>
-          <Annotation tooltip="test">
+          <OverlayContext.Consumer>
+            {
+              ({hidden, setHidden})=> (
+                <div style={{float: "right"}}>
+                  <button onClick={()=> { setHidden(!hidden) }}>Instructions</button>
+                </div>
+              )
+            }
+          </OverlayContext.Consumer>
+          <Annotation
+            placement="bottom-start"
+            tooltip={"This is a long test message to see if wrapping works correctly"}>
             <Explainer taskName={this.state.task.name} />
           </Annotation>
           <GoalMessage
