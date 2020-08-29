@@ -83,10 +83,16 @@ const AboutPage = () => (
               Progress can be made in science by making sure we measure the
               right thing. High accuracy on a subfield's main benchmark may look
               impressive, especially to outsiders, but this can be deceiving:
-              most researchers understand that achieving superhuman performance on SQuAD doesn't mean that Reading Comprehension is solved. In many cases, we ultimately care not about a
-              single benchmark, but about how well AI systems can work together
-              with humans. The real metric should be "model error rate when interacting with a human".
+              most researchers understand that achieving superhuman performance on SQuAD doesn't mean that Reading Comprehension is solved.
             </p>
+          </li>
+          <li>
+            <strong>Aligning with humans.</strong>
+            <p>
+              Usually, we ultimately care not about a
+              single benchmark, but about how well AI systems can work together
+              with humans.  It is very important that AI objectives <a href="https://arxiv.org/abs/1805.00899">align with human values</a>.
+The real metric for AI systems should be model error rate when interacting with a human.            </p>
           </li>
           <li>
             <strong>Embracing the loop.</strong>
