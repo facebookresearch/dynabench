@@ -56,14 +56,17 @@ class Example(Base):
 
     time_elapsed = db.Column(db.Time) # time context shown - time example provided
 
+    total_verified = db.Column(db.Integer, default=0)
+
     def __repr__(self):
         return '<Example {}>'.format(self.id)
 
     def to_dict(self, safe=True):
         d = {}
         for column in self.__table__.columns:
-            if safe and column.name in ['id', 'secret', 'uid', 'user']: continue
+            if safe and column.name in ['verifier_preds', 'verified_correct', 'split', 'uid', 'user']: continue
             d[column.name] = getattr(self, column.name)
+        d['context'] = self.context.to_dict()
         return d
 
 class ExampleModel(BaseModel):
@@ -154,16 +157,6 @@ class ExampleModel(BaseModel):
         anon_id.update(str(uid).encode('utf-8'))
         return anon_id.hexdigest()
 
-    def getRandomToVerify(tid, n=1):
-        # https://stackoverflow.com/questions/60805/getting-random-row-through-sqlalchemy
-        example = Example()
-        return example.query.filter(Example.tid == tid).filter(Example.model_wrong == True).filter(Example.retracted == False).filter(Example.verified_correct == False).options(db.orm.load_only('id')).offset(
-                db.sql.func.floor(
-                    db.sql.func.random() *
-                    self.dbs.query(db.sql.func.count(example.id))
-                )
-            ).limit(n).all()
-
     def getUserLeaderByTid(self, tid, n=5, offset=0, min_cnt=0, downstream=False):
         cnt = db.sql.func.sum(case([(Example.model_wrong == 1, 1)], else_=0)).label('cnt')
         query_res = self.dbs.query(User.id, User.username, User.avatar_url, cnt, (cnt / db.func.count()), db.func.count()) \
@@ -199,3 +192,18 @@ class ExampleModel(BaseModel):
         except db.orm.exc.NoResultFound:
             return False
 
+    def getRandom(self, rid, n=1):
+        result = self.dbs.query(Example) \
+                .join(Context, Example.cid == Context.id) \
+                .filter(Context.r_realid == rid) \
+                .order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
+        return result
+    def getRandomWrong(self, rid, n=1):
+        result = self.dbs.query(Example) \
+                .join(Context, Example.cid == Context.id) \
+                .filter(Context.r_realid == rid) \
+                .filter(Example.model_wrong == True) \
+                .filter(Example.retracted == False) \
+                .filter(Example.verified_correct == False) \
+                .order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
+        return result

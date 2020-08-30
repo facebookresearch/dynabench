@@ -363,12 +363,9 @@ class TaskPage extends React.Component {
     function renderCreateTooltip(props) {
       return renderTooltip(props, "Create new examples where the model fails");
     }
-    // function renderVerifyTooltip(props) {
-    //   return renderTooltip(
-    //     props,
-    //     "Verify examples where we think the model failed"
-    //   );
-    // }
+    function renderVerifyTooltip(props) {
+       return renderTooltip(props, "Verify examples where the model may have failed");
+    }
     function renderSubmitTooltip(props) {
       return renderTooltip(props, "Submit model predictions on this task");
     }
@@ -439,7 +436,7 @@ class TaskPage extends React.Component {
                     </Button>
                   </OverlayTrigger>
                 </Nav.Item>
-                {/* <Nav.Item className="task-action-btn">
+                <Nav.Item className="task-action-btn">
                   <OverlayTrigger
                     placement="bottom"
                     delay={{ show: 250, hide: 400 }}
@@ -448,12 +445,12 @@ class TaskPage extends React.Component {
                     <Button
                       as={Link}
                       className="border-0 blue-color font-weight-bold light-gray-bg"
-                      to={"/tasks/" + this.state.taskId + "/verify"}
+                      to={"/tasks/" + this.state.taskId + "/validate"}
                     >
                       Validate Examples
                     </Button>
                   </OverlayTrigger>
-                </Nav.Item> */}
+                </Nav.Item>
                 {this.state.task.shortname === "NLI" ? (
                   <Nav.Item className="task-action-btn">
                     <OverlayTrigger

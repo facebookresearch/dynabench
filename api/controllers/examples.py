@@ -15,6 +15,18 @@ import json
 import logging
 from datetime import datetime
 
+@bottle.get('/examples/<tid:int>/<rid:int>')
+@_auth.requires_auth
+def get_random_example(credentials, tid, rid):
+    rm = RoundModel()
+    round = rm.getByTidAndRid(tid, rid)
+    em = ExampleModel()
+    example = em.getRandomWrong(round.id, n=1)
+    if not example:
+        bottle.abort(500, f'No examples available ({round.id})')
+    example = example[0].to_dict()
+    return util.json_encode(example)
+
 @bottle.get('/examples/<eid:int>')
 @_auth.requires_auth
 def get_example(credentials, eid):
@@ -22,8 +34,33 @@ def get_example(credentials, eid):
     example = em.get(eid)
     if not example:
         bottle.abort(404, 'Not found')
-    if example.uid != credentials['uid']:
+    if example.uid != credentials['id']:
         bottle.abort(403, 'Access denied')
+    return util.json_encode(example.to_dict())
+
+@bottle.put('/examples/<eid:int>/validate')
+@_auth.requires_auth
+def validate_example(credentials, eid):
+    data = bottle.request.json
+    if not data or 'label' not in data:
+        bottle.abort(400, 'Bad request')
+    label = data['label']
+    if label not in ['C', 'I', 'F']:
+        bottle.abort(400, 'Bad request')
+    em = ExampleModel()
+    example = em.get(eid)
+    if not example:
+        bottle.abort(404, 'Not found')
+    nobj = example.verifier_preds
+    if nobj is None:
+        nobj = ''
+    else:
+        nobj += '|'
+    nobj += str(credentials['id']) + ',' + label
+    em.update(example.id, {
+        'verifier_preds': nobj,
+        'total_verified': example.total_verified + 1
+    })
     return util.json_encode(example.to_dict())
 
 @bottle.put('/examples/<eid:int>')

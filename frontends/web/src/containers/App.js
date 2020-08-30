@@ -27,7 +27,7 @@ import ModelPage from "./ModelPage";
 import ApiService from "../common/ApiService";
 import ScrollToTop from "./ScrollToTop.js";
 import CreateInterface from "./CreateInterface.js";
-// import VerifyInterface from "./VerifyInterface.js";
+import VerifyInterface from "./VerifyInterface.js";
 import SubmitInterface from "./SubmitInterface.js";
 import PublishInterface from "./PublishInterface.js";
 import { Avatar } from "../components/Avatar/Avatar";
@@ -207,10 +207,10 @@ class App extends React.Component {
                   path="/tasks/:taskId/create"
                   component={CreateInterface}
                 />
-                {/* <Route
-                  path="/tasks/:taskId/verify"
+                <Route
+                  path="/tasks/:taskId/validate"
                   component={VerifyInterface}
-                /> */}
+                />
                 <Route
                   path="/tasks/:taskId/submit"
                   component={SubmitInterface}

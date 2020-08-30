@@ -193,6 +193,12 @@ export default class ApiService {
     });
   }
 
+  getRandomExample(tid, rid) {
+    return this.fetch(`${this.domain}/examples/${tid}/${rid}`, {
+      method: "GET",
+    });
+  }
+
   getModel(modelId) {
     return this.fetch(`${this.domain}/models/${modelId}/details`, {
       method: "GET",
@@ -262,6 +268,17 @@ export default class ApiService {
       obj.uid = uid;
     }
     return this.fetch(`${this.domain}/examples/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(obj),
+    });
+  }
+
+  validateExample(id, label, uid = null) {
+    let obj = {label: label};
+    if (this.mode == 'mturk') {
+      obj.uid = uid;
+    }
+    return this.fetch(`${this.domain}/examples/${id}/validate`, {
       method: "PUT",
       body: JSON.stringify(obj),
     });
