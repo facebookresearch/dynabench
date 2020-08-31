@@ -50,7 +50,11 @@ class Example(Base):
     model_wrong = db.Column(db.Boolean)
     retracted = db.Column(db.Boolean, default=False)
     flagged = db.Column(db.Boolean, default=False)
+
+    verified = db.Column(db.Boolean, default=False)
     verified_correct = db.Column(db.Boolean, default=False)
+    verified_incorrect = db.Column(db.Boolean, default=False)
+    verified_flagged = db.Column(db.Boolean, default=False)
 
     generated_datetime = db.Column(db.DateTime)
 
@@ -204,6 +208,6 @@ class ExampleModel(BaseModel):
                 .filter(Context.r_realid == rid) \
                 .filter(Example.model_wrong == True) \
                 .filter(Example.retracted == False) \
-                .filter(Example.verified_correct == False) \
+                .filter(Example.verified == False) \
                 .order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
         return result

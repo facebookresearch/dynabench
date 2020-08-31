@@ -68,6 +68,9 @@ class VerifyInterface extends React.Component {
         });
       }, (error) => {
         console.log(error);
+        this.setState({
+          example: false
+        });
       });
   }
   handleResponse(action) {
@@ -94,7 +97,6 @@ class VerifyInterface extends React.Component {
     }
   }
   render() {
-    console.log(this.state);
     return (
       <Container className="mb-5 pb-5">
         <Col className="m-auto" lg={12}>
@@ -121,6 +123,8 @@ class VerifyInterface extends React.Component {
                 className="hypothesis rounded border m-3 card"
                 style={{ minHeight: 120 }}
               >
+              {this.state.example ?
+                <>
                 <Card.Body className="p-3">
                   <Row>
                     <Col xs={12} md={7}>
@@ -188,6 +192,16 @@ class VerifyInterface extends React.Component {
                       <i className="fas fa-undo-alt"></i> Skip and load new example
                   </button>
                 </Card.Footer>
+                </>
+                :
+                <Card.Body className="p-3">
+                  <Row>
+                    <Col xs={12} md={7}>
+                      <p>No more examples to be verified. Please create more examples!</p>
+                    </Col>
+                  </Row>
+                </Card.Body>
+              }
               </Card>
             </Card.Body>
           </Card>

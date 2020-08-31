@@ -12,6 +12,8 @@ from models.context import ContextModel
 
 import json
 
+from collections import Counter
+
 import logging
 from datetime import datetime
 
@@ -61,6 +63,13 @@ def validate_example(credentials, eid):
         'verifier_preds': nobj,
         'total_verified': example.total_verified + 1
     })
+    preds = Counter([x.split(",")[1] for x in nobj.split("|")])
+    if preds['C'] >= 5:
+        em.update(example.id, {'verified': True, 'verified_correct': True})
+    elif preds['I'] >= 5:
+        em.update(example.id, {'verified': True, 'verified_incorrect': True})
+    elif preds['F'] >= 5:
+        em.update(example.id, {'verified': True, 'verified_flagged': True})
     return util.json_encode(example.to_dict())
 
 @bottle.put('/examples/<eid:int>')
