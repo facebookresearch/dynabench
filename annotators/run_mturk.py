@@ -17,6 +17,7 @@ from util import arg_handler, get_qualifications
 parser = MephistoRunScriptParser()
 architect_type, requester_name, db, args = arg_handler(parser)
 task_config = json.load(open(args['task']))
+task_config['provider_type'] = args['provider_type']
 
 extra_args = {
     'static_task_data': [{} for _ in range(args['num_jobs'])],

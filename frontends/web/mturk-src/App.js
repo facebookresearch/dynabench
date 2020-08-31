@@ -35,7 +35,9 @@ function App() {
     return <h1>{getBlockedExplanation(blockedReason)}</h1>;
   }
 
-  let api = new ApiService(process.env.REACT_APP_API_HOST);
+  const backend_host = (taskConfig && 'provider_type' in taskConfig && taskConfig['provider_type'] === 'mturk') ?
+    'https://api.dynabench.org' : process.env.REACT_APP_API_HOST;
+  let api = new ApiService(backend_host);
   api.setMturkMode();
 
   if (isLoading) {
