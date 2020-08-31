@@ -1,3 +1,7 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 import os
 import time
 import shlex
@@ -13,13 +17,13 @@ from util import arg_handler, get_qualifications
 parser = MephistoRunScriptParser()
 architect_type, requester_name, db, args = arg_handler(parser)
 task_config = json.load(open(args['task']))
+task_config['provider_type'] = args['provider_type']
 
 extra_args = {
     'static_task_data': [{} for _ in range(args['num_jobs'])],
-    'task_config': task_config
+    'task_config': task_config,
+    'mturk_specific_qualifications': get_qualifications(task_config['qualifications'])
 }
-# TODO: Fix this once Mephisto fixes it:
-#    'mturk_specific_qualifications': get_qualifications(task_config['qualifications'])
 
 ARG_STRING = (
     "--blueprint-type static_react_task "

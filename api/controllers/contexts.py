@@ -1,5 +1,10 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 import bottle
 import common.auth as _auth
+import common.helpers as util
 
 from models.round import RoundModel
 from models.context import ContextModel
@@ -8,11 +13,13 @@ import json
 
 @bottle.get('/contexts/<tid:int>/<rid:int>')
 @bottle.get('/contexts/<tid:int>/<rid:int>/min')
-def getContext(tid, rid):
+@_auth.requires_auth_or_turk
+def getContext(credentials, tid, rid):
     return _getContext(tid, rid)
 
 @bottle.get('/contexts/<tid:int>/<rid:int>/uniform')
-def getUniformContext(tid, rid):
+@_auth.requires_auth_or_turk
+def getUniformContext(credentials, tid, rid):
     return _getContext(tid, rid, 'uniform')
 
 def _getContext(tid, rid, method='min'):
@@ -26,4 +33,4 @@ def _getContext(tid, rid, method='min'):
     if not context:
         bottle.abort(500, f'No contexts available ({round.id})')
     context = context[0].to_dict()
-    return json.dumps(context)
+    return util.json_encode(context)

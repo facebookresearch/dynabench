@@ -1,7 +1,7 @@
-""" 
-This is a handler passed to the torchserve to serve the model. 
-It loads up the model and handles requests. This code is specific for hatespeech
-"""
+# Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 import json
 import logging
 import os
@@ -19,7 +19,7 @@ import torch.nn.functional as F
 from ts.torch_handler.base_handler import BaseHandler
 
 from settings import my_secret
-from TransformerUtils import generate_response_signature, check_fields, handler_initialize, \
+from shared import generate_response_signature, check_fields, handler_initialize, \
     construct_input_ref, captum_sequence_forward, summarize_attributions, get_word_token
 
 class TransformersSeqClassifierHandler(BaseHandler):
@@ -32,7 +32,7 @@ class TransformersSeqClassifierHandler(BaseHandler):
 
     def initialize(self, ctx):
         """
-        Initializes the model and tokenizer during server start up 
+        Initializes the model and tokenizer during server start up
         """
         model_dir, model_pt_path, self.device, self.setup_config \
                   = handler_initialize(ctx)
@@ -75,14 +75,14 @@ class TransformersSeqClassifierHandler(BaseHandler):
         """
         max_length = self.setup_config["max_length"]
         logger.info("In preprocess, data's value: '%s'", data)
-    
+
         body = data[0]["body"]
         if not body:
-            raise AttributeError("No body found in the request") 
+            raise AttributeError("No body found in the request")
 
         # Checks if the request contains the necessary attributes
         attribute_list = ["context", "hypothesis", "insight"]
-        check_fields(body, attribute_list)  
+        check_fields(body, attribute_list)
 
         context = body["context"]
         input_text = body["hypothesis"]

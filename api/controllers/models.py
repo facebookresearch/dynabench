@@ -1,9 +1,12 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 import sqlalchemy as db
 import bottle
 
 import common.auth as _auth
 import common.helpers as  util
-from common.helpers import check_fields
 
 from models.model import ModelModel
 from models.score import ScoreModel
@@ -20,7 +23,7 @@ def get_model(mid):
     if not model:
         bottle.abort(404, 'Not found')
     # Also get this model's scores?
-    return json.dumps(model.to_dict())
+    return util.json_encode(model.to_dict())
 
 @bottle.get('/models/<mid:int>/details')
 @_auth.auth_optional
@@ -39,7 +42,7 @@ def get_model_detail(credentials, mid):
         fields = ['accuracy', 'round_id']
         s_dicts = [dict(zip(fields, d)) for d in scores]
         model['scores'] = s_dicts
-        return json.dumps(model)
+        return util.json_encode(model)
     except AssertionError as ex:
         logging.exception('Not authorized to access unpublished model detail')
         bottle.abort(403, 'Not authorized to access model detail')
@@ -51,8 +54,8 @@ def get_model_detail(credentials, mid):
 @_auth.requires_auth
 def do_upload(credentials):
     """
-    Upload the result file fpr overall round or specified round like 1,2,3
-    and save those result into models and scores table
+    Upload the result file for the overall task or specific rounds
+    and save those results into the models and scores table
     :param credentials:
     :return: Models scores detail
     """
@@ -73,15 +76,15 @@ def do_upload(credentials):
     except Exception as ex:
         logging.exception(ex)
         bottle.abort(400, 'Upload valid model result file')
-    # Round object fetch from DB
+
     r = RoundModel()
     if round_id == 'overall':
         rounds = r.getByTid(task_id)
     else:
         rounds = [r.getByTidAndRid(task_id, round_id)]
     if not rounds:
-        bottle.abort(400, 'Model evaluation  failed')
-    # Model result validate and score object save into db
+        bottle.abort(400, 'Model evaluation failed')
+
     if len(test_raw_data) > 0:
         try:
             rounds_accuracy_list, score_obj_list, overall_accuracy = util.validate_prediction(rounds, test_raw_data)
@@ -90,16 +93,16 @@ def do_upload(credentials):
                              overall_perf='{:.2f}'.format(overall_accuracy))
             s = ScoreModel()
             scores = s.bulk_create(model_id=model.id, score_objs=score_obj_list)
-            #Construct response object
+
             response = model.to_dict()
             response['user'] = user.to_dict()
             response['scores'] = rounds_accuracy_list
-            return json.dumps(response)
+            return util.json_encode(response)
         except AssertionError:
             bottle.abort(400, 'Submission file length mismatch')
-        except Exception as error_message:
-            logging.exception('Model evaluation failed: %s' % (error_message))
-            bottle.abort(400, 'Model evaluation failed: %s'% (error_message))
+#        except Exception as error_message:
+#            logging.exception('Model evaluation failed: %s' % (error_message))
+#            bottle.abort(400, 'Model evaluation failed: %s' % (error_message))
     else:
         bottle.abort(400, 'Invalid file submitted')
 
@@ -108,7 +111,7 @@ def do_upload(credentials):
 def publish_model(credentials, mid):
     m = ModelModel()
     data = bottle.request.json
-    if not check_fields(data, ['name', 'description']):
+    if not util.check_fields(data, ['name', 'description']):
         bottle.abort(400, 'Missing data')
 
     try:

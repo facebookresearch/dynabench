@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import React from "react";
 import {
   Col,
@@ -39,8 +45,7 @@ class TaskTable extends React.Component {
       .getTasks()
       .then((result) => {
         this.setState({ tasks: result.tasks });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   }
@@ -75,8 +80,7 @@ class UserTable extends React.Component {
       .getUsers()
       .then((result) => {
         this.setState({ users: result });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   }
@@ -187,12 +191,12 @@ class HomePage extends React.Component {
               <Col lg={8}>
                 <h1 className="mb-4">Rethinking AI Benchmarking</h1>
                 <p>
-                  DynaBench is a research platform for dynamic adversarial data
+                  DynaBench is a research platform for dynamic data
                   collection and benchmarking. Static benchmarks have well-known
                   issues: they saturate quickly, are susceptible to overfitting,
                   contain exploitable annotator artifacts and have unclear or
                   imperfect evaluation metrics.<br></br>
-                  <br></br> This platform essentially is a scientific
+                  <br></br> This platform in essence is a scientific
                   experiment: can we make faster progress if we collect data
                   dynamically, with humans and models in the loop, rather than
                   in the old-fashioned static way?

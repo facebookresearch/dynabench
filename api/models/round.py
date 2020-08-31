@@ -1,3 +1,7 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 import sqlalchemy as db
 from .base import Base, BaseModel
 
@@ -32,7 +36,7 @@ class Round(Base):
         d = {}
         for column in self.__table__.columns:
             if safe and column.name in ['secret']: continue
-            d[column.name] = str(getattr(self, column.name))
+            d[column.name] = getattr(self, column.name)
         return d
 
 class RoundModel(BaseModel):
@@ -51,6 +55,9 @@ class RoundModel(BaseModel):
     def incrementExampleCount(self, tid, rid):
         r = self.getByTidAndRid(tid, rid)
         if r:
-            r.total_collected = r.total_collected+1
+            prev = r.total_collected
+            if prev is None:
+                prev = 0
+            r.total_collected = prev+1
             r.task.last_updated = db.sql.func.now()
             self.dbs.commit()

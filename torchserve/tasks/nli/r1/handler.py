@@ -1,7 +1,7 @@
-""" 
-This is a handler passed to the torchserve to serve the model. 
-It loads up the model and handles requests. This code is specific for NLI round 1
-"""
+# Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 import json
 import logging
 import hashlib
@@ -19,8 +19,9 @@ from allennlp.nn.util import move_to_device
 import torch
 import torch.nn.functional as F
 from ts.torch_handler.base_handler import BaseHandler
+
 from settings import my_secret
-from TransformerUtils import generate_response_signature, check_fields, handler_initialize,remove_sp_chars
+from shared import generate_response_signature, check_fields, handler_initialize, remove_sp_chars
 
 # ==================== custom imports from anli ===============
 from bert_model.modeling import BertMultiLayerSeqClassification
@@ -40,7 +41,7 @@ class NliTransformerHandler(BaseHandler):
 
     def initialize(self, ctx):
         """
-        Initializes the model and tokenizer during server start up 
+        Initializes the model and tokenizer during server start up
         """
         model_dir, model_pt_path, self.device, self.setup_config \
                   = handler_initialize(ctx)
@@ -98,14 +99,14 @@ class NliTransformerHandler(BaseHandler):
         self.initialized = True
 
     def preprocess(self, data):
-        """ 
+        """
         Basic text preprocessing, based on the user's chocie of application mode.
         """
         #logger.info(f"In preprocess, Recieved data '{data}'")
         body = data[0]["body"]
         if not body:
-            raise AttributeError("No body found in the request") 
-        
+            raise AttributeError("No body found in the request")
+
         # Checks if the request contains the necessary attributes
         attribute_list = ["context", "hypothesis", "insight"]
         check_fields(body, attribute_list)
@@ -117,8 +118,8 @@ class NliTransformerHandler(BaseHandler):
         return [example]
 
     def inference(self, examples):
-        """ 
-        Predict the class (or classes) of the received text using the serialized 
+        """
+        Predict the class (or classes) of the received text using the serialized
         transformers checkpoint.
         """
         instances = self.bert_cs_reader.read(examples)
@@ -195,12 +196,12 @@ class NliTransformerHandler(BaseHandler):
         return r_list
 
     def postprocess(self, inference_output, data):
-        """ 
-        Post-processing of the model predictions to handle signature 
+        """
+        Post-processing of the model predictions to handle signature
         """
         inference_output = inference_output[0]
         data = data[0]
-        
+
         # The input and the output probabilities are concatenated to generate signature
         pred_str = "|".join(str(x) for x in inference_output["prob"])
         stringlist = [pred_str, data["s1"], data["s2"]]
@@ -222,8 +223,8 @@ class NliTransformerHandler(BaseHandler):
 _service = NliTransformerHandler()
 
 def handle(data, context):
-    """   
-    This function handles the requests for the model and returns a postprocessed response 
+    """
+    This function handles the requests for the model and returns a postprocessed response
     # Sample input {
         "context": "Please pretend you are reviewing a place, product, book or movie",
         "hypothesis": "pretend you are reviewing a place",
@@ -240,7 +241,7 @@ def handle(data, context):
         input_text = _service.preprocess(data)
         output = _service.inference(input_text)
         response = _service.postprocess(output, input_text)
-        print(response)
+        #print(response)
 
         return response
     except AttributeError as e:

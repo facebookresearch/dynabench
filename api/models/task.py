@@ -1,3 +1,7 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 import sqlalchemy as db
 from .base import Base, BaseModel
 from .round import Round
@@ -13,6 +17,9 @@ class Task(Base):
 
     # Task type is either 'clf' or 'extract' for now
     type = db.Column(db.String(length=255), nullable=False, default='clf')
+
+    owner_uid = db.Column(db.Integer)
+    owner_str = db.Column(db.Text)
 
     desc = db.Column(db.String(length=255))
     longdesc = db.Column(db.Text)
@@ -37,7 +44,7 @@ class Task(Base):
     def to_dict(self, safe=True):
         d = {}
         for column in self.__table__.columns:
-            d[column.name] = str(getattr(self, column.name))
+            d[column.name] = getattr(self, column.name)
         return d
 
 class TaskModel(BaseModel):

@@ -1,3 +1,7 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 import sqlalchemy as db
 from .base import Base, BaseModel
 from .model import Model
@@ -28,7 +32,7 @@ class Score(Base):
     def to_dict(self, safe=True):
         d = {}
         for column in self.__table__.columns:
-            d[column.name] = str(getattr(self, column.name))
+            d[column.name] = getattr(self, column.name)
         return d
 
 class ScoreModel(BaseModel):

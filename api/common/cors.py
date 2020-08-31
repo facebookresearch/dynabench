@@ -1,3 +1,7 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 import bottle
 import logging
 import urllib
@@ -10,7 +14,8 @@ def enable_cors_after_request_hook():
     add_cors_headers()
 def add_cors_headers():
     parsed_origin_url = urllib.parse.urlparse(bottle.request.get_header('origin'))
-    if hasattr(parsed_origin_url, 'hostname') and (parsed_origin_url.hostname.endswith('dynabench.org') or \
+    if hasattr(parsed_origin_url, 'hostname') and parsed_origin_url.hostname is not None and ( \
+            parsed_origin_url.hostname.endswith('dynabench.org') or \
             parsed_origin_url.hostname.endswith('herokuapp.com') or \
             parsed_origin_url.hostname == 'localhost'):
         origin = bottle.request.get_header('origin')

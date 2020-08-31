@@ -1,3 +1,7 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 import logging
 import sqlalchemy as db
 from sqlalchemy import case
@@ -46,11 +50,17 @@ class Example(Base):
     model_wrong = db.Column(db.Boolean)
     retracted = db.Column(db.Boolean, default=False)
     flagged = db.Column(db.Boolean, default=False)
+
+    verified = db.Column(db.Boolean, default=False)
     verified_correct = db.Column(db.Boolean, default=False)
+    verified_incorrect = db.Column(db.Boolean, default=False)
+    verified_flagged = db.Column(db.Boolean, default=False)
 
     generated_datetime = db.Column(db.DateTime)
 
     time_elapsed = db.Column(db.Time) # time context shown - time example provided
+
+    total_verified = db.Column(db.Integer, default=0)
 
     def __repr__(self):
         return '<Example {}>'.format(self.id)
@@ -58,8 +68,9 @@ class Example(Base):
     def to_dict(self, safe=True):
         d = {}
         for column in self.__table__.columns:
-            if safe and column.name in ['secret']: continue
-            d[column.name] = str(getattr(self, column.name))
+            if safe and column.name in ['verifier_preds', 'verified_correct', 'split', 'uid', 'user']: continue
+            d[column.name] = getattr(self, column.name)
+        d['context'] = self.context.to_dict()
         return d
 
 class ExampleModel(BaseModel):
@@ -140,7 +151,7 @@ class ExampleModel(BaseModel):
 
         if h.hexdigest() != signature:
             logging.error("Signature does not match (received %s, expected %s [%s])" %
-                    (h.hexdigest(), signature, ''.join(fields_to_sign)))
+                    (h.hexdigest(), signature, ''.join([str(x) for x in fields_to_sign])))
             return False
         return True
 
@@ -149,16 +160,6 @@ class ExampleModel(BaseModel):
         anon_id.update(secret.encode('utf-8'))
         anon_id.update(str(uid).encode('utf-8'))
         return anon_id.hexdigest()
-
-    def getRandomToVerify(tid, n=1):
-        # https://stackoverflow.com/questions/60805/getting-random-row-through-sqlalchemy
-        example = Example()
-        return example.query.filter(Example.tid == tid).filter(Example.model_wrong == True).filter(Example.retracted == False).filter(Example.verified_correct == False).options(db.orm.load_only('id')).offset(
-                db.sql.func.floor(
-                    db.sql.func.random() *
-                    self.dbs.query(db.sql.func.count(example.id))
-                )
-            ).limit(n).all()
 
     def getUserLeaderByTid(self, tid, n=5, offset=0, min_cnt=0, downstream=False):
         cnt = db.sql.func.sum(case([(Example.model_wrong == 1, 1)], else_=0)).label('cnt')
@@ -177,3 +178,36 @@ class ExampleModel(BaseModel):
         query_res = self.getUserLeaderByTid(tid, n, offset, min_cnt, downstream=True) \
                 .filter(Round.rid == rid)
         return query_res.limit(n).offset(n * offset), util.get_query_count(query_res)
+
+    def getByTid(self, tid):
+        try:
+            return self.dbs.query(Example) \
+                    .join(Context, Example.cid == Context.id) \
+                    .join(Round, Context.r_realid == Round.id) \
+                    .filter(Round.tid == tid).all()
+        except db.orm.exc.NoResultFound:
+            return False
+    def getByTidAndRid(self, tid, rid):
+        try:
+            return self.dbs.query(Example) \
+                    .join(Context, Example.cid == Context.id) \
+                    .join(Round, Context.r_realid == Round.id) \
+                    .filter(Round.tid == tid).filter(Round.rid == rid).all()
+        except db.orm.exc.NoResultFound:
+            return False
+
+    def getRandom(self, rid, n=1):
+        result = self.dbs.query(Example) \
+                .join(Context, Example.cid == Context.id) \
+                .filter(Context.r_realid == rid) \
+                .order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
+        return result
+    def getRandomWrong(self, rid, n=1):
+        result = self.dbs.query(Example) \
+                .join(Context, Example.cid == Context.id) \
+                .filter(Context.r_realid == rid) \
+                .filter(Example.model_wrong == True) \
+                .filter(Example.retracted == False) \
+                .filter(Example.verified == False) \
+                .order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
+        return result

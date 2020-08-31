@@ -1,7 +1,7 @@
-""" 
-This is a handler passed to the torchserve to serve the model.
- It loads up the model and handles requests. This code is specific for question answering
- """
+# Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 import json
 import logging
 import os
@@ -14,10 +14,11 @@ from transformers import AutoConfig, AutoModelForSequenceClassification, AutoTok
 import torch
 import torch.nn.functional as F
 from ts.torch_handler.base_handler import BaseHandler
-from settings import my_secret
-from TransformerUtils import generate_response_signature, check_fields, handler_initialize, remove_sp_chars, \
-    construct_input_ref_pair, captum_qa_forward, summarize_attributions, get_word_token
 from captum.attr import LayerIntegratedGradients
+
+from settings import my_secret
+from shared import generate_response_signature, check_fields, handler_initialize, remove_sp_chars, \
+    construct_input_ref_pair, captum_qa_forward, summarize_attributions, get_word_token
 
 # QA specific libraries
 from qa_utils import convert_to_squad_example, compute_predictions_logits
@@ -48,7 +49,7 @@ class TransformersSeqClassifierHandler(BaseHandler):
 
     def initialize(self, ctx):
         """
-        Initializes the model and tokenizer during server start up 
+        Initializes the model and tokenizer during server start up
         """
         model_dir, model_pt_path, self.device, self.setup_config \
                   = handler_initialize(ctx)
@@ -56,7 +57,7 @@ class TransformersSeqClassifierHandler(BaseHandler):
         self.my_task_id = self.setup_config["my_task_id"]
         self.my_round_id = self.setup_config["my_round_id"]
 
-        """ Loading the model and tokenizer from checkpoint and config files based on 
+        """ Loading the model and tokenizer from checkpoint and config files based on
         the user's choice of mode further setup config can be added."""
         if self.setup_config["save_mode"] == "torchscript":
             logger.warning("Loading torchscript model")
@@ -69,7 +70,7 @@ class TransformersSeqClassifierHandler(BaseHandler):
                         model_dir, config=config)
             else :
                 raise FileNotFoundError("Missing config file")
-                
+
         if os.path.isfile(os.path.join(model_dir, "vocab.json")):
             self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
             logger.info("Using provided vocab")
@@ -93,9 +94,9 @@ class TransformersSeqClassifierHandler(BaseHandler):
         logger.info("In preprocess, data's value: '%s'", data)
         body = data[0]["body"]
         if not body:
-            raise AttributeError("No body found in the request") 
+            raise AttributeError("No body found in the request")
         # Checks if the request contains the necessary attributes
-        attribute_list = ["answer","context", "hypothesis", "insight"]
+        attribute_list = ["answer", "context", "hypothesis", "insight"]
         check_fields(body, attribute_list)
 
         passage = body["context"]
@@ -186,7 +187,7 @@ class TransformersSeqClassifierHandler(BaseHandler):
         response["eval_f1"] = compute_f1(human_ans, response["text"])
         response["eval_exact"] = compute_exact(human_ans, response["text"])
         response["model_is_correct"] = response["eval_f1"] > THRESHOLD_F1
-        
+
         # The inputs are concatenated to generate signature
         stringlist = [str(response["model_is_correct"]) + "|" + str(response["text"]),\
             contx, data]
@@ -214,11 +215,11 @@ def get_insights(example, tokenizer, device, lig, model):
     attributions_start, delta_start = lig.attribute(inputs=input_ids,
                                   baselines=ref_input_ids,
                                   additional_forward_args=(attention_mask, 0, model),
-                                  return_convergence_delta=True)
+                                  return_convergence_delta=True, n_steps=20)
 
     attributions_end, delta_end = lig.attribute(inputs=input_ids, baselines=ref_input_ids,
                                 additional_forward_args=(attention_mask, 1, model),
-                                return_convergence_delta=True)
+                                return_convergence_delta=True, n_steps=20)
 
     attributions_start_sum = summarize_attributions(attributions_start)
     attributions_end_sum = summarize_attributions(attributions_end)

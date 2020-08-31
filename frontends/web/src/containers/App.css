@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 #content {
   min-height: 88vh;
 }
@@ -27,8 +33,20 @@
   background-color: #f0f2f5;
 }
 
+.light-green-bg {
+  background-color: #e9ffe8;
+}
+
+.light-red-bg {
+  background-color: #df4759;
+}
+
 .blue-color {
   color: #1283d8;
+}
+
+.dark-blue-color {
+  color: #005798
 }
 
 .white-color {
@@ -87,6 +105,11 @@
 
 .hypothesis {
   margin-bottom: 4px;
+}
+
+.flagged {
+  margin-bottom: 4px;
+  opacity: 0.7;
   padding: 10px;
 }
 
@@ -139,15 +162,41 @@ div.recharts-wrapper
 }
 
 table.inspectModel {
-    width: 100%;
-    border: 1px solid #ddd;
-    margin-top: 20px;
+  width: 100%;
+  border: 1px solid #ddd;
+  margin-top: 20px;
 }
 
 table.inspectModel thead td {
-    background: #efefef;
+  background: #efefef;
 }
 
 table.inspectModel td {
   padding: 5px;
+}
+
+.spaced-header {
+  letter-spacing: 1px;
+  font-size: 0.75em;
+  font-weight: bold;
+}
+
+.thick-border {
+  border-width: 2px;
+}
+
+.response-warning {
+  background-color: #fffcf4;
+  border: 1px solid #fbe5c8;
+}
+
+.response-danger {
+  background-color: #ffeff2;
+  border: 1px solid #ffe5e7;
+}
+
+.card-footer .btn-light {
+  background-color: #f8f9fa85;
+  border-color: rgba(0,0,0,.125);
+  color: inherit;
 }

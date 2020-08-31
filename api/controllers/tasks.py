@@ -1,5 +1,10 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 import bottle
 
+import common.auth as _auth
 import common.helpers as util
 
 from models.task import TaskModel
@@ -14,7 +19,7 @@ import json
 def tasks():
     t = TaskModel()
     tasks = t.listWithRounds()
-    return json.dumps(tasks)
+    return util.json_encode(tasks)
 
 @bottle.get('/tasks/<tid:int>')
 def get_task(tid):
@@ -22,7 +27,7 @@ def get_task(tid):
     task = t.getWithRound(tid)
     if not task:
         bottle.abort(404, 'Not found')
-    return json.dumps(task)
+    return util.json_encode(task)
 
 @bottle.get('/tasks/<tid:int>/<rid:int>')
 def get_task_round(tid, rid):
@@ -30,7 +35,7 @@ def get_task_round(tid, rid):
     round = rm.getByTidAndRid(tid, rid)
     if not round:
         bottle.abort(404, 'Not found')
-    return json.dumps(round.to_dict())
+    return util.json_encode(round.to_dict())
 
 @bottle.get('/tasks/<tid:int>/users')
 def get_user_leaderboard(tid):
@@ -65,6 +70,28 @@ def get_leaderboard_by_task_and_round(tid, rid):
         logging.exception('User leader board data loading failed: (%s)' % (ex))
         bottle.abort(400, 'Invalid task/round detail')
 
+@bottle.get('/tasks/<tid:int>/rounds/<rid:int>/export')
+@_auth.requires_auth
+def export_current_round_data(credentials, tid, rid):
+    t = TaskModel()
+    task = t.get(tid)
+    if task.owner_uid != credentials['id']:
+        bottle.abort(403, 'Access denied')
+    e = ExampleModel()
+    examples = e.getByTidAndRid(tid, rid)
+    return util.json_encode([e.to_dict() for e in examples])
+
+@bottle.get('/tasks/<tid:int>/export')
+@_auth.requires_auth
+def export_task_data(credentials, tid):
+    t = TaskModel()
+    task = t.get(tid)
+    if task.owner_uid != credentials['id']:
+        bottle.abort(403, 'Access denied')
+    e = ExampleModel()
+    examples = e.getByTid(tid)
+    return util.json_encode([e.to_dict() for e in examples])
+
 def construct_user_board_response_json(query_result, total_count=0):
     list_objs = []
     # converting query result into json object
@@ -80,10 +107,10 @@ def construct_user_board_response_json(query_result, total_count=0):
     if list_objs:
         # total_count = query_result[0][len(query_result[0]) - 1]
         resp_obj = {'count': total_count, 'data': list_objs}
-        return json.dumps(resp_obj)
+        return util.json_encode(resp_obj)
     else:
         resp_obj = {'count': 0, 'data': []}
-        return json.dumps(resp_obj)
+        return util.json_encode(resp_obj)
 
 @bottle.get('/tasks/<tid:int>/models')
 def get_model_leaderboard(tid):
@@ -140,10 +167,10 @@ def construct_model_board_response_json(query_result, total_count):
     dicts = [dict(zip(fields, d)) for d in query_result]
     if dicts:
         resp_obj = {'count': total_count, 'data': dicts}
-        return json.dumps(resp_obj)
+        return util.json_encode(resp_obj)
     else:
         resp_obj = {'count': 0, 'data': []}
-        return json.dumps(resp_obj)
+        return util.json_encode(resp_obj)
 
 def construct_trends_response_json(query_result):
     # construct response to support UI render
@@ -156,6 +183,6 @@ def construct_trends_response_json(query_result):
         else:
             response_obj[reslt[3]] = {'round': reslt[3], reslt[1] + '_' + str(reslt[0]): reslt[2]}
     if response_obj:
-        return json.dumps(list(response_obj.values()))
+        return util.json_encode(list(response_obj.values()))
     else:
-        return json.dumps([])
+        return util.json_encode([])

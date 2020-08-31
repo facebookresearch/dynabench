@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import React from "react";
 import {
   Container,
@@ -66,9 +72,8 @@ class ProfilePage extends React.Component {
       .getUser(ctxUserId)
       .then((result) => {
         this.setState({ user: result, loader: false });
-      })
-      .catch((error) => {
-        console.log("error", error);
+      }, (error) => {
+        console.log(error);
       });
   };
 
@@ -97,8 +102,7 @@ class ProfilePage extends React.Component {
           isEndOfUserModelsPage: isEndOfPage,
           userModels: result.data || [],
         });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   };
@@ -119,16 +123,17 @@ class ProfilePage extends React.Component {
     }
   }
 
-  handleSubmit = (values, { setSubmitting }) => {
+  handleSubmit = (values, { setFieldError, setSubmitting }) => {
     const user = this.context.api.getCredentials();
     this.context.api
       .updateUser(user.id, values)
       .then((result) => {
         this.setState({ user: result });
         setSubmitting(false);
-      })
-      .catch((error) => {
-        console.log("error", error);
+      }, (error) => {
+        console.log(error);
+        setFieldError("accept", "Profile could not be updated (" + error.error + ")");
+        setSubmitting(false);
       });
   };
 
@@ -161,9 +166,8 @@ class ProfilePage extends React.Component {
           invalidFileUpload: false,
           loader: false,
         });
-      })
-      .catch((error) => {
-        console.log("error", error);
+      }, (error) => {
+        console.log(error);
         this.setState({ invalidFileUpload: true, loader: false });
       });
   };
@@ -314,6 +318,17 @@ class ProfilePage extends React.Component {
                                       defaultValue={this.state.user.affiliation}
                                       onChange={handleChange}
                                     />
+                                  </Col>
+                                </Form.Group>
+                                <Form.Group
+                                  as={Row}
+                                  controlId="affiliation"
+                                  className="py-3 my-0"
+                                >
+                                  <Col sm="8">
+                                    <small className="form-text text-muted">
+                                      {errors.accept}
+                                    </small>
                                   </Col>
                                 </Form.Group>
                                 <Row className="justify-content-md-center">

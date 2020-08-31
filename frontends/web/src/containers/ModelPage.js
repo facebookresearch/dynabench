@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import React from "react";
 import {
   Container,
@@ -39,8 +45,7 @@ class ModelPage extends React.Component {
       .getModel(this.state.modelId)
       .then((result) => {
         this.setState({ model: result });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   };
@@ -65,8 +70,7 @@ class ModelPage extends React.Component {
       .toggleModelStatus(this.state.modelId)
       .then(() => {
         this.fetchModel();
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   };
@@ -173,6 +177,12 @@ class ModelPage extends React.Component {
                           }}
                         </TasksContext.Consumer>
                       </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <b>Description</b>
+                      </td>
+                      <td>{model.longdesc}</td>
                     </tr>
                     <tr>
                       <td colSpan="2">
