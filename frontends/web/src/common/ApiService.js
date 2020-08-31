@@ -398,7 +398,10 @@ export default class ApiService {
   }
 
   doFetch(url, options, includeCredentials = false) {
-    const token = this.getToken();
+    if (this.mode != 'mturk') {
+      const token = this.getToken();
+    }
+    else { var token = null; }
     const headers = {
       "Accept": "application/json",
       "Content-Type": "application/json",
@@ -418,24 +421,26 @@ export default class ApiService {
   }
 
   fetch(url, options) {
-    const token = this.getToken();
-    if (
-      !!token &&
-      this.isTokenExpired(token) &&
-      url !== `${this.domain}/authenticate`
-    ) {
-      return this.refreshTokenWrapper(
-        (res) => {
-          console.log("Our token was refreshed (fetch callback)");
-          return this.doFetch(url, options, {}, true);
-        },
-        (res) => {
-          console.log("Could not refresh token (fetch)");
-          var error = new Error("Could not refresh token");
-          //window.location.href = '/login';
-          throw error;
-        }
-      );
+    if (this.mode != 'mturk') {
+      const token = this.getToken();
+      if (
+        !!token &&
+        this.isTokenExpired(token) &&
+        url !== `${this.domain}/authenticate`
+      ) {
+        return this.refreshTokenWrapper(
+          (res) => {
+            console.log("Our token was refreshed (fetch callback)");
+            return this.doFetch(url, options, {}, true);
+          },
+          (res) => {
+            console.log("Could not refresh token (fetch)");
+            var error = new Error("Could not refresh token");
+            //window.location.href = '/login';
+            throw error;
+          }
+        );
+      }
     }
     return this.doFetch(url, options, {}, true);
   }
