@@ -185,7 +185,7 @@ class NliTransformerHandler(BaseHandler):
 
         # new version:
         # TODO: how do we want to handle models that do not support inspection.
-        # Here, I will just set response to be the following.
+        # Here, Yixin just set response to be the following.
         # if supported:     {"importance": importance, "words": tokens, "status": "finished"}
         # if not supported: {"importance": None, "words": None, "status": "not supported"}
 
