@@ -13,6 +13,7 @@ import {
   Button,
   FormControl,
   InputGroup,
+  ButtonGroup,
   DropdownButton,
   Dropdown,
   OverlayTrigger,
@@ -749,15 +750,22 @@ class CreateInterface extends React.Component {
       <OverlayProvider>
       <Container className="mb-5 pb-5">
         <Col className="m-auto" lg={12}>
-          <OverlayContext.Consumer>
-            {
-              ({hidden, setHidden})=> (
-                <div style={{float: "right"}}>
-                  <button onClick={()=> { setHidden(!hidden) }}>Instructions</button>
-                </div>
-              )
-            }
-          </OverlayContext.Consumer>
+          <div style={{float: "right"}}>
+            <ButtonGroup>
+            <OverlayContext.Consumer>
+              {
+                ({hidden, setHidden})=> (
+                    <button type="button" className="btn btn-light btn-sm"
+                      onClick={() => { setHidden(!hidden) }}
+                    ><i className="fas fa-info"></i></button>
+                )
+              }
+            </OverlayContext.Consumer>
+            <button type="button" className="btn btn-light btn-sm"
+              onClick={() => {  }}
+            ><i className="fas fa-question"></i></button>
+            </ButtonGroup>
+          </div>
           <Annotation
             placement="bottom-start"
             tooltip={"This is a long test message to see if wrapping works correctly"}>

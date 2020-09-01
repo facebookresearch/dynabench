@@ -14,7 +14,8 @@ function OverlayProvider({ children, initial=false }) {
     <Modal
       show={!hidden}
       onHide={() => setHidden(true)}
-    ></Modal>
+      dialogAs={() => null}
+      ></Modal>
     <OverlayContext.Provider value={{hidden, setHidden}}>
       {children}
     </OverlayContext.Provider>

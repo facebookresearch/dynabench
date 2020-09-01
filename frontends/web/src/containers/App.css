@@ -186,8 +186,8 @@ table.inspectModel td {
 }
 
 .response-warning {
-  background-color: #fff9eb;
-  border: 1px solid #fbe5c8;
+  background-color: #fffcf4;
+  border: 1px solid #fbe5c8;  
 }
 
 .response-danger {
@@ -199,4 +199,9 @@ table.inspectModel td {
   background-color: #f8f9fa85;
   border-color: rgba(0,0,0,.125);
   color: inherit;
+}
+
+.modal-open {
+  overflow-y: scroll !important;
+  padding: 0 !important;
 }
