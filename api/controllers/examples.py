@@ -18,12 +18,16 @@ import logging
 from datetime import datetime
 
 @bottle.get('/examples/<tid:int>/<rid:int>')
-@_auth.requires_auth
+@_auth.requires_auth_or_turk
 def get_random_example(credentials, tid, rid):
     rm = RoundModel()
     round = rm.getByTidAndRid(tid, rid)
     em = ExampleModel()
-    example = em.getRandomWrong(round.id, n=1)
+    if credentials['id'] != 'turk':
+        example = em.getRandomWrong(round.id, n=1, my_uid=credentials['id'])
+    else:
+        # TODO: Handle this in frontend? Or rejection sample here for N tries
+        example = em.getRandomWrong(round.id, n=1)
     if not example:
         bottle.abort(500, f'No examples available ({round.id})')
     example = example[0].to_dict()
@@ -41,7 +45,7 @@ def get_example(credentials, eid):
     return util.json_encode(example.to_dict())
 
 @bottle.put('/examples/<eid:int>/validate')
-@_auth.requires_auth
+@_auth.requires_auth_or_turk
 def validate_example(credentials, eid):
     data = bottle.request.json
     if not data or 'label' not in data:
@@ -49,10 +53,21 @@ def validate_example(credentials, eid):
     label = data['label']
     if label not in ['C', 'I', 'F']:
         bottle.abort(400, 'Bad request')
+
     em = ExampleModel()
     example = em.get(eid)
     if not example:
         bottle.abort(404, 'Not found')
+
+    if credentials['id'] == 'turk':
+        if not util.check_fields(data, ['uid']):
+            bottle.abort(400, 'Missing data');
+        metadata = json.loads(example.metadata_json)
+        if 'annotator_id' not in metadata or metadata['annotator_id'] == data['uid']:
+            bottle.abort(403, 'Access denied (cannot validate your own example)')
+    elif credentials['id'] == example.uid:
+        bottle.abort(403, 'Access denied (cannot validate your own example)')
+
     nobj = example.verifier_preds
     if nobj is None:
         nobj = ''
