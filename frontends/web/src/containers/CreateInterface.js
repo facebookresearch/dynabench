@@ -126,15 +126,18 @@ class ResponseInfo extends React.Component {
     this.setState({
       loader: false,
       inspectError: false,
+      explainSaved: null
     });
   }
   explainExample(e) {
     e.preventDefault();
     var idx = e.target.getAttribute("data-index");
     var type = e.target.getAttribute("data-type");
+    this.setState({explainSaved: false})
     this.context.api
       .explainExample(this.props.mapKeyToExampleId[idx], type, e.target.value)
       .then((result) => {
+        this.setState({explainSaved: true});
         // TODO: provide user feedback?
       }, (error) => {
         console.log(error);
@@ -259,7 +262,28 @@ class ResponseInfo extends React.Component {
         {!this.state.livemode
           ? <div>This example was not stored because you are in sandbox mode.</div>
           : this.props.obj.fooled
-            ? null
+            ? (
+              <div className="mt-3">
+                <span style={{float: "right"}}>
+                  { this.state.explainSaved === null
+                    ? <span style={{color: "#b58c14"}}>Draft. Click out of input box to save.</span>
+                    : this.state.explainSaved === false
+                      ? "Saving..."
+                      : <span style={{color: "#085756"}}>Saved!</span>
+                  }
+                </span>
+                <div>
+                  <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
+                    "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is correct"}
+                    data-index={this.props.index} data-type="example" onChange={() => this.setState({explainSaved: null})} onBlur={this.explainExample} />
+                </div>
+                <div>
+                  <input type="text" style={{width: 100+'%'}}
+                    placeholder="Explain why you think the model made a mistake"
+                    data-index={this.props.index} data-type="model" onChange={() => this.setState({explainSaved: null})} onBlur={this.explainExample} />
+                </div>
+              </div>
+            )
             : <div className="mt-3">
               We will still store this as an example that the model got
               right.
