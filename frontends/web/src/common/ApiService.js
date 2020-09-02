@@ -407,7 +407,7 @@ export default class ApiService {
   }
 
   doFetch(url, options, includeCredentials = false) {
-    const token = this.getToken();
+    const token = (this.mode != 'mturk') ? this.getToken() : null;
     const headers = {
       "Accept": "application/json",
       "Content-Type": "application/json",
@@ -426,7 +426,7 @@ export default class ApiService {
   }
 
   fetch(url, options) {
-    const token = this.getToken();
+    const token = (this.mode != 'mturk') ? this.getToken() : null;
     if (
       !!token &&
       this.isTokenExpired(token) &&
