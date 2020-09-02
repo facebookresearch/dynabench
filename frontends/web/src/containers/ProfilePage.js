@@ -420,7 +420,7 @@ class ProfilePage extends React.Component {
                                 {model.overall_perf}
                               </td>
                               <td className="text-center" width="200px">
-                                {model.is_published === "True" ? (
+                                {model.is_published === true ? (
                                   <Badge
                                     variant="success"
                                     className="publishStatus"
