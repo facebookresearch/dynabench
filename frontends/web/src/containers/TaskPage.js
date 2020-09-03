@@ -219,7 +219,7 @@ const OveralTaskStats = (props) => {
             {props.task.round?.total_verified}/
             {props.task.round?.total_collected} (
             {props.task.round?.total_collected > 0
-              ? (
+              ? (100 *
                   props.task.round?.total_verified /
                   props.task.round?.total_collected
                 ).toFixed(2)

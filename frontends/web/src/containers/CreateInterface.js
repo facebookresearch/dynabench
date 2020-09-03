@@ -257,7 +257,7 @@ class ResponseInfo extends React.Component {
             </span>
           : <span>
               <strong>Try again!</strong> The model wasn't fooled.
-            </span> 
+            </span>
         }
         {!this.state.livemode
           ? <div>This example was not stored because you are in sandbox mode.</div>
@@ -308,7 +308,7 @@ class ResponseInfo extends React.Component {
             })}
         </div>
       </>;
-    } 
+    }
     return (
       <Card
         className={classNames}
@@ -333,7 +333,7 @@ class ResponseInfo extends React.Component {
         {this.props.obj.retracted || this.props.obj.flagged
           ? null
           : <Card.Footer>
-            { <div class="btn-group" role="group" aria-label="response actions">
+            { <div className="btn-group" role="group" aria-label="response actions">
                 <OverlayTrigger
                   placement="top"
                   delay={{ show: 250, hide: 400 }}
@@ -343,7 +343,7 @@ class ResponseInfo extends React.Component {
                     data-index={this.props.index}
                     onClick={this.retractExample}
                     type="button"
-                    class="btn btn-light btn-sm">
+                    className="btn btn-light btn-sm">
                       <i className="fas fa-undo-alt"></i> Retract
                   </button>
                 </OverlayTrigger>
@@ -356,7 +356,7 @@ class ResponseInfo extends React.Component {
                     data-index={this.props.index}
                     onClick={this.flagExample}
                     type="button"
-                    class="btn btn-light btn-sm">
+                    className="btn btn-light btn-sm">
                       <i className="fas fa-flag"></i> Flag
                   </button>
                 </OverlayTrigger>
@@ -370,7 +370,7 @@ class ResponseInfo extends React.Component {
                       data-index={this.props.index}
                       onClick={this.inspectExample}
                       type="button"
-                      class="btn btn-light btn-sm">
+                      className="btn btn-light btn-sm">
                         <i className="fas fa-search"></i> Inspect
                         {this.state.loader ? (
                           <Spinner className="ml-2" animation="border" role="status" size="sm">
@@ -688,7 +688,7 @@ class CreateInterface extends React.Component {
       )
     ).filter(item => item !== undefined);
     // sentinel value of undefined filtered out after to preserve index values
-    
+
     const rounds = (this.state.task.round && this.state.task.cur_round) || 0;
     const roundNavs = [];
     for (let i = rounds; i > 0; i--) {

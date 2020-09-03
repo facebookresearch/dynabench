@@ -79,8 +79,13 @@ def validate_example(credentials, eid):
         'total_verified': example.total_verified + 1
     })
     preds = Counter([x.split(",")[1] for x in nobj.split("|")])
+    rm = RoundModel()
+    cm = ContextModel()
+    context = cm.get(example.cid)
+    rm.updateLastActivity(context.r_realid)
     if preds['C'] >= 5:
         em.update(example.id, {'verified': True, 'verified_correct': True})
+        rm.incrementVerifiedCount(context.r_realid)
     elif preds['I'] >= 5:
         em.update(example.id, {'verified': True, 'verified_incorrect': True})
     elif preds['F'] >= 5:
@@ -142,7 +147,7 @@ def post_example(credentials):
         bottle.abort(400, 'Could not create example')
 
     rm = RoundModel()
-    rm.incrementExampleCount(data['tid'], data['rid'])
+    rm.incrementCollectedCount(data['tid'], data['rid'])
     cm = ContextModel()
     cm.incrementCountDate(data['cid'])
 

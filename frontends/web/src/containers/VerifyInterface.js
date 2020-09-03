@@ -167,28 +167,28 @@ class VerifyInterface extends React.Component {
                     data-index={this.props.index}
                     onClick={() => this.handleResponse("correct")}
                     type="button"
-                    class="btn btn-light btn-sm">
+                    className="btn btn-light btn-sm">
                       <i className="fas fa-thumbs-up"></i> Correct
                   </button>{" "}
                   <button
                     data-index={this.props.index}
                     onClick={() => this.handleResponse("incorrect")}
                     type="button"
-                    class="btn btn-light btn-sm">
+                    className="btn btn-light btn-sm">
                       <i className="fas fa-thumbs-down"></i> Incorrect
                   </button>{" "}
                   <button
                     data-index={this.props.index}
                     onClick={() => this.handleResponse("flag")}
                     type="button"
-                    class="btn btn-light btn-sm">
+                    className="btn btn-light btn-sm">
                       <i className="fas fa-flag"></i> Flag
                   </button>{" "}
                   <button
                     data-index={this.props.index}
                     onClick={this.getNewExample}
                     type="button"
-                    class="btn btn-light btn-sm pull-right">
+                    className="btn btn-light btn-sm pull-right">
                       <i className="fas fa-undo-alt"></i> Skip and load new example
                   </button>
                 </Card.Footer>
