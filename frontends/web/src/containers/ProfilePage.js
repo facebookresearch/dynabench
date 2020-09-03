@@ -25,6 +25,184 @@ import { Avatar } from "../components/Avatar/Avatar";
 import "./Sidebar-Layout.css";
 import "./ProfilePage.css";
 
+const NotificationsSubPage = (props) => {
+  return (
+    <Container className="mb-5 pb-5">
+      <h1 className="my-4 pt-3 text-uppercase text-center">
+        Your Notifications
+      </h1>
+      <Col className="m-auto" lg={8}>
+        <Card className="profile-card">
+          <Card.Body style={{padding: 20}}>
+            No new notifications
+          </Card.Body>
+        </Card>
+      </Col>
+    </Container>
+  );
+};
+
+const StatsSubPage = (props) => {
+  return (
+    <Container className="mb-5 pb-5">
+      <h1 className="my-4 pt-3 text-uppercase text-center">
+        Your Stats &amp; Badges
+      </h1>
+      <Col className="m-auto" lg={8}>
+        <Card className="profile-card">
+          <Card.Body style={{padding: 20}}>
+            <Table className="mb-0">
+              <tbody>
+                <tr>
+                  <td>
+                    Total examples:
+                  </td>
+                  <td className="text-right">
+                    {props.user.examples_submitted}
+                  </td>
+                 </tr>
+                <tr>
+                  <td>
+                    Model fooling examples (verified):
+                  </td>
+                  <td className="text-right">
+                    {props.user.examples_verified_correct}
+                  </td>
+                 </tr>
+                <tr>
+                  <td>
+                    Overall model error rate:
+                  </td>
+                  <td className="text-right">
+                    {(100 *
+                      props.user.examples_verified_correct /
+                      props.user.examples_submitted
+                    ).toFixed(2)}%
+                  </td>
+                 </tr>
+                <tr>
+                  <td>
+                    Total validations:
+                  </td>
+                  <td className="text-right">
+                    {props.user.examples_verified}
+                  </td>
+                 </tr>
+              </tbody>
+            </Table>
+          </Card.Body>
+        </Card>
+      </Col>
+    </Container>
+  );
+};
+
+const ModelSubPage = (props) => {
+  return (
+    <Container className="mb-5 pb-5">
+      <h1 className="my-4 pt-3 text-uppercase text-center">
+        Your Models
+      </h1>
+      <Col className="m-auto" lg={8}>
+        <Card className="profile-card">
+          <Card.Body>
+            <Table className="modelTable mb-0">
+              <thead className="blue-color border-bottom">
+                <tr>
+                  <td>
+                    <b>Name</b>
+                  </td>
+                  <td>
+                    <b>Task</b>
+                  </td>
+                  <td className="text-right">
+                    <b>Performance</b>
+                  </td>
+                  <td className="text-center" width="200px">
+                    <b>Status</b>
+                  </td>
+                </tr>
+              </thead>
+              <tbody>
+                {!props.userModels.length ? (
+                  <tr>
+                    <td colSpan="4">
+                      <div className="text-center">No data found</div>
+                    </td>
+                  </tr>
+                ) : null}
+                {props.userModels.map((model) => {
+                  return (
+                    <tr
+                      className="cursor-pointer"
+                      key={model.id}
+                      onClick={() =>
+                        props.history.push(`/models/${model.id}`)
+                      }
+                    >
+                      <td className="blue-color">
+                        {model.name || "Unknown"}
+                      </td>
+                      <td>
+                        <TasksContext.Consumer>
+                          {({ tasks }) => {
+                            const task =
+                              model &&
+                              tasks.filter((e) => e.id == model.tid);
+                            return (
+                              task && task.length && task[0].shortname
+                            );
+                          }}
+                        </TasksContext.Consumer>
+                      </td>
+                      <td className="text-right">
+                        {model.overall_perf}
+                      </td>
+                      <td className="text-center" width="200px">
+                        {model.is_published === true ? (
+                          <Badge
+                            variant="success"
+                            className="publishStatus"
+                          >
+                            Published
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="danger"
+                            className="publishStatus"
+                          >
+                            Unpublished
+                          </Badge>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+          </Card.Body>
+          <Card.Footer className="text-center">
+            <Pagination className="mb-0 float-right" size="sm">
+              <Pagination.Item
+                disabled={!props.userModelsPage}
+                onClick={() => props.paginate("prev")}
+              >
+                Previous
+              </Pagination.Item>
+              <Pagination.Item
+                disabled={props.isEndOfUserModelsPage}
+                onClick={() => props.paginate("next")}
+              >
+                Next
+              </Pagination.Item>
+            </Pagination>
+          </Card.Footer>
+        </Card>
+      </Col>
+    </Container>
+  );
+};
+
 class ProfilePage extends React.Component {
   static contextType = UserContext;
   constructor(props) {
@@ -41,6 +219,18 @@ class ProfilePage extends React.Component {
     };
   }
 
+  refreshData() {
+    if (this.props.location.hash === "" || this.props.location.hash === "#profile") {
+      this.fetchUser();
+    } else if (this.props.location.hash === "#notifications") {
+      // TBD
+    } else if (this.props.location.hash === "#stats") {
+      this.fetchUser();
+    } else if (this.props.location.hash === "#models") {
+      this.fetchModels(0);
+    }
+  }
+
   componentDidMount() {
     if (!this.context.api.loggedIn()) {
       this.props.history.push(
@@ -49,27 +239,14 @@ class ProfilePage extends React.Component {
           "&src=/account#profile"
       );
     } else {
-      const user = this.context.api.getCredentials();
-      this.setState(
-        {
-          ctxUserId: user.id,
-        },
-        () => {
-          if (this.props.location.hash === "") {
-            this.props.location.hash = "#profile";
-          }
-          this.props.location.hash === "#profile"
-            ? this.fetchUser()
-            : this.fetchModels(0);
-        }
-      );
+      this.refreshData();
     }
   }
 
   fetchUser = () => {
-    const { ctxUserId } = this.state;
+    const user = this.context.api.getCredentials();
     this.context.api
-      .getUser(ctxUserId)
+      .getUser(user.id)
       .then((result) => {
         this.setState({ user: result, loader: false });
       }, (error) => {
@@ -92,9 +269,9 @@ class ProfilePage extends React.Component {
   };
 
   fetchModels = (page) => {
-    const { ctxUserId } = this.state;
+    const user = this.context.api.getCredentials();
     this.context.api
-      .getUserModels(ctxUserId, this.state.pageLimit, page)
+      .getUserModels(user.id, this.state.pageLimit, page)
       .then((result) => {
         const isEndOfPage =
           (page + 1) * this.state.pageLimit >= (result.count || 0);
@@ -109,17 +286,7 @@ class ProfilePage extends React.Component {
 
   componentDidUpdate(prevProps) {
     if (prevProps.location.hash !== this.props.location.hash) {
-      this.setState(
-        {
-          user: {},
-          userModels: [],
-        },
-        () => {
-          this.props.location.hash === "#profile"
-            ? this.fetchUser()
-            : this.fetchModels(0);
-        }
-      );
+      this.refreshData();
     }
   }
 
@@ -181,7 +348,7 @@ class ProfilePage extends React.Component {
               <Nav.Item>
                 <Nav.Link
                   href="#profile"
-                  className={`gray-color p-3 px-lg-5 ${
+                  className={`gray-color p-4 px-lg-6 ${
                     this.props.location.hash === "#profile" ? "active" : ""
                   }`}
                 >
@@ -190,8 +357,28 @@ class ProfilePage extends React.Component {
               </Nav.Item>
               <Nav.Item>
                 <Nav.Link
+                  href="#notifications"
+                  className={`gray-color p-4 px-lg-6 ${
+                    this.props.location.hash === "#notifications" ? "active" : ""
+                  }`}
+                >
+                  Notifications
+                </Nav.Link>
+              </Nav.Item>
+              <Nav.Item>
+                <Nav.Link
+                  href="#stats"
+                  className={`gray-color p-4 px-lg-6 ${
+                    this.props.location.hash === "#stats" ? "active" : ""
+                  }`}
+                >
+                  Stats &amp; Badges
+                </Nav.Link>
+              </Nav.Item>
+              <Nav.Item>
+                <Nav.Link
                   href="#models"
-                  className={`gray-color p-3 px-lg-5 ${
+                  className={`gray-color p-4 px-lg-6 ${
                     this.props.location.hash === "#models" ? "active" : ""
                   }`}
                 >
@@ -359,109 +546,20 @@ class ProfilePage extends React.Component {
               </Col>
             </Container>
           ) : null}
-          {this.props.location.hash === "#models" ? (
-            <Container className="mb-5 pb-5">
-              <h1 className="my-4 pt-3 text-uppercase text-center">
-                Your Models
-              </h1>
-              <Col className="m-auto" lg={8}>
-                <Card className="profile-card">
-                  <Card.Body>
-                    <Table className="modelTable mb-0">
-                      <thead className="blue-color border-bottom">
-                        <tr>
-                          <td>
-                            <b>Name</b>
-                          </td>
-                          <td>
-                            <b>Task</b>
-                          </td>
-                          <td className="text-right">
-                            <b>Performance</b>
-                          </td>
-                          <td className="text-center" width="200px">
-                            <b>Status</b>
-                          </td>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {!this.state.userModels.length ? (
-                          <tr>
-                            <td colSpan="4">
-                              <div className="text-center">No data found</div>
-                            </td>
-                          </tr>
-                        ) : null}
-                        {this.state.userModels.map((model) => {
-                          return (
-                            <tr
-                              className="cursor-pointer"
-                              key={model.id}
-                              onClick={() =>
-                                this.props.history.push(`/models/${model.id}`)
-                              }
-                            >
-                              <td className="blue-color">
-                                {model.name || "Unknown"}
-                              </td>
-                              <td>
-                                <TasksContext.Consumer>
-                                  {({ tasks }) => {
-                                    const task =
-                                      model &&
-                                      tasks.filter((e) => e.id == model.tid);
-                                    return (
-                                      task && task.length && task[0].shortname
-                                    );
-                                  }}
-                                </TasksContext.Consumer>
-                              </td>
-                              <td className="text-right">
-                                {model.overall_perf}
-                              </td>
-                              <td className="text-center" width="200px">
-                                {model.is_published === true ? (
-                                  <Badge
-                                    variant="success"
-                                    className="publishStatus"
-                                  >
-                                    Published
-                                  </Badge>
-                                ) : (
-                                  <Badge
-                                    variant="danger"
-                                    className="publishStatus"
-                                  >
-                                    Unpublished
-                                  </Badge>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </Table>
-                  </Card.Body>
-                  <Card.Footer className="text-center">
-                    <Pagination className="mb-0 float-right" size="sm">
-                      <Pagination.Item
-                        disabled={!this.state.userModelsPage}
-                        onClick={() => this.paginate("prev")}
-                      >
-                        Previous
-                      </Pagination.Item>
-                      <Pagination.Item
-                        disabled={this.state.isEndOfUserModelsPage}
-                        onClick={() => this.paginate("next")}
-                      >
-                        Next
-                      </Pagination.Item>
-                    </Pagination>
-                  </Card.Footer>
-                </Card>
-              </Col>
-            </Container>
-          ) : null}
+          {this.props.location.hash === "#models" ?
+            <ModelSubPage
+              userModels={this.state.userModels}
+              userModelsPage={this.state.userModelsPage}
+              isEndOfUserModelsPage={this.state.isEndOfUserModelsPage}
+              paginate={this.paginate}
+              {...this.props}
+            /> : null}
+          {this.props.location.hash === "#notifications" ?
+            <NotificationsSubPage />
+           : null}
+          {this.props.location.hash === "#stats" ?
+            <StatsSubPage user={this.state.user} />
+           : null}
         </div>
       </div>
     );

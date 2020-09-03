@@ -171,6 +171,17 @@ class App extends React.Component {
                         <NavDropdown.Item href="/account#profile">
                           Profile
                         </NavDropdown.Item>
+                        <NavDropdown.Divider />
+                        <NavDropdown.Item href="/account#notifications">
+                          Notifications
+                        </NavDropdown.Item>
+                        <NavDropdown.Item href="/account#stats">
+                          Stats &amp; Badges
+                        </NavDropdown.Item>
+                        <NavDropdown.Item href="/account#models">
+                          Models
+                        </NavDropdown.Item>
+                        <NavDropdown.Divider />
                         <NavDropdown.Item href="/logout">
                           Logout
                         </NavDropdown.Item>

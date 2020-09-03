@@ -109,3 +109,19 @@ class UserModel(BaseModel):
         u = self.dbs.query(User).filter(User.id == id)
         u.update(kwargs)
         self.dbs.commit()
+
+    def incrementSubmitCount(self, uid):
+        u = self.get(uid)
+        if u:
+            u.examples_submitted = u.examples_submitted + 1
+            self.dbs.commit()
+    def incrementValidatedCount(self, uid):
+        u = self.get(uid)
+        if u:
+            u.examples_verified = u.examples_verified + 1
+            self.dbs.commit()
+    def incrementCorrectCount(self, uid):
+        u = self.get(uid)
+        if u:
+            u.examples_verified_correct = u.examples_verified_correct + 1
+            self.dbs.commit()

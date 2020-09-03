@@ -7,6 +7,7 @@ import common.auth as _auth
 import common.helpers as util
 
 from models.example import ExampleModel
+from models.user import UserModel
 from models.round import RoundModel
 from models.context import ContextModel
 
@@ -80,12 +81,16 @@ def validate_example(credentials, eid):
     })
     preds = Counter([x.split(",")[1] for x in nobj.split("|")])
     rm = RoundModel()
+    um = UserModel()
+    if credentials['id'] != 'turk':
+        um.incrementValidatedCount(credentials['id'])
     cm = ContextModel()
     context = cm.get(example.cid)
     rm.updateLastActivity(context.r_realid)
     if preds['C'] >= 5:
         em.update(example.id, {'verified': True, 'verified_correct': True})
         rm.incrementVerifiedCount(context.r_realid)
+        um.incrementCorrectCount(example.uid)
     elif preds['I'] >= 5:
         em.update(example.id, {'verified': True, 'verified_incorrect': True})
     elif preds['F'] >= 5:
@@ -150,5 +155,7 @@ def post_example(credentials):
     rm.incrementCollectedCount(data['tid'], data['rid'])
     cm = ContextModel()
     cm.incrementCountDate(data['cid'])
-
+    if credentials['id'] != 'turk':
+        um = UserModel()
+        um.incrementSubmitCount(data['uid'])
     return util.json_encode({'success': 'ok', 'id': eid})
