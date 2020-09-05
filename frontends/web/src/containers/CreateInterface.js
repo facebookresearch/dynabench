@@ -138,7 +138,6 @@ class ResponseInfo extends React.Component {
       .explainExample(this.props.mapKeyToExampleId[idx], type, e.target.value)
       .then((result) => {
         this.setState({explainSaved: true});
-        // TODO: provide user feedback?
       }, (error) => {
         console.log(error);
       });
@@ -274,7 +273,7 @@ class ResponseInfo extends React.Component {
                 </span>
                 <div>
                   <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
-                    "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is correct"}
+                    "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is the correct answer"}
                     data-index={this.props.index} data-type="example" onChange={() => this.setState({explainSaved: null})} onBlur={this.explainExample} />
                 </div>
                 <div>
@@ -284,9 +283,24 @@ class ResponseInfo extends React.Component {
                 </div>
               </div>
             )
-            : <div className="mt-3">
-              We will still store this as an example that the model got
-              right.
+            :
+            <div className="mt-3">
+              <span>
+                We will store this as an example that the model got right.
+              </span>
+              <span style={{float: "right"}}>
+                { this.state.explainSaved === null
+                  ? <span style={{color: "#b58c14"}}>Draft. Click out of input box to save.</span>
+                  : this.state.explainSaved === false
+                    ? "Saving..."
+                    : <span style={{color: "#085756"}}>Saved!</span>
+                }
+              </span>
+              <div>
+                <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
+                  "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is the correct answer"}
+                  data-index={this.props.index} data-type="example" onChange={() => this.setState({explainSaved: null})} onBlur={this.explainExample} />
+              </div>
             </div>
         }
         <div className="mb-3">
