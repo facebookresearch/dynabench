@@ -5,12 +5,14 @@
 import bottle
 
 import logging
+import os
 
 from datetime import datetime
 
 def init_logger(mode):
     logger = logging.getLogger('dynabench')
     logger.setLevel(logging.INFO)
+    os.makedirs("../logs", exist_ok=True)
     file_handler = logging.FileHandler(f'../logs/dynabench-server-{mode}.log')
     formatter = logging.Formatter('%(msg)s')
     file_handler.setLevel(logging.DEBUG)

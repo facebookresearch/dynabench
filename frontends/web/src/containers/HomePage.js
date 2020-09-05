@@ -145,26 +145,21 @@ class HomePage extends React.Component {
                       <td>{task.cur_round}</td>
                     </tr>
                     <tr>
-                      <td>Verified/Collected</td>
+                      <td>Model error rate:</td>
                       <td>
-                        {task.round.total_verified}/{task.round.total_collected}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>(Model error rate):</td>
-                      <td>
-                        (
                         {task.round.total_collected > 0
-                          ? (
+                          ? ( 100 *
                               task.round.total_verified /
                               task.round.total_collected
                             ).toFixed(2)
                           : "0.00"}
-                        %)
+                        % (
+                        {task.round.total_verified}/{task.round.total_collected}
+                        )
                       </td>
                     </tr>
                     <tr>
-                      <td>Last update:</td>
+                      <td>Last activity:</td>
                       <td>
                         <Moment utc fromNow>
                           {task.last_updated}

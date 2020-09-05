@@ -202,12 +202,14 @@ class ExampleModel(BaseModel):
                 .filter(Context.r_realid == rid) \
                 .order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
         return result
-    def getRandomWrong(self, rid, n=1):
+    def getRandomWrong(self, rid, n=1, my_uid=None):
         result = self.dbs.query(Example) \
                 .join(Context, Example.cid == Context.id) \
                 .filter(Context.r_realid == rid) \
                 .filter(Example.model_wrong == True) \
                 .filter(Example.retracted == False) \
-                .filter(Example.verified == False) \
-                .order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
+                .filter(Example.verified == False);
+        if my_uid is not None:
+            result = result.filter(Example.uid != my_uid)
+        result = result.order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
         return result

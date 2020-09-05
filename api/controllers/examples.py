@@ -7,6 +7,7 @@ import common.auth as _auth
 import common.helpers as util
 
 from models.example import ExampleModel
+from models.user import UserModel
 from models.round import RoundModel
 from models.context import ContextModel
 
@@ -18,12 +19,16 @@ import logging
 from datetime import datetime
 
 @bottle.get('/examples/<tid:int>/<rid:int>')
-@_auth.requires_auth
+@_auth.requires_auth_or_turk
 def get_random_example(credentials, tid, rid):
     rm = RoundModel()
     round = rm.getByTidAndRid(tid, rid)
     em = ExampleModel()
-    example = em.getRandomWrong(round.id, n=1)
+    if credentials['id'] != 'turk':
+        example = em.getRandomWrong(round.id, n=1, my_uid=credentials['id'])
+    else:
+        # TODO: Handle this in frontend? Or rejection sample here for N tries
+        example = em.getRandomWrong(round.id, n=1)
     if not example:
         bottle.abort(500, f'No examples available ({round.id})')
     example = example[0].to_dict()
@@ -41,7 +46,7 @@ def get_example(credentials, eid):
     return util.json_encode(example.to_dict())
 
 @bottle.put('/examples/<eid:int>/validate')
-@_auth.requires_auth
+@_auth.requires_auth_or_turk
 def validate_example(credentials, eid):
     data = bottle.request.json
     if not data or 'label' not in data:
@@ -49,10 +54,21 @@ def validate_example(credentials, eid):
     label = data['label']
     if label not in ['C', 'I', 'F']:
         bottle.abort(400, 'Bad request')
+
     em = ExampleModel()
     example = em.get(eid)
     if not example:
         bottle.abort(404, 'Not found')
+
+    if credentials['id'] == 'turk':
+        if not util.check_fields(data, ['uid']):
+            bottle.abort(400, 'Missing data');
+        metadata = json.loads(example.metadata_json)
+        if 'annotator_id' not in metadata or metadata['annotator_id'] == data['uid']:
+            bottle.abort(403, 'Access denied (cannot validate your own example)')
+    elif credentials['id'] == example.uid:
+        bottle.abort(403, 'Access denied (cannot validate your own example)')
+
     nobj = example.verifier_preds
     if nobj is None:
         nobj = ''
@@ -64,8 +80,17 @@ def validate_example(credentials, eid):
         'total_verified': example.total_verified + 1
     })
     preds = Counter([x.split(",")[1] for x in nobj.split("|")])
+    rm = RoundModel()
+    um = UserModel()
+    if credentials['id'] != 'turk':
+        um.incrementValidatedCount(credentials['id'])
+    cm = ContextModel()
+    context = cm.get(example.cid)
+    rm.updateLastActivity(context.r_realid)
     if preds['C'] >= 5:
         em.update(example.id, {'verified': True, 'verified_correct': True})
+        rm.incrementVerifiedCount(context.r_realid)
+        um.incrementCorrectCount(example.uid)
     elif preds['I'] >= 5:
         em.update(example.id, {'verified': True, 'verified_incorrect': True})
     elif preds['F'] >= 5:
@@ -127,8 +152,10 @@ def post_example(credentials):
         bottle.abort(400, 'Could not create example')
 
     rm = RoundModel()
-    rm.incrementExampleCount(data['tid'], data['rid'])
+    rm.incrementCollectedCount(data['tid'], data['rid'])
     cm = ContextModel()
     cm.incrementCountDate(data['cid'])
-
+    if credentials['id'] != 'turk':
+        um = UserModel()
+        um.incrementSubmitCount(data['uid'])
     return util.json_encode({'success': 'ok', 'id': eid})

@@ -19,8 +19,9 @@ sys.path.append("/home/model-server/anli/src")
 import torch
 from ts.torch_handler.base_handler import BaseHandler
 
-from shared import generate_response_signature, check_fields, remove_sp_chars, handler_initialize
-from settings import my_secret
+from shared import generate_response_signature, check_fields, remove_sp_chars, handler_initialize, \
+    summarize_attributions, get_nli_word_token, captum_nli_forward_func
+from settings import my_secret, my_model_no
 
 # ================== Round 4 imports =================
 try:

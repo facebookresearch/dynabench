@@ -119,6 +119,128 @@ const TaskTrend = ({ data }) => {
   );
 };
 
+const RoundActionButtons = (props) => {
+  // TODO: Display "Download data" button
+  return null;
+}
+
+const TaskActionButtons = (props) => {
+  function renderTooltip(props, text) {
+    return (
+      <Tooltip id="button-tooltip" {...props}>
+        {text}
+      </Tooltip>
+    );
+  }
+
+  function renderCreateTooltip(props) {
+    return renderTooltip(props, "Create new examples where the model fails");
+  }
+  function renderVerifyTooltip(props) {
+     return renderTooltip(props, "Verify examples where the model may have failed");
+  }
+  function renderSubmitTooltip(props) {
+    return renderTooltip(props, "Submit model predictions on this task");
+  }
+
+  return (
+    <Nav className="my-4">
+      <Nav.Item className="task-action-btn">
+        <OverlayTrigger
+          placement="bottom"
+          delay={{ show: 250, hide: 400 }}
+          overlay={renderCreateTooltip}
+      >
+        <Button
+          as={Link}
+          className="border-0 blue-color font-weight-bold light-gray-bg"
+          to={"/tasks/" + props.taskId + "/create"}
+        >
+          Create Examples
+        </Button>
+      </OverlayTrigger>
+    </Nav.Item>
+    <Nav.Item className="task-action-btn">
+      <OverlayTrigger
+        placement="bottom"
+        delay={{ show: 250, hide: 400 }}
+        overlay={renderVerifyTooltip}
+      >
+        <Button
+          as={Link}
+          className="border-0 blue-color font-weight-bold light-gray-bg"
+          to={"/tasks/" + props.taskId + "/validate"}
+        >
+          Validate Examples
+        </Button>
+      </OverlayTrigger>
+    </Nav.Item>
+    {props.task.shortname === "NLI" ? (
+      <Nav.Item className="task-action-btn">
+        <OverlayTrigger
+          placement="bottom"
+          delay={{ show: 250, hide: 400 }}
+          overlay={renderSubmitTooltip}
+        >
+          <Button
+            as={Link}
+            className="border-0 blue-color font-weight-bold light-gray-bg"
+            to={"/tasks/" + props.taskId + "/submit"}
+          >
+            Submit Predictions
+          </Button>
+        </OverlayTrigger>
+      </Nav.Item>
+    ) : null}
+    {props.uid === props.task.owner_uid ?
+      <Nav.Item className="task-action-btn ml-auto">
+        <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" id="dropdown-basic-button" title="Export">
+          <Dropdown.Item onClick={props.exportCurrentRoundData}>Export current round</Dropdown.Item>
+          <Dropdown.Item onClick={props.exportAllTaskData}>Export all</Dropdown.Item>
+        </DropdownButton>
+      </Nav.Item>
+      : null}
+  </Nav>
+  );
+};
+
+const OveralTaskStats = (props) => {
+  return (
+    <Table className="w-50 font-weight-bold ml-n2">
+      <thead />
+      <tbody>
+        <tr>
+          <td>Current round:</td>
+          <td>{props.task.cur_round}</td>
+        </tr>
+        <tr>
+          <td>Fooled/Collected (Model Error rate)</td>
+          <td>
+            {props.task.round?.total_verified}/
+            {props.task.round?.total_collected} (
+            {props.task.round?.total_collected > 0
+              ? (100 *
+                  props.task.round?.total_verified /
+                  props.task.round?.total_collected
+                ).toFixed(2)
+              : "0.00"}
+            %
+            )
+          </td>
+        </tr>
+        <tr>
+          <td>Last activity:</td>
+          <td>
+            <Moment utc fromNow>
+              {props.task.last_updated}
+            </Moment>
+          </td>
+        </tr>
+      </tbody>
+    </Table>
+  );
+};
+
 const OverallModelLeaderBoard = (props) => {
   return (
     <Table hover className="mb-0">
@@ -194,16 +316,17 @@ class RoundDescription extends React.Component {
     this.getRoundInfo = this.getRoundInfo.bind(this);
   }
   componentDidMount() {
-    if (this.props.round_id === "overall") return;
     this.getRoundInfo();
   }
   getRoundInfo() {
+    if (this.props.round_id) {
     this.props.api.getTaskRound(this.props.task_id, this.props.round_id)
       .then((result) => {
         this.setState({ round: result });
       }, (error) => {
         console.log(error);
       });
+    }
   }
   componentDidUpdate(prevProps) {
     if (prevProps.round_id !== this.props.round_id) {
@@ -235,8 +358,17 @@ class TaskPage extends React.Component {
     this.exportAllTaskData = this.exportAllTaskData.bind(this);
     this.exportCurrentRoundData = this.exportCurrentRoundData.bind(this);
   }
+
   componentDidMount() {
-    this.refreshData();
+    this.context.api
+      .getTask(this.state.taskId)
+      .then((result) => {
+        this.setState({task: result, displayRoundId: result.cur_round, round: result.round}, function() {
+          this.refreshData();
+        });
+      }, (error) => {
+        console.log(error);
+      });
   }
 
   componentDidUpdate(prevProps) {
@@ -252,10 +384,9 @@ class TaskPage extends React.Component {
         isEndOfModelLeaderPage: true,
         userLeaderBoardPage: 0,
         isEndOfUserLeaderPage: true,
-        displayRoundId: this.props.location.hash.slice(1),
+        displayRoundId: this.props.location.hash !== '#overall' ? this.props.location.hash.slice(1) : this.state.task.cur_round,
       },
       () => {
-        this.fetchTask();
         this.fetchOverallModelLeaderboard(this.state.modelLeaderBoardPage);
         this.fetchOverallUserLeaderboard(this.state.userLeaderBoardPage);
         if (this.props.location.hash === "#overall") this.fetchTrend();
@@ -269,16 +400,6 @@ class TaskPage extends React.Component {
 
   exportCurrentRoundData() {
     return this.context.api.exportData(this.state.task.id, this.state.task.cur_round);
-  }
-
-  fetchTask() {
-    this.context.api
-      .getTask(this.state.taskId)
-      .then((result) => {
-        this.setState({ task: result });
-      }, (error) => {
-        console.log(error);
-      });
   }
 
   fetchTrend() {
@@ -352,25 +473,7 @@ class TaskPage extends React.Component {
   };
 
   render() {
-    function renderTooltip(props, text) {
-      return (
-        <Tooltip id="button-tooltip" {...props}>
-          {text}
-        </Tooltip>
-      );
-    }
-
-    function renderCreateTooltip(props) {
-      return renderTooltip(props, "Create new examples where the model fails");
-    }
-    function renderVerifyTooltip(props) {
-       return renderTooltip(props, "Verify examples where the model may have failed");
-    }
-    function renderSubmitTooltip(props) {
-      return renderTooltip(props, "Submit model predictions on this task");
-    }
-
-    return (
+   return (
       <Container fluid>
         <Row>
           <Col lg={2} className="p-0 border">
@@ -381,112 +484,35 @@ class TaskPage extends React.Component {
               {this.state.task.name}
             </h2>
             <p>{this.state.task.desc}</p>
-            <Table className="w-50 font-weight-bold ml-n2">
-              <thead />
-              <tbody>
-                <tr>
-                  <td>Current round:</td>
-                  <td>{this.state.task.cur_round}</td>
-                </tr>
-                <tr>
-                  <td>Verified/Collected</td>
-                  <td>
-                    {this.state.task.round?.total_verified}/
-                    {this.state.task.round?.total_collected}
-                  </td>
-                </tr>
-                <tr>
-                  <td>(Model error rate):</td>
-                  <td>
-                    (
-                    {this.state.task.round?.total_collected > 0
-                      ? (
-                          this.state.task.round?.total_verified /
-                          this.state.task.round?.total_collected
-                        ).toFixed(2)
-                      : "0.00"}
-                    %)
-                  </td>
-                </tr>
-                <tr>
-                  <td>Last update:</td>
-                  <td>
-                    <Moment utc fromNow>
-                      {this.state.task.last_updated}
-                    </Moment>
-                  </td>
-                </tr>
-              </tbody>
-            </Table>
-            <hr />
             {this.props.location.hash === "#overall" ? (
-              <Nav className="my-4">
-                <Nav.Item className="task-action-btn">
-                  <OverlayTrigger
-                    placement="bottom"
-                    delay={{ show: 250, hide: 400 }}
-                    overlay={renderCreateTooltip}
-                  >
-                    <Button
-                      as={Link}
-                      className="border-0 blue-color font-weight-bold light-gray-bg"
-                      to={"/tasks/" + this.state.taskId + "/create"}
-                    >
-                      Create Examples
-                    </Button>
-                  </OverlayTrigger>
-                </Nav.Item>
-                <Nav.Item className="task-action-btn">
-                  <OverlayTrigger
-                    placement="bottom"
-                    delay={{ show: 250, hide: 400 }}
-                    overlay={renderVerifyTooltip}
-                  >
-                    <Button
-                      as={Link}
-                      className="border-0 blue-color font-weight-bold light-gray-bg"
-                      to={"/tasks/" + this.state.taskId + "/validate"}
-                    >
-                      Validate Examples
-                    </Button>
-                  </OverlayTrigger>
-                </Nav.Item>
-                {this.state.task.shortname === "NLI" ? (
-                  <Nav.Item className="task-action-btn">
-                    <OverlayTrigger
-                      placement="bottom"
-                      delay={{ show: 250, hide: 400 }}
-                      overlay={renderSubmitTooltip}
-                    >
-                      <Button
-                        as={Link}
-                        className="border-0 blue-color font-weight-bold light-gray-bg"
-                        to={"/tasks/" + this.state.taskId + "/submit"}
-                      >
-                        Submit Predictions
-                      </Button>
-                    </OverlayTrigger>
-                  </Nav.Item>
-                ) : null}
-                {this.context.user.id === this.state.task.owner_uid ?
-                  <Nav.Item className="task-action-btn ml-auto">
-                    <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" id="dropdown-basic-button" title="Export">
-                      <Dropdown.Item onClick={this.exportCurrentRoundData}>Export current round</Dropdown.Item>
-                      <Dropdown.Item onClick={this.exportAllTaskData}>Export all</Dropdown.Item>
-                    </DropdownButton>
-                  </Nav.Item>
-                  : null}
-              </Nav>
+              <>
+                <OveralTaskStats task={this.state.task}/>
+                <hr />
+                <TaskActionButtons
+                  taskId={this.state.taskId}
+                  uid={this.context.user.id}
+                  task={this.state.task}
+                  exportCurrentRoundData={this.exportCurrentRoundData}
+                  exportCurrentRoundData={this.exportCurrentRoundData}
+                />
+              </>
             ) :
+              <>
+                <hr />
+                <RoundActionButtons
+                  taskId={this.state.taskId}
+                />
+              </>}
+
             <Row>
-              <Col xs={12} md={10}>
+              <Col xs={12} md={12}>
                 <RoundDescription
                   api={this.context.api}
                   task_id={this.state.taskId}
+                  cur_round={this.state.task.cur_round}
                   round_id={this.state.displayRoundId} />
               </Col>
             </Row>
-            }
             <Row>
               <Col xs={12} md={6}>
                 {this.state.modelLeaderBoardData.length ? (

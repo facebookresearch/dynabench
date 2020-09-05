@@ -126,15 +126,18 @@ class ResponseInfo extends React.Component {
     this.setState({
       loader: false,
       inspectError: false,
+      explainSaved: null
     });
   }
   explainExample(e) {
     e.preventDefault();
     var idx = e.target.getAttribute("data-index");
     var type = e.target.getAttribute("data-type");
+    this.setState({explainSaved: false})
     this.context.api
       .explainExample(this.props.mapKeyToExampleId[idx], type, e.target.value)
       .then((result) => {
+        this.setState({explainSaved: true});
         // TODO: provide user feedback?
       }, (error) => {
         console.log(error);
@@ -254,12 +257,33 @@ class ResponseInfo extends React.Component {
             </span>
           : <span>
               <strong>Try again!</strong> The model wasn't fooled.
-            </span> 
+            </span>
         }
         {!this.state.livemode
           ? <div>This example was not stored because you are in sandbox mode.</div>
           : this.props.obj.fooled
-            ? null
+            ? (
+              <div className="mt-3">
+                <span style={{float: "right"}}>
+                  { this.state.explainSaved === null
+                    ? <span style={{color: "#b58c14"}}>Draft. Click out of input box to save.</span>
+                    : this.state.explainSaved === false
+                      ? "Saving..."
+                      : <span style={{color: "#085756"}}>Saved!</span>
+                  }
+                </span>
+                <div>
+                  <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
+                    "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is correct"}
+                    data-index={this.props.index} data-type="example" onChange={() => this.setState({explainSaved: null})} onBlur={this.explainExample} />
+                </div>
+                <div>
+                  <input type="text" style={{width: 100+'%'}}
+                    placeholder="Explain why you think the model made a mistake"
+                    data-index={this.props.index} data-type="model" onChange={() => this.setState({explainSaved: null})} onBlur={this.explainExample} />
+                </div>
+              </div>
+            )
             : <div className="mt-3">
               We will still store this as an example that the model got
               right.
@@ -284,7 +308,7 @@ class ResponseInfo extends React.Component {
             })}
         </div>
       </>;
-    } 
+    }
     return (
       <Card
         className={classNames}
@@ -309,7 +333,7 @@ class ResponseInfo extends React.Component {
         {this.props.obj.retracted || this.props.obj.flagged
           ? null
           : <Card.Footer>
-            { <div class="btn-group" role="group" aria-label="response actions">
+            { <div className="btn-group" role="group" aria-label="response actions">
                 <OverlayTrigger
                   placement="top"
                   delay={{ show: 250, hide: 400 }}
@@ -319,7 +343,7 @@ class ResponseInfo extends React.Component {
                     data-index={this.props.index}
                     onClick={this.retractExample}
                     type="button"
-                    class="btn btn-light btn-sm">
+                    className="btn btn-light btn-sm">
                       <i className="fas fa-undo-alt"></i> Retract
                   </button>
                 </OverlayTrigger>
@@ -332,7 +356,7 @@ class ResponseInfo extends React.Component {
                     data-index={this.props.index}
                     onClick={this.flagExample}
                     type="button"
-                    class="btn btn-light btn-sm">
+                    className="btn btn-light btn-sm">
                       <i className="fas fa-flag"></i> Flag
                   </button>
                 </OverlayTrigger>
@@ -346,7 +370,7 @@ class ResponseInfo extends React.Component {
                       data-index={this.props.index}
                       onClick={this.inspectExample}
                       type="button"
-                      class="btn btn-light btn-sm">
+                      className="btn btn-light btn-sm">
                         <i className="fas fa-search"></i> Inspect
                         {this.state.loader ? (
                           <Spinner className="ml-2" animation="border" role="status" size="sm">
@@ -664,7 +688,7 @@ class CreateInterface extends React.Component {
       )
     ).filter(item => item !== undefined);
     // sentinel value of undefined filtered out after to preserve index values
-    
+
     const rounds = (this.state.task.round && this.state.task.cur_round) || 0;
     const roundNavs = [];
     for (let i = rounds; i > 0; i--) {

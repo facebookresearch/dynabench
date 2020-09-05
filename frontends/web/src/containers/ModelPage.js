@@ -14,6 +14,7 @@ import {
   Button,
   Table,
 } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import TasksContext from "./TasksContext";
 import UserContext from "./UserContext";
 
@@ -91,7 +92,7 @@ class ModelPage extends React.Component {
     const { scores } = this.state.model;
     let orderedScores = (scores || []).sort((a, b) => a.round_id - b.round_id);
     return (
-      <Container>
+      <Container className="mb-5 pb-5">
         <h1 className="my-4 pt-3 text-uppercase text-center">Model Overview</h1>
         <Col className="m-auto" lg={8}>
           <Card className="profile-card">
@@ -115,7 +116,7 @@ class ModelPage extends React.Component {
                       Edit
                     </Button>
                   )}
-                  {isModelOwner && model.is_published === "True" ? (
+                  {isModelOwner && model.is_published === true ? (
                     <Button
                       variant="outline-danger"
                       onClick={() => this.togglePublish()}
@@ -124,7 +125,7 @@ class ModelPage extends React.Component {
                     </Button>
                   ) : null}
                   {isModelOwner &&
-                  model.is_published === "False" &&
+                  model.is_published === false &&
                   model.name ? (
                     <Button
                       variant="outline-success"
@@ -160,55 +161,55 @@ class ModelPage extends React.Component {
                     </tr>
                     <tr>
                       <td>
-                        <b>Owner</b>
-                      </td>
-                      <td>{model.user && model.user.username}</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <b>Task</b>
+                        Owner
                       </td>
                       <td>
-                        <TasksContext.Consumer>
-                          {({ tasks }) => {
-                            const task =
-                              model && tasks.filter((e) => e.id == model.tid);
-                            return task && task.length && task[0].shortname;
-                          }}
-                        </TasksContext.Consumer>
+                        <Link to={`/users/${model.user.id}`}>
+                          {model.user && model.user.username}
+                        </Link>
                       </td>
                     </tr>
                     <tr>
                       <td>
-                        <b>Description</b>
+                        Task
+                      </td>
+                      <td>
+                        <Link to={`/tasks/${model.tid}#overall`}>
+                          <TasksContext.Consumer>
+                            {({ tasks }) => {
+                              const task =
+                                model && tasks.filter((e) => e.id == model.tid);
+                              return task && task.length && task[0].shortname;
+                            }}
+                          </TasksContext.Consumer>
+                        </Link>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        Description
                       </td>
                       <td>{model.longdesc}</td>
                     </tr>
                     <tr>
-                      <td colSpan="2">
+                      <td colSpan={2}>
                         <h6 className="blue-color">Performance</h6>
-                        <Container>
-                          <Row className="mt-4">
-                            <Col sm="5" className="mb-2 ">
-                              Overall Accuracy
-                            </Col>
-                            <Col sm="7">{model.overall_perf}%</Col>
-                          </Row>
-                          {orderedScores.map((data) => {
-                            return (
-                              <Row key={data.round_id}>
-                                <Col sm="5" className="row-wise">
-                                  Round {data.round_id}
-                                </Col>
-                                <Col sm="7">
-                                  {Number(data.accuracy).toFixed(2)}%
-                                </Col>
-                              </Row>
-                            );
-                          })}
-                        </Container>
                       </td>
                     </tr>
+                    <tr>
+                      <td style={{paddingLeft: 50}}>
+                        Overall
+                      </td>
+                      <td>{model.overall_perf}%</td>
+                    </tr>
+                    {orderedScores.map((data) => {
+                      return (
+                        <tr key={data.round_id}>
+                          <td style={{paddingLeft: 50}}>Round {data.round_id}</td>
+                          <td>{Number(data.accuracy).toFixed(2)}%</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </Table>
               ) : (

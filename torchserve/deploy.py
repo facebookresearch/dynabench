@@ -61,7 +61,9 @@ def generate_settings_file(config):
 
     settings_path = os.path.join(config["round_path"], "settings.py")
     with open(settings_path, "w") as settings_file:
-        settings_file.write(f'my_secret = "{my_secret}"')
+        settings_file.write(f'my_secret = "{my_secret}"\n')
+        model_no = config['model_no']
+        settings_file.write(f'my_model_no = "{model_no}"')
 
 def archive_model(config):
     handler_path = os.path.join(os.getcwd(), config['round_path'], "handler.py")
