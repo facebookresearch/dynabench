@@ -22,25 +22,9 @@ import { Formik } from "formik";
 import TasksContext from "./TasksContext";
 import UserContext from "./UserContext";
 import { Avatar } from "../components/Avatar/Avatar";
+import Moment from "react-moment";
 import "./Sidebar-Layout.css";
 import "./ProfilePage.css";
-
-const NotificationsSubPage = (props) => {
-  return (
-    <Container className="mb-5 pb-5">
-      <h1 className="my-4 pt-3 text-uppercase text-center">
-        Your Notifications
-      </h1>
-      <Col className="m-auto" lg={8}>
-        <Card className="profile-card">
-          <Card.Body style={{padding: 20}}>
-            No new notifications
-          </Card.Body>
-        </Card>
-      </Col>
-    </Container>
-  );
-};
 
 const StatsSubPage = (props) => {
   return (
@@ -96,6 +80,91 @@ const StatsSubPage = (props) => {
     </Container>
   );
 };
+
+const NotificationsSubPage = (props) => {
+  return (
+    <Container className="mb-5 pb-5">
+      <h1 className="my-4 pt-3 text-uppercase text-center">
+        Your Notifications
+      </h1>
+      <Col className="m-auto" lg={8}>
+        <Card className="profile-card">
+          <Card.Body>
+            <Table className="mb-0">
+              <thead className="blue-color border-bottom">
+                <tr>
+                  <td>
+                    <b>When</b>
+                  </td>
+                  <td>
+                    <b>Message</b>
+                  </td>
+                </tr>
+              </thead>
+              <tbody>
+                {!props.notifications.length ? (
+                  <tr>
+                    <td colSpan="4">
+                      <div className="text-center">No notifications found</div>
+                    </td>
+                  </tr>
+                ) : null}
+                {props.notifications.map((notification) => {
+                  return (
+                    <tr
+                      key={notification.id}
+                    >
+                      <td>
+                        {notification.seen}
+                        {notification.seen ?
+                            <Moment utc fromNow>
+                              {notification.created}
+                            </Moment>
+                          :
+                            <strong>
+                              <u>
+                                <Moment utc fromNow>
+                                  {notification.created}
+                                </Moment>
+                              </u>
+                            </strong>
+                        }
+                      </td>
+                      <td>
+                        {notification.seen ?
+                          notification.message
+                          :
+                          <u>{notification.message}</u>
+                        }
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+          </Card.Body>
+          <Card.Footer className="text-center">
+            <Pagination className="mb-0 float-right" size="sm">
+              <Pagination.Item
+                disabled={!props.notificationsPage}
+                onClick={() => props.paginate("prev")}
+              >
+                Previous
+              </Pagination.Item>
+              <Pagination.Item
+                disabled={props.isEndOfNotificationsPage}
+                onClick={() => props.paginate("next")}
+              >
+                Next
+              </Pagination.Item>
+            </Pagination>
+          </Card.Footer>
+        </Card>
+      </Col>
+    </Container>
+  );
+};
+
 
 const ModelSubPage = (props) => {
   return (
@@ -212,8 +281,11 @@ class ProfilePage extends React.Component {
       user: {},
       userModels: [],
       userModelsPage: 0,
+      notifications: [],
+      notificationsPage: 0,
       pageLimit: 10,
       isEndOfUserModelsPage: true,
+      isEndOfNotificationsPage: true,
       invalidFileUpload: false,
       loader: true,
     };
@@ -223,7 +295,7 @@ class ProfilePage extends React.Component {
     if (this.props.location.hash === "" || this.props.location.hash === "#profile") {
       this.fetchUser();
     } else if (this.props.location.hash === "#notifications") {
-      // TBD
+      this.fetchNotifications(0);
     } else if (this.props.location.hash === "#stats") {
       this.fetchUser();
     } else if (this.props.location.hash === "#models") {
@@ -254,7 +326,7 @@ class ProfilePage extends React.Component {
       });
   };
 
-  paginate = (state) => {
+  paginateUserModels = (state) => {
     this.setState(
       {
         userModelsPage:
@@ -266,6 +338,38 @@ class ProfilePage extends React.Component {
         this.fetchModels(this.state.userModelsPage);
       }
     );
+  };
+
+  paginateNotifications = (state) => {
+    this.setState(
+      {
+        notificationsPage:
+          state === "next"
+            ? ++this.state.notificationsPage
+            : --this.state.notificationsPage,
+      },
+      () => {
+        this.fetchNotifications(this.state.notificationsPage);
+      }
+    );
+  };
+
+  fetchNotifications = (page) => {
+    const user = this.context.api.getCredentials();
+    this.context.api
+      .getNotifications(user.id, this.state.pageLimit, page)
+      .then((result) => {
+        const isEndOfPage =
+          (page + 1) * this.state.pageLimit >= (result.count || 0);
+        this.setState({
+          isEndOfNotificationsPage: isEndOfPage,
+          notifications: result.data || [],
+        }, function() {
+          this.context.api.setNotificationsSeen();
+        });
+      }, (error) => {
+        console.log(error);
+      });
   };
 
   fetchModels = (page) => {
@@ -551,11 +655,17 @@ class ProfilePage extends React.Component {
               userModels={this.state.userModels}
               userModelsPage={this.state.userModelsPage}
               isEndOfUserModelsPage={this.state.isEndOfUserModelsPage}
-              paginate={this.paginate}
+              paginate={this.paginateUserModels}
               {...this.props}
             /> : null}
           {this.props.location.hash === "#notifications" ?
-            <NotificationsSubPage />
+            <NotificationsSubPage
+              notifications={this.state.notifications}
+              notificationsPage={this.state.notificationsPage}
+              isEndOfNotificationsPage={this.state.isEndOfNotificationsPage}
+              paginate={this.paginateNotifications}
+              {...this.props}
+              />
            : null}
           {this.props.location.hash === "#stats" ?
             <StatsSubPage user={this.state.user} />

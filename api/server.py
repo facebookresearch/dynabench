@@ -62,6 +62,7 @@ from controllers.contexts import *
 from controllers.tasks import *
 from controllers.examples import *
 from controllers.endpoints import *
+from controllers.notifications import *
 
 if running_mode == 'dev':
     if not check_fields(config, ['ssl_cert_file_path', 'ssl_org_pem_file_path']) or \

@@ -205,6 +205,25 @@ export default class ApiService {
     });
   }
 
+  setNotificationsSeen(userId) {
+    return this.fetch(
+      `${this.domain}/notifications/seen`,
+      {
+        method: "PUT",
+      }
+    );
+  }
+  getNotifications(userId, limit, offset) {
+    return this.fetch(
+      `${this.domain}/notifications?limit=${limit || 10}&offset=${
+        offset || 0
+      }`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
   getUserModels(userId, limit, offset) {
     return this.fetch(
       `${this.domain}/users/${userId}/models?limit=${limit || 10}&offset=${
