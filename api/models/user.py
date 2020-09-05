@@ -27,6 +27,8 @@ class User(Base):
     examples_submitted = db.Column(db.Integer, default=0)
     examples_verified = db.Column(db.Integer, default=0)
 
+    unseen_notifications = db.Column(db.Integer, default=0)
+
     avatar_url = db.Column(db.Text)
 
     def __repr__(self):
@@ -124,4 +126,14 @@ class UserModel(BaseModel):
         u = self.get(uid)
         if u:
             u.examples_verified_correct = u.examples_verified_correct + 1
+            self.dbs.commit()
+    def incrementNotificationCount(self, uid):
+        u = self.get(uid)
+        if u:
+            u.unseen_notifications = u.unseen_notifications + 1
+            self.dbs.commit()
+    def resetNotificationCount(self, uid):
+        u = self.get(uid)
+        if u:
+            u.unseen_notifications = 0
             self.dbs.commit()

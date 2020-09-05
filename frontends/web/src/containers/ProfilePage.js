@@ -366,6 +366,7 @@ class ProfilePage extends React.Component {
           notifications: result.data || [],
         }, function() {
           this.context.api.setNotificationsSeen();
+          this.context.user.unseen_notifications = 0;
         });
       }, (error) => {
         console.log(error);
