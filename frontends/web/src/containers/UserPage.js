@@ -194,6 +194,21 @@ class UserPage extends React.Component {
                             />
                           </Col>
                         </Form.Group>
+                        <Form.Group as={Row}>
+                          <Form.Label column sm="6" className="text-right">
+                            Model Error Rate:
+                          </Form.Label>
+                          <Col sm="6">
+                            <Form.Control
+                              plaintext
+                              readOnly
+                              defaultValue={
+                                this.state.user.examples_submitted > 0 ?
+                                  (this.state.user.examples_verified_correct / this.state.user.examples_submitted).toFixed(2) + '%'
+                    : 'N/A'}
+                            />
+                          </Col>
+                        </Form.Group>
                       </Card.Body>
                       {this.state.user.id == this.context.user.id && (
                         <Card.Footer>
