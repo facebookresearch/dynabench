@@ -169,7 +169,7 @@ class ExampleModel(BaseModel):
             .join(Round, Context.r_realid == Round.id) \
             .join(Task, Round.tid == Task.id).filter(Task.id == tid) \
             .group_by(User.id).having(db.func.count() > min_cnt) \
-            .order_by((cnt / db.func.count()).desc())
+            .order_by(db.func.count().desc(), (cnt / db.func.count()).desc())
         if not downstream:
             return query_res.limit(n).offset(n * offset), util.get_query_count(query_res)
         return query_res
