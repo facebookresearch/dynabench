@@ -39,6 +39,15 @@ except Exception as error:
     quit()
 
 
+get_model_class_name_by_model_no = {
+    1: 'roberta-large',
+    2: 'albert-xxlarge',
+    3: 'xlnet-large',
+    4: 'bart-large',
+    5: 'electra-large',
+}
+
+
 class Args(object):
     def __init__(self, model_class_name):
         self.model_class_name = model_class_name
@@ -59,10 +68,12 @@ class NliTransformerHandler(BaseHandler):
 
         self.max_length = 184
 
+        model_class_name = get_model_class_name_by_model_no[int(my_model_no)]
+
         model_checkpoint_path = model_pt_path
         # TODO maybe better to put model_class_name into config.
         # hard-code for now
-        args = Args("roberta-large")
+        args = Args(model_class_name)
         num_labels = 3
 
         self.my_task_id = self.setup_config["my_task_id"]
@@ -71,6 +82,7 @@ class NliTransformerHandler(BaseHandler):
         # TODO gpu is not supported, inspection might be time-consuming. It should be ok for now.
         device_num = -1
         model_class_item = MODEL_CLASSES[args.model_class_name]
+        model_class_item['model_class_name'] = args.model_class_name
         model_name = model_class_item['model_name']
         do_lower_case = model_class_item['do_lower_case'] \
             if 'do_lower_case' in model_class_item else False
@@ -214,7 +226,7 @@ class NliTransformerHandler(BaseHandler):
                                                      self.model_class_item,
                                                      True),
                                                  target=preprocessed_item['target_tensor'],
-                                                 return_convergence_delta=True)
+                                                 return_convergence_delta=True, n_steps=20)
 
         attributions_sum = summarize_attributions(attributions)
         token_ids = preprocessed_item['input_ids'][0].tolist()
@@ -232,7 +244,7 @@ class NliTransformerHandler(BaseHandler):
         assert len(importance) == len(tokens)
         return [response]
 
-    def inference(self, preprocessed_item):
+    def inference(self, preprocessed_item, **kwargs):
         model_output = get_model_prediction(preprocessed_item['input_ids'],
                                             preprocessed_item['attention_mask'],
                                             preprocessed_item['token_type_ids'],
