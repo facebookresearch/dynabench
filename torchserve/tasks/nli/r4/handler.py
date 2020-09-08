@@ -300,7 +300,6 @@ def handle(data, context):
             output = _service.inference(preprocessed_item)
             response = _service.postprocess(output, data)
         else:
-            # TODO do we need postprocess insight response here
             # Now if inspection is not supported by the model
             # the return value of the following call will just be
             # [{"importance": None, "words": None, "status": "not supported"}]
