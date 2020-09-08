@@ -71,7 +71,6 @@ class NliTransformerHandler(BaseHandler):
         model_class_name = get_model_class_name_by_model_no[int(my_model_no)]
 
         model_checkpoint_path = model_pt_path
-        # TODO maybe better to put model_class_name into config.
         # hard-code for now
         args = Args(model_class_name)
         num_labels = 3
@@ -109,7 +108,6 @@ class NliTransformerHandler(BaseHandler):
         attribute_list = ["context", "hypothesis"]
         check_fields(body, attribute_list)
 
-        # TODO how do we want to handle target?
         # "target" needs to be provided for inspection b.c. gradient need to be calculate w.r.t. one specific label.
         # importance-values/attributes for input tokens will be different when given different labels.
 
@@ -119,7 +117,7 @@ class NliTransformerHandler(BaseHandler):
         # (2). if we want to use inspection to motivate MTurk to write the examples to be a pre-given label,
         # then we want to provide a target here in body["target"].
 
-        # right now it just sets target=0
+        # now, we get target from body.
 
         if "insight" not in body:
             body["insight"] = False
@@ -190,15 +188,6 @@ class NliTransformerHandler(BaseHandler):
         return preprocessed_item
 
     def inspect(self, preprocessed_item):
-        # keep douwe old comments here.
-        # TODO: TBD
-        # Easiest way to handle this is probably to defer to the model, so
-        # if we can define a inspect_model() in the ANLI codebase that returns
-        # the Captum scores, we're good
-
-        # new version:
-        # TODO: how do we want to handle models that do not support inspection.
-        # Here, Yixin just set response to be the following.
         # if supported:     {"importance": importance, "words": tokens, "status": "finished"}
         # if not supported: {"importance": None, "words": None, "status": "not supported"}
 
@@ -237,7 +226,7 @@ class NliTransformerHandler(BaseHandler):
         # TODO: do we need clean up special tokens or not (like "[seq], [cls], [s]")
         # note that the importance-values for special token will always be 0.
         # by default, I just set it to be True
-        clean_up_special_tokens = True  # hard code for now.
+        clean_up_special_tokens = False  # hard code for now.
         if clean_up_special_tokens:
             tokens, importance = cleanup_tokenization_special_tokens(tokens, importance, self.tokenizer)
         response = {"importance": importance, "words": tokens, "status": "finished"}
