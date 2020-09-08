@@ -265,7 +265,6 @@ class NliTransformerHandler(BaseHandler):
 
         inference_output["s1"] = remove_sp_chars(data["s1"])
         inference_output["s2"] = remove_sp_chars(data["s2"])
-        # inference_output["y"] = data["y"]
         inference_output["status"] = "finished"
         inference_output["model_name"] = self.model_name
 
