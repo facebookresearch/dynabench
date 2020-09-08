@@ -71,7 +71,7 @@ class NliTransformerHandler(BaseHandler):
         model_class_name = get_model_class_name_by_model_no[int(my_model_no)]
 
         model_checkpoint_path = model_pt_path
-        # hard-code for now
+
         args = Args(model_class_name)
         num_labels = 3
 
