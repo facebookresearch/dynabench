@@ -18,7 +18,7 @@ from captum.attr import LayerIntegratedGradients
 
 from settings import my_secret
 from shared import generate_response_signature, check_fields, handler_initialize, remove_sp_chars, \
-    construct_input_ref_pair, captum_qa_forward, summarize_attributions, get_word_token
+    construct_input_ref_pair, captum_qa_forward, summarize_attributions, get_word_token, get_n_steps
 
 # QA specific libraries
 from qa_utils import convert_to_squad_example, compute_predictions_logits
@@ -212,15 +212,16 @@ def get_insights(example, tokenizer, device, lig, model):
     input_ids, ref_input_ids, attention_mask = construct_input_ref_pair(\
                 example[0]["question"], example[0]["passage"], tokenizer, device)
     all_tokens = get_word_token(input_ids, tokenizer)
+    n_steps = get_n_steps(len(all_tokens))
     logger.info("Word Tokens = '%s'", all_tokens)
     attributions_start, delta_start = lig.attribute(inputs=input_ids,
                                   baselines=ref_input_ids,
                                   additional_forward_args=(attention_mask, 0, model),
-                                  return_convergence_delta=True)
+                                  return_convergence_delta=True, n_steps=n_steps)
 
     attributions_end, delta_end = lig.attribute(inputs=input_ids, baselines=ref_input_ids,
                                 additional_forward_args=(attention_mask, 1, model),
-                                return_convergence_delta=True)
+                                return_convergence_delta=True, n_steps=n_steps)
 
     attributions_start_sum = summarize_attributions(attributions_start)
     attributions_end_sum = summarize_attributions(attributions_end)

@@ -115,6 +115,14 @@ def get_word_token(input_ids, tokenizer):
     tokens = [token.replace("Ġ", "") for token in tokens]
     return tokens
 
+def get_n_steps(n_tokens:int, min_n_steps:int=3, max_n_steps:int=20, max_tokens:int=500) -> int:
+    """
+    Get n_steps as a function of the number of tokens to speed up insight.
+    n_steps scaled linearly between min_n_steps and max_n_steps based on max_tokens
+    """
+    token_ratio = 1 - (min(n_tokens, max_tokens) / max_tokens)
+    return int(min_n_steps + round(token_ratio * (max_n_steps - min_n_steps), 0))
+
 def get_nli_word_token(input_ids, model):
     """
     constructs word tokens from token ids to show captum word importance.
