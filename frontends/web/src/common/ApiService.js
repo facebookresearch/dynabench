@@ -111,6 +111,7 @@ export default class ApiService {
     formData.append("file", data.file);
     formData.append("type", data.roundType);
     formData.append("taskId", data.taskId);
+    formData.append("task", data.task);
     return this.fetch(`${this.domain}/models/upload`, {
       method: "POST",
       body: formData,

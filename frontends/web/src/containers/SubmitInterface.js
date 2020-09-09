@@ -24,28 +24,43 @@ class SubmitInterface extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      taskId: props.match.params.taskId,
+      taskId: null,
+      task: {},
     };
   }
   componentDidMount() {
+    const {
+      match: { params },
+    } = this.props;
     if (!this.context.api.loggedIn()) {
       this.props.history.push(
         "/login?&src=" +
           encodeURIComponent("/tasks/" + this.state.taskId + "/submit")
       );
     }
+
+    this.setState({ taskId: params.taskId }, function () {
+      this.context.api
+        .getTask(this.state.taskId)
+        .then((result) => {
+          result.targets = result.targets.split("|"); // split targets
+          this.setState({ task: result });
+        }, (error) => {
+          console.log(error);
+        });
+    });
   }
 
   handleValidation = (values) => {
     const errors = {};
-    const allowedExtensions = /(\.txt)$/i;
+    const allowedExtensions = /(\.txt|\.json)$/i;
     if (!values.roundType) {
       errors.roundType = "Required";
     }
     if (!values.file) {
       errors.file = "Required";
     } else if (!allowedExtensions.exec(values.file.name)) {
-      errors.file = "Invalid file type - Please upload in .txt format";
+      errors.file = "Invalid file type - Please upload in .txt or .json format";
     }
     return errors;
   };
@@ -53,6 +68,7 @@ class SubmitInterface extends React.Component {
   handleSubmit = (values, { setFieldValue, setSubmitting }) => {
     const reqObj = {
       taskId: this.state.taskId,
+      task: this.state.task.shortname,
       roundType: values.roundType,
       file: values.file,
     };
@@ -71,6 +87,12 @@ class SubmitInterface extends React.Component {
   };
 
   render() {
+    const roundNavs = []
+    const num_closed_rounds = ((this.state.task.round && this.state.task.cur_round) || 1) - 1;
+    for (let i=1; i<=num_closed_rounds; i++) {
+      roundNavs.push(<option key={i} value={i}>Round {i}</option>);
+    }
+
     return (
       <Container>
         <Row>
@@ -82,11 +104,21 @@ class SubmitInterface extends React.Component {
           <CardGroup style={{ marginTop: 20, width: "100%" }}>
             <Card>
               <Card.Body>
+              {this.state.task.shortname === "NLI" ? (
                 <p>
                   Concatenate with each example's prediction per line, labeled as in <a href="https://github.com/facebookresearch/anli">ANLI</a>'s predicted_label
                   default output format (e=Entailment, c=Contradiction, n=Neutral). If you submit for multiple rounds in one go (i.e., overall),
                   concatenate in order (so first the answers, one per line, for round 1; then for round 2; then for round 3; in order).
                 </p>
+              ) : null}
+
+              {this.state.task.shortname === "QA" ? (
+                <p>
+                  Upload predicted answers as a <em>.json</em> file in the format <code>{'{'}"id_1": "answer_1", "id_2": "answer_2", ...{'}'}</code> (i.e. standard SQuAD prediction format). 
+                  If you submit for multiple rounds in one go (i.e., overall), simply concatenate the answers from each round into your prediction file.
+                </p>
+              ) : null}
+                
                 <Formik
                   initialValues={{
                     file: null,
@@ -120,9 +152,7 @@ class SubmitInterface extends React.Component {
                                 onChange={handleChange}
                               >
                                 <option value="overall">Overall</option>
-                                <option value="1">Round 1</option>
-                                <option value="2">Round 2</option>
-                                <option value="3">Round 3</option>
+                                {roundNavs}
                               </Form.Control>
                             </Form.Group>
                           </Row>

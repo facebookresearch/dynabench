@@ -69,10 +69,14 @@ def do_upload(credentials):
     round_id = bottle.request.forms.get('type')
     upload = bottle.request.files.get('file')
     task_id = bottle.request.forms.get('taskId')
-    #TODO: get some task reference and pass that to validate_prediction()
+    task = str(bottle.request.forms.get('task')).lower()
 
     try:
-        test_raw_data = upload.file.read().decode('utf-8').lower().splitlines()
+        if task == 'qa':
+            test_raw_data = json.loads(upload.file.read().decode('utf-8'))  # if QA, use standard SQuAD JSON format
+        else:
+            test_raw_data = upload.file.read().decode('utf-8').lower().splitlines()
+        
     except Exception as ex:
         logging.exception(ex)
         bottle.abort(400, 'Upload valid model result file')
@@ -87,7 +91,7 @@ def do_upload(credentials):
 
     if len(test_raw_data) > 0:
         try:
-            rounds_accuracy_list, score_obj_list, overall_accuracy = util.validate_prediction(rounds, test_raw_data)
+            rounds_accuracy_list, score_obj_list, overall_accuracy = util.validate_prediction(rounds, test_raw_data, task=task)
             m = ModelModel()
             model = m.create(task_id=task_id, user_id=user_id, name='', shortname='', longdesc='', desc='',
                              overall_perf='{:.2f}'.format(overall_accuracy))

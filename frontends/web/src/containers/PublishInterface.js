@@ -94,7 +94,7 @@ class PublishInterface extends React.Component {
                 <Container>
                   <Row className="mt-4">
                     <Col sm="4" className="mb-2">
-                      <b>Your Accuracy</b>
+                      <b>Your Performance</b>
                     </Col>
                     <Col sm="8">
                       <b>{model.overall_perf}%</b>
