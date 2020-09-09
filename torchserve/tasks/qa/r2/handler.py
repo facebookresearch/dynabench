@@ -179,7 +179,7 @@ class TransformersSeqClassifierHandler(BaseHandler):
 
         logger.info("response without sign '%s'", response)
         response["text"] = predictions_by_example["text"]
-        response["prob"] = max(1.0, min(0.0, predictions_by_example["model_conf"]))
+        response["prob"] = max(0.0, min(1.0, predictions_by_example["model_conf"]))
         # this is what the frontend expects
 
         # Evaluate the model prediction against the human answer
