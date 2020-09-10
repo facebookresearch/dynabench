@@ -129,7 +129,7 @@ class ExampleModel(BaseModel):
         except Exception as error_message:
             logging.error('Could not create example (%s)' % error_message)
             return False
-        return e.id
+        return e
 
     def verify_signature(self, signature, context, hypothesis, pred_str):
         tid = context.round.task.id

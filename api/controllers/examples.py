@@ -10,6 +10,8 @@ from models.example import ExampleModel
 from models.user import UserModel
 from models.round import RoundModel
 from models.context import ContextModel
+from models.notification import NotificationModel
+from models.badge import BadgeModel
 
 import json
 
@@ -83,7 +85,15 @@ def validate_example(credentials, eid):
     rm = RoundModel()
     um = UserModel()
     if credentials['id'] != 'turk':
-        um.incrementValidatedCount(credentials['id'])
+        user = um.updateValidatedCount(credentials['id'])
+
+        bm = BadgeModel()
+        nm = NotificationModel()
+        badges = bm.checkBadgesEarned(user, example)
+        for badge in badges:
+            bm.addBadge(badge)
+            nm.create(credentials['id'], 'NEW_BADGE_EARNED', badge['name'])
+
     cm = ContextModel()
     context = cm.get(example.cid)
     rm.updateLastActivity(context.r_realid)
@@ -95,6 +105,11 @@ def validate_example(credentials, eid):
         em.update(example.id, {'verified': True, 'verified_incorrect': True})
     elif preds['F'] >= 5:
         em.update(example.id, {'verified': True, 'verified_flagged': True})
+
+    ret = example.to_dict()
+    if credentials['id'] != 'turk' and badges:
+        ret['badges'] = '|'.join([badge['name'] for badge in badges])
+
     return util.json_encode(example.to_dict())
 
 @bottle.put('/examples/<eid:int>')
@@ -138,7 +153,7 @@ def post_example(credentials):
         bottle.abort(403, 'Access denied')
 
     em = ExampleModel()
-    eid = em.create( \
+    example = em.create( \
             tid=data['tid'], \
             rid=data['rid'], \
             uid=data['uid'] if credentials['id'] != 'turk' else 'turk', \
@@ -148,7 +163,7 @@ def post_example(credentials):
             response=data['response'], \
             metadata=data['metadata']
             )
-    if not eid:
+    if not example:
         bottle.abort(400, 'Could not create example')
 
     rm = RoundModel()
@@ -157,5 +172,18 @@ def post_example(credentials):
     cm.incrementCountDate(data['cid'])
     if credentials['id'] != 'turk':
         um = UserModel()
-        um.incrementSubmitCount(data['uid'])
-    return util.json_encode({'success': 'ok', 'id': eid})
+        user = um.updateSubmitCount(credentials['id'], example.model_wrong)
+
+        bm = BadgeModel()
+        nm = NotificationModel()
+        badges = bm.checkBadgesEarned(user, example)
+        for badge in badges:
+            bm.addBadge(badge)
+            nm.create(credentials['id'], 'NEW_BADGE_EARNED', badge['name'])
+
+    return util.json_encode({ \
+            'success': 'ok', \
+            'id': example.id, \
+            'badges': '|'.join([badge['name'] for badge in badges]) \
+                if (credentials['id'] != 'turk' and badges) else None \
+            })

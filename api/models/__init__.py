@@ -10,3 +10,4 @@ from . import score
 from . import context
 from . import example
 from . import notification
+from . import badge

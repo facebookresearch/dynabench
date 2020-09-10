@@ -36,5 +36,7 @@ dbs = sesh()
 #u = User()
 from models.notification import Notification
 n = Notification()
+from models.badge import Badge
+b = Badge()
 Base.metadata.create_all(engine)
 dbs.commit()
