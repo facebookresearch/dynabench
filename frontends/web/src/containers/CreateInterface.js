@@ -27,12 +27,16 @@ import { TokenAnnotator } from "react-text-annotate";
 import { PieRechart } from "../components/Rechart";
 import { formatWordImportances } from "../utils/color";
 import BootstrapSwitchButton from 'bootstrap-switch-button-react'
+<<<<<<< HEAD
 import {
   OverlayProvider,
   Annotation,
   OverlayContext,
   BadgeOverlay
 } from "./Overlay"
+=======
+import "./CreateInterface.css";
+>>>>>>> 8877cc0... Fix for QA tokenizer whitespace issue
 
 const Explainer = (props) => (
   <div className="mt-4 mb-1 pt-3">
@@ -46,7 +50,7 @@ const Explainer = (props) => (
 function ContextInfo({ taskType, text, answer, updateAnswer }) {
   return taskType == "extract" ? (
     <TokenAnnotator
-      className="mb-1 p-3 light-gray-bg"
+      className="mb-1 p-3 light-gray-bg qa-context"
       tokens={text.split(/\b/)}
       value={answer}
       onChange={updateAnswer}
