@@ -122,9 +122,10 @@ def validate_prediction(r_objects, prediction, task='nli'):
     rounds_accuracy_list = []
     start_index = 0
     end_index = 0
-    for r_obj in r_objects:
-        if task == 'nli' and r_obj.rid > 3: continue
-        if task == 'qa' and r_obj.rid > 1: continue
+    num_closed_rounds = max(r_obj.rid for r_obj in r_objects) - 1 if len(r_objects) > 0 else 0
+
+    for r_obj in sorted(r_objects, key=lambda x: x.rid):
+        if r_obj.rid > num_closed_rounds: continue
 
         score_obj = {}
         round_accuracy = {}
@@ -145,7 +146,10 @@ def validate_prediction(r_objects, prediction, task='nli'):
         rounds_accuracy_list.append(round_accuracy)
         score_obj_list.append(score_obj)
 
-    return rounds_accuracy_list, score_obj_list, round(overall_accuracy / len(rounds_accuracy_list), 2)
+    if len(rounds_accuracy_list) > 0:
+        overall_accuracy /= len(rounds_accuracy_list)
+
+    return rounds_accuracy_list, score_obj_list, round(overall_accuracy, 2)
 
 def is_current_user(uid, credentials=None):
     """
