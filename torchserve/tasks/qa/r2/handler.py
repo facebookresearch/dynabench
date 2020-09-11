@@ -10,7 +10,7 @@ import hashlib
 import sys
 logger = logging.getLogger(__name__)
 
-from transformers import AutoConfig, AutoModelForSequenceClassification, AutoTokenizer,AutoModelForQuestionAnswering, RobertaTokenizer
+from transformers import AutoConfig, AutoModelForSequenceClassification, AutoTokenizer, AutoModelForQuestionAnswering, RobertaTokenizer
 import torch
 import torch.nn.functional as F
 from ts.torch_handler.base_handler import BaseHandler
@@ -202,7 +202,7 @@ class TransformersSeqClassifierHandler(BaseHandler):
 
 _service = TransformersSeqClassifierHandler()
 
-def get_insights(example, tokenizer, device, lig, model):
+def get_insights(example, tokenizer, device, lig, model, compute_end_importances=False):
     """
     This function calls the layer integrated gradient to get word importance
     of the question and the passage. The word importance is obtained for
@@ -213,20 +213,23 @@ def get_insights(example, tokenizer, device, lig, model):
     all_tokens = get_word_token(input_ids, tokenizer)
     n_steps = get_n_steps(len(all_tokens))
     logger.info("Word Tokens = '%s'", all_tokens)
+
     attributions_start, delta_start = lig.attribute(inputs=input_ids,
                                   baselines=ref_input_ids,
                                   additional_forward_args=(attention_mask, 0, model),
                                   return_convergence_delta=True, n_steps=n_steps)
+    attributions_start_sum = summarize_attributions(attributions_start).tolist()
 
-    attributions_end, delta_end = lig.attribute(inputs=input_ids, baselines=ref_input_ids,
-                                additional_forward_args=(attention_mask, 1, model),
-                                return_convergence_delta=True, n_steps=n_steps)
+    attributions_end_sum = []
+    if compute_end_importances:
+        attributions_end, delta_end = lig.attribute(inputs=input_ids, baselines=ref_input_ids,
+                                    additional_forward_args=(attention_mask, 1, model),
+                                    return_convergence_delta=True, n_steps=n_steps)
+        attributions_end_sum = summarize_attributions(attributions_end).tolist()
 
-    attributions_start_sum = summarize_attributions(attributions_start)
-    attributions_end_sum = summarize_attributions(attributions_end)
     response = {}
-    response["start_importances"] = attributions_start_sum.tolist()
-    response["end_importances"] = attributions_end_sum.tolist()
+    response["start_importances"] = attributions_start_sum
+    response["end_importances"] = attributions_end_sum
     response["words"] = all_tokens
     return [response]
 

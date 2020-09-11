@@ -228,6 +228,12 @@ class ResponseInfo extends React.Component {
                 words: result.words,
               };
             });
+            inspectors = inspectors.filter((insp) => {
+              return Array.isArray(insp["importances"]) && insp["importances"].length !== 0;
+            });
+            if (inspectors.length === 1) {
+              inspectors[0]["name"] = "token_importances";  
+            }
           } else {
             inspectors = [result];
           }
