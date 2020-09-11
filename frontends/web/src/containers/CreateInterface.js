@@ -678,17 +678,21 @@ class CreateInterface extends React.Component {
     const contextContent = this.state.content
       .filter(item => item.cls === "context")
       .map((item, index) => (
-        <ContextInfo
-          key={index}
-          index={index}
-          text={item.text}
-          targets={this.state.task.targets}
-          curTarget={this.state.target}
-          taskType={this.state.task.type}
-          taskName={this.state.task.shortname}
-          answer={this.state.answer}
-          updateAnswer={this.updateAnswer}
-        />
+        <Annotation
+          placement="bottom-start"
+          tooltip={"This is the context that applies to your particular example. It will be passed to the model alongside your generated text."}>
+          <ContextInfo
+            key={index}
+            index={index}
+            text={item.text}
+            targets={this.state.task.targets}
+            curTarget={this.state.target}
+            taskType={this.state.task.type}
+            taskName={this.state.task.shortname}
+            answer={this.state.answer}
+            updateAnswer={this.updateAnswer}
+          />
+        </Annotation>
       ));
     const content = this.state.content.map((item, index) =>
       item.cls === "context" ? undefined : (
@@ -757,27 +761,27 @@ class CreateInterface extends React.Component {
                 ({hidden, setHidden})=> (
                     <button type="button" className="btn btn-light btn-sm"
                       onClick={() => { setHidden(!hidden) }}
-                    ><i className="fas fa-info"></i></button>
+                    ><i className="fas fa-question"></i></button>
                 )
               }
             </OverlayContext.Consumer>
-            <button type="button" className="btn btn-light btn-sm"
+            {/* <button type="button" className="btn btn-light btn-sm"
               onClick={() => {  }}
-            ><i className="fas fa-question"></i></button>
+            ><i className="fas fa-info"></i></button> */}
             </ButtonGroup>
           </div>
+          <Explainer taskName={this.state.task.name} />
           <Annotation
-            placement="bottom-start"
-            tooltip={"This is a long test message to see if wrapping works correctly"}>
-            <Explainer taskName={this.state.task.name} />
+            placement="top"
+            tooltip={"This is your goal. Dynabench specifies what the true label should be of your model-fooling example."}>
+            <GoalMessage
+              targets={this.state.task.targets}
+              curTarget={this.state.target}
+              taskType={this.state.task.type}
+            />
           </Annotation>
-          <GoalMessage
-            targets={this.state.task.targets}
-            curTarget={this.state.target}
-            taskType={this.state.task.type}
-          />
           <Card className="profile-card overflow-hidden">
-          {contextContent}
+            {contextContent}
             <Card.Body className="overflow-auto pt-2" style={{ height: 400 }} ref={this.chatContainerRef}>
               {content}
               <div
@@ -785,18 +789,22 @@ class CreateInterface extends React.Component {
                 ref={this.bottomAnchorRef}
               />
             </Card.Body>
+            <Annotation placement="top" tooltip="Enter your example here">
+
               <InputGroup>
-                <FormControl
-                  className="m-3 p-3 rounded-1 thick-border h-auto light-gray-bg"
-                  placeholder={
-                    this.state.task.type == "extract"
-                      ? "Enter question.."
-                      : (this.state.task.shortname == "NLI" ? "Enter hypothesis.." : "Enter statement..")
-                  }
-                  value={this.state.hypothesis}
-                  onChange={this.handleResponseChange}
-                />
+                  <FormControl
+                    className="m-3 p-3 rounded-1 thick-border h-auto light-gray-bg"
+                    placeholder={
+                      this.state.task.type == "extract"
+                        ? "Enter question.."
+                        : (this.state.task.shortname == "NLI" ? "Enter hypothesis.." : "Enter statement..")
+                    }
+                    value={this.state.hypothesis}
+                    onChange={this.handleResponseChange}
+                  />
               </InputGroup>
+              </Annotation>
+
               <Row className="p-3">
                 <Col xs={6}>
                   <InputGroup>
@@ -806,17 +814,19 @@ class CreateInterface extends React.Component {
                       overlay={renderSandboxTooltip}
                     >
                       <span style={{marginRight: 10}}>
-                        <BootstrapSwitchButton
-                          checked={this.state.livemode}
-                          onlabel='Live Mode'
-                          onstyle='primary blue-bg'
-                          offstyle='warning'
-                          offlabel='Sandbox'
-                          width={120}
-                          onChange={(checked) => {
-                            this.setState({ livemode: checked });
-                          }}
-                        />
+                        <Annotation placement="left" tooltip="If you want to just play around without storing your examples, you can switch to Sandbox mode here.">
+                          <BootstrapSwitchButton
+                            checked={this.state.livemode}
+                            onlabel='Live Mode'
+                            onstyle='primary blue-bg'
+                            offstyle='warning'
+                            offlabel='Sandbox'
+                            width={120}
+                            onChange={(checked) => {
+                              this.setState({ livemode: checked });
+                            }}
+                          />
+                        </Annotation>
                       </span>
                     </OverlayTrigger>
 
@@ -826,9 +836,11 @@ class CreateInterface extends React.Component {
                       delay={{ show: 250, hide: 400 }}
                       overlay={renderSwitchRoundTooltip}
                     >
-                      <DropdownButton variant="light" className="border-0 blue-color font-weight-bold light-gray-bg" style={{marginRight: 10}} id="dropdown-basic-button" title="Switch Round">
-                        {roundNavs}
-                      </DropdownButton>
+                      <Annotation placement="right" tooltip="Want to try talking to previous rounds? You can switch here.">
+                        <DropdownButton variant="light" className="border-0 blue-color font-weight-bold light-gray-bg" style={{marginRight: 10}} id="dropdown-basic-button" title="Switch Round">
+                          {roundNavs}
+                        </DropdownButton>
+                      </Annotation>
                     </OverlayTrigger>
                       : null}
                   </InputGroup>
@@ -840,27 +852,30 @@ class CreateInterface extends React.Component {
                     delay={{ show: 250, hide: 400 }}
                     overlay={renderSwitchContextTooltip}
                   >
-
-                    <Button
-                      className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"
-                      onClick={this.getNewContext}
-                      disabled={this.state.refreshDisabled}
-                    >
-                      Switch to next context
-                    </Button>
+                    <Annotation placement="left" tooltip="Don’t like this context, or this goal label? Try another one.">
+                      <Button
+                        className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"
+                        onClick={this.getNewContext}
+                        disabled={this.state.refreshDisabled}
+                      >
+                        Switch to next context
+                      </Button>
+                    </Annotation>
                   </OverlayTrigger>
-                  <Button
-                    className="font-weight-bold blue-bg border-0 task-action-btn"
-                    onClick={this.handleResponse}
-                    disabled={this.state.submitDisabled}
-                  >
-                    Submit{" "}
-                    <i
-                      className={
-                        this.state.submitDisabled ? "fa fa-cog fa-spin" : ""
-                      }
-                    />
-                  </Button>
+                  <Annotation placement="top" tooltip="When you’re done, you can submit the example and we’ll find out what the model thinks!">
+                    <Button
+                      className="font-weight-bold blue-bg border-0 task-action-btn"
+                      onClick={this.handleResponse}
+                      disabled={this.state.submitDisabled}
+                    >
+                      Submit{" "}
+                      <i
+                        className={
+                          this.state.submitDisabled ? "fa fa-cog fa-spin" : ""
+                        }
+                      />
+                    </Button>
+                  </Annotation>
                 </InputGroup>
               </Col>
             </Row>

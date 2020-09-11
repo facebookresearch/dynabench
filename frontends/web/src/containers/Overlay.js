@@ -7,8 +7,12 @@ import {
 
 const OverlayContext = React.createContext(false);
 
-function OverlayProvider({ children, initial=false }) {
-  const [hidden, setHidden] = React.useState(initial)
+function OverlayProvider({ children, initial=false, delayMs = 1400 }) {
+  const [hidden, setHidden] = React.useState(true)
+
+  React.useEffect(() => {
+    setTimeout(() => setHidden(initial), delayMs)
+  }, [])
 
   return (<div>
     <Modal
