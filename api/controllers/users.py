@@ -14,6 +14,7 @@ import common.mail_service as mail
 
 from models.user import UserModel
 from models.model import ModelModel
+from models.badge import BadgeModel
 
 import json
 import logging
@@ -29,8 +30,8 @@ def users():
 @bottle.get('/users/<id:int>')
 @_auth.requires_auth
 def get_user(credentials, id):
-    u = UserModel()
-    user = u.get(id)
+    um = UserModel()
+    user = um.get(id)
     if not user:
         bottle.abort(404, 'Not found')
 
@@ -42,6 +43,36 @@ def get_user(credentials, id):
         return util.json_encode(nu)
     else:
         return util.json_encode(user.to_dict())
+
+@bottle.get('/users/<id:int>/badges')
+@_auth.requires_auth
+def get_user_with_badges(credentials, id):
+    um = UserModel()
+    user = um.get(id)
+    if not user:
+        bottle.abort(404, 'Not found')
+
+    if id != credentials['id']:
+        # only copy some sub fields if this is not us
+        nu, u = {}, user.to_dict()
+        for f in ['id', 'username', 'affiliation']:
+            nu[f] = u[f]
+
+        bm = BadgeModel()
+        badges = bm.getByUid(id)
+        if badges:
+            nu['badges'] = [b.to_dict() for b in badges]
+
+        return util.json_encode(nu)
+    else:
+        user = user.to_dict()
+        bm = BadgeModel()
+        badges = bm.getByUid(id)
+        if badges:
+            user['badges'] = [b.to_dict() for b in badges]
+
+        return util.json_encode(user)
+
 
 @bottle.post('/users')
 def create_user():

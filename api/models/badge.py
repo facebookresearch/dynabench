@@ -119,7 +119,7 @@ class BadgeModel(BaseModel):
                 badge['name'], \
                 badge['metadata'])
 
-    def getBadges(self, uid):
+    def getByUid(self, uid):
         try:
             return self.dbs.query(Badge) \
                     .filter(Badge.uid == uid).all()

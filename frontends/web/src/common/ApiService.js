@@ -169,8 +169,12 @@ export default class ApiService {
     });
   }
 
-  getUser(id) {
-    return this.fetch(`${this.domain}/users/${id}`, {
+  getUser(id, badges=false) {
+    var url = `${this.domain}/users/${id}`;
+    if (badges) {
+      url += '/badges';
+    }
+    return this.fetch(url, {
       method: "GET",
     });
   }

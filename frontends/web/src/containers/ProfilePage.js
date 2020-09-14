@@ -16,6 +16,8 @@ import {
   Nav,
   Pagination,
   Badge,
+  OverlayTrigger,
+  Tooltip,
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { Formik } from "formik";
@@ -25,6 +27,7 @@ import { Avatar } from "../components/Avatar/Avatar";
 import Moment from "react-moment";
 import "./Sidebar-Layout.css";
 import "./ProfilePage.css";
+import BadgeGrid from "./BadgeGrid";
 
 const StatsSubPage = (props) => {
   return (
@@ -76,6 +79,7 @@ const StatsSubPage = (props) => {
             </Table>
           </Card.Body>
         </Card>
+        <BadgeGrid user={props.user} />
       </Col>
     </Container>
   );
@@ -318,7 +322,7 @@ class ProfilePage extends React.Component {
   fetchUser = () => {
     const user = this.context.api.getCredentials();
     this.context.api
-      .getUser(user.id)
+      .getUser(user.id, true)
       .then((result) => {
         this.setState({ user: result, loader: false });
       }, (error) => {

@@ -5,6 +5,7 @@
 import bottle
 import logging
 import common.auth as _auth
+import common.helpers as util
 
 from models.user import UserModel
 
@@ -30,7 +31,7 @@ def authenticate():
     u.update(user.id, {'refresh_token': refresh_token})
 
     logging.info('Authentication successful for %s' % (user.username))
-    return {'user': user.to_dict(), 'token': token}
+    return util.json_encode({'user': user.to_dict(), 'token': token})
 
 @bottle.get('/authenticate/refresh')
 def refresh_auth():
@@ -46,4 +47,4 @@ def refresh_auth():
     # also issue new refresh token
     refresh_token = _auth.set_refresh_token()
     u.update(user.id, {'refresh_token': refresh_token})
-    return {'token': token}
+    return util.json_encode({'token': token})
