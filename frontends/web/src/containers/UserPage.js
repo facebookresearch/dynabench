@@ -20,6 +20,7 @@ import { Avatar } from "../components/Avatar/Avatar";
 import "./Sidebar-Layout.css";
 import TasksContext from "./TasksContext";
 import UserContext from "./UserContext";
+import BadgeGrid from "./BadgeGrid";
 
 class UserPage extends React.Component {
   static contextType = UserContext;
@@ -54,7 +55,7 @@ class UserPage extends React.Component {
 
   fetchUser = () => {
     this.context.api
-      .getUser(this.state.userId)
+      .getUser(this.state.userId, true)
       .then((result) => {
         this.setState({ user: result });
       }, (error) => {
@@ -157,6 +158,7 @@ class UserPage extends React.Component {
                 </h1>
                 <Col className="m-auto" lg={8}>
                   {this.state.user.id && (
+                    <>
                     <Card>
                       <Container className="mt-3">
                         <Row>
@@ -222,6 +224,8 @@ class UserPage extends React.Component {
                         </Card.Footer>
                       )}
                     </Card>
+                    <BadgeGrid user={this.state.user} />
+                    </>
                   )}
                 </Col>
               </>
