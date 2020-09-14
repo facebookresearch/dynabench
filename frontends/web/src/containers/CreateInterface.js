@@ -58,7 +58,7 @@ function ContextInfo({ taskType, text, answer, updateAnswer }) {
   );
 }
 
-const GoalMessage = ({ targets = [], curTarget, taskType }) => {
+const GoalMessage = ({ targets = [], curTarget, taskType, onChange }) => {
   const otherTargets = targets.filter((_, index) => index !== curTarget);
   const otherTargetStr = otherTargets.join(" or ");
 
@@ -70,10 +70,14 @@ const GoalMessage = ({ targets = [], curTarget, taskType }) => {
       <i className="fas fa-flag-checkered"></i>{" "}
       {
         taskType === "extract"
-          ? <span>Your goal: enter a question and select an answer in the context, such that
-      the model is fooled.</span>
-          : <span>Your goal: enter {indefiniteArticle} <strong>{targets[curTarget]}</strong> statement that
-      fools the model into predicting {otherTargetStr}.</span>
+          ? <span>Your goal: enter a question and select an answer in the context, such that the model is fooled.</span>
+          : <span>
+              Your goal: enter {indefiniteArticle}
+              <select value={curTarget} onChange={onChange}>
+                {targets.map((target, index) => <option value={index} key={index}>{target}</option>)}
+              </select>
+              statement that fools the model into predicting {otherTargetStr}.
+            </span>
       }
     </p>
   );
@@ -425,6 +429,7 @@ class CreateInterface extends React.Component {
     this.getNewContext = this.getNewContext.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
     this.handleResponseChange = this.handleResponseChange.bind(this);
+    this.handleGoalMessageTargetChange = this.handleGoalMessageTargetChange.bind(this);
     this.updateAnswer = this.updateAnswer.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
     this.chatContainerRef = React.createRef();
@@ -628,6 +633,9 @@ class CreateInterface extends React.Component {
   handleResponseChange(e) {
     this.setState({ hypothesis: e.target.value });
   }
+  handleGoalMessageTargetChange(e) {
+    this.setState({ target: parseInt(e.target.value) });
+  }
   componentDidMount() {
     const {
       match: { params },
@@ -749,6 +757,7 @@ class CreateInterface extends React.Component {
             targets={this.state.task.targets}
             curTarget={this.state.target}
             taskType={this.state.task.type}
+            onChange={this.handleGoalMessageTargetChange}
           />
           <Card className="profile-card overflow-hidden">
           {contextContent}
