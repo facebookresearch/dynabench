@@ -208,3 +208,12 @@ table.inspectModel td {
   border-color: rgba(0,0,0,.125);
   color: inherit;
 }
+
+.modal-open {
+  overflow-y: scroll !important;
+  padding: 0 !important;
+}
+
+.btn-help-info {
+  font-size: 10px !important;
+}
