@@ -29,7 +29,8 @@ import BootstrapSwitchButton from 'bootstrap-switch-button-react'
 import {
   OverlayProvider,
   Annotation,
-  OverlayContext
+  OverlayContext,
+  BadgeOverlay
 } from "./Overlay"
 
 const Explainer = (props) => (
@@ -610,6 +611,11 @@ class CreateInterface extends React.Component {
                       [key]: result.id,
                     },
                   });
+
+                  if (!!result.badges) {
+                    this.setState({showBadges: result.badges})
+                  }
+
                 }, (error) => {
                   console.log(error);
                   this.setState({
@@ -676,10 +682,10 @@ class CreateInterface extends React.Component {
       .filter(item => item.cls === "context")
       .map((item, index) => (
         <Annotation
+          key={index}
           placement="bottom-start"
           tooltip={"This is the context that applies to your particular example. It will be passed to the model alongside your generated text."}>
           <ContextInfo
-            key={index}
             index={index}
             text={item.text}
             targets={this.state.task.targets}
@@ -746,9 +752,15 @@ class CreateInterface extends React.Component {
     function renderSwitchContextTooltip(props) {
       return renderTooltip(props, "Don't like this context? Try another one.");
     }
-
+  
     return (
-      <OverlayProvider>
+      <OverlayProvider initiallyHide={true}>
+        <BadgeOverlay
+          badgeTypes={this.state.showBadges}
+          show={!!this.state.showBadges}
+          onHide={() => this.setState({showBadges: ""})}
+        >
+        </BadgeOverlay>
       <Container className="mb-5 pb-5">
         <Col className="m-auto" lg={12}>
           <div style={{float: "right"}}>
@@ -797,7 +809,7 @@ class CreateInterface extends React.Component {
           </Annotation>
           <Card className="profile-card overflow-hidden">
             {contextContent}
-            <Card.Body className="overflow-auto pt-2" style={{ height: 370 }} ref={this.chatContainerRef}>
+            <Card.Body className="overflow-auto pt-2" style={{ height: 385 }} ref={this.chatContainerRef}>
               {content}
               <div
                 className="bottom-anchor"
