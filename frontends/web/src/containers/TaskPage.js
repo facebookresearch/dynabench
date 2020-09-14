@@ -500,18 +500,17 @@ class TaskPage extends React.Component {
             </h2>
             <div style={{float: "right", marginTop: 30}}>
             <ButtonGroup>
-            <OverlayContext.Consumer>
-              {
-                ({hidden, setHidden})=> (
-                    <button type="button" className="btn btn-light btn-sm"
-                      onClick={() => { setHidden(!hidden) }}
-                    ><i className="fas fa-question"></i></button>
-                )
-              }
-            </OverlayContext.Consumer>
-            {/* <button type="button" className="btn btn-light btn-sm"
-              onClick={() => {  }}
-            ><i className="fas fa-info"></i></button> */}
+              <Annotation placement="left" tooltip="Click to bring up this help overlay again">
+                <OverlayContext.Consumer>
+                  {
+                    ({hidden, setHidden})=> (
+                        <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
+                          onClick={() => { setHidden(!hidden) }}
+                        ><i className="fas fa-question"></i></button>
+                    )
+                  }
+                </OverlayContext.Consumer>
+              </Annotation>
             </ButtonGroup>
             </div>
             <p>{this.state.task.desc}</p>

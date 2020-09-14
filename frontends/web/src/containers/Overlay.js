@@ -27,7 +27,7 @@ function OverlayProvider({ children, initial=false, delayMs = 1400 }) {
 }
 
 function Annotation({children, placement="right", tooltip, ...props}) {
-  return (<div>
+  return (<>
     <OverlayContext.Consumer>
       {({hidden}) => <OverlayTrigger
         {...props}
@@ -41,7 +41,7 @@ function Annotation({children, placement="right", tooltip, ...props}) {
         {/* </div> */}
       </OverlayTrigger>}
     </OverlayContext.Consumer>
-  </div>);
+  </>);
 }
 
 export {

@@ -756,18 +756,22 @@ class CreateInterface extends React.Component {
         <Col className="m-auto" lg={12}>
           <div style={{float: "right"}}>
             <ButtonGroup>
-            <OverlayContext.Consumer>
-              {
-                ({hidden, setHidden})=> (
-                    <button type="button" className="btn btn-light btn-sm"
-                      onClick={() => { setHidden(!hidden) }}
-                    ><i className="fas fa-question"></i></button>
-                )
-              }
-            </OverlayContext.Consumer>
-            {/* <button type="button" className="btn btn-light btn-sm"
-              onClick={() => {  }}
-            ><i className="fas fa-info"></i></button> */}
+              <Annotation placement="left" tooltip="Click to bring up this help overlay again">
+                <OverlayContext.Consumer>
+                  {
+                    ({hidden, setHidden})=> (
+                        <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
+                          onClick={() => { setHidden(!hidden) }}
+                        ><i className="fas fa-question"></i></button>
+                    )
+                  }
+                </OverlayContext.Consumer>
+              </Annotation>
+              <Annotation placement="bottom" tooltip="Click to learn more details about this task challenge">
+                <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
+                  onClick={() => {  }}
+                ><i className="fas fa-info"></i></button>
+              </Annotation>
             </ButtonGroup>
           </div>
           <Explainer taskName={this.state.task.name} />
