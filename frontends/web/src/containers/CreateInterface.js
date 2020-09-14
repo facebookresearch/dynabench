@@ -18,7 +18,8 @@ import {
   Dropdown,
   OverlayTrigger,
   Tooltip,
-  Spinner
+  Spinner,
+  Modal
 } from "react-bootstrap";
 import UserContext from "./UserContext";
 import { TokenAnnotator } from "react-text-annotate";
@@ -32,15 +33,11 @@ import {
 } from "./Overlay"
 
 const Explainer = (props) => (
-  <div className="mt-4 mb-5 pt-3">
+  <div className="mt-4 mb-1 pt-3">
     <p className="text-uppercase mb-0 spaced-header">{props.taskName || <span>&nbsp;</span>}</p>
     <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
       Find examples that fool the model
     </h2>
-    <p>
-      Find an example that the model gets wrong but that another person would
-      get right.
-    </p>
   </div>
 );
 
@@ -769,10 +766,24 @@ class CreateInterface extends React.Component {
               </Annotation>
               <Annotation placement="bottom" tooltip="Click to learn more details about this task challenge">
                 <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
-                  onClick={() => {  }}
+                  onClick={() => { this.setState({showInfoModal: true}) }}
                 ><i className="fas fa-info"></i></button>
               </Annotation>
             </ButtonGroup>
+            <Modal
+              show={this.state.showInfoModal}
+              onHide={() => this.setState({showInfoModal: false})}
+              >
+                <Modal.Header closeButton>
+                  <Modal.Title>Instructions</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                  <p>
+                    Find an example that the model gets wrong but that another person would
+                    get right.
+                  </p>
+                </Modal.Body>
+              </Modal>
           </div>
           <Explainer taskName={this.state.task.name} />
           <Annotation
@@ -786,7 +797,7 @@ class CreateInterface extends React.Component {
           </Annotation>
           <Card className="profile-card overflow-hidden">
             {contextContent}
-            <Card.Body className="overflow-auto pt-2" style={{ height: 400 }} ref={this.chatContainerRef}>
+            <Card.Body className="overflow-auto pt-2" style={{ height: 370 }} ref={this.chatContainerRef}>
               {content}
               <div
                 className="bottom-anchor"
