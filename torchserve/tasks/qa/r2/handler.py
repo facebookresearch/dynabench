@@ -10,13 +10,13 @@ import hashlib
 import sys
 logger = logging.getLogger(__name__)
 
-from transformers import AutoConfig, AutoModelForSequenceClassification, AutoTokenizer, AutoModelForQuestionAnswering, RobertaTokenizer
+from transformers import AutoConfig, AutoTokenizer, AutoModelForQuestionAnswering
 import torch
 import torch.nn.functional as F
 from ts.torch_handler.base_handler import BaseHandler
 from captum.attr import LayerIntegratedGradients
 
-from settings import my_secret
+from settings import my_secret, my_model_no
 from shared import generate_response_signature, check_fields, handler_initialize, remove_sp_chars, \
     construct_input_ref_pair, captum_qa_forward, summarize_attributions, get_word_token, get_n_steps
 
@@ -38,6 +38,7 @@ QA_CONFIG = {
     "n_best_per_passage_size": 1,
 }
 
+
 class TransformersSeqClassifierHandler(BaseHandler):
     """
     Transformers handler class for question answering
@@ -57,6 +58,8 @@ class TransformersSeqClassifierHandler(BaseHandler):
         self.my_task_id = self.setup_config["my_task_id"]
         self.my_round_id = self.setup_config["my_round_id"]
 
+        model_dir = os.path.join(model_dir, f'r{self.my_round_id}_{my_model_no}')
+
         """ Loading the model and tokenizer from checkpoint and config files based on
         the user's choice of mode further setup config can be added."""
         if self.setup_config["save_mode"] == "torchscript":
@@ -64,26 +67,22 @@ class TransformersSeqClassifierHandler(BaseHandler):
             self.model = torch.jit.load(model_pt_path)
         elif self.setup_config["save_mode"] == "pretrained":
             if os.path.isfile(os.path.join(model_dir, "config.json")):
-                logger.warning("Loading pretrained model")
+                logger.warning("Loading trained model")
                 config = AutoConfig.from_pretrained(model_dir)
                 self.model = AutoModelForQuestionAnswering.from_pretrained(
                         model_dir, config=config)
             else :
-                raise FileNotFoundError("Missing config file")
+                raise FileNotFoundError("Missing model-specific config.json file")
 
-        if os.path.isfile(os.path.join(model_dir, "vocab.json")):
-            self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
-            logger.info("Using provided vocab")
-        else:
-            self.tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
-            logger.info("Using default vocab")
+        self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
+        logger.info("Tokenizer initialized")
 
         self.model.to(self.device)
         self.model.eval()
         logger.debug("Transformer model from path {0} loaded successfully".format(model_dir))
 
         # ------------------------------- Captum initialization ----------------------------#
-        self.lig = LayerIntegratedGradients(captum_qa_forward, self.model.roberta.embeddings)
+        self.lig = LayerIntegratedGradients(captum_qa_forward, getattr(self.model, self.model.base_model_prefix).embeddings)
         self.initialized = True
 
     def preprocess(self, data):
