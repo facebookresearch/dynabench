@@ -217,3 +217,28 @@ table.inspectModel td {
 .btn-help-info {
   font-size: 10px !important;
 }
+
+.badge-overlay {
+  font-size: 30px;
+  text-align: center;
+  color: white;
+  font-weight: bold;
+  flex: 1;
+}
+
+.modal-backdrop.badge-backdrop.show {
+  opacity: 0.9;
+}
+
+.awarded-badge {
+  animation: pop 0.3s linear 1;
+  animation-delay: 0.4s;
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+@keyframes pop{
+  0% { transform: scale(0); opacity: 0;}
+  50%  {transform: scale(1.2); opacity: 1;}
+  100%  {transform: scale(1); opacity: 1;}
+}
