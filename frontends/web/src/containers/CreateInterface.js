@@ -62,15 +62,25 @@ function ContextInfo({ taskType, text, answer, updateAnswer }) {
   );
 }
 
-const GoalMessage = ({ targets = [], curTarget, taskType }) => {
+const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName }) => {
   const otherTargets = targets.filter((_, index) => index !== curTarget);
   const otherTargetStr = otherTargets.join(" or ");
 
   const vowels = ["a", "e", "i", "o", "u"];
   const indefiniteArticle = targets[curTarget] && vowels.indexOf(targets[curTarget][0]) >= 0 ? "an" : "a";
 
+  const successBg = "light-green-bg";
+  const warningBg = "light-yellow-transparent-bg";
+  const dangerBg = "light-red-transparent-bg";
+  const specialBgTasks = {
+    "NLI": {"entailing": successBg, "neutral": warningBg, "contradictory": dangerBg},
+    "Sentiment": {"positive": successBg, "negative": dangerBg},
+    "Hate Speech": {"not-hateful": successBg, "hateful": dangerBg}
+  };
+  const colorBg = taskShortName in specialBgTasks ? specialBgTasks[taskShortName][targets[curTarget]] : successBg;
+
   return (
-    <p className="mt-3 p-3 light-green-bg rounded">
+    <p className={"mt-3 p-3 rounded " + colorBg}>
       <i className="fas fa-flag-checkered"></i>{" "}
       {
         taskType === "extract"
@@ -805,6 +815,7 @@ class CreateInterface extends React.Component {
               targets={this.state.task.targets}
               curTarget={this.state.target}
               taskType={this.state.task.type}
+              taskShortName={this.state.task.shortname}
             />
           </Annotation>
           <Card className="profile-card overflow-hidden">

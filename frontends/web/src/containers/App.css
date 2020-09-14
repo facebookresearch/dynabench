@@ -41,6 +41,14 @@
   background-color: #df4759;
 }
 
+.light-red-transparent-bg {
+  background-color: rgba(223, 71, 89, 0.15);
+}
+
+.light-yellow-transparent-bg {
+  background-color: rgba(251, 229, 200, 0.65);
+}
+
 .blue-color {
   color: #1283d8;
 }
