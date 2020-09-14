@@ -65,19 +65,18 @@ const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName }) => {
   const vowels = ["a", "e", "i", "o", "u"];
   const indefiniteArticle = targets[curTarget] && vowels.indexOf(targets[curTarget][0]) >= 0 ? "an" : "a";
 
-  const successBg = "light-green";
-  const warningBg = "warning-transparent";
-  const dangerBg = "light-red-transparent";
+  const successBg = "light-green-bg";
+  const warningBg = "light-yellow-transparent-bg";
+  const dangerBg = "light-red-transparent-bg";
   const specialBgTasks = {
     "NLI": {"entailing": successBg, "neutral": warningBg, "contradictory": dangerBg},
     "Sentiment": {"positive": successBg, "negative": dangerBg},
     "Hate Speech": {"not-hateful": successBg, "hateful": dangerBg}
   };
   const colorBg = taskShortName in specialBgTasks ? specialBgTasks[taskShortName][targets[curTarget]] : successBg;
-  const nameP = "mt-3 p-3 " + colorBg + "-bg rounded";
 
   return (
-    <p className={nameP}>
+    <p className={"mt-3 p-3 rounded " + colorBg}>
       <i className="fas fa-flag-checkered"></i>{" "}
       {
         taskType === "extract"
