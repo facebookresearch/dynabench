@@ -152,50 +152,56 @@ const TaskActionButtons = (props) => {
   return (
     <Nav className="my-4">
       <Nav.Item className="task-action-btn">
-        <OverlayTrigger
-          placement="bottom"
-          delay={{ show: 250, hide: 400 }}
-          overlay={renderCreateTooltip}
-      >
-        <Button
-          as={Link}
-          className="border-0 blue-color font-weight-bold light-gray-bg"
-          to={"/tasks/" + props.taskId + "/create"}
-        >
-          Create Examples
-        </Button>
-      </OverlayTrigger>
+        <Annotation placement="bottom" tooltip="Click here to get creative and start writing examples that fool the model">
+          <OverlayTrigger
+            placement="bottom"
+            delay={{ show: 250, hide: 400 }}
+            overlay={renderCreateTooltip}
+          >
+            <Button
+              as={Link}
+              className="border-0 blue-color font-weight-bold light-gray-bg"
+              to={"/tasks/" + props.taskId + "/create"}
+            >
+              Create Examples
+            </Button>
+        </OverlayTrigger>
+      </Annotation>
     </Nav.Item>
     <Nav.Item className="task-action-btn">
-      <OverlayTrigger
-        placement="bottom"
-        delay={{ show: 250, hide: 400 }}
-        overlay={renderVerifyTooltip}
-      >
-        <Button
-          as={Link}
-          className="border-0 blue-color font-weight-bold light-gray-bg"
-          to={"/tasks/" + props.taskId + "/validate"}
-        >
-          Validate Examples
-        </Button>
-      </OverlayTrigger>
-    </Nav.Item>
-    {props.task.shortname === "NLI" ? (
-      <Nav.Item className="task-action-btn">
+      <Annotation placement="top" tooltip="Click here to see examples created by others, and validate their correctness">
         <OverlayTrigger
           placement="bottom"
           delay={{ show: 250, hide: 400 }}
-          overlay={renderSubmitTooltip}
+          overlay={renderVerifyTooltip}
         >
           <Button
             as={Link}
             className="border-0 blue-color font-weight-bold light-gray-bg"
-            to={"/tasks/" + props.taskId + "/submit"}
+            to={"/tasks/" + props.taskId + "/validate"}
           >
-            Submit Predictions
+            Validate Examples
           </Button>
         </OverlayTrigger>
+      </Annotation>
+    </Nav.Item>
+    {props.task.shortname === "NLI" ? (
+      <Nav.Item className="task-action-btn">
+        <Annotation placement="right" tooltip="Click here to submit your model predictions for previous rounds.">
+          <OverlayTrigger
+            placement="bottom"
+            delay={{ show: 250, hide: 400 }}
+            overlay={renderSubmitTooltip}
+          >
+              <Button
+                as={Link}
+                className="border-0 blue-color font-weight-bold light-gray-bg"
+                to={"/tasks/" + props.taskId + "/submit"}
+              >
+                Submit Predictions
+              </Button>
+          </OverlayTrigger>
+        </Annotation>
       </Nav.Item>
     ) : null}
     {props.uid === props.task.owner_uid ?
@@ -479,27 +485,6 @@ class TaskPage extends React.Component {
   };
 
   render() {
-    function renderTooltip(props, text) {
-      return (
-        <Tooltip id="button-tooltip" {...props}>
-          {text}
-        </Tooltip>
-      );
-    }
-
-    function renderCreateTooltip(props) {
-      return renderTooltip(props, "Create new examples where the model fails");
-    }
-    // function renderVerifyTooltip(props) {
-    //   return renderTooltip(
-    //     props,
-    //     "Verify examples where we think the model failed"
-    //   );
-    // }
-    function renderSubmitTooltip(props) {
-      return renderTooltip(props, "Submit model predictions on this task");
-    }
-
     return (
       <OverlayProvider delayMs="1700">
       <Container fluid>
@@ -532,7 +517,9 @@ class TaskPage extends React.Component {
             <p>{this.state.task.desc}</p>
             {this.props.location.hash === "#overall" ? (
               <>
-                <OveralTaskStats task={this.state.task}/>
+                <Annotation placement="right" tooltip="This shows the statistics of the currently active round.">
+                  <OveralTaskStats task={this.state.task}/>
+                </Annotation>
                 <hr />
                 <TaskActionButtons
                   taskId={this.state.taskId}
