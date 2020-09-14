@@ -11,6 +11,7 @@ import {
   Col,
   Card,
   Button,
+  Form,
   FormControl,
   InputGroup,
   ButtonGroup,
@@ -827,8 +828,8 @@ class CreateInterface extends React.Component {
                 ref={this.bottomAnchorRef}
               />
             </Card.Body>
-            <Annotation placement="top" tooltip="Enter your example here">
-
+            <Form>
+              <Annotation placement="top" tooltip="Enter your example here">
               <InputGroup>
                   <FormControl
                     className="m-3 p-3 rounded-1 thick-border h-auto light-gray-bg"
@@ -902,6 +903,7 @@ class CreateInterface extends React.Component {
                   </OverlayTrigger>
                   <Annotation placement="top" tooltip="When you’re done, you can submit the example and we’ll find out what the model thinks!">
                     <Button
+                      type="submit"
                       className="font-weight-bold blue-bg border-0 task-action-btn"
                       onClick={this.handleResponse}
                       disabled={this.state.submitDisabled}
@@ -917,6 +919,7 @@ class CreateInterface extends React.Component {
                 </InputGroup>
               </Col>
             </Row>
+            </Form>
             <div className="p-2">
               {(this.state.task.cur_round !== this.state.task.selected_round) ?
                 <p style={{'color': 'red'}}>WARNING: You are talking to an outdated model for a round that is no longer active. Examples you generate may be less useful.</p>
