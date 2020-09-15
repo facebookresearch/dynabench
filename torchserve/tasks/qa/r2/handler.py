@@ -10,15 +10,16 @@ import hashlib
 import sys
 logger = logging.getLogger(__name__)
 
-from transformers import AutoConfig, AutoModelForSequenceClassification, AutoTokenizer,AutoModelForQuestionAnswering, RobertaTokenizer
+from transformers import AutoConfig, AutoTokenizer, AutoModelForQuestionAnswering
 import torch
 import torch.nn.functional as F
 from ts.torch_handler.base_handler import BaseHandler
 from captum.attr import LayerIntegratedGradients
 
-from settings import my_secret
+from settings import my_secret, my_model_no
 from shared import generate_response_signature, check_fields, handler_initialize, remove_sp_chars, \
-    construct_input_ref_pair, captum_qa_forward, summarize_attributions, get_word_token
+     construct_input_ref_pair, captum_qa_forward, summarize_attributions, get_word_token, \
+     get_n_steps_for_interpretability
 
 # QA specific libraries
 from qa_utils import convert_to_squad_example, compute_predictions_logits
@@ -38,13 +39,14 @@ QA_CONFIG = {
     "n_best_per_passage_size": 1,
 }
 
-class TransformersSeqClassifierHandler(BaseHandler):
+
+class TransformersQAHandler(BaseHandler):
     """
     Transformers handler class for question answering
     """
 
     def __init__(self):
-        super(TransformersSeqClassifierHandler, self).__init__()
+        super(TransformersQAHandler, self).__init__()
         self.initialized = False
 
     def initialize(self, ctx):
@@ -57,6 +59,8 @@ class TransformersSeqClassifierHandler(BaseHandler):
         self.my_task_id = self.setup_config["my_task_id"]
         self.my_round_id = self.setup_config["my_round_id"]
 
+        model_dir = os.path.join(model_dir, f'r{self.my_round_id}_{my_model_no}')
+
         """ Loading the model and tokenizer from checkpoint and config files based on
         the user's choice of mode further setup config can be added."""
         if self.setup_config["save_mode"] == "torchscript":
@@ -64,26 +68,22 @@ class TransformersSeqClassifierHandler(BaseHandler):
             self.model = torch.jit.load(model_pt_path)
         elif self.setup_config["save_mode"] == "pretrained":
             if os.path.isfile(os.path.join(model_dir, "config.json")):
-                logger.warning("Loading pretrained model")
+                logger.warning("Loading trained model")
                 config = AutoConfig.from_pretrained(model_dir)
                 self.model = AutoModelForQuestionAnswering.from_pretrained(
                         model_dir, config=config)
             else :
-                raise FileNotFoundError("Missing config file")
+                raise FileNotFoundError("Missing model-specific config.json file")
 
-        if os.path.isfile(os.path.join(model_dir, "vocab.json")):
-            self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
-            logger.info("Using provided vocab")
-        else:
-            self.tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
-            logger.info("Using default vocab")
+        self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
+        logger.info("Tokenizer initialized")
 
         self.model.to(self.device)
         self.model.eval()
         logger.debug("Transformer model from path {0} loaded successfully".format(model_dir))
 
         # ------------------------------- Captum initialization ----------------------------#
-        self.lig = LayerIntegratedGradients(captum_qa_forward, self.model.roberta.embeddings)
+        self.lig = LayerIntegratedGradients(captum_qa_forward, getattr(self.model, self.model.base_model_prefix).embeddings)
         self.initialized = True
 
     def preprocess(self, data):
@@ -99,10 +99,14 @@ class TransformersSeqClassifierHandler(BaseHandler):
         attribute_list = ["answer", "context", "hypothesis", "insight"]
         check_fields(body, attribute_list)
 
+        if "compute_end_importances" not in body:
+            body["compute_end_importances"] = False
+
         passage = body["context"]
         question = body["hypothesis"]
         answer = body["answer"]
         insight = body["insight"]
+        compute_end_importances = body["compute_end_importances"]
         logger.info("In preprocess, body's value: '%s'", body)
         logger.info("In preprocess, passage's value: '%s'", passage)
         logger.info("In preprocess, questions's value: '%s'", question)
@@ -110,7 +114,44 @@ class TransformersSeqClassifierHandler(BaseHandler):
 
         example = {"passage": passage.strip(), "question": question.strip()}
 
-        return [example], answer, insight
+        return [example], answer, insight, compute_end_importances
+
+    def inspect(self, example, compute_end_importances):
+        """
+        This function calls the layer integrated gradient to get word importance
+        of the question and the passage. The word importance is obtained for
+        start and end position of the predicted answer
+        """
+        if self.lig is None:
+            response = {"start_importances": [], "words": [], "status": "not supported"}
+            return [response]
+
+        input_ids, ref_input_ids, attention_mask = construct_input_ref_pair(\
+                    example[0]["question"], example[0]["passage"], self.tokenizer, self.device)
+        all_tokens = get_word_token(input_ids, self.tokenizer)
+        n_steps = get_n_steps_for_interpretability(len(all_tokens))
+        logger.info("Word Tokens = '%s'", all_tokens)
+
+        position_qa_model = 0
+        attributions_start, delta_start = self.lig.attribute(inputs=input_ids,
+                                    baselines=ref_input_ids,
+                                    additional_forward_args=(attention_mask, position_qa_model, self.model),
+                                    return_convergence_delta=True, n_steps=n_steps)
+        attributions_start_sum = summarize_attributions(attributions_start).tolist()
+
+        attributions_end_sum = []
+        if compute_end_importances:
+            position_qa_model = 1
+            attributions_end, delta_end = self.lig.attribute(inputs=input_ids, baselines=ref_input_ids,
+                                        additional_forward_args=(attention_mask, position_qa_model, self.model),
+                                        return_convergence_delta=True, n_steps=n_steps)
+            attributions_end_sum = summarize_attributions(attributions_end).tolist()
+
+        response = {}
+        response["start_importances"] = attributions_start_sum
+        response["end_importances"] = attributions_end_sum
+        response["words"] = all_tokens
+        return [response]
 
     def inference(self, examples):
         """
@@ -179,7 +220,7 @@ class TransformersSeqClassifierHandler(BaseHandler):
 
         logger.info("response without sign '%s'", response)
         response["text"] = predictions_by_example["text"]
-        response["prob"] = max(1.0, min(0.0, predictions_by_example["model_conf"]))
+        response["prob"] = max(0.0, min(1.0, predictions_by_example["model_conf"]))
         # this is what the frontend expects
 
         # Evaluate the model prediction against the human answer
@@ -200,34 +241,8 @@ class TransformersSeqClassifierHandler(BaseHandler):
 
         return [response]
 
-_service = TransformersSeqClassifierHandler()
+_service = TransformersQAHandler()
 
-def get_insights(example, tokenizer, device, lig, model):
-    """
-    This function calls the layer integrated gradient to get word importance
-    of the question and the passage. The word importance is obtained for
-    start and end position of the predicted answer
-    """
-    input_ids, ref_input_ids, attention_mask = construct_input_ref_pair(\
-                example[0]["question"], example[0]["passage"], tokenizer, device)
-    all_tokens = get_word_token(input_ids, tokenizer)
-    logger.info("Word Tokens = '%s'", all_tokens)
-    attributions_start, delta_start = lig.attribute(inputs=input_ids,
-                                  baselines=ref_input_ids,
-                                  additional_forward_args=(attention_mask, 0, model),
-                                  return_convergence_delta=True, n_steps=20)
-
-    attributions_end, delta_end = lig.attribute(inputs=input_ids, baselines=ref_input_ids,
-                                additional_forward_args=(attention_mask, 1, model),
-                                return_convergence_delta=True, n_steps=20)
-
-    attributions_start_sum = summarize_attributions(attributions_start)
-    attributions_end_sum = summarize_attributions(attributions_end)
-    response = {}
-    response["start_importances"] = attributions_start_sum.tolist()
-    response["end_importances"] = attributions_end_sum.tolist()
-    response["words"] = all_tokens
-    return [response]
 
 def handle(data, context):
     """
@@ -246,13 +261,13 @@ def handle(data, context):
         if data is None:
             return None
 
-        example, answer, insight = _service.preprocess(data)
+        example, answer, insight, compute_end_importances = _service.preprocess(data)
         if not insight:
             predictions_by_example = _service.inference(example)
             response = _service.postprocess(predictions_by_example, example, answer)
             return response
         else:
-            response = get_insights(example, _service.tokenizer, _service.device, _service.lig, _service.model)
+            response = _service.inspect(example, compute_end_importances)
             return response
 
     except Exception as e:

@@ -5,6 +5,7 @@
 import argparse
 import os
 import requests
+import tarfile
 import traceback
 import subprocess
 import time
@@ -95,10 +96,21 @@ def archive_model(config):
 def setup_model(config):
     os.makedirs(config['model_dir'], exist_ok=True)
     if not os.path.exists(config['model_path']):
-        print("Downloading model..")
-        r = requests.get(config['model_url_path'])
-        with open(config['model_path'], "wb") as f:
-            f.write(r.content)
+        print(f"Downloading model from {config['model_url_path']}")
+        r = requests.get(config['model_url_path'], stream=True)
+        if config["url_extension"].lower() == ".tgz":
+            tarfile_path = os.path.join(config['model_dir'], config['given_model_name'])
+            with open(tarfile_path, 'wb') as f:
+                f.write(r.raw.read())
+            with tarfile.open(tarfile_path, mode='r') as archive:
+                for member in archive.getmembers():
+                    if member.isreg():
+                        member.name = os.path.basename(member.name)
+                        archive.extract(member, path=config['model_dir'])
+            os.remove(tarfile_path)
+        else:
+            with open(config['model_path'], "wb") as f:
+                f.write(r.content)
 
 def setup_sagemaker_env(config):
     env = {}
@@ -142,11 +154,12 @@ def load_config(config_path):
 
     config["model_name"] = f"{task}-r{round_id}-{model_no}"
     config["given_model_name"] = config["model_url"].split("/")[-1]
-    config["extension"] = config["given_model_name"].split(".")[-1]
+    config["url_extension"] = os.path.splitext(config["given_model_name"])[1]
+    config["extension"] = config["url_extension"] if config["url_extension"].lower() != '.tgz' else '.bin' 
     config["task_path"] = f"tasks/{task}"
     config["mars_path"] = f"mars"
     config["model_dir"] = f"{config['task_path']}/r{round_id}/r{round_id}_{model_no}/"
-    config["model_path"] = os.path.join(config["model_dir"], f"pytorch_model.{config['extension']}")
+    config["model_path"] = os.path.join(config["model_dir"], f"pytorch_model{config['extension']}")
     config["round_path"] = f"{config['task_path']}/r{round_id}"
 
     return config

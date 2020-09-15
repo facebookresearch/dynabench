@@ -185,7 +185,7 @@ const TaskActionButtons = (props) => {
         </OverlayTrigger>
       </Annotation>
     </Nav.Item>
-    {props.task.shortname === "NLI" ? (
+    {props.task.shortname === "NLI" || props.task.shortname === "QA" ? (
       <Nav.Item className="task-action-btn">
         <Annotation placement="right" tooltip="Click here to submit your model predictions for previous rounds.">
           <OverlayTrigger
@@ -216,7 +216,7 @@ const TaskActionButtons = (props) => {
   );
 };
 
-const OveralTaskStats = (props) => {
+const OverallTaskStats = (props) => {
   return (
     <Table className="w-50 font-weight-bold ml-n2">
       <thead />
@@ -259,7 +259,11 @@ const OverallModelLeaderBoard = (props) => {
       <thead>
         <tr>
           <th>Model</th>
-          <th>Mean accuracy</th>
+          {props.task === "QA" ? (
+            <th>Mean F1</th>
+          ) : (
+            <th>Mean Accuracy</th>
+          )}
         </tr>
       </thead>
       <tbody>
@@ -517,7 +521,7 @@ class TaskPage extends React.Component {
             {this.props.location.hash === "#overall" ? (
               <>
                 <Annotation placement="right" tooltip="This shows the statistics of the currently active round.">
-                  <OveralTaskStats task={this.state.task}/>
+                  <OverallTaskStats task={this.state.task}/>
                 </Annotation>
                 <hr />
                 <TaskActionButtons
@@ -558,6 +562,7 @@ class TaskPage extends React.Component {
                     <Card.Body className="p-0">
                       <OverallModelLeaderBoard
                         data={this.state.modelLeaderBoardData}
+                        taskShortName={this.state.task.shortname}
                       />
                     </Card.Body>
                     <Card.Footer className="text-center">

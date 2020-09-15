@@ -11,6 +11,7 @@ import {
   Col,
   Card,
   Button,
+  Form,
   FormControl,
   InputGroup,
   ButtonGroup,
@@ -32,6 +33,7 @@ import {
   OverlayContext,
   BadgeOverlay
 } from "./Overlay"
+import "./CreateInterface.css";
 
 const Explainer = (props) => (
   <div className="mt-4 mb-1 pt-3">
@@ -45,7 +47,7 @@ const Explainer = (props) => (
 function ContextInfo({ taskType, text, answer, updateAnswer }) {
   return taskType == "extract" ? (
     <TokenAnnotator
-      className="mb-1 p-3 light-gray-bg"
+      className="mb-1 p-3 light-gray-bg qa-context"
       tokens={text.split(/\b/)}
       value={answer}
       onChange={updateAnswer}
@@ -227,6 +229,12 @@ class ResponseInfo extends React.Component {
                 words: result.words,
               };
             });
+            inspectors = inspectors.filter((insp) => {
+              return Array.isArray(insp["importances"]) && insp["importances"].length !== 0;
+            });
+            if (inspectors.length === 1) {
+              inspectors[0]["name"] = "token_importances";  
+            }
           } else {
             inspectors = [result];
           }
@@ -476,7 +484,7 @@ class CreateInterface extends React.Component {
   }
 
   updateSelectedRound(e) {
-    const selected = e.target.getAttribute('index');
+    const selected = parseInt(e.target.getAttribute('index'));
     if (selected != this.state.task.selected_round) {
       this.context.api.getTaskRound(this.state.task.id, selected)
         .then((result) => {
@@ -839,15 +847,20 @@ class CreateInterface extends React.Component {
                 ref={this.bottomAnchorRef}
               />
             </Card.Body>
-            <Annotation placement="top" tooltip="Enter your example here">
-
+            <Form>
+              <Annotation placement="top" tooltip="Enter your example here">
               <InputGroup>
                   <FormControl
                     className="m-3 p-3 rounded-1 thick-border h-auto light-gray-bg"
                     placeholder={
-                      this.state.task.type == "extract"
-                        ? "Enter question.."
-                        : (this.state.task.shortname == "NLI" ? "Enter hypothesis.." : "Enter statement..")
+                      ["NLI", "QA", "Sentiment", "Hate Speech"].includes(this.state.task.shortname)
+                      ? {
+                          "NLI": "Enter " + this.state.task.targets[this.state.target] + " hypothesis..",
+                          "QA": "Enter question..",
+                          "Sentiment": "Enter " + this.state.task.targets[this.state.target] + " statement..",
+                          "Hate Speech": "Enter " + this.state.task.targets[this.state.target] + " statement..",
+                        }[this.state.task.shortname]
+                      : 'Enter statement..'
                     }
                     value={this.state.hypothesis}
                     onChange={this.handleResponseChange}
@@ -914,6 +927,7 @@ class CreateInterface extends React.Component {
                   </OverlayTrigger>
                   <Annotation placement="top" tooltip="When you’re done, you can submit the example and we’ll find out what the model thinks!">
                     <Button
+                      type="submit"
                       className="font-weight-bold blue-bg border-0 task-action-btn"
                       onClick={this.handleResponse}
                       disabled={this.state.submitDisabled}
@@ -929,6 +943,7 @@ class CreateInterface extends React.Component {
                 </InputGroup>
               </Col>
             </Row>
+            </Form>
             <div className="p-2">
               {(this.state.task.cur_round !== this.state.task.selected_round) ?
                 <p style={{'color': 'red'}}>WARNING: You are talking to an outdated model for a round that is no longer active. Examples you generate may be less useful.</p>
