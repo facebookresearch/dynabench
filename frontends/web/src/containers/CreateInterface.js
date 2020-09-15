@@ -80,20 +80,20 @@ const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName, onChang
   const colorBg = taskShortName in specialBgTasks ? specialBgTasks[taskShortName][targets[curTarget]] : successBg;
 
   return (
-    <p className={"mt-3 p-3 rounded " + colorBg}>
+    <div className={"mt-3 p-3 rounded " + colorBg}>
       <i className="fas fa-flag-checkered"></i>{" "}
       {
         taskType === "extract"
           ? <span>Your goal: enter a question and select an answer in the context, such that the model is fooled.</span>
-          : <span>
+          : <InputGroup className="align-items-center">
               Your goal: enter {indefiniteArticle}
-              <select value={curTarget} onChange={onChange}>
-                {targets.map((target, index) => <option value={index} key={index}>{target}</option>)}
-              </select>
+              <DropdownButton variant="secondary" className="p-1" title={targets[curTarget]}>
+                {targets.map((target, index) => <Dropdown.Item onClick={onChange} key={index} index={index}>{target}</Dropdown.Item>).filter((_, index) => index !== curTarget)}
+              </DropdownButton>
               statement that fools the model into predicting {otherTargetStr}.
-            </span>
+            </InputGroup>
       }
-    </p>
+    </div>
   );
 };
 
@@ -513,8 +513,10 @@ class CreateInterface extends React.Component {
   }
 
   handleGoalMessageTargetChange(e) {
-    this.setState({ target: parseInt(e.target.value),
-                    content: [this.state.content[0]]});
+    this.setState({
+      target: parseInt(e.target.getAttribute('index')),
+      content: [this.state.content[0]]
+    });
   }
   handleResponse() {
     this.setState({ submitDisabled: true, refreshDisabled: true }, () => {
