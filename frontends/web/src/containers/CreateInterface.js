@@ -783,7 +783,7 @@ class CreateInterface extends React.Component {
         <Col className="m-auto" lg={12}>
           <div style={{float: "right"}}>
             <ButtonGroup>
-              <Annotation placement="left" tooltip="Click to bring up this help overlay again">
+              <Annotation placement="left" tooltip="Click to show help overlays">
                 <OverlayContext.Consumer>
                   {
                     ({hidden, setHidden})=> (
