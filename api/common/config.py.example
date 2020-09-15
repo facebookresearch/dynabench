@@ -5,7 +5,7 @@
 config = { \
         'jwtsecret': '',
         'jwtexp': 15*60, # in seconds (5 minutes)
-        'jwtalgo': '',
+        'jwtalgo': 'HS256',
         'cookie_secret': '',
         'refreshexp': 90, # in days
         'db_host': 'localhost', # Change as required (aws rds)
