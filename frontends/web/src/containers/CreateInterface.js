@@ -125,6 +125,44 @@ const TextFeature = ({ data, curTarget, targets }) => {
   );
 };
 
+const QATaskInstructions = () => {
+  return (
+    <div>
+      <p>
+        You will be presented with a <em>passage</em> of text, for which you should 
+        ask <em>questions</em> that the AI cannot answer correctly but that another person would 
+        get right. After entering the question, select the answer by <strong>highlighting the 
+        words that best answer the question</strong> in the passage.
+      </p>
+      <p>
+        Try to come up with creative ways to <strong>beat the AI</strong>, and if you notice 
+        any consistent failure modes, please be sure to let us know in the explanation section!
+      </p>
+      <p>
+        Try to ensure that:
+      </p>
+      <ol>
+        <li>
+          The <strong>shortest span</strong> which <strong>correctly answers the question</strong> 
+          is selected
+        </li>
+        <li>
+          Questions can be correctly answered from a span in the passage and <strong>DO NOT require 
+          a Yes or No answer</strong>
+        </li>
+        <li>
+          Questions can be answered from the content of the passage and <strong>DO 
+          NOT</strong> rely on expert external knowledge
+        </li>
+        <li>
+          <strong>DO NOT</strong> ask questions about the passage structure such as "What is the 
+          third word in the passage?"
+        </li>
+      </ol>
+    </div>
+  );
+};
+
 class ResponseInfo extends React.Component {
   static contextType = UserContext;
   constructor(props) {
@@ -809,46 +847,12 @@ class CreateInterface extends React.Component {
                 </Modal.Header>
                 <Modal.Body>
                   {this.state.task.shortname === "QA" ? (
-                    <div>
-                      <p>
-                        You will be presented with a <em>passage</em> of text, for which you should 
-                        ask <em>questions</em> that the AI cannot answer correctly but that another person would 
-                        get right. After entering the question, select the answer by <strong>highlighting the 
-                        words that best answer the question</strong> in the passage.
-                      </p>
-                      <p>
-                        Try to come up with creative ways to <strong>beat the AI</strong>, and if you notice 
-                        any consistent failure modes, please be sure to let us know in the explanation section!
-                      </p>
-                      <p>
-                        Try to ensure that:
-                      </p>
-                      <ol>
-                        <li>
-                          The <strong>shortest span</strong> which <strong>correctly answers the question</strong> 
-                          is selected
-                        </li>
-                        <li>
-                          Questions can be correctly answered from a span in the passage and <strong>DO NOT require 
-                          a Yes or No answer</strong>
-                        </li>
-                        <li>
-                          Questions can be answered from the content of the passage and <strong>DO 
-                          NOT</strong> rely on expert external knowledge
-                        </li>
-                        <li>
-                          <strong>DO NOT</strong> ask questions about the passage structure such as "What is the 
-                          third word in the passage?"
-                        </li>
-                      </ol>
-                    </div>
+                    <QATaskInstructions />
                   ) : (
-                    <div>
-                      <p>
-                        Find an example that the model gets wrong but that another person would
-                        get right.
-                      </p>
-                    </div>
+                    <p>
+                      Find an example that the model gets wrong but that another person would
+                      get right.
+                    </p>
                   )
                 }
                 </Modal.Body>
