@@ -82,19 +82,24 @@ const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName, onChang
   const colorBg = taskShortName in specialBgTasks ? specialBgTasks[taskShortName][targets[curTarget]] : successBg;
 
   return (
-    <div className={"mt-3 p-3 rounded " + colorBg}>
-      <i className="fas fa-flag-checkered"></i>{" "}
-      {
-        taskType === "extract"
-          ? <span>Your goal: enter a question and select an answer in the context, such that the model is fooled.</span>
-          : <InputGroup className="align-items-center">
-              Your goal: enter {indefiniteArticle}
-              <DropdownButton variant="secondary" className="p-1" title={targets[curTarget]}>
-                {targets.map((target, index) => <Dropdown.Item onClick={onChange} key={index} index={index}>{target}</Dropdown.Item>).filter((_, index) => index !== curTarget)}
-              </DropdownButton>
-              statement that fools the model into predicting {otherTargetStr}.
-            </InputGroup>
-      }
+    <div className={"mb-3"}>
+      <div className={"mt-3 p-3 rounded " + colorBg}>
+        {
+          taskType === "extract"
+            ? <InputGroup className="align-items-center">
+                <i className="fas fa-flag-checkered mr-1"></i>
+                <span>Your goal: enter a question and select an answer in the context, such that the model is fooled.</span>
+              </InputGroup>
+            : <InputGroup className="align-items-center">
+                <i className="fas fa-flag-checkered mr-1"></i>
+                Your goal: enter {indefiniteArticle}
+                <DropdownButton variant="light" className="p-1" title={targets[curTarget] ? targets[curTarget] : "Loading.."}>
+                  {targets.map((target, index) => <Dropdown.Item onClick={onChange} key={index} index={index}>{target}</Dropdown.Item>).filter((_, index) => index !== curTarget)}
+                </DropdownButton>
+                statement that fools the model into predicting {otherTargetStr}.
+              </InputGroup>
+        }
+      </div>
     </div>
   );
 };
@@ -233,7 +238,7 @@ class ResponseInfo extends React.Component {
               return Array.isArray(insp["importances"]) && insp["importances"].length !== 0;
             });
             if (inspectors.length === 1) {
-              inspectors[0]["name"] = "token_importances";  
+              inspectors[0]["name"] = "token_importances";
             }
           } else {
             inspectors = [result];
