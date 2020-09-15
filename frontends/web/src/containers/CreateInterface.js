@@ -337,7 +337,7 @@ class ResponseInfo extends React.Component {
             })}
         </div>
       </>;
-    } 
+    }
     return (
       <Card
         className={classNames}
@@ -763,7 +763,7 @@ class CreateInterface extends React.Component {
     function renderSwitchContextTooltip(props) {
       return renderTooltip(props, "Don't like this context? Try another one.");
     }
-  
+
     return (
       <OverlayProvider initiallyHide={true}>
         <BadgeOverlay
@@ -834,9 +834,14 @@ class CreateInterface extends React.Component {
                   <FormControl
                     className="m-3 p-3 rounded-1 thick-border h-auto light-gray-bg"
                     placeholder={
-                      this.state.task.type == "extract"
-                        ? "Enter question.."
-                        : (this.state.task.shortname == "NLI" ? "Enter hypothesis.." : "Enter statement..")
+                      ["NLI", "QA", "Sentiment", "Hate Speech"].includes(this.state.task.shortname)
+                      ? {
+                          "NLI": "Enter " + this.state.task.targets[this.state.target] + " hypothesis..",
+                          "QA": "Enter question..",
+                          "Sentiment": "Enter " + this.state.task.targets[this.state.target] + " statement..",
+                          "Hate Speech": "Enter " + this.state.task.targets[this.state.target] + " statement..",
+                        }[this.state.task.shortname]
+                      : 'Enter..'
                     }
                     value={this.state.hypothesis}
                     onChange={this.handleResponseChange}
