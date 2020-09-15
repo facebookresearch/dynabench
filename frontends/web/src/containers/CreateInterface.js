@@ -33,6 +33,7 @@ import {
   OverlayContext,
   BadgeOverlay
 } from "./Overlay"
+import "./CreateInterface.css";
 
 const Explainer = (props) => (
   <div className="mt-4 mb-1 pt-3">
@@ -46,7 +47,7 @@ const Explainer = (props) => (
 function ContextInfo({ taskType, text, answer, updateAnswer }) {
   return taskType == "extract" ? (
     <TokenAnnotator
-      className="mb-1 p-3 light-gray-bg"
+      className="mb-1 p-3 light-gray-bg qa-context"
       tokens={text.split(/\b/)}
       value={answer}
       onChange={updateAnswer}
@@ -224,6 +225,12 @@ class ResponseInfo extends React.Component {
                 words: result.words,
               };
             });
+            inspectors = inspectors.filter((insp) => {
+              return Array.isArray(insp["importances"]) && insp["importances"].length !== 0;
+            });
+            if (inspectors.length === 1) {
+              inspectors[0]["name"] = "token_importances";  
+            }
           } else {
             inspectors = [result];
           }
