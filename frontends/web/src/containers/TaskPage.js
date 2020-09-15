@@ -521,7 +521,7 @@ class TaskPage extends React.Component {
             {this.props.location.hash === "#overall" ? (
               <>
                 <Annotation placement="right" tooltip="This shows the statistics of the currently active round.">
-                  <OveralTaskStats task={this.state.task}/>
+                  <OverallTaskStats task={this.state.task}/>
                 </Annotation>
                 <hr />
                 <TaskActionButtons
@@ -562,7 +562,7 @@ class TaskPage extends React.Component {
                     <Card.Body className="p-0">
                       <OverallModelLeaderBoard
                         data={this.state.modelLeaderBoardData}
-                        task={this.state.task.shortname}
+                        taskShortName={this.state.task.shortname}
                       />
                     </Card.Body>
                     <Card.Footer className="text-center">

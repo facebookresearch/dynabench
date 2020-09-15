@@ -39,13 +39,13 @@ QA_CONFIG = {
 }
 
 
-class TransformersSeqClassifierHandler(BaseHandler):
+class TransformersQAHandler(BaseHandler):
     """
     Transformers handler class for question answering
     """
 
     def __init__(self):
-        super(TransformersSeqClassifierHandler, self).__init__()
+        super(TransformersQAHandler, self).__init__()
         self.initialized = False
 
     def initialize(self, ctx):
@@ -199,7 +199,7 @@ class TransformersSeqClassifierHandler(BaseHandler):
 
         return [response]
 
-_service = TransformersSeqClassifierHandler()
+_service = TransformersQAHandler()
 
 def get_insights(example, tokenizer, device, lig, model, compute_end_importances=False):
     """

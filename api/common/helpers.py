@@ -88,7 +88,7 @@ def get_f1(prediction, target):
 
     return sum(compute_f1(target[index], prediction[index]) for index in range(len(target))) / len(target)
 
-def validate_prediction(r_objects, prediction, task='nli'):
+def validate_prediction(r_objects, prediction, task_shortname='nli'):
     """
     Function help as calculated the accuracy and convert them into scores object
     :param r_objects: Rounds object
@@ -97,10 +97,10 @@ def validate_prediction(r_objects, prediction, task='nli'):
     """
 
     app = bottle.default_app()
-    if task == 'nli':
+    if task_shortname == 'nli':
         target_labels = app.config['nli_labels']
         eval_fn = get_accuracy
-    elif task == 'qa':
+    elif task_shortname == 'qa':
         target_examples = app.config['qa_labels']
         target_ids = {r_id: [x[0] for x in target_examples[r_id]] for r_id in target_examples}
         target_labels = {r_id: [x[1] for x in target_examples[r_id]] for r_id in target_examples}
@@ -122,11 +122,8 @@ def validate_prediction(r_objects, prediction, task='nli'):
     rounds_accuracy_list = []
     start_index = 0
     end_index = 0
-    num_closed_rounds = max(r_obj.rid for r_obj in r_objects) - 1 if len(r_objects) > 0 else 0
 
     for r_obj in sorted(r_objects, key=lambda x: x.rid):
-        if r_obj.rid > num_closed_rounds: continue
-
         score_obj = {}
         round_accuracy = {}
         score_obj['round_id'] = r_obj.id

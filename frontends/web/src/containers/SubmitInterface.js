@@ -68,7 +68,7 @@ class SubmitInterface extends React.Component {
   handleSubmit = (values, { setFieldValue, setSubmitting }) => {
     const reqObj = {
       taskId: this.state.taskId,
-      task: this.state.task.shortname,
+      taskShortName: this.state.task.shortname,
       roundType: values.roundType,
       file: values.file,
     };
