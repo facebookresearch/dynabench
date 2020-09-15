@@ -115,7 +115,7 @@ def get_word_token(input_ids, tokenizer):
     tokens = [token.replace("Ġ", "") for token in tokens]
     return tokens
 
-def get_n_steps(n_tokens:int, min_n_steps:int=3, max_n_steps:int=20, max_tokens:int=500) -> int:
+def get_n_steps_for_interpretability(n_tokens:int, min_n_steps:int=3, max_n_steps:int=20, max_tokens:int=500) -> int:
     """
     Get n_steps as a function of the number of tokens to speed up insight.
     n_steps scaled linearly between min_n_steps and max_n_steps based on max_tokens
