@@ -64,7 +64,7 @@ function ContextInfo({ taskType, text, answer, updateAnswer }) {
   );
 }
 
-const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName }) => {
+const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName, onChange }) => {
   const otherTargets = targets.filter((_, index) => index !== curTarget);
   const otherTargetStr = otherTargets.join(" or ");
 
@@ -82,16 +82,25 @@ const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName }) => {
   const colorBg = taskShortName in specialBgTasks ? specialBgTasks[taskShortName][targets[curTarget]] : successBg;
 
   return (
-    <p className={"mt-3 p-3 rounded " + colorBg}>
-      <i className="fas fa-flag-checkered"></i>{" "}
-      {
-        taskType === "extract"
-          ? <span>Your goal: enter a question and select an answer in the context, such that
-      the model is fooled.</span>
-          : <span>Your goal: enter {indefiniteArticle} <strong>{targets[curTarget]}</strong> statement that
-      fools the model into predicting {otherTargetStr}.</span>
-      }
-    </p>
+    <div className={"mb-3"}>
+      <div className={"mt-3 p-3 rounded " + colorBg}>
+        {
+          taskType === "extract"
+            ? <InputGroup className="align-items-center">
+                <i className="fas fa-flag-checkered mr-1"></i>
+                <span>Your goal: enter a question and select an answer in the context, such that the model is fooled.</span>
+              </InputGroup>
+            : <InputGroup className="align-items-center">
+                <i className="fas fa-flag-checkered mr-1"></i>
+                Your goal: enter {indefiniteArticle}
+                <DropdownButton variant="light" className="p-1" title={targets[curTarget] ? targets[curTarget] : "Loading.."}>
+                  {targets.map((target, index) => <Dropdown.Item onClick={onChange} key={index} index={index}>{target}</Dropdown.Item>).filter((_, index) => index !== curTarget)}
+                </DropdownButton>
+                statement that fools the model into predicting {otherTargetStr}.
+              </InputGroup>
+        }
+      </div>
+    </div>
   );
 };
 
@@ -229,7 +238,7 @@ class ResponseInfo extends React.Component {
               return Array.isArray(insp["importances"]) && insp["importances"].length !== 0;
             });
             if (inspectors.length === 1) {
-              inspectors[0]["name"] = "token_importances";  
+              inspectors[0]["name"] = "token_importances";
             }
           } else {
             inspectors = [result];
@@ -445,6 +454,7 @@ class CreateInterface extends React.Component {
       mapKeyToExampleId: {},
     };
     this.getNewContext = this.getNewContext.bind(this);
+    this.handleGoalMessageTargetChange = this.handleGoalMessageTargetChange.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
     this.handleResponseChange = this.handleResponseChange.bind(this);
     this.updateAnswer = this.updateAnswer.bind(this);
@@ -515,6 +525,12 @@ class CreateInterface extends React.Component {
     }
   }
 
+  handleGoalMessageTargetChange(e) {
+    this.setState({
+      target: parseInt(e.target.getAttribute('index')),
+      content: [this.state.content[0]]
+    });
+  }
   handleResponse() {
     this.setState({ submitDisabled: true, refreshDisabled: true }, () => {
       if (this.state.hypothesis.length == 0) {
@@ -818,12 +834,13 @@ class CreateInterface extends React.Component {
           <Explainer taskName={this.state.task.name} />
           <Annotation
             placement="top"
-            tooltip={"This is your goal. Dynabench specifies what the true label should be of your model-fooling example."}>
+            tooltip={"This is your goal. Dynabench specifies what the true label should be of your model-fooling example. You can change this label by clicking it."}>
             <GoalMessage
               targets={this.state.task.targets}
               curTarget={this.state.target}
               taskType={this.state.task.type}
               taskShortName={this.state.task.shortname}
+              onChange={this.handleGoalMessageTargetChange}
             />
           </Annotation>
           <Card className="profile-card overflow-hidden">
