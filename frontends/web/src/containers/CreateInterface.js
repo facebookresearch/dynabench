@@ -841,7 +841,7 @@ class CreateInterface extends React.Component {
                           "Sentiment": "Enter " + this.state.task.targets[this.state.target] + " statement..",
                           "Hate Speech": "Enter " + this.state.task.targets[this.state.target] + " statement..",
                         }[this.state.task.shortname]
-                      : 'Enter..'
+                      : 'Enter statement..'
                     }
                     value={this.state.hypothesis}
                     onChange={this.handleResponseChange}
