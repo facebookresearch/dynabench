@@ -337,7 +337,7 @@ class ResponseInfo extends React.Component {
             })}
         </div>
       </>;
-    } 
+    }
     return (
       <Card
         className={classNames}
@@ -472,7 +472,7 @@ class CreateInterface extends React.Component {
   }
 
   updateSelectedRound(e) {
-    const selected = e.target.getAttribute('index');
+    const selected = parseInt(e.target.getAttribute('index'));
     if (selected != this.state.task.selected_round) {
       this.context.api.getTaskRound(this.state.task.id, selected)
         .then((result) => {
@@ -763,7 +763,7 @@ class CreateInterface extends React.Component {
     function renderSwitchContextTooltip(props) {
       return renderTooltip(props, "Don't like this context? Try another one.");
     }
-  
+
     return (
       <OverlayProvider initiallyHide={true}>
         <BadgeOverlay
