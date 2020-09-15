@@ -504,7 +504,7 @@ class TaskPage extends React.Component {
             </h2>
             <div style={{float: "right", marginTop: 30}}>
             <ButtonGroup>
-              <Annotation placement="left" tooltip="Click to show help overlays">
+              <Annotation placement="left" tooltip="Click to show help overlay">
                 <OverlayContext.Consumer>
                   {
                     ({hidden, setHidden})=> (
