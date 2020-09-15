@@ -51,16 +51,24 @@ class SubmitInterface extends React.Component {
     });
   }
 
+  escapeRegExp = (string) => {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
   handleValidation = (values) => {
     const errors = {};
-    const allowedExtensions = /(\.txt|\.json)$/i;
+    let allowedTaskExtension = ".txt";
+    if (this.state.task.shortname === "QA") {
+      allowedTaskExtension = ".json";
+    }
+    const allowedExtensions = new RegExp(this.escapeRegExp(allowedTaskExtension)+"$", "i");
     if (!values.roundType) {
       errors.roundType = "Required";
     }
     if (!values.file) {
       errors.file = "Required";
     } else if (!allowedExtensions.exec(values.file.name)) {
-      errors.file = "Invalid file type - Please upload in .txt or .json format";
+      errors.file = "Invalid file type - Please upload in "+allowedTaskExtension+" format";
     }
     return errors;
   };
