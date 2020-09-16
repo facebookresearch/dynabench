@@ -490,7 +490,7 @@ class TaskPage extends React.Component {
 
   render() {
     return (
-      <OverlayProvider delayMs="1700">
+      <OverlayProvider initiallyHide={true} delayMs="1700">
       <Container fluid>
         <Row>
           <Col lg={2} className="p-0 border">
@@ -504,7 +504,7 @@ class TaskPage extends React.Component {
             </h2>
             <div style={{float: "right", marginTop: 30}}>
             <ButtonGroup>
-              <Annotation placement="left" tooltip="Click to bring up this help overlay again">
+              <Annotation placement="left" tooltip="Click to show help overlay">
                 <OverlayContext.Consumer>
                   {
                     ({hidden, setHidden})=> (
