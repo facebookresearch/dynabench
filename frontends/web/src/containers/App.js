@@ -16,7 +16,6 @@ import RegisterPage from "./RegisterPage";
 import ProfilePage from "./ProfilePage";
 import AboutPage from "./AboutPage";
 import TaskPage from "./TaskPage";
-import TasksPage from "./TasksPage";
 import ContactPage from "./ContactPage";
 import TermsPage from "./TermsPage";
 import DataPolicyPage from "./DataPolicyPage";
@@ -239,7 +238,6 @@ class App extends React.Component {
                   component={TaskPage}
                 />
                 <Route path="/tasks/:taskId" component={TaskPage} />
-                <Route path="/tasks" component={TasksPage} />
                 <Route path="/login" component={LoginPage} />
                 <Route path="/forgot-password" component={ForgotPassword} />
                 <Route
