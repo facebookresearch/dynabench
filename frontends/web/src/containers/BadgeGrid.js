@@ -25,7 +25,7 @@ const BadgeGrid = (props) => {
               delay={{ show: 250, hide: 400 }}
               overlay={(props) => <Tooltip {...props}>
                 {name}<br/>
-                <Moment utc fromNow>{awarded}</Moment>
+                <Moment fromNow>{awarded}</Moment>
                 </Tooltip>}
             >
               <img src={"/badges/"+name+".png"} style={{width: 50, marginBottom: 10, cursor: 'pointer'}} />
