@@ -35,7 +35,7 @@ class Notification(Base):
     created = db.Column(db.DateTime, nullable=True)
 
     def __repr__(self):
-        return '<Notification {}>'.format(self.msg)
+        return '<Notification {}>'.format(self.message)
 
     def to_dict(self, safe=True):
         d = {}
@@ -75,6 +75,9 @@ class NotificationModel(BaseModel):
                     message=message, \
                     created=db.sql.func.now(), \
                     **kwargs)
+            self.dbs.add(n)
+            self.dbs.flush()
+            self.dbs.commit()
             um.incrementNotificationCount(uid)
             logging.info('Added notification (%s)' % (n.id))
         except Exception as error_message:
