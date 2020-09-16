@@ -196,14 +196,20 @@ class ResponseInfo extends React.Component {
     e.preventDefault();
     var idx = e.target.getAttribute("data-index");
     var type = e.target.getAttribute("data-type");
-    this.setState({explainSaved: false})
-    this.context.api
-      .explainExample(this.props.mapKeyToExampleId[idx], type, e.target.value)
-      .then((result) => {
-        this.setState({explainSaved: true});
-      }, (error) => {
-        console.log(error);
-      });
+    var explanation = e.target.value.trim(); 
+    if (explanation !== "" || this.state.hasPreviousExplanation) {
+      this.setState({explainSaved: false, hasPreviousExplanation: true})
+      this.context.api
+        .explainExample(this.props.mapKeyToExampleId[idx], type, explanation)
+        .then((result) => {
+          this.setState({explainSaved: true})
+          if (explanation === "") {
+            this.setState({hasPreviousExplanation: false})
+          }
+        }, (error) => {
+          console.log(error);
+        });
+    }
   }
   retractExample(e) {
     e.preventDefault();
