@@ -575,7 +575,8 @@ class CreateInterface extends React.Component {
       content: [this.state.content[0]]
     });
   }
-  handleResponse() {
+  handleResponse(e) {
+    e.preventDefault();
     this.setState({ submitDisabled: true, refreshDisabled: true }, () => {
       if (this.state.hypothesis.length == 0) {
         this.setState({ submitDisabled: false, refreshDisabled: false });
@@ -918,6 +919,7 @@ class CreateInterface extends React.Component {
                     }
                     value={this.state.hypothesis}
                     onChange={this.handleResponseChange}
+                    required={true}
                   />
               </InputGroup>
               </Annotation>

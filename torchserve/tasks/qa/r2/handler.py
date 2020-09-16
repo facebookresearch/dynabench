@@ -59,8 +59,6 @@ class TransformersQAHandler(BaseHandler):
         self.my_task_id = self.setup_config["my_task_id"]
         self.my_round_id = self.setup_config["my_round_id"]
 
-        model_dir = os.path.join(model_dir, f'r{self.my_round_id}_{my_model_no}')
-
         """ Loading the model and tokenizer from checkpoint and config files based on
         the user's choice of mode further setup config can be added."""
         if self.setup_config["save_mode"] == "torchscript":

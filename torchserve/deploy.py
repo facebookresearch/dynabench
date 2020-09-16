@@ -72,7 +72,9 @@ def archive_model(config):
     round_path = os.path.join(os.getcwd(), config['round_path'])
     model_path = os.path.join(os.getcwd(), config['model_path'])
 
-    include_files = [f"{round_path}/{fname}" for fname in os.listdir(round_path)] + [utils_path]
+    round_model_files = [os.path.join(config['model_dir'], fname) for fname in os.listdir(config['model_dir']) \
+                        if not fname.startswith('.')]
+    include_files = [f"{round_path}/{fname}" for fname in os.listdir(round_path)] + [utils_path] + round_model_files
     include_files = [f for f in include_files if not os.path.isdir(f)]
     extra_files = ",".join(include_files)
     archiver_command = f'torch-model-archiver --model-name {config["model_name"]} --version 1.0 ' + \
