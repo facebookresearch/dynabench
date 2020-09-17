@@ -206,7 +206,7 @@ class UserPage extends React.Component {
                               readOnly
                               defaultValue={
                                 this.state.user.examples_submitted > 0 ?
-                                  (this.state.user.examples_verified_correct / this.state.user.examples_submitted).toFixed(2) + '%'
+                                  (100 * this.state.user.examples_verified_correct / this.state.user.examples_submitted).toFixed(2) + '%'
                     : 'N/A'}
                             />
                           </Col>

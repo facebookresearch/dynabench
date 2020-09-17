@@ -39,7 +39,7 @@ def get_user(credentials, id):
     if id != credentials['id']:
         # only copy some sub fields if this is not us
         nu, u = {}, user.to_dict()
-        for f in ['id', 'username', 'affiliation']:
+        for f in ['id', 'username', 'affiliation', 'examples_submitted', 'examples_verified_correct']:
             nu[f] = u[f]
         return util.json_encode(nu)
     else:
@@ -56,7 +56,7 @@ def get_user_with_badges(credentials, id):
     if id != credentials['id']:
         # only copy some sub fields if this is not us
         nu, u = {}, user.to_dict()
-        for f in ['id', 'username', 'affiliation']:
+        for f in ['id', 'username', 'affiliation', 'examples_submitted', 'examples_verified_correct']:
             nu[f] = u[f]
 
         bm = BadgeModel()
