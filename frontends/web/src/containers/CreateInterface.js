@@ -156,7 +156,26 @@ const TaskInstructions = (props) => {
 const NLITaskInstructions = () => {
   return (
     <div>
-      <p>TBD</p>
+      <p>
+        You will be presented with a label and a passage of text. Assuming the passage is true, please write another passage that is paired with the first via the label (either 'entailment', 'neutral', or 'contradiction').
+      </p>
+      <p>
+        Write your passage so another person will be able to guess the correct label, but the AI will be fooled!
+      </p>
+      <p>
+        Try to come up with creative ways to beat the AI! If you notice any consistent AI failure modes, please share them in the "explanation of model failure" field!  If you'd like to explain why you're right and the model is wrong, please add that information in the "explanation of label" field!
+      </p>
+      <p>
+        Try to ensure that:
+      </p>
+      <ol>
+        <li>Your passage contains at least one complete sentence.</li>
+        <li>Your passage cannot be related to the provided text by any label other than the provided one (remember, you can always retract mistakes!).</li>
+        <li>You do not refer to the passage structure itself, such as "the third word of the passage is 'the'".</li>
+        <li>You do not refer to or speculate about the author of the passage, but instead focus only on its content.</li>
+        <li>Your passage doesn't require any expert external knowledge not provided.</li>
+        <li>Your spelling is correct.</li>
+      </ol>
     </div>
   );
 };
