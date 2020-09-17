@@ -106,8 +106,8 @@ def validate_example(credentials, eid):
         for badge in badges:
             bm.addBadge(badge)
             nm.create(credentials['id'], 'NEW_BADGE_EARNED', badge['name'])
-    if credentials['id'] != 'turk' and badges:
-        ret['badges'] = '|'.join([badge['name'] for badge in badges])
+        if badges:
+            ret['badges'] = '|'.join([badge['name'] for badge in badges])
 
     return util.json_encode(ret)
 
