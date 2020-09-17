@@ -194,7 +194,7 @@ class NliTransformerHandler(BaseHandler):
         # self.lig is built in initialize()
         # if self.lig is None, then it means inspection is not support for the model
         if self.lig is None:
-            response = {"importance": None, "words": None, "status": "not supported"}
+            response = {"importances": None, "words": None, "status": "not supported"}
             return [response]
 
         self.model.eval()
