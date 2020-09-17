@@ -31,7 +31,7 @@ THRESHOLD_F1 = 0.4
 QA_CONFIG = {
     "max_seq_length": 512,
     "max_query_length": 64,
-    "max_answer_length": 30,
+    "max_answer_length": 200,
     "do_lower_case": False,
     "doc_stride": 128,
     "eval_batch_size": 8,
