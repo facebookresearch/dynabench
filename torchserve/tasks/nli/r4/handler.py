@@ -229,6 +229,7 @@ class NliTransformerHandler(BaseHandler):
         clean_up_special_tokens = False  # hard code for now.
         if clean_up_special_tokens:
             tokens, importance = cleanup_tokenization_special_tokens(tokens, importance, self.tokenizer)
+        tokens = [remove_sp_chars(t) for t in tokens]
         response = {"importance": importance, "words": tokens, "status": "finished"}
         assert len(importance) == len(tokens)
         return [response]
