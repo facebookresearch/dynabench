@@ -215,7 +215,7 @@ class NliTransformerHandler(BaseHandler):
                                                      self.model_class_item,
                                                      True),
                                                  target=preprocessed_item['target_tensor'],
-                                                 return_convergence_delta=True, n_steps=20)
+                                                 return_convergence_delta=True, n_steps=10)
 
         attributions_sum = summarize_attributions(attributions)
         token_ids = preprocessed_item['input_ids'][0].tolist()
