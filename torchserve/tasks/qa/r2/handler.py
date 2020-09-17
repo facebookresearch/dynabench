@@ -31,7 +31,7 @@ THRESHOLD_F1 = 0.4
 QA_CONFIG = {
     "max_seq_length": 512,
     "max_query_length": 64,
-    "max_answer_length": 30,
+    "max_answer_length": 200,
     "do_lower_case": False,
     "doc_stride": 128,
     "eval_batch_size": 8,
@@ -127,7 +127,7 @@ class TransformersQAHandler(BaseHandler):
         input_ids, ref_input_ids, attention_mask = construct_input_ref_pair(\
                     example[0]["question"], example[0]["passage"], self.tokenizer, self.device)
         all_tokens = get_word_token(input_ids, self.tokenizer)
-        n_steps = get_n_steps_for_interpretability(len(all_tokens))
+        n_steps = get_n_steps_for_interpretability(n_tokens=len(all_tokens), max_n_steps=8)
         logger.info("Word Tokens = '%s'", all_tokens)
 
         position_qa_model = 0

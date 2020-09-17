@@ -236,6 +236,9 @@ const QATaskInstructions = () => {
       </p>
       <ol>
         <li>
+          Questions must have <strong>only one valid answer</strong> in the passage
+        </li>
+        <li>
           The <strong>shortest span</strong> which <strong>correctly answers the question</strong> 
           is selected
         </li>
