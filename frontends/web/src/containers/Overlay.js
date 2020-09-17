@@ -4,6 +4,7 @@ import {
   OverlayTrigger,
   Tooltip
 } from "react-bootstrap";
+import Badge from "./Badge"
 
 const OverlayContext = React.createContext(false);
 
@@ -58,14 +59,28 @@ function BadgeOverlay({children, badgeTypes, ...props}) {
       </div>
     )}
   >
-    Congratulations! You won a badge!
+    Congratulations!
     {badgeTypes ? <div className="m-3">
       {badgeTypes.split("|").map((badge, idx) => (
+        /*
         <img
           key={badge+"-"+idx}
           className="awarded-badge"
           src={"/badges/"+badge+".png"}
-          style={{margin: "0 10px", animationDelay: 0.4 + 0.3 * idx + "s"}} />)
+          style={{margin: "0 10px", animationDelay: 0.4 + 0.3 * idx + "s"}} />
+        */
+        <>
+        <Badge
+          name={badge}
+          className="awarded-badge"
+          style={{margin: "0 10px", animationDelay: 0.4 + 0.3 * idx + "s"}}
+        /><br/>
+        You won a new badge:
+        <br/>
+        <Badge name={badge} format="text" />
+        <br/>
+        </>
+      )
       )}
     </div> : null}
     <div style={{fontSize: 12}}>Click anywhere to continue...</div>
