@@ -84,16 +84,6 @@ def validate_example(credentials, eid):
     preds = Counter([x.split(",")[1] for x in nobj.split("|")])
     rm = RoundModel()
     um = UserModel()
-    if credentials['id'] != 'turk':
-        user = um.updateValidatedCount(credentials['id'])
-
-        bm = BadgeModel()
-        nm = NotificationModel()
-        badges = bm.checkBadgesEarned(user, example)
-        for badge in badges:
-            bm.addBadge(badge)
-            nm.create(credentials['id'], 'NEW_BADGE_EARNED', badge['name'])
-
     cm = ContextModel()
     context = cm.get(example.cid)
     rm.updateLastActivity(context.r_realid)
@@ -107,10 +97,19 @@ def validate_example(credentials, eid):
         em.update(example.id, {'verified': True, 'verified_flagged': True})
 
     ret = example.to_dict()
+    if credentials['id'] != 'turk':
+        user = um.updateValidatedCount(credentials['id'])
+
+        bm = BadgeModel()
+        nm = NotificationModel()
+        badges = bm.checkBadgesEarned(user, example)
+        for badge in badges:
+            bm.addBadge(badge)
+            nm.create(credentials['id'], 'NEW_BADGE_EARNED', badge['name'])
     if credentials['id'] != 'turk' and badges:
         ret['badges'] = '|'.join([badge['name'] for badge in badges])
 
-    return util.json_encode(example.to_dict())
+    return util.json_encode(ret)
 
 @bottle.put('/examples/<eid:int>')
 @_auth.requires_auth_or_turk
