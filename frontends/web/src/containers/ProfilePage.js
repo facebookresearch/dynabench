@@ -15,7 +15,7 @@ import {
   Button,
   Nav,
   Pagination,
-  Badge,
+  Badge as BBadge,
   OverlayTrigger,
   Tooltip,
 } from "react-bootstrap";
@@ -28,6 +28,7 @@ import Moment from "react-moment";
 import "./Sidebar-Layout.css";
 import "./ProfilePage.css";
 import BadgeGrid from "./BadgeGrid";
+import Badge from "./Badge";
 
 const StatsSubPage = (props) => {
   return (
@@ -114,36 +115,26 @@ const NotificationsSubPage = (props) => {
                   </tr>
                 ) : null}
                 {props.notifications.map((notification) => {
+                  var message = notification.type + ': ' + notification.message;
+                  var created= <Moment utc fromNow>{notification.created}</Moment>;
+                  if (notification.type === "NEW_BADGE_EARNED") {
+                    message = (
+                      <span>You've earned a new badge: <Badge format="text" name={notification.message} /></span>
+                    );
+                  }
+                  if (!notification.seen) {
+                    message = <strong><u>{message}</u></strong>;
+                    created = <strong><u>{created}</u></strong>;
+                  }
                   return (
                     <tr
                       key={notification.id}
                     >
                       <td>
-                        {notification.seen}
-                        {notification.seen ?
-                            <Moment utc fromNow>
-                              {notification.created}
-                            </Moment>
-                          :
-                            <strong>
-                              <u>
-                                <Moment utc fromNow>
-                                  {notification.created}
-                                </Moment>
-                              </u>
-                            </strong>
-                        }
+                        {created}
                       </td>
                       <td>
-                        {notification.seen ?
-                            notification.message
-                          :
-                            <strong>
-                              <u>
-                                {notification.message}
-                              </u>
-                            </strong>
-                        }
+                        {message}
                       </td>
                     </tr>
                   );
@@ -237,19 +228,19 @@ const ModelSubPage = (props) => {
                       </td>
                       <td className="text-center" width="200px">
                         {model.is_published === true ? (
-                          <Badge
+                          <BBadge
                             variant="success"
                             className="publishStatus"
                           >
                             Published
-                          </Badge>
+                          </BBadge>
                         ) : (
-                          <Badge
+                          <BBadge
                             variant="danger"
                             className="publishStatus"
                           >
                             Unpublished
-                          </Badge>
+                          </BBadge>
                         )}
                       </td>
                     </tr>
