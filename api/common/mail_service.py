@@ -10,7 +10,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from string import Template
 
-import logging
+from common.logging import logger
 
 def read_template(filename):
     """
@@ -35,7 +35,7 @@ def get_mail_session(host, port, smtp_user, smtp_secret):
         server.login(smtp_user, smtp_secret)
         return server
     except Exception as e:
-        logging.exception('Mail session could not be created - you will not be able to send mail: (%s)', e)
+        logger.exception('Mail session could not be created - you will not be able to send mail: (%s)', e)
         return None
 
 def test_SMTP_conn_open(conn):
@@ -60,7 +60,7 @@ def send(server=None, contacts = [], template_name = '', msg_dict = {}, subject 
     """
     app = bottle.default_app()
     if not test_SMTP_conn_open(server):
-        logging.error('SMTP service session closed. Reconnecting the server')
+        logger.error('SMTP service session closed. Reconnecting the server')
         # create another smtp server handler
         server = get_mail_session(host=app.config['smtp_host'], port=app.config['smtp_port'], smtp_user=app.config['smtp_user'],
                                     smtp_secret=app.config['smtp_secret'])
@@ -80,11 +80,11 @@ def send(server=None, contacts = [], template_name = '', msg_dict = {}, subject 
             # send the message via the server set up earlier.
             server.send_message(msg)
             del msg
-        logging.info('Email send successful (%s)', contacts)
+        logger.info('Email send successful (%s)', contacts)
         return True
 
     except Exception as message:
-        logging.exception(' Mail sending failed : (%s)', message)
+        logger.exception(' Mail sending failed : (%s)', message)
         return False
 
 

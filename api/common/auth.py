@@ -14,7 +14,6 @@ class AuthorizationError(Exception):
 
 def jwt_token_from_header():
     auth = bottle.request.headers.get('Authorization', None)
-    print("Auth:", auth)
     if not auth:
         raise AuthorizationError({'code': 'authorization_header_missing', 'description': 'Authorization header is expected'})
 

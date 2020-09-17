@@ -5,8 +5,8 @@
 import bottle
 
 import common.auth as _auth
+from common.logging import logger
 
-import logging
 import json
 
 @bottle.post('/endpoints/<endpoint>')
@@ -31,15 +31,15 @@ def invoke_endpoint(credentials, endpoint):
 
     # Invoke sagemaker endpoint to get model result
     try:
-        logging.info("Example: {}".format(payload['hypothesis']))
+        logger.info("Example: {}".format(payload['hypothesis']))
         response = sagemaker_client.invoke_endpoint(EndpointName=endpoint,
                                        ContentType='application/json',
                                        Body=json.dumps(payload))
     except Exception as error_message:
-        logging.info('Error in prediction: %s' % (error_message))
+        logger.info('Error in prediction: %s' % (error_message))
         bottle.abort(400, 'Error in prediction: %s' % (error_message))
 
     result = response['Body'].read()
-    logging.info('Model response %s' % (result))
+    logger.info('Model response %s' % (result))
 
     return result

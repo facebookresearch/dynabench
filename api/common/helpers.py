@@ -8,8 +8,8 @@ from urllib.parse import urlparse
 from transformers.data.metrics.squad_metrics import compute_f1
 
 import common.auth as _auth
+from common.logging import logger
 
-import logging
 import json
 
 import sqlalchemy as db
@@ -168,7 +168,7 @@ def is_current_user(uid, credentials=None):
             return False
         return True
     except Exception as ex:
-        logging.exception('Current user verification failed for (%s) exception: %s' % (uid, ex))
+        logger.exception('Current user verification failed for (%s) exception: %s' % (uid, ex))
         return False
 
 def get_limit_and_offset_from_request():
@@ -189,7 +189,7 @@ def get_limit_and_offset_from_request():
         limit = int(limit)
         offset = int(offset)
     except Exception as ex:
-        logging.exception('Query param parsing issue: (%s)' % (ex))
+        logger.exception('Query param parsing issue: (%s)' % (ex))
         limit = 5
         offset = 0
 

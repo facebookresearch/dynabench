@@ -7,6 +7,7 @@ import bottle
 
 import common.auth as _auth
 import common.helpers as  util
+from common.logging import logger
 
 from models.model import ModelModel
 from models.score import ScoreModel
@@ -14,7 +15,6 @@ from models.round import RoundModel
 from models.user import UserModel
 
 import json
-import logging
 
 @bottle.get('/models/<mid:int>')
 def get_model(mid):
@@ -44,10 +44,10 @@ def get_model_detail(credentials, mid):
         model['scores'] = s_dicts
         return util.json_encode(model)
     except AssertionError as ex:
-        logging.exception('Not authorized to access unpublished model detail')
+        logger.exception('Not authorized to access unpublished model detail')
         bottle.abort(403, 'Not authorized to access model detail')
     except Exception as ex:
-        logging.exception('Model detail exception : (%s)' %(ex))
+        logger.exception('Model detail exception : (%s)' %(ex))
         bottle.abort(404, 'Not found')
 
 @bottle.post('/models/upload')
@@ -63,7 +63,7 @@ def do_upload(credentials):
     user_id = credentials['id']
     user = u.get(user_id)
     if not user:
-        logging.error('Invalid user detail for id (%s)' %(user_id))
+        logger.error('Invalid user detail for id (%s)' %(user_id))
         bottle.abort(404, 'User information not found')
 
     round_id = bottle.request.forms.get('type')
@@ -76,9 +76,9 @@ def do_upload(credentials):
             test_raw_data = json.loads(upload.file.read().decode('utf-8'))  # if QA, use standard SQuAD JSON format
         else:
             test_raw_data = upload.file.read().decode('utf-8').lower().splitlines()
-        
+
     except Exception as ex:
-        logging.exception(ex)
+        logger.exception(ex)
         bottle.abort(400, 'Upload valid model result file')
 
     r = RoundModel()
@@ -108,7 +108,7 @@ def do_upload(credentials):
         except AssertionError:
             bottle.abort(400, 'Submission file length mismatch')
 #        except Exception as error_message:
-#            logging.exception('Model evaluation failed: %s' % (error_message))
+#            logger.exception('Model evaluation failed: %s' % (error_message))
 #            bottle.abort(400, 'Model evaluation failed: %s' % (error_message))
     else:
         bottle.abort(400, 'Invalid file submitted')
@@ -124,7 +124,7 @@ def publish_model(credentials, mid):
     try:
         model = m.getUnpublishedModelByMid(mid)
         if model.uid != credentials['id']:
-            logging.error('Original user (%s) and the modification tried by (%s)' % (model.uid, credentials['id']))
+            logger.error('Original user (%s) and the modification tried by (%s)' % (model.uid, credentials['id']))
             bottle.abort(401, 'Operation not authorized')
 
         model = m.update(model.id, name=data['name'], longdesc=data['description'], is_published=True)
@@ -133,7 +133,7 @@ def publish_model(credentials, mid):
     except db.orm.exc.NoResultFound as ex:
         bottle.abort(404, 'Model Not found')
     except Exception as e:
-        logging.exception('Could not update model details: %s' % (e))
+        logger.exception('Could not update model details: %s' % (e))
         bottle.abort(400, 'Could not update model details: %s' % (e))
 
 @bottle.put('/models/<mid:int>/revertstatus')
@@ -143,7 +143,7 @@ def revert_model_status(credentials, mid):
     try:
         model = m.getUnpublishedModelByMid(mid)
         if model.uid != credentials['id']:
-            logging.error('Original user (%s) and the modification tried by (%s)' % (model.uid, credentials['id']))
+            logger.error('Original user (%s) and the modification tried by (%s)' % (model.uid, credentials['id']))
             bottle.abort(401, 'Operation not authorized')
 
         model = m.update(model.id, is_published=not model.is_published)
@@ -152,5 +152,5 @@ def revert_model_status(credentials, mid):
     except db.orm.exc.NoResultFound as ex:
         bottle.abort(404, 'Model Not found')
     except Exception as e:
-        logging.exception('Could not update model details: %s' % (e))
+        logger.exception('Could not update model details: %s' % (e))
         bottle.abort(400, 'Could not update model details: %s' % (e))

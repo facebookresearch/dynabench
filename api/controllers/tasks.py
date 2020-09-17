@@ -6,13 +6,13 @@ import bottle
 
 import common.auth as _auth
 import common.helpers as util
+from common.logging import logger
 
 from models.task import TaskModel
 from models.round import RoundModel
 from models.score import ScoreModel
 from models.example import ExampleModel
 
-import logging
 import json
 
 @bottle.get('/tasks')
@@ -50,7 +50,7 @@ def get_user_leaderboard(tid):
         query_result, total_count = e.getUserLeaderByTid(tid=tid, n=limit, offset=offset)
         return construct_user_board_response_json(query_result=query_result, total_count=total_count)
     except Exception as ex:
-        logging.exception('User leader board data loading failed: (%s)' % (ex))
+        logger.exception('User leader board data loading failed: (%s)' % (ex))
         bottle.abort(400, 'Invalid task detail')
 
 @bottle.get('/tasks/<tid:int>/rounds/<rid:int>/users')
@@ -67,7 +67,7 @@ def get_leaderboard_by_task_and_round(tid, rid):
         query_result, total_count = e.getUserLeaderByTidAndRid(tid=tid, rid=rid, n=limit, offset=offset)
         return construct_user_board_response_json(query_result=query_result, total_count=total_count)
     except Exception as ex:
-        logging.exception('User leader board data loading failed: (%s)' % (ex))
+        logger.exception('User leader board data loading failed: (%s)' % (ex))
         bottle.abort(400, 'Invalid task/round detail')
 
 @bottle.get('/tasks/<tid:int>/rounds/<rid:int>/export')
@@ -125,7 +125,7 @@ def get_model_leaderboard(tid):
         query_result, total_count = score.getOverallModelPerfByTask(tid=tid, n=limit, offset=offset)
         return construct_model_board_response_json(query_result=query_result, total_count=total_count)
     except Exception as ex:
-        logging.exception('Model leader board data loading failed: (%s)' % (ex))
+        logger.exception('Model leader board data loading failed: (%s)' % (ex))
         bottle.abort(400, 'Invalid task detail')
 
 @bottle.get('/tasks/<tid:int>/rounds/<rid:int>/models')
@@ -142,7 +142,7 @@ def get_model_leaderboard_round(tid, rid):
         query_result, total_count = score.getModelPerfByTidAndRid(tid=tid, rid=rid, n=limit, offset=offset)
         return construct_model_board_response_json(query_result=query_result, total_count=total_count)
     except Exception as ex:
-        logging.exception('Model leader board data loading failed: (%s)' %(ex))
+        logger.exception('Model leader board data loading failed: (%s)' %(ex))
         bottle.abort(400, 'Invalid task/round detail')
 
 @bottle.get('/tasks/<tid:int>/trends')
@@ -156,10 +156,9 @@ def get_task_trends(tid):
     model = ScoreModel()
     try:
         query_result = model.getTrendsByTid(tid=tid)
-        logging.info('Top trending model fetch query (%s)' % (query_result))
         return construct_trends_response_json(query_result=query_result)
     except Exception as ex:
-        logging.exception('User trends data loading failed: (%s)' % (ex))
+        logger.exception('User trends data loading failed: (%s)' % (ex))
         bottle.abort(400, 'Invalid task detail')
 
 def construct_model_board_response_json(query_result, total_count):

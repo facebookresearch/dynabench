@@ -6,10 +6,10 @@ import sqlalchemy as db
 from .base import Base, BaseModel
 
 from common import helpers as util
+from common.logging import logger
 
 from models.user import User, UserModel
 
-import logging
 
 class Notification(Base):
     __tablename__ = 'notifications'
@@ -79,9 +79,9 @@ class NotificationModel(BaseModel):
             self.dbs.flush()
             self.dbs.commit()
             um.incrementNotificationCount(uid)
-            logging.info('Added notification (%s)' % (n.id))
+            logger.info('Added notification (%s)' % (n.id))
         except Exception as error_message:
-            logging.error('Could not create notification (%s)' % error_message)
+            logger.error('Could not create notification (%s)' % error_message)
             return False
 
         return n.id

@@ -5,12 +5,12 @@
 import bottle
 import common.auth as _auth
 import common.helpers as util
+from common.logging import logger
 
 from models.notification import NotificationModel
 from models.user import UserModel
 
 import json
-import logging
 
 @bottle.get('/notifications')
 @_auth.requires_auth
@@ -24,7 +24,7 @@ def getNotifications(credentials):
             return util.json_encode({'count': total_count, 'data': dicts})
         return util.json_encode({'count': 0, 'data': []})
     except Exception as e:
-        logging.exception('Could not fetch notifications: %s' % (e))
+        logger.exception('Could not fetch notifications: %s' % (e))
         bottle.abort(400, 'Could not fetch notifications')
 
 @bottle.put('/notifications/seen')
@@ -35,5 +35,5 @@ def setAllSeen(credentials):
         nm.setAllSeen(credentials['id'])
         return util.json_encode({'success': 'ok'})
     except Exception as e:
-        logging.exception('Could not mark notifications seen: %s' % (e))
+        logger.exception('Could not mark notifications seen: %s' % (e))
         bottle.abort(400, 'Could not mark notifications seen')

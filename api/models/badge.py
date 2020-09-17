@@ -6,7 +6,7 @@ import sqlalchemy as db
 from .base import Base, BaseModel
 from .user import User, UserModel
 
-import logging
+from common.logging import logger
 
 class Badge(Base):
     __tablename__ = 'badges'
@@ -150,8 +150,8 @@ class BadgeModel(BaseModel):
             self.dbs.add(b)
             self.dbs.flush()
             self.dbs.commit()
-            logging.info('Awarded badge to user (%s, %s)' % (b.id, b.uid))
+            logger.info('Awarded badge to user (%s, %s)' % (b.id, b.uid))
         except Exception as error_message:
-            logging.error('Could not create badge (%s)' % error_message)
+            logger.error('Could not create badge (%s)' % error_message)
             return False
         return b.id

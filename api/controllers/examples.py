@@ -5,6 +5,7 @@
 import bottle
 import common.auth as _auth
 import common.helpers as util
+from common.logging import logger
 
 from models.example import ExampleModel
 from models.user import UserModel
@@ -17,7 +18,6 @@ import json
 
 from collections import Counter
 
-import logging
 from datetime import datetime
 
 @bottle.get('/examples/<tid:int>/<rid:int>')
@@ -131,11 +131,11 @@ def update_example(credentials, eid):
                 bottle.abort(403, 'Access denied')
             del data['uid'] # don't store this
 
-        logging.info("Updating example {} with {}".format(example.id, data))
+        logger.info("Updating example {} with {}".format(example.id, data))
         em.update(example.id, data)
         return util.json_encode({'success': 'ok'})
     except Exception as e:
-        logging.error('Error updating example {}: {}'.format(eid, e))
+        logger.error('Error updating example {}: {}'.format(eid, e))
         bottle.abort(500, {'error': str(e)})
 
 @bottle.post('/examples')
