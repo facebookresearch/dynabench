@@ -70,7 +70,7 @@ class BadgeModel(BaseModel):
             return {'uid': user.id, 'name': name, 'metadata': None}
 
         badges = []
-        badges.append('TESTING_BADGES')
+        #badges.append('TESTING_BADGES')
 
         # General beginner badges
         if user.examples_submitted == 1:
@@ -117,7 +117,8 @@ class BadgeModel(BaseModel):
     def addBadge(self, badge):
         self.create(badge['uid'], \
                 badge['name'], \
-                badge['metadata'])
+                badge['metadata'] if 'metadata' in badge \
+                    else None)
 
     def getByUid(self, uid):
         try:

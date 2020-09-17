@@ -16,6 +16,7 @@ from common.logging import logger
 from models.user import UserModel
 from models.model import ModelModel
 from models.badge import BadgeModel
+from models.notification import NotificationModel
 
 import json
 
@@ -77,6 +78,8 @@ def get_user_with_badges(credentials, id):
 @bottle.post('/users')
 def create_user():
     u = UserModel()
+    bm = BadgeModel()
+    nm = NotificationModel()
     data = bottle.request.json
     if not data or 'email' not in data or 'password' not in data or 'username' not in data:
         logger.info('Missing data')
@@ -91,15 +94,19 @@ def create_user():
     try:
         u.create(email=data['email'], password=data['password'], username=data['username'])
         user = u.getByEmail(data['email'])
+        user_dict = user.to_dict()
         refresh_token = _auth.set_refresh_token()
         u.update(user.id, {'refresh_token': refresh_token})
+        bm.addBadge({'uid': user_dict['id'], 'name': 'WELCOME_NOOB'})
+        nm.create(user_dict['id'], 'NEW_BADGE_EARNED', 'WELCOME_NOOB')
+
     except Exception as error_message:
         logger.info('Could not create user: %s' % (error_message))
         bottle.abort(400, 'Could not create user')
 
-    token = _auth.get_token({'id': user.id, 'username': user.username})
-    logger.info('Registration and authentication successful for %s' % (user.username))
-    return {'user': user.to_dict(), 'token': token}
+    token = _auth.get_token({'id': user_dict['id'], 'username': user_dict['username']})
+    logger.info('Registration and authentication successful for %s' % (user_dict['username']))
+    return {'user': user_dict, 'token': token}
 
 @bottle.post('/recover/resolve/<forgot_token>')
 def reset_password(forgot_token):

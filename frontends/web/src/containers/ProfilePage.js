@@ -58,10 +58,10 @@ const StatsSubPage = (props) => {
                  </tr>
                 <tr>
                   <td>
-                    Overall model error rate:
+                    Overall validated model error rate:
                   </td>
                   <td className="text-right">
-                    {(100 *
+                    {props.user.examples_submitted && (100 *
                       props.user.examples_verified_correct /
                       props.user.examples_submitted
                     ).toFixed(2)}%
@@ -136,9 +136,13 @@ const NotificationsSubPage = (props) => {
                       </td>
                       <td>
                         {notification.seen ?
-                          notification.message
+                            notification.message
                           :
-                          <u>{notification.message}</u>
+                            <strong>
+                              <u>
+                                {notification.message}
+                              </u>
+                            </strong>
                         }
                       </td>
                     </tr>

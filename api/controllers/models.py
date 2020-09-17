@@ -13,6 +13,8 @@ from models.model import ModelModel
 from models.score import ScoreModel
 from models.round import RoundModel
 from models.user import UserModel
+from models.badge import BadgeModel
+from models.notification import NotificationModel
 
 import json
 
@@ -101,9 +103,21 @@ def do_upload(credentials):
             s = ScoreModel()
             scores = s.bulk_create(model_id=model.id, score_objs=score_obj_list)
 
+            user_dict = user.to_dict()
+
+            if user_dict['models_submitted'] == 0:
+                bm = BadgeModel()
+                nm = NotificationModel()
+                bm.addBadge({'uid': user_dict['id'], 'name': 'MODEL_BUILDER'})
+                nm.create(user_dict['id'], 'NEW_BADGE_EARNED', 'MODEL_BUILDER')
+
+            um = UserModel()
+            um.incrementModelSubmitCount(user_dict['id'])
+
             response = model.to_dict()
-            response['user'] = user.to_dict()
+            response['user'] = user_dict
             response['scores'] = rounds_accuracy_list
+
             return util.json_encode(response)
         except AssertionError:
             bottle.abort(400, 'Submission file length mismatch')

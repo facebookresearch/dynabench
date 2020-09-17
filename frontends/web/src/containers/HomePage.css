@@ -74,10 +74,6 @@
   padding: 24px;
 }
 
-.profile-card td:last-child {
-  font-weight: 700;
-}
-
 .profile-card tr + tr {
   border-top: 1px solid #dee2e6;
 }

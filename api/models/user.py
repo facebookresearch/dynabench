@@ -27,6 +27,7 @@ class User(Base):
     examples_verified_correct = db.Column(db.Integer, default=0)
     examples_submitted = db.Column(db.Integer, default=0)
     examples_verified = db.Column(db.Integer, default=0)
+    models_submitted = db.Column(db.Integer, default=0)
 
     unseen_notifications = db.Column(db.Integer, default=0)
 
@@ -150,6 +151,11 @@ class UserModel(BaseModel):
             u.examples_verified = u.examples_verified + 1
             self.dbs.commit()
         return u
+    def incrementModelSubmitCount(self, uid):
+        u = self.get(uid)
+        if u:
+            u.models_submitted = u.models_submitted + 1
+            self.dbs.commit()
     def incrementCorrectCount(self, uid):
         u = self.get(uid)
         if u:
