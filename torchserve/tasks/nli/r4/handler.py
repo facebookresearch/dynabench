@@ -194,7 +194,7 @@ class NliTransformerHandler(BaseHandler):
         # self.lig is built in initialize()
         # if self.lig is None, then it means inspection is not support for the model
         if self.lig is None:
-            response = {"importance": None, "words": None, "status": "not supported"}
+            response = {"importances": None, "words": None, "status": "not supported"}
             return [response]
 
         self.model.eval()
@@ -215,7 +215,7 @@ class NliTransformerHandler(BaseHandler):
                                                      self.model_class_item,
                                                      True),
                                                  target=preprocessed_item['target_tensor'],
-                                                 return_convergence_delta=True, n_steps=20)
+                                                 return_convergence_delta=True, n_steps=10)
 
         attributions_sum = summarize_attributions(attributions)
         token_ids = preprocessed_item['input_ids'][0].tolist()
@@ -229,7 +229,8 @@ class NliTransformerHandler(BaseHandler):
         clean_up_special_tokens = False  # hard code for now.
         if clean_up_special_tokens:
             tokens, importance = cleanup_tokenization_special_tokens(tokens, importance, self.tokenizer)
-        response = {"importance": importance, "words": tokens, "status": "finished"}
+        tokens = [remove_sp_chars(t) for t in tokens]
+        response = {"importances": importance, "words": tokens, "status": "finished"}
         assert len(importance) == len(tokens)
         return [response]
 
