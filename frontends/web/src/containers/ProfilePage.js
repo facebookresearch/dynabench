@@ -136,9 +136,13 @@ const NotificationsSubPage = (props) => {
                       </td>
                       <td>
                         {notification.seen ?
-                          notification.message
+                            notification.message
                           :
-                          <u>{notification.message}</u>
+                            <strong>
+                              <u>
+                                {notification.message}
+                              </u>
+                            </strong>
                         }
                       </td>
                     </tr>
