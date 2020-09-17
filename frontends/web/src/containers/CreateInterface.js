@@ -536,27 +536,24 @@ class ResponseInfo extends React.Component {
                       <i className="fas fa-flag"></i> Flag
                   </button>
                 </OverlayTrigger>
-                { this.props.taskName !== "NLI" ?
-                  <OverlayTrigger
-                    placement="top"
-                    delay={{ show: 250, hide: 400 }}
-                    overlay={(props) => <Tooltip {...props}>Want more insight into how this decision was made?</Tooltip>}
-                  >
-                    <button
-                      data-index={this.props.index}
-                      onClick={this.inspectExample}
-                      type="button"
-                      className="btn btn-light btn-sm">
-                        <i className="fas fa-search"></i> Inspect
-                        {this.state.loader ? (
-                          <Spinner className="ml-2" animation="border" role="status" size="sm">
-                            <span className="sr-only">Loading...</span>
-                          </Spinner>
-                        ) : null}
-                    </button>
-                  </OverlayTrigger>
-                  : null
-                }
+                <OverlayTrigger
+                  placement="top"
+                  delay={{ show: 250, hide: 400 }}
+                  overlay={(props) => <Tooltip {...props}>Want more insight into how this decision was made?</Tooltip>}
+                >
+                  <button
+                    data-index={this.props.index}
+                    onClick={this.inspectExample}
+                    type="button"
+                    className="btn btn-light btn-sm">
+                      <i className="fas fa-search"></i> Inspect
+                      {this.state.loader ? (
+                        <Spinner className="ml-2" animation="border" role="status" size="sm">
+                          <span className="sr-only">Loading...</span>
+                        </Spinner>
+                      ) : null}
+                  </button>
+                </OverlayTrigger>
               </div>
             }
         </Card.Footer>}
