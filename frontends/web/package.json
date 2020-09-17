@@ -22,6 +22,7 @@
     "react-dom": "^16.13.1",
     "react-ga": "^3.1.2",
     "react-moment": "^0.9.7",
+    "react-player": "^2.6.2",
     "react-powerplug": "^1.0.0",
     "react-router-dom": "^5.2.0",
     "react-scripts": "^3.4.0",
@@ -40,7 +41,8 @@
   },
   "scripts": {
     "webpack": "webpack",
-    "start": "HTTPS=true SSL_CRT_FILE=/home/ubuntu/.ssl/dynabench.org.crt SSL_KEY_FILE=/home/ubuntu/.ssl/dynabench.org-key.pem react-scripts start",
+    "xstart": "HTTPS=true SSL_CRT_FILE=/home/ubuntu/.ssl/dynabench.org.crt SSL_KEY_FILE=/home/ubuntu/.ssl/dynabench.org-key.pem react-scripts start",
+    "start": "HTTPS=true SKIP_PREFLIGHT_CHECK=true react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
