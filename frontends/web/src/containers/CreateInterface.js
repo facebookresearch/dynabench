@@ -134,17 +134,82 @@ const TextFeature = ({ data, curTarget, targets }) => {
   );
 };
 
+const TaskInstructions = (props) => {
+  if (props.shortname === "QA") {
+    return <QATaskInstructions />
+  } else if (props.shortname === "NLI") {
+    return <NLITaskInstructions />
+  } else if (props.shortname === "Sentiment") {
+    return <SentimentTaskInstructions />
+  } else if (props.shortname === "Hate Speech") {
+    return <HateSpeechTaskInstructions />
+  } else {
+    return (
+      <p>
+        Find an example that the model gets wrong but that another person would
+        get right.
+      </p>
+    );
+  }
+}
+
+const NLITaskInstructions = () => {
+  return (
+    <div>
+      <p>TBD</p>
+    </div>
+  );
+};
+const SentimentTaskInstructions = () => {
+  return (
+    <div>
+      <p>
+        Your objective is to come up with a statement that is either <strong>positive</strong>, or
+        <strong>negative</strong>, in such a way that you fool the model. Your statement should be classified
+        correctly by another person!
+      </p>
+      <p>
+        Try to come up with creative ways to fool the model. Please make sure that your statement actually
+        is sentiment-laden, i.e. that it actually expresses a sentiment.
+      </p>
+    </div>
+  );
+};
+const HateSpeechTaskInstructions = () => {
+  return (
+    <div>
+      <p>
+        For the purposes of this task we define hate speech as follows:
+      </p>
+      <p><i>
+        A direct or indirect attack on people based on characteristics, including ethnicity,
+        race, nationality, immigration status, religion, caste, sex, gender identity, sexual
+        orientation, and disability or disease. We define attack as violent or dehumanizing
+        (comparing people to non-human things, e.g. animals) speech, statements of
+        inferiority, and calls for exclusion or segregation. Mocking hate crime is also
+        considered hate speech. Attacking individuals/famous people is allowed if the attack
+        is not based on any of the protected characteristics listed in the definition.
+        Attacking groups perpetrating hate (e.g. terrorist groups) is also not considered hate.
+      </i></p>
+      <p>
+        <b>Note</b> that, if this wasn't already abundantly clear: this hate speech definition, and the hate speech model
+        used in the loop, do not in any way reflect Facebook's (or anyone else's) policy on hate speech.
+      </p>
+    </div>
+  );
+};
+
 const QATaskInstructions = () => {
   return (
     <div>
       <p>
-        You will be presented with a <em>passage</em> of text, for which you should 
-        ask <em>questions</em> that the AI cannot answer correctly but that another person would 
-        get right. After entering the question, select the answer by <strong>highlighting the 
+        You will be presented with a <em>passage</em> of text, for which you should
+        ask <em>questions</em> that the AI cannot answer correctly but that another person would
+        get right. After entering the question, select the answer by <strong>highlighting the
         words that best answer the question</strong> in the passage.
       </p>
       <p>
-        Try to come up with creative ways to <strong>beat the AI</strong>, and if you notice 
+        Try to come up with creative ways to <strong>beat the AI</strong>, and if you notice
         any consistent failure modes, please be sure to let us know in the explanation section!
       </p>
       <p>
@@ -156,15 +221,15 @@ const QATaskInstructions = () => {
           is selected
         </li>
         <li>
-          Questions can be correctly answered from a span in the passage and <strong>DO NOT require 
+          Questions can be correctly answered from a span in the passage and <strong>DO NOT require
           a Yes or No answer</strong>
         </li>
         <li>
-          Questions can be answered from the content of the passage and <strong>DO 
+          Questions can be answered from the content of the passage and <strong>DO
           NOT</strong> rely on expert external knowledge
         </li>
         <li>
-          <strong>DO NOT</strong> ask questions about the passage structure such as "What is the 
+          <strong>DO NOT</strong> ask questions about the passage structure such as "What is the
           third word in the passage?"
         </li>
       </ol>
@@ -196,7 +261,7 @@ class ResponseInfo extends React.Component {
     e.preventDefault();
     var idx = e.target.getAttribute("data-index");
     var type = e.target.getAttribute("data-type");
-    var explanation = e.target.value.trim(); 
+    var explanation = e.target.value.trim();
     if (explanation !== "" || this.state.hasPreviousExplanation) {
       this.setState({explainSaved: false, hasPreviousExplanation: true})
       this.context.api
@@ -869,15 +934,7 @@ class CreateInterface extends React.Component {
                   <Modal.Title>Instructions</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                  {this.state.task.shortname === "QA" ? (
-                    <QATaskInstructions />
-                  ) : (
-                    <p>
-                      Find an example that the model gets wrong but that another person would
-                      get right.
-                    </p>
-                  )
-                }
+                  <TaskInstructions shortname={this.state.task.shortname} />
                 </Modal.Body>
               </Modal>
           </div>
