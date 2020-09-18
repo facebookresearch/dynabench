@@ -112,6 +112,10 @@ class BadgeModel(BaseModel):
         elif user.streak_days == 365:
             badges.append('DAY_STREAK_1_YEAR')
 
+        for existing_badge in self.getByUid(user.id):
+            if existing_badge.name in badges:
+                badges.remove(existing_badge.name)
+
         return [_badgeobj(b) for b in badges]
 
     def addBadge(self, badge):
