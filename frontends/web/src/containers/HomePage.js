@@ -14,12 +14,14 @@ import {
   Button,
   Card,
   CardGroup,
+  Modal
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import UserContext from "./UserContext";
 import TasksContext from "./TasksContext";
 import "./HomePage.css";
 import Moment from "react-moment";
+import ReactPlayer from "react-player";
 
 class HomePageTable extends React.Component {
   render() {
@@ -112,6 +114,7 @@ class HomePage extends React.Component {
     this.state = {
       showjumbo: true,
       tasks: [],
+      showVideo: false
     };
     this.hideJumbo = this.hideJumbo.bind(this);
   }
@@ -186,24 +189,59 @@ class HomePage extends React.Component {
               <Col lg={8}>
                 <h1 className="mb-4">Rethinking AI Benchmarking</h1>
                 <p>
-                  DynaBench is a research platform for dynamic data
-                  collection and benchmarking. Static benchmarks have well-known
-                  issues: they saturate quickly, are susceptible to overfitting,
-                  contain exploitable annotator artifacts and have unclear or
-                  imperfect evaluation metrics.<br></br>
-                  <br></br> This platform in essence is a scientific
-                  experiment: can we make faster progress if we collect data
-                  dynamically, with humans and models in the loop, rather than
-                  in the old-fashioned static way?
+                  DynaBench is a research platform for dynamic data collection
+                  and benchmarking. Static benchmarks have well-known issues:
+                  they saturate quickly, are susceptible to overfitting, contain
+                  exploitable annotator artifacts and have unclear or imperfect
+                  evaluation metrics.<br></br>
+                  <br></br> This platform in essence is a scientific experiment:
+                  can we make faster progress if we collect data dynamically,
+                  with humans and models in the loop, rather than in the
+                  old-fashioned static way?
                 </p>
-                <Button
-                  variant="primary"
-                  as={Link}
-                  className="button-ellipse blue-bg home-readmore-btn border-0"
-                  to="/about"
+                <Modal
+                  show={this.state.showVideo}
+                  centered
+                  backdropClassName="badge-backdrop"
+                  onHide={() => {
+                    this.setState({ showVideo: false });
+                  }}
+                  dialogAs={({ children }) => (
+                    <div style={{ pointerEvents: "none" }}>{children}</div>
+                  )}
                 >
-                  Read more
-                </Button>
+                  <ReactPlayer
+                    url="https://dynabench-us-west-1-096166425824.s3-us-west-1.amazonaws.com/public/Dynabench_09_17_2020_small.mp4"
+                    controls
+                    playing
+                    width="80vw"
+                    height="80vh"
+                    style={{
+                      pointerEvents: "all",
+                      margin: "10vh auto 0",
+                      backgroundColor: "black",
+                    }}
+                  />
+                </Modal>
+
+                <img
+                  onClick={() => {
+                    this.setState({ showVideo: true });
+                  }}
+                  src="/vid_thumb.png"
+                  className="video-thumbnail"
+                />
+
+                <div>
+                  <Button
+                    variant="primary"
+                    as={Link}
+                    className="button-ellipse blue-bg home-readmore-btn border-0"
+                    to="/about"
+                  >
+                    Read more
+                  </Button>
+                </div>
               </Col>
             </Row>
           </Container>
