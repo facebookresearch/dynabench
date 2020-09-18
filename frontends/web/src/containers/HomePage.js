@@ -211,7 +211,7 @@ class HomePage extends React.Component {
                   )}
                 >
                   <ReactPlayer
-                    url="https://dynabench-us-west-1-096166425824.s3-us-west-1.amazonaws.com/public/Dynabench_09_17_2020.mp4"
+                    url="https://dynabench-us-west-1-096166425824.s3-us-west-1.amazonaws.com/public/Dynabench_09_17_2020_small.mp4"
                     controls
                     playing
                     width="80vw"
