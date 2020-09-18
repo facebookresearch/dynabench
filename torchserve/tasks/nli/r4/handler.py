@@ -47,6 +47,14 @@ get_model_class_name_by_model_no = {
     5: 'electra-large',
 }
 
+get_inspection_forward_steps_by_model_class_name = {
+    'roberta-large': 10,
+    'albert-xxlarge': 2,
+    'xlnet-large': 10,
+    'bart-large': 10,
+    'electra-large': 10,
+}
+
 
 class Args(object):
     def __init__(self, model_class_name):
@@ -199,6 +207,7 @@ class NliTransformerHandler(BaseHandler):
 
         self.model.eval()
 
+        forward_steps = get_inspection_forward_steps_by_model_class_name[self.model_class_item['model_class_name']]
         # the following method will be called 100 times (by default) to compute integrate gradient for
         # both input token and reference tokens for comparision.
         # It might be time consuming if gpu is not support (5-10 secs).
@@ -215,7 +224,7 @@ class NliTransformerHandler(BaseHandler):
                                                      self.model_class_item,
                                                      True),
                                                  target=preprocessed_item['target_tensor'],
-                                                 return_convergence_delta=True, n_steps=10)
+                                                 return_convergence_delta=True, n_steps=forward_steps)
 
         attributions_sum = summarize_attributions(attributions)
         token_ids = preprocessed_item['input_ids'][0].tolist()
