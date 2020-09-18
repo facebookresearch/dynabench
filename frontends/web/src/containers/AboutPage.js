@@ -22,11 +22,11 @@ const AboutPage = () => (
       <div className="mt-5">
         <p>
           Benchmarks &mdash; from{" "}
-          <a href="http://yann.lecun.com/exdb/mnist/">MNIST</a>{" "}to{" "}
-          <a href="http://www.image-net.org">ImageNet</a> to{" "}
-          <a href="https://rajpurkar.github.io/SQuAD-explorer/">SQuAD</a>,{" "}
-          <a href="https://nlp.stanford.edu/projects/snli/">SNLI</a> and{" "}
-          <a href="https://gluebenchmark.com/">GLUE</a>{" "}
+          <a href="http://yann.lecun.com/exdb/mnist/" target="_blank">MNIST</a>{" "}to{" "}
+          <a href="http://www.image-net.org" target="_blank">ImageNet</a> to{" "}
+          <a href="https://rajpurkar.github.io/SQuAD-explorer/" target="_blank">SQuAD</a>,{" "}
+          <a href="https://nlp.stanford.edu/projects/snli/" target="_blank">SNLI</a> and{" "}
+          <a href="https://gluebenchmark.com/" target="_blank">GLUE</a>{" "}
           &mdash; have played a hugely important role in driving progress in AI
           research. With the rapid pace of progress in the field, however, the
           current status quo is starting to show cracks. While it took us
@@ -59,10 +59,11 @@ const AboutPage = () => (
             <p>
               There are well-documented cases of inadvertent biases that may be
               present in datasets. For example, you can get decent performance on
-              SNLI by using <a href="https://arxiv.org/abs/1803.02324">just the hypothesis</a>.
+              SNLI by using <a href="https://arxiv.org/abs/1803.02324" target="_blank">just the hypothesis</a>.
               In VQA (visual question
-              answering), the answer to a "how much" or "how many" question <a href="https://arxiv.org/abs/1612.00837">is
-              usually "2"</a>. Data biases are almost impossible to avoid, which may
+              answering), the answer to a "how much" or "how many" question <a href="https://arxiv.org/abs/1612.00837" target="_blank">is
+              usually "2"</a>. There might be <a href="https://arxiv.org/abs/2008.02637" target="_blank">unintended overlap</a> between train and test sets.
+              Data biases are almost impossible to avoid, which may
               have very serious and potentially harmful side-effects.
             </p>
           </li>
@@ -91,7 +92,7 @@ const AboutPage = () => (
             <p>
               Usually, we ultimately care not about a
               single benchmark, but about how well AI systems can work together
-              with humans.  It is very important that AI objectives <a href="https://arxiv.org/abs/1805.00899">align with human values</a>.
+              with humans.  It is very important that AI objectives <a href="https://arxiv.org/abs/1805.00899" target="_blank">align with human values</a>.
 The real metric for AI systems should be model error rate when interacting with a human.            </p>
           </li>
           <li>
@@ -152,41 +153,41 @@ The real metric for AI systems should be model error rate when interacting with 
         </h2>
         <p>
           This platform came out of our paper on{" "}
-          <a href="https://arxiv.org/abs/1910.14599">
+          <a href="https://arxiv.org/abs/1910.14599" target="_blank">
             Adversarial NLI: A New Benchmark for Natural Language Understanding
           </a>{" "}
           (NLI rounds 1-3). The idea is not new, of course: our work is heavily inspired by
           things like{" "}
-          <a href="https://arxiv.org/pdf/1606.01881.pdf">
+          <a href="https://arxiv.org/abs/1606.01881" target="_blank">
             Build it, Break it, Fix it
           </a>{" "}
           and the awesome{" "}
-          <a href="https://bibinlp.umiacs.umd.edu/">
+          <a href="https://bibinlp.umiacs.umd.edu/" target="_blank">
             Build it, Break it: The Language Edition
           </a>{" "}
           shared task. There's related work on{" "}
-          <a href="https://arxiv.org/abs/1711.07950">
+          <a href="https://arxiv.org/abs/1711.07950" target="_blank">
             Mechanical Turker Descent
           </a>
           ,{" "}
-          <a href="https://arxiv.org/abs/1908.06083">
+          <a href="https://arxiv.org/abs/1908.06083" target="_blank">
             applying these ideas to dialogue safety
           </a>
           ,{" "}
-          <a href="https://www.mitpressjournals.org/doi/full/10.1162/tacl_a_00279">
+          <a href="https://www.mitpressjournals.org/doi/full/10.1162/tacl_a_00279" target="_blank">
             trick me if you can
           </a>{" "}
           and the excellent{" "}
-          <a href="https://arxiv.org/abs/2002.00293">Beat the AI</a> (QA round 1). There are
+          <a href="https://arxiv.org/abs/2002.00293" target="_blank">Beat the AI</a> (QA round 1). There are
           lots of cool datasets out there that use similar ideas, especially
           when it comes to adversarial collection, like{" "}
-          <a href="https://arxiv.org/abs/1808.05326">Swag</a>,{" "}
-          <a href="https://arxiv.org/abs/1904.04365">CODAH</a>,{" "}
-          <a href="https://hotpotqa.github.io/">HotpotQA</a> and of course{" "}
-          <a href="https://arxiv.org/abs/1707.07328">Adversarial SQuAD</a>.
+          <a href="https://arxiv.org/abs/1808.05326" target="_blank">Swag</a>,{" "}
+          <a href="https://arxiv.org/abs/1904.04365" target="_blank">CODAH</a>,{" "}
+          <a href="https://hotpotqa.github.io/" target="_blank">HotpotQA</a> and of course{" "}
+          <a href="https://arxiv.org/abs/1707.07328" target="_blank">Adversarial SQuAD</a>.
           Closely related concepts are{" "}
-          <a href="https://arxiv.org/abs/2004.02709">contrast sets</a> and{" "}
-          <a href="https://arxiv.org/abs/1909.12434">
+          <a href="https://arxiv.org/abs/2004.02709" target="_blank">contrast sets</a> and{" "}
+          <a href="https://arxiv.org/abs/1909.12434" target="_blank">
             counterfactually-augmented data
           </a>
           .
@@ -230,9 +231,9 @@ The real metric for AI systems should be model error rate when interacting with 
           Ultimately, that is for the community to decide and we don't want to
           enforce anything in particular. A suggestion could be that papers
           report results on numbered datasets, so e.g. "ANLI-1:3" for the first
-          three rounds of NLI. If a new round comes out, we will have to take
-          care to score existing state-of-the-art methods to facilitate a
-          staggered comparison.
+          three rounds of NLI. If a new round comes out, as a community we will have to
+          make sure existing state-of-the-art methods are evaluated on each round to
+          facilitate a staggered comparison. We expect this to happen relatively organically.
         </p>
         <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
           Where will this lead?

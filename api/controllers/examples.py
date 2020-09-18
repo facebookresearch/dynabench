@@ -5,17 +5,19 @@
 import bottle
 import common.auth as _auth
 import common.helpers as util
+from common.logging import logger
 
 from models.example import ExampleModel
 from models.user import UserModel
 from models.round import RoundModel
 from models.context import ContextModel
+from models.notification import NotificationModel
+from models.badge import BadgeModel
 
 import json
 
 from collections import Counter
 
-import logging
 from datetime import datetime
 
 @bottle.get('/examples/<tid:int>/<rid:int>')
@@ -82,8 +84,6 @@ def validate_example(credentials, eid):
     preds = Counter([x.split(",")[1] for x in nobj.split("|")])
     rm = RoundModel()
     um = UserModel()
-    if credentials['id'] != 'turk':
-        um.incrementValidatedCount(credentials['id'])
     cm = ContextModel()
     context = cm.get(example.cid)
     rm.updateLastActivity(context.r_realid)
@@ -95,7 +95,21 @@ def validate_example(credentials, eid):
         em.update(example.id, {'verified': True, 'verified_incorrect': True})
     elif preds['F'] >= 5:
         em.update(example.id, {'verified': True, 'verified_flagged': True})
-    return util.json_encode(example.to_dict())
+
+    ret = example.to_dict()
+    if credentials['id'] != 'turk':
+        user = um.updateValidatedCount(credentials['id'])
+
+        bm = BadgeModel()
+        nm = NotificationModel()
+        badges = bm.checkBadgesEarned(user, example)
+        for badge in badges:
+            bm.addBadge(badge)
+            nm.create(credentials['id'], 'NEW_BADGE_EARNED', badge['name'])
+        if badges:
+            ret['badges'] = '|'.join([badge['name'] for badge in badges])
+
+    return util.json_encode(ret)
 
 @bottle.put('/examples/<eid:int>')
 @_auth.requires_auth_or_turk
@@ -116,11 +130,11 @@ def update_example(credentials, eid):
                 bottle.abort(403, 'Access denied')
             del data['uid'] # don't store this
 
-        logging.info("Updating example {} with {}".format(example.id, data))
+        logger.info("Updating example {} with {}".format(example.id, data))
         em.update(example.id, data)
         return util.json_encode({'success': 'ok'})
     except Exception as e:
-        logging.error('Error updating example {}: {}'.format(eid, e))
+        logger.error('Error updating example {}: {}'.format(eid, e))
         bottle.abort(500, {'error': str(e)})
 
 @bottle.post('/examples')
@@ -138,7 +152,7 @@ def post_example(credentials):
         bottle.abort(403, 'Access denied')
 
     em = ExampleModel()
-    eid = em.create( \
+    example = em.create( \
             tid=data['tid'], \
             rid=data['rid'], \
             uid=data['uid'] if credentials['id'] != 'turk' else 'turk', \
@@ -148,7 +162,7 @@ def post_example(credentials):
             response=data['response'], \
             metadata=data['metadata']
             )
-    if not eid:
+    if not example:
         bottle.abort(400, 'Could not create example')
 
     rm = RoundModel()
@@ -157,5 +171,18 @@ def post_example(credentials):
     cm.incrementCountDate(data['cid'])
     if credentials['id'] != 'turk':
         um = UserModel()
-        um.incrementSubmitCount(data['uid'])
-    return util.json_encode({'success': 'ok', 'id': eid})
+        user = um.updateSubmitCount(credentials['id'], example.model_wrong)
+
+        bm = BadgeModel()
+        nm = NotificationModel()
+        badges = bm.checkBadgesEarned(user, example)
+        for badge in badges:
+            bm.addBadge(badge)
+            nm.create(credentials['id'], 'NEW_BADGE_EARNED', badge['name'])
+
+    return util.json_encode({ \
+            'success': 'ok', \
+            'id': example.id, \
+            'badges': '|'.join([badge['name'] for badge in badges]) \
+                if (credentials['id'] != 'turk' and badges) else None \
+            })

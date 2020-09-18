@@ -15,32 +15,20 @@ import {
   Button,
   Nav,
   Pagination,
-  Badge,
+  Badge as BBadge,
+  OverlayTrigger,
+  Tooltip,
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { Formik } from "formik";
 import TasksContext from "./TasksContext";
 import UserContext from "./UserContext";
 import { Avatar } from "../components/Avatar/Avatar";
+import Moment from "react-moment";
 import "./Sidebar-Layout.css";
 import "./ProfilePage.css";
-
-const NotificationsSubPage = (props) => {
-  return (
-    <Container className="mb-5 pb-5">
-      <h1 className="my-4 pt-3 text-uppercase text-center">
-        Your Notifications
-      </h1>
-      <Col className="m-auto" lg={8}>
-        <Card className="profile-card">
-          <Card.Body style={{padding: 20}}>
-            No new notifications
-          </Card.Body>
-        </Card>
-      </Col>
-    </Container>
-  );
-};
+import BadgeGrid from "./BadgeGrid";
+import Badge from "./Badge";
 
 const StatsSubPage = (props) => {
   return (
@@ -71,10 +59,10 @@ const StatsSubPage = (props) => {
                  </tr>
                 <tr>
                   <td>
-                    Overall model error rate:
+                    Overall validated model error rate:
                   </td>
                   <td className="text-right">
-                    {(100 *
+                    {props.user.examples_submitted && (100 *
                       props.user.examples_verified_correct /
                       props.user.examples_submitted
                     ).toFixed(2)}%
@@ -92,10 +80,90 @@ const StatsSubPage = (props) => {
             </Table>
           </Card.Body>
         </Card>
+        <BadgeGrid user={props.user} />
       </Col>
     </Container>
   );
 };
+
+const NotificationsSubPage = (props) => {
+  return (
+    <Container className="mb-5 pb-5">
+      <h1 className="my-4 pt-3 text-uppercase text-center">
+        Your Notifications
+      </h1>
+      <Col className="m-auto" lg={8}>
+        <Card className="profile-card">
+          <Card.Body>
+            <Table className="mb-0">
+              <thead className="blue-color border-bottom">
+                <tr>
+                  <td>
+                    <b>When</b>
+                  </td>
+                  <td>
+                    <b>Message</b>
+                  </td>
+                </tr>
+              </thead>
+              <tbody>
+                {!props.notifications.length ? (
+                  <tr>
+                    <td colSpan="4">
+                      <div className="text-center">No notifications found</div>
+                    </td>
+                  </tr>
+                ) : null}
+                {props.notifications.map((notification) => {
+                  var message = notification.type + ': ' + notification.message;
+                  var created= <Moment utc fromNow>{notification.created}</Moment>;
+                  if (notification.type === "NEW_BADGE_EARNED") {
+                    message = (
+                      <span>You've earned a new badge: <Badge format="text" name={notification.message} /></span>
+                    );
+                  }
+                  if (!notification.seen) {
+                    message = <strong><u>{message}</u></strong>;
+                    created = <strong><u>{created}</u></strong>;
+                  }
+                  return (
+                    <tr
+                      key={notification.id}
+                    >
+                      <td>
+                        {created}
+                      </td>
+                      <td>
+                        {message}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+          </Card.Body>
+          <Card.Footer className="text-center">
+            <Pagination className="mb-0 float-right" size="sm">
+              <Pagination.Item
+                disabled={!props.notificationsPage}
+                onClick={() => props.paginate("prev")}
+              >
+                Previous
+              </Pagination.Item>
+              <Pagination.Item
+                disabled={props.isEndOfNotificationsPage}
+                onClick={() => props.paginate("next")}
+              >
+                Next
+              </Pagination.Item>
+            </Pagination>
+          </Card.Footer>
+        </Card>
+      </Col>
+    </Container>
+  );
+};
+
 
 const ModelSubPage = (props) => {
   return (
@@ -160,19 +228,19 @@ const ModelSubPage = (props) => {
                       </td>
                       <td className="text-center" width="200px">
                         {model.is_published === true ? (
-                          <Badge
+                          <BBadge
                             variant="success"
                             className="publishStatus"
                           >
                             Published
-                          </Badge>
+                          </BBadge>
                         ) : (
-                          <Badge
+                          <BBadge
                             variant="danger"
                             className="publishStatus"
                           >
                             Unpublished
-                          </Badge>
+                          </BBadge>
                         )}
                       </td>
                     </tr>
@@ -212,8 +280,11 @@ class ProfilePage extends React.Component {
       user: {},
       userModels: [],
       userModelsPage: 0,
+      notifications: [],
+      notificationsPage: 0,
       pageLimit: 10,
       isEndOfUserModelsPage: true,
+      isEndOfNotificationsPage: true,
       invalidFileUpload: false,
       loader: true,
     };
@@ -223,7 +294,7 @@ class ProfilePage extends React.Component {
     if (this.props.location.hash === "" || this.props.location.hash === "#profile") {
       this.fetchUser();
     } else if (this.props.location.hash === "#notifications") {
-      // TBD
+      this.fetchNotifications(0);
     } else if (this.props.location.hash === "#stats") {
       this.fetchUser();
     } else if (this.props.location.hash === "#models") {
@@ -246,7 +317,7 @@ class ProfilePage extends React.Component {
   fetchUser = () => {
     const user = this.context.api.getCredentials();
     this.context.api
-      .getUser(user.id)
+      .getUser(user.id, true)
       .then((result) => {
         this.setState({ user: result, loader: false });
       }, (error) => {
@@ -254,7 +325,7 @@ class ProfilePage extends React.Component {
       });
   };
 
-  paginate = (state) => {
+  paginateUserModels = (state) => {
     this.setState(
       {
         userModelsPage:
@@ -266,6 +337,39 @@ class ProfilePage extends React.Component {
         this.fetchModels(this.state.userModelsPage);
       }
     );
+  };
+
+  paginateNotifications = (state) => {
+    this.setState(
+      {
+        notificationsPage:
+          state === "next"
+            ? ++this.state.notificationsPage
+            : --this.state.notificationsPage,
+      },
+      () => {
+        this.fetchNotifications(this.state.notificationsPage);
+      }
+    );
+  };
+
+  fetchNotifications = (page) => {
+    const user = this.context.api.getCredentials();
+    this.context.api
+      .getNotifications(user.id, this.state.pageLimit, page)
+      .then((result) => {
+        const isEndOfPage =
+          (page + 1) * this.state.pageLimit >= (result.count || 0);
+        this.setState({
+          isEndOfNotificationsPage: isEndOfPage,
+          notifications: result.data || [],
+        }, function() {
+          this.context.api.setNotificationsSeen();
+          this.context.user.unseen_notifications = 0;
+        });
+      }, (error) => {
+        console.log(error);
+      });
   };
 
   fetchModels = (page) => {
@@ -551,11 +655,17 @@ class ProfilePage extends React.Component {
               userModels={this.state.userModels}
               userModelsPage={this.state.userModelsPage}
               isEndOfUserModelsPage={this.state.isEndOfUserModelsPage}
-              paginate={this.paginate}
+              paginate={this.paginateUserModels}
               {...this.props}
             /> : null}
           {this.props.location.hash === "#notifications" ?
-            <NotificationsSubPage />
+            <NotificationsSubPage
+              notifications={this.state.notifications}
+              notificationsPage={this.state.notificationsPage}
+              isEndOfNotificationsPage={this.state.isEndOfNotificationsPage}
+              paginate={this.paginateNotifications}
+              {...this.props}
+              />
            : null}
           {this.props.location.hash === "#stats" ?
             <StatsSubPage user={this.state.user} />

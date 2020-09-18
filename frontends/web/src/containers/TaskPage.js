@@ -11,6 +11,7 @@ import {
   Col,
   Card,
   Button,
+  ButtonGroup,
   Nav,
   Table,
   Tooltip,
@@ -24,6 +25,11 @@ import UserContext from "./UserContext";
 import { LineRechart } from "../components/Rechart";
 import { Avatar } from "../components/Avatar/Avatar";
 import Moment from "react-moment";
+import {
+  OverlayProvider,
+  Annotation,
+  OverlayContext
+} from "./Overlay";
 
 const chartSizes = {
   xs: { fontSize: 10 },
@@ -146,50 +152,56 @@ const TaskActionButtons = (props) => {
   return (
     <Nav className="my-4">
       <Nav.Item className="task-action-btn">
-        <OverlayTrigger
-          placement="bottom"
-          delay={{ show: 250, hide: 400 }}
-          overlay={renderCreateTooltip}
-      >
-        <Button
-          as={Link}
-          className="border-0 blue-color font-weight-bold light-gray-bg"
-          to={"/tasks/" + props.taskId + "/create"}
-        >
-          Create Examples
-        </Button>
-      </OverlayTrigger>
+        <Annotation placement="bottom" tooltip="Click here to get creative and start writing examples that fool the model">
+          <OverlayTrigger
+            placement="bottom"
+            delay={{ show: 250, hide: 400 }}
+            overlay={renderCreateTooltip}
+          >
+            <Button
+              as={Link}
+              className="border-0 blue-color font-weight-bold light-gray-bg"
+              to={"/tasks/" + props.taskId + "/create"}
+            >
+              Create Examples
+            </Button>
+        </OverlayTrigger>
+      </Annotation>
     </Nav.Item>
     <Nav.Item className="task-action-btn">
-      <OverlayTrigger
-        placement="bottom"
-        delay={{ show: 250, hide: 400 }}
-        overlay={renderVerifyTooltip}
-      >
-        <Button
-          as={Link}
-          className="border-0 blue-color font-weight-bold light-gray-bg"
-          to={"/tasks/" + props.taskId + "/validate"}
-        >
-          Validate Examples
-        </Button>
-      </OverlayTrigger>
-    </Nav.Item>
-    {props.task.shortname === "NLI" ? (
-      <Nav.Item className="task-action-btn">
+      <Annotation placement="top" tooltip="Click here to see examples created by others, and validate their correctness">
         <OverlayTrigger
           placement="bottom"
           delay={{ show: 250, hide: 400 }}
-          overlay={renderSubmitTooltip}
+          overlay={renderVerifyTooltip}
         >
           <Button
             as={Link}
             className="border-0 blue-color font-weight-bold light-gray-bg"
-            to={"/tasks/" + props.taskId + "/submit"}
+            to={"/tasks/" + props.taskId + "/validate"}
           >
-            Submit Predictions
+            Validate Examples
           </Button>
         </OverlayTrigger>
+      </Annotation>
+    </Nav.Item>
+    {props.task.shortname === "NLI" || props.task.shortname === "QA" ? (
+      <Nav.Item className="task-action-btn">
+        <Annotation placement="right" tooltip="Click here to submit your model predictions for previous rounds.">
+          <OverlayTrigger
+            placement="bottom"
+            delay={{ show: 250, hide: 400 }}
+            overlay={renderSubmitTooltip}
+          >
+              <Button
+                as={Link}
+                className="border-0 blue-color font-weight-bold light-gray-bg"
+                to={"/tasks/" + props.taskId + "/submit"}
+              >
+                Submit Predictions
+              </Button>
+          </OverlayTrigger>
+        </Annotation>
       </Nav.Item>
     ) : null}
     {props.uid === props.task.owner_uid ?
@@ -204,7 +216,7 @@ const TaskActionButtons = (props) => {
   );
 };
 
-const OveralTaskStats = (props) => {
+const OverallTaskStats = (props) => {
   return (
     <Table className="w-50 font-weight-bold ml-n2">
       <thead />
@@ -247,7 +259,11 @@ const OverallModelLeaderBoard = (props) => {
       <thead>
         <tr>
           <th>Model</th>
-          <th>Mean accuracy</th>
+          {props.task === "QA" ? (
+            <th>Mean F1</th>
+          ) : (
+            <th>Mean Accuracy</th>
+          )}
         </tr>
       </thead>
       <tbody>
@@ -473,20 +489,40 @@ class TaskPage extends React.Component {
   };
 
   render() {
-   return (
+    return (
+      <OverlayProvider initiallyHide={true} delayMs="1700">
       <Container fluid>
         <Row>
           <Col lg={2} className="p-0 border">
-            <TaskNav {...this.props} taskDetail={this.state.task} />
+            <Annotation placement="bottom-start" tooltip="Dynabench tasks happen over multiple rounds. You can look at previous rounds here.">
+              <TaskNav {...this.props} taskDetail={this.state.task} />
+            </Annotation>
           </Col>
           <Col lg={10} className="px-4 px-lg-5">
             <h2 className="task-page-header text-reset ml-0">
               {this.state.task.name}
             </h2>
+            <div style={{float: "right", marginTop: 30}}>
+            <ButtonGroup>
+              <Annotation placement="left" tooltip="Click to show help overlay">
+                <OverlayContext.Consumer>
+                  {
+                    ({hidden, setHidden})=> (
+                        <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
+                          onClick={() => { setHidden(!hidden) }}
+                        ><i className="fas fa-question"></i></button>
+                    )
+                  }
+                </OverlayContext.Consumer>
+              </Annotation>
+            </ButtonGroup>
+            </div>
             <p>{this.state.task.desc}</p>
             {this.props.location.hash === "#overall" ? (
               <>
-                <OveralTaskStats task={this.state.task}/>
+                <Annotation placement="right" tooltip="This shows the statistics of the currently active round.">
+                  <OverallTaskStats task={this.state.task}/>
+                </Annotation>
                 <hr />
                 <TaskActionButtons
                   taskId={this.state.taskId}
@@ -516,6 +552,7 @@ class TaskPage extends React.Component {
             <Row>
               <Col xs={12} md={6}>
                 {this.state.modelLeaderBoardData.length ? (
+                  <Annotation placement="left" tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round">
                   <Card className="my-4">
                     <Card.Header className="p-3 light-gray-bg">
                       <h2 className="text-uppercase m-0 text-reset">
@@ -525,6 +562,7 @@ class TaskPage extends React.Component {
                     <Card.Body className="p-0">
                       <OverallModelLeaderBoard
                         data={this.state.modelLeaderBoardData}
+                        taskShortName={this.state.task.shortname}
                       />
                     </Card.Body>
                     <Card.Footer className="text-center">
@@ -544,8 +582,10 @@ class TaskPage extends React.Component {
                       </Pagination>
                     </Card.Footer>
                   </Card>
+                  </Annotation>
                 ) : null}
                 {this.state.userLeaderBoardData.length ? (
+                  <Annotation placement="left" tooltip="This shows how well our users did on this task">
                   <Card className="my-4">
                     <Card.Header className="p-3 light-gray-bg">
                       <h2 className="text-uppercase m-0 text-reset">
@@ -574,18 +614,22 @@ class TaskPage extends React.Component {
                       </Pagination>
                     </Card.Footer>
                   </Card>
+                  </Annotation>
                 ) : null}
               </Col>
               <Col xs={12} md={6}>
                 {this.props.location.hash === "#overall" &&
                 this.state.trendScore.length ? (
-                  <TaskTrend data={this.state.trendScore} />
+                  <Annotation placement="top-end" tooltip="As tasks progress over time, we can follow their trend, which is shown here">
+                    <TaskTrend data={this.state.trendScore} />
+                  </Annotation>
                 ) : null}
               </Col>
             </Row>
           </Col>
         </Row>
       </Container>
+      </OverlayProvider>
     );
   }
 }

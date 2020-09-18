@@ -77,7 +77,7 @@ nvm install latest
 nvm alias default latest
 nvm use latest
 npm install
-echo 'REACT_APP_API_HOST = "http://0.0.0.0:8081"' >> .env
+echo 'REACT_APP_API_HOST = "http://localhost:8081"' >> .env
 npm start
 ```
 

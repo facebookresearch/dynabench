@@ -111,6 +111,7 @@ export default class ApiService {
     formData.append("file", data.file);
     formData.append("type", data.roundType);
     formData.append("taskId", data.taskId);
+    formData.append("taskShortName", data.taskShortName);
     return this.fetch(`${this.domain}/models/upload`, {
       method: "POST",
       body: formData,
@@ -169,8 +170,12 @@ export default class ApiService {
     });
   }
 
-  getUser(id) {
-    return this.fetch(`${this.domain}/users/${id}`, {
+  getUser(id, badges=false) {
+    var url = `${this.domain}/users/${id}`;
+    if (badges) {
+      url += '/badges';
+    }
+    return this.fetch(url, {
       method: "GET",
     });
   }
@@ -203,6 +208,25 @@ export default class ApiService {
     return this.fetch(`${this.domain}/models/${modelId}/details`, {
       method: "GET",
     });
+  }
+
+  setNotificationsSeen(userId) {
+    return this.fetch(
+      `${this.domain}/notifications/seen`,
+      {
+        method: "PUT",
+      }
+    );
+  }
+  getNotifications(userId, limit, offset) {
+    return this.fetch(
+      `${this.domain}/notifications?limit=${limit || 10}&offset=${
+        offset || 0
+      }`,
+      {
+        method: "GET",
+      }
+    );
   }
 
   getUserModels(userId, limit, offset) {

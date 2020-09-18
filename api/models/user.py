@@ -5,6 +5,7 @@
 import sqlalchemy as db
 from .base import Base, BaseModel
 import secrets
+import datetime
 
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -26,6 +27,13 @@ class User(Base):
     examples_verified_correct = db.Column(db.Integer, default=0)
     examples_submitted = db.Column(db.Integer, default=0)
     examples_verified = db.Column(db.Integer, default=0)
+    models_submitted = db.Column(db.Integer, default=0)
+
+    unseen_notifications = db.Column(db.Integer, default=0)
+
+    streak_examples = db.Column(db.Integer, default=0)
+    streak_days = db.Column(db.Integer, default=0)
+    streak_days_last_model_wrong = db.Column(db.DateTime, nullable=True)
 
     avatar_url = db.Column(db.Text)
 
@@ -110,18 +118,56 @@ class UserModel(BaseModel):
         u.update(kwargs)
         self.dbs.commit()
 
-    def incrementSubmitCount(self, uid):
+    def updateSubmitCount(self, uid, wrong=False):
         u = self.get(uid)
         if u:
             u.examples_submitted = u.examples_submitted + 1
+            if wrong:
+                u.streak_examples = u.streak_examples + 1
+                #now = db.sql.func.now()
+                now = datetime.datetime.now()
+                if u.streak_days_last_model_wrong is None:
+                    u.streak_days_last_model_wrong = now
+                else:
+                    one_day_passed = u.streak_days_last_model_wrong \
+                            + datetime.timedelta(days=1)
+                    two_days_passed = u.streak_days_last_model_wrong \
+                            + datetime.timedelta(days=2)
+                    if now > one_day_passed:
+                        if now <= two_days_passed:
+                            u.streak_days = u.streak_days + 1
+                            u.streak_days_last_model_wrong = now
+                        elif now > two_days_passed:
+                            u.streak_days = 0
+                            u.streak_days_last_model_wrong = None
+            else:
+                u.streak_examples = 0
             self.dbs.commit()
-    def incrementValidatedCount(self, uid):
+        return u
+
+    def updateValidatedCount(self, uid):
         u = self.get(uid)
         if u:
             u.examples_verified = u.examples_verified + 1
+            self.dbs.commit()
+        return u
+    def incrementModelSubmitCount(self, uid):
+        u = self.get(uid)
+        if u:
+            u.models_submitted = u.models_submitted + 1
             self.dbs.commit()
     def incrementCorrectCount(self, uid):
         u = self.get(uid)
         if u:
             u.examples_verified_correct = u.examples_verified_correct + 1
+            self.dbs.commit()
+    def incrementNotificationCount(self, uid):
+        u = self.get(uid)
+        if u:
+            u.unseen_notifications = u.unseen_notifications + 1
+            self.dbs.commit()
+    def resetNotificationCount(self, uid):
+        u = self.get(uid)
+        if u:
+            u.unseen_notifications = 0
             self.dbs.commit()

@@ -16,7 +16,6 @@ import RegisterPage from "./RegisterPage";
 import ProfilePage from "./ProfilePage";
 import AboutPage from "./AboutPage";
 import TaskPage from "./TaskPage";
-import TasksPage from "./TasksPage";
 import ContactPage from "./ContactPage";
 import TermsPage from "./TermsPage";
 import DataPolicyPage from "./DataPolicyPage";
@@ -70,6 +69,7 @@ class App extends React.Component {
       tasks: [],
     };
     this.updateState = this.updateState.bind(this);
+    this.refreshData = this.refreshData.bind(this);
     this.api = new ApiService(process.env.REACT_APP_API_HOST);
     if (process.env.REACT_APP_GA_ID) {
       ReactGA.initialize(process.env.REACT_APP_GA_ID);
@@ -78,7 +78,7 @@ class App extends React.Component {
   updateState(value) {
     this.setState(value);
   }
-  componentDidMount() {
+  refreshData(){
     if (this.api.loggedIn()) {
       const userCredentials = this.api.getCredentials();
       this.setState({ user: userCredentials }, () => {
@@ -98,6 +98,9 @@ class App extends React.Component {
       }, (error) => {
         console.log(error);
       });
+  }
+  componentDidMount() {
+    this.refreshData()
   }
   render() {
     const NavItems = this.state.tasks.map((task, index) => (
@@ -156,6 +159,7 @@ class App extends React.Component {
                   {this.state.user.id ? (
                     <>
                       <NavDropdown
+                        onToggle={this.refreshData}
                         alignRight
                         className="no-chevron"
                         title={
@@ -173,7 +177,7 @@ class App extends React.Component {
                         </NavDropdown.Item>
                         <NavDropdown.Divider />
                         <NavDropdown.Item href="/account#notifications">
-                          Notifications
+                          Notifications ({this.state.user?.unseen_notifications})
                         </NavDropdown.Item>
                         <NavDropdown.Item href="/account#stats">
                           Stats &amp; Badges
@@ -239,7 +243,6 @@ class App extends React.Component {
                   component={TaskPage}
                 />
                 <Route path="/tasks/:taskId" component={TaskPage} />
-                <Route path="/tasks" component={TasksPage} />
                 <Route path="/login" component={LoginPage} />
                 <Route path="/forgot-password" component={ForgotPassword} />
                 <Route

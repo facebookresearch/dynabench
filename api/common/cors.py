@@ -3,7 +3,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import bottle
-import logging
 import urllib
 
 @bottle.route('/<:re:.*>', method='OPTIONS')

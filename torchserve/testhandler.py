@@ -17,8 +17,11 @@ class Context(object):
         else:
             self.manifest = {"model": {"serializedFile": os.path.join(config['round_path'], fname)}}
         self.system_properties = {"model_dir": config['round_path']}
-        if not os.path.exists(os.path.join(config['round_path'], fname)):
-            os.symlink(os.path.join(os.getcwd(), config['model_dir'], fname), os.path.join(config['round_path'], fname))
+        # Create symlinks for everything in model_dir to simulate the flattened structure when served
+        round_model_files = [fname for fname in os.listdir(config['model_dir']) if not fname.startswith('.')]
+        for fname in round_model_files:
+            if not os.path.exists(os.path.join(config['round_path'], fname)):
+                os.symlink(os.path.join(os.getcwd(), config['model_dir'], fname), os.path.join(config['round_path'], fname))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Dynabench Model Deployment")

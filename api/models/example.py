@@ -2,12 +2,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import logging
 import sqlalchemy as db
 from sqlalchemy import case
 from .base import Base, BaseModel
 from .context import ContextModel
 from .user import UserModel
+
+from common.logging import logger
 
 from models.user import User
 from models.context import Context
@@ -79,13 +80,13 @@ class ExampleModel(BaseModel):
 
     def create(self, tid, rid, uid, cid, hypothesis, tgt, response, metadata):
         if uid == 'turk' and 'annotator_id' not in metadata:
-            logging.error('Annotator id not specified but received Turk example')
+            logger.error('Annotator id not specified but received Turk example')
             return False
 
         cm = ContextModel()
         c = cm.get(cid)
         if int(tid) != c.round.task.id or int(rid) != c.round.rid:
-            logging.error('Task id ({}={}) or round id ({}={}) do not match context'.format(tid, c.round.task.id, rid, c.round.rid))
+            logger.error('Task id ({}={}) or round id ({}={}) do not match context'.format(tid, c.round.task.id, rid, c.round.rid))
             return False
 
         # If task has_answer, handle here (specifically target_pred and model_wrong)
@@ -125,11 +126,11 @@ class ExampleModel(BaseModel):
             self.dbs.add(e)
             self.dbs.flush()
             self.dbs.commit()
-            logging.info('Added example (%s)' % (e.id))
+            logger.info('Added example (%s)' % (e.id))
         except Exception as error_message:
-            logging.error('Could not create example (%s)' % error_message)
+            logger.error('Could not create example (%s)' % error_message)
             return False
-        return e.id
+        return e
 
     def verify_signature(self, signature, context, hypothesis, pred_str):
         tid = context.round.task.id
@@ -150,7 +151,7 @@ class ExampleModel(BaseModel):
             h.update(f)
 
         if h.hexdigest() != signature:
-            logging.error("Signature does not match (received %s, expected %s [%s])" %
+            logger.error("Signature does not match (received %s, expected %s [%s])" %
                     (h.hexdigest(), signature, ''.join([str(x) for x in fields_to_sign])))
             return False
         return True
@@ -169,7 +170,7 @@ class ExampleModel(BaseModel):
             .join(Round, Context.r_realid == Round.id) \
             .join(Task, Round.tid == Task.id).filter(Task.id == tid) \
             .group_by(User.id).having(db.func.count() > min_cnt) \
-            .order_by((cnt / db.func.count()).desc())
+            .order_by(db.func.count().desc(), (cnt / db.func.count()).desc())
         if not downstream:
             return query_res.limit(n).offset(n * offset), util.get_query_count(query_res)
         return query_res

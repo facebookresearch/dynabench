@@ -20,19 +20,23 @@ sesh = sessionmaker(bind=engine)
 dbs = sesh()
 
 # insert models here:
-from models.task import Task
-t = Task()
-from models.round import Round
-r = Round()
-from models.score import Score
-s = Score()
-from models.model import Model
-m = Model()
-from models.context import Context
-c = Context()
-from models.example import Example
-e = Example()
-from models.user import User
-u = User()
+#from models.task import Task
+#t = Task()
+#from models.round import Round
+#r = Round()
+#from models.score import Score
+#s = Score()
+#from models.model import Model
+#m = Model()
+#from models.context import Context
+#c = Context()
+#from models.example import Example
+#e = Example()
+#from models.user import User
+#u = User()
+from models.notification import Notification
+n = Notification()
+from models.badge import Badge
+b = Badge()
 Base.metadata.create_all(engine)
 dbs.commit()

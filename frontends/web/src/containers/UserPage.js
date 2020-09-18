@@ -20,6 +20,7 @@ import { Avatar } from "../components/Avatar/Avatar";
 import "./Sidebar-Layout.css";
 import TasksContext from "./TasksContext";
 import UserContext from "./UserContext";
+import BadgeGrid from "./BadgeGrid";
 
 class UserPage extends React.Component {
   static contextType = UserContext;
@@ -54,7 +55,7 @@ class UserPage extends React.Component {
 
   fetchUser = () => {
     this.context.api
-      .getUser(this.state.userId)
+      .getUser(this.state.userId, true)
       .then((result) => {
         this.setState({ user: result });
       }, (error) => {
@@ -157,6 +158,7 @@ class UserPage extends React.Component {
                 </h1>
                 <Col className="m-auto" lg={8}>
                   {this.state.user.id && (
+                    <>
                     <Card>
                       <Container className="mt-3">
                         <Row>
@@ -194,6 +196,21 @@ class UserPage extends React.Component {
                             />
                           </Col>
                         </Form.Group>
+                        <Form.Group as={Row}>
+                          <Form.Label column sm="6" className="text-right">
+                            Model Error Rate:
+                          </Form.Label>
+                          <Col sm="6">
+                            <Form.Control
+                              plaintext
+                              readOnly
+                              defaultValue={
+                                this.state.user.examples_submitted > 0 ?
+                                  (100 * this.state.user.examples_verified_correct / this.state.user.examples_submitted).toFixed(2) + '%'
+                    : 'N/A'}
+                            />
+                          </Col>
+                        </Form.Group>
                       </Card.Body>
                       {this.state.user.id == this.context.user.id && (
                         <Card.Footer>
@@ -207,6 +224,8 @@ class UserPage extends React.Component {
                         </Card.Footer>
                       )}
                     </Card>
+                    <BadgeGrid user={this.state.user} />
+                    </>
                   )}
                 </Col>
               </>

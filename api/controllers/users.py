@@ -11,12 +11,14 @@ import os
 import common.auth as _auth
 import common.helpers as util
 import common.mail_service as mail
+from common.logging import logger
 
 from models.user import UserModel
 from models.model import ModelModel
+from models.badge import BadgeModel
+from models.notification import NotificationModel
 
 import json
-import logging
 
 @bottle.get('/users')
 #@_auth.requires_auth
@@ -29,46 +31,82 @@ def users():
 @bottle.get('/users/<id:int>')
 @_auth.requires_auth
 def get_user(credentials, id):
-    u = UserModel()
-    user = u.get(id)
+    um = UserModel()
+    user = um.get(id)
     if not user:
         bottle.abort(404, 'Not found')
 
     if id != credentials['id']:
         # only copy some sub fields if this is not us
         nu, u = {}, user.to_dict()
-        for f in ['id', 'username', 'affiliation']:
+        for f in ['id', 'username', 'affiliation', 'examples_submitted', 'examples_verified_correct']:
             nu[f] = u[f]
         return util.json_encode(nu)
     else:
         return util.json_encode(user.to_dict())
 
+@bottle.get('/users/<id:int>/badges')
+@_auth.requires_auth
+def get_user_with_badges(credentials, id):
+    um = UserModel()
+    user = um.get(id)
+    if not user:
+        bottle.abort(404, 'Not found')
+
+    if id != credentials['id']:
+        # only copy some sub fields if this is not us
+        nu, u = {}, user.to_dict()
+        for f in ['id', 'username', 'affiliation', 'examples_submitted', 'examples_verified_correct']:
+            nu[f] = u[f]
+
+        bm = BadgeModel()
+        badges = bm.getByUid(id)
+        if badges:
+            nu['badges'] = [b.to_dict() for b in badges]
+
+        return util.json_encode(nu)
+    else:
+        user = user.to_dict()
+        bm = BadgeModel()
+        badges = bm.getByUid(id)
+        if badges:
+            user['badges'] = [b.to_dict() for b in badges]
+
+        return util.json_encode(user)
+
+
 @bottle.post('/users')
 def create_user():
     u = UserModel()
+    bm = BadgeModel()
+    nm = NotificationModel()
     data = bottle.request.json
     if not data or 'email' not in data or 'password' not in data or 'username' not in data:
-        logging.info('Missing data')
+        logger.info('Missing data')
         bottle.abort(400, 'Missing data')
     if u.exists(email=data['email']):
-        logging.info('Email already exists')
+        logger.info('Email already exists')
         bottle.abort(409, 'Email already exists')
     elif u.exists(username=data['username']):
-        logging.info('Username already exists')
+        logger.info('Username already exists')
         bottle.abort(409, 'Username already exists')
 
     try:
         u.create(email=data['email'], password=data['password'], username=data['username'])
         user = u.getByEmail(data['email'])
+        user_dict = user.to_dict()
         refresh_token = _auth.set_refresh_token()
         u.update(user.id, {'refresh_token': refresh_token})
+        bm.addBadge({'uid': user_dict['id'], 'name': 'WELCOME_NOOB'})
+        nm.create(user_dict['id'], 'NEW_BADGE_EARNED', 'WELCOME_NOOB')
+
     except Exception as error_message:
-        logging.info('Could not create user: %s' % (error_message))
+        logger.info('Could not create user: %s' % (error_message))
         bottle.abort(400, 'Could not create user')
 
-    token = _auth.get_token({'id': user.id, 'username': user.username})
-    logging.info('Registration and authentication successful for %s' % (user.username))
-    return {'user': user.to_dict(), 'token': token}
+    token = _auth.get_token({'id': user_dict['id'], 'username': user_dict['username']})
+    logger.info('Registration and authentication successful for %s' % (user_dict['username']))
+    return {'user': user_dict, 'token': token}
 
 @bottle.post('/recover/resolve/<forgot_token>')
 def reset_password(forgot_token):
@@ -81,7 +119,7 @@ def reset_password(forgot_token):
 
     data = bottle.request.json
     if not data or 'password' not in data or 'email' not in data:
-        logging.info('Missing data')
+        logger.info('Missing data')
         bottle.abort(400, 'Missing data')
     try:
         u = UserModel()
@@ -100,13 +138,13 @@ def reset_password(forgot_token):
             'password': user.password \
             })
     except AssertionError as e:
-        logging.exception('Invalid token : %s' % (e))
+        logger.exception('Invalid token : %s' % (e))
         bottle.abort(401, str(e))
     except Exception as error_message:
-        logging.exception('Could not reset user password: %s' % (error_message))
+        logger.exception('Could not reset user password: %s' % (error_message))
         bottle.abort(400, 'Could not reset user password')
 
-    logging.info('User password reset successful for %s' % (user.username))
+    logger.info('User password reset successful for %s' % (user.username))
     return {'status': 'success'}
 
 @bottle.post('/recover/initiate')
@@ -140,7 +178,7 @@ def recover_password():
                   template_name='templates/forgot_password.txt', msg_dict=msg, subject=subject)
         return {'status': 'success'}
     except Exception as error_message:
-        logging.exception("Reset password failure (%s): (%s)" % (data['email'], error_message))
+        logger.exception("Reset password failure (%s): (%s)" % (data['email'], error_message))
         bottle.abort(403, 'Reset password failed')
 
 @bottle.get('/users/<uid:int>/models')
@@ -152,7 +190,6 @@ def get_user_models(uid):
     """
     # check the current user and request user id are same
     is_current_user = util.is_current_user(uid=uid)
-    logging.info('Current user validation status (%s) for %s' %(is_current_user, uid))
     limit, offset = util.get_limit_and_offset_from_request()
     try:
         model = ModelModel()
@@ -162,7 +199,7 @@ def get_user_models(uid):
             return util.json_encode({'count': total_count, 'data': dicts})
         return util.json_encode({'count': 0, 'data': []})
     except Exception as e:
-        logging.exception('Could not fetch user model(s) : %s' % (e))
+        logger.exception('Could not fetch user model(s) : %s' % (e))
         bottle.abort(400, 'Could not fetch user model(s)')
 
 @bottle.get('/users/<uid:int>/models/<model_id:int>')
@@ -175,7 +212,7 @@ def get_user_models(uid, model_id):
     """
     # check the current user and request user id are same
     is_current_user = util.is_current_user(uid= uid)
-    logging.info('Current user validation status (%s) for %s' %(is_current_user, uid))
+    logger.info('Current user validation status (%s) for %s' %(is_current_user, uid))
     try:
         model = ModelModel()
         model_obj = model.getUserModelsByUidAndMid(uid=uid, mid=model_id, is_current_user=is_current_user)
@@ -183,7 +220,7 @@ def get_user_models(uid, model_id):
         if dicts:
             return util.json_encode(dicts)
     except Exception as e:
-        logging.exception('Could not fetch user model: %s' % (e))
+        logger.exception('Could not fetch user model: %s' % (e))
         bottle.abort(400, 'Could not fetch user model')
 
     bottle.abort(204, 'No models found')
@@ -204,17 +241,17 @@ def update_user_profile(credentials, id):
 
     # validate user detail
     if not util.is_current_user(uid=id, credentials=credentials):
-        logging.error('Not authorized to update profile')
+        logger.error('Not authorized to update profile')
         bottle.abort(403, 'Not authorized to update profile')
 
     user = u.get(id)
     if not user:
-        logging.error('User does not exist (%s)' % id)
+        logger.error('User does not exist (%s)' % id)
         bottle.abort(404, 'User not found')
 
     existing = u.getByUsername(data['username'])
     if existing and user.id != existing.id:
-        logging.error('Username already exists (%s)' % data['username'])
+        logger.error('Username already exists (%s)' % data['username'])
         bottle.abort(409, 'Username already exists')
 
     try:
@@ -225,7 +262,7 @@ def update_user_profile(credentials, id):
             })
         return util.json_encode(user.to_dict())
     except Exception as ex:
-        logging.exception('Could not update profile: %s' % (ex))
+        logger.exception('Could not update profile: %s' % (ex))
         bottle.abort(400, 'Could not update profile')
 
 @bottle.post('/users/<id:int>/avatar/upload')
@@ -277,5 +314,5 @@ def upload_user_profile_picture(credentials, id):
     except AssertionError as ex:
         bottle.abort(413, str(ex))
     except Exception as ex:
-        logging.exception('Could not upload user profile picture: %s' % (ex))
+        logger.exception('Could not upload user profile picture: %s' % (ex))
         bottle.abort(400, 'Could not upload user profile picture')
