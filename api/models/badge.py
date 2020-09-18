@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import sqlalchemy as db
+import datetime
 from .base import Base, BaseModel
 from .user import User, UserModel
 
@@ -65,56 +66,82 @@ class BadgeModel(BaseModel):
     def __init__(self):
         super(BadgeModel, self).__init__(Badge)
 
-    def checkBadgesEarned(self, user, example):
+    def updateSubmitCountsAndCheckBadgesEarned(self, user, example, type):
         def _badgeobj(name):
             return {'uid': user.id, 'name': name, 'metadata': None}
 
         badges = []
         #badges.append('TESTING_BADGES')
 
-        # General beginner badges
-        if user.examples_submitted == 1:
-            badges.append('FIRST_CREATED')
-        if user.examples_submitted == 10:
-            badges.append('FIRST_TEN_CREATED')
-        if user.examples_verified == 1:
-            badges.append('FIRST_VERIFIED')
-        if user.examples_verified_correct == 1:
-            badges.append('FIRST_VALIDATED_FOOLING')
+        if type == 'validate':
+            # Validate beginner badges
+            if user.examples_verified == 1:
+                badges.append('FIRST_VERIFIED')
+            if user.examples_verified_correct == 1:
+                badges.append('FIRST_VALIDATED_FOOLING')
 
-        # Example streaks
-        if user.streak_examples == 5:
-            badges.append('EXAMPLE_STREAK_5')
-        elif user.streak_examples == 10:
-            badges.append('EXAMPLE_STREAK_10')
-        elif user.streak_examples == 20:
-            badges.append('EXAMPLE_STREAK_20')
-        elif user.streak_examples == 50:
-            badges.append('EXAMPLE_STREAK_50')
-        elif user.streak_examples == 100:
-            badges.append('EXAMPLE_STREAK_100')
+        elif type == 'create':
+            user.examples_submitted = user.examples_submitted + 1
+            streak_days_increased = False
+            if example.model_wrong:
+                user.streak_examples = user.streak_examples + 1
+                now = datetime.datetime.now()
+                if user.streak_days_last_model_wrong is None:
+                    user.streak_days_last_model_wrong = now
+                else:
+                    one_day_passed = user.streak_days_last_model_wrong \
+                            + datetime.timedelta(days=1)
+                    two_days_passed = user.streak_days_last_model_wrong \
+                            + datetime.timedelta(days=2)
+                    if now > one_day_passed:
+                        if now <= two_days_passed:
+                            streak_days_increased = True
+                            user.streak_days = user.streak_days + 1
+                            user.streak_days_last_model_wrong = now
+                        elif now > two_days_passed:
+                            user.streak_days = 0
+                            user.streak_days_last_model_wrong = None
+            else:
+                user.streak_examples = 0
+            self.dbs.commit()
+            # Create beginner badges
+            if user.examples_submitted == 1:
+                badges.append('FIRST_CREATED')
+            if user.examples_submitted == 10:
+                badges.append('FIRST_TEN_CREATED')
 
-        # Day streaks
-        if user.streak_days == 2:
-            badges.append('DAY_STREAK_2')
-        elif user.streak_days == 3:
-            badges.append('DAY_STREAK_3')
-        elif user.streak_days == 5:
-            badges.append('DAY_STREAK_5')
-        elif user.streak_days == 7:
-            badges.append('DAY_STREAK_1_WEEK')
-        elif user.streak_days == 14:
-            badges.append('DAY_STREAK_2_WEEK')
-        elif user.streak_days == 30:
-            badges.append('DAY_STREAK_1_MONTH')
-        elif user.streak_days == 90:
-            badges.append('DAY_STREAK_3_MONTH')
-        elif user.streak_days == 365:
-            badges.append('DAY_STREAK_1_YEAR')
+            # Example streaks
+            if user.streak_examples == 5:
+                badges.append('EXAMPLE_STREAK_5')
+            elif user.streak_examples == 10:
+                badges.append('EXAMPLE_STREAK_10')
+            elif user.streak_examples == 20:
+                badges.append('EXAMPLE_STREAK_20')
+            elif user.streak_examples == 50:
+                badges.append('EXAMPLE_STREAK_50')
+            elif user.streak_examples == 100:
+                badges.append('EXAMPLE_STREAK_100')
 
-        for existing_badge in self.getByUid(user.id):
-            if existing_badge.name in badges:
-                badges.remove(existing_badge.name)
+            # Day streaks
+            if streak_days_increased:
+                if user.streak_days == 2:
+                    badges.append('DAY_STREAK_2')
+                elif user.streak_days == 3:
+                    badges.append('DAY_STREAK_3')
+                elif user.streak_days == 5:
+                    badges.append('DAY_STREAK_5')
+                elif user.streak_days == 7:
+                    badges.append('DAY_STREAK_1_WEEK')
+                elif user.streak_days == 14:
+                    badges.append('DAY_STREAK_2_WEEK')
+                elif user.streak_days == 30:
+                    badges.append('DAY_STREAK_1_MONTH')
+                elif user.streak_days == 90:
+                    badges.append('DAY_STREAK_3_MONTH')
+                elif user.streak_days == 365:
+                    badges.append('DAY_STREAK_1_YEAR')
+        else:
+            raise ValueError(' "' + type + '" not recognized as a badge type.')
 
         return [_badgeobj(b) for b in badges]
 
