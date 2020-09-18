@@ -77,9 +77,8 @@ class BadgeModel(BaseModel):
             # Validate beginner badges
             if user.examples_verified == 1:
                 badges.append('FIRST_VERIFIED')
-            if 'FIRST_VALIDATED_FOOLING' not in\
-                map(lambda badge: badge.name, self.getByUid(user.id))\
-                    and user.examples_verified_correct == 1:
+            if user.examples_verified_correct == 1 and 'FIRST_VALIDATED_FOOLING'\
+                    not in map(lambda badge: badge.name, self.getByUid(user.id)):
                 badges.append('FIRST_VALIDATED_FOOLING')
 
         elif type == 'create':
