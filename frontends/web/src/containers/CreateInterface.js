@@ -130,6 +130,15 @@ const TextFeature = ({ data, curTarget, targets }) => {
       <tbody>
         <tr dangerouslySetInnerHTML={{ __html: template }}></tr>
       </tbody>
+      <tfoot>
+        <tr>
+          <td>
+            The model inspector shows the
+            <a href="https://captum.ai/docs/extension/integrated_gradients" target="_blank"> layer integrated gradients </a>
+            for the input token layer of the model.
+          </td>
+        </tr>
+      </tfoot>
     </table>
   );
 };
