@@ -224,10 +224,13 @@ class HomePage extends React.Component {
                   />
                 </Modal>
 
-                {/* TODO: replace below button w/ thumbnail */}
-                <img onClick={() => {
+                <img
+                  onClick={() => {
                     this.setState({ showVideo: true });
-                  }} src="/vid_thumb.png" className="video-thumbnail" />
+                  }}
+                  src="/vid_thumb.png"
+                  className="video-thumbnail"
+                />
 
                 <div>
                   <Button
