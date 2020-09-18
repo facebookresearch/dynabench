@@ -81,3 +81,16 @@
 .profile-card tr + tr {
   border-top: 1px solid #dee2e6;
 }
+
+.video-thumbnail {
+  width: 200px;
+  border-radius: 10px;
+  box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.5);
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.video-thumbnail:active {
+  position: relative;
+  top: 2px;
+}

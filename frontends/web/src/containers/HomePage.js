@@ -202,39 +202,43 @@ class HomePage extends React.Component {
                 <Modal
                   show={this.state.showVideo}
                   centered
-                  backdropClassName="badge-backdrop"              
+                  backdropClassName="badge-backdrop"
                   onHide={() => {
-                    this.setState({showVideo: false});
+                    this.setState({ showVideo: false });
                   }}
-                  dialogAs={({children}) => <div style={{pointerEvents: "none"}}>{children}</div>}
-                  >
+                  dialogAs={({ children }) => (
+                    <div style={{ pointerEvents: "none" }}>{children}</div>
+                  )}
+                >
                   <ReactPlayer
-                    url="sample_mp4.mp4"
+                    url="https://dynabench-us-west-1-096166425824.s3-us-west-1.amazonaws.com/public/Dynabench_09_17_2020.mp4"
                     controls
                     playing
                     width="80vw"
                     height="80vh"
-                    style={{pointerEvents: "all", margin: "10vh auto 0", backgroundColor: "black"}}
+                    style={{
+                      pointerEvents: "all",
+                      margin: "10vh auto 0",
+                      backgroundColor: "black",
+                    }}
                   />
                 </Modal>
 
                 {/* TODO: replace below button w/ thumbnail */}
-                <Button
-                  variant="primary"
-                  onClick={() => {this.setState({showVideo: true})}}
-                  className="button-ellipse blue-bg home-readmore-btn border-0 mr-3"
-                >
-                  Show video
-                </Button>
+                <img onClick={() => {
+                    this.setState({ showVideo: true });
+                  }} src="/vid_thumb.png" className="video-thumbnail" />
 
-                <Button
-                  variant="primary"
-                  as={Link}
-                  className="button-ellipse blue-bg home-readmore-btn border-0"
-                  to="/about"
-                >
-                  Read more
-                </Button>
+                <div>
+                  <Button
+                    variant="primary"
+                    as={Link}
+                    className="button-ellipse blue-bg home-readmore-btn border-0"
+                    to="/about"
+                  >
+                    Read more
+                  </Button>
+                </div>
               </Col>
             </Row>
           </Container>
