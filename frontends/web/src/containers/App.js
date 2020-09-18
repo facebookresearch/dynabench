@@ -177,7 +177,7 @@ class App extends React.Component {
                         </NavDropdown.Item>
                         <NavDropdown.Divider />
                         <NavDropdown.Item href="/account#notifications">
-                          Notifications ({this.state.user?.unseen_notifications})
+                          Notifications {(this.state.user && this.state.user.unseen_notifications) ? '(' + this.state.user?.unseen_notifications + ')' : ''}
                         </NavDropdown.Item>
                         <NavDropdown.Item href="/account#stats">
                           Stats &amp; Badges
