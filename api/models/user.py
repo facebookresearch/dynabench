@@ -5,7 +5,6 @@
 import sqlalchemy as db
 from .base import Base, BaseModel
 import secrets
-import datetime
 
 from werkzeug.security import generate_password_hash, check_password_hash
 

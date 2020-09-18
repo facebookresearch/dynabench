@@ -18,8 +18,6 @@ import json
 
 from collections import Counter
 
-from datetime import datetime
-
 @bottle.get('/examples/<tid:int>/<rid:int>')
 @_auth.requires_auth_or_turk
 def get_random_example(credentials, tid, rid):
