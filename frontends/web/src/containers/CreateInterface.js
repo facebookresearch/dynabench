@@ -476,14 +476,19 @@ class ResponseInfo extends React.Component {
           ) : null}
           {this.props.obj.inspect &&
             this.props.obj.inspect.map((inspectData, idx) => {
-              return (
+              return (<>
                 <TextFeature
                   key={idx}
                   data={inspectData}
                   curTarget={this.props.curTarget}
                   targets={this.props.targets}
                 />
-              );
+                <div className="mt-3">
+                  <span>
+                    The model inspector shows the <a href="https://captum.ai/docs/extension/integrated_gradients" target="_blank">layer integrated gradients</a> for the input token layer of the model.
+                  </span>
+                </div>
+              </>);
             })}
         </div>
       </>;
@@ -529,7 +534,7 @@ class ResponseInfo extends React.Component {
                 <OverlayTrigger
                   placement="top"
                   delay={{ show: 250, hide: 400 }}
-                  overlay={(props) => <Tooltip {...props}>Something doesn't look right? Have someone look over this example.</Tooltip>}
+                  overlay={(props) => <Tooltip {...props}>Something wrong? Flag this example and we will take a look.</Tooltip>}
                 >
                   <button
                     data-index={this.props.index}
