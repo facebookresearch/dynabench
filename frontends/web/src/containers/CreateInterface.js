@@ -44,7 +44,7 @@ const Explainer = (props) => (
   </div>
 );
 
-function ContextInfo({ taskType, text, answer, updateAnswer }) {
+function ContextInfo({ taskType, taskName, text, answer, updateAnswer }) {
   return taskType == "extract" ? (
     <TokenAnnotator
       className="mb-1 p-3 light-gray-bg qa-context"
@@ -58,7 +58,7 @@ function ContextInfo({ taskType, text, answer, updateAnswer }) {
     />
   ) : (
     <div className="mb-1 p-3 light-gray-bg">
-      <h6 className="text-uppercase dark-blue-color spaced-header">Context:</h6>
+      {taskName === "NLI" ? <h6 className="text-uppercase dark-blue-color spaced-header">Context:</h6> : ''}
       {text.replace("<br>", "\n")}
     </div>
   );
@@ -555,11 +555,11 @@ class ResponseInfo extends React.Component {
                     type="button"
                     className="btn btn-light btn-sm">
                       <i className="fas fa-search"></i> Inspect
-                      {this.state.loader ? (
-                        <Spinner className="ml-2" animation="border" role="status" size="sm">
+                      {this.state.loader ? (<>
+                        {" "}<span>(this may take a while)</span><Spinner className="ml-2" animation="border" role="status" size="sm">
                           <span className="sr-only">Loading...</span>
                         </Spinner>
-                      ) : null}
+                      </>) : null}
                   </button>
                 </OverlayTrigger>
               </div>
@@ -855,7 +855,7 @@ class CreateInterface extends React.Component {
         <Annotation
           key={index}
           placement="bottom-start"
-          tooltip={"This is the context that applies to your particular example. It will be passed to the model alongside your generated text."}>
+          tooltip={"This is the context that applies to your particular example. It will be passed to the model alongside your generated text if the model expects a context."}>
           <ContextInfo
             index={index}
             text={item.text}
