@@ -14,8 +14,8 @@ const AboutPage = () => (
       <div className="mb-5 text-center">
         <h1 className="my-4 pt-3 text-uppercase">About</h1>
         <h2 className="task-page-header d-block font-weight-normal m-0 text-reset">
-          DynaBench is a platform for dynamic data collection and
-          benchmarking. Static benchmarks have many issues. DynaBench offers a
+          Dynabench is a platform for dynamic data collection and
+          benchmarking. Static benchmarks have many issues. Dynabench offers a
           more accurate and sustainable way for evaluating progress in AI.
         </h2>
       </div>
@@ -36,7 +36,7 @@ const AboutPage = () => (
           <strong>
             the time is ripe to radically rethink the way we do benchmarking
           </strong>
-          . With DynaBench, we can collect human-in-the-loop data dynamically,{" "}
+          . With Dynabench, we can collect human-in-the-loop data dynamically,{" "}
           <i>against</i> the current state-of-the-art, in a way that more
           accurately measures progress, that cannot saturate and that can
           automatically fix annotation artifacts and other biases over time. This is meant to
@@ -146,7 +146,8 @@ The real metric for AI systems should be model error rate when interacting with 
           to further train even stronger SOTA models. The process is repeated
           over multiple rounds: each time a round gets "solved" by the SOTA, we
           can take those models and adversarially collect a new dataset where
-          they fail.
+          they fail. Datasets will be released periodically as new examples are
+          collected.
         </p>
         <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
           Where can I read more?
@@ -196,21 +197,22 @@ The real metric for AI systems should be model error rate when interacting with 
           How can I help?
         </h2>
         <p>
-          We need all the help we can get! Please reach out to us. The community
+          We need all the help we can get! Please <a href="mailto:dynabench@fb.com">reach out to us</a>. The community
           needs to have a say in what this platform becomes.
         </p>
         <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
           Won't this lead to unnatural distributions and distributional shift?
         </h2>
         <p>
-          It probably will, if we use collected data for training (it could also only be used
+          It very well could, if we use collected data for training (the data could also only be used
           for evaluation). Another risk is catastrophic forgetting or cyclical
           "progress", where improved models forget things that were relevant in
           an earlier round. Research is required in trying to understand these
           shifts better, in characterizing how it might impact learning and in
-          overcoming any adverse effects. A few things will help, however: we
+          overcoming any adverse effects. Remember that Dynabench is a scientific experiment! A few
+          things will help, however: we
           can make sure we don't shift in the direction of one particular model
-          by using ensembles as adversarial targets, by verifying collected
+          by using ensembles as adversarial targets, by validating collected
           examples with other humans and by not discarding data from older
           rounds. That said, it is unclear to what extent a statically collected
           crowdsourced datasets are more "natural".
@@ -247,7 +249,7 @@ The real metric for AI systems should be model error rate when interacting with 
         </h2>
         <p>
           Hopefully, soon you will be able to add your own target models and
-          your own tasks. Please stay tuned, and let us know if you have any
+          your own tasks. Please stay tuned, and <a href="mailto:dynabench@fb.com">let us know</a> if you have any
           interesting proposals.
         </p>
         <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
@@ -260,7 +262,7 @@ The real metric for AI systems should be model error rate when interacting with 
           What about annotators?
         </h2>
         <p>
-          Anyone can use the platform to find or verify model-fooling examples. We hope to give linguists and other experts the tools they need to discover weaknesses in AI systems. We will also use crowdworkers to generate additional data in the same manner.
+          Anyone can use the platform to find or validate model-fooling examples. We hope to give linguists and other experts the tools they need to discover weaknesses in AI systems. We will also use crowdworkers to generate additional data, and to validate examples, in the same manner.
         </p>
         <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
           Why these tasks?

@@ -141,7 +141,7 @@ class App extends React.Component {
                 <img
                   src="/logo_w.png"
                   style={{ width: 80, marginLeft: 5, marginRight: 20 }}
-                  alt="DynaBench"
+                  alt="Dynabench"
                 />
               </Navbar.Brand>
               <Navbar.Collapse>

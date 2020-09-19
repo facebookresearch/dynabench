@@ -14,8 +14,8 @@ const DataPolicyPage = () => (
       <p>Effective Date: June 25, 2020</p>
       <br />
       <p>
-        DynaBench is a collaborative research project from Facebook, Inc.
-        (“Facebook,” “us,” or “our”). The aim of the DynaBench website (the
+        Dynabench is a collaborative research project from Facebook, Inc.
+        (“Facebook,” “us,” or “our”). The aim of the Dynabench website (the
         “Website”) is to investigate the ability of AI models to make accurate
         predictions in different contexts using different terminology and
         expressions, and to determine to what extent existing AI models can

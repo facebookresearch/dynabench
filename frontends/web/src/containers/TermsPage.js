@@ -14,7 +14,7 @@ const TermsPage = () => (
       <p>Effective Date: June 25, 2020</p>
       <br />
       <p>
-        These Terms of Use (“Terms”) govern the use of the DynaBench website
+        These Terms of Use (“Terms”) govern the use of the Dynabench website
         (the “Website”). These Terms constitute an agreement between you and
         Facebook, Inc. (“Facebook,” “us,”, “we”, “our”) so it is important that
         you review them carefully.

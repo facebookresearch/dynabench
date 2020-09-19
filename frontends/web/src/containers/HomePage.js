@@ -189,7 +189,7 @@ class HomePage extends React.Component {
               <Col lg={8}>
                 <h1 className="mb-4">Rethinking AI Benchmarking</h1>
                 <p>
-                  DynaBench is a research platform for dynamic data collection
+                  Dynabench is a research platform for dynamic data collection
                   and benchmarking. Static benchmarks have well-known issues:
                   they saturate quickly, are susceptible to overfitting, contain
                   exploitable annotator artifacts and have unclear or imperfect
