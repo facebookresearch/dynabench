@@ -425,6 +425,9 @@ class ResponseInfo extends React.Component {
           : this.props.obj.fooled
             ? (
               <div className="mt-3">
+                <span>
+                  Optionally, provide an explanation for your example:
+                </span>
                 <span style={{float: "right"}}>
                   { this.state.explainSaved === null
                     ? <span style={{color: "#b58c14"}}>Draft. Click out of input box to save.</span>
@@ -448,7 +451,7 @@ class ResponseInfo extends React.Component {
             :
             <div className="mt-3">
               <span>
-                We will store this as an example that the model got right.
+                Optionally, provide an explanation for your example:
               </span>
               <span style={{float: "right"}}>
                 { this.state.explainSaved === null
