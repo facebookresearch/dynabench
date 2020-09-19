@@ -77,7 +77,7 @@ function BadgeOverlay({children, badgeTypes, ...props}) {
         /><br/>
         You won a new badge:
         <br/>
-        <Badge name={badge} format="text" />
+        <Badge key={badge+"-"+idx+"-text"} name={badge} format="text" />
         <br/>
         </>
       )

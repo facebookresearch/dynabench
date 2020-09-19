@@ -609,9 +609,11 @@ class CreateInterface extends React.Component {
             var randomTarget = Math.floor(
               Math.random() * this.state.task.targets.length
             );
+            const randomModel = this.pickModel(this.state.task.round.url);
             this.setState({
               hypothesis: "",
               target: randomTarget,
+              randomModel: randomModel,
               context: result,
               content: [{ cls: "context", text: result.context }],
               submitDisabled: false,
@@ -702,9 +704,8 @@ class CreateInterface extends React.Component {
         insight: false,
       };
 
-      const randomModel = this.pickModel(this.state.task.round.url);
       this.context.api
-        .getModelResponse(randomModel, modelInputs)
+        .getModelResponse(this.state.randomModel, modelInputs)
         .then((result) => {
           if (result.errorMessage) {
             this.setState({
@@ -743,7 +744,7 @@ class CreateInterface extends React.Component {
                   modelPredStr: modelPredStr,
                   fooled: modelFooled,
                   text: this.state.hypothesis,
-                  url: randomModel,
+                  url: this.state.randomModel,
                   retracted: false,
                   response: result,
                 },
@@ -759,7 +760,7 @@ class CreateInterface extends React.Component {
                 });
                 return;
               }
-              const metadata = {'model': randomModel}
+              const metadata = {'model': this.state.randomModel}
               this.context.api
                 .storeExample(
                   this.state.task.id,
