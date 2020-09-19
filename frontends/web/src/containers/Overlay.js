@@ -70,7 +70,7 @@ function BadgeOverlay({children, badgeTypes, ...props}) {
           style={{margin: "0 10px", animationDelay: 0.4 + 0.3 * idx + "s"}} />
         */
         <>
-        <Badge
+        <Badge key={badge+"-"+idx}
           name={badge}
           className="awarded-badge"
           style={{margin: "0 10px", animationDelay: 0.4 + 0.3 * idx + "s"}}
