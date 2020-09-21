@@ -584,6 +584,7 @@ class CreateInterface extends React.Component {
       modelPredStr: "",
       hypothesis: "",
       content: [],
+      removeHypothesis: true,
       livemode: true,
       submitDisabled: true,
       refreshDisabled: true,
@@ -611,7 +612,7 @@ class CreateInterface extends React.Component {
             );
             const randomModel = this.pickModel(this.state.task.round.url);
             this.setState({
-              hypothesis: "",
+              hypothesis: this.state.removeHypothesis ? "" : this.state.hypothesis,
               target: randomTarget,
               randomModel: randomModel,
               context: result,
@@ -775,7 +776,7 @@ class CreateInterface extends React.Component {
                 .then((result) => {
                   var key = this.state.content.length - 1;
                   this.setState({
-                    hypothesis: "",
+                    hypothesis: this.state.removeHypothesis ? "" : this.state.hypothesis,
                     submitDisabled: false,
                     refreshDisabled: false,
                     mapKeyToExampleId: {
@@ -918,6 +919,9 @@ class CreateInterface extends React.Component {
     function renderSandboxTooltip(props) {
       return renderTooltip(props, "Just playing? Switch to sandbox mode.");
     }
+    function renderRemoveHypothesisTooltip(props) {
+      return renderTooltip(props, "Are you tweaking the same text over and over? Switch to retain your input after a submission or context change.");
+    }
     function renderSwitchRoundTooltip(props) {
       return renderTooltip(props, "Switch to other rounds of this task, including no longer active ones.");
     }
@@ -1013,12 +1017,33 @@ class CreateInterface extends React.Component {
                 <Col xs={6}>
                   <InputGroup>
                     <OverlayTrigger
-                      placement="bottom"
+                      placement="left"
+                      delay={{ show: 250, hide: 400 }}
+                      overlay={renderRemoveHypothesisTooltip}
+                    >
+                      <span style={{marginRight: 10}}>
+                        <Annotation placement="left" tooltip="If you want to retain your text in the input box after submitting or changing the context, you can choose that option here.">
+                          <BootstrapSwitchButton
+                            checked={this.state.removeHypothesis}
+                            onlabel='Remove Input'
+                            onstyle='primary blue-bg'
+                            offstyle='warning'
+                            offlabel='Retain Input'
+                            width={150}
+                            onChange={(checked) => {
+                              this.setState({ removeHypothesis: checked });
+                            }}
+                          />
+                        </Annotation>
+                      </span>
+                    </OverlayTrigger>
+                    <OverlayTrigger
+                      placement="top"
                       delay={{ show: 250, hide: 400 }}
                       overlay={renderSandboxTooltip}
                     >
                       <span style={{marginRight: 10}}>
-                        <Annotation placement="left" tooltip="If you want to just play around without storing your examples, you can switch to Sandbox mode here.">
+                        <Annotation placement="top" tooltip="If you want to just play around without storing your examples, you can switch to Sandbox mode here.">
                           <BootstrapSwitchButton
                             checked={this.state.livemode}
                             onlabel='Live Mode'
@@ -1033,7 +1058,6 @@ class CreateInterface extends React.Component {
                         </Annotation>
                       </span>
                     </OverlayTrigger>
-
                     {this.state.task.cur_round > 1 ?
                     <OverlayTrigger
                       placement="bottom"
