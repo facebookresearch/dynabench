@@ -5,7 +5,6 @@
 import sqlalchemy as db
 from .base import Base, BaseModel
 import secrets
-import datetime
 
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -117,34 +116,6 @@ class UserModel(BaseModel):
         u = self.dbs.query(User).filter(User.id == id)
         u.update(kwargs)
         self.dbs.commit()
-
-    def updateSubmitCount(self, uid, wrong=False):
-        u = self.get(uid)
-        if u:
-            u.examples_submitted = u.examples_submitted + 1
-            if wrong:
-                u.streak_examples = u.streak_examples + 1
-                #now = db.sql.func.now()
-                now = datetime.datetime.now()
-                if u.streak_days_last_model_wrong is None:
-                    u.streak_days_last_model_wrong = now
-                else:
-                    one_day_passed = u.streak_days_last_model_wrong \
-                            + datetime.timedelta(days=1)
-                    two_days_passed = u.streak_days_last_model_wrong \
-                            + datetime.timedelta(days=2)
-                    if now > one_day_passed:
-                        if now <= two_days_passed:
-                            u.streak_days = u.streak_days + 1
-                            u.streak_days_last_model_wrong = now
-                        elif now > two_days_passed:
-                            u.streak_days = 0
-                            u.streak_days_last_model_wrong = None
-            else:
-                u.streak_examples = 0
-            self.dbs.commit()
-        return u
-
     def updateValidatedCount(self, uid):
         u = self.get(uid)
         if u:

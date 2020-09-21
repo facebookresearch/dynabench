@@ -18,8 +18,6 @@ import json
 
 from collections import Counter
 
-from datetime import datetime
-
 @bottle.get('/examples/<tid:int>/<rid:int>')
 @_auth.requires_auth_or_turk
 def get_random_example(credentials, tid, rid):
@@ -102,7 +100,7 @@ def validate_example(credentials, eid):
 
         bm = BadgeModel()
         nm = NotificationModel()
-        badges = bm.checkBadgesEarned(user, example)
+        badges = bm.updateSubmitCountsAndCheckBadgesEarned(user, example, 'validate')
         for badge in badges:
             bm.addBadge(badge)
             nm.create(credentials['id'], 'NEW_BADGE_EARNED', badge['name'])
@@ -171,11 +169,10 @@ def post_example(credentials):
     cm.incrementCountDate(data['cid'])
     if credentials['id'] != 'turk':
         um = UserModel()
-        user = um.updateSubmitCount(credentials['id'], example.model_wrong)
-
         bm = BadgeModel()
         nm = NotificationModel()
-        badges = bm.checkBadgesEarned(user, example)
+        user = um.get(credentials['id'])
+        badges = bm.updateSubmitCountsAndCheckBadgesEarned(user, example, 'create')
         for badge in badges:
             bm.addBadge(badge)
             nm.create(credentials['id'], 'NEW_BADGE_EARNED', badge['name'])
