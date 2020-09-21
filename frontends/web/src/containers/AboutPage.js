@@ -6,7 +6,6 @@
 
 import React from "react";
 import { Button, Container, Col } from "react-bootstrap";
-import { Link } from "react-router-dom";
 
 const AboutPage = () => (
   <Container className="mb-5 pb-5">
@@ -280,13 +279,11 @@ The real metric for AI systems should be model error rate when interacting with 
         <h2 className="home-cardgroup-header d-block font-weight-light mb-4 text-uppercase text-reset">
           Have a question?
         </h2>
-        <Button
-          to="/contact"
-          as={Link}
-          className="button-ellipse blue-bg home-readmore-btn border-0"
-        >
-          Reach out to us
-        </Button>
+        <a href="mailto:dynabench@fb.com">
+          <Button className="button-ellipse blue-bg home-readmore-btn border-0">
+            Reach out to us
+          </Button>
+        </a>
       </div>
     </Col>
   </Container>
