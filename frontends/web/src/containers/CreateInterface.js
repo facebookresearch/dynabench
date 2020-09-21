@@ -1041,7 +1041,13 @@ class CreateInterface extends React.Component {
                       overlay={renderSwitchRoundTooltip}
                     >
                       <Annotation placement="right" tooltip="Want to try talking to previous rounds? You can switch here.">
-                        <DropdownButton variant="light" className="border-0 blue-color font-weight-bold light-gray-bg" style={{marginRight: 10}} id="dropdown-basic-button" title="Switch Round">
+                        <DropdownButton
+                          variant="light"
+                          className="border-0 blue-color font-weight-bold light-gray-bg"
+                          style={{marginRight: 10}}
+                          id="dropdown-basic-button"
+                          title={"Round " + this.state.task.selected_round + (this.state.task.selected_round === this.state.task.cur_round ? " (active)" : "")}
+                        >
                           {roundNavs}
                         </DropdownButton>
                       </Annotation>
