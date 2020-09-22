@@ -514,7 +514,7 @@ class ResponseInfo extends React.Component {
             </Col>
           </Row>
         </Card.Body>
-        {this.props.obj.retracted || this.props.obj.flagged
+        {this.props.obj.retracted || this.props.obj.flagged || !this.state.livemode
           ? null
           : <Card.Footer>
             { <div className="btn-group" role="group" aria-label="response actions">
