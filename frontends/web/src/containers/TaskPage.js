@@ -341,6 +341,9 @@ class RoundDescription extends React.Component {
         this.setState({ round: result });
       }, (error) => {
         console.log(error);
+        if (error.status_code === 404 || error.status_code === 405) {
+          this.props.history.push("/");
+        }
       });
     }
   }
@@ -384,6 +387,9 @@ class TaskPage extends React.Component {
         });
       }, (error) => {
         console.log(error);
+        if (error.status_code === 404 || error.status_code === 405) {
+          this.props.history.push("/");
+        }
       });
   }
 

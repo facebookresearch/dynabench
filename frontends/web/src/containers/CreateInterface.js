@@ -835,6 +835,9 @@ class CreateInterface extends React.Component {
           });
         }, (error) => {
           console.log(error);
+          if (error.status_code === 404 || error.status_code === 405) {
+            this.props.history.push("/");
+          }
         });
     });
   }

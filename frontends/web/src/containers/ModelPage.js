@@ -48,6 +48,9 @@ class ModelPage extends React.Component {
         this.setState({ model: result });
       }, (error) => {
         console.log(error);
+        if (error.status_code === 404 || error.status_code === 405) {
+          this.props.history.push("/");
+        }
       });
   };
 
