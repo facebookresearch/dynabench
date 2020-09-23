@@ -87,7 +87,7 @@ def validate_example(credentials, eid):
     rm.updateLastActivity(context.r_realid)
     if preds['C'] >= 5:
         em.update(example.id, {'verified': True, 'verified_correct': True})
-        rm.incrementVerifiedCorrectCount(context.r_realid)
+        rm.incrementVerifiedFooledCount(context.r_realid)
         um.incrementCorrectCount(example.uid)
     elif preds['I'] >= 5:
         em.update(example.id, {'verified': True, 'verified_incorrect': True})
@@ -170,7 +170,7 @@ def post_example(credentials):
     context = cm.get(example.cid)
     rm.updateLastActivity(context.r_realid)
     if example.model_wrong:
-        rm.incrementVerifiedCount(context.r_realid)
+        rm.incrementFooledCount(context.r_realid)
     if credentials['id'] != 'turk':
         um = UserModel()
         bm = BadgeModel()
