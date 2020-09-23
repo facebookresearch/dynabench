@@ -23,6 +23,7 @@ class Round(Base):
     longdesc = db.Column(db.Text)
 
     total_fooled = db.Column(db.Integer, default=0)
+    total_verified = db.Column(db.Integer, default=0)
     total_verified_fooled = db.Column(db.Integer, default=0)
     total_collected = db.Column(db.Integer, default=0)
     total_time_spent = db.Column(db.Time, default=0)
