@@ -201,7 +201,7 @@ class UserPage extends React.Component {
                         </Form.Group>
                         <Form.Group as={Row}>
                           <Form.Label column sm="6" className="text-right">
-                            Model Error Rate:
+                            Validated model error rate:
                           </Form.Label>
                           <Col sm="6">
                             <Form.Control
