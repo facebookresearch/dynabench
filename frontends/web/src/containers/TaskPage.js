@@ -394,6 +394,7 @@ class TaskPage extends React.Component {
   }
 
   refreshData() {
+    if (!this.props.location.hash || this.props.location.hash === '') this.props.location.hash = '#overall';
     this.setState(
       {
         modelLeaderBoardPage: 0,
