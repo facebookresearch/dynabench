@@ -152,12 +152,12 @@ class HomePage extends React.Component {
                       <td>
                         {task.round.total_collected > 0
                           ? ( 100 *
-                              task.round.total_verified /
+                              task.round.total_fooled /
                               task.round.total_collected
                             ).toFixed(2)
                           : "0.00"}
                         % (
-                        {task.round.total_verified}/{task.round.total_collected}
+                        {task.round.total_fooled}/{task.round.total_collected}
                         )
                       </td>
                     </tr>
