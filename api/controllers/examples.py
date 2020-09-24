@@ -70,6 +70,7 @@ def validate_example(credentials, eid):
         bottle.abort(403, 'Access denied (cannot validate your own example)')
 
     nobj = example.verifier_preds
+    print('nobj:', nobj)
     if nobj is None:
         nobj = ''
     else:
@@ -88,7 +89,7 @@ def validate_example(credentials, eid):
     if preds['C'] >= 5:
         em.update(example.id, {'verified': True, 'verified_correct': True})
         rm.incrementVerifiedFooledCount(context.r_realid)
-        um.incrementCorrectCount(example.uid)
+        um.incrementVerifiedFooledCount(example.uid)
     elif preds['I'] >= 5:
         em.update(example.id, {'verified': True, 'verified_incorrect': True})
     elif preds['F'] >= 5:
@@ -173,6 +174,8 @@ def post_example(credentials):
         rm.incrementFooledCount(context.r_realid)
     if credentials['id'] != 'turk':
         um = UserModel()
+        if example.model_wrong:
+            um.incrementFooledCount(example.uid)
         bm = BadgeModel()
         nm = NotificationModel()
         user = um.get(credentials['id'])

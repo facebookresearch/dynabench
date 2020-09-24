@@ -201,7 +201,7 @@ class UserPage extends React.Component {
                         </Form.Group>
                         <Form.Group as={Row}>
                           <Form.Label column sm="6" className="text-right">
-                            Validated model error rate:
+                            Model error rate (verified):
                           </Form.Label>
                           <Col sm="6">
                             <Form.Control
@@ -209,7 +209,22 @@ class UserPage extends React.Component {
                               readOnly
                               defaultValue={
                                 this.state.user.examples_submitted > 0 ?
-                                  (100 * this.state.user.examples_verified_correct / this.state.user.examples_submitted).toFixed(2) + '%'
+                                  (100 * this.state.user.total_verified_fooled / this.state.user.examples_submitted).toFixed(2) + '%'
+                    : 'N/A'}
+                            />
+                          </Col>
+                        </Form.Group>
+                        <Form.Group as={Row}>
+                          <Form.Label column sm="6" className="text-right">
+                            Model error rate:
+                          </Form.Label>
+                          <Col sm="6">
+                            <Form.Control
+                              plaintext
+                              readOnly
+                              defaultValue={
+                                this.state.user.examples_submitted > 0 ?
+                                  (100 * this.state.user.total_fooled / this.state.user.examples_submitted).toFixed(2) + '%'
                     : 'N/A'}
                             />
                           </Col>

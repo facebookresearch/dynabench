@@ -54,20 +54,39 @@ const StatsSubPage = (props) => {
                     Model fooling examples (verified):
                   </td>
                   <td className="text-right">
-                    {props.user.examples_verified_correct}
+                    {props.user.total_verified_fooled}
                   </td>
                  </tr>
                 <tr>
                   <td>
-                    Overall validated model error rate:
+                    Model error rate (verified):
                   </td>
                   <td className="text-right">
                     {props.user.examples_submitted && (100 *
-                      props.user.examples_verified_correct /
+                      props.user.total_verified_fooled /
                       props.user.examples_submitted
                     ).toFixed(2)}%
                   </td>
                  </tr>
+                 <tr>
+                   <td>
+                     Model fooling examples:
+                   </td>
+                   <td className="text-right">
+                     {props.user.total_fooled}
+                   </td>
+                  </tr>
+                 <tr>
+                   <td>
+                     Model error rate:
+                   </td>
+                   <td className="text-right">
+                     {props.user.examples_submitted && (100 *
+                       props.user.total_fooled /
+                       props.user.examples_submitted
+                     ).toFixed(2)}%
+                   </td>
+                  </tr>
                 <tr>
                   <td>
                     Total validations:
