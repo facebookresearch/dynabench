@@ -18,6 +18,7 @@ from models.task import Task
 import hashlib
 import json
 import numpy as np
+import random
 
 from common import helpers as util
 
@@ -212,5 +213,7 @@ class ExampleModel(BaseModel):
                 .filter(Example.verified == False);
         if my_uid is not None:
             result = result.filter(Example.uid != my_uid)
-        result = result.order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
-        return result
+            result = filter(lambda ex: ex.verifier_preds is None or my_uid not in [int(uid.split(",")[0]) for uid in ex.verifier_preds.split("|")], result)
+        result = list(result)
+        random.shuffle(result)
+        return result[:n]
