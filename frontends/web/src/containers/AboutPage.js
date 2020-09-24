@@ -193,13 +193,6 @@ The real metric for AI systems should be model error rate when interacting with 
           .
         </p>
         <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
-          How can I help?
-        </h2>
-        <p>
-          We need all the help we can get! Please <a href="mailto:dynabench@fb.com">reach out to us</a>. The community
-          needs to have a say in what this platform becomes.
-        </p>
-        <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
           Won't this lead to unnatural distributions and distributional shift?
         </h2>
         <p>
@@ -252,10 +245,16 @@ The real metric for AI systems should be model error rate when interacting with 
           interesting proposals.
         </p>
         <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
+          Do you have a data statement?
+        </h2>
+        <p>
+          We think <a href="https://www.aclweb.org/anthology/Q18-1041/" target="_blank">data statements</a> are a great idea, and we would like to provide not just one, but one for each task round. At the same time we have to be careful about respecting people's privacy, different social norms and making sure nobody is excluded. We hope to work this out in more detail in the near future when we start releasing datasets.
+        </p>
+        <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
           What about other languages? Other modalities?
         </h2>
         <p>
-          For now, Dynabench is English-only, but we are absolutely open to expanding to other languages. Similarly, for now we focus on NLP and text-only problems, but we are very interested in opening this up to other modalities.
+          For now, Dynabench is English-only, but we are absolutely open to expanding to other languages. Similarly, for now we focus on language and text, but we are very interested in opening this up to other modalities.
         </p>
         <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
           What about annotators?
@@ -272,6 +271,19 @@ The real metric for AI systems should be model error rate when interacting with 
           that are well known and that people care about deeply. The idea is to
           open this up to any task that the community is interested in in the
           future.
+        </p>
+        <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
+          Who is on the team?
+        </h2>
+        <p>
+          Everyone! People who have contributed to Dynabench so far include: Douwe Kiela, Divyansh Kaushik, Max Bartolo, Adina Williams, Yixin Nie, Grusha Prasad, Pratik Ringshia, Amanpreet Singh, Robin Jia, Sebastian Riedel, Tristan Thrush, Atticus Geiger, Chris Potts, Pontus Stenetorp, Mohit Bansal, Bertie Vidgen, Zeerak Waseem, and others.
+        </p>
+        <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
+          How can I help?
+        </h2>
+        <p>
+          We need all the help we can get! Please <a href="mailto:dynabench@fb.com">reach out to us</a>. The community
+          needs to have a say in what this platform becomes.
         </p>
       </div>
       <hr />
