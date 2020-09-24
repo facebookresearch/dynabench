@@ -379,23 +379,38 @@ class TaskPage extends React.Component {
   }
 
   componentDidMount() {
-    this.context.api
-      .getTask(this.state.taskId)
-      .then((result) => {
-        this.setState({task: result, displayRoundId: result.cur_round, round: result.round}, function() {
-          this.refreshData();
+    this.setState({taskId: this.props.match.params.taskId}, function() {
+      this.context.api
+        .getTask(this.state.taskId)
+        .then((result) => {
+          this.setState({task: result, displayRoundId: result.cur_round, round: result.round}, function() {
+            this.refreshData();
+          });
+        }, (error) => {
+          console.log(error);
+          if (error.status_code === 404 || error.status_code === 405) {
+            this.props.history.push("/");
+          }
         });
-      }, (error) => {
-        console.log(error);
-        if (error.status_code === 404 || error.status_code === 405) {
-          this.props.history.push("/");
-        }
-      });
+    });
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.location.hash !== this.props.location.hash) {
-      this.refreshData();
+    if (prevProps.location.hash !== this.props.location.hash || this.props.match.params.taskId != this.state.taskId) {
+      this.setState({taskId: this.props.match.params.taskId}, function() {
+        this.context.api
+          .getTask(this.state.taskId)
+          .then((result) => {
+            this.setState({task: result, displayRoundId: result.cur_round, round: result.round}, function() {
+              this.refreshData();
+            });
+          }, (error) => {
+            console.log(error);
+            if (error.status_code === 404 || error.status_code === 405) {
+              this.props.history.push("/");
+            }
+          });
+      });
     }
   }
 
