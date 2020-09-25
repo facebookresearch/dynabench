@@ -13,6 +13,7 @@ from models.round import RoundModel
 from models.context import ContextModel
 from models.notification import NotificationModel
 from models.badge import BadgeModel
+from models.admin import AdminModel
 
 import json
 
@@ -34,6 +35,18 @@ def get_random_example(credentials, tid, rid):
     example = example[0].to_dict()
     return util.json_encode(example)
 
+@bottle.get('/examples/verifiedflagged/<tid:int>/<rid:int>')
+@_auth.requires_auth
+def get_flagged_example(credentials, tid, rid):
+    rm = RoundModel()
+    round = rm.getByTidAndRid(tid, rid)
+    em = ExampleModel()
+    example = em.getFlagged(round.id, n=1)
+    if not example:
+        bottle.abort(500, f'No examples available ({round.id})')
+    example = example[0].to_dict()
+    return util.json_encode(example)
+
 @bottle.get('/examples/<eid:int>')
 @_auth.requires_auth
 def get_example(credentials, eid):
@@ -49,11 +62,20 @@ def get_example(credentials, eid):
 @_auth.requires_auth_or_turk
 def validate_example(credentials, eid):
     data = bottle.request.json
-    if not data or 'label' not in data:
+    if not data or 'label' not in data or 'override_if_admin' not in data:
         bottle.abort(400, 'Bad request')
     label = data['label']
     if label not in ['C', 'I', 'F']:
         bottle.abort(400, 'Bad request')
+    override_if_admin = data['override_if_admin']
+    print('ov', override_if_admin)
+    admin_override = False
+    if override_if_admin:
+        am = AdminModel()
+        if am.get(credentials['id']):
+            admin_override = True
+        else:
+            bottle.abort(403, 'Access denied (you are not an admin)')
 
     em = ExampleModel()
     example = em.get(eid)
@@ -85,14 +107,16 @@ def validate_example(credentials, eid):
     cm = ContextModel()
     context = cm.get(example.cid)
     rm.updateLastActivity(context.r_realid)
-    if preds['C'] >= 5:
+    if preds['C'] >= 5 or (admin_override and label == 'C'):
         em.update(example.id, {'verified': True, 'verified_correct': True})
         rm.incrementVerifiedFooledCount(context.r_realid)
         um.incrementCorrectCount(example.uid)
-    elif preds['I'] >= 5:
+    elif preds['I'] >= 5 or (admin_override and label == 'I'):
         em.update(example.id, {'verified': True, 'verified_incorrect': True})
     elif preds['F'] >= 5:
         em.update(example.id, {'verified': True, 'verified_flagged': True})
+    if admin_override:
+        em.update(example.id, {'verified_flagged': False})
 
     ret = example.to_dict()
     if credentials['id'] != 'turk':

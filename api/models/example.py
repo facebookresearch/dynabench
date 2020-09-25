@@ -214,3 +214,11 @@ class ExampleModel(BaseModel):
             result = result.filter(Example.uid != my_uid)
         result = result.order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
         return result
+    def getFlagged(self, rid, n=1):
+        result = self.dbs.query(Example) \
+                .join(Context, Example.cid == Context.id) \
+                .filter(Context.r_realid == rid) \
+                .filter(Example.model_wrong == True) \
+                .filter(Example.retracted == False) \
+                .filter(Example.verified_flagged == True);
+        return result.limit(n).all()

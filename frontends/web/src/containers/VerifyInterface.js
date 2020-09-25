@@ -12,6 +12,7 @@ import {
   Card,
 } from "react-bootstrap";
 import UserContext from "./UserContext";
+import BootstrapSwitchButton from 'bootstrap-switch-button-react'
 import {
   OverlayProvider,
   BadgeOverlay
@@ -25,6 +26,7 @@ class VerifyInterface extends React.Component {
       taskId: null,
       task: {},
       example: {},
+      user_mode: true,
     };
     this.getNewExample = this.getNewExample.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
@@ -61,9 +63,9 @@ class VerifyInterface extends React.Component {
         });
     });
   }
+
   getNewExample() {
-    this.context.api
-      .getRandomExample(this.state.taskId, this.state.task.selected_round)
+    (this.state.user_mode ? this.context.api.getRandomExample(this.state.taskId, this.state.task.selected_round) : this.context.api.getVerifiedFlaggedExample(this.state.taskId, this.state.task.selected_round))
       .then((result) => {
         if (this.state.task.type !== 'extract') {
           result.target = this.state.task.targets[parseInt(result.target_pred)];
@@ -92,8 +94,7 @@ class VerifyInterface extends React.Component {
         break;
     }
     if (action_label !== null) {
-      this.context.api
-        .validateExample(this.state.example.id, action_label)
+      this.context.api.validateExample(this.state.example.id, action_label, null, !this.state.user_mode)
         .then((result) => {
           this.getNewExample();
           if (!!result.badges) {
@@ -123,6 +124,19 @@ class VerifyInterface extends React.Component {
               <p>
                 If a model was fooled, we need to make sure that the example is correct.
               </p>
+              <BootstrapSwitchButton
+                checked={this.state.user_mode}
+                onlabel='User Mode'
+                onstyle='primary blue-bg'
+                offstyle='warning'
+                offlabel='Admin Mode'
+                width={150}
+                onChange={(checked) => {
+                  this.setState({ user_mode: checked },
+                  this.componentDidMount()
+                );
+                }}
+              />
             </div>
             {this.state.task.shortname === "Hate Speech" ?
               <p className="mt-3 p-3 light-red-bg rounded white-color"><strong>WARNING</strong>: This is sensitive content! If you do not want to see any hateful examples, please switch to another task.</p>
@@ -192,20 +206,22 @@ class VerifyInterface extends React.Component {
                       className="btn btn-light btn-sm">
                         <i className="fas fa-thumbs-down"></i> Incorrect
                     </button>{" "}
+                    {this.state.user_mode ?
                     <button
                       data-index={this.props.index}
                       onClick={() => this.handleResponse("flag")}
                       type="button"
                       className="btn btn-light btn-sm">
                         <i className="fas fa-flag"></i> Flag
-                    </button>{" "}
+                    </button> : ""}{" "}
+                    {this.state.user_mode ?
                     <button
                       data-index={this.props.index}
                       onClick={this.getNewExample}
                       type="button"
                       className="btn btn-light btn-sm pull-right">
                         <i className="fas fa-undo-alt"></i> Skip and load new example
-                    </button>
+                    </button> : ""}
                   </Card.Footer>
                   </>
                   :
