@@ -341,14 +341,14 @@ class RoundDescription extends React.Component {
         this.setState({ round: result });
       }, (error) => {
         console.log(error);
-        if (error.status_code === 404 || error.status_code === 405) {
+        if ((error.status_code === 404 || error.status_code === 405) && this.props.history) {
           this.props.history.push("/");
         }
       });
     }
   }
   componentDidUpdate(prevProps) {
-    if (prevProps.round_id !== this.props.round_id) {
+    if (prevProps.task_id !== this.props.task_id || prevProps.round_id !== this.props.round_id) {
       this.getRoundInfo();
     }
   }
