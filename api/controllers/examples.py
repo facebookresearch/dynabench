@@ -85,9 +85,9 @@ def validate_example(credentials, eid):
         if not util.check_fields(data, ['uid']):
             bottle.abort(400, 'Missing data');
         metadata = json.loads(example.metadata_json)
-        if 'annotator_id' not in metadata or metadata['annotator_id'] == data['uid']:
+        if ('annotator_id' not in metadata or metadata['annotator_id'] == data['uid']) and not owner_override:
             bottle.abort(403, 'Access denied (cannot validate your own example)')
-    elif credentials['id'] == example.uid:
+    elif credentials['id'] == example.uid and not owner_override:
         bottle.abort(403, 'Access denied (cannot validate your own example)')
 
     nobj = example.verifier_preds
