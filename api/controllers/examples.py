@@ -36,11 +36,11 @@ def get_random_example(credentials, tid, rid):
 
 @bottle.get('/examples/verifiedflagged/<tid:int>/<rid:int>')
 @_auth.requires_auth
-def get_flagged_example(credentials, tid, rid):
+def get_verified_flagged_example(credentials, tid, rid):
     rm = RoundModel()
     round = rm.getByTidAndRid(tid, rid)
     em = ExampleModel()
-    example = em.getFlagged(round.id, n=1)
+    example = em.getVerifiedFlagged(round.id, n=1)
     if not example:
         bottle.abort(500, f'No examples available ({round.id})')
     example = example[0].to_dict()
@@ -67,7 +67,6 @@ def validate_example(credentials, eid):
     if label not in ['C', 'I', 'F']:
         bottle.abort(400, 'Bad request')
 
-    override_if_owner = data['override_if_owner']
     em = ExampleModel()
     example = em.get(eid)
     if not example:
@@ -75,8 +74,8 @@ def validate_example(credentials, eid):
     cm = ContextModel()
     context = cm.get(example.cid)
     owner_override = False
+    override_if_owner = data['override_if_owner']
     if override_if_owner:
-        print(context.round.task.owner_uids.split(','))
         if str(credentials['id']) in context.round.task.owner_uids.split(','):
             owner_override = True
         else:
