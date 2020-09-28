@@ -213,7 +213,6 @@ class ExampleModel(BaseModel):
                 .filter(Example.verified == False);
         if my_uid is not None:
             result = result.filter(Example.uid != my_uid)
-            result = filter(lambda ex: ex.verifier_preds is None or my_uid not in [int(uid.split(",")[0]) for uid in ex.verifier_preds.split("|")], result)
-        result = list(result)
-        random.shuffle(result)
-        return result[:n]
+            result = result.filter(db.or_(Example.verifier_preds == None, db.not_(('|' + Example.verifier_preds).contains('|' + str(my_uid) + ','))))
+        result = result.order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
+        return result
