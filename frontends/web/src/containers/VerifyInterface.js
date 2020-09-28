@@ -221,13 +221,16 @@ class VerifyInterface extends React.Component {
                       </button>
                       : ""
                     }{" "}
-                    <button
-                      data-index={this.props.index}
-                      onClick={this.getNewExample}
-                      type="button"
-                      className="btn btn-light btn-sm pull-right">
-                        <i className="fas fa-undo-alt"></i> Skip and load new example
-                    </button>
+                    {this.state.user_mode ?
+                      <button
+                        data-index={this.props.index}
+                        onClick={this.getNewExample}
+                        type="button"
+                        className="btn btn-light btn-sm pull-right">
+                          <i className="fas fa-undo-alt"></i> Skip and load new example
+                      </button>
+                      : ""
+                    }{" "}
                   </Card.Footer>
                   </>
                   :
