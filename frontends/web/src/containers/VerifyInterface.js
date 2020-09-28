@@ -10,6 +10,7 @@ import {
   Row,
   Col,
   Card,
+  InputGroup,
 } from "react-bootstrap";
 import UserContext from "./UserContext";
 import BootstrapSwitchButton from 'bootstrap-switch-button-react'
@@ -118,25 +119,29 @@ class VerifyInterface extends React.Component {
           <Col className="m-auto" lg={12}>
             <div className="mt-4 mb-5 pt-3">
               <p className="text-uppercase mb-0 spaced-header">{this.props.taskName}</p>
+              <InputGroup className="align-items-center">
               <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
                 Validate examples
               </h2>
+              {this.state.task.owner_uids?.split(',').includes(this.context.user.id.toString()) ?
+                <BootstrapSwitchButton
+                  checked={this.state.user_mode}
+                  onlabel="User Mode"
+                  onstyle="primary blue-bg"
+                  offstyle="warning"
+                  offlabel="Task Owner Mode"
+                  width={180}
+                  onChange={(checked) => {
+                    this.setState({ user_mode: checked },
+                    this.componentDidMount()
+                  );
+                  }}
+                /> : ""
+              }
+              </InputGroup>
               <p>
                 If a model was fooled, we need to make sure that the example is correct.
               </p>
-              <BootstrapSwitchButton
-                checked={this.state.user_mode}
-                onlabel='User Mode'
-                onstyle='primary blue-bg'
-                offstyle='warning'
-                offlabel='Admin Mode'
-                width={150}
-                onChange={(checked) => {
-                  this.setState({ user_mode: checked },
-                  this.componentDidMount()
-                );
-                }}
-              />
             </div>
             {this.state.task.shortname === "Hate Speech" ?
               <p className="mt-3 p-3 light-red-bg rounded white-color"><strong>WARNING</strong>: This is sensitive content! If you do not want to see any hateful examples, please switch to another task.</p>
@@ -197,31 +202,32 @@ class VerifyInterface extends React.Component {
                       onClick={() => this.handleResponse("correct")}
                       type="button"
                       className="btn btn-light btn-sm">
-                        <i className="fas fa-thumbs-up"></i> Correct
+                        <i className="fas fa-thumbs-up"></i> {this.state.user_mode ? "" : "Verified "} Correct
                     </button>{" "}
                     <button
                       data-index={this.props.index}
                       onClick={() => this.handleResponse("incorrect")}
                       type="button"
                       className="btn btn-light btn-sm">
-                        <i className="fas fa-thumbs-down"></i> Incorrect
+                        <i className="fas fa-thumbs-down"></i> {this.state.user_mode ? "" : "Verified "} Incorrect
                     </button>{" "}
                     {this.state.user_mode ?
-                    <button
-                      data-index={this.props.index}
-                      onClick={() => this.handleResponse("flag")}
-                      type="button"
-                      className="btn btn-light btn-sm">
-                        <i className="fas fa-flag"></i> Flag
-                    </button> : ""}{" "}
-                    {this.state.user_mode ?
+                      <button
+                        data-index={this.props.index}
+                        onClick={() => this.handleResponse("flag")}
+                        type="button"
+                        className="btn btn-light btn-sm">
+                          <i className="fas fa-flag"></i> Flag
+                      </button>
+                      : ""
+                    }{" "}
                     <button
                       data-index={this.props.index}
                       onClick={this.getNewExample}
                       type="button"
                       className="btn btn-light btn-sm pull-right">
                         <i className="fas fa-undo-alt"></i> Skip and load new example
-                    </button> : ""}
+                    </button>
                   </Card.Footer>
                   </>
                   :

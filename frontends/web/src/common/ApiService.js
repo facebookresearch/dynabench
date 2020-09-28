@@ -303,8 +303,8 @@ export default class ApiService {
     });
   }
 
-  validateExample(id, label, uid = null, override_if_admin = false) {
-    let obj = {label: label, override_if_admin: override_if_admin};
+  validateExample(id, label, uid = null, override_if_owner = false) {
+    let obj = {label: label, override_if_owner: override_if_owner};
     if (this.mode == 'mturk') {
       obj.uid = uid;
     }

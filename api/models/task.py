@@ -18,7 +18,7 @@ class Task(Base):
     # Task type is either 'clf' or 'extract' for now
     type = db.Column(db.String(length=255), nullable=False, default='clf')
 
-    owner_uid = db.Column(db.Integer)
+    owner_uids = db.Column(db.Text)
     owner_str = db.Column(db.Text)
 
     desc = db.Column(db.String(length=255))
@@ -72,4 +72,3 @@ class TaskModel(BaseModel):
             return t
         except db.orm.exc.NoResultFound:
             return False
-

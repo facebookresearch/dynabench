@@ -75,7 +75,7 @@ def get_leaderboard_by_task_and_round(tid, rid):
 def export_current_round_data(credentials, tid, rid):
     t = TaskModel()
     task = t.get(tid)
-    if task.owner_uid != credentials['id']:
+    if str(credentials['id']) not in task.owner_uids.split(','):
         bottle.abort(403, 'Access denied')
     e = ExampleModel()
     examples = e.getByTidAndRid(tid, rid)
@@ -86,7 +86,7 @@ def export_current_round_data(credentials, tid, rid):
 def export_task_data(credentials, tid):
     t = TaskModel()
     task = t.get(tid)
-    if task.owner_uid != credentials['id']:
+    if str(credentials['id']) not in task.owner_uids.split(','):
         bottle.abort(403, 'Access denied')
     e = ExampleModel()
     examples = e.getByTid(tid)
