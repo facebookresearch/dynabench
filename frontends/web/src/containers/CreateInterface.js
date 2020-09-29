@@ -283,7 +283,13 @@ class ResponseInfo extends React.Component {
     e.preventDefault();
     var idx = e.target.getAttribute("data-index");
     var type = e.target.getAttribute("data-type");
-    var explanation = e.target.value.trim();
+    var explanation;
+    if (type === "dropdown"){
+      explanation = e.target.getAttribute("data");
+      this.setState({hate_target: explanation})
+    }else{
+      explanation = e.target.value.trim();
+    }
     if (explanation !== "" || this.state.hasPreviousExplanation) {
       this.setState({explainSaved: false, hasPreviousExplanation: true})
       this.context.api
@@ -428,14 +434,24 @@ class ResponseInfo extends React.Component {
                 <span>
                   Optionally, provide an explanation for your example:
                 </span>
-                <span style={{float: "right"}}>
+                <br></br>
+                <span style={{float: "left"}}>
                   { this.state.explainSaved === null
-                    ? <span style={{color: "#b58c14"}}>Draft. Click out of input box to save.</span>
+                    ? <span style={{color: "#b58c14"}}>{"Draft. Click out of input box" + (this.props.taskName === "Hate Speech" ? " or dropdown button" : "") + " to save."}</span>
                     : this.state.explainSaved === false
                       ? "Saving..."
                       : <span style={{color: "#085756"}}>Saved!</span>
                   }
                 </span>
+                <br></br>
+                {this.props.taskName === "Hate Speech" ?
+                  <DropdownButton variant="light" className="p-1" title={this.state.hate_target ? "Target of hate: " + this.state.hate_target : "Target of hate"}>
+                    {["Threatening language", "Supporting hateful entities", "Derogation", "Dehumanizing language", "Animosity", "None selected"].map((target, index) =>
+                      <Dropdown.Item data-index={this.props.index} data-type="dropdown" data={target} onClick={this.explainExample} key={index} index={index}>{target}</Dropdown.Item>)
+                    }
+                  </DropdownButton>
+                  : ""
+                }
                 <div>
                   <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
                     "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is the correct answer"}
@@ -453,14 +469,24 @@ class ResponseInfo extends React.Component {
               <span>
                 Optionally, provide an explanation for your example:
               </span>
-              <span style={{float: "right"}}>
+              <br></br>
+              <span style={{float: "left"}}>
                 { this.state.explainSaved === null
-                  ? <span style={{color: "#b58c14"}}>Draft. Click out of input box to save.</span>
+                  ? <span style={{color: "#b58c14"}}>{"Draft. Click out of input box" + (this.props.taskName === "Hate Speech" ? " or dropdown button" : "") + " to save."}</span>
                   : this.state.explainSaved === false
                     ? "Saving..."
                     : <span style={{color: "#085756"}}>Saved!</span>
                 }
               </span>
+              <br></br>
+              {this.props.taskName === "Hate Speech" ?
+                <DropdownButton variant="light" className="p-1" title={this.state.hate_target ? "Target of hate: " + this.state.hate_target : "Target of hate"}>
+                  {["Threatening language", "Supporting hateful entities", "Derogation", "Dehumanizing language", "Animosity", "None selected"].map((target, index) =>
+                    <Dropdown.Item data-index={this.props.index} data-type="dropdown" data={target} onClick={this.explainExample} key={index} index={index}>{target}</Dropdown.Item>)
+                  }
+                </DropdownButton>
+                : ""
+              }
               <div>
                 <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
                   "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is the correct answer"}

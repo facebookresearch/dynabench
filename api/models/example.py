@@ -38,6 +38,7 @@ class Example(Base):
     text = db.Column(db.Text)
     example_explanation = db.Column(db.Text) # why is X the label for this example
     model_explanation = db.Column(db.Text) # why do you think the model got it wrong
+    dropdown_explanation = db.Column(db.Text) # optional selection provided by the frontend about the category of an example
 
     metadata_json = db.Column(db.Text)
 
