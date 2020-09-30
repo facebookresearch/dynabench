@@ -104,6 +104,17 @@ const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName, onChang
   );
 };
 
+const HateSpeechDropdown = ({ hateTarget, dataIndex, onClick }) => {
+  return (
+    <DropdownButton variant="light" className="p-1" title={hateTarget ? "Target of hate: " + hateTarget : "Target of hate"}>
+      {
+        ["Threatening language", "Supporting hateful entities", "Derogation", "Dehumanizing language", "Animosity", "None selected"].map((target, index) =>
+        <Dropdown.Item data-index={dataIndex} data-type="dropdown" data={target} onClick={onClick} key={index} index={index}>{target}</Dropdown.Item>)
+      }
+    </DropdownButton>
+  );
+};
+
 const TextFeature = ({ data, curTarget, targets }) => {
   const capitalize = (s) => {
     if (typeof s !== "string") return "";
@@ -284,10 +295,10 @@ class ResponseInfo extends React.Component {
     var idx = e.target.getAttribute("data-index");
     var type = e.target.getAttribute("data-type");
     var explanation;
-    if (type === "dropdown"){
+    if (type === "dropdown") {
       explanation = e.target.getAttribute("data");
-      this.setState({hate_target: explanation})
-    }else{
+      this.setState({hate_target: explanation});
+    } else {
       explanation = e.target.value.trim();
     }
     if (explanation !== "" || this.state.hasPreviousExplanation) {
@@ -434,22 +445,20 @@ class ResponseInfo extends React.Component {
                 <span>
                   Optionally, provide an explanation for your example:
                 </span>
-                <br></br>
-                <span style={{float: "left"}}>
+                <span style={{float: "right"}}>
                   { this.state.explainSaved === null
-                    ? <span style={{color: "#b58c14"}}>{"Draft. Click out of input box" + (this.props.taskName === "Hate Speech" ? " or dropdown button" : "") + " to save."}</span>
+                    ? <span style={{color: "#b58c14"}}>Draft. Click out of input box to save.</span>
                     : this.state.explainSaved === false
                       ? "Saving..."
                       : <span style={{color: "#085756"}}>Saved!</span>
                   }
                 </span>
-                <br></br>
                 {this.props.taskName === "Hate Speech" ?
-                  <DropdownButton variant="light" className="p-1" title={this.state.hate_target ? "Target of hate: " + this.state.hate_target : "Target of hate"}>
-                    {["Threatening language", "Supporting hateful entities", "Derogation", "Dehumanizing language", "Animosity", "None selected"].map((target, index) =>
-                      <Dropdown.Item data-index={this.props.index} data-type="dropdown" data={target} onClick={this.explainExample} key={index} index={index}>{target}</Dropdown.Item>)
-                    }
-                  </DropdownButton>
+                  <HateSpeechDropdown
+                    hateTarget={this.state.hate_target}
+                    dataIndex={this.props.index}
+                    onClick={this.explainExample}
+                  />
                   : ""
                 }
                 <div>
@@ -469,22 +478,20 @@ class ResponseInfo extends React.Component {
               <span>
                 Optionally, provide an explanation for your example:
               </span>
-              <br></br>
-              <span style={{float: "left"}}>
+              <span style={{float: "right"}}>
                 { this.state.explainSaved === null
-                  ? <span style={{color: "#b58c14"}}>{"Draft. Click out of input box" + (this.props.taskName === "Hate Speech" ? " or dropdown button" : "") + " to save."}</span>
+                  ? <span style={{color: "#b58c14"}}>Draft. Click out of input box to save.</span>
                   : this.state.explainSaved === false
                     ? "Saving..."
                     : <span style={{color: "#085756"}}>Saved!</span>
                 }
               </span>
-              <br></br>
               {this.props.taskName === "Hate Speech" ?
-                <DropdownButton variant="light" className="p-1" title={this.state.hate_target ? "Target of hate: " + this.state.hate_target : "Target of hate"}>
-                  {["Threatening language", "Supporting hateful entities", "Derogation", "Dehumanizing language", "Animosity", "None selected"].map((target, index) =>
-                    <Dropdown.Item data-index={this.props.index} data-type="dropdown" data={target} onClick={this.explainExample} key={index} index={index}>{target}</Dropdown.Item>)
-                  }
-                </DropdownButton>
+                <HateSpeechDropdown
+                  hateTarget={this.state.hate_target}
+                  dataIndex={this.props.index}
+                  onClick={this.explainExample}
+                />
                 : ""
               }
               <div>
