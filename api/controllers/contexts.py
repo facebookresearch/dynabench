@@ -17,7 +17,8 @@ def getContext(tid, rid):
     return _getContext(tid, rid)
 
 @bottle.get('/contexts/<tid:int>/<rid:int>/uniform')
-def getUniformContext(tid, rid):
+@_auth.requires_auth_or_turk
+def getUniformContext(credentials, tid, rid):
     return _getContext(tid, rid, 'uniform')
 
 def _getContext(tid, rid, method='min'):
