@@ -603,6 +603,7 @@ class CreateInterface extends React.Component {
     this.handleGoalMessageTargetChange = this.handleGoalMessageTargetChange.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
     this.handleResponseChange = this.handleResponseChange.bind(this);
+    this.switchLiveMode = this.switchLiveMode.bind(this);
     this.updateAnswer = this.updateAnswer.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
     this.chatContainerRef = React.createRef();
