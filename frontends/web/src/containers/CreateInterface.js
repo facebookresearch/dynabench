@@ -22,6 +22,7 @@ import {
   Spinner,
   Modal
 } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import UserContext from "./UserContext";
 import { TokenAnnotator } from "react-text-annotate";
 import { PieRechart } from "../components/Rechart";
@@ -421,7 +422,16 @@ class ResponseInfo extends React.Component {
             </span>
         }
         {!this.state.livemode
-          ? <div>This example was not stored because you are in sandbox mode.</div>
+          ? <div>
+              This example was not stored because you are in sandbox mode.
+              { this.context.api.loggedIn()
+                ? ""
+                : <div>
+                    Your work is for nothing!{" "}
+                    <Link to="/login">Log in or sign up now</Link>
+                  </div>
+              }
+            </div>
           : this.props.obj.fooled
             ? (
               <div className="mt-3">
@@ -809,19 +819,25 @@ class CreateInterface extends React.Component {
   handleResponseChange(e) {
     this.setState({ hypothesis: e.target.value });
   }
-  componentDidMount() {
-    const {
-      match: { params },
-    } = this.props;
-    if (!this.context.api.loggedIn()) {
+  switchLiveMode(checked) {
+    if (checked === true && !this.context.api.loggedIn()) {
       this.props.history.push(
         "/login?msg=" +
           encodeURIComponent(
             "Please log in or sign up so that you can get credit for your generated examples."
           ) +
           "&src=" +
-          encodeURIComponent("/tasks/" + params.taskId + "/create")
+          encodeURIComponent("/tasks/" + this.props.taskId + "/create")
       );
+    }
+    this.setState({ livemode: checked });
+  }
+  componentDidMount() {
+    const {
+      match: { params },
+    } = this.props;
+    if (!this.context.api.loggedIn()) {
+      this.setState({ livemode: false });
     }
 
     this.setState({ taskId: params.taskId }, function () {
@@ -1030,7 +1046,7 @@ class CreateInterface extends React.Component {
                             offlabel='Sandbox'
                             width={120}
                             onChange={(checked) => {
-                              this.setState({ livemode: checked });
+                              this.switchLiveMode(checked);
                             }}
                           />
                         </Annotation>

@@ -13,13 +13,11 @@ import json
 
 @bottle.get('/contexts/<tid:int>/<rid:int>')
 @bottle.get('/contexts/<tid:int>/<rid:int>/min')
-@_auth.requires_auth_or_turk
-def getContext(credentials, tid, rid):
+def getContext(tid, rid):
     return _getContext(tid, rid)
 
 @bottle.get('/contexts/<tid:int>/<rid:int>/uniform')
-@_auth.requires_auth_or_turk
-def getUniformContext(credentials, tid, rid):
+def getUniformContext(tid, rid):
     return _getContext(tid, rid, 'uniform')
 
 def _getContext(tid, rid, method='min'):
