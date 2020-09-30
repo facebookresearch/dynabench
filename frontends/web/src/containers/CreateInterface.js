@@ -453,12 +453,12 @@ class ResponseInfo extends React.Component {
                       : <span style={{color: "#085756"}}>Saved!</span>
                   }
                 </span>
-                {this.props.taskName === "Hate Speech" ?
-                  <HateSpeechDropdown
-                    hateTarget={this.state.hate_target}
-                    dataIndex={this.props.index}
-                    onClick={this.explainExample}
-                  />
+                { this.props.taskName === "Hate Speech"
+                  ? <HateSpeechDropdown
+                      hateTarget={this.state.hate_target}
+                      dataIndex={this.props.index}
+                      onClick={this.explainExample}
+                    />
                   : ""
                 }
                 <div>
@@ -486,12 +486,12 @@ class ResponseInfo extends React.Component {
                     : <span style={{color: "#085756"}}>Saved!</span>
                 }
               </span>
-              {this.props.taskName === "Hate Speech" ?
-                <HateSpeechDropdown
-                  hateTarget={this.state.hate_target}
-                  dataIndex={this.props.index}
-                  onClick={this.explainExample}
-                />
+              { this.props.taskName === "Hate Speech"
+                ? <HateSpeechDropdown
+                    hateTarget={this.state.hate_target}
+                    dataIndex={this.props.index}
+                    onClick={this.explainExample}
+                  />
                 : ""
               }
               <div>
