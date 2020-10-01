@@ -143,3 +143,10 @@ class UserModel(BaseModel):
         if u:
             u.unseen_notifications = 0
             self.dbs.commit()
+    def getUserDictWithOwnedTasks(self, uid):
+        user = self.get(uid)
+        user_dict = user.to_dict()
+        user_dict['owned_tasks'] = []
+        for task in user.owned_tasks:
+            user_dict['owned_tasks'].append(task)
+        return user_dict

@@ -43,11 +43,7 @@ def get_user(credentials, id):
             nu[f] = u[f]
         return util.json_encode(nu)
     else:
-        user_dict = user.to_dict();
-        user_dict['owned_tasks'] = []
-        for task in user.owned_tasks:
-            user_dict['owned_tasks'].append(task.to_dict())
-        return util.json_encode(user_dict)
+        return util.json_encode(um.getUserDictWithOwnedTasks(id))
 
 @bottle.get('/users/<id:int>/badges')
 @_auth.requires_auth
@@ -70,16 +66,13 @@ def get_user_with_badges(credentials, id):
 
         return util.json_encode(nu)
     else:
-        user_dict = user.to_dict()
+        user = um.getUserDictWithOwnedTasks(id)
         bm = BadgeModel()
         badges = bm.getByUid(id)
         if badges:
-            user_dict['badges'] = [b.to_dict() for b in badges]
-        user_dict['owned_tasks'] = []
-        for task in user.owned_tasks:
-            user_dict['owned_tasks'].append(task.to_dict())
+            user['badges'] = [b.to_dict() for b in badges]
 
-        return util.json_encode(user_dict)
+        return util.json_encode(user)
 
 
 @bottle.post('/users')
