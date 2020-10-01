@@ -6,6 +6,10 @@ import sqlalchemy as db
 from .base import Base, BaseModel
 from .round import Round
 
+task_owner_permissions = db.Table('task_owner_permissions', Base.metadata,
+    db.Column('uid', db.Integer, db.ForeignKey('users.id')),
+    db.Column('tid', db.Integer, db.ForeignKey('tasks.id')))
+
 class Task(Base):
     __tablename__ = 'tasks'
     __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
@@ -14,11 +18,12 @@ class Task(Base):
 
     name = db.Column(db.String(length=255), nullable=False, unique=True)
     shortname = db.Column(db.String(length=255), nullable=False, unique=True)
+    task_owners = db.orm.relationship('User', secondary=task_owner_permissions,
+        backref=db.orm.backref('owned_tasks'))
 
     # Task type is either 'clf' or 'extract' for now
     type = db.Column(db.String(length=255), nullable=False, default='clf')
 
-    owner_uid = db.Column(db.Integer)
     owner_str = db.Column(db.Text)
 
     desc = db.Column(db.String(length=255))
@@ -72,4 +77,3 @@ class TaskModel(BaseModel):
             return t
         except db.orm.exc.NoResultFound:
             return False
-

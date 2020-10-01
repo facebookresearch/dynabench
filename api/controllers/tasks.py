@@ -12,6 +12,7 @@ from models.task import TaskModel
 from models.round import RoundModel
 from models.score import ScoreModel
 from models.example import ExampleModel
+from models.user import UserModel
 
 import json
 
@@ -73,10 +74,12 @@ def get_leaderboard_by_task_and_round(tid, rid):
 @bottle.get('/tasks/<tid:int>/rounds/<rid:int>/export')
 @_auth.requires_auth
 def export_current_round_data(credentials, tid, rid):
-    t = TaskModel()
-    task = t.get(tid)
-    if task.owner_uid != credentials['id']:
-        bottle.abort(403, 'Access denied')
+    um = UserModel()
+    user = um.get(credentials['id'])
+    if not user.admin:
+        owned_tids = map(lambda task: task.id, user.owned_tasks)
+        if tid not in owned_tids:
+            bottle.abort(403, 'Access denied')
     e = ExampleModel()
     examples = e.getByTidAndRid(tid, rid)
     return util.json_encode([e.to_dict() for e in examples])

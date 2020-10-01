@@ -204,7 +204,7 @@ const TaskActionButtons = (props) => {
         </Annotation>
       </Nav.Item>
     ) : null}
-    {props.uid === props.task.owner_uid ?
+    {props.user.owned_tasks?.map((target, index) => target.id).includes(props.task.id) || props.user.admin ?
       <Nav.Item className="task-action-btn ml-auto">
         <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" id="dropdown-basic-button" title="Export">
           <Dropdown.Item onClick={props.exportCurrentRoundData}>Export current round</Dropdown.Item>
@@ -548,7 +548,7 @@ class TaskPage extends React.Component {
                 <hr />
                 <TaskActionButtons
                   taskId={this.state.taskId}
-                  uid={this.context.user.id}
+                  user={this.context.user}
                   task={this.state.task}
                   exportCurrentRoundData={this.exportCurrentRoundData}
                   exportCurrentRoundData={this.exportCurrentRoundData}
