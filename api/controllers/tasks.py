@@ -89,8 +89,10 @@ def export_current_round_data(credentials, tid, rid):
 def export_task_data(credentials, tid):
     um = UserModel()
     user = um.get(credentials['id'])
-    if tid not in map(lambda permission: permission.tid, user.task_permissions):
-        bottle.abort(403, 'Access denied')
+    if not user.admin:
+        tids = map(lambda permission: permission.tid, user.task_permissions)
+        if tid not in tids:
+            bottle.abort(403, 'Access denied')
     e = ExampleModel()
     examples = e.getByTid(tid)
     return util.json_encode([e.to_dict() for e in examples])
