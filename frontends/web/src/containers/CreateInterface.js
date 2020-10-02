@@ -109,7 +109,7 @@ const HateSpeechDropdown = ({ hateTarget, dataIndex, onClick }) => {
     <DropdownButton variant="light" className="p-1" title={hateTarget ? "Target of hate: " + hateTarget : "Target of hate"}>
       {
         ["Threatening language", "Supporting hateful entities", "Derogation", "Dehumanizing language", "Animosity", "None selected"].map((target, index) =>
-        <Dropdown.Item data-index={dataIndex} data-type="dropdown" data={target} onClick={onClick} key={index} index={index}>{target}</Dropdown.Item>)
+        <Dropdown.Item data-index={dataIndex} data-type="metadata" data={target} onClick={onClick} key={index} index={index}>{target}</Dropdown.Item>)
       }
     </DropdownButton>
   );
@@ -295,9 +295,10 @@ class ResponseInfo extends React.Component {
     var idx = e.target.getAttribute("data-index");
     var type = e.target.getAttribute("data-type");
     var explanation;
-    if (type === "dropdown") {
+    if (type === "metadata") {
       explanation = e.target.getAttribute("data");
       this.setState({hate_target: explanation});
+      explanation = '{"model": "' + this.props.randomModel + '", "hate_target": "' + explanation + '"}';
     } else {
       explanation = e.target.value.trim();
     }
@@ -908,6 +909,7 @@ class CreateInterface extends React.Component {
     const content = this.state.content.map((item, index) =>
       item.cls === "context" ? undefined : (
         <ResponseInfo
+          randomModel={this.state.randomModel}
           key={index}
           index={index}
           targets={this.state.task.targets}

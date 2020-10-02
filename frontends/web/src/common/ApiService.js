@@ -276,8 +276,8 @@ export default class ApiService {
       obj.example_explanation = explanation;
     } else if (type == 'model') {
       obj.model_explanation = explanation;
-    } else if (type == 'dropdown') {
-      obj.dropdown_explanation = explanation;
+    } else if (type == 'metadata') {
+      obj.metadata_json = explanation;
     }
     if (this.mode == 'mturk') {
       obj.uid = uid;
