@@ -427,8 +427,16 @@ class ResponseInfo extends React.Component {
               { this.context.api.loggedIn()
                 ? ""
                 : <div>
-                    Your work is for nothing!{" "}
-                    <Link to="/login">Log in or sign up now</Link>
+                    <Link
+                      to={"/register?msg=" +
+                          encodeURIComponent("Please sign up or log in so that you can get credit for your generated examples.") +
+                          "&src=" +
+                          encodeURIComponent("/tasks/" + this.props.taskId + "/create")
+                          }
+                    >
+                      Sign up now
+                    </Link>{" "}
+                    to add your examples to our database!
                   </div>
               }
             </div>
@@ -823,9 +831,9 @@ class CreateInterface extends React.Component {
   switchLiveMode(checked) {
     if (checked === true && !this.context.api.loggedIn()) {
       this.props.history.push(
-        "/login?msg=" +
+        "/register?msg=" +
           encodeURIComponent(
-            "Please log in or sign up so that you can get credit for your generated examples."
+            "Please sign up or log in so that you can get credit for your generated examples."
           ) +
           "&src=" +
           encodeURIComponent("/tasks/" + this.props.taskId + "/create")
@@ -936,7 +944,7 @@ class CreateInterface extends React.Component {
       );
     }
     function renderSandboxTooltip(props) {
-      return renderTooltip(props, "Just playing? Switch to sandbox mode.");
+      return renderTooltip(props, "Switch in and out of sandbox mode.");
     }
     function renderSwitchRoundTooltip(props) {
       return renderTooltip(props, "Switch to other rounds of this task, including no longer active ones.");
