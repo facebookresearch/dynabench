@@ -204,7 +204,7 @@ const TaskActionButtons = (props) => {
         </Annotation>
       </Nav.Item>
     ) : null}
-    {props.user.owned_tids?.includes(props.task.id) || props.user.admin ?
+    {props.user.permission_tids?.includes(props.task.id) || props.user.admin ?
       <Nav.Item className="task-action-btn ml-auto">
         <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" id="dropdown-basic-button" title="Export">
           <Dropdown.Item onClick={props.exportCurrentRoundData}>Export current round</Dropdown.Item>

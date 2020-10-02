@@ -5,10 +5,7 @@
 import sqlalchemy as db
 from .base import Base, BaseModel
 from .round import Round
-
-task_owner_permissions = db.Table('task_owner_permissions', Base.metadata,
-    db.Column('uid', db.Integer, db.ForeignKey('users.id')),
-    db.Column('tid', db.Integer, db.ForeignKey('tasks.id')))
+from .user import User
 
 class Task(Base):
     __tablename__ = 'tasks'
@@ -18,8 +15,6 @@ class Task(Base):
 
     name = db.Column(db.String(length=255), nullable=False, unique=True)
     shortname = db.Column(db.String(length=255), nullable=False, unique=True)
-    task_owners = db.orm.relationship('User', secondary=task_owner_permissions,
-        backref=db.orm.backref('owned_tasks'))
 
     # Task type is either 'clf' or 'extract' for now
     type = db.Column(db.String(length=255), nullable=False, default='clf')
@@ -51,6 +46,18 @@ class Task(Base):
         for column in self.__table__.columns:
             d[column.name] = getattr(self, column.name)
         return d
+
+class TaskUserPermission(Base):
+    __tablename__ = 'task_user_permissions'
+    __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
+
+    id = db.Column(db.Integer, primary_key=True)
+    uid = db.Column(db.Integer, db.ForeignKey('users.id'))
+    type = db.Column(db.String(255))
+    tid = db.Column(db.Integer, db.ForeignKey('tasks.id'))
+
+    task = db.orm.relationship(Task, backref="task_permissions")
+    user = db.orm.relationship(User, backref="task_permissions")
 
 class TaskModel(BaseModel):
     def __init__(self):

@@ -77,8 +77,8 @@ def export_current_round_data(credentials, tid, rid):
     um = UserModel()
     user = um.get(credentials['id'])
     if not user.admin:
-        owned_tids = map(lambda task: task.id, user.owned_tasks)
-        if tid not in owned_tids:
+        tids = map(lambda permission: permission.tid, user.task_permissions)
+        if tid not in tids:
             bottle.abort(403, 'Access denied')
     e = ExampleModel()
     examples = e.getByTidAndRid(tid, rid)
@@ -87,9 +87,9 @@ def export_current_round_data(credentials, tid, rid):
 @bottle.get('/tasks/<tid:int>/export')
 @_auth.requires_auth
 def export_task_data(credentials, tid):
-    t = TaskModel()
-    task = t.get(tid)
-    if task.owner_uid != credentials['id']:
+    um = UserModel()
+    user = um.get(credentials['id'])
+    if tid not in map(lambda permission: permission.tid, user.task_permissions):
         bottle.abort(403, 'Access denied')
     e = ExampleModel()
     examples = e.getByTid(tid)
