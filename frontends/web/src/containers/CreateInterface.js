@@ -436,7 +436,7 @@ class ResponseInfo extends React.Component {
                     >
                       Sign up now
                     </Link>{" "}
-                    to add your examples to our database!
+                    to make sure your examples are stored and you get credit for your examples!
                   </div>
               }
             </div>
