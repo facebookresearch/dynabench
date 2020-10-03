@@ -551,7 +551,7 @@ class TaskPage extends React.Component {
                   user={this.context.user}
                   task={this.state.task}
                   exportCurrentRoundData={this.exportCurrentRoundData}
-                  exportCurrentRoundData={this.exportCurrentRoundData}
+                  exportAllTaskData={this.exportAllTaskData}
                 />
               </>
             ) :
