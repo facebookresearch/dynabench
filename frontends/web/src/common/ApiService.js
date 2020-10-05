@@ -270,8 +270,8 @@ export default class ApiService {
     });
   }
 
-  getExample(id) {
-    return this.fetch(`${this.domain}/examples/${id}`, {
+  getExampleMetadata(id) {
+    return this.fetch(`${this.domain}/examples/${id}/metadata`, {
       method: "GET",
     });
   }

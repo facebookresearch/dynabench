@@ -298,12 +298,12 @@ class ResponseInfo extends React.Component {
     this.setState({explainSaved: false});
     this.setState({hate_target: hate_target});
     this.context.api
-      .getExample(this.props.mapKeyToExampleId[idx])
+      .getExampleMetadata(this.props.mapKeyToExampleId[idx])
       .then((result) => {
-        var metadata_json = JSON.parse(result.metadata_json);
-        metadata_json['hate_target'] = hate_target;
+        var metadata = JSON.parse(result);
+        metadata['hate_target'] = hate_target;
         this.context.api
-          .setExampleMetadata(this.props.mapKeyToExampleId[idx], metadata_json)
+          .setExampleMetadata(this.props.mapKeyToExampleId[idx], metadata)
           .then((result) => {
             this.setState({explainSaved: true});
           }, (error) => {
