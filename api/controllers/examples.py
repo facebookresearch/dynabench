@@ -35,14 +35,11 @@ def get_random_example(credentials, tid, rid):
     return util.json_encode(example)
 
 @bottle.get('/examples/<eid:int>')
-@_auth.requires_auth
-def get_example(credentials, eid):
+def get_example(eid):
     em = ExampleModel()
     example = em.get(eid)
     if not example:
         bottle.abort(404, 'Not found')
-    if example.uid != credentials['id']:
-        bottle.abort(403, 'Access denied')
     return util.json_encode(example.to_dict())
 
 @bottle.put('/examples/<eid:int>/validate')

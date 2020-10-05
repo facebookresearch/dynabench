@@ -270,14 +270,27 @@ export default class ApiService {
     });
   }
 
+  getExample(id) {
+    return this.fetch(`${this.domain}/examples/${id}`, {
+      method: "GET",
+    });
+  }
+
+  setExampleMetadata(id, metadata_json) {
+    var obj = {};
+    obj.metadata_json = JSON.stringify(metadata_json);
+    return this.fetch(`${this.domain}/examples/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(obj),
+    });
+  }
+
   explainExample(id, type, explanation, uid = null) {
     var obj = {};
     if (type == 'example') {
       obj.example_explanation = explanation;
     } else if (type == 'model') {
       obj.model_explanation = explanation;
-    } else if (type == 'metadata') {
-      obj.metadata_json = explanation;
     }
     if (this.mode == 'mturk') {
       obj.uid = uid;

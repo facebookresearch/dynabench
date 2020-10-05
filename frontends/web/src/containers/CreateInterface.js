@@ -109,7 +109,7 @@ const HateSpeechDropdown = ({ hateTarget, dataIndex, onClick }) => {
     <DropdownButton variant="light" className="p-1" title={hateTarget ? "Target of hate: " + hateTarget : "Target of hate"}>
       {
         ["Threatening language", "Supporting hateful entities", "Derogation", "Dehumanizing language", "Animosity", "None selected"].map((target, index) =>
-        <Dropdown.Item data-index={dataIndex} data-type="metadata" data={target} onClick={onClick} key={index} index={index}>{target}</Dropdown.Item>)
+        <Dropdown.Item data-index={dataIndex} data={target} onClick={onClick} key={index} index={index}>{target}</Dropdown.Item>)
       }
     </DropdownButton>
   );
@@ -277,6 +277,7 @@ class ResponseInfo extends React.Component {
     this.retractExample = this.retractExample.bind(this);
     this.flagExample = this.flagExample.bind(this);
     this.explainExample = this.explainExample.bind(this);
+    this.updateHateSpeechTargetMetadata = this.updateHateSpeechTargetMetadata.bind(this);
     this.state = {
       loader: true,
       inspectError: false,
@@ -290,18 +291,32 @@ class ResponseInfo extends React.Component {
       explainSaved: null
     });
   }
+  updateHateSpeechTargetMetadata(e) {
+    const hate_target = e.target.getAttribute("data");
+    const idx = e.target.getAttribute("data-index");
+    this.setState({explainSaved: false});
+    this.setState({hate_target: hate_target});
+    this.context.api
+      .getExample(this.props.mapKeyToExampleId[idx])
+      .then((result) => {
+        var metadata_json = JSON.parse(result.metadata_json);
+        metadata_json['hate_target'] = hate_target;
+        this.context.api
+          .setExampleMetadata(this.props.mapKeyToExampleId[idx], metadata_json)
+          .then((result) => {
+            this.setState({explainSaved: true});
+          }, (error) => {
+            console.log(error);
+          });
+      }, (error) => {
+        console.log(error);
+      });
+  }
   explainExample(e) {
     e.preventDefault();
     var idx = e.target.getAttribute("data-index");
     var type = e.target.getAttribute("data-type");
-    var explanation;
-    if (type === "metadata") {
-      explanation = e.target.getAttribute("data");
-      this.setState({hate_target: explanation});
-      explanation = '{"model": "' + this.props.randomModel + '", "hate_target": "' + explanation + '"}';
-    } else {
-      explanation = e.target.value.trim();
-    }
+    var explanation = e.target.value.trim();
     if (explanation !== "" || this.state.hasPreviousExplanation) {
       this.setState({explainSaved: false, hasPreviousExplanation: true})
       this.context.api
@@ -458,7 +473,7 @@ class ResponseInfo extends React.Component {
                   ? <HateSpeechDropdown
                       hateTarget={this.state.hate_target}
                       dataIndex={this.props.index}
-                      onClick={this.explainExample}
+                      onClick={this.updateHateSpeechTargetMetadata}
                     />
                   : ""
                 }
@@ -491,7 +506,7 @@ class ResponseInfo extends React.Component {
                 ? <HateSpeechDropdown
                     hateTarget={this.state.hate_target}
                     dataIndex={this.props.index}
-                    onClick={this.explainExample}
+                    onClick={this.updateHateSpeechTargetMetadata}
                   />
                 : ""
               }
