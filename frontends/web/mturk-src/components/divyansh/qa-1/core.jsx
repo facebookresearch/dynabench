@@ -116,7 +116,7 @@ class TaskOnboardingCompletedInstructions extends React.Component {
         <strong>Congrats on completing onboarding.</strong> We hope you are now familiar with the platform. Before you click on Complete Onboarding, here is some housekeeping.
 	<ul>
 	<li><strong>The instructions for the downstream task are different than the onboarding.</strong></li>
-	<li>Please email us at noahturkXXXX@gmail.com if you do not understand any parts of the instructions or if there is anything else that we can help with. We will try to respond as quickly as possible.</li>
+	<li>Please email us at NoahTurkProject.1041@gmail.com if you do not understand any parts of the instructions or if there is anything else that we can help with. We will try to respond as quickly as possible.</li>
 	<li>If upon clicking Complete Onboarding, the interface does not re-route you to the main task, please refresh your page.</li>
 	</ul>
 	We appreciate your work and are eagerly looking forward to outputs from this HIT.
@@ -134,9 +134,9 @@ class TaskNoModelInstructions extends React.Component {
         <li><strong>highlight the answer</strong> — a contiguous region within the passage.</li>
         </ul>
         Additionally, please follow the following guidelines: (i) ensure that the question is coherent; (ii) that the answer is unambiguous — any competent reader shown the same question and passage should select the same (or highly overlapping) answer.
-        <br />After entering your question and selecting the answer, press “Submit”. You are required to follow this process 5 times for each passage. Once you've submitted all 5 question-answer pairs, Submit HIT button will appear. Try to write questions that do not highly overlap with passage text.
+        <br />After entering your question and selecting the answer, press “Submit”. You are required to follow this process 5 times for each passage <b>(remember that each question is standalone)</b>. Once you've submitted all 5 question-answer pairs, Submit HIT button will appear. Try to write questions that do not highly overlap with passage text.</small>
 	<br /><br />
-        <i>Submissions will be audited for quality so do not try to cheat by writing incoherent questions or choosing incorrect answers.</i></small>
+        <small style={{ color: 'red' }}><i>Submissions will be audited for quality so do not try to write incoherent questions or choose incorrect answers. </i></small><small><b>Please email us at NoahTurkProject.1041@gmail.com if you do not understand any parts of the instructions or if there is anything else that we can help with. We will try to respond as quickly as possible.</b></small>
         </>;
   }
 }
@@ -154,9 +154,9 @@ class TaskModelInstructions extends React.Component {
         Be sure to  (i) ensure that the question is coherent; (ii) that the answer is unambiguous — any competent reader shown the same question and passage should select the same (or highly overlapping) answer.
         <br />
         After entering your question and selecting the answer, press “Submit”. The app will then highlight the AI’s predicted answer. If the AI got it wrong, then you fooled the machine! 
-	<br />You are required to follow the above process 5 times for each passage. Once you've submitted all 5 question-answer pairs, Submit HIT button will appear. You will be provided a bonus of 15 cents for every question that fools the machine! Try to write questions that do not highly overlap with passage text.
-        <br /><br />
-        <i>Submissions will be audited for quality so do not try to cheat by writing incoherent questions or choosing incorrect answers.</i>
+	<br />You are required to follow the above process 5 times for each passage <b>(remember that each question is standalone)</b>. Once you've submitted all 5 question-answer pairs, Submit HIT button will appear. You will be provided a bonus of 15 cents for every question that fools the machine! Try to write questions that do not highly overlap with passage text.
+        <br /><br /></small>
+        <small style={{ color: 'red' }}><i>Submissions will be audited for quality so do not try to write incoherent questions or choose incorrect answers. </i></small><small><b>Please email us at NoahTurkProject.1041@gmail.com if you do not understand any parts of the instructions or if there is anything else that we can help with. We will try to respond as quickly as possible.</b>
     </small></>;
   }
 }

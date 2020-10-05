@@ -245,12 +245,12 @@ class CreateInterface extends React.Component {
                   (item.fooled ?
                     <>
                       <span><strong>Well done!</strong> You fooled the model. The model predicted <strong>{item.modelPredStr}</strong> instead. </span><br />
-                      <span>Made a mistake? You can still <a href="#" data-index={index} onClick={this.retractExample} className="btn-link">retract this example</a>. Otherwise, we will have it verified.</span>
+			  {/*<span>Made a mistake? You can still <a href="#" data-index={index} onClick={this.retractExample} className="btn-link">retract this example</a>. Otherwise, we will have it verified.</span>*/}
                     </>
                     :
                     <>
                       <span><strong>Bad luck!</strong> The model correctly predicted <strong>{item.modelPredStr}</strong>. Try again.</span>
-                      <span>We will still store this as an example that the model got right. You can <a href="#" data-index={index} onClick={this.retractExample} className="btn-link">retract this example</a> if you don't want it saved.</span>
+			  {/*<span>We will still store this as an example that the model got right. You can <a href="#" data-index={index} onClick={this.retractExample} className="btn-link">retract this example</a> if you don't want it saved.</span>*/}
                     </>
                   )
                 }</small>
