@@ -22,6 +22,7 @@ import {
   Spinner,
   Modal
 } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import UserContext from "./UserContext";
 import { TokenAnnotator } from "react-text-annotate";
 import { PieRechart } from "../components/Rechart";
@@ -454,7 +455,24 @@ class ResponseInfo extends React.Component {
             </span>
         }
         {!this.state.livemode
-          ? <div>This example was not stored because you are in sandbox mode.</div>
+          ? <div>
+              This example was not stored because you are in sandbox mode.
+              { this.context.api.loggedIn()
+                ? ""
+                : <div>
+                    <Link
+                      to={"/register?msg=" +
+                          encodeURIComponent("Please sign up or log in so that you can get credit for your generated examples.") +
+                          "&src=" +
+                          encodeURIComponent("/tasks/" + this.props.taskId + "/create")
+                          }
+                    >
+                      Sign up now
+                    </Link>{" "}
+                    to make sure your examples are stored and you get credit for your examples!
+                  </div>
+              }
+            </div>
           : this.props.obj.fooled
             ? (
               <div className="mt-3">
@@ -642,6 +660,7 @@ class CreateInterface extends React.Component {
     this.handleGoalMessageTargetChange = this.handleGoalMessageTargetChange.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
     this.handleResponseChange = this.handleResponseChange.bind(this);
+    this.switchLiveMode = this.switchLiveMode.bind(this);
     this.updateAnswer = this.updateAnswer.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
     this.chatContainerRef = React.createRef();
@@ -858,19 +877,25 @@ class CreateInterface extends React.Component {
   handleResponseChange(e) {
     this.setState({ hypothesis: e.target.value });
   }
+  switchLiveMode(checked) {
+    if (checked === true && !this.context.api.loggedIn()) {
+      this.props.history.push(
+        "/register?msg=" +
+          encodeURIComponent(
+            "Please sign up or log in so that you can get credit for your generated examples."
+          ) +
+          "&src=" +
+          encodeURIComponent("/tasks/" + this.props.taskId + "/create")
+      );
+    }
+    this.setState({ livemode: checked });
+  }
   componentDidMount() {
     const {
       match: { params },
     } = this.props;
     if (!this.context.api.loggedIn()) {
-      this.props.history.push(
-        "/login?msg=" +
-          encodeURIComponent(
-            "Please log in or sign up so that you can get credit for your generated examples."
-          ) +
-          "&src=" +
-          encodeURIComponent("/tasks/" + params.taskId + "/create")
-      );
+      this.setState({ livemode: false });
     }
 
     this.setState({ taskId: params.taskId }, function () {
@@ -969,7 +994,7 @@ class CreateInterface extends React.Component {
       );
     }
     function renderSandboxTooltip(props) {
-      return renderTooltip(props, "Just playing? Switch to sandbox mode.");
+      return renderTooltip(props, "Switch in and out of sandbox mode.");
     }
     function renderSwitchRoundTooltip(props) {
       return renderTooltip(props, "Switch to other rounds of this task, including no longer active ones.");
@@ -1080,7 +1105,7 @@ class CreateInterface extends React.Component {
                             offlabel='Sandbox'
                             width={120}
                             onChange={(checked) => {
-                              this.setState({ livemode: checked });
+                              this.switchLiveMode(checked);
                             }}
                           />
                         </Annotation>
