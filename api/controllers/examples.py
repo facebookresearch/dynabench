@@ -86,11 +86,13 @@ def validate_example(credentials, eid):
     context = cm.get(example.cid)
     owner_override = False
     override_if_owner = data['override_if_owner']
+    um = UserModel()
     if override_if_owner:
-        if str(credentials['id']) in context.round.task.owner_uids.split(','):
+        user = um.get(credentials['id'])
+        if user.admin or (context.round.task.id, 'owner') in [(perm.tid, perm.type) for perm in user.task_permissions]:
             owner_override = True
         else:
-            bottle.abort(403, 'Access denied (you are not an owner of this task)')
+            bottle.abort(403, 'Access denied (you are not an admin or owner of this task)')
 
     if credentials['id'] == 'turk':
         if not util.check_fields(data, ['uid']):
@@ -113,7 +115,6 @@ def validate_example(credentials, eid):
     })
     preds = Counter([x.split(",")[1] for x in nobj.split("|")])
     rm = RoundModel()
-    um = UserModel()
     rm.updateLastActivity(context.r_realid)
     if preds['C'] >= 5 or (owner_override and label == 'C'):
         em.update(example.id, {'verified': True, 'verified_correct': True})

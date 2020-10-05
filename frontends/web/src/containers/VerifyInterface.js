@@ -123,7 +123,7 @@ class VerifyInterface extends React.Component {
               <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
                 Validate examples
               </h2>
-              {this.state.task.owner_uids?.split(',').includes(this.context.user.id.toString()) ?
+              {this.context.user.task_permissions?.filter((task_permission) => this.state.task.id === task_permission.tid && "owner" === task_permission.type).length > 0 || this.context.user.admin  ?
                 <BootstrapSwitchButton
                   checked={this.state.user_mode}
                   onlabel="User Mode"
