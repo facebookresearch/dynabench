@@ -13,6 +13,7 @@ class User(Base):
     __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
 
     id = db.Column(db.Integer, primary_key=True)
+    admin = db.Column(db.Boolean)
     username = db.Column(db.String(length=255), nullable=False, unique=True)
     email = db.Column(db.String(length=255), nullable=False, unique=True)
     password = db.Column(db.String(length=255), nullable=False)

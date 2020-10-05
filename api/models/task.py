@@ -5,6 +5,7 @@
 import sqlalchemy as db
 from .base import Base, BaseModel
 from .round import Round
+from .user import User
 
 class Task(Base):
     __tablename__ = 'tasks'
@@ -18,7 +19,6 @@ class Task(Base):
     # Task type is either 'clf' or 'extract' for now
     type = db.Column(db.String(length=255), nullable=False, default='clf')
 
-    owner_uids = db.Column(db.Text)
     owner_str = db.Column(db.Text)
 
     desc = db.Column(db.String(length=255))
@@ -40,6 +40,27 @@ class Task(Base):
 
     def __repr__(self):
         return '<Task {}>'.format(self.name)
+
+    def to_dict(self, safe=True):
+        d = {}
+        for column in self.__table__.columns:
+            d[column.name] = getattr(self, column.name)
+        return d
+
+class TaskUserPermission(Base):
+    __tablename__ = 'task_user_permissions'
+    __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
+
+    id = db.Column(db.Integer, primary_key=True)
+    uid = db.Column(db.Integer, db.ForeignKey('users.id'))
+    type = db.Column(db.String(255)) #  For now, the only recognized type is 'owner'
+    tid = db.Column(db.Integer, db.ForeignKey('tasks.id'))
+
+    task = db.orm.relationship(Task, backref="task_permissions")
+    user = db.orm.relationship(User, backref="task_permissions")
+
+    def __repr__(self):
+        return '<TaskUserPermission {}>'.format(self.id)
 
     def to_dict(self, safe=True):
         d = {}

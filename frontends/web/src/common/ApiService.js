@@ -276,6 +276,21 @@ export default class ApiService {
     });
   }
 
+  getExampleMetadata(id) {
+    return this.fetch(`${this.domain}/examples/${id}/metadata`, {
+      method: "GET",
+    });
+  }
+
+  setExampleMetadata(id, metadata_json) {
+    var obj = {};
+    obj.metadata_json = JSON.stringify(metadata_json);
+    return this.fetch(`${this.domain}/examples/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(obj),
+    });
+  }
+
   explainExample(id, type, explanation, uid = null) {
     var obj = {};
     if (type == 'example') {
