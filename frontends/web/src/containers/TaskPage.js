@@ -148,7 +148,6 @@ const TaskActionButtons = (props) => {
   function renderSubmitTooltip(props) {
     return renderTooltip(props, "Submit model predictions on this task");
   }
-
   return (
     <Nav className="my-4">
       <Nav.Item className="task-action-btn">
@@ -204,7 +203,7 @@ const TaskActionButtons = (props) => {
         </Annotation>
       </Nav.Item>
     ) : null}
-    {props.user.permission_tids?.includes(props.task.id) || props.user.admin ?
+    {props.user.task_permissions?.filter((task_permission) => props.task.id === task_permission.tid && "owner" === task_permission.type).length > 0 || props.user.admin ?
       <Nav.Item className="task-action-btn ml-auto">
         <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" id="dropdown-basic-button" title="Export">
           <Dropdown.Item onClick={props.exportCurrentRoundData}>Export current round</Dropdown.Item>

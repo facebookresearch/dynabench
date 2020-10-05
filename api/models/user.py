@@ -143,10 +143,3 @@ class UserModel(BaseModel):
         if u:
             u.unseen_notifications = 0
             self.dbs.commit()
-    def getUserDictWithPermissionTaskIds(self, uid):
-        user = self.get(uid)
-        user_dict = user.to_dict()
-        user_dict['permission_tids'] = []
-        for permission in user.task_permissions:
-            user_dict['permission_tids'].append(permission.tid)
-        return user_dict
