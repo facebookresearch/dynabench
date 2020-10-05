@@ -69,7 +69,8 @@ for unit in units:
             unit.get_assigned_agent().approve_work()
             sendbonus = input("How much bonus would you like to give for this work (in dollars)? ")
             sendbonus = float(sendbonus)
-            unit.get_assigned_agent().get_worker().bonus_worker(amount=sendbonus, reason="They did extra work!", unit=unit)
+            if sendbonus>0:
+                unit.get_assigned_agent().get_worker().bonus_worker(amount=sendbonus, reason=input("Briefly tell them why you are bonusing them: "), unit=unit)
         elif keep == "r":
             reason = input("Why are you rejecting this work?")
             unit.get_assigned_agent().reject_work(reason)
@@ -78,6 +79,10 @@ for unit in units:
             # the worker from working on more of these tasks
             agent = unit.get_assigned_agent()
             agent.soft_reject_work()
+            sendbonus = input("How much bonus would you like to give for this work (in dollars)? ")
+            sendbonus = float(sendbonus)
+            if sendbonus>0:
+                unit.get_assigned_agent().get_worker().bonus_worker(amount=sendbonus, reason=input("Briefly tell them why you are bonusing them: "), unit=unit)
             should_soft_block = input(
                 "Do you want to soft block this worker? (y)es/(n)o: "
             )
