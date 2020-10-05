@@ -166,6 +166,19 @@ class VerifyInterface extends React.Component {
                             <p>
                             {this.state.example.text}
                             </p>
+                            {this.state.example.metadata_json
+                              ? JSON.parse(this.state.example.metadata_json).hasOwnProperty('hate_target')
+                                ? <div>
+                                    <h6 className="text-uppercase dark-blue-color spaced-header">
+                                    Hate Target:
+                                    </h6>
+                                    <p>
+                                    {JSON.parse(this.state.example.metadata_json).hate_target}
+                                    </p>
+                                  </div>
+                                : ""
+                              : ""
+                            }
                             <h6 className="text-uppercase dark-blue-color spaced-header">
                             Label:
                             </h6>

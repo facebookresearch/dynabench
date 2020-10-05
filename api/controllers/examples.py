@@ -45,6 +45,17 @@ def get_example(credentials, eid):
         bottle.abort(403, 'Access denied')
     return util.json_encode(example.to_dict())
 
+@bottle.get('/examples/<eid:int>/metadata')
+@_auth.requires_auth
+def get_example_metadata(credentials, eid):
+    em = ExampleModel()
+    example = em.get(eid)
+    if not example:
+        bottle.abort(404, 'Not found')
+    if example.uid != credentials['id']:
+        bottle.abort(403, 'Access denied')
+    return util.json_encode(example.metadata_json)
+
 @bottle.put('/examples/<eid:int>/validate')
 @_auth.requires_auth_or_turk
 def validate_example(credentials, eid):

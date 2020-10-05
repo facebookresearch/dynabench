@@ -105,6 +105,17 @@ const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName, onChang
   );
 };
 
+const HateSpeechDropdown = ({ hateTarget, dataIndex, onClick }) => {
+  return (
+    <DropdownButton variant="light" className="p-1" title={hateTarget ? "Target of hate: " + hateTarget : "Target of hate"}>
+      {
+        ["Threatening language", "Supporting hateful entities", "Derogation", "Dehumanizing language", "Animosity", "None selected"].map((target, index) =>
+        <Dropdown.Item data-index={dataIndex} data={target} onClick={onClick} key={index} index={index}>{target}</Dropdown.Item>)
+      }
+    </DropdownButton>
+  );
+};
+
 const TextFeature = ({ data, curTarget, targets }) => {
   const capitalize = (s) => {
     if (typeof s !== "string") return "";
@@ -267,6 +278,7 @@ class ResponseInfo extends React.Component {
     this.retractExample = this.retractExample.bind(this);
     this.flagExample = this.flagExample.bind(this);
     this.explainExample = this.explainExample.bind(this);
+    this.updateHateSpeechTargetMetadata = this.updateHateSpeechTargetMetadata.bind(this);
     this.state = {
       loader: true,
       inspectError: false,
@@ -279,6 +291,27 @@ class ResponseInfo extends React.Component {
       inspectError: false,
       explainSaved: null
     });
+  }
+  updateHateSpeechTargetMetadata(e) {
+    const hate_target = e.target.getAttribute("data");
+    const idx = e.target.getAttribute("data-index");
+    this.setState({explainSaved: false});
+    this.setState({hate_target: hate_target});
+    this.context.api
+      .getExampleMetadata(this.props.mapKeyToExampleId[idx])
+      .then((result) => {
+        var metadata = JSON.parse(result);
+        metadata['hate_target'] = hate_target;
+        this.context.api
+          .setExampleMetadata(this.props.mapKeyToExampleId[idx], metadata)
+          .then((result) => {
+            this.setState({explainSaved: true});
+          }, (error) => {
+            console.log(error);
+          });
+      }, (error) => {
+        console.log(error);
+      });
   }
   explainExample(e) {
     e.preventDefault();
@@ -454,6 +487,14 @@ class ResponseInfo extends React.Component {
                       : <span style={{color: "#085756"}}>Saved!</span>
                   }
                 </span>
+                { this.props.taskName === "Hate Speech"
+                  ? <HateSpeechDropdown
+                      hateTarget={this.state.hate_target}
+                      dataIndex={this.props.index}
+                      onClick={this.updateHateSpeechTargetMetadata}
+                    />
+                  : ""
+                }
                 <div>
                   <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
                     "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is the correct answer"}
@@ -479,6 +520,14 @@ class ResponseInfo extends React.Component {
                     : <span style={{color: "#085756"}}>Saved!</span>
                 }
               </span>
+              { this.props.taskName === "Hate Speech"
+                ? <HateSpeechDropdown
+                    hateTarget={this.state.hate_target}
+                    dataIndex={this.props.index}
+                    onClick={this.updateHateSpeechTargetMetadata}
+                  />
+                : ""
+              }
               <div>
                 <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
                   "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is the correct answer"}
@@ -900,6 +949,7 @@ class CreateInterface extends React.Component {
     const content = this.state.content.map((item, index) =>
       item.cls === "context" ? undefined : (
         <ResponseInfo
+          randomModel={this.state.randomModel}
           key={index}
           index={index}
           targets={this.state.task.targets}
