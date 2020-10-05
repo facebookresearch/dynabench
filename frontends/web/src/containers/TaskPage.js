@@ -148,7 +148,6 @@ const TaskActionButtons = (props) => {
   function renderSubmitTooltip(props) {
     return renderTooltip(props, "Submit model predictions on this task");
   }
-
   return (
     <Nav className="my-4">
       <Nav.Item className="task-action-btn">
@@ -204,7 +203,7 @@ const TaskActionButtons = (props) => {
         </Annotation>
       </Nav.Item>
     ) : null}
-    {props.uid === props.task.owner_uid ?
+    {props.user.task_permissions?.filter((task_permission) => props.task.id === task_permission.tid && "owner" === task_permission.type).length > 0 || props.user.admin ?
       <Nav.Item className="task-action-btn ml-auto">
         <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" id="dropdown-basic-button" title="Export">
           <Dropdown.Item onClick={props.exportCurrentRoundData}>Export current round</Dropdown.Item>
@@ -341,14 +340,14 @@ class RoundDescription extends React.Component {
         this.setState({ round: result });
       }, (error) => {
         console.log(error);
-        if (error.status_code === 404 || error.status_code === 405) {
+        if ((error.status_code === 404 || error.status_code === 405) && this.props.history) {
           this.props.history.push("/");
         }
       });
     }
   }
   componentDidUpdate(prevProps) {
-    if (prevProps.round_id !== this.props.round_id) {
+    if (prevProps.task_id !== this.props.task_id || prevProps.round_id !== this.props.round_id) {
       this.getRoundInfo();
     }
   }
@@ -379,23 +378,38 @@ class TaskPage extends React.Component {
   }
 
   componentDidMount() {
-    this.context.api
-      .getTask(this.state.taskId)
-      .then((result) => {
-        this.setState({task: result, displayRoundId: result.cur_round, round: result.round}, function() {
-          this.refreshData();
+    this.setState({taskId: this.props.match.params.taskId}, function() {
+      this.context.api
+        .getTask(this.state.taskId)
+        .then((result) => {
+          this.setState({task: result, displayRoundId: result.cur_round, round: result.round}, function() {
+            this.refreshData();
+          });
+        }, (error) => {
+          console.log(error);
+          if (error.status_code === 404 || error.status_code === 405) {
+            this.props.history.push("/");
+          }
         });
-      }, (error) => {
-        console.log(error);
-        if (error.status_code === 404 || error.status_code === 405) {
-          this.props.history.push("/");
-        }
-      });
+    });
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.location.hash !== this.props.location.hash) {
-      this.refreshData();
+    if (prevProps.location.hash !== this.props.location.hash || this.props.match.params.taskId != this.state.taskId) {
+      this.setState({taskId: this.props.match.params.taskId}, function() {
+        this.context.api
+          .getTask(this.state.taskId)
+          .then((result) => {
+            this.setState({task: result, displayRoundId: result.cur_round, round: result.round}, function() {
+              this.refreshData();
+            });
+          }, (error) => {
+            console.log(error);
+            if (error.status_code === 404 || error.status_code === 405) {
+              this.props.history.push("/");
+            }
+          });
+      });
     }
   }
 
@@ -533,10 +547,10 @@ class TaskPage extends React.Component {
                 <hr />
                 <TaskActionButtons
                   taskId={this.state.taskId}
-                  uid={this.context.user.id}
+                  user={this.context.user}
                   task={this.state.task}
                   exportCurrentRoundData={this.exportCurrentRoundData}
-                  exportCurrentRoundData={this.exportCurrentRoundData}
+                  exportAllTaskData={this.exportAllTaskData}
                 />
               </>
             ) :

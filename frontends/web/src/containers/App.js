@@ -103,10 +103,11 @@ class App extends React.Component {
     this.refreshData()
   }
   render() {
+    //href={`/tasks/${task.id}#overall`}
     const NavItems = this.state.tasks.map((task, index) => (
       <NavDropdown.Item
         key={task.id}
-        href={`/tasks/${task.id}#overall`}
+        as={Link} to={`/tasks/${task.id}#overall`}
         className="py-3"
       >
         {task.name}
@@ -172,21 +173,21 @@ class App extends React.Component {
                         }
                         id="collasible-nav-dropdown"
                       >
-                        <NavDropdown.Item href="/account#profile">
+                        <NavDropdown.Item as={Link} to="/account#profile">
                           Profile
                         </NavDropdown.Item>
                         <NavDropdown.Divider />
-                        <NavDropdown.Item href="/account#notifications">
+                        <NavDropdown.Item as={Link} to="/account#notifications">
                           Notifications {(this.state.user && this.state.user.unseen_notifications) ? '(' + this.state.user?.unseen_notifications + ')' : ''}
                         </NavDropdown.Item>
-                        <NavDropdown.Item href="/account#stats">
+                        <NavDropdown.Item as={Link} to="/account#stats">
                           Stats &amp; Badges
                         </NavDropdown.Item>
-                        <NavDropdown.Item href="/account#models">
+                        <NavDropdown.Item as={Link} to="/account#models">
                           Models
                         </NavDropdown.Item>
                         <NavDropdown.Divider />
-                        <NavDropdown.Item href="/logout">
+                        <NavDropdown.Item as={Link} to="/logout">
                           Logout
                         </NavDropdown.Item>
                       </NavDropdown>
