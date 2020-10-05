@@ -134,7 +134,7 @@ class CreateInterfaceNoModel extends React.Component {
             this.state.context.id,
             this.state.hypothesis,
             this.state.task.type == 'extract' ? JSON.stringify(this.state.answer) : this.state.target,
-            {},
+            {"text":"","model_is_correct":true},
             metadata
           ).then(result => {
             var key = this.state.content.length-1;
@@ -147,7 +147,6 @@ class CreateInterfaceNoModel extends React.Component {
 	    });
           })
           .catch(error => {
-            console.log(result);
             console.log(error);
           });
       });
@@ -216,13 +215,13 @@ class CreateInterfaceNoModel extends React.Component {
     var taskTracker = <Button className="btn btn-primary btn-success" disabled={this.state.submitDisabled} onClick={this.handleResponse}>Submit HIT</Button>;
     return (
       <Container>
-        <Row>
+	{/*<Row>
           <h2>Find examples for - {this.state.task.name}</h2>
-	</Row>
+	</Row>*/}
         <Row>
           <CardGroup style={{marginTop: 20, width: '100%'}}>
             <Card border='dark'>
-              <Card.Body style={{height: 400, overflowY: 'scroll'}}>
+              <Card.Body style={{height: 250, overflowY: 'scroll'}}>
                 {content}
               </Card.Body>
             </Card>

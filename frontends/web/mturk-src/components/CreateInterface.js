@@ -94,11 +94,13 @@ class CreateInterface extends React.Component {
       const newContent = this.state.content.slice();
       newContent[idx].cls = 'retracted';
       newContent[idx].retracted = true;
-      this.setState({content: newContent});
+      console.log(this.state);
+      this.setState({content: newContent, tries:this.state.tries-1}, function(){console.log(this.state);});
     })
     .catch(error => {
       console.log(error);
     });
+    this.setState({tries:this.state.tries-1});
   }
   handleTaskSubmit() {
     this.props.onSubmit(this.state.content);
@@ -117,7 +119,7 @@ class CreateInterface extends React.Component {
         var answer_text = "";
         if (this.state.answer.length > 0) {
           var last_answer = this.state.answer[this.state.answer.length - 1];
-          var answer_text = last_answer.tokens.join(""); // NOTE: no spaces required as tokenising by word boundaries
+          var answer_text = last_answer.tokens.join(" "); // NOTE: no spaces required as tokenising by word boundaries
           // Update the target with the answer text since this is defined by the annotator in QA (unlike NLI)
           this.setState({ target: answer_text });
         }
@@ -262,13 +264,13 @@ class CreateInterface extends React.Component {
     }
     return (
       <Container>
-        <Row>
+	{/*<Row>
           <h2>Find examples for - {this.state.task.name}</h2>
-        </Row>
+        </Row>*/}
         <Row>
           <CardGroup style={{marginTop: 20, width: '100%'}}>
             <Card border='dark'>
-              <Card.Body style={{height: 400, overflowY: 'scroll'}}>
+              <Card.Body style={{height: 250, overflowY: 'scroll'}}>
                 {content}
               </Card.Body>
             </Card>
