@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import React from "react";
 import { Button, Container, Col } from "react-bootstrap";
 import { Link } from "react-router-dom";
@@ -8,29 +14,33 @@ const AboutPage = () => (
       <div className="mb-5 text-center">
         <h1 className="my-4 pt-3 text-uppercase">About</h1>
         <h2 className="task-page-header d-block font-weight-normal m-0 text-reset">
-          DynaBench is a platform for dynamic adversarial data collection and
+          DynaBench is a platform for dynamic data collection and
           benchmarking. Static benchmarks have many issues. DynaBench offers a
           more accurate and sustainable way for evaluating progress in AI.
         </h2>
       </div>
       <div className="mt-5">
         <p>
-          Benchmarks &mdash; from MNIST to ImageNet to SQuAD, SNLI and GLUE
+          Benchmarks &mdash; from{" "}
+          <a href="http://yann.lecun.com/exdb/mnist/">MNIST</a>{" "}to{" "}
+          <a href="http://www.image-net.org">ImageNet</a> to{" "}
+          <a href="https://rajpurkar.github.io/SQuAD-explorer/">SQuAD</a>,{" "}
+          <a href="https://nlp.stanford.edu/projects/snli/">SNLI</a> and{" "}
+          <a href="https://gluebenchmark.com/">GLUE</a>{" "}
           &mdash; have played a hugely important role in driving progress in AI
           research. With the rapid pace of progress in the field, however, the
           current status quo is starting to show cracks. While it took us
           roughly 18 years to achieve "super human performance" on MNIST, the
           GLUE benchmark for natural language understanding was "solved" in less
-          than a year after its inception. Static benchmarks made a lot of sense
-          for a long time, but we believe{" "}
+          than a year after its inception. We believe{" "}
           <strong>
             the time is ripe to radically rethink the way we do benchmarking
           </strong>
           . With DynaBench, we can collect human-in-the-loop data dynamically,{" "}
           <i>against</i> the current state-of-the-art, in a way that more
           accurately measures progress, that cannot saturate and that can
-          automatically fix annotation artifacts over time. This is meant to
-          address the following issues:
+          automatically fix annotation artifacts and other biases over time. This is meant to
+          address the following challenges:
         </p>
         <ul>
           <li>
@@ -48,10 +58,11 @@ const AboutPage = () => (
             <strong>Benchmarks have artifacts.</strong>
             <p>
               There are well-documented cases of inadvertent biases that may be
-              present in datasets. Famously, you can get decent performance on
-              SNLI by using just the hypothesis. In VQA (visual question
-              answering), the answer to a "how much" or "how many" question is
-              usually "2". Data biases are almost impossible to avoid, which may
+              present in datasets. For example, you can get decent performance on
+              SNLI by using <a href="https://arxiv.org/abs/1803.02324">just the hypothesis</a>.
+              In VQA (visual question
+              answering), the answer to a "how much" or "how many" question <a href="https://arxiv.org/abs/1612.00837">is
+              usually "2"</a>. Data biases are almost impossible to avoid, which may
               have very serious and potentially harmful side-effects.
             </p>
           </li>
@@ -72,23 +83,26 @@ const AboutPage = () => (
               Progress can be made in science by making sure we measure the
               right thing. High accuracy on a subfield's main benchmark may look
               impressive, especially to outsiders, but this can be deceiving:
-              nobody in NLP will claim we have solved natural language
-              understanding. In many cases, we ultimately care not about a
-              single benchmark, but about how well AI systems can work together
-              with humans. If only there were a platform that would help us
-              measure that...
+              most researchers understand that achieving superhuman performance on SQuAD doesn't mean that Reading Comprehension is solved.
             </p>
+          </li>
+          <li>
+            <strong>Aligning with humans.</strong>
+            <p>
+              Usually, we ultimately care not about a
+              single benchmark, but about how well AI systems can work together
+              with humans.  It is very important that AI objectives <a href="https://arxiv.org/abs/1805.00899">align with human values</a>.
+The real metric for AI systems should be model error rate when interacting with a human.            </p>
           </li>
           <li>
             <strong>Embracing the loop.</strong>
             <p>
               Valuable time is lost when fields need to go in search of new
-              benchmarks. All while everybody knows we still have a long time to
-              go! The cyclical process of benchmarks saturating and getting
+              benchmarks. The cyclical process of benchmarks saturating and getting
               replaced with newer ones &mdash; the "loop" of scientific progress
               &mdash; can be embraced to ensure we waste less time: by
               collecting data against the current state-of-the-art, the death of
-              a saturated dynamic benchmark automatically induces the birth of a
+              a saturated dynamic benchmark leads to the birth of a
               new, challenging benchmark.
             </p>
           </li>
@@ -100,7 +114,7 @@ const AboutPage = () => (
               serve large-scale models for inference. They were expensive to
               collect, took a long time to saturate and models had a long way to
               go. Putting humans and models in the data collection loop together
-              made no sense, since models were simply too brittle. With recent
+              made little sense, since models were simply too brittle. With recent
               advances, however, we think models are good enough to be put in
               the loop with humans, to measure the problem we really care about:
               how well can AI systems work together with humans.
@@ -140,8 +154,8 @@ const AboutPage = () => (
           This platform came out of our paper on{" "}
           <a href="https://arxiv.org/abs/1910.14599">
             Adversarial NLI: A New Benchmark for Natural Language Understanding
-          </a>
-          . The idea is not new, of course: our work is heavily inspired by
+          </a>{" "}
+          (NLI rounds 1-3). The idea is not new, of course: our work is heavily inspired by
           things like{" "}
           <a href="https://arxiv.org/pdf/1606.01881.pdf">
             Build it, Break it, Fix it
@@ -163,7 +177,7 @@ const AboutPage = () => (
             trick me if you can
           </a>{" "}
           and the excellent{" "}
-          <a href="https://arxiv.org/abs/2002.00293">Beat the AI</a>. There are
+          <a href="https://arxiv.org/abs/2002.00293">Beat the AI</a> (QA round 1). There are
           lots of cool datasets out there that use similar ideas, especially
           when it comes to adversarial collection, like{" "}
           <a href="https://arxiv.org/abs/1808.05326">Swag</a>,{" "}
@@ -188,7 +202,8 @@ const AboutPage = () => (
           Won't this lead to unnatural distributions and distributional shift?
         </h2>
         <p>
-          It probably will. Another risk is catastrophic forgetting or cyclical
+          It probably will, if we use collected data for training (it could also only be used
+          for evaluation). Another risk is catastrophic forgetting or cyclical
           "progress", where improved models forget things that were relevant in
           an earlier round. Research is required in trying to understand these
           shifts better, in characterizing how it might impact learning and in
@@ -217,15 +232,13 @@ const AboutPage = () => (
           report results on numbered datasets, so e.g. "ANLI-1:3" for the first
           three rounds of NLI. If a new round comes out, we will have to take
           care to score existing state-of-the-art methods to facilitate a
-          staggered comparison. Papers can also more easily be updated these
-          days, or sequals can be written.
+          staggered comparison.
         </p>
         <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
           Where will this lead?
         </h2>
         <p>
-          In the limit, to AGI. We kid, of course. In the short term, it will
-          hopefully lead to more robust models, faster progress, and a better
+          We hope that it will lead to more robust models, faster progress, a more well-defined objective, and a better
           understanding of our current limitations.
         </p>
         <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
@@ -235,6 +248,18 @@ const AboutPage = () => (
           Hopefully, soon you will be able to add your own target models and
           your own tasks. Please stay tuned, and let us know if you have any
           interesting proposals.
+        </p>
+        <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
+          What about other languages? Other modalities?
+        </h2>
+        <p>
+          For now, Dynabench is English-only, but we are absolutely open to expanding to other languages. Similarly, for now we focus on NLP and text-only problems, but we are very interested in opening this up to other modalities.
+        </p>
+        <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
+          What about annotators?
+        </h2>
+        <p>
+          Anyone can use the platform to find or verify model-fooling examples. We hope to give linguists and other experts the tools they need to discover weaknesses in AI systems. We will also use crowdworkers to generate additional data in the same manner.
         </p>
         <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
           Why these tasks?

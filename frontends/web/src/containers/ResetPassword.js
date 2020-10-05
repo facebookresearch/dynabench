@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import React from "react";
 import { Formik } from "formik";
 import { Container, Row, Button } from "react-bootstrap";
@@ -35,11 +41,12 @@ class ResetPassword extends React.Component {
         token: params.token,
       })
       .then((result) => {
-        this.props.history.push("/login");
-      })
-      .catch((error) => {
+        this.props.history.push("/login?msg=" +
+          encodeURIComponent("Password reset successful. Please login."));
+      }, (error) => {
         this.setState({ error });
         setSubmitting(false);
+        setFieldError("general", "Reset failed (token invalid?)");
       });
   };
 
@@ -110,6 +117,9 @@ class ResetPassword extends React.Component {
                             {errors.confirmPassword &&
                               touched.confirmPassword &&
                               errors.confirmPassword}
+                          </small>
+                          <small className="form-text text-muted">
+                            {errors.general}
                           </small>
                           <Button
                             type="submit"

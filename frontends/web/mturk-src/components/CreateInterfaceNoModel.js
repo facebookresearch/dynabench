@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import React from 'react';
 import {
   Container,
@@ -75,8 +81,7 @@ class CreateInterfaceNoModel extends React.Component {
       .then(result => {
         var randomTarget = Math.floor(Math.random() * this.state.task.targets.length);
         this.setState({target: randomTarget, context: result, content: [{cls: 'context', text: result.context}], submitDisabled: false, refreshDisabled: false});
-      })
-      .catch(error => {
+      }, error => {
         console.log(error);
       });
     });
@@ -93,8 +98,7 @@ class CreateInterfaceNoModel extends React.Component {
       newContent[idx].cls = 'retracted';
       newContent[idx].retracted = true;
       this.setState({content: newContent});
-    })
-    .catch(error => {
+    }, error => {
       console.log(error);
     });
   }
@@ -144,10 +148,9 @@ class CreateInterfaceNoModel extends React.Component {
                   console.log('Success! You can submit HIT');
                   this.setState({taskCompleted: true});
                   this.handleTaskSubmit();
-	    });
-          })
-          .catch(error => {
-            console.log(error);
+            });
+          }, error => {
+		  console.log(error);
           });
       });
     });
@@ -162,8 +165,7 @@ class CreateInterfaceNoModel extends React.Component {
       this.setState({task: result}, function() {
         this.getNewContext();
       });
-    })
-    .catch(error => {
+    }, error => {
       console.log(error);
     });
   }

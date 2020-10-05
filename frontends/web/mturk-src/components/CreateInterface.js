@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import React from 'react';
 import {
   Container,
@@ -77,8 +83,7 @@ class CreateInterface extends React.Component {
       .then(result => {
         var randomTarget = Math.floor(Math.random() * this.state.task.targets.length);
         this.setState({target: randomTarget, context: result, content: [{cls: 'context', text: result.context}], submitDisabled: false, refreshDisabled: false});
-      })
-      .catch(error => {
+      }, error => {
         console.log(error);
       });
     });
@@ -94,13 +99,11 @@ class CreateInterface extends React.Component {
       const newContent = this.state.content.slice();
       newContent[idx].cls = 'retracted';
       newContent[idx].retracted = true;
-      console.log(this.state);
       this.setState({content: newContent, tries:this.state.tries-1}, function(){console.log(this.state);});
     })
     .catch(error => {
-      console.log(error);
+	    console.log(error);
     });
-    this.setState({tries:this.state.tries-1});
   }
   handleTaskSubmit() {
     this.props.onSubmit(this.state.content);
@@ -158,7 +161,7 @@ class CreateInterface extends React.Component {
           const metadata = {
             'annotator_id': this.props.providerWorkerId,
             'mephisto_id': this.props.mephistoWorkerId,
-            'model': 'model-name-unknown' 
+            'model': 'model-name-unknown'
           };
           this.api.storeExample(
             this.state.task.id,
@@ -179,13 +182,11 @@ class CreateInterface extends React.Component {
                   this.setState({taskCompleted: true});
                 }
               });
-          })
-          .catch(error => {
+          }, error => {
             console.log(error);
           });
         });
-      })
-      .catch(error => {
+      }, error => {
         console.log(error);
       });
     });
@@ -200,8 +201,7 @@ class CreateInterface extends React.Component {
       this.setState({task: result}, function() {
         this.getNewContext();
       });
-    })
-    .catch(error => {
+    }, error => {
       console.log(error);
     });
   }

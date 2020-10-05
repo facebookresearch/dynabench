@@ -1,3 +1,7 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 import sqlalchemy as db
 from .base import Base, BaseModel
 import secrets
@@ -39,7 +43,7 @@ class User(Base):
         for column in self.__table__.columns:
             if safe and column.name in ['password', 'refresh_token', 'forgot_password_token',
                                         'forgot_password_token_expiry_date']: continue
-            d[column.name] = str(getattr(self, column.name))
+            d[column.name] = getattr(self, column.name)
         return d
 
 class UserModel(BaseModel):
@@ -60,6 +64,11 @@ class UserModel(BaseModel):
     def getByEmail(self, email):
         try:
             return self.dbs.query(User).filter(User.email == email).one()
+        except db.orm.exc.NoResultFound:
+            return False
+    def getByUsername(self, username):
+        try:
+            return self.dbs.query(User).filter(User.username == username).one()
         except db.orm.exc.NoResultFound:
             return False
     def getByEmailAndPassword(self, email, password):

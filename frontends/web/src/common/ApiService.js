@@ -1,4 +1,10 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
 import decode from "jwt-decode";
+import * as download from 'downloadjs';
 
 function delay(t, v) {
   return new Promise(function (resolve) {
@@ -35,7 +41,7 @@ export default class ApiService {
       body: JSON.stringify({ email: email, password: password }),
     }).then((res) => {
       this.setToken(res.token);
-      return Promise.resolve(res);
+      return res;
     });
   }
 
@@ -49,7 +55,7 @@ export default class ApiService {
       }),
     }).then((res) => {
       this.setToken(res.token);
-      return Promise.resolve(res);
+      return res;
     });
   }
 
@@ -57,8 +63,6 @@ export default class ApiService {
     return this.fetch(`${this.domain}/recover/initiate`, {
       method: "POST",
       body: JSON.stringify({ email }),
-    }).then((res) => {
-      return Promise.resolve(res);
     });
   }
 
@@ -66,17 +70,13 @@ export default class ApiService {
     return this.fetch(`${this.domain}/recover/resolve/${token}`, {
       method: "POST",
       body: JSON.stringify({ email, password }),
-    }).then((res) => {
-      return Promise.resolve(res);
     });
   }
 
   updateUser(userId, body) {
-    return this.fetch(`${this.domain}/users/${userId}/profileUpdate`, {
+    return this.fetch(`${this.domain}/users/${userId}`, {
       method: "PUT",
       body: JSON.stringify(body),
-    }).then((res) => {
-      return Promise.resolve(res);
     });
   }
 
@@ -84,31 +84,24 @@ export default class ApiService {
     const formData = new FormData();
     formData.append("file", file);
     const token = this.getToken();
-    var f = this.fetch(`${this.domain}/users/${userId}/avatar/upload`, {
+    return this.fetch(`${this.domain}/users/${userId}/avatar/upload`, {
       method: "POST",
       body: formData,
       headers: {
         Authorization: token ? "Bearer " + token : "None",
       },
     });
-    return f.then((res) => {
-      return Promise.resolve(res);
-    });
   }
 
   getUsers() {
     return this.fetch(`${this.domain}/users`, {
       method: "GET",
-    }).then((res) => {
-      return Promise.resolve(res);
     });
   }
 
   getTasks() {
     return this.fetch(`${this.domain}/tasks`, {
       method: "GET",
-    }).then((res) => {
-      return Promise.resolve(res);
     });
   }
 
@@ -118,56 +111,41 @@ export default class ApiService {
     formData.append("file", data.file);
     formData.append("type", data.roundType);
     formData.append("taskId", data.taskId);
-    var f = this.fetch(`${this.domain}/models/upload`, {
+    return this.fetch(`${this.domain}/models/upload`, {
       method: "POST",
       body: formData,
       headers: {
         Authorization: token ? "Bearer " + token : "None",
       },
     });
-    return f.then((res) => {
-      return Promise.resolve(res);
-    });
   }
 
   publishModel({ modelId, name, description }) {
-    var f = this.fetch(`${this.domain}/models/${modelId}/publish`, {
+    return this.fetch(`${this.domain}/models/${modelId}/publish`, {
       method: "PUT",
       body: JSON.stringify({
         name,
         description,
       }),
     });
-    return f.then((res) => {
-      return Promise.resolve(res);
-    });
   }
 
   toggleModelStatus(modelId) {
-    var f = this.fetch(`${this.domain}/models/${modelId}/revertstatus`, {
+    return this.fetch(`${this.domain}/models/${modelId}/revertstatus`, {
       method: "PUT",
-    });
-    return f.then((res) => {
-      return Promise.resolve(res);
     });
   }
 
   updateModel(modelId, data) {
-    var f = this.fetch(`${this.domain}/models/${modelId}`, {
+    return this.fetch(`${this.domain}/models/${modelId}`, {
       method: "PUT",
       body: JSON.stringify(data),
-    });
-    return f.then((res) => {
-      return Promise.resolve(res);
     });
   }
 
   getTrends(taskId) {
-    var f = this.fetch(`${this.domain}/tasks/${taskId}/trends`, {
+    return this.fetch(`${this.domain}/tasks/${taskId}/trends`, {
       method: "GET",
-    });
-    return f.then((res) => {
-      return Promise.resolve(res);
     });
   }
 
@@ -176,11 +154,8 @@ export default class ApiService {
       round === "overall"
         ? `/models?limit=${limit || 10}&offset=${offset || 0}`
         : `/rounds/${round}/models?limit=${limit || 10}&offset=${offset || 0}`;
-    var f = this.fetch(`${this.domain}/tasks/${taskId}${url}`, {
+    return this.fetch(`${this.domain}/tasks/${taskId}${url}`, {
       method: "GET",
-    });
-    return f.then((res) => {
-      return Promise.resolve(res);
     });
   }
 
@@ -189,52 +164,44 @@ export default class ApiService {
       round === "overall"
         ? `/users?limit=${limit || 10}&offset=${offset || 0}`
         : `/rounds/${round}/users?limit=${limit || 10}&offset=${offset || 0}`;
-    var f = this.fetch(`${this.domain}/tasks/${taskId}${url}`, {
+    return this.fetch(`${this.domain}/tasks/${taskId}${url}`, {
       method: "GET",
-    });
-    return f.then((res) => {
-      return Promise.resolve(res);
     });
   }
 
   getUser(id) {
-    var f = this.fetch(`${this.domain}/users/${id}`, {
+    return this.fetch(`${this.domain}/users/${id}`, {
       method: "GET",
-    });
-    return f.then((res) => {
-      return Promise.resolve(res);
     });
   }
 
   getTask(id) {
     return this.fetch(`${this.domain}/tasks/${id}`, {
       method: "GET",
-    }).then((res) => {
-      return Promise.resolve(res);
     });
   }
 
   getTaskRound(id, rid) {
     return this.fetch(`${this.domain}/tasks/${id}/${rid}`, {
       method: "GET",
-    }).then((res) => {
-      return Promise.resolve(res);
     });
   }
 
   getRandomContext(tid, rid) {
     return this.fetch(`${this.domain}/contexts/${tid}/${rid}`, {
       method: "GET",
-    }).then((res) => {
-      return Promise.resolve(res);
+    });
+  }
+
+  getRandomExample(tid, rid) {
+    return this.fetch(`${this.domain}/examples/${tid}/${rid}`, {
+      method: "GET",
     });
   }
 
   getModel(modelId) {
     return this.fetch(`${this.domain}/models/${modelId}/details`, {
       method: "GET",
-    }).then((res) => {
-      return Promise.resolve(res);
     });
   }
 
@@ -246,9 +213,7 @@ export default class ApiService {
       {
         method: "GET",
       }
-    ).then((res) => {
-      return Promise.resolve(res);
-    });
+    );
   }
 
   getModelResponse(modelUrl, { context, hypothesis, answer, insight }) {
@@ -264,8 +229,36 @@ export default class ApiService {
         }),
       },
       false
-    ).then((res) => {
-      return Promise.resolve(res);
+    );
+  }
+
+  exportData(tid, rid = null) {
+    var export_link = `${this.domain}/tasks/${tid}`;
+    if (rid !== null) {
+      export_link += `/rounds/${rid}`;
+    }
+    export_link += '/export';
+    return this.fetch(export_link, {
+      method: "GET",
+    }).then((res) => {
+      res = JSON.stringify(res);
+      return download(res, "export.json", "text/json");
+    });
+  }
+
+  explainExample(id, type, explanation, uid = null) {
+    var obj = {};
+    if (type == 'example') {
+      obj.example_explanation = explanation;
+    } else if (type == 'model') {
+      obj.model_explanation = explanation;
+    }
+    if (this.mode == 'mturk') {
+      obj.uid = uid;
+    }
+    return this.fetch(`${this.domain}/examples/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(obj),
     });
   }
 
@@ -277,8 +270,28 @@ export default class ApiService {
     return this.fetch(`${this.domain}/examples/${id}`, {
       method: "PUT",
       body: JSON.stringify(obj),
-    }).then((res) => {
-      return Promise.resolve(res);
+    });
+  }
+
+  validateExample(id, label, uid = null) {
+    let obj = {label: label};
+    if (this.mode == 'mturk') {
+      obj.uid = uid;
+    }
+    return this.fetch(`${this.domain}/examples/${id}/validate`, {
+      method: "PUT",
+      body: JSON.stringify(obj),
+    });
+  }
+
+  flagExample(id, uid = null) {
+    let obj = {flagged: true};
+    if (this.mode == 'mturk') {
+      obj.uid = uid;
+    }
+    return this.fetch(`${this.domain}/examples/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(obj),
     });
   }
 
@@ -290,9 +303,7 @@ export default class ApiService {
         body: JSON.stringify(data),
       },
       false
-    ).then((res) => {
-      return Promise.resolve(res);
-    });
+    );
   }
 
   storeExample(tid, rid, uid, cid, hypothesis, target, response, metadata) {
@@ -308,24 +319,22 @@ export default class ApiService {
         response: response,
         metadata: metadata,
       }),
-    }).then((res) => {
-      return Promise.resolve(res);
     });
   }
 
   loggedIn() {
     const token = this.getToken();
     if (!token) {
-      console.log("We do not have a token");
+      //console.log("We do not have a token");
       return false;
     } else if (!!token && !this.isTokenExpired(token)) {
-      console.log("We have a valid token");
+      //console.log("We have a valid token");
       return true;
     } else {
-      console.log("We have a token that is not longer valid - refreshing");
+      //console.log("We have a token that is not longer valid - refreshing");
       return this.refreshTokenWrapper(
         function () {
-          console.log("Our token was refreshed (loggedIn)");
+          //console.log("Token refreshed");
           return true;
         },
         function () {
@@ -362,7 +371,7 @@ export default class ApiService {
   }
 
   getCredentials() {
-    console.log(this.getToken());
+    //console.log(this.getToken());
     return this.getToken() ? decode(this.getToken()) : {};
   }
 
@@ -416,8 +425,7 @@ export default class ApiService {
       options.credentials = "include";
     }
     return fetch(url, options)
-      .then(this._checkStatus)
-      .then((response) => response.json());
+      .then(this.errorHandler);
   }
 
   fetch(url, options) {
@@ -445,14 +453,18 @@ export default class ApiService {
     return this.doFetch(url, options, {}, true);
   }
 
-  _checkStatus(response) {
-    // raises an error in case response status is not a success
-    if (response.status >= 200 && response.status < 300) {
-      return response;
-    } else {
-      var error = new Error(response.statusText);
-      error.response = response;
-      throw error;
+  errorHandler(response) {
+    try {
+      if (response.status >= 200 && response.status < 300) {
+        return Promise.resolve(response.json());
+      } else {
+        return Promise.resolve(response.json()).then((responseInJson) => {
+          return Promise.reject(responseInJson);
+        });
+      }
+    }
+    catch (error) {
+      console.log(error);
     }
   }
 }

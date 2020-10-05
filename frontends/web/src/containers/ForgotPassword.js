@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import React from "react";
 import { Formik } from "formik";
 import { Container, Row, Button } from "react-bootstrap";
@@ -36,8 +42,7 @@ class ForgotPassword extends React.Component {
                         .then((result) => {
                           setFieldValue("isSubmitted", "true");
                           setSubmitting(false);
-                        })
-                        .catch((error) => {
+                        }, (error) => {
                           console.log(error);
                           this.setState({ error });
                           setFieldValue("isSubmitted", "true");

@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import React from "react";
 import {Row, Container, Button, InputGroup } from 'react-bootstrap';
 
@@ -180,7 +186,7 @@ class DivyanshQATaskMain extends React.Component {
           <h2>Generate Questions for Reading Comprehension Tasks</h2> &nbsp; &nbsp; <Button className="btn" onClick={this.showInstructions}>{this.state.showInstructions ? "Hide" : "Show" } instructions </Button>
           </Row>
           {this.state.showInstructions && <Row> <TaskModelInstructions /> </Row>}
-          </Container> 
+          </Container>
           <CreateInterface api={this.api} {...this.props} />
 	</>;
     }
@@ -191,7 +197,7 @@ class DivyanshQATaskMain extends React.Component {
           <h2>Generate Questions for Reading Comprehension Tasks</h2> &nbsp; &nbsp; <Button className="btn" onClick={this.showInstructions}>{this.state.showInstructions ? "Hide" : "Show" } instructions </Button>
           </Row>
           {this.state.showInstructions && <Row> <TaskNoModelInstructions /> </Row>}
-          </Container> 
+          </Container>
           <CreateInterfaceNoModel api={this.api} {...this.props} />
 	</>;
     }

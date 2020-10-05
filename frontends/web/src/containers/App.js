@@ -1,7 +1,13 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import React from "react";
 import "./App.css";
 import { Navbar, Nav, NavDropdown, Row, Container } from "react-bootstrap";
-import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
+import { BrowserRouter, Switch, Route, Link } from "react-router-dom";
 import HomePage from "./HomePage";
 import LoginPage from "./LoginPage";
 import ForgotPassword from "./ForgotPassword";
@@ -21,10 +27,40 @@ import ModelPage from "./ModelPage";
 import ApiService from "../common/ApiService";
 import ScrollToTop from "./ScrollToTop.js";
 import CreateInterface from "./CreateInterface.js";
-// import VerifyInterface from "./VerifyInterface.js";
+import VerifyInterface from "./VerifyInterface.js";
 import SubmitInterface from "./SubmitInterface.js";
 import PublishInterface from "./PublishInterface.js";
 import { Avatar } from "../components/Avatar/Avatar";
+import ReactGA from "react-ga";
+
+class RouterMonitor extends React.Component {
+  constructor(props) {
+    super(props);
+    this.api = this.props.api;
+  }
+  render() {
+    if (process.env.REACT_APP_GA_ID) {
+      ReactGA.set({page: this.props.location.pathname})
+      ReactGA.pageview(this.props.location.pathname)
+    }
+
+    if (process.env.REACT_APP_BETA_LOGIN_REQUIRED) {
+      if (!this.api.loggedIn() && (
+        this.props.location.pathname !== "/login" &&
+        this.props.location.pathname !== "/register" &&
+        this.props.location.pathname !== "/termsofuse" &&
+        this.props.location.pathname !== "/datapolicy" &&
+        this.props.location.pathname !== "/forgot-password" &&
+        (!this.props.location.pathname.startsWith("/reset-password/") || this.props.location.pathname.length <= "/reset-password/".length)
+      )) {
+        this.props.history.push("/login?msg=" +
+          encodeURIComponent("You need to be logged in to access this beta.")
+        );
+      }
+    }
+    return null;
+  }
+}
 
 class App extends React.Component {
   constructor(props) {
@@ -35,6 +71,9 @@ class App extends React.Component {
     };
     this.updateState = this.updateState.bind(this);
     this.api = new ApiService(process.env.REACT_APP_API_HOST);
+    if (process.env.REACT_APP_GA_ID) {
+      ReactGA.initialize(process.env.REACT_APP_GA_ID);
+    }
   }
   updateState(value) {
     this.setState(value);
@@ -47,9 +86,8 @@ class App extends React.Component {
           .getUser(userCredentials.id)
           .then((result) => {
             this.setState({ user: result });
-          })
-          .catch((error) => {
-            console.log("error", error);
+          }, (error) => {
+            console.log(error);
           });
       });
     }
@@ -57,16 +95,9 @@ class App extends React.Component {
       .getTasks()
       .then((result) => {
         this.setState({ tasks: result });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
-    // else {
-    //  var token = this.api.getToken();
-    //  if (token) {
-    //    console.log('we have an expired token, we should refresh!');
-    //  }
-    //}
   }
   render() {
     const NavItems = this.state.tasks.map((task, index) => (
@@ -91,8 +122,9 @@ class App extends React.Component {
             tasks: this.state.tasks,
           }}
         >
-          <Router>
+          <BrowserRouter>
             <ScrollToTop />
+            <Route render={(props) => <RouterMonitor {...props} api={this.api}/>} />
             <Navbar
               expand="lg"
               variant="dark"
@@ -175,10 +207,10 @@ class App extends React.Component {
                   path="/tasks/:taskId/create"
                   component={CreateInterface}
                 />
-                {/* <Route
-                  path="/tasks/:taskId/verify"
+                <Route
+                  path="/tasks/:taskId/validate"
                   component={VerifyInterface}
-                /> */}
+                />
                 <Route
                   path="/tasks/:taskId/submit"
                   component={SubmitInterface}
@@ -235,7 +267,7 @@ class App extends React.Component {
                 </Row>
               </Container>
             </footer>
-          </Router>
+          </BrowserRouter>
         </TasksContext.Provider>
       </UserContext.Provider>
     );

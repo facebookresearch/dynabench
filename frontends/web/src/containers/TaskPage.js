@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import React from "react";
 import {
   Container,
@@ -10,6 +16,8 @@ import {
   Tooltip,
   OverlayTrigger,
   Pagination,
+  DropdownButton,
+  Dropdown
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import UserContext from "./UserContext";
@@ -179,6 +187,34 @@ const OverallUserLeaderBoard = (props) => {
   );
 };
 
+class RoundDescription extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {};
+    this.getRoundInfo = this.getRoundInfo.bind(this);
+  }
+  componentDidMount() {
+    if (this.props.round_id === "overall") return;
+    this.getRoundInfo();
+  }
+  getRoundInfo() {
+    this.props.api.getTaskRound(this.props.task_id, this.props.round_id)
+      .then((result) => {
+        this.setState({ round: result });
+      }, (error) => {
+        console.log(error);
+      });
+  }
+  componentDidUpdate(prevProps) {
+    if (prevProps.round_id !== this.props.round_id) {
+      this.getRoundInfo();
+    }
+  }
+  render() {
+    return <div dangerouslySetInnerHTML={{__html: this.state.round?.longdesc}}></div>;
+  }
+}
+
 class TaskPage extends React.Component {
   static contextType = UserContext;
   constructor(props) {
@@ -195,6 +231,9 @@ class TaskPage extends React.Component {
       isEndOfUserLeaderPage: true,
       pageLimit: 5,
     };
+
+    this.exportAllTaskData = this.exportAllTaskData.bind(this);
+    this.exportCurrentRoundData = this.exportCurrentRoundData.bind(this);
   }
   componentDidMount() {
     this.refreshData();
@@ -213,6 +252,7 @@ class TaskPage extends React.Component {
         isEndOfModelLeaderPage: true,
         userLeaderBoardPage: 0,
         isEndOfUserLeaderPage: true,
+        displayRoundId: this.props.location.hash.slice(1),
       },
       () => {
         this.fetchTask();
@@ -223,13 +263,20 @@ class TaskPage extends React.Component {
     );
   }
 
+  exportAllTaskData() {
+    return this.context.api.exportData(this.state.task.id);
+  }
+
+  exportCurrentRoundData() {
+    return this.context.api.exportData(this.state.task.id, this.state.task.cur_round);
+  }
+
   fetchTask() {
     this.context.api
       .getTask(this.state.taskId)
       .then((result) => {
         this.setState({ task: result });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   }
@@ -241,8 +288,7 @@ class TaskPage extends React.Component {
         this.setState({
           trendScore: result,
         });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   }
@@ -261,8 +307,7 @@ class TaskPage extends React.Component {
           isEndOfModelLeaderPage: isEndOfPage,
           modelLeaderBoardData: result.data,
         });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   }
@@ -281,8 +326,7 @@ class TaskPage extends React.Component {
           isEndOfUserLeaderPage: isEndOfPage,
           userLeaderBoardData: result.data,
         });
-      })
-      .catch((error) => {
+      }, (error) => {
         console.log(error);
       });
   }
@@ -319,12 +363,9 @@ class TaskPage extends React.Component {
     function renderCreateTooltip(props) {
       return renderTooltip(props, "Create new examples where the model fails");
     }
-    // function renderVerifyTooltip(props) {
-    //   return renderTooltip(
-    //     props,
-    //     "Verify examples where we think the model failed"
-    //   );
-    // }
+    function renderVerifyTooltip(props) {
+       return renderTooltip(props, "Verify examples where the model may have failed");
+    }
     function renderSubmitTooltip(props) {
       return renderTooltip(props, "Submit model predictions on this task");
     }
@@ -344,7 +385,7 @@ class TaskPage extends React.Component {
               <thead />
               <tbody>
                 <tr>
-                  <td>Round:</td>
+                  <td>Current round:</td>
                   <td>{this.state.task.cur_round}</td>
                 </tr>
                 <tr>
@@ -391,11 +432,11 @@ class TaskPage extends React.Component {
                       className="border-0 blue-color font-weight-bold light-gray-bg"
                       to={"/tasks/" + this.state.taskId + "/create"}
                     >
-                      Create
+                      Create Examples
                     </Button>
                   </OverlayTrigger>
                 </Nav.Item>
-                {/* <Nav.Item className="task-action-btn">
+                <Nav.Item className="task-action-btn">
                   <OverlayTrigger
                     placement="bottom"
                     delay={{ show: 250, hide: 400 }}
@@ -404,12 +445,12 @@ class TaskPage extends React.Component {
                     <Button
                       as={Link}
                       className="border-0 blue-color font-weight-bold light-gray-bg"
-                      to={"/tasks/" + this.state.taskId + "/verify"}
+                      to={"/tasks/" + this.state.taskId + "/validate"}
                     >
-                      Verify
+                      Validate Examples
                     </Button>
                   </OverlayTrigger>
-                </Nav.Item> */}
+                </Nav.Item>
                 {this.state.task.shortname === "NLI" ? (
                   <Nav.Item className="task-action-btn">
                     <OverlayTrigger
@@ -422,13 +463,30 @@ class TaskPage extends React.Component {
                         className="border-0 blue-color font-weight-bold light-gray-bg"
                         to={"/tasks/" + this.state.taskId + "/submit"}
                       >
-                        Submit
+                        Submit Predictions
                       </Button>
                     </OverlayTrigger>
                   </Nav.Item>
                 ) : null}
+                {this.context.user.id === this.state.task.owner_uid ?
+                  <Nav.Item className="task-action-btn ml-auto">
+                    <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" id="dropdown-basic-button" title="Export">
+                      <Dropdown.Item onClick={this.exportCurrentRoundData}>Export current round</Dropdown.Item>
+                      <Dropdown.Item onClick={this.exportAllTaskData}>Export all</Dropdown.Item>
+                    </DropdownButton>
+                  </Nav.Item>
+                  : null}
               </Nav>
-            ) : null}
+            ) :
+            <Row>
+              <Col xs={12} md={10}>
+                <RoundDescription
+                  api={this.context.api}
+                  task_id={this.state.taskId}
+                  round_id={this.state.displayRoundId} />
+              </Col>
+            </Row>
+            }
             <Row>
               <Col xs={12} md={6}>
                 {this.state.modelLeaderBoardData.length ? (

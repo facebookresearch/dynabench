@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 import bottle
 import boto3
 import os
@@ -17,7 +24,7 @@ from common.helpers import *
 init_logger(running_mode)
 
 app = bottle.default_app()
-for k in ['jwtsecret', 'jwtexp', 'jwtalgo', 'cookie_secret', 'refreshexp', 'forgot_pass_template',
+for k in ['jwtsecret', 'jwtexp', 'jwtalgo', 'cookie_secret', 'refreshexp',
           'smtp_from_email_address', 'smtp_host', 'smtp_port', 'smtp_secret', 'smtp_user', 'email_sender_name',
           'aws_s3_bucket_name', 'aws_s3_profile_base_url', 'profile_img_max_size']:
     app.config[k] = config[k]

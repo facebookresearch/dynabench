@@ -1,3 +1,7 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 from aiohttp import web
 import logging
 import ssl
@@ -11,6 +15,8 @@ def get_cors_headers(cors_url):
                         ['https://workersandbox.mturk.com', 'https://sandbox.mturk.com']
     # TODO: Fix this, ugly hack to get Mephisto to work
     if str(cors_url).endswith('herokuapp.com'):
+        pass
+    elif cors_url.endswith('dynabench.org'):
         pass
     elif cors_url not in valid_cors_urls:
         cors_url = 'http://dynabench.org'

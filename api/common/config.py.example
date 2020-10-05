@@ -1,3 +1,7 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 config = { \
         'jwtsecret': '',
         'jwtexp': 15*60, # in seconds (5 minutes)
@@ -8,7 +12,6 @@ config = { \
         'db_name': '',
         'db_user': '',
         'db_password': '',
-        'forgot_pass_template': 'common/forgot_password.txt',
         'smtp_host': '',
         'smtp_port': 587,
         'smtp_secret': '',
