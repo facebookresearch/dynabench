@@ -87,6 +87,25 @@ const StatsSubPage = (props) => {
                      ).toFixed(2)}%
                    </td>
                   </tr>
+                  <tr>
+                    <td>
+                      User error rate:
+                    </td>
+                    <td className="text-right">
+                      {props.user.examples_submitted && (100 *
+                        (props.user.total_fooled - props.user.total_verified_fooled) /
+                        props.user.examples_submitted
+                      ).toFixed(2)}%
+                    </td>
+                   </tr>
+                  <tr>
+                    <td>
+                      Total retractions:
+                    </td>
+                    <td className="text-right">
+                      {props.user.total_retracted}
+                    </td>
+                   </tr>
                 <tr>
                   <td>
                     Total validations:

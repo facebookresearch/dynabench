@@ -142,6 +142,14 @@ def update_example(credentials, eid):
 
         logger.info("Updating example {} with {}".format(example.id, data))
         em.update(example.id, data)
+        if 'retracted' in data and data['retracted'] == True:
+            um = UserModel()
+            um.incrementRetractedCount(example.uid)
+            um.incrementExamplesSubmittedCount(example.uid, -1)
+            if example.verified_correct:
+                um.incrementVerifiedFooledCount(example.uid, -1)
+            if example.model_wrong:
+                um.incrementFooledCount(example.uid, -1)
         return util.json_encode({'success': 'ok'})
     except Exception as e:
         logger.error('Error updating example {}: {}'.format(eid, e))

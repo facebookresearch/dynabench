@@ -164,14 +164,15 @@ class ExampleModel(BaseModel):
         return anon_id.hexdigest()
 
     def getUserLeaderByTid(self, tid, n=5, offset=0, min_cnt=0, downstream=False):
-        cnt = db.sql.func.sum(case([(Example.model_wrong == 1, 1)], else_=0)).label('cnt')
-        query_res = self.dbs.query(User.id, User.username, User.avatar_url, cnt, (cnt / db.func.count()), db.func.count()) \
+        cnt = db.sql.func.sum(case([((db.and_(Example.model_wrong == 1, db.not_(Example.retracted))), 1)], else_=0)).label('cnt')
+        denominator = db.sql.func.sum(case([(Example.retracted, 0)], else_=1)).label('denominator')
+        query_res = self.dbs.query(User.id, User.username, User.avatar_url, cnt, (cnt / denominator), denominator) \
             .join(Example, User.id == Example.uid) \
             .join(Context, Example.cid == Context.id) \
             .join(Round, Context.r_realid == Round.id) \
             .join(Task, Round.tid == Task.id).filter(Task.id == tid) \
-            .group_by(User.id).having(db.func.count() > min_cnt) \
-            .order_by(db.func.count().desc(), (cnt / db.func.count()).desc())
+            .group_by(User.id).having(denominator > min_cnt) \
+            .order_by(denominator.desc(), (cnt / denominator).desc())
         if not downstream:
             return query_res.limit(n).offset(n * offset), util.get_query_count(query_res)
         return query_res

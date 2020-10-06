@@ -229,6 +229,33 @@ class UserPage extends React.Component {
                             />
                           </Col>
                         </Form.Group>
+                        <Form.Group as={Row}>
+                          <Form.Label column sm="6" className="text-right">
+                            User error rate:
+                          </Form.Label>
+                          <Col sm="6">
+                            <Form.Control
+                              plaintext
+                              readOnly
+                              defaultValue={
+                                this.state.user.examples_submitted > 0 ?
+                                  (100 * (this.state.user.total_fooled - this.state.user.total_verified_fooled) / this.state.user.examples_submitted).toFixed(2) + '%'
+                    : 'N/A'}
+                            />
+                          </Col>
+                        </Form.Group>
+                        <Form.Group as={Row}>
+                          <Form.Label column sm="6" className="text-right">
+                            Total retractions:
+                          </Form.Label>
+                          <Col sm="6">
+                            <Form.Control
+                              plaintext
+                              readOnly
+                              defaultValue={this.state.user.total_retracted}
+                            />
+                          </Col>
+                        </Form.Group>
                       </Card.Body>
                       {this.state.user.id == this.context.user.id && (
                         <Card.Footer>
