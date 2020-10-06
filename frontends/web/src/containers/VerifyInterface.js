@@ -66,7 +66,7 @@ class VerifyInterface extends React.Component {
   }
 
   getNewExample() {
-    (this.state.user_mode ? this.context.api.getRandomExample(this.state.taskId, this.state.task.selected_round) : this.context.api.getVerifiedFlaggedExample(this.state.taskId, this.state.task.selected_round))
+    (this.state.user_mode ? this.context.api.getRandomExample(this.state.taskId, this.state.task.selected_round) : this.context.api.getRandomVerifiedFlaggedExample(this.state.taskId, this.state.task.selected_round))
       .then((result) => {
         if (this.state.task.type !== 'extract') {
           result.target = this.state.task.targets[parseInt(result.target_pred)];
@@ -95,15 +95,17 @@ class VerifyInterface extends React.Component {
         break;
     }
     if (action_label !== null) {
-      this.context.api.validateExample(this.state.example.id, action_label, null, !this.state.user_mode)
-        .then((result) => {
-          this.getNewExample();
-          if (!!result.badges) {
-            this.setState({showBadges: result.badges})
-          }
-        }, (error) => {
-          console.log(error);
-        });
+      (this.state.user_mode
+        ? this.context.api.validateExample(this.state.example.id, action_label)
+        : this.context.api.fullyValidateExample(this.state.example.id, action_label))
+          .then((result) => {
+            this.getNewExample();
+            if (!!result.badges) {
+              this.setState({showBadges: result.badges})
+            }
+          }, (error) => {
+            console.log(error);
+          });
     }
   }
   render() {
@@ -123,7 +125,7 @@ class VerifyInterface extends React.Component {
               <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
                 Validate examples
               </h2>
-              {this.context.user.task_permissions?.filter((task_permission) => this.state.task.id === task_permission.tid && "owner" === task_permission.type).length > 0 || this.context.user.admin  ?
+              {this.context.api.isTaskOwner(this.context.user, this.state.task.id) || this.context.user.admin ?
                 <BootstrapSwitchButton
                   checked={this.state.user_mode}
                   onlabel="User Mode"
@@ -234,16 +236,13 @@ class VerifyInterface extends React.Component {
                       </button>
                       : ""
                     }{" "}
-                    {this.state.user_mode ?
-                      <button
-                        data-index={this.props.index}
-                        onClick={this.getNewExample}
-                        type="button"
-                        className="btn btn-light btn-sm pull-right">
-                          <i className="fas fa-undo-alt"></i> Skip and load new example
-                      </button>
-                      : ""
-                    }{" "}
+                    <button
+                      data-index={this.props.index}
+                      onClick={this.getNewExample}
+                      type="button"
+                      className="btn btn-light btn-sm pull-right">
+                        <i className="fas fa-undo-alt"></i> Skip and load new example
+                    </button>
                   </Card.Footer>
                   </>
                   :

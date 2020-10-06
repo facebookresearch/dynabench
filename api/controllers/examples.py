@@ -34,13 +34,13 @@ def get_random_example(credentials, tid, rid):
     example = example[0].to_dict()
     return util.json_encode(example)
 
-@bottle.get('/examples/verifiedflagged/<tid:int>/<rid:int>')
+@bottle.get('/examples/<tid:int>/<rid:int>/verifiedflagged')
 @_auth.requires_auth
-def get_verified_flagged_example(credentials, tid, rid):
+def get_random_verified_flagged_example(credentials, tid, rid):
     rm = RoundModel()
     round = rm.getByTidAndRid(tid, rid)
     em = ExampleModel()
-    example = em.getVerifiedFlagged(round.id, n=1)
+    example = em.getRandomVerifiedFlagged(round.id, n=1)
     if not example:
         bottle.abort(500, f'No examples available ({round.id})')
     example = example[0].to_dict()
@@ -68,11 +68,31 @@ def get_example_metadata(credentials, eid):
         bottle.abort(403, 'Access denied')
     return util.json_encode(example.metadata_json)
 
+@bottle.put('/examples/<eid:int>/fullyvalidate')
+@_auth.requires_auth_or_turk
+def fully_validate_example(credentials, eid):
+    em = ExampleModel()
+    example = em.get(eid)
+    if not example:
+        bottle.abort(404, 'Not found')
+    cm = ContextModel()
+    context = cm.get(example.cid)
+    um = UserModel()
+    user = um.get(credentials['id'])
+    if user.admin or (context.round.task.id, 'owner') in [(perm.tid, perm.type) for perm in user.task_permissions]:
+        owner_override = True
+    else:
+        bottle.abort(403, 'Access denied (you are not an admin or owner of this task)')
+    return validate_example(credentials, eid, True)
+
 @bottle.put('/examples/<eid:int>/validate')
 @_auth.requires_auth_or_turk
-def validate_example(credentials, eid):
+def validate_example_as_user(credentials, eid):
+    return validate_example(credentials, eid, False)
+
+def validate_example(credentials, eid, fully_validate):
     data = bottle.request.json
-    if not data or 'label' not in data or 'override_if_owner' not in data:
+    if not data or 'label' not in data:
         bottle.abort(400, 'Bad request')
     label = data['label']
     if label not in ['C', 'I', 'F']:
@@ -84,23 +104,15 @@ def validate_example(credentials, eid):
         bottle.abort(404, 'Not found')
     cm = ContextModel()
     context = cm.get(example.cid)
-    owner_override = False
-    override_if_owner = data['override_if_owner']
     um = UserModel()
-    if override_if_owner:
-        user = um.get(credentials['id'])
-        if user.admin or (context.round.task.id, 'owner') in [(perm.tid, perm.type) for perm in user.task_permissions]:
-            owner_override = True
-        else:
-            bottle.abort(403, 'Access denied (you are not an admin or owner of this task)')
-
+    user = um.get(credentials['id'])
     if credentials['id'] == 'turk':
         if not util.check_fields(data, ['uid']):
             bottle.abort(400, 'Missing data');
         metadata = json.loads(example.metadata_json)
-        if ('annotator_id' not in metadata or metadata['annotator_id'] == data['uid']) and not owner_override:
+        if ('annotator_id' not in metadata or metadata['annotator_id'] == data['uid']) and not fully_validate:
             bottle.abort(403, 'Access denied (cannot validate your own example)')
-    elif credentials['id'] == example.uid and not owner_override:
+    elif credentials['id'] == example.uid and not fully_validate:
         bottle.abort(403, 'Access denied (cannot validate your own example)')
 
     nobj = example.verifier_preds
@@ -116,15 +128,15 @@ def validate_example(credentials, eid):
     preds = Counter([x.split(",")[1] for x in nobj.split("|")])
     rm = RoundModel()
     rm.updateLastActivity(context.r_realid)
-    if preds['C'] >= 5 or (owner_override and label == 'C'):
+    if preds['C'] >= 5 or (fully_validate and label == 'C'):
         em.update(example.id, {'verified': True, 'verified_correct': True})
         rm.incrementVerifiedFooledCount(context.r_realid)
         um.incrementCorrectCount(example.uid)
-    elif preds['I'] >= 5 or (owner_override and label == 'I'):
+    elif preds['I'] >= 5 or (fully_validate and label == 'I'):
         em.update(example.id, {'verified': True, 'verified_incorrect': True})
     elif preds['F'] >= 5:
         em.update(example.id, {'verified': True, 'verified_flagged': True})
-    if owner_override:
+    if fully_validate:
         em.update(example.id, {'verified_flagged': False})
 
     ret = example.to_dict()
