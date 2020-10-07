@@ -79,9 +79,7 @@ def validate_example_as_admin_or_owner(credentials, eid):
     context = cm.get(example.cid)
     um = UserModel()
     user = um.get(credentials['id'])
-    if user.admin or (context.round.task.id, 'owner') in [(perm.tid, perm.type) for perm in user.task_permissions]:
-        owner_override = True
-    else:
+    if not user.admin and not (context.round.task.id, 'owner') in [(perm.tid, perm.type) for perm in user.task_permissions]:
         bottle.abort(403, 'Access denied (you are not an admin or owner of this task)')
     return validate_example(credentials, eid, True)
 
