@@ -14,6 +14,8 @@ import {
   Table,
   Form,
   Nav,
+  Tooltip,
+  OverlayTrigger,
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { Avatar } from "../components/Avatar/Avatar";
@@ -21,6 +23,23 @@ import "./Sidebar-Layout.css";
 import TasksContext from "./TasksContext";
 import UserContext from "./UserContext";
 import BadgeGrid from "./BadgeGrid";
+
+function renderTooltip(props, text) {
+  return (
+    <Tooltip id="button-tooltip" {...props}>
+      {text}
+    </Tooltip>
+  );
+}
+function renderMERTooltip(props) {
+  return renderTooltip(props, "The model error rate is the number of submitted model fooling examples divided by the number of submitted examples. The model error count is the number of submitted model fooling examples. The definitions of the verified model error rate and count are analagous, except the number of verified submitted model fooling examples is used instead of the number of submitted model fooling examples. Retracted examples are not included in these numbers.");
+}
+function renderRejectionTooltip(props) {
+  return renderTooltip(props, "The rejection rate is model error rate minus the verified model error rate. The rejection count is the model error count minus the verified model error count.")
+}
+function renderRetractionTooltip(props) {
+  return renderTooltip(props, "The retracted rate is the numer of retracted examples divided by all examples entered (both submitted and retracted). The retracted count is the number of retracted examples.")
+}
 
 class UserPage extends React.Component {
   static contextType = UserContext;
@@ -159,7 +178,7 @@ class UserPage extends React.Component {
                 <h1 className="my-4 pt-3 text-uppercase text-center">
                   User Overview
                 </h1>
-                <Col className="m-auto" lg={8}>
+                <Col className="m-auto" lg={12}>
                   {this.state.user.id && (
                     <>
                     <Card>
@@ -199,63 +218,85 @@ class UserPage extends React.Component {
                             />
                           </Col>
                         </Form.Group>
-                        <Form.Group as={Row}>
-                          <Form.Label column sm="6" className="text-right">
-                            Model error rate (verified):
-                          </Form.Label>
-                          <Col sm="6">
-                            <Form.Control
-                              plaintext
-                              readOnly
-                              defaultValue={
-                                this.state.user.examples_submitted > 0 ?
-                                  (100 * this.state.user.total_verified_fooled / this.state.user.examples_submitted).toFixed(2) + '%'
-                    : 'N/A'}
-                            />
-                          </Col>
-                        </Form.Group>
-                        <Form.Group as={Row}>
-                          <Form.Label column sm="6" className="text-right">
-                            Model error rate:
-                          </Form.Label>
-                          <Col sm="6">
-                            <Form.Control
-                              plaintext
-                              readOnly
-                              defaultValue={
-                                this.state.user.examples_submitted > 0 ?
-                                  (100 * this.state.user.total_fooled / this.state.user.examples_submitted).toFixed(2) + '%'
-                    : 'N/A'}
-                            />
-                          </Col>
-                        </Form.Group>
-                        <Form.Group as={Row}>
-                          <Form.Label column sm="6" className="text-right">
-                            User error rate:
-                          </Form.Label>
-                          <Col sm="6">
-                            <Form.Control
-                              plaintext
-                              readOnly
-                              defaultValue={
-                                this.state.user.examples_submitted > 0 ?
-                                  (100 * (this.state.user.total_fooled - this.state.user.total_verified_fooled) / this.state.user.examples_submitted).toFixed(2) + '%'
-                    : 'N/A'}
-                            />
-                          </Col>
-                        </Form.Group>
-                        <Form.Group as={Row}>
-                          <Form.Label column sm="6" className="text-right">
-                            Total retractions:
-                          </Form.Label>
-                          <Col sm="6">
-                            <Form.Control
-                              plaintext
-                              readOnly
-                              defaultValue={this.state.user.total_retracted}
-                            />
-                          </Col>
-                        </Form.Group>
+                        <OverlayTrigger
+                          placement="bottom"
+                          delay={{ show: 250, hide: 400 }}
+                          overlay={renderMERTooltip}
+                        >
+                          <Form.Group as={Row}>
+                            <Form.Label column sm="6" className="text-right">
+                              Model error:
+                            </Form.Label>
+                            <Col sm="6">
+                              <Form.Control
+                                plaintext
+                                readOnly
+                                defaultValue={
+                                  this.state.user.examples_submitted > 0 ?
+                                    (100 *
+                                      this.state.user.total_fooled /
+                                      this.state.user.examples_submitted
+                                    ).toFixed(2).toString() + "% (rate) " +
+                                    this.state.user.total_fooled.toString() + " (count) " +
+                                    (100 *
+                                      this.state.user.total_verified_fooled /
+                                      this.state.user.examples_submitted
+                                    ).toFixed(2).toString() + "% (verified rate) " +
+                                    this.state.user.total_verified_fooled.toString() + " (verified count)"
+                      : 'N/A'}
+                              />
+                            </Col>
+                          </Form.Group>
+                        </OverlayTrigger>
+                        <OverlayTrigger
+                          placement="bottom"
+                          delay={{ show: 250, hide: 400 }}
+                          overlay={renderRejectionTooltip}
+                        >
+                          <Form.Group as={Row}>
+                            <Form.Label column sm="6" className="text-right">
+                              Rejection:
+                            </Form.Label>
+                            <Col sm="6">
+                              <Form.Control
+                                plaintext
+                                readOnly
+                                defaultValue={
+                                  this.state.user.examples_submitted > 0 ?
+                                    (100 *
+                                      (this.state.user.total_fooled - this.state.user.total_verified_fooled) /
+                                      this.state.user.examples_submitted
+                                    ).toFixed(2).toString() + "% (rate) " +
+                                    (this.state.user.total_fooled - this.state.user.total_verified_fooled).toString() + " (count)"
+                      : 'N/A'}
+                              />
+                            </Col>
+                          </Form.Group>
+                        </OverlayTrigger>
+                        <OverlayTrigger
+                          placement="bottom"
+                          delay={{ show: 250, hide: 400 }}
+                          overlay={renderRetractionTooltip}
+                        >
+                          <Form.Group as={Row}>
+                            <Form.Label column sm="6" className="text-right">
+                              Retraction:
+                            </Form.Label>
+                            <Col sm="6">
+                              <Form.Control
+                                plaintext
+                                readOnly
+                                defaultValue={
+                                  this.state.user.examples_submitted > 0 ?
+                                    (100 * this.state.user.total_retracted /
+                                      (this.state.user.examples_submitted + this.state.user.total_retracted)
+                                    ).toFixed(2).toString() + '% (rate) ' +
+                                    this.state.user.total_retracted.toString() + ' (count)'
+                      : 'N/A'}
+                              />
+                            </Col>
+                          </Form.Group>
+                        </OverlayTrigger>
                       </Card.Body>
                       {this.state.user.id == this.context.user.id && (
                         <Card.Footer>

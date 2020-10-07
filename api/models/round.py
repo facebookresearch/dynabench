@@ -53,30 +53,30 @@ class RoundModel(BaseModel):
             return self.dbs.query(Round).filter(Round.tid == tid).all()
         except db.orm.exc.NoResultFound:
             return False
-    def incrementCollectedCount(self, tid, rid):
+    def incrementCollectedCount(self, tid, rid, n=1):
         r = self.getByTidAndRid(tid, rid)
         if r:
             prev = r.total_collected
             if prev is None:
                 prev = 0
-            r.total_collected = prev+1
+            r.total_collected = prev+n
             r.task.last_updated = db.sql.func.now()
             self.dbs.commit()
-    def incrementFooledCount(self, r_realid):
+    def incrementFooledCount(self, r_realid, n=1):
         r = self.get(r_realid)
         if r:
             prev = r.total_fooled
             if prev is None:
                 prev = 0
-            r.total_fooled = prev+1
+            r.total_fooled = prev+n
             self.dbs.commit()
-    def incrementVerifiedFooledCount(self, r_realid):
+    def incrementVerifiedFooledCount(self, r_realid, n=1):
         r = self.get(r_realid)
         if r:
             prev = r.total_verified_fooled
             if prev is None:
                 prev = 0
-            r.total_verified_fooled = prev+1
+            r.total_verified_fooled = prev+n
             self.dbs.commit()
     def updateLastActivity(self, r_realid):
         r = self.get(r_realid)

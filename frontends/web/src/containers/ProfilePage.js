@@ -30,6 +30,23 @@ import "./ProfilePage.css";
 import BadgeGrid from "./BadgeGrid";
 import Badge from "./Badge";
 
+function renderTooltip(props, text) {
+  return (
+    <Tooltip id="button-tooltip" {...props}>
+      {text}
+    </Tooltip>
+  );
+}
+function renderMERTooltip(props) {
+  return renderTooltip(props, "The model error rate is the number of submitted model fooling examples divided by the number of submitted examples. The model error count is the number of submitted model fooling examples. The definitions of the verified model error rate and count are analagous, except the number of verified submitted model fooling examples is used instead of the number of submitted model fooling examples. Retracted examples are not included in these numbers.");
+}
+function renderRejectionTooltip(props) {
+  return renderTooltip(props, "The rejection rate is model error rate minus the verified model error rate. The rejection count is the model error count minus the verified model error count.")
+}
+function renderRetractionTooltip(props) {
+  return renderTooltip(props, "The retracted rate is the numer of retracted examples divided by all examples entered (both submitted and retracted). The retracted count is the number of retracted examples.")
+}
+
 const StatsSubPage = (props) => {
   return (
     <Container className="mb-5 pb-5">
@@ -49,63 +66,67 @@ const StatsSubPage = (props) => {
                     {props.user.examples_submitted}
                   </td>
                  </tr>
-                <tr>
-                  <td>
-                    Model fooling examples (verified):
-                  </td>
-                  <td className="text-right">
-                    {props.user.total_verified_fooled}
-                  </td>
-                 </tr>
-                <tr>
-                  <td>
-                    Model error rate (verified):
-                  </td>
-                  <td className="text-right">
-                    {props.user.examples_submitted && (100 *
-                      props.user.total_verified_fooled /
-                      props.user.examples_submitted
-                    ).toFixed(2)}%
-                  </td>
-                 </tr>
-                 <tr>
-                   <td>
-                     Model fooling examples:
-                   </td>
-                   <td className="text-right">
-                     {props.user.total_fooled}
-                   </td>
-                  </tr>
-                 <tr>
-                   <td>
-                     Model error rate:
-                   </td>
-                   <td className="text-right">
-                     {props.user.examples_submitted && (100 *
-                       props.user.total_fooled /
-                       props.user.examples_submitted
-                     ).toFixed(2)}%
-                   </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      User error rate:
-                    </td>
-                    <td className="text-right">
-                      {props.user.examples_submitted && (100 *
-                        (props.user.total_fooled - props.user.total_verified_fooled) /
-                        props.user.examples_submitted
-                      ).toFixed(2)}%
-                    </td>
-                   </tr>
-                  <tr>
-                    <td>
-                      Total retractions:
-                    </td>
-                    <td className="text-right">
-                      {props.user.total_retracted}
-                    </td>
-                   </tr>
+                   <OverlayTrigger
+                     placement="bottom"
+                     delay={{ show: 250, hide: 400 }}
+                     overlay={renderMERTooltip}
+                   >
+                     <tr>
+                       <td>
+                         Model error:
+                       </td>
+                       <td className="text-right">
+                         {props.user.examples_submitted && (100 *
+                           props.user.total_fooled /
+                           props.user.examples_submitted
+                         ).toFixed(2)}% (rate){" "}
+                         {props.user.total_fooled} (count){" "}
+                         {props.user.examples_submitted && (100 *
+                           props.user.total_verified_fooled /
+                           props.user.examples_submitted
+                         ).toFixed(2)}% (verified rate){" "}
+                         {props.user.total_verified_fooled} (verified count){" "}
+                       </td>
+                     </tr>
+                   </OverlayTrigger>
+                    <OverlayTrigger
+                      placement="bottom"
+                      delay={{ show: 250, hide: 400 }}
+                      overlay={renderRejectionTooltip}
+                    >
+                      <tr>
+                        <td>
+                          Rejection:
+                        </td>
+                        <td className="text-right">
+                          {props.user.examples_submitted && (100 *
+                            (props.user.total_fooled - props.user.total_verified_fooled) /
+                            props.user.examples_submitted
+                          ).toFixed(2)}% (rate){" "}
+                          {props.user.examples_submitted &&
+                            props.user.total_fooled - props.user.total_verified_fooled
+                          } (count)
+                        </td>
+                      </tr>
+                    </OverlayTrigger>
+                    <OverlayTrigger
+                      placement="bottom"
+                      delay={{ show: 250, hide: 400 }}
+                      overlay={renderRetractionTooltip}
+                    >
+                      <tr>
+                        <td>
+                          Retraction:
+                        </td>
+                        <td className="text-right">
+                        {props.user.examples_submitted && (100 *
+                          props.user.total_retracted/
+                          (props.user.examples_submitted + props.user.total_retracted)
+                        ).toFixed(2)}% (rate){" "}
+                        {props.user.total_retracted} (count)
+                        </td>
+                      </tr>
+                    </OverlayTrigger>
                 <tr>
                   <td>
                     Total validations:
