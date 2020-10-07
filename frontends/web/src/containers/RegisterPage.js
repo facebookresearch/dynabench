@@ -11,8 +11,13 @@ import { Link } from "react-router-dom";
 import "./LoginPage.css";
 import UserContext from "./UserContext";
 
+import qs from "qs";
+
 class RegisterPage extends React.Component {
   render() {
+    var query = qs.parse(this.props.location.search, {
+      ignoreQueryPrefix: true,
+    });
     return (
       <UserContext.Consumer>
         {(props) => (
@@ -23,6 +28,7 @@ class RegisterPage extends React.Component {
                   <h2 className="d-block my-4 text-uppercase text-reset">
                     Register
                   </h2>
+                  <p className="msg mb-0">{query.msg}</p>
                   <hr className="mb-4" />
                   <Formik
                     initialValues={{

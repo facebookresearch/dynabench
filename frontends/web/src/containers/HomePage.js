@@ -152,12 +152,12 @@ class HomePage extends React.Component {
                       <td>
                         {task.round.total_collected > 0
                           ? ( 100 *
-                              task.round.total_verified /
+                              task.round.total_fooled /
                               task.round.total_collected
                             ).toFixed(2)
                           : "0.00"}
                         % (
-                        {task.round.total_verified}/{task.round.total_collected}
+                        {task.round.total_fooled}/{task.round.total_collected}
                         )
                       </td>
                     </tr>
@@ -211,7 +211,7 @@ class HomePage extends React.Component {
                   )}
                 >
                   <ReactPlayer
-                    url="https://dynabench-us-west-1-096166425824.s3-us-west-1.amazonaws.com/public/Dynabench_09_17_2020_small.mp4"
+                    url="https://dynabench-us-west-1-096166425824.s3-us-west-1.amazonaws.com/public/explainer.mp4"
                     controls
                     playing
                     width="80vw"

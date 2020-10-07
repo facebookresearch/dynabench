@@ -60,6 +60,9 @@ class UserPage extends React.Component {
         this.setState({ user: result });
       }, (error) => {
         console.log(error);
+        if (error.status_code === 404 || error.status_code === 405) {
+          this.props.history.push("/");
+        }
       });
   };
 
@@ -198,7 +201,7 @@ class UserPage extends React.Component {
                         </Form.Group>
                         <Form.Group as={Row}>
                           <Form.Label column sm="6" className="text-right">
-                            Model Error Rate:
+                            Validated model error rate:
                           </Form.Label>
                           <Col sm="6">
                             <Form.Control

@@ -18,6 +18,7 @@ from models.task import Task
 import hashlib
 import json
 import numpy as np
+import random
 
 from common import helpers as util
 
@@ -212,5 +213,15 @@ class ExampleModel(BaseModel):
                 .filter(Example.verified == False);
         if my_uid is not None:
             result = result.filter(Example.uid != my_uid)
+            result = result.filter(db.or_(Example.verifier_preds == None, db.not_(('|' + Example.verifier_preds).contains('|' + str(my_uid) + ','))))
+        result = result.order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
+        return result
+    def getRandomVerifiedFlagged(self, rid, n=1):
+        result = self.dbs.query(Example) \
+                .join(Context, Example.cid == Context.id) \
+                .filter(Context.r_realid == rid) \
+                .filter(Example.model_wrong == True) \
+                .filter(Example.retracted == False) \
+                .filter(Example.verified_flagged == True);
         result = result.order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
         return result

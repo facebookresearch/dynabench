@@ -22,6 +22,7 @@ import {
   Spinner,
   Modal
 } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import UserContext from "./UserContext";
 import { TokenAnnotator } from "react-text-annotate";
 import { PieRechart } from "../components/Rechart";
@@ -101,6 +102,17 @@ const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName, onChang
         }
       </div>
     </div>
+  );
+};
+
+const HateSpeechDropdown = ({ hateTarget, dataIndex, onClick }) => {
+  return (
+    <DropdownButton variant="light" className="p-1" title={hateTarget ? "Target of hate: " + hateTarget : "Target of hate"}>
+      {
+        ["Threatening language", "Supporting hateful entities", "Derogation", "Dehumanizing language", "Animosity", "None selected"].map((target, index) =>
+        <Dropdown.Item data-index={dataIndex} data={target} onClick={onClick} key={index} index={index}>{target}</Dropdown.Item>)
+      }
+    </DropdownButton>
   );
 };
 
@@ -266,6 +278,7 @@ class ResponseInfo extends React.Component {
     this.retractExample = this.retractExample.bind(this);
     this.flagExample = this.flagExample.bind(this);
     this.explainExample = this.explainExample.bind(this);
+    this.updateHateSpeechTargetMetadata = this.updateHateSpeechTargetMetadata.bind(this);
     this.state = {
       loader: true,
       inspectError: false,
@@ -278,6 +291,27 @@ class ResponseInfo extends React.Component {
       inspectError: false,
       explainSaved: null
     });
+  }
+  updateHateSpeechTargetMetadata(e) {
+    const hate_target = e.target.getAttribute("data");
+    const idx = e.target.getAttribute("data-index");
+    this.setState({explainSaved: false});
+    this.setState({hate_target: hate_target});
+    this.context.api
+      .getExampleMetadata(this.props.mapKeyToExampleId[idx])
+      .then((result) => {
+        var metadata = JSON.parse(result);
+        metadata['hate_target'] = hate_target;
+        this.context.api
+          .setExampleMetadata(this.props.mapKeyToExampleId[idx], metadata)
+          .then((result) => {
+            this.setState({explainSaved: true});
+          }, (error) => {
+            console.log(error);
+          });
+      }, (error) => {
+        console.log(error);
+      });
   }
   explainExample(e) {
     e.preventDefault();
@@ -421,7 +455,24 @@ class ResponseInfo extends React.Component {
             </span>
         }
         {!this.state.livemode
-          ? <div>This example was not stored because you are in sandbox mode.</div>
+          ? <div>
+              This example was not stored because you are in sandbox mode.
+              { this.context.api.loggedIn()
+                ? ""
+                : <div>
+                    <Link
+                      to={"/register?msg=" +
+                          encodeURIComponent("Please sign up or log in so that you can get credit for your generated examples.") +
+                          "&src=" +
+                          encodeURIComponent("/tasks/" + this.props.taskId + "/create")
+                          }
+                    >
+                      Sign up now
+                    </Link>{" "}
+                    to make sure your examples are stored and you get credit for your examples!
+                  </div>
+              }
+            </div>
           : this.props.obj.fooled
             ? (
               <div className="mt-3">
@@ -436,6 +487,14 @@ class ResponseInfo extends React.Component {
                       : <span style={{color: "#085756"}}>Saved!</span>
                   }
                 </span>
+                { this.props.taskName === "Hate Speech"
+                  ? <HateSpeechDropdown
+                      hateTarget={this.state.hate_target}
+                      dataIndex={this.props.index}
+                      onClick={this.updateHateSpeechTargetMetadata}
+                    />
+                  : ""
+                }
                 <div>
                   <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
                     "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is the correct answer"}
@@ -461,6 +520,14 @@ class ResponseInfo extends React.Component {
                     : <span style={{color: "#085756"}}>Saved!</span>
                 }
               </span>
+              { this.props.taskName === "Hate Speech"
+                ? <HateSpeechDropdown
+                    hateTarget={this.state.hate_target}
+                    dataIndex={this.props.index}
+                    onClick={this.updateHateSpeechTargetMetadata}
+                  />
+                : ""
+              }
               <div>
                 <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
                   "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is the correct answer"}
@@ -514,7 +581,7 @@ class ResponseInfo extends React.Component {
             </Col>
           </Row>
         </Card.Body>
-        {this.props.obj.retracted || this.props.obj.flagged
+        {this.props.obj.retracted || this.props.obj.flagged || !this.state.livemode
           ? null
           : <Card.Footer>
             { <div className="btn-group" role="group" aria-label="response actions">
@@ -594,6 +661,7 @@ class CreateInterface extends React.Component {
     this.handleGoalMessageTargetChange = this.handleGoalMessageTargetChange.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
     this.handleResponseChange = this.handleResponseChange.bind(this);
+    this.switchLiveMode = this.switchLiveMode.bind(this);
     this.updateAnswer = this.updateAnswer.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
     this.chatContainerRef = React.createRef();
@@ -810,19 +878,25 @@ class CreateInterface extends React.Component {
   handleResponseChange(e) {
     this.setState({ hypothesis: e.target.value });
   }
+  switchLiveMode(checked) {
+    if (checked === true && !this.context.api.loggedIn()) {
+      this.props.history.push(
+        "/register?msg=" +
+          encodeURIComponent(
+            "Please sign up or log in so that you can get credit for your generated examples."
+          ) +
+          "&src=" +
+          encodeURIComponent("/tasks/" + this.props.taskId + "/create")
+      );
+    }
+    this.setState({ livemode: checked });
+  }
   componentDidMount() {
     const {
       match: { params },
     } = this.props;
     if (!this.context.api.loggedIn()) {
-      this.props.history.push(
-        "/login?msg=" +
-          encodeURIComponent(
-            "Please log in or sign up so that you can get credit for your generated examples."
-          ) +
-          "&src=" +
-          encodeURIComponent("/tasks/" + params.taskId + "/create")
-      );
+      this.setState({ livemode: false });
     }
 
     this.setState({ taskId: params.taskId }, function () {
@@ -836,6 +910,9 @@ class CreateInterface extends React.Component {
           });
         }, (error) => {
           console.log(error);
+          if (error.status_code === 404 || error.status_code === 405) {
+            this.props.history.push("/");
+          }
         });
     });
   }
@@ -873,6 +950,7 @@ class CreateInterface extends React.Component {
     const content = this.state.content.map((item, index) =>
       item.cls === "context" ? undefined : (
         <ResponseInfo
+          randomModel={this.state.randomModel}
           key={index}
           index={index}
           targets={this.state.task.targets}
@@ -917,7 +995,7 @@ class CreateInterface extends React.Component {
       );
     }
     function renderSandboxTooltip(props) {
-      return renderTooltip(props, "Just playing? Switch to sandbox mode.");
+      return renderTooltip(props, "Switch in and out of sandbox mode.");
     }
     function renderRemoveHypothesisTooltip(props) {
       return renderTooltip(props, "Are you tweaking the same text over and over? Switch to retain your input after a submission or context change.");
@@ -1052,7 +1130,7 @@ class CreateInterface extends React.Component {
                             offlabel='Sandbox'
                             width={120}
                             onChange={(checked) => {
-                              this.setState({ livemode: checked });
+                              this.switchLiveMode(checked);
                             }}
                           />
                         </Annotation>

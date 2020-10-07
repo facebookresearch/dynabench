@@ -204,7 +204,7 @@ const TaskActionButtons = (props) => {
         </Annotation>
       </Nav.Item>
     ) : null}
-    {props.uid === props.task.owner_uid ?
+    {props.api.isTaskOwner(props.user, props.task.id) || props.user.admin ?
       <Nav.Item className="task-action-btn ml-auto">
         <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" id="dropdown-basic-button" title="Export">
           <Dropdown.Item onClick={props.exportCurrentRoundData}>Export current round</Dropdown.Item>
@@ -228,11 +228,11 @@ const OverallTaskStats = (props) => {
         <tr>
           <td>Fooled/Collected (Model Error rate)</td>
           <td>
-            {props.task.round?.total_verified}/
+            {props.task.round?.total_fooled}/
             {props.task.round?.total_collected} (
             {props.task.round?.total_collected > 0
               ? (100 *
-                  props.task.round?.total_verified /
+                  props.task.round?.total_fooled /
                   props.task.round?.total_collected
                 ).toFixed(2)
               : "0.00"}
@@ -341,11 +341,14 @@ class RoundDescription extends React.Component {
         this.setState({ round: result });
       }, (error) => {
         console.log(error);
+        if ((error.status_code === 404 || error.status_code === 405) && this.props.history) {
+          this.props.history.push("/");
+        }
       });
     }
   }
   componentDidUpdate(prevProps) {
-    if (prevProps.round_id !== this.props.round_id) {
+    if (prevProps.task_id !== this.props.task_id || prevProps.round_id !== this.props.round_id) {
       this.getRoundInfo();
     }
   }
@@ -376,24 +379,43 @@ class TaskPage extends React.Component {
   }
 
   componentDidMount() {
-    this.context.api
-      .getTask(this.state.taskId)
-      .then((result) => {
-        this.setState({task: result, displayRoundId: result.cur_round, round: result.round}, function() {
-          this.refreshData();
+    this.setState({taskId: this.props.match.params.taskId}, function() {
+      this.context.api
+        .getTask(this.state.taskId)
+        .then((result) => {
+          this.setState({task: result, displayRoundId: result.cur_round, round: result.round}, function() {
+            this.refreshData();
+          });
+        }, (error) => {
+          console.log(error);
+          if (error.status_code === 404 || error.status_code === 405) {
+            this.props.history.push("/");
+          }
         });
-      }, (error) => {
-        console.log(error);
-      });
+    });
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.location.hash !== this.props.location.hash) {
-      this.refreshData();
+    if (prevProps.location.hash !== this.props.location.hash || this.props.match.params.taskId != this.state.taskId) {
+      this.setState({taskId: this.props.match.params.taskId}, function() {
+        this.context.api
+          .getTask(this.state.taskId)
+          .then((result) => {
+            this.setState({task: result, displayRoundId: result.cur_round, round: result.round}, function() {
+              this.refreshData();
+            });
+          }, (error) => {
+            console.log(error);
+            if (error.status_code === 404 || error.status_code === 405) {
+              this.props.history.push("/");
+            }
+          });
+      });
     }
   }
 
   refreshData() {
+    if (!this.props.location.hash || this.props.location.hash === '') this.props.location.hash = '#overall';
     this.setState(
       {
         modelLeaderBoardPage: 0,
@@ -525,11 +547,12 @@ class TaskPage extends React.Component {
                 </Annotation>
                 <hr />
                 <TaskActionButtons
+                  api={this.context.api}
                   taskId={this.state.taskId}
-                  uid={this.context.user.id}
+                  user={this.context.user}
                   task={this.state.task}
                   exportCurrentRoundData={this.exportCurrentRoundData}
-                  exportCurrentRoundData={this.exportCurrentRoundData}
+                  exportAllTaskData={this.exportAllTaskData}
                 />
               </>
             ) :

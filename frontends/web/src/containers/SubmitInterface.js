@@ -47,6 +47,9 @@ class SubmitInterface extends React.Component {
           this.setState({ task: result });
         }, (error) => {
           console.log(error);
+          if (error.status_code === 404 || error.status_code === 405) {
+            this.props.history.push("/");
+          }
         });
     });
   }
@@ -122,11 +125,11 @@ class SubmitInterface extends React.Component {
 
               {this.state.task.shortname === "QA" ? (
                 <p>
-                  Upload predicted answers as a <em>.json</em> file in the format <code>{'{'}"id_1": "answer_1", "id_2": "answer_2", ...{'}'}</code> (i.e. standard SQuAD prediction format). 
+                  Upload predicted answers as a <em>.json</em> file in the format <code>{'{'}"id_1": "answer_1", "id_2": "answer_2", ...{'}'}</code> (i.e. standard SQuAD prediction format).
                   If you submit for multiple rounds in one go (i.e., overall), simply concatenate the answers from each round into your prediction file.
                 </p>
               ) : null}
-                
+
                 <Formik
                   initialValues={{
                     file: null,
