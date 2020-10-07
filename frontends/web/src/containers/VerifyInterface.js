@@ -11,6 +11,8 @@ import {
   Col,
   Card,
   InputGroup,
+  OverlayTrigger,
+  Tooltip
 } from "react-bootstrap";
 import UserContext from "./UserContext";
 import BootstrapSwitchButton from 'bootstrap-switch-button-react'
@@ -27,7 +29,7 @@ class VerifyInterface extends React.Component {
       taskId: null,
       task: {},
       example: {},
-      user_mode: true,
+      owner_mode: false,
     };
     this.getNewExample = this.getNewExample.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
@@ -66,7 +68,7 @@ class VerifyInterface extends React.Component {
   }
 
   getNewExample() {
-    (this.state.user_mode ? this.context.api.getRandomExample(this.state.taskId, this.state.task.selected_round) : this.context.api.getRandomVerifiedFlaggedExample(this.state.taskId, this.state.task.selected_round))
+    (this.state.owner_mode ? this.context.api.getRandomVerifiedFlaggedExample(this.state.taskId, this.state.task.selected_round) : this.context.api.getRandomExample(this.state.taskId, this.state.task.selected_round))
       .then((result) => {
         if (this.state.task.type !== 'extract') {
           result.target = this.state.task.targets[parseInt(result.target_pred)];
@@ -95,9 +97,9 @@ class VerifyInterface extends React.Component {
         break;
     }
     if (action_label !== null) {
-      (this.state.user_mode
-        ? this.context.api.validateExample(this.state.example.id, action_label)
-        : this.context.api.fullyValidateExample(this.state.example.id, action_label))
+      (this.state.owner_mode
+        ? this.context.api.fullyValidateExample(this.state.example.id, action_label)
+        : this.context.api.validateExample(this.state.example.id, action_label))
           .then((result) => {
             this.getNewExample();
             if (!!result.badges) {
@@ -125,21 +127,6 @@ class VerifyInterface extends React.Component {
               <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
                 Validate examples
               </h2>
-              {this.context.api.isTaskOwner(this.context.user, this.state.task.id) || this.context.user.admin ?
-                <BootstrapSwitchButton
-                  checked={this.state.user_mode}
-                  onlabel="User Mode"
-                  onstyle="primary blue-bg"
-                  offstyle="warning"
-                  offlabel="Task Owner Mode"
-                  width={180}
-                  onChange={(checked) => {
-                    this.setState({ user_mode: checked },
-                    this.componentDidMount()
-                  );
-                  }}
-                /> : ""
-              }
               </InputGroup>
               <p>
                 If a model was fooled, we need to make sure that the example is correct.
@@ -217,24 +204,24 @@ class VerifyInterface extends React.Component {
                       onClick={() => this.handleResponse("correct")}
                       type="button"
                       className="btn btn-light btn-sm">
-                        <i className="fas fa-thumbs-up"></i> {this.state.user_mode ? "" : "Verified "} Correct
+                        <i className="fas fa-thumbs-up"></i> {this.state.owner_mode ? "Verified " : ""} Correct
                     </button>{" "}
                     <button
                       data-index={this.props.index}
                       onClick={() => this.handleResponse("incorrect")}
                       type="button"
                       className="btn btn-light btn-sm">
-                        <i className="fas fa-thumbs-down"></i> {this.state.user_mode ? "" : "Verified "} Incorrect
+                        <i className="fas fa-thumbs-down"></i> {this.state.owner_mode ? "Verified " : ""} Incorrect
                     </button>{" "}
-                    {this.state.user_mode ?
-                      <button
-                        data-index={this.props.index}
-                        onClick={() => this.handleResponse("flag")}
-                        type="button"
-                        className="btn btn-light btn-sm">
-                          <i className="fas fa-flag"></i> Flag
-                      </button>
-                      : ""
+                    {this.state.owner_mode ?
+                      ""
+                      : <button
+                          data-index={this.props.index}
+                          onClick={() => this.handleResponse("flag")}
+                          type="button"
+                          className="btn btn-light btn-sm">
+                            <i className="fas fa-flag"></i> Flag
+                        </button>
                     }{" "}
                     <button
                       data-index={this.props.index}
@@ -255,6 +242,37 @@ class VerifyInterface extends React.Component {
                   </Card.Body>
                 }
                 </Card>
+                <div className="p-3">
+                  {this.context.api.isTaskOwner(this.context.user, this.state.task.id) || this.context.user.admin ?
+                    <OverlayTrigger
+                      placement="bottom"
+                      delay={{ show: 250, hide: 400 }}
+                      overlay={(props) => <Tooltip id="button-tooltip" {...props}>Switch between task owner and regular annotation mode.</Tooltip>}
+                    >
+                      <span>
+                        <BootstrapSwitchButton
+                          checked={!this.state.owner_mode}
+                          onlabel="Regular Mode"
+                          onstyle="primary blue-bg"
+                          offstyle="warning"
+                          offlabel="Task Owner Mode"
+                          width={180}
+                          onChange={(checked) => {
+                            this.setState({ owner_mode: !checked },
+                            this.componentDidMount()
+                          );
+                          }}
+                        />
+                      </span>
+                    </OverlayTrigger>
+                   : ""
+                  }
+                </div>
+                <div className="p-2">
+                {this.state.owner_mode ?
+                    <p style={{'color': 'red'}}>WARNING: You are in "Task owner mode." You can verify examples as correct or incorrect without input from anyone else!!</p>
+                  : ''}
+                </div>
               </Card.Body>
             </Card>
           </Col>
