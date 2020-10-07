@@ -322,19 +322,19 @@ export default class ApiService {
     return user.task_permissions?.filter((task_permission) => tid === task_permission.tid && "owner" === task_permission.type).length > 0;
   }
 
-  fullyValidateExample(id, label, uid = null) {
+  validateExampleAsAdminOrOwner(id, label, uid = null) {
     let obj = {label: label};
     if (this.mode == 'mturk') {
       obj.uid = uid;
     }
-    return this.fetch(`${this.domain}/examples/${id}/fullyvalidate`, {
+    return this.fetch(`${this.domain}/examples/${id}/validate-as-admin-or-owner`, {
       method: "PUT",
       body: JSON.stringify(obj),
     });
   }
 
-  validateExample(id, label, uid = null, override_if_owner = false) {
-    let obj = {label: label, override_if_owner: override_if_owner};
+  validateExample(id, label, uid = null) {
+    let obj = {label: label};
     if (this.mode == 'mturk') {
       obj.uid = uid;
     }

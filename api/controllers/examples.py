@@ -68,9 +68,9 @@ def get_example_metadata(credentials, eid):
         bottle.abort(403, 'Access denied')
     return util.json_encode(example.metadata_json)
 
-@bottle.put('/examples/<eid:int>/fullyvalidate')
+@bottle.put('/examples/<eid:int>/validate-as-admin-or-owner')
 @_auth.requires_auth_or_turk
-def fully_validate_example(credentials, eid):
+def validate_example_as_admin_or_owner(credentials, eid):
     em = ExampleModel()
     example = em.get(eid)
     if not example:
@@ -90,7 +90,7 @@ def fully_validate_example(credentials, eid):
 def validate_example_as_user(credentials, eid):
     return validate_example(credentials, eid, False)
 
-def validate_example(credentials, eid, fully_validate):
+def validate_example(credentials, eid, validate_as_admin_or_owner):
     data = bottle.request.json
     if not data or 'label' not in data:
         bottle.abort(400, 'Bad request')
@@ -110,9 +110,9 @@ def validate_example(credentials, eid, fully_validate):
         if not util.check_fields(data, ['uid']):
             bottle.abort(400, 'Missing data');
         metadata = json.loads(example.metadata_json)
-        if ('annotator_id' not in metadata or metadata['annotator_id'] == data['uid']) and not fully_validate:
+        if ('annotator_id' not in metadata or metadata['annotator_id'] == data['uid']) and not validate_as_admin_or_owner:
             bottle.abort(403, 'Access denied (cannot validate your own example)')
-    elif credentials['id'] == example.uid and not fully_validate:
+    elif credentials['id'] == example.uid and not validate_as_admin_or_owner:
         bottle.abort(403, 'Access denied (cannot validate your own example)')
 
     nobj = example.verifier_preds
@@ -128,15 +128,17 @@ def validate_example(credentials, eid, fully_validate):
     preds = Counter([x.split(",")[1] for x in nobj.split("|")])
     rm = RoundModel()
     rm.updateLastActivity(context.r_realid)
-    if preds['C'] >= 5 or (fully_validate and label == 'C'):
+    if preds['C'] >= 5 or (validate_as_admin_or_owner and label == 'C'):
         em.update(example.id, {'verified': True, 'verified_correct': True})
         rm.incrementVerifiedFooledCount(context.r_realid)
         um.incrementCorrectCount(example.uid)
-    elif preds['I'] >= 5 or (fully_validate and label == 'I'):
+    elif preds['I'] >= 5 or (validate_as_admin_or_owner and label == 'I'):
         em.update(example.id, {'verified': True, 'verified_incorrect': True})
     elif preds['F'] >= 5:
         em.update(example.id, {'verified': True, 'verified_flagged': True})
-    if fully_validate:
+
+    # Example has been validated by an admin or owner so is no longer flagged.
+    if validate_as_admin_or_owner:
         em.update(example.id, {'verified_flagged': False})
 
     ret = example.to_dict()

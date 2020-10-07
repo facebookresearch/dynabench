@@ -148,7 +148,7 @@ const TaskActionButtons = (props) => {
   function renderSubmitTooltip(props) {
     return renderTooltip(props, "Submit model predictions on this task");
   }
-  console.log(props.api.isTaskOwner(props.user, props.task.id))
+
   return (
     <Nav className="my-4">
       <Nav.Item className="task-action-btn">

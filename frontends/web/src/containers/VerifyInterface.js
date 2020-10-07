@@ -100,7 +100,7 @@ class VerifyInterface extends React.Component {
     }
     if (action_label !== null) {
       (this.state.owner_mode
-        ? this.context.api.fullyValidateExample(this.state.example.id, action_label)
+        ? this.context.api.validateExampleAsAdminOrOwner(this.state.example.id, action_label)
         : this.context.api.validateExample(this.state.example.id, action_label))
           .then((result) => {
             this.getNewExample();
@@ -125,11 +125,9 @@ class VerifyInterface extends React.Component {
           <Col className="m-auto" lg={12}>
             <div className="mt-4 mb-5 pt-3">
               <p className="text-uppercase mb-0 spaced-header">{this.props.taskName}</p>
-              <InputGroup className="align-items-center">
               <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
                 Validate examples
               </h2>
-              </InputGroup>
               <p>
                 If a model was fooled, we need to make sure that the example is correct.
               </p>
