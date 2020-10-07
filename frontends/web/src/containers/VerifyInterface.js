@@ -68,7 +68,9 @@ class VerifyInterface extends React.Component {
   }
 
   getNewExample() {
-    (this.state.owner_mode ? this.context.api.getRandomVerifiedFlaggedExample(this.state.taskId, this.state.task.selected_round) : this.context.api.getRandomExample(this.state.taskId, this.state.task.selected_round))
+    (this.state.owner_mode
+      ? this.context.api.getRandomVerifiedFlaggedExample(this.state.taskId, this.state.task.selected_round)
+      : this.context.api.getRandomExample(this.state.taskId, this.state.task.selected_round))
       .then((result) => {
         if (this.state.task.type !== 'extract') {
           result.target = this.state.task.targets[parseInt(result.target_pred)];
