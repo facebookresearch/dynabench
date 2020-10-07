@@ -23,6 +23,11 @@ import "./Sidebar-Layout.css";
 import TasksContext from "./TasksContext";
 import UserContext from "./UserContext";
 import BadgeGrid from "./BadgeGrid";
+import {
+  MERTooltip,
+  RetractionTooltip,
+  RejectionTooltip
+} from "./ProfilePage";
 
 class UserPage extends React.Component {
   static contextType = UserContext;
@@ -204,7 +209,7 @@ class UserPage extends React.Component {
                         <OverlayTrigger
                           placement="bottom"
                           delay={{ show: 250, hide: 400 }}
-                          //overlay={MERTooltip}
+                          overlay={MERTooltip}
                         >
                           <Form.Group as={Row}>
                             <Form.Label column sm="6" className="text-right">
@@ -234,7 +239,7 @@ class UserPage extends React.Component {
                         <OverlayTrigger
                           placement="bottom"
                           delay={{ show: 250, hide: 400 }}
-                          //overlay={RejectionTooltip}
+                          overlay={RejectionTooltip}
                         >
                           <Form.Group as={Row}>
                             <Form.Label column sm="6" className="text-right">
@@ -259,7 +264,7 @@ class UserPage extends React.Component {
                         <OverlayTrigger
                           placement="bottom"
                           delay={{ show: 250, hide: 400 }}
-                          //overlay={RetractionTooltip}
+                          overlay={RetractionTooltip}
                         >
                           <Form.Group as={Row}>
                             <Form.Label column sm="6" className="text-right">
@@ -272,7 +277,7 @@ class UserPage extends React.Component {
                                 defaultValue={
                                   this.state.user.examples_submitted > 0 ?
                                     (100 * this.state.user.total_retracted /
-                                      (this.state.user.examples_submitted + this.state.user.total_retracted)
+                                      this.state.user.examples_submitted
                                     ).toFixed(2).toString() + '% (rate) ' +
                                     this.state.user.total_retracted.toString() + ' (count)'
                       : 'N/A'}

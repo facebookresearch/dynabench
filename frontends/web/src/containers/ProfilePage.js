@@ -49,7 +49,7 @@ const RejectionTooltip = (props) => {
 const RetractionTooltip = (props) => {
   return (
     <Tooltip id="button-tooltip" {...props}>
-      {"The retracted count is the numer of retracted examples. The retracted rate is the count divided by the total number of examples."}
+      {"The retraction count is the numer of retracted examples. The retraction rate is the count divided by the total number of examples."}
     </Tooltip>
   );
 }
@@ -128,7 +128,7 @@ const StatsSubPage = (props) => {
                         <td className="text-right">
                         {props.user.examples_submitted && (100 *
                           props.user.total_retracted/
-                          (props.user.examples_submitted + props.user.total_retracted)
+                          props.user.examples_submitted
                         ).toFixed(2)}% (rate){" "}
                         {props.user.total_retracted} (count)
                         </td>
@@ -743,3 +743,8 @@ class ProfilePage extends React.Component {
 }
 
 export default ProfilePage;
+export {
+  MERTooltip,
+  RejectionTooltip,
+  RetractionTooltip
+}

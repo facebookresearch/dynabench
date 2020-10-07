@@ -130,25 +130,20 @@ class UserModel(BaseModel):
         if u:
             u.models_submitted = u.models_submitted + 1
             self.dbs.commit()
-    def incrementVerifiedFooledCount(self, uid, n=1):
+    def incrementVerifiedFooledCount(self, uid):
         u = self.get(uid)
         if u:
-            u.total_verified_fooled = u.total_verified_fooled + n
+            u.total_verified_fooled = u.total_verified_fooled + 1
             self.dbs.commit()
-    def incrementFooledCount(self, uid, n=1):
+    def incrementFooledCount(self, uid):
         u = self.get(uid)
         if u:
-            u.total_fooled = u.total_fooled + n
+            u.total_fooled = u.total_fooled + 1
             self.dbs.commit()
-    def incrementRetractedCount(self, uid, n=1):
+    def incrementRetractedCount(self, uid):
         u = self.get(uid)
         if u:
-            u.total_retracted= u.total_retracted + n
-            self.dbs.commit()
-    def incrementExamplesSubmittedCount(self, uid, n=1):
-        u = self.get(uid)
-        if u:
-            u.examples_submitted = u.examples_submitted + n
+            u.total_retracted= u.total_retracted + 1
             self.dbs.commit()
     def incrementNotificationCount(self, uid):
         u = self.get(uid)

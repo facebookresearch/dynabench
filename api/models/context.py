@@ -48,9 +48,9 @@ class ContextModel(BaseModel):
     def getRandomMin(self, rid, n=1):
         return self.dbs.query(Context).filter(Context.r_realid == rid).order_by(Context.total_used.asc(), db.sql.func.rand()).limit(n).all()
 
-    def incrementCountDate(self, cid, n=1):
+    def incrementCountDate(self, cid):
         c = self.get(cid)
         if c:
-            c.total_used = (c.total_used + n) if c.total_used is not None else n
+            c.total_used = (c.total_used + 1) if c.total_used is not None else 1
             c.last_used = db.sql.func.now()
             self.dbs.commit()

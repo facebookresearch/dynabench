@@ -129,7 +129,7 @@ def validate_example(credentials, eid, validate_as_admin_or_owner):
     if preds['C'] >= 5 or (validate_as_admin_or_owner and label == 'C'):
         em.update(example.id, {'verified': True, 'verified_correct': True})
         rm.incrementVerifiedFooledCount(context.r_realid)
-        um.incrementCorrectCount(example.uid)
+        um.incrementVerifiedFooledCount(example.uid)
     elif preds['I'] >= 5 or (validate_as_admin_or_owner and label == 'I'):
         em.update(example.id, {'verified': True, 'verified_incorrect': True})
     elif preds['F'] >= 5:
@@ -176,6 +176,7 @@ def update_example(credentials, eid):
         logger.info("Updating example {} with {}".format(example.id, data))
         em.update(example.id, data)
         if 'retracted' in data and data['retracted'] == True:
+            um = UserModel()
             um.incrementRetractedCount(example.uid)
         return util.json_encode({'success': 'ok'})
     except Exception as e:
