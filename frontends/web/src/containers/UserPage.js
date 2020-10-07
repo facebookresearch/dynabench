@@ -24,23 +24,6 @@ import TasksContext from "./TasksContext";
 import UserContext from "./UserContext";
 import BadgeGrid from "./BadgeGrid";
 
-function renderTooltip(props, text) {
-  return (
-    <Tooltip id="button-tooltip" {...props}>
-      {text}
-    </Tooltip>
-  );
-}
-function renderMERTooltip(props) {
-  return renderTooltip(props, "The model error rate is the number of submitted model fooling examples divided by the number of submitted examples. The model error count is the number of submitted model fooling examples. The definitions of the verified model error rate and count are analagous, except the number of verified submitted model fooling examples is used instead of the number of submitted model fooling examples. Retracted examples are not included in these numbers.");
-}
-function renderRejectionTooltip(props) {
-  return renderTooltip(props, "The rejection rate is model error rate minus the verified model error rate. The rejection count is the model error count minus the verified model error count.")
-}
-function renderRetractionTooltip(props) {
-  return renderTooltip(props, "The retracted rate is the numer of retracted examples divided by all examples entered (both submitted and retracted). The retracted count is the number of retracted examples.")
-}
-
 class UserPage extends React.Component {
   static contextType = UserContext;
   constructor(props) {
@@ -221,7 +204,7 @@ class UserPage extends React.Component {
                         <OverlayTrigger
                           placement="bottom"
                           delay={{ show: 250, hide: 400 }}
-                          overlay={renderMERTooltip}
+                          //overlay={MERTooltip}
                         >
                           <Form.Group as={Row}>
                             <Form.Label column sm="6" className="text-right">
@@ -251,7 +234,7 @@ class UserPage extends React.Component {
                         <OverlayTrigger
                           placement="bottom"
                           delay={{ show: 250, hide: 400 }}
-                          overlay={renderRejectionTooltip}
+                          //overlay={RejectionTooltip}
                         >
                           <Form.Group as={Row}>
                             <Form.Label column sm="6" className="text-right">
@@ -276,7 +259,7 @@ class UserPage extends React.Component {
                         <OverlayTrigger
                           placement="bottom"
                           delay={{ show: 250, hide: 400 }}
-                          overlay={renderRetractionTooltip}
+                          //overlay={RetractionTooltip}
                         >
                           <Form.Group as={Row}>
                             <Form.Label column sm="6" className="text-right">

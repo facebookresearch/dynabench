@@ -30,21 +30,28 @@ import "./ProfilePage.css";
 import BadgeGrid from "./BadgeGrid";
 import Badge from "./Badge";
 
-function renderTooltip(props, text) {
+const MERTooltip = (props) => {
   return (
     <Tooltip id="button-tooltip" {...props}>
-      {text}
+      {"The model error count is the number of model fooling examples. The model error rate is the count divided by the total number of examples. The definitions of the verified model error rate and count are analagous, except the number of verified model fooling examples is used instead of the number of model fooling examples."}
     </Tooltip>
   );
 }
-function renderMERTooltip(props) {
-  return renderTooltip(props, "The model error rate is the number of submitted model fooling examples divided by the number of submitted examples. The model error count is the number of submitted model fooling examples. The definitions of the verified model error rate and count are analagous, except the number of verified submitted model fooling examples is used instead of the number of submitted model fooling examples. Retracted examples are not included in these numbers.");
+
+const RejectionTooltip = (props) => {
+  return (
+    <Tooltip id="button-tooltip" {...props}>
+      {"The rejection count is the number of verified incorrect examples. The rejection rate is the count divided by the total number of examples."}
+    </Tooltip>
+  );
 }
-function renderRejectionTooltip(props) {
-  return renderTooltip(props, "The rejection rate is model error rate minus the verified model error rate. The rejection count is the model error count minus the verified model error count.")
-}
-function renderRetractionTooltip(props) {
-  return renderTooltip(props, "The retracted rate is the numer of retracted examples divided by all examples entered (both submitted and retracted). The retracted count is the number of retracted examples.")
+
+const RetractionTooltip = (props) => {
+  return (
+    <Tooltip id="button-tooltip" {...props}>
+      {"The retracted count is the numer of retracted examples. The retracted rate is the count divided by the total number of examples."}
+    </Tooltip>
+  );
 }
 
 const StatsSubPage = (props) => {
@@ -69,7 +76,7 @@ const StatsSubPage = (props) => {
                    <OverlayTrigger
                      placement="bottom"
                      delay={{ show: 250, hide: 400 }}
-                     overlay={renderMERTooltip}
+                     overlay={MERTooltip}
                    >
                      <tr>
                        <td>
@@ -92,7 +99,7 @@ const StatsSubPage = (props) => {
                     <OverlayTrigger
                       placement="bottom"
                       delay={{ show: 250, hide: 400 }}
-                      overlay={renderRejectionTooltip}
+                      overlay={RejectionTooltip}
                     >
                       <tr>
                         <td>
@@ -112,7 +119,7 @@ const StatsSubPage = (props) => {
                     <OverlayTrigger
                       placement="bottom"
                       delay={{ show: 250, hide: 400 }}
-                      overlay={renderRetractionTooltip}
+                      overlay={RetractionTooltip}
                     >
                       <tr>
                         <td>

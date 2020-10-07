@@ -81,7 +81,6 @@ def validate_example(credentials, eid):
         bottle.abort(403, 'Access denied (cannot validate your own example)')
 
     nobj = example.verifier_preds
-    print('nobj:', nobj)
     if nobj is None:
         nobj = ''
     else:
@@ -143,20 +142,7 @@ def update_example(credentials, eid):
         logger.info("Updating example {} with {}".format(example.id, data))
         em.update(example.id, data)
         if 'retracted' in data and data['retracted'] == True:
-            cm = ContextModel()
-            context = cm.get(example.cid)
-            cm.incrementCountDate(context.id, -1)
-            um = UserModel()
             um.incrementRetractedCount(example.uid)
-            um.incrementExamplesSubmittedCount(example.uid, -1)
-            rm = RoundModel()
-            rm.incrementCollectedCount(context.round.tid, context.round.rid, -1)
-            if example.verified_correct:
-                um.incrementVerifiedFooledCount(example.uid, -1)
-                rm.incrementVerifiedFooledCount(context.round.id, -1)
-            if example.model_wrong:
-                um.incrementFooledCount(example.uid, -1)
-                rm.incrementFooledCount(context.round.id, -1)
         return util.json_encode({'success': 'ok'})
     except Exception as e:
         logger.error('Error updating example {}: {}'.format(eid, e))
