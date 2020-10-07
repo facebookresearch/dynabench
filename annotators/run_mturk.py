@@ -1,47 +1,115 @@
+#!/usr/bin/env python3
+
 # Copyright (c) Facebook, Inc. and its affiliates.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
 import os
-import time
-import shlex
-import json
-import sys
-sys.path.append('./Mephisto')
-from mephisto.core.local_database import LocalMephistoDB
+import shutil
+import subprocess
 from mephisto.core.operator import Operator
-from mephisto.utils.scripts import MephistoRunScriptParser
-
-from util import arg_handler, get_qualifications
-
-parser = MephistoRunScriptParser()
-architect_type, requester_name, db, args = arg_handler(parser)
-task_config = json.load(open(args['task']))
-task_config['provider_type'] = args['provider_type']
-
-extra_args = {
-    'static_task_data': [{} for _ in range(args['num_jobs'])],
-    'task_config': task_config,
-    'mturk_specific_qualifications': get_qualifications(task_config['qualifications'])
-}
-
-ARG_STRING = (
-    "--blueprint-type static_react_task "
-    f"--architect-type {architect_type} "
-    f"--requester-name {requester_name} "
-    f'--task-title "\\"{task_config["task_title"]}\\"" '
-    f'--task-description "\\"{task_config["task_description"]}\\"" '
-    f"--task-reward {task_config['reward_in_dollars']} "
-    f"--task-tags {task_config['tags']} "
-    f'--task-source "../frontends/web/build/bundle.js" '
-    f"--units-per-assignment 1 "
-    f"--task-name {task_config['task_name']} "
-    f"--port {args['port']} "
+from mephisto.utils.scripts import load_db_and_process_config
+from mephisto.server.blueprints.static_react_task.static_react_blueprint import (
+    BLUEPRINT_TYPE,
+)
+from mephisto.server.blueprints.abstract.static_task.static_blueprint import (
+    SharedStaticTaskState,
 )
 
-if args['use_onboarding']:
-    ARG_STRING += f"--onboarding-qualification {task_config['onboarding_qualification_name']}"
+import hydra
+from omegaconf import DictConfig
+from dataclasses import dataclass, field
+from typing import List, Any
 
-operator = Operator(db)
-operator.parse_and_launch_run_wrapper(shlex.split(ARG_STRING), extra_args=extra_args)
-operator.wait_for_runs_then_shutdown()
+from util import get_qualifications
+
+CURRENT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+
+defaults = [
+    {"mephisto/blueprint": BLUEPRINT_TYPE},
+    {"mephisto/architect": "local"},
+    {"mephisto/provider": "mock"},
+    "conf/base",
+    {"conf": "nli_r1"},
+]
+
+from mephisto.core.hydra_config import RunScriptConfig, register_script_config
+
+@dataclass
+class DynaBenchConfig:
+    task_name: str = 'no_task'
+    task_id: int = 0
+    round_id: int = 0
+
+
+@dataclass
+class TestScriptConfig(RunScriptConfig):
+    defaults: List[Any] = field(default_factory=lambda: defaults)
+    dynabench: DynaBenchConfig = DynaBenchConfig()
+    num_jobs: int = 10
+    preselected_qualifications: List[str] = ("100_hits_approved", "english_only")
+    frontend_dir: str = f'{CURRENT_DIRECTORY}/../frontends'
+
+
+register_script_config(name="scriptconfig", module=TestScriptConfig)
+
+
+def build_frontend(frontend_dir):
+    # automatically build frontend:
+    frontend_source_dir = os.path.join(frontend_dir, "web")
+    frontend_build_dir = os.path.join(frontend_source_dir, "build")
+
+    return_dir = os.getcwd()
+    os.chdir(frontend_source_dir)
+    # we do not remove the old file, subject to change
+    # if error occurs during frontend building, user need to manually build frontend
+    # if os.path.exists(frontend_build_dir):
+    #     shutil.rmtree(frontend_build_dir)
+    packages_installed = subprocess.call(["npm", "install"])
+    if packages_installed != 0:
+        raise Exception(
+            "please make sure npm is installed, otherwise view "
+            "the above error for more info."
+        )
+
+    webpack_complete = subprocess.call(["npm", "run", "mturk"])
+    if webpack_complete != 0:
+        raise Exception(
+            "Webpack appears to have failed to build your "
+            "frontend. See the above error for more information."
+        )
+    os.chdir(return_dir)
+
+
+@hydra.main(config_name="scriptconfig")
+def main(cfg: DictConfig) -> None:
+    num_jobs = cfg.num_jobs
+    static_task_data = [{} for _ in range(num_jobs)]
+    mturk_specific_qualifications = get_qualifications(cfg.preselected_qualifications)
+    # mturk_specific_qualifications
+
+    #TODO: How to set onboarding ready?
+    def onboarding_always_valid(onboarding_data):
+        return True
+
+    shared_state = SharedStaticTaskState(
+        static_task_data=static_task_data,
+        validate_onboarding=onboarding_always_valid,
+        task_config=dict(cfg.dynabench),
+    )
+
+    # We need to implicitly add 'mturk_specific_qualifications' here like this.
+    shared_state.__setattr__("mturk_specific_qualifications", mturk_specific_qualifications)
+    # qualifications will be picked up at mturk_provider.py
+
+    build_frontend(cfg.frontend_dir)
+
+    db, cfg = load_db_and_process_config(cfg)
+    operator = Operator(db)
+
+    operator.validate_and_run_config(cfg.mephisto, shared_state)
+    operator.wait_for_runs_then_shutdown(skip_input=True, log_rate=30)
+
+
+if __name__ == "__main__":
+    main()
