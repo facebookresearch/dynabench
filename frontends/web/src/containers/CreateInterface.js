@@ -1147,6 +1147,7 @@ class CreateInterface extends React.Component {
                         </Annotation>
                       </span>
                     </OverlayTrigger>
+
                     {this.state.task.cur_round > 1 ?
                     <OverlayTrigger
                       placement="bottom"
