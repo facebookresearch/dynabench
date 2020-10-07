@@ -651,7 +651,7 @@ class CreateInterface extends React.Component {
       modelPredStr: "",
       hypothesis: "",
       content: [],
-      removeHypothesis: true,
+      retainInput: false,
       livemode: true,
       submitDisabled: true,
       refreshDisabled: true,
@@ -663,6 +663,7 @@ class CreateInterface extends React.Component {
     this.handleResponseChange = this.handleResponseChange.bind(this);
     this.switchLiveMode = this.switchLiveMode.bind(this);
     this.updateAnswer = this.updateAnswer.bind(this);
+    this.updateRetainInput = this.updateRetainInput.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
     this.chatContainerRef = React.createRef();
     this.bottomAnchorRef = React.createRef();
@@ -680,7 +681,7 @@ class CreateInterface extends React.Component {
             );
             const randomModel = this.pickModel(this.state.task.round.url);
             this.setState({
-              hypothesis: this.state.removeHypothesis ? "" : this.state.hypothesis,
+              hypothesis: "",
               target: randomTarget,
               randomModel: randomModel,
               context: result,
@@ -693,6 +694,14 @@ class CreateInterface extends React.Component {
           });
       }
     );
+  }
+
+  updateRetainInput(e) {
+    const retainInput = e.target.checked;
+    if (this.context.api.loggedIn()) {
+      this.context.api.updateUserRetainInput(this.context.user.id, retainInput);
+    }
+    this.setState({ retainInput: retainInput });
   }
 
   updateSelectedRound(e) {
@@ -824,6 +833,7 @@ class CreateInterface extends React.Component {
               if (!this.state.livemode) {
                 // We are in sandbox
                 this.setState({
+                  hypothesis: this.state.retainInput? this.state.hypothesis : "",
                   submitDisabled: false,
                   refreshDisabled: false,
                 });
@@ -844,7 +854,7 @@ class CreateInterface extends React.Component {
                 .then((result) => {
                   var key = this.state.content.length - 1;
                   this.setState({
-                    hypothesis: this.state.removeHypothesis ? "" : this.state.hypothesis,
+                    hypothesis: this.state.retainInput? this.state.hypothesis : "",
                     submitDisabled: false,
                     refreshDisabled: false,
                     mapKeyToExampleId: {
@@ -898,6 +908,15 @@ class CreateInterface extends React.Component {
     if (!this.context.api.loggedIn()) {
       this.setState({ livemode: false });
     }
+
+    const user = this.context.api.getCredentials();
+    this.context.api
+      .getUser(user.id, true)
+      .then((result) => {
+        this.setState({ retainInput: result.retain_input });
+      }, (error) => {
+        console.log(error);
+      });
 
     this.setState({ taskId: params.taskId }, function () {
       this.context.api
@@ -997,9 +1016,6 @@ class CreateInterface extends React.Component {
     function renderSandboxTooltip(props) {
       return renderTooltip(props, "Switch in and out of sandbox mode.");
     }
-    function renderRemoveHypothesisTooltip(props) {
-      return renderTooltip(props, "Are you tweaking the same text over and over? Switch to retain your input after a submission or context change.");
-    }
     function renderSwitchRoundTooltip(props) {
       return renderTooltip(props, "Switch to other rounds of this task, including no longer active ones.");
     }
@@ -1035,6 +1051,11 @@ class CreateInterface extends React.Component {
                   onClick={() => { this.setState({showInfoModal: true}) }}
                 ><i className="fas fa-info"></i></button>
               </Annotation>
+              <Annotation placement="top" tooltip="Click to adjust your create settings">
+                <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
+                  onClick={() => { this.setState({showCreateSettingsModal: true}) }}
+                ><i className="fa fa-cog"></i></button>
+              </Annotation>
             </ButtonGroup>
             <Modal
               show={this.state.showInfoModal}
@@ -1046,7 +1067,18 @@ class CreateInterface extends React.Component {
                 <Modal.Body>
                   <TaskInstructions shortname={this.state.task.shortname} />
                 </Modal.Body>
-              </Modal>
+            </Modal>
+            <Modal
+              show={this.state.showCreateSettingsModal}
+              onHide={() => this.setState({showCreateSettingsModal: false})}
+              >
+                <Modal.Header closeButton>
+                  <Modal.Title>Create Settings</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                  <Form.Check checked={this.state.retainInput} label="Do you want to retain your input for the same context?" onChange={this.updateRetainInput}/>
+                </Modal.Body>
+            </Modal>
           </div>
           <Explainer taskName={this.state.task.name} />
           <Annotation
@@ -1095,33 +1127,12 @@ class CreateInterface extends React.Component {
                 <Col xs={6}>
                   <InputGroup>
                     <OverlayTrigger
-                      placement="left"
-                      delay={{ show: 250, hide: 400 }}
-                      overlay={renderRemoveHypothesisTooltip}
-                    >
-                      <span style={{marginRight: 10}}>
-                        <Annotation placement="left" tooltip="If you want to retain your text in the input box after submitting or changing the context, you can choose that option here.">
-                          <BootstrapSwitchButton
-                            checked={this.state.removeHypothesis}
-                            onlabel='Remove Input'
-                            onstyle='primary blue-bg'
-                            offstyle='warning'
-                            offlabel='Retain Input'
-                            width={150}
-                            onChange={(checked) => {
-                              this.setState({ removeHypothesis: checked });
-                            }}
-                          />
-                        </Annotation>
-                      </span>
-                    </OverlayTrigger>
-                    <OverlayTrigger
-                      placement="top"
+                      placement="bottom"
                       delay={{ show: 250, hide: 400 }}
                       overlay={renderSandboxTooltip}
                     >
                       <span style={{marginRight: 10}}>
-                        <Annotation placement="top" tooltip="If you want to just play around without storing your examples, you can switch to Sandbox mode here.">
+                        <Annotation placement="left" tooltip="If you want to just play around without storing your examples, you can switch to Sandbox mode here.">
                           <BootstrapSwitchButton
                             checked={this.state.livemode}
                             onlabel='Live Mode'
