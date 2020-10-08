@@ -27,6 +27,9 @@ class User(Base):
     total_retracted = db.Column(db.Integer, default=0)
     total_verified_fooled = db.Column(db.Integer, default=0)
     total_fooled = db.Column(db.Integer, default=0)
+
+    settings_json = db.Column(db.Text)
+
     examples_submitted = db.Column(db.Integer, default=0)
     examples_verified = db.Column(db.Integer, default=0)
     models_submitted = db.Column(db.Integer, default=0)
