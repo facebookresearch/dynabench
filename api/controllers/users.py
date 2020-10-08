@@ -261,39 +261,14 @@ def update_user_profile(credentials, id):
         u.update(user.id, { \
             'username': data['username'], \
             'affiliation': data['affiliation'], \
-            'realname': data['realname'] \
+            'realname': data['realname'], \
             })
+        if 'settings_json' in data:
+            u.update(user.id, {'settings_json': data['settings_json']})
         return util.json_encode(user.to_dict())
     except Exception as ex:
         logger.exception('Could not update profile: %s' % (ex))
         bottle.abort(400, 'Could not update profile')
-
-
-@bottle.put('/users/<id:int>/retain-input')
-@_auth.requires_auth
-def update_user_retain_input(credentials, id):
-    data = bottle.request.json
-    u = UserModel()
-    if not util.check_fields(data, ['retain_input']):
-        bottle.abort(400, 'Missing data')
-
-    # validate user detail
-    if not util.is_current_user(uid=id, credentials=credentials):
-        logger.error('Not authorized to update retain input variable')
-        bottle.abort(403, 'Not authorized to update retain input variable')
-
-    user = u.get(id)
-    if not user:
-        logger.error('User does not exist (%s)' % id)
-        bottle.abort(404, 'User not found')
-
-    try:
-        u.update(user.id, {'retain_input': data['retain_input']})
-        return util.json_encode(user.to_dict())
-    except Exception as ex:
-        logger.exception('Could not update retain input: %s' % (ex))
-        bottle.abort(400, 'Could not update retain input')
-
 
 @bottle.post('/users/<id:int>/avatar/upload')
 @_auth.requires_auth

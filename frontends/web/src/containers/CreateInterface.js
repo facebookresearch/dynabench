@@ -699,7 +699,14 @@ class CreateInterface extends React.Component {
   updateRetainInput(e) {
     const retainInput = e.target.checked;
     if (this.context.api.loggedIn()) {
-      this.context.api.updateUserRetainInput(this.context.user.id, retainInput);
+      var settings_json = JSON.parse(this.context.user.settings_json)
+      if (settings_json) {
+        settings_json['retain_input'] = retainInput;
+      } else {
+        settings_json = {'retain_input': retainInput};
+      }
+      this.context.user.settings_json = JSON.stringify(settings_json);
+      this.context.api.updateUser(this.context.user.id, this.context.user);
     }
     this.setState({ retainInput: retainInput });
   }
@@ -913,7 +920,10 @@ class CreateInterface extends React.Component {
     this.context.api
       .getUser(user.id, true)
       .then((result) => {
-        this.setState({ retainInput: result.retain_input });
+        var settings_json = JSON.parse(result.settings_json)
+        if (settings_json && settings_json['retain_input']) {
+          this.setState({ retainInput: settings_json['retain_input'] });
+        }
       }, (error) => {
         console.log(error);
       });

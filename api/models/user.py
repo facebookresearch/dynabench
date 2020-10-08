@@ -24,7 +24,7 @@ class User(Base):
     forgot_password_token = db.Column(db.String(length=255))
     forgot_password_token_expiry_date = db.Column(db.DateTime)
 
-    retain_input = db.Column(db.Boolean)
+    settings_json = db.Column(db.Text)
 
     examples_verified_correct = db.Column(db.Integer, default=0)
     examples_submitted = db.Column(db.Integer, default=0)

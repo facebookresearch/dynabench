@@ -80,13 +80,6 @@ export default class ApiService {
     });
   }
 
-  updateUserRetainInput(userId, retainInput) {
-    return this.fetch(`${this.domain}/users/${userId}/retain-input`, {
-      method: "PUT",
-      body: JSON.stringify({ 'retain_input': retainInput }),
-    });
-  }
-
   updateProfilePic(userId, file) {
     const formData = new FormData();
     formData.append("file", file);
