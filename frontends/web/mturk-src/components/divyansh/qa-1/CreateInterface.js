@@ -77,6 +77,7 @@ class CreateInterface extends React.Component {
       .then(result => {
         var randomTarget = Math.floor(Math.random() * this.state.task.targets.length);
         this.setState({target: randomTarget, context: result, content: [{cls: 'context', text: result.context}], submitDisabled: false, refreshDisabled: false});
+	console.log(this.props);
       })
       .catch(error => {
         console.log(error);
@@ -154,10 +155,14 @@ class CreateInterface extends React.Component {
             retracted: false,
             response: result}
           ]}, function() {
+	  var last_answer = this.state.answer[this.state.answer.length - 1];
+          var answer_text = last_answer.tokens.join(" ");
           const metadata = {
             'annotator_id': this.props.providerWorkerId,
             'mephisto_id': this.props.mephistoWorkerId,
-            'model': 'model-name-unknown' 
+            'model': 'model-name-unknown',
+	    'agentId': this.props.agentId,
+            'fullresponse': this.state.task.type == 'extract' ? JSON.stringify(this.state.answer) : this.state.target
           };
           this.api.storeExample(
             this.state.task.id,
@@ -165,7 +170,7 @@ class CreateInterface extends React.Component {
             'turk',
             this.state.context.id,
             this.state.hypothesis,
-            this.state.task.type == 'extract' ? JSON.stringify(this.state.answer) : this.state.target,
+            answer_text,
             result,
             metadata
           ).then(result => {
