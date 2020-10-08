@@ -702,9 +702,7 @@ class CreateInterface extends React.Component {
       var settings_json;
       if (this.context.user.settings_json) {
         settings_json = JSON.parse(this.context.user.settings_json)
-        if (settings_json) {
-          settings_json['retain_input'] = retainInput;
-        }
+        settings_json['retain_input'] = retainInput;
       } else {
           settings_json = {'retain_input': retainInput};
       }
@@ -924,9 +922,11 @@ class CreateInterface extends React.Component {
     this.context.api
       .getUser(user.id, true)
       .then((result) => {
-        var settings_json = JSON.parse(result.settings_json)
-        if (settings_json && settings_json['retain_input']) {
-          this.setState({ retainInput: settings_json['retain_input'] });
+        if (result.settings_json) {
+          var settings_json = JSON.parse(result.settings_json)
+          if (settings_json['retain_input']) {
+            this.setState({ retainInput: settings_json['retain_input'] });
+          }
         }
       }, (error) => {
         console.log(error);
