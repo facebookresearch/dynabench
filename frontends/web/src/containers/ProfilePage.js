@@ -29,6 +29,11 @@ import "./Sidebar-Layout.css";
 import "./ProfilePage.css";
 import BadgeGrid from "./BadgeGrid";
 import Badge from "./Badge";
+import {
+  METooltip,
+  RejectionTooltip,
+  RetractionTooltip
+} from "./UserStatTooltips.js"
 
 const StatsSubPage = (props) => {
   return (
@@ -49,25 +54,67 @@ const StatsSubPage = (props) => {
                     {props.user.examples_submitted}
                   </td>
                  </tr>
-                <tr>
-                  <td>
-                    Model fooling examples (verified):
-                  </td>
-                  <td className="text-right">
-                    {props.user.examples_verified_correct}
-                  </td>
-                 </tr>
-                <tr>
-                  <td>
-                    Overall validated model error rate:
-                  </td>
-                  <td className="text-right">
-                    {props.user.examples_submitted && (100 *
-                      props.user.examples_verified_correct /
-                      props.user.examples_submitted
-                    ).toFixed(2)}%
-                  </td>
-                 </tr>
+                   <OverlayTrigger
+                     placement="bottom"
+                     delay={{ show: 250, hide: 400 }}
+                     overlay={METooltip}
+                   >
+                     <tr>
+                       <td>
+                         Model error:
+                       </td>
+                       <td className="text-right">
+                         {props.user.examples_submitted && (100 *
+                           props.user.total_fooled /
+                           props.user.examples_submitted
+                         ).toFixed(2)}% (rate){" "}
+                         {props.user.total_fooled} (count){" "}
+                         {props.user.examples_submitted && (100 *
+                           props.user.total_verified_fooled /
+                           props.user.examples_submitted
+                         ).toFixed(2)}% (verified rate){" "}
+                         {props.user.total_verified_fooled} (verified count){" "}
+                       </td>
+                     </tr>
+                   </OverlayTrigger>
+                    <OverlayTrigger
+                      placement="bottom"
+                      delay={{ show: 250, hide: 400 }}
+                      overlay={RejectionTooltip}
+                    >
+                      <tr>
+                        <td>
+                          Rejection:
+                        </td>
+                        <td className="text-right">
+                          {props.user.examples_submitted && (100 *
+                            (props.user.total_fooled - props.user.total_verified_fooled) /
+                            props.user.examples_submitted
+                          ).toFixed(2)}% (rate){" "}
+                          {props.user.examples_submitted &&
+                            props.user.total_fooled - props.user.total_verified_fooled
+                          } (count)
+                        </td>
+                      </tr>
+                    </OverlayTrigger>
+                    <OverlayTrigger
+                      placement="bottom"
+                      delay={{ show: 250, hide: 400 }}
+                      overlay={RetractionTooltip}
+                    >
+                      <tr>
+                        <td>
+                          Retraction:
+                        </td>
+                        <td className="text-right">
+                        {props.user.examples_submitted && (100 *
+                          props.user.total_retracted/
+                          props.user.examples_submitted
+                        ).toFixed(2)}% (rate){" "}
+                        {props.user.total_retracted} (count)
+                        </td>
+                      </tr>
+                    </OverlayTrigger>
                 <tr>
                   <td>
                     Total validations:
