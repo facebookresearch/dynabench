@@ -263,6 +263,8 @@ def update_user_profile(credentials, id):
             'affiliation': data['affiliation'], \
             'realname': data['realname'] \
             })
+        if 'settings_json' in data:
+            u.update(user.id, {'settings_json': data['settings_json']})
         return util.json_encode(user.to_dict())
     except Exception as ex:
         logger.exception('Could not update profile: %s' % (ex))
