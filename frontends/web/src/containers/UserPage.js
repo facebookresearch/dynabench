@@ -24,10 +24,10 @@ import TasksContext from "./TasksContext";
 import UserContext from "./UserContext";
 import BadgeGrid from "./BadgeGrid";
 import {
-  MERTooltip,
+  METooltip,
   RetractionTooltip,
   RejectionTooltip
-} from "./ProfilePage";
+} from "./UserStatTooltips";
 
 class UserPage extends React.Component {
   static contextType = UserContext;
@@ -209,7 +209,7 @@ class UserPage extends React.Component {
                         <OverlayTrigger
                           placement="bottom"
                           delay={{ show: 250, hide: 400 }}
-                          overlay={MERTooltip}
+                          overlay={METooltip}
                         >
                           <Form.Group as={Row}>
                             <Form.Label column sm="6" className="text-right">

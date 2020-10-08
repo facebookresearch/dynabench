@@ -29,30 +29,11 @@ import "./Sidebar-Layout.css";
 import "./ProfilePage.css";
 import BadgeGrid from "./BadgeGrid";
 import Badge from "./Badge";
-
-const MERTooltip = (props) => {
-  return (
-    <Tooltip id="button-tooltip" {...props}>
-      {"The model error count is the number of model fooling examples. The model error rate is the count divided by the total number of examples. The definitions of the verified model error rate and count are analagous, except the number of verified model fooling examples is used instead of the number of model fooling examples."}
-    </Tooltip>
-  );
-}
-
-const RejectionTooltip = (props) => {
-  return (
-    <Tooltip id="button-tooltip" {...props}>
-      {"The rejection count is the number of verified incorrect examples. The rejection rate is the count divided by the total number of examples."}
-    </Tooltip>
-  );
-}
-
-const RetractionTooltip = (props) => {
-  return (
-    <Tooltip id="button-tooltip" {...props}>
-      {"The retraction count is the numer of retracted examples. The retraction rate is the count divided by the total number of examples."}
-    </Tooltip>
-  );
-}
+import {
+  METooltip,
+  RejectionTooltip,
+  RetractionTooltip
+} from "./UserStatTooltips.js"
 
 const StatsSubPage = (props) => {
   return (
@@ -76,7 +57,7 @@ const StatsSubPage = (props) => {
                    <OverlayTrigger
                      placement="bottom"
                      delay={{ show: 250, hide: 400 }}
-                     overlay={MERTooltip}
+                     overlay={METooltip}
                    >
                      <tr>
                        <td>
@@ -743,8 +724,3 @@ class ProfilePage extends React.Component {
 }
 
 export default ProfilePage;
-export {
-  MERTooltip,
-  RejectionTooltip,
-  RetractionTooltip
-}
