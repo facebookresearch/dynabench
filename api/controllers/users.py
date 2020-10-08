@@ -239,8 +239,6 @@ def update_user_profile(credentials, id):
     """
     data = bottle.request.json
     u = UserModel()
-    if not util.check_fields(data, ['username', 'affiliation', 'realname']):
-        bottle.abort(400, 'Missing data')
 
     # validate user detail
     if not util.is_current_user(uid=id, credentials=credentials):
@@ -252,23 +250,24 @@ def update_user_profile(credentials, id):
         logger.error('User does not exist (%s)' % id)
         bottle.abort(404, 'User not found')
 
-    existing = u.getByUsername(data['username'])
-    if existing and user.id != existing.id:
-        logger.error('Username already exists (%s)' % data['username'])
-        bottle.abort(409, 'Username already exists')
+    if 'username' in data:
+        existing = u.getByUsername(data['username'])
+        if existing and user.id != existing.id:
+            logger.error('Username already exists (%s)' % data['username'])
+            bottle.abort(409, 'Username already exists')
+
+    update_dict = {}
+    updatable_fields = ['username', 'affiliation', 'realname', 'settings_json']
+    for field in updatable_fields:
+        if field in data:
+            update_dict[field] = data[field]
 
     try:
-        u.update(user.id, { \
-            'username': data['username'], \
-            'affiliation': data['affiliation'], \
-            'realname': data['realname'] \
-            })
-        if 'settings_json' in data:
-            u.update(user.id, {'settings_json': data['settings_json']})
+        u.update(user.id, update_dict)
         return util.json_encode(user.to_dict())
     except Exception as ex:
-        logger.exception('Could not update profile: %s' % (ex))
-        bottle.abort(400, 'Could not update profile')
+        logger.exception('Could not update user fields: %s' % (ex))
+        bottle.abort(400, 'Could not update user fields')
 
 @bottle.post('/users/<id:int>/avatar/upload')
 @_auth.requires_auth
