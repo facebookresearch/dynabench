@@ -699,12 +699,16 @@ class CreateInterface extends React.Component {
   updateRetainInput(e) {
     const retainInput = e.target.checked;
     if (this.context.api.loggedIn()) {
-      var settings_json = JSON.parse(this.context.user.settings_json)
-      if (settings_json) {
-        settings_json['retain_input'] = retainInput;
+      var settings_json;
+      if (this.context.user.settings_json) {
+        settings_json = JSON.parse(this.context.user.settings_json)
+        if (settings_json) {
+          settings_json['retain_input'] = retainInput;
+        }
       } else {
-        settings_json = {'retain_input': retainInput};
+          settings_json = {'retain_input': retainInput};
       }
+
       this.context.user.settings_json = JSON.stringify(settings_json);
       this.context.api.updateUser(this.context.user.id, this.context.user);
     }
