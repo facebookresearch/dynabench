@@ -261,7 +261,7 @@ def update_user_profile(credentials, id):
         u.update(user.id, { \
             'username': data['username'], \
             'affiliation': data['affiliation'], \
-            'realname': data['realname'], \
+            'realname': data['realname'] \
             })
         if 'settings_json' in data:
             u.update(user.id, {'settings_json': data['settings_json']})
