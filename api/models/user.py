@@ -24,9 +24,12 @@ class User(Base):
     forgot_password_token = db.Column(db.String(length=255))
     forgot_password_token_expiry_date = db.Column(db.DateTime)
 
+    total_retracted = db.Column(db.Integer, default=0)
+    total_verified_fooled = db.Column(db.Integer, default=0)
+    total_fooled = db.Column(db.Integer, default=0)
+
     settings_json = db.Column(db.Text)
 
-    examples_verified_correct = db.Column(db.Integer, default=0)
     examples_submitted = db.Column(db.Integer, default=0)
     examples_verified = db.Column(db.Integer, default=0)
     models_submitted = db.Column(db.Integer, default=0)
@@ -130,10 +133,20 @@ class UserModel(BaseModel):
         if u:
             u.models_submitted = u.models_submitted + 1
             self.dbs.commit()
-    def incrementCorrectCount(self, uid):
+    def incrementVerifiedFooledCount(self, uid):
         u = self.get(uid)
         if u:
-            u.examples_verified_correct = u.examples_verified_correct + 1
+            u.total_verified_fooled = u.total_verified_fooled + 1
+            self.dbs.commit()
+    def incrementFooledCount(self, uid):
+        u = self.get(uid)
+        if u:
+            u.total_fooled = u.total_fooled + 1
+            self.dbs.commit()
+    def incrementRetractedCount(self, uid):
+        u = self.get(uid)
+        if u:
+            u.total_retracted= u.total_retracted + 1
             self.dbs.commit()
     def incrementNotificationCount(self, uid):
         u = self.get(uid)
