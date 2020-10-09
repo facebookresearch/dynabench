@@ -44,19 +44,19 @@ class Example(Base):
 
     target_pred = db.Column(db.Text)
     model_preds = db.Column(db.Text)
-    verifier_preds = db.Column(db.Text)
+    #verifier_preds = db.Column(db.Text) TODO
     target_model = db.Column(db.Text)
 
     split = db.Column(db.String(length=255), default='undecided')
 
     model_wrong = db.Column(db.Boolean)
     retracted = db.Column(db.Boolean, default=False)
-    flagged = db.Column(db.Boolean, default=False)
+    #flagged = db.Column(db.Boolean, default=False) TODO
 
-    verified = db.Column(db.Boolean, default=False)
-    verified_correct = db.Column(db.Boolean, default=False)
-    verified_incorrect = db.Column(db.Boolean, default=False)
-    verified_flagged = db.Column(db.Boolean, default=False)
+    #verified = db.Column(db.Boolean, default=False) TODO
+    #verified_correct = db.Column(db.Boolean, default=False) TODO
+    #verified_incorrect = db.Column(db.Boolean, default=False) TODO
+    #verified_flagged = db.Column(db.Boolean, default=False) TODO
 
     generated_datetime = db.Column(db.DateTime)
 
