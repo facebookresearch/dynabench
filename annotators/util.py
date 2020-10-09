@@ -4,6 +4,7 @@
 
 MTURK_LOCALE_REQUIREMENT = "00000000000000000071"
 MTURK_NUMHITSAPPROVED_REQUIREMENT = "00000000000000000040"
+
 MTURK_QUALIFICATIONS = {
     '100_hits_approved': {
         "QualificationTypeId": MTURK_NUMHITSAPPROVED_REQUIREMENT,
@@ -26,9 +27,12 @@ MTURK_QUALIFICATIONS = {
     # NOTE: Feel free to add more qualifications here
 }
 
+
 def get_qualifications(quals):
-    for q in quals: assert q in MTURK_QUALIFICATIONS
+    for q in quals:
+        assert q in MTURK_QUALIFICATIONS
     return [MTURK_QUALIFICATIONS[q] for q in quals]
+
 
 def arg_handler(parser):
     parser.add_argument(
