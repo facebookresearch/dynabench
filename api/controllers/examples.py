@@ -18,34 +18,6 @@ import json
 
 from collections import Counter
 
-@bottle.get('/examples/<tid:int>/<rid:int>')
-@_auth.requires_auth_or_turk
-def get_random_example(credentials, tid, rid):
-    rm = RoundModel()
-    round = rm.getByTidAndRid(tid, rid)
-    em = ExampleModel()
-    if credentials['id'] != 'turk':
-        example = em.getRandomWrong(round.id, n=1, my_uid=credentials['id'])
-    else:
-        # TODO: Handle this in frontend? Or rejection sample here for N tries
-        example = em.getRandomWrong(round.id, n=1)
-    if not example:
-        bottle.abort(500, f'No examples available ({round.id})')
-    example = example[0].to_dict()
-    return util.json_encode(example)
-
-@bottle.get('/examples/<tid:int>/<rid:int>/verifiedflagged')
-@_auth.requires_auth
-def get_random_verified_flagged_example(credentials, tid, rid):
-    rm = RoundModel()
-    round = rm.getByTidAndRid(tid, rid)
-    em = ExampleModel()
-    example = em.getRandomVerifiedFlagged(round.id, n=1)
-    if not example:
-        bottle.abort(500, f'No examples available ({round.id})')
-    example = example[0].to_dict()
-    return util.json_encode(example)
-
 @bottle.get('/examples/<eid:int>')
 @_auth.requires_auth
 def get_example(credentials, eid):
