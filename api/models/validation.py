@@ -58,6 +58,17 @@ class ValidationModel(BaseModel):
 
     def getByUid(self, uid):
         try:
-            return self.dbs.query(Validation).filter(Validation.username == username)
+            return self.dbs.query(Validation).filter(Validation.uid == username)
         except db.orm.exc.NoResultFound:
             return False
+
+    def getRandomFlagged(self, rid, n=1):
+        result = self.dbs.query(Example) \
+                .join(Validation, Validation.eid == Example.id) \
+                .join(Context, Example.cid == Context.id) \
+                .filter(Context.r_realid == rid) \
+                .filter(Example.model_wrong == True) \
+                .filter(Example.retracted == False) \
+                .filter(Validation.label == LabelEnum.flagged);
+        result = result.order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
+        return result
