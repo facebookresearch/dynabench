@@ -102,7 +102,7 @@ class CreateInterface extends React.Component {
       this.setState({content: newContent, tries:this.state.tries-1}, function(){console.log(this.state);});
     })
     .catch(error => {
-	    console.log(error);
+      console.log(error);
     });
   }
   handleTaskSubmit() {
@@ -165,7 +165,7 @@ class CreateInterface extends React.Component {
             'mephisto_id': this.props.mephistoWorkerId,
             'model': 'model-name-unknown',
             'agentId': this.props.agentId,
-	    'assignmentId': this.props.assignmentId,
+            'assignmentId': this.props.assignmentId,
             'fullresponse': this.state.task.type == 'extract' ? JSON.stringify(this.state.answer) : this.state.target
           }; 
           this.api.storeExample(
@@ -182,7 +182,7 @@ class CreateInterface extends React.Component {
             this.state.tries += 1;
             this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false, mapKeyToExampleId: {...this.state.mapKeyToExampleId, [key]: result.id}},
               function () {
-		if (this.state.content[this.state.content.length-1].fooled || this.state.tries >= this.state.total_tries) {
+                if (this.state.content[this.state.content.length-1].fooled || this.state.tries >= this.state.total_tries) {
                   console.log('Success! You can submit HIT');
                   this.setState({taskCompleted: true});
                 }
@@ -269,9 +269,6 @@ class CreateInterface extends React.Component {
     }
     return (
       <Container>
-	{/*<Row>
-          <h2>Find examples for - {this.state.task.name}</h2>
-        </Row>*/}
         <Row>
           <CardGroup style={{marginTop: 20, width: '100%'}}>
             <Card border='dark'>
