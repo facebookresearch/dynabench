@@ -126,7 +126,7 @@ class CreateInterfaceNoModel extends React.Component {
             text: this.state.hypothesis,
             retracted: false
           }]}, function() {
-	  var last_answer = this.state.answer[this.state.answer.length - 1];
+          var last_answer = this.state.answer[this.state.answer.length - 1];
           var answer_text = last_answer.tokens.join(" ");
           const metadata = {
             'annotator_id': this.props.providerWorkerId,
