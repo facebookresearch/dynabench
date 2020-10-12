@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import React from 'react';
 import {
   Container,
@@ -103,7 +109,7 @@ class CreateInterface extends React.Component {
     });
   }
   handleTaskSubmit() {
-    this.props.onSubmit(this.state.content);
+    this.props.onSubmit(this.state);
   }
   handleResponse() {
     this.setState({submitDisabled: true, refreshDisabled: true}, function () {
@@ -161,7 +167,8 @@ class CreateInterface extends React.Component {
             'annotator_id': this.props.providerWorkerId,
             'mephisto_id': this.props.mephistoWorkerId,
             'model': 'model-name-unknown',
-	    'agentId': this.props.agentId,
+            'agentId': this.props.agentId,
+            'assignmentId': this.props.assignmentId,
             'fullresponse': this.state.task.type == 'extract' ? JSON.stringify(this.state.answer) : this.state.target
           };
           this.api.storeExample(
@@ -170,7 +177,7 @@ class CreateInterface extends React.Component {
             'turk',
             this.state.context.id,
             this.state.hypothesis,
-            answer_text,
+            this.state.task.type == 'extract' ? answer_text : this.state.target,
             result,
             metadata
           ).then(result => {

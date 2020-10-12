@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import React from 'react';
 import {
   Container,
@@ -100,7 +106,7 @@ class CreateInterfaceNoModel extends React.Component {
     });
   }
   handleTaskSubmit() {
-    this.props.onSubmit(this.state.content);
+    this.props.onSubmit(this.state);
   }
   handleResponse() {
     this.setState({submitDisabled: true, refreshDisabled: true}, function () {
@@ -128,15 +134,17 @@ class CreateInterfaceNoModel extends React.Component {
             'mephisto_id': this.props.mephistoWorkerId,
             'model': 'no-model',
             'fullresponse': this.state.task.type == 'extract' ? JSON.stringify(this.state.answer) : this.state.target,
-	    'agentId': this.props.agentId
+            'agentId': this.props.agentId,
+            'assignmentId': this.props.assignmentId
           };
+          var answer_text = last_answer.tokens.join(" ");
           this.api.storeExample(
             this.state.task.id,
             this.state.task.cur_round,
             'turk',
             this.state.context.id,
             this.state.hypothesis,
-            this.state.task.type == 'extract' ? JSON.stringify(this.state.answer) : this.state.target,
+            this.state.task.type == 'extract' ? answer_text : this.state.target,
             {"text":"","model_is_correct":true},
             metadata
           ).then(result => {
