@@ -36,4 +36,5 @@ When you add a new task, you need to write a new config file. Most fields should
 
 Once you are done developing locally, you can deploy in MTurk sandbox by adding `python run_mturk.py mephisto/architect=heroku mephisto.provider.requester_name=my_mturk_user_sandbox`, 
 and for real by using `python run_mturk.py mephisto/architect=heroku mephisto.provider.requester_name=my_mturk_user`.  
+
 For details, please refer to [this link](https://github.com/facebookresearch/mephisto/blob/master/docs/quickstart.md).
