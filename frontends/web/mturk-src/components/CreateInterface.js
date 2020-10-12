@@ -158,18 +158,23 @@ class CreateInterface extends React.Component {
             retracted: false,
             response: result}
           ]}, function() {
+          var last_answer = this.state.answer[this.state.answer.length - 1];
+          var answer_text = last_answer.tokens.join(" ");
           const metadata = {
             'annotator_id': this.props.providerWorkerId,
             'mephisto_id': this.props.mephistoWorkerId,
-            'model': 'model-name-unknown'
-          };
+            'model': 'model-name-unknown',
+            'agentId': this.props.agentId,
+	    'assignmentId': this.props.assignmentId,
+            'fullresponse': this.state.task.type == 'extract' ? JSON.stringify(this.state.answer) : this.state.target
+          }; 
           this.api.storeExample(
             this.state.task.id,
             this.state.task.cur_round,
             'turk',
             this.state.context.id,
             this.state.hypothesis,
-            this.state.task.type == 'extract' ? JSON.stringify(this.state.answer) : this.state.target,
+            this.state.task.type == 'extract' ? answer_text : this.state.target,
             result,
             metadata
           ).then(result => {

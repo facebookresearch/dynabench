@@ -126,10 +126,15 @@ class CreateInterfaceNoModel extends React.Component {
             text: this.state.hypothesis,
             retracted: false
           }]}, function() {
+	  var last_answer = this.state.answer[this.state.answer.length - 1];
+          var answer_text = last_answer.tokens.join(" ");
           const metadata = {
             'annotator_id': this.props.providerWorkerId,
             'mephisto_id': this.props.mephistoWorkerId,
-            'model': 'no-model'
+            'model': 'no-model',
+            'fullresponse': this.state.task.type == 'extract' ? JSON.stringify(this.state.answer) : this.state.target,
+            'agentId': this.props.agentId,
+            'assignmentId': this.props.assignmentId
           };
           this.api.storeExample(
             this.state.task.id,
@@ -137,7 +142,7 @@ class CreateInterfaceNoModel extends React.Component {
             'turk',
             this.state.context.id,
             this.state.hypothesis,
-            this.state.task.type == 'extract' ? JSON.stringify(this.state.answer) : this.state.target,
+            this.state.task.type == 'extract' ? answer_text : this.state.target,
             {"text":"","model_is_correct":true},
             metadata
           ).then(result => {
