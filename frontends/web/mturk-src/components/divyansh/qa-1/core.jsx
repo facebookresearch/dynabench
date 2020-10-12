@@ -9,16 +9,7 @@ import {Row, Container, Button, InputGroup } from 'react-bootstrap';
 
 import { CreateInterface } from './CreateInterface.js';
 import { CreateInterfaceNoModel } from './CreateInterfaceNoModel.js';
-import { CreateInterfaceOnboardingStep10 } from './CreateInterfaceOnboarding10.js';
-import { CreateInterfaceOnboardingStep1 } from './CreateInterfaceOnboarding1.js';
-import { CreateInterfaceOnboardingStep2 } from './CreateInterfaceOnboarding2.js';
-import { CreateInterfaceOnboardingStep3 } from './CreateInterfaceOnboarding3.js';
-import { CreateInterfaceOnboardingStep4 } from './CreateInterfaceOnboarding4.js';
-import { CreateInterfaceOnboardingStep5 } from './CreateInterfaceOnboarding5.js';
-import { CreateInterfaceOnboardingStep6 } from './CreateInterfaceOnboarding6.js';
-import { CreateInterfaceOnboardingStep7 } from './CreateInterfaceOnboarding7.js';
-import { CreateInterfaceOnboardingStep8 } from './CreateInterfaceOnboarding8.js';
-import { CreateInterfaceOnboardingStep9 } from './CreateInterfaceOnboarding9.js';
+import { CreateInterfaceOnboardingAns,CreateInterfaceOnboardingQues } from './CreateInterfaceOnboarding.js';
 
 class DivyanshQATaskPreview extends React.Component {
   constructor(props) {
@@ -70,15 +61,15 @@ class DivyanshQATaskOnboarder extends React.Component {
       <h1>Onboarding</h1>
       </Row>
       {this.state.onboardingStep==0 && <Row> <TaskOnboardingInstructions /> </Row>}
-      {this.state.onboardingStep==1 && <Row> <CreateInterfaceOnboardingStep1 api={this.api} {...this.props} /> </Row>}
-      {this.state.onboardingStep==2 && <Row> <CreateInterfaceOnboardingStep2 api={this.api} {...this.props} /> </Row>}
-      {this.state.onboardingStep==3 && <Row> <CreateInterfaceOnboardingStep3 api={this.api} {...this.props} /> </Row>}
-      {this.state.onboardingStep==4 && <Row> <CreateInterfaceOnboardingStep4 api={this.api} {...this.props} /> </Row>}
-      {this.state.onboardingStep==5 && <Row> <CreateInterfaceOnboardingStep5 api={this.api} {...this.props} /> </Row>}
-      {this.state.onboardingStep==6 && <Row> <CreateInterfaceOnboardingStep6 /> </Row>}
-      {this.state.onboardingStep==7 && <Row> <CreateInterfaceOnboardingStep7 /> </Row>}
-      {this.state.onboardingStep==8 && <Row> <CreateInterfaceOnboardingStep8 /> </Row>}
-      {this.state.onboardingStep==9 && <Row> <CreateInterfaceOnboardingStep9 /> </Row>}
+      {this.state.onboardingStep==1 && <Row> <CreateInterfaceOnboardingAns api={this.api} step={this.state.onboardingStep} {...this.props} /> </Row>}
+      {this.state.onboardingStep==2 && <Row> <CreateInterfaceOnboardingAns api={this.api} step={this.state.onboardingStep} {...this.props} /> </Row>}
+      {this.state.onboardingStep==3 && <Row> <CreateInterfaceOnboardingAns api={this.api} step={this.state.onboardingStep} {...this.props} /> </Row>}
+      {this.state.onboardingStep==4 && <Row> <CreateInterfaceOnboardingAns api={this.api} step={this.state.onboardingStep} {...this.props} /> </Row>}
+      {this.state.onboardingStep==5 && <Row> <CreateInterfaceOnboardingAns api={this.api} step={this.state.onboardingStep} {...this.props} /> </Row>}
+      {this.state.onboardingStep==6 && <Row> <CreateInterfaceOnboardingQues step={this.state.onboardingStep} {...this.props} /> </Row>}
+      {this.state.onboardingStep==7 && <Row> <CreateInterfaceOnboardingQues step={this.state.onboardingStep} {...this.props} /> </Row>}
+      {this.state.onboardingStep==8 && <Row> <CreateInterfaceOnboardingQues step={this.state.onboardingStep} {...this.props} /> </Row>}
+      {this.state.onboardingStep==9 && <Row> <CreateInterfaceOnboardingQues step={this.state.onboardingStep} {...this.props} /> </Row>}
       {this.state.onboardingStep==10 && <Row> <CreateInterfaceOnboardingStep10 /> </Row>}
       {this.state.showOnboardingSubmit && <Row> <TaskOnboardingCompletedInstructions /> </Row>}
       <Row>
