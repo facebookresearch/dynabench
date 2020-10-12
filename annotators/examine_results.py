@@ -8,7 +8,6 @@ from mephisto.core.local_database import LocalMephistoDB
 from mephisto.core.data_browser import DataBrowser as MephistoDataBrowser
 from mephisto.data_model.worker import Worker
 from mephisto.data_model.assignment import Unit
-import pdb
 db = LocalMephistoDB()
 mephisto_data_browser = MephistoDataBrowser(db=db)
 
@@ -35,7 +34,6 @@ else:
 
 def format_for_printing_data(data):
     # Custom tasks can define methods for how to display their data in a relevant way
-    #pdb.set_trace()
     worker_name = Worker(db, data["worker_id"]).worker_name
     contents = data["data"]
     duration = contents["times"]["task_end"] - contents["times"]["task_start"]
