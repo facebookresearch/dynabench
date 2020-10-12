@@ -16,7 +16,7 @@ In order to add a new task, do the following:
 2. Add a new identifier e.g. `divyansh-pilot-1` to the TaskComponents in
    `frontends/mturk-src/components/core.jsx` and import your task components accordingly
 3. Build your bundle using `npm run mturk` from anywhere in frontends/web.
-3. Create a JSON config file e.g. in `conf/nli_r1.json`. See examples in that dir - should be straightforward - and make sure the task_name field is the same as your task identifier.
+3. Create a JSON config file e.g. in `conf/nli_r1.yaml`. See examples in that dir - should be straightforward - and make sure the task_name field is the same as your task identifier.
 4. Run `run_mturk.py conf=nli_r1`, follow any account setup instructions from Mephisto, and go to the corresponding URL to see the task running.
 5. If you want to enable onboarding, add the `onboarding_qualification` argument in the `yaml` file.
 
@@ -34,5 +34,6 @@ When you add a new task, you need to write a new config file. Most fields should
 
 # Deploying on MTurk
 
-Once you are done developing locally, you can deploy in MTurk sandbox by adding `python run_mturk,py mephisto/architect=heroku mephisto.provider.requester_name=my_mturk_user_sandbox`, 
-and for real by using `python run_mturk,py mephisto/architect=heroku mephisto.provider.requester_name=my_mturk_user`. For details, please refer to [this link](https://github.com/facebookresearch/mephisto/blob/master/docs/quickstart.md).
+Once you are done developing locally, you can deploy in MTurk sandbox by adding `python run_mturk.py mephisto/architect=heroku mephisto.provider.requester_name=my_mturk_user_sandbox`, 
+and for real by using `python run_mturk.py mephisto/architect=heroku mephisto.provider.requester_name=my_mturk_user`.  
+For details, please refer to [this link](https://github.com/facebookresearch/mephisto/blob/master/docs/quickstart.md).
