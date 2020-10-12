@@ -12,10 +12,22 @@ MTURK_QUALIFICATIONS = {
         "IntegerValues": [100],
         "ActionsGuarded": "DiscoverPreviewAndAccept",
     },
+    '1000_hits_approved': {
+        "QualificationTypeId": MTURK_NUMHITSAPPROVED_REQUIREMENT,
+        "Comparator": "GreaterThanOrEqualTo",
+        "IntegerValues": [1000],
+        "ActionsGuarded": "DiscoverPreviewAndAccept",
+    },
     '97_percent_approved': {
         "QualificationTypeId": Worker_PercentAssignmentsApproved,
         "Comparator": "GreaterThanOrEqualTo",
         "IntegerValues": [97],
+        "ActionsGuarded": "DiscoverPreviewAndAccept",
+    },
+    '98_percent_approved': {
+        "QualificationTypeId": Worker_PercentAssignmentsApproved,
+        "Comparator": "GreaterThanOrEqualTo",
+        "IntegerValues": [98],
         "ActionsGuarded": "DiscoverPreviewAndAccept",
     },
     'english_only': {
@@ -27,6 +39,14 @@ MTURK_QUALIFICATIONS = {
             {"Country": "GB"},
             {"Country": "AU"},
             {"Country": "NZ"},
+        ],
+        "ActionsGuarded": "DiscoverPreviewAndAccept",
+    },
+    'us_only': {
+        "QualificationTypeId": MTURK_LOCALE_REQUIREMENT,
+        "Comparator": "In",
+        "LocaleValues": [
+            {"Country": "US"},
         ],
         "ActionsGuarded": "DiscoverPreviewAndAccept",
     },
