@@ -35,6 +35,7 @@ else:
 
 def format_for_printing_data(data):
     # Custom tasks can define methods for how to display their data in a relevant way
+    #pdb.set_trace()
     worker_name = Worker(db, data["worker_id"]).worker_name
     contents = data["data"]
     duration = contents["times"]["task_end"] - contents["times"]["task_start"]
@@ -62,7 +63,11 @@ def format_for_printing_data(data):
 
 disqualification_name = None
 for unit in units:
-    print(format_for_printing_data(mephisto_data_browser.get_data_from_unit(unit)))
+    try:
+        print(format_for_printing_data(mephisto_data_browser.get_data_from_unit(unit)))
+    except:
+        if unit.get_assigned_agent() is None:
+            continue
     if DO_REVIEW:
         keep = input("Do you want to accept this work? (a)ccept, (r)eject, (p)ass: ")
         if keep == "a":
