@@ -1,5 +1,8 @@
 torch
+torchserve
 transformers
 torch-model-archiver
 boto3
 sagemaker
+captum
+

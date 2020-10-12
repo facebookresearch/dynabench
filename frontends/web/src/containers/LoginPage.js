@@ -48,7 +48,7 @@ class LoginPage extends React.Component {
                       props.api
                         .login(values.email, values.password)
                         .then((result) => {
-                          console.log(result);
+                          //console.log(result);
                           props.updateState({
                             user: {
                               ...props.api.getCredentials(),

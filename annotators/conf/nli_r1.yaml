@@ -1,0 +1,16 @@
+#@package _global_
+mephisto:
+  blueprint:
+    onboarding_qualification: nli-1-qualification
+  task:
+    task_name: nli-1
+    task_title: Fool the model - Natural Language Inference
+    task_description: >
+      Your job is to find examples that fool
+      AI models
+    task_reward: 0.3
+    task_tags: "nli,testing"
+dynabench:
+  task_name: nli-1
+  task_id: 1
+  round_id: 1

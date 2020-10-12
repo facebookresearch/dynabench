@@ -14,12 +14,20 @@ import {
   Table,
   Form,
   Nav,
+  Tooltip,
+  OverlayTrigger,
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { Avatar } from "../components/Avatar/Avatar";
 import "./Sidebar-Layout.css";
 import TasksContext from "./TasksContext";
 import UserContext from "./UserContext";
+import BadgeGrid from "./BadgeGrid";
+import {
+  METooltip,
+  RetractionTooltip,
+  RejectionTooltip
+} from "./UserStatTooltips";
 
 class UserPage extends React.Component {
   static contextType = UserContext;
@@ -54,11 +62,14 @@ class UserPage extends React.Component {
 
   fetchUser = () => {
     this.context.api
-      .getUser(this.state.userId)
+      .getUser(this.state.userId, true)
       .then((result) => {
         this.setState({ user: result });
       }, (error) => {
         console.log(error);
+        if (error.status_code === 404 || error.status_code === 405) {
+          this.props.history.push("/");
+        }
       });
   };
 
@@ -155,8 +166,9 @@ class UserPage extends React.Component {
                 <h1 className="my-4 pt-3 text-uppercase text-center">
                   User Overview
                 </h1>
-                <Col className="m-auto" lg={8}>
+                <Col className="m-auto" lg={12}>
                   {this.state.user.id && (
+                    <>
                     <Card>
                       <Container className="mt-3">
                         <Row>
@@ -194,6 +206,85 @@ class UserPage extends React.Component {
                             />
                           </Col>
                         </Form.Group>
+                        <OverlayTrigger
+                          placement="bottom"
+                          delay={{ show: 250, hide: 400 }}
+                          overlay={METooltip}
+                        >
+                          <Form.Group as={Row}>
+                            <Form.Label column sm="6" className="text-right">
+                              Model error:
+                            </Form.Label>
+                            <Col sm="6">
+                              <Form.Control
+                                plaintext
+                                readOnly
+                                defaultValue={
+                                  this.state.user.examples_submitted > 0 ?
+                                    (100 *
+                                      this.state.user.total_fooled /
+                                      this.state.user.examples_submitted
+                                    ).toFixed(2).toString() + "% (rate) " +
+                                    this.state.user.total_fooled.toString() + " (count) " +
+                                    (100 *
+                                      this.state.user.total_verified_fooled /
+                                      this.state.user.examples_submitted
+                                    ).toFixed(2).toString() + "% (verified rate) " +
+                                    this.state.user.total_verified_fooled.toString() + " (verified count)"
+                      : 'N/A'}
+                              />
+                            </Col>
+                          </Form.Group>
+                        </OverlayTrigger>
+                        <OverlayTrigger
+                          placement="bottom"
+                          delay={{ show: 250, hide: 400 }}
+                          overlay={RejectionTooltip}
+                        >
+                          <Form.Group as={Row}>
+                            <Form.Label column sm="6" className="text-right">
+                              Rejection:
+                            </Form.Label>
+                            <Col sm="6">
+                              <Form.Control
+                                plaintext
+                                readOnly
+                                defaultValue={
+                                  this.state.user.examples_submitted > 0 ?
+                                    (100 *
+                                      (this.state.user.total_fooled - this.state.user.total_verified_fooled) /
+                                      this.state.user.examples_submitted
+                                    ).toFixed(2).toString() + "% (rate) " +
+                                    (this.state.user.total_fooled - this.state.user.total_verified_fooled).toString() + " (count)"
+                      : 'N/A'}
+                              />
+                            </Col>
+                          </Form.Group>
+                        </OverlayTrigger>
+                        <OverlayTrigger
+                          placement="bottom"
+                          delay={{ show: 250, hide: 400 }}
+                          overlay={RetractionTooltip}
+                        >
+                          <Form.Group as={Row}>
+                            <Form.Label column sm="6" className="text-right">
+                              Retraction:
+                            </Form.Label>
+                            <Col sm="6">
+                              <Form.Control
+                                plaintext
+                                readOnly
+                                defaultValue={
+                                  this.state.user.examples_submitted > 0 ?
+                                    (100 * this.state.user.total_retracted /
+                                      this.state.user.examples_submitted
+                                    ).toFixed(2).toString() + '% (rate) ' +
+                                    this.state.user.total_retracted.toString() + ' (count)'
+                      : 'N/A'}
+                              />
+                            </Col>
+                          </Form.Group>
+                        </OverlayTrigger>
                       </Card.Body>
                       {this.state.user.id == this.context.user.id && (
                         <Card.Footer>
@@ -207,6 +298,8 @@ class UserPage extends React.Component {
                         </Card.Footer>
                       )}
                     </Card>
+                    <BadgeGrid user={this.state.user} />
+                    </>
                   )}
                 </Col>
               </>

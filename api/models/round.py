@@ -22,7 +22,8 @@ class Round(Base):
     desc = db.Column(db.String(length=255))
     longdesc = db.Column(db.Text)
 
-    total_verified = db.Column(db.Integer, default=0)
+    total_fooled = db.Column(db.Integer, default=0)
+    total_verified_fooled = db.Column(db.Integer, default=0)
     total_collected = db.Column(db.Integer, default=0)
     total_time_spent = db.Column(db.Time, default=0)
 
@@ -52,12 +53,33 @@ class RoundModel(BaseModel):
             return self.dbs.query(Round).filter(Round.tid == tid).all()
         except db.orm.exc.NoResultFound:
             return False
-    def incrementExampleCount(self, tid, rid):
+    def incrementCollectedCount(self, tid, rid):
         r = self.getByTidAndRid(tid, rid)
         if r:
             prev = r.total_collected
             if prev is None:
                 prev = 0
             r.total_collected = prev+1
+            r.task.last_updated = db.sql.func.now()
+            self.dbs.commit()
+    def incrementFooledCount(self, r_realid):
+        r = self.get(r_realid)
+        if r:
+            prev = r.total_fooled
+            if prev is None:
+                prev = 0
+            r.total_fooled = prev+1
+            self.dbs.commit()
+    def incrementVerifiedFooledCount(self, r_realid):
+        r = self.get(r_realid)
+        if r:
+            prev = r.total_verified_fooled
+            if prev is None:
+                prev = 0
+            r.total_verified_fooled = prev+1
+            self.dbs.commit()
+    def updateLastActivity(self, r_realid):
+        r = self.get(r_realid)
+        if r:
             r.task.last_updated = db.sql.func.now()
             self.dbs.commit()

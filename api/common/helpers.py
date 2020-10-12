@@ -8,8 +8,8 @@ from urllib.parse import urlparse
 from transformers.data.metrics.squad_metrics import compute_f1
 
 import common.auth as _auth
+from common.logging import logger
 
-import logging
 import json
 
 import sqlalchemy as db
@@ -64,7 +64,8 @@ def read_qa_round_labels(root_path):
     for r_file_path in r_file_paths:
         r_num = r_file_path[len(r_file_path)-1:len(r_file_path)]
         r_file_path = full_path + '/' + r_file_path
-        qa_labels[int(r_num)] = [json.loads(l)['answers'][0]['text'].lower() for l in open(f'{r_file_path}/test.jsonl').read().splitlines()]
+        loaded_data = [json.loads(l) for l in open(f'{r_file_path}/test.jsonl').read().splitlines()]
+        qa_labels[int(r_num)] = [(example['id'], example['answers'][0]['text'].lower()) for example in loaded_data]
     return qa_labels
 
 def get_accuracy(prediction, target):
@@ -87,7 +88,7 @@ def get_f1(prediction, target):
 
     return sum(compute_f1(target[index], prediction[index]) for index in range(len(target))) / len(target)
 
-def validate_prediction(r_objects, prediction, task='nli'):
+def validate_prediction(r_objects, prediction, task_shortname='nli'):
     """
     Function help as calculated the accuracy and convert them into scores object
     :param r_objects: Rounds object
@@ -96,11 +97,18 @@ def validate_prediction(r_objects, prediction, task='nli'):
     """
 
     app = bottle.default_app()
-    if task == 'nli':
+    if task_shortname == 'nli':
         target_labels = app.config['nli_labels']
         eval_fn = get_accuracy
-    elif task == 'qa':
-        target_labels = app.config['qa_labels']
+    elif task_shortname == 'qa':
+        target_examples = app.config['qa_labels']
+        target_ids = {r_id: [x[0] for x in target_examples[r_id]] for r_id in target_examples}
+        target_labels = {r_id: [x[1] for x in target_examples[r_id]] for r_id in target_examples}
+        # For QA, we are using SQuAD JSON format, so align the predictions with the target labels
+        aligned_prediction = []
+        for r_id in sorted(target_examples):
+            aligned_prediction += [prediction.get(qid, "") for qid in target_ids[r_id]]
+        prediction = aligned_prediction
         eval_fn = get_f1
 
     # validate prediction and target labels length
@@ -114,8 +122,8 @@ def validate_prediction(r_objects, prediction, task='nli'):
     rounds_accuracy_list = []
     start_index = 0
     end_index = 0
-    for r_obj in r_objects:
-        if task == 'nli' and r_obj.rid > 3: continue
+
+    for r_obj in sorted(r_objects, key=lambda x: x.rid):
         score_obj = {}
         round_accuracy = {}
         score_obj['round_id'] = r_obj.id
@@ -135,7 +143,10 @@ def validate_prediction(r_objects, prediction, task='nli'):
         rounds_accuracy_list.append(round_accuracy)
         score_obj_list.append(score_obj)
 
-    return rounds_accuracy_list, score_obj_list, round(overall_accuracy / len(r_objects), 2)
+    if len(rounds_accuracy_list) > 0:
+        overall_accuracy /= len(rounds_accuracy_list)
+
+    return rounds_accuracy_list, score_obj_list, round(overall_accuracy, 2)
 
 def is_current_user(uid, credentials=None):
     """
@@ -157,7 +168,7 @@ def is_current_user(uid, credentials=None):
             return False
         return True
     except Exception as ex:
-        logging.exception('Current user verification failed for (%s) exception: %s' % (uid, ex))
+        logger.exception('Current user verification failed for (%s) exception: %s' % (uid, ex))
         return False
 
 def get_limit_and_offset_from_request():
@@ -178,7 +189,7 @@ def get_limit_and_offset_from_request():
         limit = int(limit)
         offset = int(offset)
     except Exception as ex:
-        logging.exception('Query param parsing issue: (%s)' % (ex))
+        logger.exception('Query param parsing issue: (%s)' % (ex))
         limit = 5
         offset = 0
 

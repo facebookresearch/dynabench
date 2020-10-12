@@ -111,6 +111,7 @@ export default class ApiService {
     formData.append("file", data.file);
     formData.append("type", data.roundType);
     formData.append("taskId", data.taskId);
+    formData.append("taskShortName", data.taskShortName);
     return this.fetch(`${this.domain}/models/upload`, {
       method: "POST",
       body: formData,
@@ -169,8 +170,12 @@ export default class ApiService {
     });
   }
 
-  getUser(id) {
-    return this.fetch(`${this.domain}/users/${id}`, {
+  getUser(id, badges=false) {
+    var url = `${this.domain}/users/${id}`;
+    if (badges) {
+      url += '/badges';
+    }
+    return this.fetch(url, {
       method: "GET",
     });
   }
@@ -199,10 +204,35 @@ export default class ApiService {
     });
   }
 
+  getRandomVerifiedFlaggedExample(tid, rid) {
+    return this.fetch(`${this.domain}/examples/${tid}/${rid}/verifiedflagged`, {
+      method: "GET",
+    });
+  }
+
   getModel(modelId) {
     return this.fetch(`${this.domain}/models/${modelId}/details`, {
       method: "GET",
     });
+  }
+
+  setNotificationsSeen(userId) {
+    return this.fetch(
+      `${this.domain}/notifications/seen`,
+      {
+        method: "PUT",
+      }
+    );
+  }
+  getNotifications(userId, limit, offset) {
+    return this.fetch(
+      `${this.domain}/notifications?limit=${limit || 10}&offset=${
+        offset || 0
+      }`,
+      {
+        method: "GET",
+      }
+    );
   }
 
   getUserModels(userId, limit, offset) {
@@ -246,6 +276,21 @@ export default class ApiService {
     });
   }
 
+  getExampleMetadata(id) {
+    return this.fetch(`${this.domain}/examples/${id}/metadata`, {
+      method: "GET",
+    });
+  }
+
+  setExampleMetadata(id, metadata_json) {
+    var obj = {};
+    obj.metadata_json = JSON.stringify(metadata_json);
+    return this.fetch(`${this.domain}/examples/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(obj),
+    });
+  }
+
   explainExample(id, type, explanation, uid = null) {
     var obj = {};
     if (type == 'example') {
@@ -268,6 +313,21 @@ export default class ApiService {
       obj.uid = uid;
     }
     return this.fetch(`${this.domain}/examples/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(obj),
+    });
+  }
+
+  isTaskOwner(user, tid) {
+    return user.task_permissions?.filter((task_permission) => tid === task_permission.tid && "owner" === task_permission.type).length > 0;
+  }
+
+  validateExampleAsAdminOrOwner(id, label, uid = null) {
+    let obj = {label: label};
+    if (this.mode == 'mturk') {
+      obj.uid = uid;
+    }
+    return this.fetch(`${this.domain}/examples/${id}/validate-as-admin-or-owner`, {
       method: "PUT",
       body: JSON.stringify(obj),
     });
@@ -407,10 +467,7 @@ export default class ApiService {
   }
 
   doFetch(url, options, includeCredentials = false) {
-    if (this.mode != 'mturk') {
-      const token = this.getToken();
-    }
-    else { var token = null; }
+    const token = (this.mode != 'mturk') ? this.getToken() : null;
     const headers = {
       "Accept": "application/json",
       "Content-Type": "application/json",
@@ -429,26 +486,24 @@ export default class ApiService {
   }
 
   fetch(url, options) {
-    if (this.mode != 'mturk') {
-      const token = this.getToken();
-      if (
-        !!token &&
-        this.isTokenExpired(token) &&
-        url !== `${this.domain}/authenticate`
-      ) {
-        return this.refreshTokenWrapper(
-          (res) => {
-            console.log("Our token was refreshed (fetch callback)");
-            return this.doFetch(url, options, {}, true);
-          },
-          (res) => {
-            console.log("Could not refresh token (fetch)");
-            var error = new Error("Could not refresh token");
-            //window.location.href = '/login';
-            throw error;
-          }
-        );
-      }
+    const token = (this.mode != 'mturk') ? this.getToken() : null;
+    if (
+      !!token &&
+      this.isTokenExpired(token) &&
+      url !== `${this.domain}/authenticate`
+    ) {
+      return this.refreshTokenWrapper(
+        (res) => {
+          //console.log("Our token was refreshed (fetch callback)");
+          return this.doFetch(url, options, {}, true);
+        },
+        (res) => {
+          console.log("Could not refresh token (fetch)");
+          var error = new Error("Could not refresh token");
+          //window.location.href = '/login';
+          throw error;
+        }
+      );
     }
     return this.doFetch(url, options, {}, true);
   }

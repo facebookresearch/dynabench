@@ -11,6 +11,7 @@ import {
   Col,
   Card,
   Button,
+  ButtonGroup,
   Nav,
   Table,
   Tooltip,
@@ -24,6 +25,11 @@ import UserContext from "./UserContext";
 import { LineRechart } from "../components/Rechart";
 import { Avatar } from "../components/Avatar/Avatar";
 import Moment from "react-moment";
+import {
+  OverlayProvider,
+  Annotation,
+  OverlayContext
+} from "./Overlay";
 
 const chartSizes = {
   xs: { fontSize: 10 },
@@ -119,13 +125,145 @@ const TaskTrend = ({ data }) => {
   );
 };
 
+const RoundActionButtons = (props) => {
+  // TODO: Display "Download data" button
+  return null;
+}
+
+const TaskActionButtons = (props) => {
+  function renderTooltip(props, text) {
+    return (
+      <Tooltip id="button-tooltip" {...props}>
+        {text}
+      </Tooltip>
+    );
+  }
+
+  function renderCreateTooltip(props) {
+    return renderTooltip(props, "Create new examples where the model fails");
+  }
+  function renderVerifyTooltip(props) {
+     return renderTooltip(props, "Verify examples where the model may have failed");
+  }
+  function renderSubmitTooltip(props) {
+    return renderTooltip(props, "Submit model predictions on this task");
+  }
+
+  return (
+    <Nav className="my-4">
+      <Nav.Item className="task-action-btn">
+        <Annotation placement="bottom" tooltip="Click here to get creative and start writing examples that fool the model">
+          <OverlayTrigger
+            placement="bottom"
+            delay={{ show: 250, hide: 400 }}
+            overlay={renderCreateTooltip}
+          >
+            <Button
+              as={Link}
+              className="border-0 blue-color font-weight-bold light-gray-bg"
+              to={"/tasks/" + props.taskId + "/create"}
+            >
+              Create Examples
+            </Button>
+        </OverlayTrigger>
+      </Annotation>
+    </Nav.Item>
+    <Nav.Item className="task-action-btn">
+      <Annotation placement="top" tooltip="Click here to see examples created by others, and validate their correctness">
+        <OverlayTrigger
+          placement="bottom"
+          delay={{ show: 250, hide: 400 }}
+          overlay={renderVerifyTooltip}
+        >
+          <Button
+            as={Link}
+            className="border-0 blue-color font-weight-bold light-gray-bg"
+            to={"/tasks/" + props.taskId + "/validate"}
+          >
+            Validate Examples
+          </Button>
+        </OverlayTrigger>
+      </Annotation>
+    </Nav.Item>
+    {props.task.shortname === "NLI" || props.task.shortname === "QA" ? (
+      <Nav.Item className="task-action-btn">
+        <Annotation placement="right" tooltip="Click here to submit your model predictions for previous rounds.">
+          <OverlayTrigger
+            placement="bottom"
+            delay={{ show: 250, hide: 400 }}
+            overlay={renderSubmitTooltip}
+          >
+              <Button
+                as={Link}
+                className="border-0 blue-color font-weight-bold light-gray-bg"
+                to={"/tasks/" + props.taskId + "/submit"}
+              >
+                Submit Predictions
+              </Button>
+          </OverlayTrigger>
+        </Annotation>
+      </Nav.Item>
+    ) : null}
+    {props.api.isTaskOwner(props.user, props.task.id) || props.user.admin ?
+      <Nav.Item className="task-action-btn ml-auto">
+        <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" id="dropdown-basic-button" title="Export">
+          <Dropdown.Item onClick={props.exportCurrentRoundData}>Export current round</Dropdown.Item>
+          <Dropdown.Item onClick={props.exportAllTaskData}>Export all</Dropdown.Item>
+        </DropdownButton>
+      </Nav.Item>
+      : null}
+  </Nav>
+  );
+};
+
+const OverallTaskStats = (props) => {
+  return (
+    <Table className="w-50 font-weight-bold ml-n2">
+      <thead />
+      <tbody>
+        <tr>
+          <td>Current round:</td>
+          <td>{props.task.cur_round}</td>
+        </tr>
+        <tr>
+          <td>Fooled/Collected (Model Error rate)</td>
+          <td>
+            {props.task.round?.total_fooled}/
+            {props.task.round?.total_collected} (
+            {props.task.round?.total_collected > 0
+              ? (100 *
+                  props.task.round?.total_fooled /
+                  props.task.round?.total_collected
+                ).toFixed(2)
+              : "0.00"}
+            %
+            )
+          </td>
+        </tr>
+        <tr>
+          <td>Last activity:</td>
+          <td>
+            <Moment utc fromNow>
+              {props.task.last_updated}
+            </Moment>
+          </td>
+        </tr>
+      </tbody>
+    </Table>
+  );
+};
+
 const OverallModelLeaderBoard = (props) => {
   return (
     <Table hover className="mb-0">
       <thead>
         <tr>
           <th>Model</th>
-          <th>Mean accuracy</th>
+          {props.task === "QA" ? (
+            <th>Mean F1</th>
+          ) : (
+            <th>Mean Accuracy</th>
+          )}
         </tr>
       </thead>
       <tbody>
@@ -194,19 +332,23 @@ class RoundDescription extends React.Component {
     this.getRoundInfo = this.getRoundInfo.bind(this);
   }
   componentDidMount() {
-    if (this.props.round_id === "overall") return;
     this.getRoundInfo();
   }
   getRoundInfo() {
+    if (this.props.round_id) {
     this.props.api.getTaskRound(this.props.task_id, this.props.round_id)
       .then((result) => {
         this.setState({ round: result });
       }, (error) => {
         console.log(error);
+        if ((error.status_code === 404 || error.status_code === 405) && this.props.history) {
+          this.props.history.push("/");
+        }
       });
+    }
   }
   componentDidUpdate(prevProps) {
-    if (prevProps.round_id !== this.props.round_id) {
+    if (prevProps.task_id !== this.props.task_id || prevProps.round_id !== this.props.round_id) {
       this.getRoundInfo();
     }
   }
@@ -235,27 +377,54 @@ class TaskPage extends React.Component {
     this.exportAllTaskData = this.exportAllTaskData.bind(this);
     this.exportCurrentRoundData = this.exportCurrentRoundData.bind(this);
   }
+
   componentDidMount() {
-    this.refreshData();
+    this.setState({taskId: this.props.match.params.taskId}, function() {
+      this.context.api
+        .getTask(this.state.taskId)
+        .then((result) => {
+          this.setState({task: result, displayRoundId: result.cur_round, round: result.round}, function() {
+            this.refreshData();
+          });
+        }, (error) => {
+          console.log(error);
+          if (error.status_code === 404 || error.status_code === 405) {
+            this.props.history.push("/");
+          }
+        });
+    });
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.location.hash !== this.props.location.hash) {
-      this.refreshData();
+    if (prevProps.location.hash !== this.props.location.hash || this.props.match.params.taskId != this.state.taskId) {
+      this.setState({taskId: this.props.match.params.taskId}, function() {
+        this.context.api
+          .getTask(this.state.taskId)
+          .then((result) => {
+            this.setState({task: result, displayRoundId: result.cur_round, round: result.round}, function() {
+              this.refreshData();
+            });
+          }, (error) => {
+            console.log(error);
+            if (error.status_code === 404 || error.status_code === 405) {
+              this.props.history.push("/");
+            }
+          });
+      });
     }
   }
 
   refreshData() {
+    if (!this.props.location.hash || this.props.location.hash === '') this.props.location.hash = '#overall';
     this.setState(
       {
         modelLeaderBoardPage: 0,
         isEndOfModelLeaderPage: true,
         userLeaderBoardPage: 0,
         isEndOfUserLeaderPage: true,
-        displayRoundId: this.props.location.hash.slice(1),
+        displayRoundId: this.props.location.hash !== '#overall' ? this.props.location.hash.slice(1) : this.state.task.cur_round,
       },
       () => {
-        this.fetchTask();
         this.fetchOverallModelLeaderboard(this.state.modelLeaderBoardPage);
         this.fetchOverallUserLeaderboard(this.state.userLeaderBoardPage);
         if (this.props.location.hash === "#overall") this.fetchTrend();
@@ -269,16 +438,6 @@ class TaskPage extends React.Component {
 
   exportCurrentRoundData() {
     return this.context.api.exportData(this.state.task.id, this.state.task.cur_round);
-  }
-
-  fetchTask() {
-    this.context.api
-      .getTask(this.state.taskId)
-      .then((result) => {
-        this.setState({ task: result });
-      }, (error) => {
-        console.log(error);
-      });
   }
 
   fetchTrend() {
@@ -352,144 +511,71 @@ class TaskPage extends React.Component {
   };
 
   render() {
-    function renderTooltip(props, text) {
-      return (
-        <Tooltip id="button-tooltip" {...props}>
-          {text}
-        </Tooltip>
-      );
-    }
-
-    function renderCreateTooltip(props) {
-      return renderTooltip(props, "Create new examples where the model fails");
-    }
-    function renderVerifyTooltip(props) {
-       return renderTooltip(props, "Verify examples where the model may have failed");
-    }
-    function renderSubmitTooltip(props) {
-      return renderTooltip(props, "Submit model predictions on this task");
-    }
-
     return (
+      <OverlayProvider initiallyHide={true} delayMs="1700">
       <Container fluid>
         <Row>
           <Col lg={2} className="p-0 border">
-            <TaskNav {...this.props} taskDetail={this.state.task} />
+            <Annotation placement="bottom-start" tooltip="Dynabench tasks happen over multiple rounds. You can look at previous rounds here.">
+              <TaskNav {...this.props} taskDetail={this.state.task} />
+            </Annotation>
           </Col>
           <Col lg={10} className="px-4 px-lg-5">
             <h2 className="task-page-header text-reset ml-0">
               {this.state.task.name}
             </h2>
+            <div style={{float: "right", marginTop: 30}}>
+            <ButtonGroup>
+              <Annotation placement="left" tooltip="Click to show help overlay">
+                <OverlayContext.Consumer>
+                  {
+                    ({hidden, setHidden})=> (
+                        <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
+                          onClick={() => { setHidden(!hidden) }}
+                        ><i className="fas fa-question"></i></button>
+                    )
+                  }
+                </OverlayContext.Consumer>
+              </Annotation>
+            </ButtonGroup>
+            </div>
             <p>{this.state.task.desc}</p>
-            <Table className="w-50 font-weight-bold ml-n2">
-              <thead />
-              <tbody>
-                <tr>
-                  <td>Current round:</td>
-                  <td>{this.state.task.cur_round}</td>
-                </tr>
-                <tr>
-                  <td>Verified/Collected</td>
-                  <td>
-                    {this.state.task.round?.total_verified}/
-                    {this.state.task.round?.total_collected}
-                  </td>
-                </tr>
-                <tr>
-                  <td>(Model error rate):</td>
-                  <td>
-                    (
-                    {this.state.task.round?.total_collected > 0
-                      ? (
-                          this.state.task.round?.total_verified /
-                          this.state.task.round?.total_collected
-                        ).toFixed(2)
-                      : "0.00"}
-                    %)
-                  </td>
-                </tr>
-                <tr>
-                  <td>Last update:</td>
-                  <td>
-                    <Moment utc fromNow>
-                      {this.state.task.last_updated}
-                    </Moment>
-                  </td>
-                </tr>
-              </tbody>
-            </Table>
-            <hr />
             {this.props.location.hash === "#overall" ? (
-              <Nav className="my-4">
-                <Nav.Item className="task-action-btn">
-                  <OverlayTrigger
-                    placement="bottom"
-                    delay={{ show: 250, hide: 400 }}
-                    overlay={renderCreateTooltip}
-                  >
-                    <Button
-                      as={Link}
-                      className="border-0 blue-color font-weight-bold light-gray-bg"
-                      to={"/tasks/" + this.state.taskId + "/create"}
-                    >
-                      Create Examples
-                    </Button>
-                  </OverlayTrigger>
-                </Nav.Item>
-                <Nav.Item className="task-action-btn">
-                  <OverlayTrigger
-                    placement="bottom"
-                    delay={{ show: 250, hide: 400 }}
-                    overlay={renderVerifyTooltip}
-                  >
-                    <Button
-                      as={Link}
-                      className="border-0 blue-color font-weight-bold light-gray-bg"
-                      to={"/tasks/" + this.state.taskId + "/validate"}
-                    >
-                      Validate Examples
-                    </Button>
-                  </OverlayTrigger>
-                </Nav.Item>
-                {this.state.task.shortname === "NLI" ? (
-                  <Nav.Item className="task-action-btn">
-                    <OverlayTrigger
-                      placement="bottom"
-                      delay={{ show: 250, hide: 400 }}
-                      overlay={renderSubmitTooltip}
-                    >
-                      <Button
-                        as={Link}
-                        className="border-0 blue-color font-weight-bold light-gray-bg"
-                        to={"/tasks/" + this.state.taskId + "/submit"}
-                      >
-                        Submit Predictions
-                      </Button>
-                    </OverlayTrigger>
-                  </Nav.Item>
-                ) : null}
-                {this.context.user.id === this.state.task.owner_uid ?
-                  <Nav.Item className="task-action-btn ml-auto">
-                    <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" id="dropdown-basic-button" title="Export">
-                      <Dropdown.Item onClick={this.exportCurrentRoundData}>Export current round</Dropdown.Item>
-                      <Dropdown.Item onClick={this.exportAllTaskData}>Export all</Dropdown.Item>
-                    </DropdownButton>
-                  </Nav.Item>
-                  : null}
-              </Nav>
+              <>
+                <Annotation placement="right" tooltip="This shows the statistics of the currently active round.">
+                  <OverallTaskStats task={this.state.task}/>
+                </Annotation>
+                <hr />
+                <TaskActionButtons
+                  api={this.context.api}
+                  taskId={this.state.taskId}
+                  user={this.context.user}
+                  task={this.state.task}
+                  exportCurrentRoundData={this.exportCurrentRoundData}
+                  exportAllTaskData={this.exportAllTaskData}
+                />
+              </>
             ) :
+              <>
+                <hr />
+                <RoundActionButtons
+                  taskId={this.state.taskId}
+                />
+              </>}
+
             <Row>
-              <Col xs={12} md={10}>
+              <Col xs={12} md={12}>
                 <RoundDescription
                   api={this.context.api}
                   task_id={this.state.taskId}
+                  cur_round={this.state.task.cur_round}
                   round_id={this.state.displayRoundId} />
               </Col>
             </Row>
-            }
             <Row>
               <Col xs={12} md={6}>
                 {this.state.modelLeaderBoardData.length ? (
+                  <Annotation placement="left" tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round">
                   <Card className="my-4">
                     <Card.Header className="p-3 light-gray-bg">
                       <h2 className="text-uppercase m-0 text-reset">
@@ -499,6 +585,7 @@ class TaskPage extends React.Component {
                     <Card.Body className="p-0">
                       <OverallModelLeaderBoard
                         data={this.state.modelLeaderBoardData}
+                        taskShortName={this.state.task.shortname}
                       />
                     </Card.Body>
                     <Card.Footer className="text-center">
@@ -518,8 +605,10 @@ class TaskPage extends React.Component {
                       </Pagination>
                     </Card.Footer>
                   </Card>
+                  </Annotation>
                 ) : null}
                 {this.state.userLeaderBoardData.length ? (
+                  <Annotation placement="left" tooltip="This shows how well our users did on this task">
                   <Card className="my-4">
                     <Card.Header className="p-3 light-gray-bg">
                       <h2 className="text-uppercase m-0 text-reset">
@@ -548,18 +637,22 @@ class TaskPage extends React.Component {
                       </Pagination>
                     </Card.Footer>
                   </Card>
+                  </Annotation>
                 ) : null}
               </Col>
               <Col xs={12} md={6}>
                 {this.props.location.hash === "#overall" &&
                 this.state.trendScore.length ? (
-                  <TaskTrend data={this.state.trendScore} />
+                  <Annotation placement="top-end" tooltip="As tasks progress over time, we can follow their trend, which is shown here">
+                    <TaskTrend data={this.state.trendScore} />
+                  </Annotation>
                 ) : null}
               </Col>
             </Row>
           </Col>
         </Row>
       </Container>
+      </OverlayProvider>
     );
   }
 }

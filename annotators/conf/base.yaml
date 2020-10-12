@@ -1,0 +1,6 @@
+#@package _global_
+mephisto:
+  blueprint:
+    task_source: ${frontend_dir}/web/build/bundle.js
+#    extra_source_dir: ${task_dir}/webapp/src/static
+    units_per_assignment: 1

@@ -61,9 +61,12 @@ MTURK_QUALIFICATIONS = {
     # NOTE: Feel free to add more qualifications here
 }
 
+
 def get_qualifications(quals):
-    for q in quals: assert q in MTURK_QUALIFICATIONS
+    for q in quals:
+        assert q in MTURK_QUALIFICATIONS
     return [MTURK_QUALIFICATIONS[q] for q in quals]
+
 
 def arg_handler(parser):
     parser.add_argument(

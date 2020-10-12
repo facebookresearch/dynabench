@@ -13,6 +13,7 @@ class User(Base):
     __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
 
     id = db.Column(db.Integer, primary_key=True)
+    admin = db.Column(db.Boolean)
     username = db.Column(db.String(length=255), nullable=False, unique=True)
     email = db.Column(db.String(length=255), nullable=False, unique=True)
     password = db.Column(db.String(length=255), nullable=False)
@@ -23,9 +24,21 @@ class User(Base):
     forgot_password_token = db.Column(db.String(length=255))
     forgot_password_token_expiry_date = db.Column(db.DateTime)
 
-    examples_verified_correct = db.Column(db.Integer, default=0)
+    total_retracted = db.Column(db.Integer, default=0)
+    total_verified_fooled = db.Column(db.Integer, default=0)
+    total_fooled = db.Column(db.Integer, default=0)
+
+    settings_json = db.Column(db.Text)
+
     examples_submitted = db.Column(db.Integer, default=0)
     examples_verified = db.Column(db.Integer, default=0)
+    models_submitted = db.Column(db.Integer, default=0)
+
+    unseen_notifications = db.Column(db.Integer, default=0)
+
+    streak_examples = db.Column(db.Integer, default=0)
+    streak_days = db.Column(db.Integer, default=0)
+    streak_days_last_model_wrong = db.Column(db.DateTime, nullable=True)
 
     avatar_url = db.Column(db.Text)
 
@@ -109,3 +122,39 @@ class UserModel(BaseModel):
         u = self.dbs.query(User).filter(User.id == id)
         u.update(kwargs)
         self.dbs.commit()
+    def updateValidatedCount(self, uid):
+        u = self.get(uid)
+        if u:
+            u.examples_verified = u.examples_verified + 1
+            self.dbs.commit()
+        return u
+    def incrementModelSubmitCount(self, uid):
+        u = self.get(uid)
+        if u:
+            u.models_submitted = u.models_submitted + 1
+            self.dbs.commit()
+    def incrementVerifiedFooledCount(self, uid):
+        u = self.get(uid)
+        if u:
+            u.total_verified_fooled = u.total_verified_fooled + 1
+            self.dbs.commit()
+    def incrementFooledCount(self, uid):
+        u = self.get(uid)
+        if u:
+            u.total_fooled = u.total_fooled + 1
+            self.dbs.commit()
+    def incrementRetractedCount(self, uid):
+        u = self.get(uid)
+        if u:
+            u.total_retracted= u.total_retracted + 1
+            self.dbs.commit()
+    def incrementNotificationCount(self, uid):
+        u = self.get(uid)
+        if u:
+            u.unseen_notifications = u.unseen_notifications + 1
+            self.dbs.commit()
+    def resetNotificationCount(self, uid):
+        u = self.get(uid)
+        if u:
+            u.unseen_notifications = 0
+            self.dbs.commit()
