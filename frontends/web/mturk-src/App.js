@@ -56,6 +56,7 @@ function App() {
         providerWorkerId={providerWorkerId}
         mephistoWorkerId={mephistoWorkerId}
 	agentId={agentId}
+        assignmentId={assignmentId}
       />
     </>
   );
