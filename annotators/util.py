@@ -53,10 +53,10 @@ MTURK_QUALIFICATIONS = {
     "not_ca": {
         "QualificationTypeId": MTURK_LOCALE_REQUIREMENT,
         "Comparator":"NotEqualTo",
-  	"LocaleValues":[{
-  		'Country':"US",
-  		'Subdivision':"CA"
-	}]
+        "LocaleValues":[{
+            'Country':"US",
+            'Subdivision':"CA"
+        }]
     }
     # NOTE: Feel free to add more qualifications here
 }
