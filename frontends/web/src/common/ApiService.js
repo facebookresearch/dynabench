@@ -199,13 +199,13 @@ export default class ApiService {
   }
 
   getRandomExample(tid, rid) {
-    return this.fetch(`${this.domain}/validations/${tid}/${rid}`, {
+    return this.fetch(`${this.domain}/examples/${tid}/${rid}`, {
       method: "GET",
     });
   }
 
   getRandomFlaggedExample(tid, rid, numFlags = 5) {
-    return this.fetch(`${this.domain}/validations/${tid}/${rid}/flagged/${numFlags}`, {
+    return this.fetch(`${this.domain}/examples/${tid}/${rid}/flagged/${numFlags}`, {
       method: "GET",
     });
   }
@@ -327,7 +327,7 @@ export default class ApiService {
     if (this.mode == 'mturk') {
       obj.uid = uid;
     }
-    return this.fetch(`${this.domain}/validations/${id}/validate`, {
+    return this.fetch(`${this.domain}/validations/${id}`, {
       method: "PUT",
       body: JSON.stringify(obj),
     });

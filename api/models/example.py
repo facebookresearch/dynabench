@@ -51,6 +51,7 @@ class Example(Base):
 
     model_wrong = db.Column(db.Boolean)
     retracted = db.Column(db.Boolean, default=False)
+    flagged = db.Column(db.Boolean, default=False)
 
     generated_datetime = db.Column(db.DateTime)
 
