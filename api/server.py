@@ -66,14 +66,12 @@ from controllers.endpoints import *
 from controllers.notifications import *
 
 if running_mode == 'dev':
-    '''
     if not check_fields(config, ['ssl_cert_file_path', 'ssl_org_pem_file_path']) or \
             is_fields_blank(config, ['ssl_cert_file_path', 'ssl_org_pem_file_path']):
         raise AssertionError('Configure SSL certificates detail')
-    '''
     app.config['mode'] = 'dev'
-    bottle.run(host='0.0.0.0', port=8081, debug=True, server='cheroot', reloader=True)#,
-                #certfile=config['ssl_cert_file_path'], keyfile=config['ssl_org_pem_file_path'])
+    bottle.run(host='0.0.0.0', port=8081, debug=True, server='cheroot', reloader=True,
+               certfile=config['ssl_cert_file_path'], keyfile=config['ssl_org_pem_file_path'])
 elif running_mode == 'prod':
     # Assertion for necessary configuration
     if not check_fields(config, ['smtp_user', 'smtp_host', 'smtp_port', 'smtp_secret']) or \
