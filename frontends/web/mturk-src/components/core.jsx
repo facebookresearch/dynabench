@@ -10,11 +10,13 @@ import { YixinTaskPreview, YixinTaskOnboarder, YixinTaskMain } from './yixin/cor
 import { DivyanshNLITaskPreview, DivyanshNLITaskOnboarder, DivyanshNLITaskMain } from './divyansh/nli-1/core.jsx';
 import { DivyanshQATaskPreview, DivyanshQATaskOnboarder, DivyanshQATaskMain } from './divyansh/qa-1/core.jsx';
 import { NLITaskPreview, NLITaskOnboarder, NLITaskMain } from './nli-1/core.jsx';
+import { DivyanshVerifyQATaskPreview, DivyanshVerifyQATaskOnboarder, DivyanshVerifyQATaskMain } from './divyansh/qa-1-verify/core.jsx';
 
 const TaskComponents = {
   'yixin-1': [YixinTaskPreview, YixinTaskOnboarder, YixinTaskMain],
   'divyansh-nli-1': [DivyanshNLITaskPreview, DivyanshNLITaskOnboarder, DivyanshNLITaskMain],
   'divyansh-qa-1': [DivyanshQATaskPreview, DivyanshQATaskOnboarder, DivyanshQATaskMain],
+  'divyansh-qa-1-verify': [DivyanshVerifyQATaskPreview, DivyanshVerifyQATaskOnboarder, DivyanshVerifyQATaskMain],
   'nli-1': [NLITaskPreview, NLITaskOnboarder, NLITaskMain]
   // TODO: New tasks are added here
 };

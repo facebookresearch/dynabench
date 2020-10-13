@@ -41,9 +41,13 @@ class ValidationModel(BaseModel):
         super(ValidationModel, self).__init__(Validation)
 
     def create(self, uid, eid, label, mode):
-        validation = Validation(uid=uid, eid=eid, label=label, mode=mode)
-        self.dbs.add(validation)
-        return self.dbs.commit()
+        try:
+            validation = Validation(uid=uid, eid=eid, label=label, mode=mode)
+            self.dbs.add(validation)
+            return self.dbs.commit()
+        except Exception as error_message:
+            logger.error('Could not create validation (%s)' % error_message)
+            return False
 
     def get(self, id):
         try:

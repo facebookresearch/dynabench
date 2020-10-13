@@ -14,34 +14,7 @@ from models.notification import NotificationModel
 from models.badge import BadgeModel
 from models.round import RoundModel
 
-@bottle.get('/validations/<tid:int>/<rid:int>/flagged/<num_flags:int>')
-@_auth.requires_auth
-def get_random_flagged_example(credentials, tid, rid, num_flags):
-    rm = RoundModel()
-    round = rm.getByTidAndRid(tid, rid)
-    em = ExampleModel()
-    example = em.getRandomFlagged(round.id, num_flags, n=1)
-    if not example:
-        bottle.abort(500, f'No examples available ({round.id})')
-    example = example[0].to_dict()
-    return util.json_encode(example)
-
-@bottle.get('/validations/<tid:int>/<rid:int>')
-@_auth.requires_auth_or_turk
-def get_random_example(credentials, tid, rid):
-    rm = RoundModel()
-    round = rm.getByTidAndRid(tid, rid)
-    em = ExampleModel()
-    if credentials['id'] != 'turk':
-        example = em.getRandomWrong(round.id, n=1, my_uid=credentials['id'])
-    else:
-        example = em.getRandomWrong(round.id, n=1)
-    if not example:
-        bottle.abort(500, f'No examples available ({round.id})')
-    example = example[0].to_dict()
-    return util.json_encode(example)
-
-@bottle.put('/validations/<eid:int>/validate')
+@bottle.put('/validations/<eid:int>')
 @_auth.requires_auth_or_turk
 def validate_example(credentials, eid):
     data = bottle.request.json
@@ -92,6 +65,10 @@ def validate_example(credentials, eid):
         bottle.abort(403, 'Access denied (cannot validate your own example)')
 
     vm.create(credentials['id'], eid, label, mode)
+
+    em.update(example.id, {
+        'total_verified': example.total_verified + 1
+    })
 
     rm = RoundModel()
     rm.updateLastActivity(context.r_realid)
