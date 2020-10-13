@@ -93,6 +93,10 @@ def validate_example(credentials, eid):
 
     vm.create(credentials['id'], eid, label, mode)
 
+    em.update(example.id, {
+        'total_verified': example.total_verified + 1
+    })
+
     rm = RoundModel()
     rm.updateLastActivity(context.r_realid)
     if label_counts['correct'] >= 5 or (mode == 'owner' and label == 'correct'):
