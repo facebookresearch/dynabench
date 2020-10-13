@@ -50,3 +50,9 @@ class ValidationModel(BaseModel):
             return self.dbs.query(Validation).filter(Validation.id == id).one()
         except db.orm.exc.NoResultFound:
             return False
+
+    def getByEid(self, eid):
+        try:
+            return self.dbs.query(Validation).filter(Validation.eid == eid)
+        except db.orm.exc.NoResultFound:
+            return False
