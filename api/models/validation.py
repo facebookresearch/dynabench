@@ -24,6 +24,7 @@ class Validation(Base):
     eid = db.Column(db.Integer, db.ForeignKey("examples.id"), nullable=False)
     label = db.Column(db.Enum(LabelEnum))
     mode = db.Column(db.Enum(ModeEnum))
+    metadata_json = db.Column(db.Text)
 
     def __repr__(self):
         return '<Validation {} {} {} {} {}>'.format(
