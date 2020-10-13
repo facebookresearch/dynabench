@@ -14,6 +14,7 @@ from models.user import User
 from models.context import Context
 from models.round import Round
 from models.task import Task
+from models.validation import Validation, LabelEnum, ModeEnum
 
 import hashlib
 import json
@@ -44,19 +45,12 @@ class Example(Base):
 
     target_pred = db.Column(db.Text)
     model_preds = db.Column(db.Text)
-    #verifier_preds = db.Column(db.Text) TODO
     target_model = db.Column(db.Text)
 
     split = db.Column(db.String(length=255), default='undecided')
 
     model_wrong = db.Column(db.Boolean)
     retracted = db.Column(db.Boolean, default=False)
-    #flagged = db.Column(db.Boolean, default=False) TODO
-
-    #verified = db.Column(db.Boolean, default=False) TODO
-    #verified_correct = db.Column(db.Boolean, default=False) TODO
-    #verified_incorrect = db.Column(db.Boolean, default=False) TODO
-    #verified_flagged = db.Column(db.Boolean, default=False) TODO
 
     generated_datetime = db.Column(db.DateTime)
 
@@ -70,7 +64,7 @@ class Example(Base):
     def to_dict(self, safe=True):
         d = {}
         for column in self.__table__.columns:
-            if safe and column.name in ['verifier_preds', 'verified_correct', 'split', 'uid', 'user']: continue
+            if safe and column.name in ['split', 'uid', 'user']: continue
             d[column.name] = getattr(self, column.name)
         d['context'] = self.context.to_dict()
         return d
@@ -205,23 +199,55 @@ class ExampleModel(BaseModel):
                 .order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
         return result
     def getRandomWrong(self, rid, n=1, my_uid=None):
+        cnt_correct = db.sql.func.sum(
+            case([(Validation.label == LabelEnum.correct, 1)],
+                 else_=0)).label('cnt_correct')
+        cnt_flagged = db.sql.func.sum(
+            case([(Validation.label == LabelEnum.flagged, 1)],
+                 else_=0)).label('cnt_flagged')
+        cnt_incorrect = db.sql.func.sum(
+            case([(Validation.label == LabelEnum.incorrect, 1)],
+                 else_=0)).label('cnt_incorrect')
+        cnt_owner_validated = db.sql.func.sum(
+            case([(Validation.mode == ModeEnum.owner, 1)],
+                 else_=0)).label('cnt_owner_validated')
         result = self.dbs.query(Example) \
                 .join(Context, Example.cid == Context.id) \
                 .filter(Context.r_realid == rid) \
                 .filter(Example.model_wrong == True) \
-                .filter(Example.retracted == False) \
-                .filter(Example.verified == False);
+                .filter(Example.retracted == False)
+        result_partially_validated = result \
+                .join(Validation, Example.id == Validation.eid) \
+                .group_by(Validation.eid).having(db.and_(
+                    cnt_correct < 5, cnt_flagged < 5, cnt_incorrect < 5,
+                    cnt_owner_validated == 0))
+        if my_uid is not None:
+            cnt_uid = db.sql.func.sum(
+                case([(Validation.uid == my_uid, 1)],
+                     else_=0)).label('cnt_uid')
+            result_partially_validated = result_partially_validated \
+                    .group_by(Validation.eid).having(cnt_uid == 0)
+        result_not_validated = result \
+                 .filter(db.not_(db.exists().where(Validation.eid == Example.id)))
+        result = result_partially_validated.union(result_not_validated)
         if my_uid is not None:
             result = result.filter(Example.uid != my_uid)
-            result = result.filter(db.or_(Example.verifier_preds == None, db.not_(('|' + Example.verifier_preds).contains('|' + str(my_uid) + ','))))
         result = result.order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
         return result
-    def getRandomVerifiedFlagged(self, rid, n=1):
+    def getRandomFlagged(self, rid, num_flags, n=1):
+        cnt_flagged = db.sql.func.sum(
+            case([(Validation.label == LabelEnum.flagged, 1)],
+                 else_=0)).label('cnt_flagged')
+        cnt_owner_validated = db.sql.func.sum(
+            case([(Validation.mode == ModeEnum.owner, 1)],
+                 else_=0)).label('cnt_owner_validated')
         result = self.dbs.query(Example) \
+                .join(Validation, Example.id == Validation.eid) \
                 .join(Context, Example.cid == Context.id) \
                 .filter(Context.r_realid == rid) \
                 .filter(Example.model_wrong == True) \
                 .filter(Example.retracted == False) \
-                .filter(Example.verified_flagged == True);
+                .group_by(Validation.eid).having(
+                    db.and_(cnt_flagged == num_flags, cnt_owner_validated == 0))
         result = result.order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
         return result

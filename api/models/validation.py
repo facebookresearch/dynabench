@@ -16,7 +16,7 @@ class ModeEnum(enum.Enum):
     owner = 'owner'
 
 class Validation(Base):
-    __tablename__ = 'users'
+    __tablename__ = 'validations'
     __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
 
     id = db.Column(db.Integer, primary_key=True)
@@ -27,9 +27,9 @@ class Validation(Base):
 
     def __repr__(self):
         return '<Validation {} {} {} {} {}>'.format(
-            self.id, self.uid, self.tid, self.label, self.mode)
+            self.id, self.uid, self.eid, self.label, self.mode)
 
-    def to_dict(self, safe=True): #TODO: check
+    def to_dict(self, safe=True):
         d = {}
         for column in self.__table__.columns:
             d[column.name] = getattr(self, column.name)
@@ -49,26 +49,3 @@ class ValidationModel(BaseModel):
             return self.dbs.query(Validation).filter(Validation.id == id).one()
         except db.orm.exc.NoResultFound:
             return False
-
-    def getByEid(self, eid):
-        try:
-            return self.dbs.query(Validation).filter(Validation.eid == eid)
-        except db.orm.exc.NoResultFound:
-            return False
-
-    def getByUid(self, uid):
-        try:
-            return self.dbs.query(Validation).filter(Validation.uid == username)
-        except db.orm.exc.NoResultFound:
-            return False
-
-    def getRandomFlagged(self, rid, n=1):
-        result = self.dbs.query(Example) \
-                .join(Validation, Validation.eid == Example.id) \
-                .join(Context, Example.cid == Context.id) \
-                .filter(Context.r_realid == rid) \
-                .filter(Example.model_wrong == True) \
-                .filter(Example.retracted == False) \
-                .filter(Validation.label == LabelEnum.flagged);
-        result = result.order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
-        return result
