@@ -213,7 +213,7 @@ class UserPage extends React.Component {
                         >
                           <Form.Group as={Row}>
                             <Form.Label column sm="6" className="text-right">
-                              Model error:
+                              Model error rate (verified/unverified):
                             </Form.Label>
                             <Col sm="6">
                               <Form.Control
@@ -224,13 +224,15 @@ class UserPage extends React.Component {
                                     (100 *
                                       this.state.user.total_fooled /
                                       this.state.user.examples_submitted
-                                    ).toFixed(2).toString() + "% (rate) " +
-                                    this.state.user.total_fooled.toString() + " (count) " +
+                                    ).toFixed(2).toString() + "% (" +
+                                    this.state.user.total_fooled.toString() + "/" +
+                                    this.state.user.examples_submitted + ") / " +
                                     (100 *
                                       this.state.user.total_verified_fooled /
                                       this.state.user.examples_submitted
-                                    ).toFixed(2).toString() + "% (verified rate) " +
-                                    this.state.user.total_verified_fooled.toString() + " (verified count)"
+                                    ).toFixed(2).toString() + "% (" +
+                                    this.state.user.total_verified_fooled.toString() + "/" +
+                                    this.state.user.examples_submitted + ") "
                       : 'N/A'}
                               />
                             </Col>
@@ -243,7 +245,7 @@ class UserPage extends React.Component {
                         >
                           <Form.Group as={Row}>
                             <Form.Label column sm="6" className="text-right">
-                              Rejection:
+                              Rejection rate:
                             </Form.Label>
                             <Col sm="6">
                               <Form.Control
@@ -254,8 +256,9 @@ class UserPage extends React.Component {
                                     (100 *
                                       (this.state.user.total_fooled - this.state.user.total_verified_fooled) /
                                       this.state.user.examples_submitted
-                                    ).toFixed(2).toString() + "% (rate) " +
-                                    (this.state.user.total_fooled - this.state.user.total_verified_fooled).toString() + " (count)"
+                                    ).toFixed(2).toString() + "% (" +
+                                    (this.state.user.total_fooled - this.state.user.total_verified_fooled).toString() + "/" +
+                                    this.state.user.examples_submitted + ")"
                       : 'N/A'}
                               />
                             </Col>
@@ -268,7 +271,7 @@ class UserPage extends React.Component {
                         >
                           <Form.Group as={Row}>
                             <Form.Label column sm="6" className="text-right">
-                              Retraction:
+                              Retraction rate:
                             </Form.Label>
                             <Col sm="6">
                               <Form.Control
@@ -278,8 +281,9 @@ class UserPage extends React.Component {
                                   this.state.user.examples_submitted > 0 ?
                                     (100 * this.state.user.total_retracted /
                                       this.state.user.examples_submitted
-                                    ).toFixed(2).toString() + '% (rate) ' +
-                                    this.state.user.total_retracted.toString() + ' (count)'
+                                    ).toFixed(2).toString() + '% (' +
+                                    this.state.user.total_retracted.toString() + '/' +
+                                    this.state.user.examples_submitted + ')'
                       : 'N/A'}
                               />
                             </Col>
