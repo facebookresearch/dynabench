@@ -69,7 +69,7 @@ class VerifyInterface extends React.Component {
 
   getNewExample() {
     (this.state.owner_mode
-      ? this.context.api.getRandomVerifiedFlaggedExample(this.state.taskId, this.state.task.selected_round)
+      ? this.context.api.getRandomFlaggedExample(this.state.taskId, this.state.task.selected_round)
       : this.context.api.getRandomExample(this.state.taskId, this.state.task.selected_round))
       .then((result) => {
         if (this.state.task.type !== 'extract') {
@@ -89,27 +89,26 @@ class VerifyInterface extends React.Component {
     var action_label = null;
     switch(action) {
       case 'correct':
-        action_label = 'C';
+        action_label = 'correct';
         break;
       case 'incorrect':
-        action_label = 'I';
+        action_label = 'incorrect';
         break;
       case 'flag':
-        action_label = 'F';
+        action_label = 'flagged';
         break;
     }
     if (action_label !== null) {
-      (this.state.owner_mode
-        ? this.context.api.validateExampleAsAdminOrOwner(this.state.example.id, action_label)
-        : this.context.api.validateExample(this.state.example.id, action_label))
-          .then((result) => {
-            this.getNewExample();
-            if (!!result.badges) {
-              this.setState({showBadges: result.badges})
-            }
-          }, (error) => {
-            console.log(error);
-          });
+      const mode = this.state.owner_mode ? "owner" : "user";
+      this.context.api.validateExample(this.state.example.id, action_label, mode)
+        .then((result) => {
+          this.getNewExample();
+          if (!!result.badges) {
+            this.setState({showBadges: result.badges})
+          }
+        }, (error) => {
+          console.log(error);
+        });
     }
   }
   render() {

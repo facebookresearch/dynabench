@@ -204,8 +204,8 @@ export default class ApiService {
     });
   }
 
-  getRandomVerifiedFlaggedExample(tid, rid) {
-    return this.fetch(`${this.domain}/examples/${tid}/${rid}/verifiedflagged`, {
+  getRandomFlaggedExample(tid, rid, numFlags = 5) {
+    return this.fetch(`${this.domain}/examples/${tid}/${rid}/flagged/${numFlags}`, {
       method: "GET",
     });
   }
@@ -322,23 +322,12 @@ export default class ApiService {
     return user.task_permissions?.filter((task_permission) => tid === task_permission.tid && "owner" === task_permission.type).length > 0;
   }
 
-  validateExampleAsAdminOrOwner(id, label, uid = null) {
-    let obj = {label: label};
+  validateExample(id, label, mode, uid = null) {
+    let obj = {label: label, mode: mode};
     if (this.mode == 'mturk') {
       obj.uid = uid;
     }
-    return this.fetch(`${this.domain}/examples/${id}/validate-as-admin-or-owner`, {
-      method: "PUT",
-      body: JSON.stringify(obj),
-    });
-  }
-
-  validateExample(id, label, uid = null) {
-    let obj = {label: label};
-    if (this.mode == 'mturk') {
-      obj.uid = uid;
-    }
-    return this.fetch(`${this.domain}/examples/${id}/validate`, {
+    return this.fetch(`${this.domain}/validations/${id}`, {
       method: "PUT",
       body: JSON.stringify(obj),
     });
