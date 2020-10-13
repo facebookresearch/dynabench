@@ -66,6 +66,7 @@ class CreateInterfaceNoModel extends React.Component {
       refreshDisabled: true,
       mapKeyToExampleId: {},
       tries: 0,
+      total_tries: 5,
       taskCompleted: false
     };
     this.getNewContext = this.getNewContext.bind(this);
@@ -81,7 +82,8 @@ class CreateInterfaceNoModel extends React.Component {
       .then(result => {
         var randomTarget = Math.floor(Math.random() * this.state.task.targets.length);
         this.setState({target: randomTarget, context: result, content: [{cls: 'context', text: result.context}], submitDisabled: false, refreshDisabled: false});
-      }, error => {
+      })
+      .catch(error => {
         console.log(error);
       });
     });
@@ -98,12 +100,13 @@ class CreateInterfaceNoModel extends React.Component {
       newContent[idx].cls = 'retracted';
       newContent[idx].retracted = true;
       this.setState({content: newContent});
-    }, error => {
+    })
+    .catch(error => {
       console.log(error);
     });
   }
   handleTaskSubmit() {
-    this.props.onSubmit(this.state.content);
+    this.props.onSubmit(this.state);
   }
   handleResponse() {
     this.setState({submitDisabled: true, refreshDisabled: true}, function () {
@@ -150,12 +153,14 @@ class CreateInterfaceNoModel extends React.Component {
             this.state.tries += 1;
             this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false, mapKeyToExampleId: {...this.state.mapKeyToExampleId, [key]: result.id}},
               function () {
-                  console.log('Success! You can submit HIT');
+                  if (this.state.tries==this.state.total_tries) {
+		  console.log('Success! You can submit HIT');
                   this.setState({taskCompleted: true});
-                  this.handleTaskSubmit();
-            });
-          }, error => {
-		  console.log(error);
+		}
+	    });
+          })
+          .catch(error => {
+            console.log(error);
           });
       });
     });
@@ -170,7 +175,8 @@ class CreateInterfaceNoModel extends React.Component {
       this.setState({task: result}, function() {
         this.getNewContext();
       });
-    }, error => {
+    })
+    .catch(error => {
       console.log(error);
     });
   }
@@ -219,7 +225,11 @@ class CreateInterfaceNoModel extends React.Component {
             </Row>
           </div>
     );
-    var taskTracker = <Button className="btn btn-primary btn-success" disabled={this.state.submitDisabled} onClick={this.handleResponse}>Submit HIT</Button>;
+    if (this.state.taskCompleted) {
+      var taskTracker = <Button className="btn btn-primary btn-success" onClick={this.handleTaskSubmit}>Submit HIT</Button>;
+    } else {
+      var taskTracker = <small style={{padding: 7}}>Questions generated: {this.state.tries} / {this.state.total_tries}</small>;
+    }
     return (
       <Container>
 	{/*<Row>
@@ -228,7 +238,7 @@ class CreateInterfaceNoModel extends React.Component {
         <Row>
           <CardGroup style={{marginTop: 20, width: '100%'}}>
             <Card border='dark'>
-              <Card.Body style={{height: 250, overflowY: 'scroll'}}>
+              <Card.Body style={{height: 500, overflowY: 'scroll'}}>
                 {content}
               </Card.Body>
             </Card>
@@ -245,8 +255,8 @@ class CreateInterfaceNoModel extends React.Component {
             <small className="form-text text-muted">Please enter your input. Remember, the goal is to generate an example in accordance with the instructions. Load time may be slow; please be patient.</small>
           </InputGroup>
           <InputGroup>
-	    {/*<Button className="btn btn-primary" style={{marginRight: 2}} onClick={this.handleResponse} disabled={this.state.submitDisabled}>Submit <i className={this.state.submitDisabled ? "fa fa-cog fa-spin" : ""} /></Button>*/}
-            <Button className="btn btn-secondary" style={{marginRight: 2}} onClick={this.getNewContext} disabled={this.state.refreshDisabled}>Switch to next context</Button>
+	    <Button className="btn btn-primary" style={{marginRight: 2}} onClick={this.handleResponse} disabled={this.state.submitDisabled}>Submit <i className={this.state.submitDisabled ? "fa fa-cog fa-spin" : ""} /></Button>
+	    {/*<Button className="btn btn-secondary" style={{marginRight: 2}} onClick={this.getNewContext} disabled={this.state.refreshDisabled}>Switch to next context</Button>*/}
             {taskTracker}
           </InputGroup>
         </Row>

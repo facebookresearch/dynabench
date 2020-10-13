@@ -204,6 +204,12 @@ export default class ApiService {
     });
   }
 
+  getRandomVerifiedFlaggedExample(tid, rid) {
+    return this.fetch(`${this.domain}/examples/${tid}/${rid}/verifiedflagged`, {
+      method: "GET",
+    });
+  }
+
   getModel(modelId) {
     return this.fetch(`${this.domain}/models/${modelId}/details`, {
       method: "GET",
@@ -307,6 +313,21 @@ export default class ApiService {
       obj.uid = uid;
     }
     return this.fetch(`${this.domain}/examples/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(obj),
+    });
+  }
+
+  isTaskOwner(user, tid) {
+    return user.task_permissions?.filter((task_permission) => tid === task_permission.tid && "owner" === task_permission.type).length > 0;
+  }
+
+  validateExampleAsAdminOrOwner(id, label, uid = null) {
+    let obj = {label: label};
+    if (this.mode == 'mturk') {
+      obj.uid = uid;
+    }
+    return this.fetch(`${this.domain}/examples/${id}/validate-as-admin-or-owner`, {
       method: "PUT",
       body: JSON.stringify(obj),
     });

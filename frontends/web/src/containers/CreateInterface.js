@@ -651,6 +651,7 @@ class CreateInterface extends React.Component {
       modelPredStr: "",
       hypothesis: "",
       content: [],
+      retainInput: false,
       livemode: true,
       submitDisabled: true,
       refreshDisabled: true,
@@ -662,6 +663,7 @@ class CreateInterface extends React.Component {
     this.handleResponseChange = this.handleResponseChange.bind(this);
     this.switchLiveMode = this.switchLiveMode.bind(this);
     this.updateAnswer = this.updateAnswer.bind(this);
+    this.updateRetainInput = this.updateRetainInput.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
     this.chatContainerRef = React.createRef();
     this.bottomAnchorRef = React.createRef();
@@ -692,6 +694,22 @@ class CreateInterface extends React.Component {
           });
       }
     );
+  }
+
+  updateRetainInput(e) {
+    const retainInput = e.target.checked;
+    if (this.context.api.loggedIn()) {
+      var settings_json;
+      if (this.context.user.settings_json) {
+        settings_json = JSON.parse(this.context.user.settings_json);
+        settings_json['retain_input'] = retainInput;
+      } else {
+        settings_json = {'retain_input': retainInput};
+      }
+      this.context.user.settings_json = JSON.stringify(settings_json);
+      this.context.api.updateUser(this.context.user.id, this.context.user);
+    }
+    this.setState({ retainInput: retainInput });
   }
 
   updateSelectedRound(e) {
@@ -823,6 +841,7 @@ class CreateInterface extends React.Component {
               if (!this.state.livemode) {
                 // We are in sandbox
                 this.setState({
+                  hypothesis: this.state.retainInput? this.state.hypothesis : "",
                   submitDisabled: false,
                   refreshDisabled: false,
                 });
@@ -843,7 +862,7 @@ class CreateInterface extends React.Component {
                 .then((result) => {
                   var key = this.state.content.length - 1;
                   this.setState({
-                    hypothesis: "",
+                    hypothesis: this.state.retainInput? this.state.hypothesis : "",
                     submitDisabled: false,
                     refreshDisabled: false,
                     mapKeyToExampleId: {
@@ -897,6 +916,20 @@ class CreateInterface extends React.Component {
     if (!this.context.api.loggedIn()) {
       this.setState({ livemode: false });
     }
+
+    const user = this.context.api.getCredentials();
+    this.context.api
+      .getUser(user.id, true)
+      .then((result) => {
+        if (result.settings_json) {
+          var settings_json = JSON.parse(result.settings_json);
+          if (settings_json['retain_input']) {
+            this.setState({ retainInput: settings_json['retain_input'] });
+          }
+        }
+      }, (error) => {
+        console.log(error);
+      });
 
     this.setState({ taskId: params.taskId }, function () {
       this.context.api
@@ -1031,6 +1064,11 @@ class CreateInterface extends React.Component {
                   onClick={() => { this.setState({showInfoModal: true}) }}
                 ><i className="fas fa-info"></i></button>
               </Annotation>
+              <Annotation placement="top" tooltip="Click to adjust your create settings">
+                <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
+                  onClick={() => { this.setState({showCreateSettingsModal: true}) }}
+                ><i className="fa fa-cog"></i></button>
+              </Annotation>
             </ButtonGroup>
             <Modal
               show={this.state.showInfoModal}
@@ -1042,7 +1080,18 @@ class CreateInterface extends React.Component {
                 <Modal.Body>
                   <TaskInstructions shortname={this.state.task.shortname} />
                 </Modal.Body>
-              </Modal>
+            </Modal>
+            <Modal
+              show={this.state.showCreateSettingsModal}
+              onHide={() => this.setState({showCreateSettingsModal: false})}
+              >
+                <Modal.Header closeButton>
+                  <Modal.Title>Create Settings</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                  <Form.Check checked={this.state.retainInput} label="Do you want to retain your input for the same context?" onChange={this.updateRetainInput}/>
+                </Modal.Body>
+            </Modal>
           </div>
           <Explainer taskName={this.state.task.name} />
           <Annotation

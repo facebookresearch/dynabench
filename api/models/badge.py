@@ -77,7 +77,7 @@ class BadgeModel(BaseModel):
             # Validate beginner badges
             if user.examples_verified == 1:
                 badges.append('FIRST_VERIFIED')
-            if user.examples_verified_correct == 1 and 'FIRST_VALIDATED_FOOLING'\
+            if user.total_verified_fooled == 1 and 'FIRST_VALIDATED_FOOLING'\
                     not in map(lambda badge: badge.name, self.getByUid(user.id)):
                 badges.append('FIRST_VALIDATED_FOOLING')
 
