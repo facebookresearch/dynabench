@@ -199,7 +199,7 @@ export default class ApiService {
   }
 
   getRandomExample(tid, rid) {
-    return this.fetch(`${this.domain}/validations/${tid}/${rid}`, {
+    return this.fetch(`${this.domain}/examples/${tid}/${rid}`, {
       method: "GET",
     });
   }
