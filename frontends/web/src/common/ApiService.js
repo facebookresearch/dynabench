@@ -204,8 +204,8 @@ export default class ApiService {
     });
   }
 
-  getRandomFlaggedExample(tid, rid, numFlags = 5) {
-    return this.fetch(`${this.domain}/examples/${tid}/${rid}/flagged/${numFlags}`, {
+  getRandomFilteredExample(tid, rid, minNumFlags, maxNumFlags, minNumDisagreements, maxNumDisagreements) {
+    return this.fetch(`${this.domain}/examples/${tid}/${rid}/filtered/${minNumFlags}/${maxNumFlags}/${minNumDisagreements}/${maxNumDisagreements}`, {
       method: "GET",
     });
   }

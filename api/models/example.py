@@ -235,20 +235,46 @@ class ExampleModel(BaseModel):
             result = result.filter(Example.uid != my_uid)
         result = result.order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
         return result
-    def getRandomFlagged(self, rid, num_flags, n=1):
-        cnt_flagged = db.sql.func.sum(
-            case([(Validation.label == LabelEnum.flagged, 1)],
-                 else_=0)).label('cnt_flagged')
+    def getRandomFiltered(self, rid, min_num_flags, max_num_flags, min_num_disagreements, max_num_disagreements, n=1):
         cnt_owner_validated = db.sql.func.sum(
             case([(Validation.mode == ModeEnum.owner, 1)],
                  else_=0)).label('cnt_owner_validated')
         result = self.dbs.query(Example) \
-                .join(Validation, Example.id == Validation.eid) \
                 .join(Context, Example.cid == Context.id) \
                 .filter(Context.r_realid == rid) \
                 .filter(Example.model_wrong == True) \
-                .filter(Example.retracted == False) \
-                .group_by(Validation.eid).having(
-                    db.and_(cnt_flagged == num_flags, cnt_owner_validated == 0))
+                .filter(Example.retracted == False)
+
+        result_not_validated = result \
+                 .filter(db.not_(db.exists().where(Validation.eid == Example.id)))
+
+        result = result \
+                .join(Validation, Example.id == Validation.eid) \
+                .group_by(Validation.eid).having(cnt_owner_validated == 0)
+
+        cnt_flagged = db.sql.func.sum(
+            case([(Validation.label == LabelEnum.flagged, 1)],
+                 else_=0)).label('cnt_flagged')
+        result = result \
+                .having(db.and_(cnt_flagged <= max_num_flags, cnt_flagged >= min_num_flags))
+
+        cnt_correct = db.sql.func.sum(
+            case([(Validation.label == LabelEnum.correct, 1)],
+                 else_=0)).label('cnt_correct')
+        cnt_incorrect = db.sql.func.sum(
+            case([(Validation.label == LabelEnum.incorrect, 1)],
+                 else_=0)).label('cnt_incorrect')
+        result = result \
+                .having(db.or_(
+                    db.and_(cnt_incorrect > cnt_correct,
+                        cnt_correct >= min_num_disagreements,
+                        cnt_correct <= max_num_disagreements),
+                    db.and_(cnt_correct >= cnt_incorrect,
+                        cnt_incorrect >= min_num_disagreements,
+                        cnt_incorrect <= max_num_disagreements)))
+
+        if min_num_disagreements == 0 and min_num_flags == 0:
+            result = result.union(result_not_validated)
+
         result = result.order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
         return result

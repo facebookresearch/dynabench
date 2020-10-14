@@ -16,13 +16,13 @@ from models.badge import BadgeModel
 
 import json
 
-@bottle.get('/examples/<tid:int>/<rid:int>/flagged/<num_flags:int>')
+@bottle.get('/examples/<tid:int>/<rid:int>/filtered/<min_num_flags:int>/<max_num_flags:int>/<min_num_disagreements:int>/<max_num_disagreements:int>')
 @_auth.requires_auth
-def get_random_flagged_example(credentials, tid, rid, num_flags):
+def get_random_filtered_example(credentials, tid, rid, min_num_flags, max_num_flags, min_num_disagreements, max_num_disagreements):
     rm = RoundModel()
     round = rm.getByTidAndRid(tid, rid)
     em = ExampleModel()
-    example = em.getRandomFlagged(round.id, num_flags, n=1)
+    example = em.getRandomFiltered(round.id, min_num_flags, max_num_flags, min_num_disagreements, max_num_disagreements, n=1)
     if not example:
         bottle.abort(500, f'No examples available ({round.id})')
     example = example[0].to_dict()
