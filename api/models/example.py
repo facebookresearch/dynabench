@@ -192,6 +192,40 @@ class ExampleModel(BaseModel):
                     .filter(Round.tid == tid).filter(Round.rid == rid).all()
         except db.orm.exc.NoResultFound:
             return False
+    def getByTidAndRidWithAnonymizedValidations(self, tid, rid):
+        try:
+            validations_query = self.dbs.query(Example, db.func.group_concat('("' + Validation.label + '","' + Validation.mode + '")')) \
+                    .join(Context, Example.cid == Context.id) \
+                    .join(Round, Context.r_realid == Round.id) \
+                    .filter(Round.tid == tid).filter(Round.rid == rid) \
+                    .join(Validation, Validation.eid == Example.id) \
+                    .group_by(Validation.eid)
+            no_validations_query = self.dbs.query(Example, db.func.group_concat('')) \
+                    .join(Context, Example.cid == Context.id) \
+                    .join(Round, Context.r_realid == Round.id) \
+                    .filter(Round.tid == tid).filter(Round.rid == rid) \
+                    .filter(db.not_(db.exists().where(Validation.eid == Example.id))) \
+                    .group_by(Example.id)
+            return validations_query.union(no_validations_query).all()
+        except db.orm.exc.NoResultFound:
+            return False
+    def getByTidWithAnonymizedValidations(self, tid):
+        try:
+            validations_query = self.dbs.query(Example, db.func.group_concat('("' + Validation.label + '","' + Validation.mode + '")')) \
+                    .join(Context, Example.cid == Context.id) \
+                    .join(Round, Context.r_realid == Round.id) \
+                    .filter(Round.tid == tid) \
+                    .join(Validation, Validation.eid == Example.id) \
+                    .group_by(Validation.eid)
+            no_validations_query = self.dbs.query(Example, db.func.group_concat('')) \
+                    .join(Context, Example.cid == Context.id) \
+                    .join(Round, Context.r_realid == Round.id) \
+                    .filter(Round.tid == tid) \
+                    .filter(db.not_(db.exists().where(Validation.eid == Example.id))) \
+                    .group_by(Example.id)
+            return validations_query.union(no_validations_query).all()
+        except db.orm.exc.NoResultFound:
+            return False
 
     def getRandom(self, rid, n=1):
         result = self.dbs.query(Example) \

@@ -72,18 +72,6 @@ def get_leaderboard_by_task_and_round(tid, rid):
         logger.exception('User leader board data loading failed: (%s)' % (ex))
         bottle.abort(400, 'Invalid task/round detail')
 
-def get_example_dict_list_with_anonymized_validations(examples):
-    example_dict_list = []
-    vm = ValidationModel()
-    for example in examples:
-        example_dict = example.to_dict()
-        validations = vm.getByEid(example.id)
-        example_dict['validation_labels'] = []
-        for validation in validations:
-            example_dict['validation_labels'].append(validation.label.name)
-        example_dict_list.append(example_dict)
-    return example_dict_list
-
 @bottle.get('/tasks/<tid:int>/rounds/<rid:int>/export')
 @_auth.requires_auth
 def export_current_round_data(credentials, tid, rid):
@@ -93,9 +81,8 @@ def export_current_round_data(credentials, tid, rid):
         if (tid, 'owner') not in [(perm.tid, perm.type) for perm in user.task_permissions]:
             bottle.abort(403, 'Access denied')
     e = ExampleModel()
-    examples = e.getByTidAndRid(tid, rid)
-    return util.json_encode(
-        get_example_dict_list_with_anonymized_validations(examples))
+    examples = e.getByTidAndRidWithAnonymizedValidations(tid, rid)
+    return util.json_encode([{**e[0].to_dict(), **{'validation_labels': eval('[' + e[1] + ']')}} for e in examples])
 
 @bottle.get('/tasks/<tid:int>/export')
 @_auth.requires_auth
@@ -106,9 +93,8 @@ def export_task_data(credentials, tid):
         if (tid, 'owner') not in [(perm.tid, perm.type) for perm in user.task_permissions]:
             bottle.abort(403, 'Access denied')
     e = ExampleModel()
-    examples = e.getByTid(tid)
-    return util.json_encode(
-        get_example_dict_list_with_anonymized_validations(examples))
+    examples = e.getByTidWithAnonymizedValidations(tid)
+    return util.json_encode([{**e[0].to_dict(), **{'validation_labels': eval('[' + e[1] + ']')}} for e in examples])
 
 def construct_user_board_response_json(query_result, total_count=0):
     list_objs = []
