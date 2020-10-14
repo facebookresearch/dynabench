@@ -26,6 +26,10 @@ class Score(Base):
     pretty_perf = db.Column(db.String(length=255))
     perf = db.Column(db.Float(), default=0.0)
 
+    raw_upload_data = db.Column(db.Text)
+    eval_id_start = db.Column(db.Integer, default=-1)
+    eval_id_end = db.Column(db.Integer, default=-1)
+
     def __repr__(self):
         return '<Score {}>'.format(self.id)
 
@@ -44,11 +48,12 @@ class ScoreModel(BaseModel):
         self.dbs.add(m)
         return self.dbs.commit()
 
-    def bulk_create(self, model_id, score_objs=[]):
+    def bulk_create(self, model_id, score_objs=[], raw_upload_data=''):
         self.dbs.add_all([
             Score(
                 rid=score_obj['round_id'], mid=model_id, desc=score_obj['desc'],
-                longdesc=score_obj['longdesc'], pretty_perf=score_obj['pretty_perf'], perf=score_obj['perf']
+                longdesc=score_obj['longdesc'], pretty_perf=score_obj['pretty_perf'], perf=score_obj['perf'],
+                raw_upload_data=raw_upload_data, eval_id_start=score_obj['start_index'], eval_id_end=score_obj['end_index']
             )
             for score_obj in score_objs
         ])

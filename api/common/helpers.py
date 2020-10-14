@@ -131,6 +131,8 @@ def validate_prediction(r_objects, prediction, task_shortname='nli'):
         score_obj['longdesc'] = None
         # slice and extract round specific prediction
         end_index = end_index + len(target_labels[r_obj.rid])
+        score_obj['start_index'] = start_index
+        score_obj['end_index'] = end_index
         r_prediction = prediction[start_index: end_index]
         start_index = end_index
         r_accuracy = eval_fn(r_prediction, target_labels[r_obj.rid])
