@@ -16,7 +16,7 @@ from models.badge import BadgeModel
 
 import json
 
-@bottle.get('/examples/<tid:int>/<rid:int>/filtered/<min_num_flags:int>/<max_num_flags:int>/<min_num_disagreements:int>/<max_num_disagreements>')
+@bottle.get('/examples/<tid:int>/<rid:int>/filtered/<min_num_flags:int>/<max_num_flags:int>/<min_num_disagreements:int>/<max_num_disagreements:int>')
 @_auth.requires_auth
 def get_random_filtered_example(credentials, tid, rid, min_num_flags, max_num_flags, min_num_disagreements, max_num_disagreements):
     rm = RoundModel()
