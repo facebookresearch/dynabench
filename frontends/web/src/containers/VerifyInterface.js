@@ -10,15 +10,16 @@ import {
   Row,
   Col,
   Card,
-  InputGroup,
-  OverlayTrigger,
-  Tooltip
+  DropdownButton,
+  Dropdown,
+  Modal,
+  Form
 } from "react-bootstrap";
 import UserContext from "./UserContext";
-import BootstrapSwitchButton from 'bootstrap-switch-button-react'
 import {
   OverlayProvider,
-  BadgeOverlay
+  BadgeOverlay,
+  Annotation
 } from "./Overlay"
 
 class VerifyInterface extends React.Component {
@@ -30,9 +31,15 @@ class VerifyInterface extends React.Component {
       task: {},
       example: {},
       owner_mode: false,
+      ownerValidationFlagFilter: "Any",
+      ownerValidationDisagreementFilter: "Any",
     };
     this.getNewExample = this.getNewExample.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
+    this.setRangesAndGetRandomFilteredExample = this.setRangesAndGetRandomFilteredExample.bind(this);
+    this.updateUserSettings = this.updateUserSettings.bind(this);
+    this.updateOwnerValidationFlagFilter = this.updateOwnerValidationFlagFilter.bind(this);
+    this.updateOwnerValidationDisagreementFilter = this.updateOwnerValidationDisagreementFilter.bind(this);
   }
   componentDidMount() {
     const {
@@ -47,6 +54,16 @@ class VerifyInterface extends React.Component {
           "&src=" +
           encodeURIComponent("/tasks/" + params.taskId + "/create")
       );
+    }
+
+    if (this.context.user.settings_json) {
+      const settings_json = JSON.parse(this.context.user.settings_json);
+      if (settings_json.hasOwnProperty('owner_validation_flag_filter')) {
+        this.setState({ ownerValidationFlagFilter: settings_json['owner_validation_flag_filter'] });
+      }
+      if (settings_json.hasOwnProperty('owner_validation_disagreement_filter')) {
+        this.setState({ ownerValidationDisagreementFilter: settings_json['owner_validation_disagreement_filter'] });
+      }
     }
 
     this.setState({ taskId: params.taskId }, function () {
@@ -69,7 +86,7 @@ class VerifyInterface extends React.Component {
 
   getNewExample() {
     (this.state.owner_mode
-      ? this.context.api.getRandomFlaggedExample(this.state.taskId, this.state.task.selected_round)
+      ? this.setRangesAndGetRandomFilteredExample()
       : this.context.api.getRandomExample(this.state.taskId, this.state.task.selected_round))
       .then((result) => {
         if (this.state.task.type !== 'extract') {
@@ -111,6 +128,60 @@ class VerifyInterface extends React.Component {
         });
     }
   }
+
+  setRangesAndGetRandomFilteredExample() {
+    var minNumFlags;
+    var maxNumFlags;
+    var minNumDisagreements;
+    var maxNumDisagreements;
+
+    if (this.state.ownerValidationFlagFilter === "Any") {
+      minNumFlags = 0;
+      maxNumFlags = 5;
+    } else {
+      minNumFlags = this.state.ownerValidationFlagFilter;
+      maxNumFlags = this.state.ownerValidationFlagFilter;
+    }
+
+    if (this.state.ownerValidationDisagreementFilter === "Any") {
+      minNumDisagreements = 0;
+      maxNumDisagreements = 4;
+    } else {
+      minNumDisagreements = this.state.ownerValidationDisagreementFilter;
+      maxNumDisagreements = this.state.ownerValidationDisagreementFilter;
+    }
+
+    return this.context.api.getRandomFilteredExample(
+      this.state.taskId, this.state.task.selected_round,
+      minNumFlags, maxNumFlags, minNumDisagreements, maxNumDisagreements);
+  }
+
+  updateUserSettings(key, value) {
+    var settings_json;
+    if (this.context.user.settings_json) {
+      settings_json = JSON.parse(this.context.user.settings_json);
+    } else {
+      settings_json = {};
+    }
+    settings_json[key] = value;
+    this.context.user.settings_json = JSON.stringify(settings_json);
+    this.context.api.updateUser(this.context.user.id, this.context.user);
+  }
+
+  updateOwnerValidationFlagFilter(value) {
+    this.updateUserSettings('owner_validation_flag_filter', value);
+    this.setState({ ownerValidationFlagFilter: value }, () => {
+      this.getNewExample();
+    });
+  }
+
+  updateOwnerValidationDisagreementFilter(value) {
+    this.updateUserSettings('owner_validation_disagreement_filter', value);
+    this.setState({ ownerValidationDisagreementFilter: value }, () => {
+      this.getNewExample();
+    });
+  }
+
   render() {
     return (
       <OverlayProvider initiallyHide={true}>
@@ -122,6 +193,45 @@ class VerifyInterface extends React.Component {
         </BadgeOverlay>
         <Container className="mb-5 pb-5">
           <Col className="m-auto" lg={12}>
+            {this.context.api.isTaskOwner(this.context.user, this.state.task.id) || this.context.user.admin
+              ? <div style={{float: "right"}}>
+                  <Annotation placement="top" tooltip="Click to adjust your owner validation filters">
+                    <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
+                      onClick={() => { this.setState({showOwnerValidationFiltersModal: true}) }}
+                    ><i className="fa fa-cog"></i></button>
+                  </Annotation>
+                  <Modal
+                    show={this.state.showOwnerValidationFiltersModal}
+                    onHide={() => this.setState({showOwnerValidationFiltersModal: false})}
+                    >
+                      <Modal.Header closeButton>
+                        <Modal.Title>Owner Validation Filters</Modal.Title>
+                      </Modal.Header>
+                      <Modal.Body>
+                        <Form.Check
+                          checked={this.state.owner_mode}
+                          label="Enter task owner mode?"
+                          onChange={() => {
+                              this.setState({ owner_mode: !this.state.owner_mode },
+                              this.componentDidMount()
+                            );}
+                          }
+                        />
+                        {this.state.owner_mode
+                          ? <div>
+                              <DropdownButton variant="light" className="p-1" title={this.state.ownerValidationFlagFilter.toString() + " flag" + (this.state.ownerValidationFlagFilter === 1 ? "" : "s")}>
+                                {["Any",0,1,2,3,4,5].map((target, index) => <Dropdown.Item onClick={() => this.updateOwnerValidationFlagFilter(target)} key={index} index={index}>{target}</Dropdown.Item>)}
+                              </DropdownButton>
+                              <DropdownButton variant="light" className="p-1" title={this.state.ownerValidationDisagreementFilter.toString() + " correct/incorrect disagreement" + (this.state.ownerValidationDisagreementFilter === 1 ? "" : "s")}>
+                                {["Any",0,1,2,3,4].map((target, index) => <Dropdown.Item onClick={() => this.updateOwnerValidationDisagreementFilter(target)} key={index} index={index}>{target}</Dropdown.Item>)}
+                              </DropdownButton>
+                            </div>
+                          : ""
+                        }
+                      </Modal.Body>
+                  </Modal>
+                </div>
+              : ""}
             <div className="mt-4 mb-5 pt-3">
               <p className="text-uppercase mb-0 spaced-header">{this.props.taskName}</p>
               <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
@@ -241,32 +351,6 @@ class VerifyInterface extends React.Component {
                   </Card.Body>
                 }
                 </Card>
-                <div className="p-3">
-                  {this.context.api.isTaskOwner(this.context.user, this.state.task.id) || this.context.user.admin ?
-                    <OverlayTrigger
-                      placement="bottom"
-                      delay={{ show: 250, hide: 400 }}
-                      overlay={(props) => <Tooltip id="button-tooltip" {...props}>Switch between task owner and regular annotation mode.</Tooltip>}
-                    >
-                      <span>
-                        <BootstrapSwitchButton
-                          checked={!this.state.owner_mode}
-                          onlabel="Regular Mode"
-                          onstyle="primary blue-bg"
-                          offstyle="warning"
-                          offlabel="Task Owner Mode"
-                          width={180}
-                          onChange={(checked) => {
-                            this.setState({ owner_mode: !checked },
-                            this.componentDidMount()
-                          );
-                          }}
-                        />
-                      </span>
-                    </OverlayTrigger>
-                   : ""
-                  }
-                </div>
                 <div className="p-2">
                 {this.state.owner_mode ?
                     <p style={{'color': 'red'}}>WARNING: You are in "Task owner mode." You can verify examples as correct or incorrect without input from anyone else!!</p>

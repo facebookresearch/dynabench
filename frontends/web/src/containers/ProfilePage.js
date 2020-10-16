@@ -61,19 +61,19 @@ const StatsSubPage = (props) => {
                    >
                      <tr>
                        <td>
-                         Model error:
+                         Model error rate (verified/unverified):
                        </td>
                        <td className="text-right">
                          {props.user.examples_submitted && (100 *
-                           props.user.total_fooled /
-                           props.user.examples_submitted
-                         ).toFixed(2)}% (rate){" "}
-                         {props.user.total_fooled} (count){" "}
-                         {props.user.examples_submitted && (100 *
                            props.user.total_verified_fooled /
                            props.user.examples_submitted
-                         ).toFixed(2)}% (verified rate){" "}
-                         {props.user.total_verified_fooled} (verified count){" "}
+                         ).toFixed(2)}% (
+                         {props.user.total_verified_fooled}/{props.user.examples_submitted}) / {" "}
+                         {props.user.examples_submitted && (100 *
+                           props.user.total_fooled /
+                           props.user.examples_submitted
+                         ).toFixed(2)}% (
+                         {props.user.total_fooled}/{props.user.examples_submitted})
                        </td>
                      </tr>
                    </OverlayTrigger>
@@ -84,16 +84,16 @@ const StatsSubPage = (props) => {
                     >
                       <tr>
                         <td>
-                          Rejection:
+                          Rejection rate:
                         </td>
                         <td className="text-right">
                           {props.user.examples_submitted && (100 *
                             (props.user.total_fooled - props.user.total_verified_fooled) /
                             props.user.examples_submitted
-                          ).toFixed(2)}% (rate){" "}
+                          ).toFixed(2)}% (
                           {props.user.examples_submitted &&
                             props.user.total_fooled - props.user.total_verified_fooled
-                          } (count)
+                          }/{props.user.examples_submitted})
                         </td>
                       </tr>
                     </OverlayTrigger>
@@ -104,14 +104,15 @@ const StatsSubPage = (props) => {
                     >
                       <tr>
                         <td>
-                          Retraction:
+                          Retraction rate:
                         </td>
                         <td className="text-right">
                         {props.user.examples_submitted && (100 *
                           props.user.total_retracted/
                           props.user.examples_submitted
-                        ).toFixed(2)}% (rate){" "}
-                        {props.user.total_retracted} (count)
+                        ).toFixed(2)}% (
+                        {props.user.total_retracted}/
+                        {props.user.examples_submitted})
                         </td>
                       </tr>
                     </OverlayTrigger>
