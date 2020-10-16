@@ -10,15 +10,12 @@ import {
   Row,
   Col,
   Card,
-  InputGroup,
   DropdownButton,
   Dropdown,
-  OverlayTrigger,
-  Tooltip,
-  Modal
+  Modal,
+  Form
 } from "react-bootstrap";
 import UserContext from "./UserContext";
-import BootstrapSwitchButton from 'bootstrap-switch-button-react'
 import {
   OverlayProvider,
   BadgeOverlay,
@@ -196,7 +193,7 @@ class VerifyInterface extends React.Component {
         </BadgeOverlay>
         <Container className="mb-5 pb-5">
           <Col className="m-auto" lg={12}>
-            {this.state.owner_mode
+            {this.context.api.isTaskOwner(this.context.user, this.state.task.id) || this.context.user.admin
               ? <div style={{float: "right"}}>
                   <Annotation placement="top" tooltip="Click to adjust your owner validation filters">
                     <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
@@ -211,12 +208,26 @@ class VerifyInterface extends React.Component {
                         <Modal.Title>Owner Validation Filters</Modal.Title>
                       </Modal.Header>
                       <Modal.Body>
-                        <DropdownButton variant="light" className="p-1" title={this.state.ownerValidationFlagFilter.toString() + " flag" + (this.state.ownerValidationFlagFilter === 1 ? "" : "s")}>
-                          {["Any",0,1,2,3,4,5].map((target, index) => <Dropdown.Item onClick={() => this.updateOwnerValidationFlagFilter(target)} key={index} index={index}>{target}</Dropdown.Item>)}
-                        </DropdownButton>
-                        <DropdownButton variant="light" className="p-1" title={this.state.ownerValidationDisagreementFilter.toString() + " correct/incorrect disagreement" + (this.state.ownerValidationDisagreementFilter === 1 ? "" : "s")}>
-                          {["Any",0,1,2,3,4].map((target, index) => <Dropdown.Item onClick={() => this.updateOwnerValidationDisagreementFilter(target)} key={index} index={index}>{target}</Dropdown.Item>)}
-                        </DropdownButton>
+                        <Form.Check
+                          checked={this.state.owner_mode}
+                          label="Enter task owner mode?"
+                          onChange={() => {
+                              this.setState({ owner_mode: !this.state.owner_mode },
+                              this.componentDidMount()
+                            );}
+                          }
+                        />
+                        {this.state.owner_mode
+                          ? <div>
+                              <DropdownButton variant="light" className="p-1" title={this.state.ownerValidationFlagFilter.toString() + " flag" + (this.state.ownerValidationFlagFilter === 1 ? "" : "s")}>
+                                {["Any",0,1,2,3,4,5].map((target, index) => <Dropdown.Item onClick={() => this.updateOwnerValidationFlagFilter(target)} key={index} index={index}>{target}</Dropdown.Item>)}
+                              </DropdownButton>
+                              <DropdownButton variant="light" className="p-1" title={this.state.ownerValidationDisagreementFilter.toString() + " correct/incorrect disagreement" + (this.state.ownerValidationDisagreementFilter === 1 ? "" : "s")}>
+                                {["Any",0,1,2,3,4].map((target, index) => <Dropdown.Item onClick={() => this.updateOwnerValidationDisagreementFilter(target)} key={index} index={index}>{target}</Dropdown.Item>)}
+                              </DropdownButton>
+                            </div>
+                          : ""
+                        }
                       </Modal.Body>
                   </Modal>
                 </div>
@@ -340,32 +351,6 @@ class VerifyInterface extends React.Component {
                   </Card.Body>
                 }
                 </Card>
-                <div className="p-3">
-                  {this.context.api.isTaskOwner(this.context.user, this.state.task.id) || this.context.user.admin ?
-                    <OverlayTrigger
-                      placement="bottom"
-                      delay={{ show: 250, hide: 400 }}
-                      overlay={(props) => <Tooltip id="button-tooltip" {...props}>Switch between task owner and regular annotation mode.</Tooltip>}
-                    >
-                      <span>
-                        <BootstrapSwitchButton
-                          checked={!this.state.owner_mode}
-                          onlabel="Regular Mode"
-                          onstyle="primary blue-bg"
-                          offstyle="warning"
-                          offlabel="Task Owner Mode"
-                          width={180}
-                          onChange={(checked) => {
-                            this.setState({ owner_mode: !checked },
-                            this.componentDidMount()
-                          );
-                          }}
-                        />
-                      </span>
-                    </OverlayTrigger>
-                   : ""
-                  }
-                </div>
                 <div className="p-2">
                 {this.state.owner_mode ?
                     <p style={{'color': 'red'}}>WARNING: You are in "Task owner mode." You can verify examples as correct or incorrect without input from anyone else!!</p>
