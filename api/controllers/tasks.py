@@ -82,7 +82,13 @@ def export_current_round_data(credentials, tid, rid):
             bottle.abort(403, 'Access denied')
     e = ExampleModel()
     examples = e.getByTidAndRidWithAnonymizedValidations(tid, rid)
-    return util.json_encode([{**e[0].to_dict(), **{'validation_labels': eval('[' + e[1] + ']')}} for e in examples])
+    example_dicts = []
+    for example in examples:
+        example_dict = example[0].to_dict()
+        example_labels = eval('[' + example[1] + ']')
+        example_dict['validation_labels'] = example_labels
+        example_dicts.append(example_dict)
+    return util.json_encode(example_dicts)
 
 @bottle.get('/tasks/<tid:int>/export')
 @_auth.requires_auth
@@ -94,7 +100,13 @@ def export_task_data(credentials, tid):
             bottle.abort(403, 'Access denied')
     e = ExampleModel()
     examples = e.getByTidWithAnonymizedValidations(tid)
-    return util.json_encode([{**e[0].to_dict(), **{'validation_labels': eval('[' + e[1] + ']')}} for e in examples])
+    example_dicts = []
+    for example in examples:
+        example_dict = example[0].to_dict()
+        example_labels = eval('[' + example[1] + ']')
+        example_dict['validation_labels'] = example_labels
+        example_dicts.append(example_dict)
+    return util.json_encode(example_dicts)
 
 def construct_user_board_response_json(query_result, total_count=0):
     list_objs = []
