@@ -127,7 +127,7 @@ class HomePage extends React.Component {
         <p>No tasks found</p>
       ) : (
         tasks.map((task, index) => (
-          <Col sm={6} lg={3} key={task.id}>
+          <Col sm={6} lg={3} key={task.id} className="mb-3">
             <Card
               key={task.id}
               className="task-card"
@@ -151,14 +151,13 @@ class HomePage extends React.Component {
                       <td>Model error rate:</td>
                       <td>
                         {task.round.total_collected > 0
-                          ? ( 100 *
-                              task.round.total_fooled /
+                          ? (
+                              (100 * task.round.total_fooled) /
                               task.round.total_collected
                             ).toFixed(2)
                           : "0.00"}
-                        % (
-                        {task.round.total_fooled}/{task.round.total_collected}
-                        )
+                        % ({task.round.total_fooled}/
+                        {task.round.total_collected})
                       </td>
                     </tr>
                     <tr>
