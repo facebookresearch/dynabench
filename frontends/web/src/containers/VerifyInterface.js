@@ -283,25 +283,47 @@ class VerifyInterface extends React.Component {
                             <p>
                             {this.state.example.text}
                             </p>
-                            {this.state.example.metadata_json
-                              ? JSON.parse(this.state.example.metadata_json).hasOwnProperty('hate_target')
-                                ? <div>
-                                    <h6 className="text-uppercase dark-blue-color spaced-header">
-                                    Hate Target:
-                                    </h6>
-                                    <p>
-                                    {JSON.parse(this.state.example.metadata_json).hate_target}
-                                    </p>
-                                  </div>
-                                : ""
-                              : ""
-                            }
                             <h6 className="text-uppercase dark-blue-color spaced-header">
                             Label:
                             </h6>
                             <p>
                             {this.state.example.target}
                             </p>
+                            {this.state.example.example_explanation ?
+                              <>
+                                <h6 className="text-uppercase dark-blue-color spaced-header">
+                                Example explanation <small>(why target label is correct)</small>
+                                </h6>
+                                <p>
+                                {this.state.example.example_explanation}
+                                </p>
+                              </>
+                              : ""
+                            }
+                            {this.state.example.model_explanation ?
+                              <>
+                                <h6 className="text-uppercase dark-blue-color spaced-header">
+                                Model explanation <small>({this.state.example.model_wrong ? "why model was fooled" : "how they tried to trick the model"})</small>
+                                </h6>
+                                <p>
+                                {this.state.example.model_explanation}
+                                </p>
+                              </>
+                              : ""
+                            }
+                            {this.state.example.metadata_json
+                              ? JSON.parse(this.state.example.metadata_json).hasOwnProperty('hate_type')
+                                ? <>
+                                    <h6 className="text-uppercase dark-blue-color spaced-header">
+                                    Hate Target:
+                                    </h6>
+                                    <p>
+                                    {JSON.parse(this.state.example.metadata_json).hate_type}
+                                    </p>
+                                  </>
+                                : ""
+                              : ""
+                            }
                           </div>
                         }
                       </Col>
