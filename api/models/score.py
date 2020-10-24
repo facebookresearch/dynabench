@@ -94,7 +94,7 @@ class ScoreModel(BaseModel):
 
     def getModelPerfByTidAndRid(self, tid, rid, n=5, offset=0):
         # main query to fetch the model details
-        query_res = self.dbs.query(Model.id, Model.name, User.username, User.id, Score.perf) \
+        query_res = self.dbs.query(Model.id, Model.name, User.username, User.id, Score.perf, Score.metadata_json) \
                 .join(Score, Score.mid == Model.id, isouter=True)\
                 .join(User, User.id == Model.uid, isouter=True)\
                 .join(Round, Round.id == Score.rid, isouter=True).filter(Model.tid == tid)\
