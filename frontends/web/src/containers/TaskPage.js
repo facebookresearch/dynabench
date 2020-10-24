@@ -260,12 +260,12 @@ const OverallModelLeaderBoard = (props) => {
         <tr>
           <th>Model</th>
           {props.tags.map((tag) => {
-            return (<th key={`th-${tag}`}>{tag}</th>)
+            return (<th className="text-right" key={`th-${tag}`}>{tag}</th>)
           })}
           {props.taskShortName === "QA" ? (
-            <th>Overall F1</th>
+            <th className="text-right pr-4">Overall F1</th>
           ) : (
-            <th>Mean Accuracy</th>
+            <th className="text-right pr-4">Mean Accuracy</th>
           )}
         </tr>
       </thead>
@@ -291,10 +291,10 @@ const OverallModelLeaderBoard = (props) => {
                   if (selected_tag.length > 0) tag_result = parseFloat(selected_tag[0].perf).toFixed(2)+'%';
                 };
                 return (
-                  <td key={`${tag}-${data.model_id}`}>{tag_result}</td>
+                  <td className="text-right" key={`${tag}-${data.model_id}`}>{tag_result}</td>
                 )
               })}
-              <td>{parseFloat(data.accuracy).toFixed(2)}%</td>
+              <td className="text-right pr-4">{parseFloat(data.accuracy).toFixed(2)}%</td>
             </tr>
           );
         })}
@@ -309,8 +309,8 @@ const OverallUserLeaderBoard = (props) => {
       <thead>
         <tr>
           <th>User</th>
-          <th>Mean MER</th>
-          <th>Total</th>
+          <th className="text-right">Mean MER</th>
+          <th className="text-right pr-4">Total</th>
         </tr>
       </thead>
       <tbody>
@@ -328,8 +328,8 @@ const OverallUserLeaderBoard = (props) => {
                   {data.username}
                 </Link>
               </td>
-              <td>{data.MER}%</td>
-              <td>{data.total}</td>
+              <td className="text-right">{data.MER}%</td>
+              <td className="text-right pr-4">{data.total}</td>
             </tr>
           );
         })}
