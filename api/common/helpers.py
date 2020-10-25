@@ -65,7 +65,7 @@ def read_qa_round_labels(root_path):
         r_num = r_file_path[len(r_file_path)-1:len(r_file_path)]
         r_file_path = full_path + '/' + r_file_path
         loaded_data = [json.loads(l) for l in open(f'{r_file_path}/test.jsonl').read().splitlines()]
-        qa_labels[int(r_num)] = [(example['id'], example['answers'][0]['text'].lower()) for example in loaded_data]
+        qa_labels[int(r_num)] = [{'id': example['id'], 'answer': example['answers'][0]['text'], 'tags': example['tags']} for example in loaded_data]
     return qa_labels
 
 def get_accuracy(prediction, target):
@@ -97,13 +97,15 @@ def validate_prediction(r_objects, prediction, task_shortname='nli'):
     """
 
     app = bottle.default_app()
+    target_tags = None
     if task_shortname == 'nli':
         target_labels = app.config['nli_labels']
         eval_fn = get_accuracy
     elif task_shortname == 'qa':
         target_examples = app.config['qa_labels']
-        target_ids = {r_id: [x[0] for x in target_examples[r_id]] for r_id in target_examples}
-        target_labels = {r_id: [x[1] for x in target_examples[r_id]] for r_id in target_examples}
+        target_ids = {r_id: [x['id'] for x in target_examples[r_id]] for r_id in target_examples}
+        target_labels = {r_id: [x['answer'] for x in target_examples[r_id]] for r_id in target_examples}
+        target_tags = {r_id: [x['tags'] for x in target_examples[r_id]] for r_id in target_examples}
         # For QA, we are using SQuAD JSON format, so align the predictions with the target labels
         aligned_prediction = []
         for r_id in sorted(target_examples):
@@ -129,16 +131,36 @@ def validate_prediction(r_objects, prediction, task_shortname='nli'):
         score_obj['round_id'] = r_obj.id
         score_obj['desc'] = None
         score_obj['longdesc'] = None
-        # slice and extract round specific prediction
+        score_obj['metadata_json'] = {}
+
+        # Slice and extract round specific prediction
         end_index = end_index + len(target_labels[r_obj.rid])
         score_obj['start_index'] = start_index
         score_obj['end_index'] = end_index
         r_prediction = prediction[start_index: end_index]
         start_index = end_index
+
+        # Get round performance
         r_accuracy = eval_fn(r_prediction, target_labels[r_obj.rid])
         score_obj['pretty_perf'] = str(round(r_accuracy * 100, 2)) + ' %'
         score_obj['perf'] = round(r_accuracy * 100, 2)
-        # sum rounds accuracy and generate score object list
+
+        # Get performance breakdown for this round across tags
+        if target_tags:
+            examples_by_tag = {}
+            for r_pred, r_target_label, r_target_tags in zip(r_prediction, target_labels[r_obj.rid], target_tags[r_obj.rid]):
+                for tag in r_target_tags:
+                    examples_by_tag.setdefault(tag, []).append((r_pred, r_target_label))
+            perf_by_tag = {
+                k: eval_fn(*list(zip(*examples))) for k, examples in examples_by_tag.items()
+            }
+            score_obj['metadata_json']['perf_by_tag'] = [{
+                'tag': tag,
+                'pretty_perf': str(round(perf * 100, 2)) + ' %',
+                'perf': round(perf * 100, 2)
+            } for tag, perf in perf_by_tag.items()]
+        
+        # Sum rounds accuracy and generate score object list
         overall_accuracy = overall_accuracy + round(r_accuracy * 100, 2)
         round_accuracy['round_id'] = r_obj.rid
         round_accuracy['accuracy'] = round(r_accuracy * 100, 2)

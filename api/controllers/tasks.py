@@ -178,13 +178,27 @@ def get_task_trends(tid):
         bottle.abort(400, 'Invalid task detail')
 
 def construct_model_board_response_json(query_result, total_count):
-    fields = ['model_id', 'model_name', 'owner', 'owner_id', 'accuracy']
-    dicts = [dict(zip(fields, d)) for d in query_result]
-    if dicts:
-        resp_obj = {'count': total_count, 'data': dicts}
+    fields = ['model_id', 'model_name', 'owner', 'owner_id', 'accuracy', 'metadata_json']
+    list_objs = []
+    leaderboard_tags = []
+    for d in query_result:
+        obj = dict(zip(fields, d))
+        if obj.get('metadata_json', None):
+            obj['metadata_json'] = json.loads(obj['metadata_json'])
+            # Check tags for every model to allow flexibility for adding or removing tags in future
+            if 'perf_by_tag' in obj['metadata_json']:
+                for tag in obj['metadata_json']['perf_by_tag']:
+                    if tag['tag'] not in leaderboard_tags:
+                        leaderboard_tags.append(tag['tag'])
+        else:
+            obj['metadata_json'] = {}
+        list_objs.append(obj)
+
+    if list_objs:
+        resp_obj = {'count': total_count, 'data': list_objs, 'leaderboard_tags': leaderboard_tags}
         return util.json_encode(resp_obj)
     else:
-        resp_obj = {'count': 0, 'data': []}
+        resp_obj = {'count': 0, 'data': [], 'leaderboard_tags': []}
         return util.json_encode(resp_obj)
 
 def construct_trends_response_json(query_result):

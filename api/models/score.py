@@ -2,6 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import json
 import sqlalchemy as db
 from .base import Base, BaseModel
 from .model import Model
@@ -29,6 +30,7 @@ class Score(Base):
     raw_upload_data = db.Column(db.Text)
     eval_id_start = db.Column(db.Integer, default=-1)
     eval_id_end = db.Column(db.Integer, default=-1)
+    metadata_json = db.Column(db.Text)
 
     def __repr__(self):
         return '<Score {}>'.format(self.id)
@@ -53,7 +55,8 @@ class ScoreModel(BaseModel):
             Score(
                 rid=score_obj['round_id'], mid=model_id, desc=score_obj['desc'],
                 longdesc=score_obj['longdesc'], pretty_perf=score_obj['pretty_perf'], perf=score_obj['perf'],
-                raw_upload_data=raw_upload_data, eval_id_start=score_obj['start_index'], eval_id_end=score_obj['end_index']
+                raw_upload_data=raw_upload_data, eval_id_start=score_obj['start_index'], eval_id_end=score_obj['end_index'],
+                metadata_json=json.dumps(score_obj['metadata_json'])
             )
             for score_obj in score_objs
         ])
@@ -91,7 +94,7 @@ class ScoreModel(BaseModel):
 
     def getModelPerfByTidAndRid(self, tid, rid, n=5, offset=0):
         # main query to fetch the model details
-        query_res = self.dbs.query(Model.id, Model.name, User.username, User.id, Score.perf) \
+        query_res = self.dbs.query(Model.id, Model.name, User.username, User.id, Score.perf, Score.metadata_json) \
                 .join(Score, Score.mid == Model.id, isouter=True)\
                 .join(User, User.id == Model.uid, isouter=True)\
                 .join(Round, Round.id == Score.rid, isouter=True).filter(Model.tid == tid)\
