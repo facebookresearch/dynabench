@@ -99,8 +99,9 @@ class CreateInterface extends React.Component {
       const newContent = this.state.content.slice();
       newContent[idx].cls = 'retracted';
       newContent[idx].retracted = true;
-      this.setState({content: newContent});
-    }, error => {
+      this.setState({content: newContent, tries:this.state.tries-1}, function(){console.log(this.state);});
+    })
+    .catch(error => {
       console.log(error);
     });
   }
@@ -117,10 +118,21 @@ class CreateInterface extends React.Component {
         this.setState({submitDisabled: false, refreshDisabled: false});
         return;
       }
+      if (this.state.task.type == "extract") {
+        var answer_text = "";
+        if (this.state.answer.length > 0) {
+          var last_answer = this.state.answer[this.state.answer.length - 1];
+          var answer_text = last_answer.tokens.join(" "); // NOTE: no spaces required as tokenising by word boundaries
+          // Update the target with the answer text since this is defined by the annotator in QA (unlike NLI)
+          this.setState({ target: answer_text });
+        }
+      } else {
+        var answer_text = null;
+      }
       let modelInputs = {
         context: this.state.context.context,
         hypothesis: this.state.hypothesis,
-        answer: this.state.task.type == 'extract' ? this.state.answer : null
+        answer: answer_text
       };
       this.api.getModelResponse(this.state.task.round.url, modelInputs)
         .then(result => {
@@ -131,7 +143,7 @@ class CreateInterface extends React.Component {
           } else {
             var modelPredIdx = null;
             var modelPredStr = result.text;
-            var modelFooled = (this.state.answer !== result.text);
+            var modelFooled = !result.model_is_correct;
             // TODO: Handle this more elegantly:
             result.prob = [result.prob, 1 - result.prob];
             this.state.task.targets = ['confidence', 'uncertainty'];
@@ -146,18 +158,23 @@ class CreateInterface extends React.Component {
             retracted: false,
             response: result}
           ]}, function() {
+          var last_answer = this.state.answer[this.state.answer.length - 1];
+          var answer_text = last_answer.tokens.join(" ");
           const metadata = {
             'annotator_id': this.props.providerWorkerId,
             'mephisto_id': this.props.mephistoWorkerId,
-            'model': 'model-name-unknown'
-          };
+            'model': 'model-name-unknown',
+            'agentId': this.props.agentId,
+            'assignmentId': this.props.assignmentId,
+            'fullresponse': this.state.task.type == 'extract' ? JSON.stringify(this.state.answer) : this.state.target
+          }; 
           this.api.storeExample(
             this.state.task.id,
             this.state.task.cur_round,
             'turk',
             this.state.context.id,
             this.state.hypothesis,
-            this.state.task.type == 'extract' ? this.state.answer : this.state.target,
+            this.state.task.type == 'extract' ? answer_text : this.state.target,
             result,
             metadata
           ).then(result => {
@@ -165,7 +182,7 @@ class CreateInterface extends React.Component {
             this.state.tries += 1;
             this.setState({hypothesis: "", submitDisabled: false, refreshDisabled: false, mapKeyToExampleId: {...this.state.mapKeyToExampleId, [key]: result.id}},
               function () {
-		if (this.state.content[this.state.content.length-1].fooled || this.state.tries >= this.state.total_tries) {
+                if (this.state.content[this.state.content.length-1].fooled || this.state.tries >= this.state.total_tries) {
                   console.log('Success! You can submit HIT');
                   this.setState({taskCompleted: true});
                 }
@@ -224,17 +241,17 @@ class CreateInterface extends React.Component {
                 <small>{
                   item.retracted ?
                   <>
-                    <span><strong>Example retracted</strong> - thanks. The model predicted <strong>{this.state.task.targets[item.modelPredStr]}</strong>. Please try again!</span>
+                    <span><strong>Example retracted</strong> - thanks. The model predicted <strong>{item.modelPredStr}</strong>. Please try again!</span>
                   </>
                   :
                   (item.fooled ?
                     <>
-                      <span><strong>Well done!</strong> You fooled the model. The model predicted <strong>{this.state.task.targets[item.modelPredStr]}</strong> instead. </span><br />
+                      <span><strong>Well done!</strong> You fooled the model. The model predicted <strong>{item.modelPredStr}</strong> instead. </span><br />
                       <span>Made a mistake? You can still <a href="#" data-index={index} onClick={this.retractExample} className="btn-link">retract this example</a>. Otherwise, we will have it verified.</span>
                     </>
                     :
                     <>
-                      <span><strong>Bad luck!</strong> The model correctly predicted <strong>{this.state.task.targets[item.modelPredStr]}</strong>. Try again.</span>
+                      <span><strong>Bad luck!</strong> The model correctly predicted <strong>{item.modelPredStr}</strong>. Try again.</span>
                       <span>We will still store this as an example that the model got right. You can <a href="#" data-index={index} onClick={this.retractExample} className="btn-link">retract this example</a> if you don't want it saved.</span>
                     </>
                   )
@@ -253,12 +270,9 @@ class CreateInterface extends React.Component {
     return (
       <Container>
         <Row>
-          <h2>Find examples for - {this.state.task.name}</h2>
-        </Row>
-        <Row>
           <CardGroup style={{marginTop: 20, width: '100%'}}>
             <Card border='dark'>
-              <Card.Body style={{height: 400, overflowY: 'scroll'}}>
+              <Card.Body style={{height: 250, overflowY: 'scroll'}}>
                 {content}
               </Card.Body>
             </Card>

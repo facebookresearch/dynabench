@@ -10,11 +10,16 @@ import {
   Row,
   Col,
   Card,
+  DropdownButton,
+  Dropdown,
+  Modal,
+  Form
 } from "react-bootstrap";
 import UserContext from "./UserContext";
 import {
   OverlayProvider,
-  BadgeOverlay
+  BadgeOverlay,
+  Annotation
 } from "./Overlay"
 
 class VerifyInterface extends React.Component {
@@ -25,9 +30,16 @@ class VerifyInterface extends React.Component {
       taskId: null,
       task: {},
       example: {},
+      owner_mode: false,
+      ownerValidationFlagFilter: "Any",
+      ownerValidationDisagreementFilter: "Any",
     };
     this.getNewExample = this.getNewExample.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
+    this.setRangesAndGetRandomFilteredExample = this.setRangesAndGetRandomFilteredExample.bind(this);
+    this.updateUserSettings = this.updateUserSettings.bind(this);
+    this.updateOwnerValidationFlagFilter = this.updateOwnerValidationFlagFilter.bind(this);
+    this.updateOwnerValidationDisagreementFilter = this.updateOwnerValidationDisagreementFilter.bind(this);
   }
   componentDidMount() {
     const {
@@ -42,6 +54,16 @@ class VerifyInterface extends React.Component {
           "&src=" +
           encodeURIComponent("/tasks/" + params.taskId + "/create")
       );
+    }
+
+    if (this.context.user.settings_json) {
+      const settings_json = JSON.parse(this.context.user.settings_json);
+      if (settings_json.hasOwnProperty('owner_validation_flag_filter')) {
+        this.setState({ ownerValidationFlagFilter: settings_json['owner_validation_flag_filter'] });
+      }
+      if (settings_json.hasOwnProperty('owner_validation_disagreement_filter')) {
+        this.setState({ ownerValidationDisagreementFilter: settings_json['owner_validation_disagreement_filter'] });
+      }
     }
 
     this.setState({ taskId: params.taskId }, function () {
@@ -61,9 +83,11 @@ class VerifyInterface extends React.Component {
         });
     });
   }
+
   getNewExample() {
-    this.context.api
-      .getRandomExample(this.state.taskId, this.state.task.selected_round)
+    (this.state.owner_mode
+      ? this.setRangesAndGetRandomFilteredExample()
+      : this.context.api.getRandomExample(this.state.taskId, this.state.task.selected_round))
       .then((result) => {
         if (this.state.task.type !== 'extract') {
           result.target = this.state.task.targets[parseInt(result.target_pred)];
@@ -82,18 +106,18 @@ class VerifyInterface extends React.Component {
     var action_label = null;
     switch(action) {
       case 'correct':
-        action_label = 'C';
+        action_label = 'correct';
         break;
       case 'incorrect':
-        action_label = 'I';
+        action_label = 'incorrect';
         break;
       case 'flag':
-        action_label = 'F';
+        action_label = 'flagged';
         break;
     }
     if (action_label !== null) {
-      this.context.api
-        .validateExample(this.state.example.id, action_label)
+      const mode = this.state.owner_mode ? "owner" : "user";
+      this.context.api.validateExample(this.state.example.id, action_label, mode)
         .then((result) => {
           this.getNewExample();
           if (!!result.badges) {
@@ -104,6 +128,60 @@ class VerifyInterface extends React.Component {
         });
     }
   }
+
+  setRangesAndGetRandomFilteredExample() {
+    var minNumFlags;
+    var maxNumFlags;
+    var minNumDisagreements;
+    var maxNumDisagreements;
+
+    if (this.state.ownerValidationFlagFilter === "Any") {
+      minNumFlags = 0;
+      maxNumFlags = 5;
+    } else {
+      minNumFlags = this.state.ownerValidationFlagFilter;
+      maxNumFlags = this.state.ownerValidationFlagFilter;
+    }
+
+    if (this.state.ownerValidationDisagreementFilter === "Any") {
+      minNumDisagreements = 0;
+      maxNumDisagreements = 4;
+    } else {
+      minNumDisagreements = this.state.ownerValidationDisagreementFilter;
+      maxNumDisagreements = this.state.ownerValidationDisagreementFilter;
+    }
+
+    return this.context.api.getRandomFilteredExample(
+      this.state.taskId, this.state.task.selected_round,
+      minNumFlags, maxNumFlags, minNumDisagreements, maxNumDisagreements);
+  }
+
+  updateUserSettings(key, value) {
+    var settings_json;
+    if (this.context.user.settings_json) {
+      settings_json = JSON.parse(this.context.user.settings_json);
+    } else {
+      settings_json = {};
+    }
+    settings_json[key] = value;
+    this.context.user.settings_json = JSON.stringify(settings_json);
+    this.context.api.updateUser(this.context.user.id, this.context.user);
+  }
+
+  updateOwnerValidationFlagFilter(value) {
+    this.updateUserSettings('owner_validation_flag_filter', value);
+    this.setState({ ownerValidationFlagFilter: value }, () => {
+      this.getNewExample();
+    });
+  }
+
+  updateOwnerValidationDisagreementFilter(value) {
+    this.updateUserSettings('owner_validation_disagreement_filter', value);
+    this.setState({ ownerValidationDisagreementFilter: value }, () => {
+      this.getNewExample();
+    });
+  }
+
   render() {
     return (
       <OverlayProvider initiallyHide={true}>
@@ -115,6 +193,45 @@ class VerifyInterface extends React.Component {
         </BadgeOverlay>
         <Container className="mb-5 pb-5">
           <Col className="m-auto" lg={12}>
+            {this.context.api.isTaskOwner(this.context.user, this.state.task.id) || this.context.user.admin
+              ? <div style={{float: "right"}}>
+                  <Annotation placement="top" tooltip="Click to adjust your owner validation filters">
+                    <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
+                      onClick={() => { this.setState({showOwnerValidationFiltersModal: true}) }}
+                    ><i className="fa fa-cog"></i></button>
+                  </Annotation>
+                  <Modal
+                    show={this.state.showOwnerValidationFiltersModal}
+                    onHide={() => this.setState({showOwnerValidationFiltersModal: false})}
+                    >
+                      <Modal.Header closeButton>
+                        <Modal.Title>Owner Validation Filters</Modal.Title>
+                      </Modal.Header>
+                      <Modal.Body>
+                        <Form.Check
+                          checked={this.state.owner_mode}
+                          label="Enter task owner mode?"
+                          onChange={() => {
+                              this.setState({ owner_mode: !this.state.owner_mode },
+                              this.componentDidMount()
+                            );}
+                          }
+                        />
+                        {this.state.owner_mode
+                          ? <div>
+                              <DropdownButton variant="light" className="p-1" title={this.state.ownerValidationFlagFilter.toString() + " flag" + (this.state.ownerValidationFlagFilter === 1 ? "" : "s")}>
+                                {["Any",0,1,2,3,4,5].map((target, index) => <Dropdown.Item onClick={() => this.updateOwnerValidationFlagFilter(target)} key={index} index={index}>{target}</Dropdown.Item>)}
+                              </DropdownButton>
+                              <DropdownButton variant="light" className="p-1" title={this.state.ownerValidationDisagreementFilter.toString() + " correct/incorrect disagreement" + (this.state.ownerValidationDisagreementFilter === 1 ? "" : "s")}>
+                                {["Any",0,1,2,3,4].map((target, index) => <Dropdown.Item onClick={() => this.updateOwnerValidationDisagreementFilter(target)} key={index} index={index}>{target}</Dropdown.Item>)}
+                              </DropdownButton>
+                            </div>
+                          : ""
+                        }
+                      </Modal.Body>
+                  </Modal>
+                </div>
+              : ""}
             <div className="mt-4 mb-5 pt-3">
               <p className="text-uppercase mb-0 spaced-header">{this.props.taskName}</p>
               <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
@@ -166,25 +283,47 @@ class VerifyInterface extends React.Component {
                             <p>
                             {this.state.example.text}
                             </p>
-                            {this.state.example.metadata_json
-                              ? JSON.parse(this.state.example.metadata_json).hasOwnProperty('hate_target')
-                                ? <div>
-                                    <h6 className="text-uppercase dark-blue-color spaced-header">
-                                    Hate Target:
-                                    </h6>
-                                    <p>
-                                    {JSON.parse(this.state.example.metadata_json).hate_target}
-                                    </p>
-                                  </div>
-                                : ""
-                              : ""
-                            }
                             <h6 className="text-uppercase dark-blue-color spaced-header">
                             Label:
                             </h6>
                             <p>
                             {this.state.example.target}
                             </p>
+                            {this.state.example.example_explanation ?
+                              <>
+                                <h6 className="text-uppercase dark-blue-color spaced-header">
+                                Example explanation <small>(why target label is correct)</small>
+                                </h6>
+                                <p>
+                                {this.state.example.example_explanation}
+                                </p>
+                              </>
+                              : ""
+                            }
+                            {this.state.example.model_explanation ?
+                              <>
+                                <h6 className="text-uppercase dark-blue-color spaced-header">
+                                Model explanation <small>({this.state.example.model_wrong ? "why model was fooled" : "how they tried to trick the model"})</small>
+                                </h6>
+                                <p>
+                                {this.state.example.model_explanation}
+                                </p>
+                              </>
+                              : ""
+                            }
+                            {this.state.example.metadata_json
+                              ? JSON.parse(this.state.example.metadata_json).hasOwnProperty('hate_type')
+                                ? <>
+                                    <h6 className="text-uppercase dark-blue-color spaced-header">
+                                    Hate Target:
+                                    </h6>
+                                    <p>
+                                    {JSON.parse(this.state.example.metadata_json).hate_type}
+                                    </p>
+                                  </>
+                                : ""
+                              : ""
+                            }
                           </div>
                         }
                       </Col>
@@ -196,22 +335,25 @@ class VerifyInterface extends React.Component {
                       onClick={() => this.handleResponse("correct")}
                       type="button"
                       className="btn btn-light btn-sm">
-                        <i className="fas fa-thumbs-up"></i> Correct
+                        <i className="fas fa-thumbs-up"></i> {this.state.owner_mode ? "Verified " : ""} Correct
                     </button>{" "}
                     <button
                       data-index={this.props.index}
                       onClick={() => this.handleResponse("incorrect")}
                       type="button"
                       className="btn btn-light btn-sm">
-                        <i className="fas fa-thumbs-down"></i> Incorrect
+                        <i className="fas fa-thumbs-down"></i> {this.state.owner_mode ? "Verified " : ""} Incorrect
                     </button>{" "}
-                    <button
-                      data-index={this.props.index}
-                      onClick={() => this.handleResponse("flag")}
-                      type="button"
-                      className="btn btn-light btn-sm">
-                        <i className="fas fa-flag"></i> Flag
-                    </button>{" "}
+                    {this.state.owner_mode ?
+                      ""
+                      : <button
+                          data-index={this.props.index}
+                          onClick={() => this.handleResponse("flag")}
+                          type="button"
+                          className="btn btn-light btn-sm">
+                            <i className="fas fa-flag"></i> Flag
+                        </button>
+                    }{" "}
                     <button
                       data-index={this.props.index}
                       onClick={this.getNewExample}
@@ -231,6 +373,11 @@ class VerifyInterface extends React.Component {
                   </Card.Body>
                 }
                 </Card>
+                <div className="p-2">
+                {this.state.owner_mode ?
+                    <p style={{'color': 'red'}}>WARNING: You are in "Task owner mode." You can verify examples as correct or incorrect without input from anyone else!!</p>
+                  : ''}
+                </div>
               </Card.Body>
             </Card>
           </Col>

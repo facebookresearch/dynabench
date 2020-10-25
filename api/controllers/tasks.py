@@ -13,6 +13,7 @@ from models.round import RoundModel
 from models.score import ScoreModel
 from models.example import ExampleModel
 from models.user import UserModel
+from models.validation import ValidationModel
 
 import json
 
@@ -80,8 +81,14 @@ def export_current_round_data(credentials, tid, rid):
         if (tid, 'owner') not in [(perm.tid, perm.type) for perm in user.task_permissions]:
             bottle.abort(403, 'Access denied')
     e = ExampleModel()
-    examples = e.getByTidAndRid(tid, rid)
-    return util.json_encode([e.to_dict() for e in examples])
+    examples = e.getByTidAndRidWithAnonymizedValidations(tid, rid)
+    example_dicts = []
+    for example in examples:
+        example_dict = example[0].to_dict()
+        example_labels = eval('[' + example[1] + ']')
+        example_dict['validation_labels'] = example_labels
+        example_dicts.append(example_dict)
+    return util.json_encode(example_dicts)
 
 @bottle.get('/tasks/<tid:int>/export')
 @_auth.requires_auth
@@ -92,8 +99,14 @@ def export_task_data(credentials, tid):
         if (tid, 'owner') not in [(perm.tid, perm.type) for perm in user.task_permissions]:
             bottle.abort(403, 'Access denied')
     e = ExampleModel()
-    examples = e.getByTid(tid)
-    return util.json_encode([e.to_dict() for e in examples])
+    examples = e.getByTidWithAnonymizedValidations(tid)
+    example_dicts = []
+    for example in examples:
+        example_dict = example[0].to_dict()
+        example_labels = eval('[' + example[1] + ']')
+        example_dict['validation_labels'] = example_labels
+        example_dicts.append(example_dict)
+    return util.json_encode(example_dicts)
 
 def construct_user_board_response_json(query_result, total_count=0):
     list_objs = []

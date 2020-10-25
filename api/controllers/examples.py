@@ -16,7 +16,17 @@ from models.badge import BadgeModel
 
 import json
 
-from collections import Counter
+@bottle.get('/examples/<tid:int>/<rid:int>/filtered/<min_num_flags:int>/<max_num_flags:int>/<min_num_disagreements:int>/<max_num_disagreements:int>')
+@_auth.requires_auth
+def get_random_filtered_example(credentials, tid, rid, min_num_flags, max_num_flags, min_num_disagreements, max_num_disagreements):
+    rm = RoundModel()
+    round = rm.getByTidAndRid(tid, rid)
+    em = ExampleModel()
+    example = em.getRandomFiltered(round.id, min_num_flags, max_num_flags, min_num_disagreements, max_num_disagreements, n=1)
+    if not example:
+        bottle.abort(500, f'No examples available ({round.id})')
+    example = example[0].to_dict()
+    return util.json_encode(example)
 
 @bottle.get('/examples/<tid:int>/<rid:int>')
 @_auth.requires_auth_or_turk
@@ -27,7 +37,6 @@ def get_random_example(credentials, tid, rid):
     if credentials['id'] != 'turk':
         example = em.getRandomWrong(round.id, n=1, my_uid=credentials['id'])
     else:
-        # TODO: Handle this in frontend? Or rejection sample here for N tries
         example = em.getRandomWrong(round.id, n=1)
     if not example:
         bottle.abort(500, f'No examples available ({round.id})')
@@ -56,70 +65,6 @@ def get_example_metadata(credentials, eid):
         bottle.abort(403, 'Access denied')
     return util.json_encode(example.metadata_json)
 
-@bottle.put('/examples/<eid:int>/validate')
-@_auth.requires_auth_or_turk
-def validate_example(credentials, eid):
-    data = bottle.request.json
-    if not data or 'label' not in data:
-        bottle.abort(400, 'Bad request')
-    label = data['label']
-    if label not in ['C', 'I', 'F']:
-        bottle.abort(400, 'Bad request')
-
-    em = ExampleModel()
-    example = em.get(eid)
-    if not example:
-        bottle.abort(404, 'Not found')
-
-    if credentials['id'] == 'turk':
-        if not util.check_fields(data, ['uid']):
-            bottle.abort(400, 'Missing data');
-        metadata = json.loads(example.metadata_json)
-        if 'annotator_id' not in metadata or metadata['annotator_id'] == data['uid']:
-            bottle.abort(403, 'Access denied (cannot validate your own example)')
-    elif credentials['id'] == example.uid:
-        bottle.abort(403, 'Access denied (cannot validate your own example)')
-
-    nobj = example.verifier_preds
-    if nobj is None:
-        nobj = ''
-    else:
-        nobj += '|'
-    nobj += str(credentials['id']) + ',' + label
-    em.update(example.id, {
-        'verifier_preds': nobj,
-        'total_verified': example.total_verified + 1
-    })
-    preds = Counter([x.split(",")[1] for x in nobj.split("|")])
-    rm = RoundModel()
-    um = UserModel()
-    cm = ContextModel()
-    context = cm.get(example.cid)
-    rm.updateLastActivity(context.r_realid)
-    if preds['C'] >= 5:
-        em.update(example.id, {'verified': True, 'verified_correct': True})
-        rm.incrementVerifiedFooledCount(context.r_realid)
-        um.incrementCorrectCount(example.uid)
-    elif preds['I'] >= 5:
-        em.update(example.id, {'verified': True, 'verified_incorrect': True})
-    elif preds['F'] >= 5:
-        em.update(example.id, {'verified': True, 'verified_flagged': True})
-
-    ret = example.to_dict()
-    if credentials['id'] != 'turk':
-        user = um.updateValidatedCount(credentials['id'])
-
-        bm = BadgeModel()
-        nm = NotificationModel()
-        badges = bm.updateSubmitCountsAndCheckBadgesEarned(user, example, 'validate')
-        for badge in badges:
-            bm.addBadge(badge)
-            nm.create(credentials['id'], 'NEW_BADGE_EARNED', badge['name'])
-        if badges:
-            ret['badges'] = '|'.join([badge['name'] for badge in badges])
-
-    return util.json_encode(ret)
-
 @bottle.put('/examples/<eid:int>')
 @_auth.requires_auth_or_turk
 def update_example(credentials, eid):
@@ -141,6 +86,9 @@ def update_example(credentials, eid):
 
         logger.info("Updating example {} with {}".format(example.id, data))
         em.update(example.id, data)
+        if 'retracted' in data and data['retracted'] == True:
+            um = UserModel()
+            um.incrementRetractedCount(example.uid)
         return util.json_encode({'success': 'ok'})
     except Exception as e:
         logger.error('Error updating example {}: {}'.format(eid, e))
@@ -184,6 +132,8 @@ def post_example(credentials):
         rm.incrementFooledCount(context.r_realid)
     if credentials['id'] != 'turk':
         um = UserModel()
+        if example.model_wrong:
+            um.incrementFooledCount(example.uid)
         bm = BadgeModel()
         nm = NotificationModel()
         user = um.get(credentials['id'])

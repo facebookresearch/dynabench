@@ -75,9 +75,11 @@ def do_upload(credentials):
 
     try:
         if task_shortname == 'qa':
-            test_raw_data = json.loads(upload.file.read().decode('utf-8'))  # if QA, use standard SQuAD JSON format
+            raw_upload_data = json.loads(upload.file.read().decode('utf-8'))   # if QA, use standard SQuAD JSON format
+            test_raw_data = raw_upload_data
         else:
-            test_raw_data = upload.file.read().decode('utf-8').lower().splitlines()
+            raw_upload_data = upload.file.read().decode('utf-8')
+            test_raw_data = raw_upload_data.lower().splitlines()
 
     except Exception as ex:
         logger.exception(ex)
@@ -101,7 +103,7 @@ def do_upload(credentials):
             model = m.create(task_id=task_id, user_id=user_id, name='', shortname='', longdesc='', desc='',
                              overall_perf='{:.2f}'.format(overall_accuracy))
             s = ScoreModel()
-            scores = s.bulk_create(model_id=model.id, score_objs=score_obj_list)
+            scores = s.bulk_create(model_id=model.id, score_objs=score_obj_list, raw_upload_data=json.dumps(raw_upload_data))
 
             user_dict = user.to_dict()
 

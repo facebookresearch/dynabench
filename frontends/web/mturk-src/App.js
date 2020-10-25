@@ -55,6 +55,8 @@ function App() {
         api={api}
         providerWorkerId={providerWorkerId}
         mephistoWorkerId={mephistoWorkerId}
+        agentId={agentId}
+        assignmentId={assignmentId}
       />
     </>
   );

@@ -204,6 +204,12 @@ export default class ApiService {
     });
   }
 
+  getRandomFilteredExample(tid, rid, minNumFlags, maxNumFlags, minNumDisagreements, maxNumDisagreements) {
+    return this.fetch(`${this.domain}/examples/${tid}/${rid}/filtered/${minNumFlags}/${maxNumFlags}/${minNumDisagreements}/${maxNumDisagreements}`, {
+      method: "GET",
+    });
+  }
+
   getModel(modelId) {
     return this.fetch(`${this.domain}/models/${modelId}/details`, {
       method: "GET",
@@ -312,12 +318,16 @@ export default class ApiService {
     });
   }
 
-  validateExample(id, label, uid = null) {
-    let obj = {label: label};
+  isTaskOwner(user, tid) {
+    return user.task_permissions?.filter((task_permission) => tid === task_permission.tid && "owner" === task_permission.type).length > 0;
+  }
+
+  validateExample(id, label, mode, uid = null) {
+    let obj = {label: label, mode: mode};
     if (this.mode == 'mturk') {
       obj.uid = uid;
     }
-    return this.fetch(`${this.domain}/examples/${id}/validate`, {
+    return this.fetch(`${this.domain}/validations/${id}`, {
       method: "PUT",
       body: JSON.stringify(obj),
     });
