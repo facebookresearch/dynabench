@@ -46,7 +46,7 @@ class DynaBenchConfig:
 class TestScriptConfig(RunScriptConfig):
     defaults: List[Any] = field(default_factory=lambda: defaults)
     dynabench: DynaBenchConfig = DynaBenchConfig()
-    num_jobs: int = 10
+    num_jobs: int = 3
     preselected_qualifications: List[str] = ("100_hits_approved", "english_only")
     frontend_dir: str = f'{CURRENT_DIRECTORY}/../frontends'
 
