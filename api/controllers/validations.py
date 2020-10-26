@@ -64,7 +64,7 @@ def validate_example(credentials, eid):
             bottle.abort(403, 'Access denied (cannot validate your own example)')
         turk_annotator_id = data['uid']
         for validation in validations:
-            if validation.metadata_json['annotator_id'] == turk_annotator_id:
+            if json.loads(validation.metadata_json)['annotator_id'] == turk_annotator_id:
                 bottle.abort(403, 'Access denied (you have already validated this example)')
     elif credentials['id'] == example.uid and mode != 'owner':
         bottle.abort(403, 'Access denied (cannot validate your own example)')
