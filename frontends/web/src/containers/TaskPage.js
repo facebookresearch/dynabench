@@ -18,7 +18,10 @@ import {
   OverlayTrigger,
   Pagination,
   DropdownButton,
-  Dropdown
+  Dropdown,
+  Modal,
+  Form,
+  InputGroup
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import UserContext from "./UserContext";
@@ -505,6 +508,32 @@ class TaskPage extends React.Component {
       });
   }
 
+  updateTaskSettings(key, value) {
+    var settings_json;
+    if (this.state.task.settings_json) {
+      settings_json = JSON.parse(this.state.task.settings_json);
+    } else {
+      settings_json = {};
+    }
+    settings_json[key] = value;
+    this.state.task.settings_json = JSON.stringify(settings_json);
+    this.context.api.updateTaskSettings(this.state.task.id, this.state.task.settings_json);
+  }
+
+  updateValidateNonFooling(value) {
+    this.updateTaskSettings('validate_non_fooling', value);
+    this.setState({ validateNonFooling: value }, () => {
+      this.getNewExample();
+    });
+  }
+
+  updateNumMatchingValidations(value) {
+    this.updateTaskSettings('num_matching_validations', value);
+    this.setState({ numMatchingValidations: value }, () => {
+      this.getNewExample();
+    });
+  }
+
   paginate = (component, state) => {
     const componentPageState =
       component === "model" ? "modelLeaderBoardPage" : "userLeaderBoardPage";
@@ -552,7 +581,42 @@ class TaskPage extends React.Component {
                   }
                 </OverlayContext.Consumer>
               </Annotation>
+              {this.context.api.isTaskOwner(this.context.user, this.state.task.id) || this.context.user.admin
+                ?  <Annotation placement="top" tooltip="Click to adjust your owner validation filters">
+                      <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
+                        onClick={() => { this.setState({showOwnerValidationFiltersModal: true}) }}
+                      ><i className="fa fa-cog"></i></button>
+                    </Annotation>
+                : ""}
             </ButtonGroup>
+            <Modal
+              show={this.state.showOwnerValidationFiltersModal}
+              onHide={() => this.setState({showOwnerValidationFiltersModal: false})}
+              >
+                <Modal.Header closeButton>
+                  <Modal.Title>Owner Validation Filters</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                <Form.Check
+                  checked={false}
+                  label="Validate non-model-fooling examples?"
+                  onChange={() => {
+                      this.setState({ validate_non_fooling: false},
+                    );}
+                  }
+                />
+                <InputGroup className="align-items-center">
+                  Number of matching validations
+                  <Col sm="3">
+                    <Form.Control
+                      type="number"
+                      defaultValue={3}
+                      onChange={(e) => console.log(parseInt(e.target.value))}
+                    />
+                  </Col>
+                </InputGroup>
+                </Modal.Body>
+            </Modal>
             </div>
             <p>{this.state.task.desc}</p>
             {this.props.location.hash === "#overall" ? (
