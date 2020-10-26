@@ -65,7 +65,7 @@ def read_qa_round_labels(root_path):
         r_num = r_file_path[len(r_file_path)-1:len(r_file_path)]
         r_file_path = full_path + '/' + r_file_path
         loaded_data = [json.loads(l) for l in open(f'{r_file_path}/test.jsonl').read().splitlines()]
-        qa_labels[int(r_num)] = [{'id': example['id'], 'answer': example['answers'][0]['text'], 'tags': example['tags']} for example in loaded_data]
+        qa_labels[int(r_num)] = [{'id': example['id'], 'answer': example['answers'][0]['text'], 'tags': example['tags'] if 'tags' in example else ''} for example in loaded_data]
     return qa_labels
 
 def get_accuracy(prediction, target):
@@ -159,7 +159,7 @@ def validate_prediction(r_objects, prediction, task_shortname='nli'):
                 'pretty_perf': str(round(perf * 100, 2)) + ' %',
                 'perf': round(perf * 100, 2)
             } for tag, perf in perf_by_tag.items()]
-        
+
         # Sum rounds accuracy and generate score object list
         overall_accuracy = overall_accuracy + round(r_accuracy * 100, 2)
         round_accuracy['round_id'] = r_obj.rid
