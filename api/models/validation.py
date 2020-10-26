@@ -6,6 +6,8 @@ import enum
 import sqlalchemy as db
 from .base import Base, BaseModel
 
+from common.logging import logger
+
 class LabelEnum(enum.Enum):
     flagged = 'flagged'
     correct = 'correct'
