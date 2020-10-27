@@ -42,10 +42,10 @@ class ValidationModel(BaseModel):
     def __init__(self):
         super(ValidationModel, self).__init__(Validation)
 
-    def create(self, uid, eid, label, mode, metadata_json={}):
+    def create(self, uid, eid, label, mode, metadata={}):
         try:
             if uid == 'turk':
-                validation = Validation(eid=eid, label=label, mode=mode, metadata_json=json.dumps(metadata_json))
+                validation = Validation(eid=eid, label=label, mode=mode, metadata_json=json.dumps(metadata))
             else:
                 validation = Validation(uid=uid, eid=eid, label=label, mode=mode)
             self.dbs.add(validation)
