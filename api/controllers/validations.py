@@ -55,21 +55,21 @@ def validate_example(credentials, eid):
         if validation.uid == credentials['id'] and mode != 'owner':
             bottle.abort(403, 'Access denied (you have already validated this example)')
 
-    turk_annotator_id = None
+    current_validation_metadata = {}
     if credentials['id'] == 'turk':
         if not util.check_fields(data, ['uid']):
             bottle.abort(400, 'Missing data');
-        metadata = json.loads(example.metadata_json)
-        if ('annotator_id' not in metadata or metadata['annotator_id'] == data['uid']) and mode != 'owner':
+        example_metadata = json.loads(example.metadata_json)
+        if ('annotator_id' not in example_metadata or example_metadata['annotator_id'] == data['uid']) and mode != 'owner':
             bottle.abort(403, 'Access denied (cannot validate your own example)')
-        turk_annotator_id = data['uid']
+        current_validation_metadata['annotator_id'] = data['uid']
         for validation in validations:
-            if json.loads(validation.metadata_json)['annotator_id'] == turk_annotator_id:
+            if json.loads(validation.metadata_json)['annotator_id'] == current_validation_metadata['annotator_id']:
                 bottle.abort(403, 'Access denied (you have already validated this example)')
     elif credentials['id'] == example.uid and mode != 'owner':
         bottle.abort(403, 'Access denied (cannot validate your own example)')
 
-    vm.create(credentials['id'], eid, label, mode, turk_annotator_id)
+    vm.create(credentials['id'], eid, label, mode, current_validation_metadata)
 
     em.update(example.id, {
         'total_verified': example.total_verified + 1
