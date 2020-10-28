@@ -20,8 +20,14 @@ from common.config import *
 from common.logging import *
 from common.mail_service import *
 from common.helpers import *
+from common.migrator import run_migrations
 
 init_logger(running_mode)
+
+
+# Run migration only for the parent
+if not os.environ.get("BOTTLE_CHILD", False):
+    run_migrations()
 
 app = bottle.default_app()
 for k in ['jwtsecret', 'jwtexp', 'jwtalgo', 'cookie_secret', 'refreshexp',
