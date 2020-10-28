@@ -5,6 +5,7 @@
  */
 
 import React from "react";
+import "./TaskPage.css";
 import {
   Container,
   Row,
@@ -599,7 +600,7 @@ class TaskPage extends React.Component {
                           )}
                       </h2>
                     </Card.Header>
-                    <Card.Body className="p-0">
+                    <Card.Body className="p-0 leaderboard-container">
                       <OverallModelLeaderBoard
                         data={this.state.modelLeaderBoardData}
                         tags={this.state.modelLeaderBoardTags}
@@ -635,7 +636,7 @@ class TaskPage extends React.Component {
                           )}
                       </h2>
                     </Card.Header>
-                    <Card.Body className="p-0">
+                    <Card.Body className="p-0 leaderboard-container">
                       <OverallUserLeaderBoard
                         data={this.state.userLeaderBoardData}
                       />
