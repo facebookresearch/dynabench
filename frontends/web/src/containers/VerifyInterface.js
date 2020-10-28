@@ -422,28 +422,30 @@ class VerifyInterface extends React.Component {
                           className="btn btn-light btn-sm">
                             <i className="fas fa-thumbs-down"></i> {this.state.owner_mode ? "Verified " : ""} Incorrect
                         </button>}
-                    {!this.state.owner_mode && this.state.flaggedSelected ?
-                        <div className="rounded border text-center p-1">
-                          <i className="fas fa-flag"></i> Flag
-                          <Col sm="12 p-1">
-                            <Form.Control
-                              type="text"
-                              className="btn-light"
-                              placeholder="Reason for flagging"
-                              onChange={(e) => this.setState({ flagReason: e.target.value })}
-                            />
-                          </Col>
-                          <button type="button" className="btn btn-light btn-sm"
-                            onClick={() => this.handleResponse("flagged") }
-                          > Save </button>
-                        </div>
-                      : <button
-                          data-index={this.props.index}
-                          onClick={() => {this.resetValidatorSelections(() => this.setState({ flaggedSelected: true}))}}
-                          type="button"
-                          className="btn btn-light btn-sm">
+                    {this.state.owner_mode ?
+                        ""
+                      : this.state.flaggedSelected ?
+                          <div className="rounded border text-center p-1">
                             <i className="fas fa-flag"></i> Flag
-                        </button>}
+                            <Col sm="12 p-1">
+                              <Form.Control
+                                type="text"
+                                className="btn-light"
+                                placeholder="Reason for flagging"
+                                onChange={(e) => this.setState({ flagReason: e.target.value })}
+                              />
+                            </Col>
+                            <button type="button" className="btn btn-light btn-sm"
+                              onClick={() => this.handleResponse("flagged") }
+                            > Save </button>
+                          </div>
+                        : <button
+                            data-index={this.props.index}
+                            onClick={() => {this.resetValidatorSelections(() => this.setState({ flaggedSelected: true}))}}
+                            type="button"
+                            className="btn btn-light btn-sm">
+                              <i className="fas fa-flag"></i> Flag
+                          </button>}
                     <button
                       data-index={this.props.index}
                       onClick={this.getNewExample}
