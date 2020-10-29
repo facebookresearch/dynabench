@@ -55,7 +55,11 @@ def validate_example(credentials, eid):
         if validation.uid == credentials['id'] and mode != 'owner':
             bottle.abort(403, 'Access denied (you have already validated this example)')
 
-    current_validation_metadata = {}
+    if 'metadata' in data:
+        current_validation_metadata = data['metadata']
+    else:
+        current_validation_metadata = {}
+
     if credentials['id'] == 'turk':
         if not util.check_fields(data, ['uid']):
             bottle.abort(400, 'Missing data');

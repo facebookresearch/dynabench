@@ -49,7 +49,7 @@ class ValidationModel(BaseModel):
             if uid == 'turk':
                 validation = Validation(eid=eid, label=label, mode=mode, metadata_json=json.dumps(metadata))
             else:
-                validation = Validation(uid=uid, eid=eid, label=label, mode=mode)
+                validation = Validation(uid=uid, eid=eid, label=label, mode=mode, metadata_json=json.dumps(metadata))
             self.dbs.add(validation)
             return self.dbs.commit()
         except Exception as error_message:
