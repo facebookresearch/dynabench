@@ -6,6 +6,11 @@ Dynamic Adversarial Benchmarking platform
 
 Dynabench on high-level is divided into two sections (i) api for backend (ii) frontends.
 
+## Development
+
+Please read our [contributing guidelines](https://github.com/facebookresearch/dynabench/blob/master/CONTRIBUTING.md) to understand how to setup your development environment including
+`pre-commit` hooks.
+
 ### Enabling backend
 
 First clone the repo using:

@@ -77,8 +77,8 @@ class VerifyInterface extends React.Component {
         .validateExample(this.state.example.id, action_label, this.props.providerWorkerId)
             .then(result => {
 		    this.props.onSubmit(this.state.content);
-	    }), (error) => { 
-		    console.log(error); 
+	    }), (error) => {
+		    console.log(error);
 	    }
       }
   }

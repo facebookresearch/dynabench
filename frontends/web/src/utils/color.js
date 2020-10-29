@@ -15,7 +15,7 @@ export const formatWordImportances = ({ words, importances }, target) => {
   words.map((word, i) => {
     const formatedWord = formatSpecialTokens(word);
     const color = getColor(importances[i], target);
-    const unwrapped_tag = `<mark style="background-color: ${color}; opacity:1.0; 
+    const unwrapped_tag = `<mark style="background-color: ${color}; opacity:1.0;
                     line-height:1.75"><font color="black"> ${formatedWord}
                     </font></mark>`;
     tags.push(unwrapped_tag);

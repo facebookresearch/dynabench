@@ -1,21 +1,23 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
 
 import collections
+import hashlib
 import json
 import logging
-import hashlib
+
+from transformers.data.metrics.squad_metrics import (
+    _compute_softmax,
+    _get_best_indexes,
+    get_final_text,
+)
 from transformers.data.processors.squad import SquadExample
-from transformers.data.metrics.squad_metrics import _compute_softmax, _get_best_indexes, get_final_text
 
 
 logger = logging.getLogger(__name__)
 
 
 def convert_to_squad_example(passage, question):
-    qas_id = hashlib.md5(
-        (passage + question).encode('utf-8')).hexdigest()
+    qas_id = hashlib.md5((passage + question).encode("utf-8")).hexdigest()
 
     example = SquadExample(
         qas_id=qas_id,
@@ -46,7 +48,8 @@ def compute_predictions_logits(
     tokenizer,
 ):
     """
-        Adapted from "transformers.data.metrics.squad_metrics import compute_predictions_logits"
+        Adapted from
+        "transformers.data.metrics.squad_metrics import compute_predictions_logits"
         Fixes include:
             - returning entire prediction object
             - calculating model confidence
@@ -69,7 +72,15 @@ def compute_predictions_logits(
         unique_id_to_result[result.unique_id] = result
 
     _PrelimPrediction = collections.namedtuple(  # pylint: disable=invalid-name
-        "PrelimPrediction", ["feature_index", "start_index", "end_index", "start_logit", "end_logit", "model_conf"]
+        "PrelimPrediction",
+        [
+            "feature_index",
+            "start_index",
+            "end_index",
+            "start_logit",
+            "end_logit",
+            "model_conf",
+        ],
     )
 
     all_predictions = collections.OrderedDict()
@@ -93,7 +104,8 @@ def compute_predictions_logits(
 
             start_indexes = _get_best_indexes(result.start_logits, n_best_size)
             end_indexes = _get_best_indexes(result.end_logits, n_best_size)
-            # if we could have irrelevant answers, get the min score of irrelevant
+            # if we could have irrelevant answers, get the min score of
+            # irrelevant
             if version_2_with_negative:
                 feature_null_score = result.start_logits[0] + result.end_logits[0]
                 if feature_null_score < score_null:
@@ -129,7 +141,8 @@ def compute_predictions_logits(
                             end_index=end_index,
                             start_logit=result.start_logits[start_index],
                             end_logit=result.end_logits[end_index],
-                            model_conf=softmaxed_start[start_index] * softmaxed_end[end_index]
+                            model_conf=softmaxed_start[start_index]
+                            * softmaxed_end[end_index],
                         )
                     )
         if version_2_with_negative:
@@ -143,7 +156,11 @@ def compute_predictions_logits(
                     model_conf=0.0,
                 )
             )
-        prelim_predictions = sorted(prelim_predictions, key=lambda x: (x.start_logit + x.end_logit), reverse=True)
+        prelim_predictions = sorted(
+            prelim_predictions,
+            key=lambda x: (x.start_logit + x.end_logit),
+            reverse=True,
+        )
 
         _NbestPrediction = collections.namedtuple(  # pylint: disable=invalid-name
             "NbestPrediction", ["text", "start_logit", "end_logit", "model_conf"]
@@ -174,7 +191,9 @@ def compute_predictions_logits(
                 tok_text = " ".join(tok_text.split())
                 orig_text = " ".join(orig_tokens)
 
-                final_text = get_final_text(tok_text, orig_text, do_lower_case, verbose_logging)
+                final_text = get_final_text(
+                    tok_text, orig_text, do_lower_case, verbose_logging
+                )
                 if final_text in seen_predictions:
                     continue
 
@@ -183,21 +202,45 @@ def compute_predictions_logits(
                 final_text = ""
                 seen_predictions[final_text] = True
 
-            nbest.append(_NbestPrediction(text=final_text, start_logit=pred.start_logit, end_logit=pred.end_logit, model_conf=pred.model_conf))
+            nbest.append(
+                _NbestPrediction(
+                    text=final_text,
+                    start_logit=pred.start_logit,
+                    end_logit=pred.end_logit,
+                    model_conf=pred.model_conf,
+                )
+            )
         # if we didn't include the empty option in the n-best, include it
         if version_2_with_negative:
             if "" not in seen_predictions:
-                nbest.append(_NbestPrediction(text="", start_logit=null_start_logit, end_logit=null_end_logit, model_conf=0.0))
+                nbest.append(
+                    _NbestPrediction(
+                        text="",
+                        start_logit=null_start_logit,
+                        end_logit=null_end_logit,
+                        model_conf=0.0,
+                    )
+                )
 
             # In very rare edge cases we could only have single null prediction.
-            # So we just create a nonce prediction in this case to avoid failure.
+            # So we just create a nonce prediction in this case to avoid
+            # failure.
             if len(nbest) == 1:
-                nbest.insert(0, _NbestPrediction(text="empty", start_logit=0.0, end_logit=0.0, model_conf=0.0))
+                nbest.insert(
+                    0,
+                    _NbestPrediction(
+                        text="empty", start_logit=0.0, end_logit=0.0, model_conf=0.0
+                    ),
+                )
 
         # In very rare edge cases we could have no valid predictions. So we
         # just create a nonce prediction in this case to avoid failure.
         if not nbest:
-            nbest.append(_NbestPrediction(text="empty", start_logit=0.0, end_logit=0.0, model_conf=-1.0))
+            nbest.append(
+                _NbestPrediction(
+                    text="empty", start_logit=0.0, end_logit=0.0, model_conf=-1.0
+                )
+            )
 
         assert len(nbest) >= 1
 
@@ -226,8 +269,13 @@ def compute_predictions_logits(
         if not version_2_with_negative:
             all_predictions[example.qas_id] = nbest_json[0]
         else:
-            # predict "" iff the null score - the score of best non-null > threshold
-            score_diff = score_null - best_non_null_entry.start_logit - (best_non_null_entry.end_logit)
+            # predict "" iff the null score - the score of best non-null >
+            # threshold
+            score_diff = (
+                score_null
+                - best_non_null_entry.start_logit
+                - (best_non_null_entry.end_logit)
+            )
             scores_diff_json[example.qas_id] = score_diff
             if score_diff > null_score_diff_threshold:
                 all_predictions[example.qas_id] = ""

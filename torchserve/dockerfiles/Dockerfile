@@ -31,8 +31,8 @@ RUN pip install captum
 RUN pip install --no-cache-dir psutil \
                 --no-cache-dir torch \
                 --no-cache-dir torchvision
-                
-RUN pip install transformers                
+
+RUN pip install transformers
 ADD serve serve
 RUN pip install ../serve/
 
