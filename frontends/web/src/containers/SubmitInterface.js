@@ -130,6 +130,13 @@ class SubmitInterface extends React.Component {
                 </p>
               ) : null}
 
+              {this.state.task.shortname === "Hate Speech" ? (
+                <p>
+                  Provide a .txt file with a single 1 or 0 on each line, corresponding to your model's predictions for the ordered test examples (0=not hateful, 1=hateful).
+                  If you submit for multiple rounds in one go (i.e., overall), concatenate in order (so first the answers, one per line, for round 1; then for round 2; then for round 3; in order).
+                </p>
+              ) : null}
+
                 <Formik
                   initialValues={{
                     file: null,
