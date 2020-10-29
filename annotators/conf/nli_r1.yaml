@@ -2,6 +2,8 @@
 mephisto:
   blueprint:
     onboarding_qualification: nli-1-qualification
+  architect:
+    port: 4000
   task:
     task_name: nli-1
     task_title: Fool the model - Natural Language Inference
