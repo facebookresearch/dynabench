@@ -80,6 +80,13 @@ export default class ApiService {
     });
   }
 
+  updateTaskSettings(taskId, settings) {
+    return this.fetch(`${this.domain}/tasks/${taskId}/settings`, {
+      method: "PUT",
+      body: JSON.stringify({settings: settings}),
+    });
+  }
+
   updateProfilePic(userId, file) {
     const formData = new FormData();
     formData.append("file", file);

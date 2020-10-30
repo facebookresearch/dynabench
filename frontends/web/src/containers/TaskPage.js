@@ -207,14 +207,6 @@ const TaskActionButtons = (props) => {
         </Annotation>
       </Nav.Item>
     ) : null}
-    {props.api.isTaskOwner(props.user, props.task.id) || props.user.admin ?
-      <Nav.Item className="task-action-btn ml-auto">
-        <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" id="dropdown-basic-button" title="Export">
-          <Dropdown.Item onClick={props.exportCurrentRoundData}>Export current round</Dropdown.Item>
-          <Dropdown.Item onClick={props.exportAllTaskData}>Export all</Dropdown.Item>
-        </DropdownButton>
-      </Nav.Item>
-      : null}
   </Nav>
   );
 };
@@ -389,9 +381,12 @@ class TaskPage extends React.Component {
       userLeaderBoardPage: 0,
       isEndOfUserLeaderPage: true,
       pageLimit: 5,
+      validateNonFooling: false,
+      numMatchingValidations: 3,
     };
 
     this.exportAllTaskData = this.exportAllTaskData.bind(this);
+    this.getSavedTaskSettings = this.getSavedTaskSettings.bind(this);
     this.exportCurrentRoundData = this.exportCurrentRoundData.bind(this);
   }
 
@@ -401,7 +396,7 @@ class TaskPage extends React.Component {
         .getTask(this.state.taskId)
         .then((result) => {
           this.setState({task: result, displayRoundId: result.cur_round, round: result.round}, function() {
-            this.refreshData();
+            this.refreshData(); this.getSavedTaskSettings();
           });
         }, (error) => {
           console.log(error);
@@ -428,6 +423,18 @@ class TaskPage extends React.Component {
             }
           });
       });
+    }
+  }
+
+  getSavedTaskSettings() {
+    if (this.state.task.settings_json) {
+      const settings_json = JSON.parse(this.state.task.settings_json);
+      if (settings_json.hasOwnProperty('validate_non_fooling')) {
+        this.setState({ validateNonFooling: settings_json['validate_non_fooling'] });
+      }
+      if (settings_json.hasOwnProperty('num_matching_validations')) {
+        this.setState({ numMatchingValidations: settings_json['num_matching_validations'] });
+      }
     }
   }
 
@@ -508,32 +515,6 @@ class TaskPage extends React.Component {
       });
   }
 
-  updateTaskSettings(key, value) {
-    var settings_json;
-    if (this.state.task.settings_json) {
-      settings_json = JSON.parse(this.state.task.settings_json);
-    } else {
-      settings_json = {};
-    }
-    settings_json[key] = value;
-    this.state.task.settings_json = JSON.stringify(settings_json);
-    this.context.api.updateTaskSettings(this.state.task.id, this.state.task.settings_json);
-  }
-
-  updateValidateNonFooling(value) {
-    this.updateTaskSettings('validate_non_fooling', value);
-    this.setState({ validateNonFooling: value }, () => {
-      this.getNewExample();
-    });
-  }
-
-  updateNumMatchingValidations(value) {
-    this.updateTaskSettings('num_matching_validations', value);
-    this.setState({ numMatchingValidations: value }, () => {
-      this.getNewExample();
-    });
-  }
-
   paginate = (component, state) => {
     const componentPageState =
       component === "model" ? "modelLeaderBoardPage" : "userLeaderBoardPage";
@@ -582,39 +563,56 @@ class TaskPage extends React.Component {
                 </OverlayContext.Consumer>
               </Annotation>
               {this.context.api.isTaskOwner(this.context.user, this.state.task.id) || this.context.user.admin
-                ?  <Annotation placement="top" tooltip="Click to adjust your owner validation filters">
-                      <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
-                        onClick={() => { this.setState({showOwnerValidationFiltersModal: true}) }}
-                      ><i className="fa fa-cog"></i></button>
-                    </Annotation>
+                ? <Annotation placement="top" tooltip="Click to adjust your owner task settings">
+                    <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
+                      onClick={() => { this.setState({showTaskOwnerSettingsModal: true}) }}
+                    ><i className="fa fa-cog"></i></button>
+                  </Annotation>
                 : ""}
             </ButtonGroup>
             <Modal
-              show={this.state.showOwnerValidationFiltersModal}
-              onHide={() => this.setState({showOwnerValidationFiltersModal: false})}
+              show={this.state.showTaskOwnerSettingsModal}
+              onHide={() => this.setState({ showTaskOwnerSettingsModal: false })}
               >
                 <Modal.Header closeButton>
-                  <Modal.Title>Owner Validation Filters</Modal.Title>
+                  <Modal.Title>Task Owner Settings</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                <Form.Check
-                  checked={false}
-                  label="Validate non-model-fooling examples?"
-                  onChange={() => {
-                      this.setState({ validate_non_fooling: false},
-                    );}
-                  }
-                />
-                <InputGroup className="align-items-center">
-                  Number of matching validations
-                  <Col sm="3">
-                    <Form.Control
-                      type="number"
-                      defaultValue={3}
-                      onChange={(e) => console.log(parseInt(e.target.value))}
-                    />
-                  </Col>
-                </InputGroup>
+                  <Form.Check
+                    checked={this.state.validateNonFooling}
+                    label="Validate non-model-fooling examples?"
+                    onChange={() => {
+                        this.setState(
+                          { validateNonFooling: !this.state.validateNonFooling },
+                          () => this.context.api.updateTaskSettings(this.state.task.id, { validate_non_fooling: this.state.validateNonFooling, num_matching_validations: this.state.numMatchingValidations })
+                        );
+                      }
+                    }
+                  />
+                  <InputGroup className="align-items-center">
+                    Number of matching validations needed
+                    <Col sm="3">
+                      <Form.Control
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="1"
+                        defaultValue={this.state.numMatchingValidations}
+                        onChange={(e) => {
+                            this.setState(
+                              { numMatchingValidations: parseInt(e.target.value) },
+                              () => this.context.api.updateTaskSettings(this.state.task.id, { validate_non_fooling: this.state.validateNonFooling, num_matching_validations: this.state.numMatchingValidations })
+                            );
+                          }
+                        }
+                      />
+                    </Col>
+                    {this.state.numMatchingValidations}
+                  </InputGroup>
+                  <DropdownButton className="border-0 blue-color font-weight-bold pt-2" id="dropdown-basic-button" title="Export Data">
+                    <Dropdown.Item onClick={this.exportCurrentRoundData}>Export current round</Dropdown.Item>
+                    <Dropdown.Item onClick={this.exportAllTaskData}>Export all</Dropdown.Item>
+                  </DropdownButton>
                 </Modal.Body>
             </Modal>
             </div>
@@ -630,8 +628,6 @@ class TaskPage extends React.Component {
                   taskId={this.state.taskId}
                   user={this.context.user}
                   task={this.state.task}
-                  exportCurrentRoundData={this.exportCurrentRoundData}
-                  exportAllTaskData={this.exportAllTaskData}
                 />
               </>
             ) :
