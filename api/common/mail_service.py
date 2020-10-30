@@ -7,6 +7,7 @@ from email.mime.text import MIMEText
 from string import Template
 
 import bottle
+
 from common.logging import logger
 
 

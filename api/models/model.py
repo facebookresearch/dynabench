@@ -25,6 +25,13 @@ class Model(Base):
     longdesc = db.Column(db.Text)
     papers = db.Column(db.Text)
 
+    # Model cards
+    params = db.Column(db.BigInteger)
+    languages = db.Column(db.Text)
+    license = db.Column(db.Text)
+    upload_date = db.Column(db.Date)
+    model_card = db.Column(db.Text)
+
     overall_perf = db.Column(db.Text)
 
     is_published = db.Column(db.BOOLEAN, default=False)

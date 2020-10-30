@@ -128,12 +128,16 @@ export default class ApiService {
     });
   }
 
-  publishModel({ modelId, name, description }) {
+  publishModel({ modelId, name, description, params, languages, license, model_card }) {
     return this.fetch(`${this.domain}/models/${modelId}/publish`, {
       method: "PUT",
       body: JSON.stringify({
         name,
         description,
+        params,
+        languages,
+        license,
+        model_card
       }),
     });
   }

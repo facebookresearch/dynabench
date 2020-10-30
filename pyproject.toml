@@ -2,8 +2,8 @@
 # This is required to make sorting same as fbcode as all absolute imports
 # are considered third party there
 known_third_party = [
-    "transformers", "yoyo", "boto3", "aiohttp", "pyjwt", "jwt", "cheroot",
-    "numpy", "sqlalchemy", "numpy", "pymysql", "six", "SQLAlchemy",
+    "transformers", "yoyo", "boto3", "bottle", "aiohttp", "pyjwt", "jwt", "cheroot",
+    "numpy", "sqlalchemy", "numpy", "pymysql", "requests", "six", "SQLAlchemy", "sagemaker",
     "torch", "werkzeug", "cryptography", "mephisto", "omegaconf", "hydra"
 ]
 skip_glob = "**/build/**,frontends/**"
