@@ -264,7 +264,7 @@ class ExampleModel(BaseModel):
         result = result_partially_validated.union(result_not_validated)
         if my_uid is not None:
             result = result.filter(Example.uid != my_uid)
-        result = result.order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
+        result = result.order_by(db.not_(Example.model_wrong), Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
         return result
     def getRandomFiltered(self, rid, validate_non_fooling, min_num_flags, max_num_flags, min_num_disagreements, max_num_disagreements, n=1):
         cnt_owner_validated = db.sql.func.sum(
@@ -309,5 +309,5 @@ class ExampleModel(BaseModel):
         if min_num_disagreements == 0 and min_num_flags == 0:
             result = result.union(result_not_validated)
 
-        result = result.order_by(Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
+        result = result.order_by(db.not_(Example.model_wrong), Example.total_verified.asc(), db.sql.func.rand()).limit(n).all()
         return result
