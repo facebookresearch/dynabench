@@ -54,9 +54,11 @@ class VerifyInterface extends React.Component {
       owner_mode: false,
       ownerValidationFlagFilter: "Any",
       ownerValidationDisagreementFilter: "Any",
+      correctSelected: false,
       incorrectSelected: false,
       flaggedSelected: false,
-      answer: ''
+      validatorLabel: '',
+      flagReason: null
     };
     this.getNewExample = this.getNewExample.bind(this);
     this.resetValidatorSelections = this.resetValidatorSelections.bind(this);
@@ -111,7 +113,7 @@ class VerifyInterface extends React.Component {
   }
 
   resetValidatorSelections(callback) {
-    return this.setState({ flaggedSelected: false, incorrectSelected: false, validatorLabel: null, flagReason: null, answer: '', needAnswer: false}, callback);
+    return this.setState({ correctSelected: false, flaggedSelected: false, incorrectSelected: false, validatorLabel: '', flagReason: null}, callback);
   }
 
   getNewExample() {
@@ -134,26 +136,29 @@ class VerifyInterface extends React.Component {
         })
     );
   }
-  handleResponse(action) {
+  handleResponse() {
+    var action;
+    if (this.state.correctSelected) {
+      action = 'correct'
+    } else if (this.state.incorrectSelected) {
+      action = 'incorrect'
+    } else if (this.state.flaggedSelected) {
+      action = 'flagged'
+    }
+
     const mode = this.state.owner_mode ? "owner" : "user";
-    if ((!this.state.needAnswer || (this.state.needAnswer && this.state.answer !== ''))
-        && (
-          (action === 'correct')
-          || (action === 'incorrect' && this.state.task.shortname !== "QA" && this.state.task.shortname !== "NLI") || (action === 'incorrect' && this.state.validatorLabel !== null)
-          || (action === 'flagged' && this.state.flagReason))
+    if ((action === 'correct')
+        || (action === 'incorrect' && (this.state.task.shortname === "Sentiment" || this.state.task.shortname === "Hate Speech")) || (action === 'incorrect' && this.state.validatorLabel !== '')
+        || (action === 'flagged' && this.state.flagReason)
         ) {
       var metadata = {};
 
-      if (this.state.validatorLabel !== null) {
+      if (this.state.validatorLabel !== '') {
         metadata['validator_label'] = this.state.validatorLabel;
       }
 
       if (this.state.flagReason !== null) {
         metadata['flag_reason'] = this.state.flagReason;
-      }
-
-      if (this.state.answer !== '') {
-        metadata['selected_answer_from_context'] = this.state.answer;
       }
 
       this.context.api.validateExample(this.state.example.id, action, mode, metadata)
@@ -225,10 +230,10 @@ class VerifyInterface extends React.Component {
     // Only keep the last answer annotated
     if (value.length > 0) {
       this.setState({
-        answer: [value[value.length - 1]],
+        validatorLabel: [value[value.length - 1]],
       });
     } else {
-      this.setState({ answer: value});
+      this.setState({ validatorLabel: value});
     }
   }
 
@@ -301,8 +306,8 @@ class VerifyInterface extends React.Component {
                 {this.state.example.context && this.state.example.context.context ?
                     <ContextInfo
                       text={this.state.example.context.context}
-                      needAnswer={this.state.needAnswer}
-                      answer={this.state.answer}
+                      needAnswer={this.state.incorrectSelected && this.state.task.shortname === 'QA'}
+                      answer={this.state.validatorLabel}
                       updateAnswer={this.updateAnswer}
                     />
                   : ""}
@@ -383,69 +388,69 @@ class VerifyInterface extends React.Component {
                             }
                           </div>
                         }
+                        <h6 className="text-uppercase dark-blue-color spaced-header">
+                        Actions:
+                        </h6>
+                        <p>
+                          <InputGroup className="align-items-center">
+                            <Form.Check
+                              checked={this.state.correctSelected}
+                              type="radio"
+                              onChange={() => this.resetValidatorSelections(() => this.setState({ correctSelected: true }))}
+                            />
+                            <i className="fas fa-thumbs-up"></i>  &nbsp; {this.state.owner_mode ? "Verified " : ""} Correct
+                          </InputGroup>
+                          <InputGroup className="align-items-center">
+                            <Form.Check
+                              checked={this.state.incorrectSelected}
+                              type="radio"
+                              onChange={() => this.resetValidatorSelections(() => this.setState({ incorrectSelected: true }))}
+                            />
+                            <i className="fas fa-thumbs-down"></i>  &nbsp; {this.state.owner_mode ? "Verified " : ""} Incorrect
+                          </InputGroup>
+                          <InputGroup className="ml-3">
+                            {this.state.incorrectSelected ?
+                                {
+                                  'NLI': <DropdownButton className="p-1 light-red-transparent-bg rounded" title={"Your corrected label: " + this.state.validatorLabel}>
+                                           {["entailing", "neutral", "contradictory"].filter((target, _) => target !== this.state.example.target)
+                                             .map((target, index) => <Dropdown.Item onClick={() => this.setState({ validatorLabel: target })} key={index} index={index}>{target}</Dropdown.Item>)}
+                                         </DropdownButton>,
+                                  'QA': 'Please select the correct answer in the context. If it is not in the context, then flag this example.',
+                                  'Hate Speech': <div>You have proposed that the correct answer is <b>{['hateful', 'not-hateful'].filter((target, _) => target !== this.state.example.target)[0]}</b></div>,
+                                  'Sentiment': <div>You have proposed that the correct answer is <b>{['positive', 'negative'].filter((target, _) => target !== this.state.example.target)[0]}</b></div>
+                                }[this.state.task.shortname]
+                              : ""}
+                          </InputGroup>
+                            {this.state.owner_mode ?
+                                ""
+                              : <InputGroup className="align-items-center">
+                                  <Form.Check
+                                    checked={this.state.flaggedSelected}
+                                    type="radio"
+                                    onChange={() => this.resetValidatorSelections(() => this.setState({ flaggedSelected: true }))}
+                                  />
+                                  <i className="fas fa-flag"></i> &nbsp; Flag
+                                </InputGroup>}
+                              <InputGroup className="ml-3">
+                              {this.state.flaggedSelected ?
+                                  <Col sm="12 p-1">
+                                    <Form.Control
+                                      type="text"
+                                      placeholder="Reason for flagging"
+                                      onChange={(e) => this.setState({ flagReason: e.target.value })}
+                                    />
+                                  </Col>
+                                : ""}
+                              </InputGroup>
+                        </p>
                       </Col>
                     </Row>
                   </Card.Body>
                   <Card.Footer>
                   <InputGroup className="align-items-center">
-                    <button
-                      data-index={this.props.index}
-                      onClick={() => {this.resetValidatorSelections(() => this.handleResponse("correct"))}}
-                      type="button"
-                      className="btn btn-light btn-sm">
-                        <i className="fas fa-thumbs-up"></i> {this.state.owner_mode ? "Verified " : ""} Correct
-                    </button>{" "}
-                    {this.state.incorrectSelected && (this.state.task.shortname === "NLI" || this.state.task.shortname === "QA") ?
-                        <div className="rounded border text-center p-1">
-                          <i className="fas fa-thumbs-down"></i> {this.state.owner_mode ? "Verified " : ""} Incorrect
-                          {this.state.task.shortname === "NLI" ?
-                              <DropdownButton variant="light" className="p-1" title={"Your corrected label: " + (this.state.validatorLabel ? this.state.validatorLabel : "")}>
-                                {["entailing", "neutral", "contradictory"].filter((target, _) => target !== this.state.example.target)
-                                  .map((target, index) => <Dropdown.Item onClick={() => this.setState({ validatorLabel: target })} key={index} index={index}>{target}</Dropdown.Item>)}
-                              </DropdownButton>
-                            :
-                              <Col sm="12 p-1">
-                                <DropdownButton variant="light" title={"Your answer: " + (this.state.validatorLabel ? this.state.validatorLabel : "")}>
-                                  {
-                                    ['Answer is in the context (please select)', 'Answer is not in the context'].map((target, index) => <Dropdown.Item onClick={() => this.setState({ validatorLabel: target, needAnswer: target === 'Answer is in the context (please select)' })} key={index} index={index}>{target}</Dropdown.Item>)}
-                                </DropdownButton>
-                              </Col>
-                          }
-                          <button type="button" className="btn btn-light btn-sm p-1"
-                            onClick={() => this.handleResponse("incorrect") }
-                          > Save </button>
-                        </div>
-                      : <button
-                          data-index={this.props.index}
-                          onClick={() => {this.resetValidatorSelections(() => (this.state.task.shortname === "NLI" || this.state.task.shortname === "QA") ? this.setState({ incorrectSelected: true}) : this.handleResponse("incorrect"))}}
-                          type="button"
-                          className="btn btn-light btn-sm">
-                            <i className="fas fa-thumbs-down"></i> {this.state.owner_mode ? "Verified " : ""} Incorrect
-                        </button>}
-                    {this.state.owner_mode ?
-                        ""
-                      : this.state.flaggedSelected ?
-                          <div className="rounded border text-center p-1">
-                            <i className="fas fa-flag"></i> Flag
-                            <Col sm="12 p-1">
-                              <Form.Control
-                                type="text"
-                                className="btn-light"
-                                placeholder="Reason for flagging"
-                                onChange={(e) => this.setState({ flagReason: e.target.value })}
-                              />
-                            </Col>
-                            <button type="button" className="btn btn-light btn-sm"
-                              onClick={() => this.handleResponse("flagged") }
-                            > Save </button>
-                          </div>
-                        : <button
-                            data-index={this.props.index}
-                            onClick={() => {this.resetValidatorSelections(() => this.setState({ flaggedSelected: true}))}}
-                            type="button"
-                            className="btn btn-light btn-sm">
-                              <i className="fas fa-flag"></i> Flag
-                          </button>}
+                    <button type="button" className="btn btn-light btn-sm"
+                      onClick={() => this.handleResponse()}
+                    > Save </button>
                     <button
                       data-index={this.props.index}
                       onClick={this.getNewExample}
