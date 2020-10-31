@@ -411,7 +411,7 @@ class VerifyInterface extends React.Component {
                           <InputGroup className="ml-3">
                             {this.state.incorrectSelected ?
                                 {
-                                  'NLI': <DropdownButton className="p-1 light-red-transparent-bg rounded" title={"Your corrected label: " + this.state.validatorLabel}>
+                                  'NLI': <DropdownButton className="p-1" title={"Your corrected label: " + this.state.validatorLabel}>
                                            {["entailing", "neutral", "contradictory"].filter((target, _) => target !== this.state.example.target)
                                              .map((target, index) => <Dropdown.Item onClick={() => this.setState({ validatorLabel: target })} key={index} index={index}>{target}</Dropdown.Item>)}
                                          </DropdownButton>,
@@ -448,9 +448,9 @@ class VerifyInterface extends React.Component {
                   </Card.Body>
                   <Card.Footer>
                   <InputGroup className="align-items-center">
-                    <button type="button" className="btn btn-light btn-sm"
+                    <button type="button" className="btn btn-primary t btn-sm"
                       onClick={() => this.handleResponse()}
-                    > Save </button>
+                    > Submit </button>
                     <button
                       data-index={this.props.index}
                       onClick={this.getNewExample}
