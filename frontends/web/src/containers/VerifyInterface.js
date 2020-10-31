@@ -13,14 +13,35 @@ import {
   DropdownButton,
   Dropdown,
   Modal,
-  Form
+  Form,
+  InputGroup
 } from "react-bootstrap";
 import UserContext from "./UserContext";
+import { TokenAnnotator } from "react-text-annotate";
 import {
   OverlayProvider,
   BadgeOverlay,
   Annotation
 } from "./Overlay"
+
+function ContextInfo({ needAnswer, text, answer, updateAnswer }) {
+  return needAnswer ? (
+    <TokenAnnotator
+      className="mb-1 p-3 light-gray-bg qa-context"
+      tokens={text.split(/\b/)}
+      value={answer}
+      onChange={updateAnswer}
+      getSpan={(span) => ({
+        ...span,
+        tag: "ANS",
+      })}
+    />
+  ) : (
+    <div className="mb-1 p-3 light-gray-bg">
+      {text.replace("<br>", "\n")}
+    </div>
+  );
+}
 
 class VerifyInterface extends React.Component {
   static contextType = UserContext;
@@ -33,8 +54,13 @@ class VerifyInterface extends React.Component {
       owner_mode: false,
       ownerValidationFlagFilter: "Any",
       ownerValidationDisagreementFilter: "Any",
+      incorrectSelected: false,
+      flaggedSelected: false,
+      answer: ''
     };
     this.getNewExample = this.getNewExample.bind(this);
+    this.resetValidatorSelections = this.resetValidatorSelections.bind(this);
+    this.updateAnswer = this.updateAnswer.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
     this.setRangesAndGetRandomFilteredExample = this.setRangesAndGetRandomFilteredExample.bind(this);
     this.updateUserSettings = this.updateUserSettings.bind(this);
@@ -84,40 +110,53 @@ class VerifyInterface extends React.Component {
     });
   }
 
+  resetValidatorSelections(callback) {
+    return this.setState({ flaggedSelected: false, incorrectSelected: false, validatorLabel: null, flagReason: null, answer: '', needAnswer: false}, callback);
+  }
+
   getNewExample() {
-    (this.state.owner_mode
-      ? this.setRangesAndGetRandomFilteredExample()
-      : this.context.api.getRandomExample(this.state.taskId, this.state.task.selected_round))
-      .then((result) => {
-        if (this.state.task.type !== 'extract') {
-          result.target = this.state.task.targets[parseInt(result.target_pred)];
-        }
-        this.setState({
-          example: result,
-        });
-      }, (error) => {
-        console.log(error);
-        this.setState({
-          example: false
-        });
-      });
+    this.resetValidatorSelections(() =>
+      (this.state.owner_mode
+        ? this.setRangesAndGetRandomFilteredExample()
+        : this.context.api.getRandomExample(this.state.taskId, this.state.task.selected_round))
+        .then((result) => {
+          if (this.state.task.type !== 'extract') {
+            result.target = this.state.task.targets[parseInt(result.target_pred)];
+          }
+          this.setState({
+            example: result,
+          });
+        }, (error) => {
+          console.log(error);
+          this.setState({
+            example: false
+          });
+        })
+    );
   }
   handleResponse(action) {
-    var action_label = null;
-    switch(action) {
-      case 'correct':
-        action_label = 'correct';
-        break;
-      case 'incorrect':
-        action_label = 'incorrect';
-        break;
-      case 'flag':
-        action_label = 'flagged';
-        break;
-    }
-    if (action_label !== null) {
-      const mode = this.state.owner_mode ? "owner" : "user";
-      this.context.api.validateExample(this.state.example.id, action_label, mode)
+    const mode = this.state.owner_mode ? "owner" : "user";
+    if ((!this.state.needAnswer || (this.state.needAnswer && this.state.answer !== ''))
+        && (
+          (action === 'correct')
+          || (action === 'incorrect' && this.state.task.shortname !== "QA" && this.state.task.shortname !== "NLI") || (action === 'incorrect' && this.state.validatorLabel !== null)
+          || (action === 'flagged' && this.state.flagReason))
+        ) {
+      var metadata = {};
+
+      if (this.state.validatorLabel !== null) {
+        metadata['validator_label'] = this.state.validatorLabel;
+      }
+
+      if (this.state.flagReason !== null) {
+        metadata['flag_reason'] = this.state.flagReason;
+      }
+
+      if (this.state.answer !== '') {
+        metadata['selected_answer_from_context'] = this.state.answer;
+      }
+
+      this.context.api.validateExample(this.state.example.id, action, mode, metadata)
         .then((result) => {
           this.getNewExample();
           if (!!result.badges) {
@@ -180,6 +219,17 @@ class VerifyInterface extends React.Component {
     this.setState({ ownerValidationDisagreementFilter: value }, () => {
       this.getNewExample();
     });
+  }
+
+  updateAnswer(value) {
+    // Only keep the last answer annotated
+    if (value.length > 0) {
+      this.setState({
+        answer: [value[value.length - 1]],
+      });
+    } else {
+      this.setState({ answer: value});
+    }
   }
 
   render() {
@@ -248,7 +298,14 @@ class VerifyInterface extends React.Component {
             <Card className="profile-card overflow-hidden">
               <div className="mb-1 p-3 light-gray-bg">
                 <h6 className="text-uppercase dark-blue-color spaced-header">Context:</h6>
-                {this.state.example.context && this.state.example.context.context.replace("<br>", "\n")}
+                {this.state.example.context && this.state.example.context.context ?
+                    <ContextInfo
+                      text={this.state.example.context.context}
+                      needAnswer={this.state.needAnswer}
+                      answer={this.state.answer}
+                      updateAnswer={this.updateAnswer}
+                    />
+                  : ""}
               </div>
               <Card.Body className="overflow-auto pt-2" style={{ height: 400 }}>
                 <Card
@@ -330,30 +387,65 @@ class VerifyInterface extends React.Component {
                     </Row>
                   </Card.Body>
                   <Card.Footer>
+                  <InputGroup className="align-items-center">
                     <button
                       data-index={this.props.index}
-                      onClick={() => this.handleResponse("correct")}
+                      onClick={() => {this.resetValidatorSelections(() => this.handleResponse("correct"))}}
                       type="button"
                       className="btn btn-light btn-sm">
                         <i className="fas fa-thumbs-up"></i> {this.state.owner_mode ? "Verified " : ""} Correct
                     </button>{" "}
-                    <button
-                      data-index={this.props.index}
-                      onClick={() => this.handleResponse("incorrect")}
-                      type="button"
-                      className="btn btn-light btn-sm">
-                        <i className="fas fa-thumbs-down"></i> {this.state.owner_mode ? "Verified " : ""} Incorrect
-                    </button>{" "}
-                    {this.state.owner_mode ?
-                      ""
+                    {this.state.incorrectSelected && (this.state.task.shortname === "NLI" || this.state.task.shortname === "QA") ?
+                        <div className="rounded border text-center p-1">
+                          <i className="fas fa-thumbs-down"></i> {this.state.owner_mode ? "Verified " : ""} Incorrect
+                          {this.state.task.shortname === "NLI" ?
+                              <DropdownButton variant="light" className="p-1" title={"Your corrected label: " + (this.state.validatorLabel ? this.state.validatorLabel : "")}>
+                                {["entailing", "neutral", "contradictory"].filter((target, _) => target !== this.state.example.target)
+                                  .map((target, index) => <Dropdown.Item onClick={() => this.setState({ validatorLabel: target })} key={index} index={index}>{target}</Dropdown.Item>)}
+                              </DropdownButton>
+                            :
+                              <Col sm="12 p-1">
+                                <DropdownButton variant="light" title={"Your answer: " + (this.state.validatorLabel ? this.state.validatorLabel : "")}>
+                                  {
+                                    ['Answer is in the context (please select)', 'Answer is not in the context'].map((target, index) => <Dropdown.Item onClick={() => this.setState({ validatorLabel: target, needAnswer: target === 'Answer is in the context (please select)' })} key={index} index={index}>{target}</Dropdown.Item>)}
+                                </DropdownButton>
+                              </Col>
+                          }
+                          <button type="button" className="btn btn-light btn-sm p-1"
+                            onClick={() => this.handleResponse("incorrect") }
+                          > Save </button>
+                        </div>
                       : <button
                           data-index={this.props.index}
-                          onClick={() => this.handleResponse("flag")}
+                          onClick={() => {this.resetValidatorSelections(() => (this.state.task.shortname === "NLI" || this.state.task.shortname === "QA") ? this.setState({ incorrectSelected: true}) : this.handleResponse("incorrect"))}}
                           type="button"
                           className="btn btn-light btn-sm">
+                            <i className="fas fa-thumbs-down"></i> {this.state.owner_mode ? "Verified " : ""} Incorrect
+                        </button>}
+                    {this.state.owner_mode ?
+                        ""
+                      : this.state.flaggedSelected ?
+                          <div className="rounded border text-center p-1">
                             <i className="fas fa-flag"></i> Flag
-                        </button>
-                    }{" "}
+                            <Col sm="12 p-1">
+                              <Form.Control
+                                type="text"
+                                className="btn-light"
+                                placeholder="Reason for flagging"
+                                onChange={(e) => this.setState({ flagReason: e.target.value })}
+                              />
+                            </Col>
+                            <button type="button" className="btn btn-light btn-sm"
+                              onClick={() => this.handleResponse("flagged") }
+                            > Save </button>
+                          </div>
+                        : <button
+                            data-index={this.props.index}
+                            onClick={() => {this.resetValidatorSelections(() => this.setState({ flaggedSelected: true}))}}
+                            type="button"
+                            className="btn btn-light btn-sm">
+                              <i className="fas fa-flag"></i> Flag
+                          </button>}
                     <button
                       data-index={this.props.index}
                       onClick={this.getNewExample}
@@ -361,6 +453,7 @@ class VerifyInterface extends React.Component {
                       className="btn btn-light btn-sm pull-right">
                         <i className="fas fa-undo-alt"></i> Skip and load new example
                     </button>
+                  </InputGroup>
                   </Card.Footer>
                   </>
                   :

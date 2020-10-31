@@ -51,6 +51,22 @@ def read_nli_round_labels(root_path):
         nli_labels[int(r_num)] = [json.loads(l)['label'].lower() for l in open(f'{r_file_path}/test.jsonl').read().splitlines()]
     return nli_labels
 
+def read_hate_speech_round_labels(root_path):
+    """
+    Load the files from the Hate Speech directory and label them automatically
+    :param root_path: We assume hate_speech_v0.1 test set present in api folder
+    :return: Dict object
+    """
+
+    full_path = root_path + '/data/hate_speech_v1.0'
+    r_file_paths = [name for name in os.listdir(full_path) if os.path.isdir(os.path.join(full_path, name))]
+    hate_speech_labels = {}
+    for r_file_path in r_file_paths:
+        r_num = r_file_path[len(r_file_path)-1:len(r_file_path)]
+        r_file_path = full_path + '/' + r_file_path
+        hate_speech_labels[int(r_num)] = [l.rstrip()[-1] for l in open(f'{r_file_path}/test.tsv').readlines()]
+    return hate_speech_labels
+
 def read_qa_round_labels(root_path):
     """
     Load the files from QA directory and label them automatically
@@ -65,7 +81,7 @@ def read_qa_round_labels(root_path):
         r_num = r_file_path[len(r_file_path)-1:len(r_file_path)]
         r_file_path = full_path + '/' + r_file_path
         loaded_data = [json.loads(l) for l in open(f'{r_file_path}/test.jsonl').read().splitlines()]
-        qa_labels[int(r_num)] = [{'id': example['id'], 'answer': example['answers'][0]['text'], 'tags': example['tags']} for example in loaded_data]
+        qa_labels[int(r_num)] = [{'id': example['id'], 'answer': example['answers'][0]['text'], 'tags': example['tags'] if 'tags' in example else ''} for example in loaded_data]
     return qa_labels
 
 def get_accuracy(prediction, target):
@@ -100,6 +116,9 @@ def validate_prediction(r_objects, prediction, task_shortname='nli'):
     target_tags = None
     if task_shortname == 'nli':
         target_labels = app.config['nli_labels']
+        eval_fn = get_accuracy
+    elif task_shortname == 'hate speech':
+        target_labels = app.config['hate_speech_labels']
         eval_fn = get_accuracy
     elif task_shortname == 'qa':
         target_examples = app.config['qa_labels']
@@ -159,7 +178,7 @@ def validate_prediction(r_objects, prediction, task_shortname='nli'):
                 'pretty_perf': str(round(perf * 100, 2)) + ' %',
                 'perf': round(perf * 100, 2)
             } for tag, perf in perf_by_tag.items()]
-        
+
         # Sum rounds accuracy and generate score object list
         overall_accuracy = overall_accuracy + round(r_accuracy * 100, 2)
         round_accuracy['round_id'] = r_obj.rid

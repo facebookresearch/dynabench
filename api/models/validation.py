@@ -2,9 +2,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import json
 import enum
 import sqlalchemy as db
 from .base import Base, BaseModel
+from common.logging import logger
+
+from common.logging import logger
 
 class LabelEnum(enum.Enum):
     flagged = 'flagged'
@@ -20,7 +24,7 @@ class Validation(Base):
     __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
 
     id = db.Column(db.Integer, primary_key=True)
-    uid = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    uid = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
     eid = db.Column(db.Integer, db.ForeignKey("examples.id"), nullable=False)
     label = db.Column(db.Enum(LabelEnum))
     mode = db.Column(db.Enum(ModeEnum))
@@ -40,9 +44,12 @@ class ValidationModel(BaseModel):
     def __init__(self):
         super(ValidationModel, self).__init__(Validation)
 
-    def create(self, uid, eid, label, mode):
+    def create(self, uid, eid, label, mode, metadata={}):
         try:
-            validation = Validation(uid=uid, eid=eid, label=label, mode=mode)
+            if uid == 'turk':
+                validation = Validation(eid=eid, label=label, mode=mode, metadata_json=json.dumps(metadata))
+            else:
+                validation = Validation(uid=uid, eid=eid, label=label, mode=mode, metadata_json=json.dumps(metadata))
             self.dbs.add(validation)
             return self.dbs.commit()
         except Exception as error_message:

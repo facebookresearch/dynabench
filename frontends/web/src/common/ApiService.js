@@ -329,8 +329,8 @@ export default class ApiService {
     return user.task_permissions?.filter((task_permission) => tid === task_permission.tid && "owner" === task_permission.type).length > 0;
   }
 
-  validateExample(id, label, mode, uid = null) {
-    let obj = {label: label, mode: mode};
+  validateExample(id, label, mode, metadata = {}, uid = null) {
+    let obj = {label: label, mode: mode, metadata: metadata};
     if (this.mode == 'mturk') {
       obj.uid = uid;
     }

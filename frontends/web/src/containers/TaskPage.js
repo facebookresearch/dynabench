@@ -5,6 +5,7 @@
  */
 
 import React from "react";
+import "./TaskPage.css";
 import {
   Container,
   Row,
@@ -188,7 +189,7 @@ const TaskActionButtons = (props) => {
         </OverlayTrigger>
       </Annotation>
     </Nav.Item>
-    {props.task.shortname === "NLI" || props.task.shortname === "QA" ? (
+    {props.task.shortname === "NLI" || props.task.shortname === "QA" || props.task.shortname === "Hate Speech" ? (
       <Nav.Item className="task-action-btn">
         <Annotation placement="right" tooltip="Click here to submit your model predictions for previous rounds.">
           <OverlayTrigger
@@ -659,7 +660,7 @@ class TaskPage extends React.Component {
                           )}
                       </h2>
                     </Card.Header>
-                    <Card.Body className="p-0">
+                    <Card.Body className="p-0 leaderboard-container">
                       <OverallModelLeaderBoard
                         data={this.state.modelLeaderBoardData}
                         tags={this.state.modelLeaderBoardTags}
@@ -695,7 +696,7 @@ class TaskPage extends React.Component {
                           )}
                       </h2>
                     </Card.Header>
-                    <Card.Body className="p-0">
+                    <Card.Body className="p-0 leaderboard-container">
                       <OverallUserLeaderBoard
                         data={this.state.userLeaderBoardData}
                       />
