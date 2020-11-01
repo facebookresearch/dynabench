@@ -595,7 +595,7 @@ class TaskPage extends React.Component {
                     />
                   </span>
                   <hr/>
-                  Maximum number of correct, incorrect, <br/> or flagged marks before an example
+                  Number of correct, incorrect, <br/> or flagged marks when an example
                   <span className="float-right">
                     {this.state.numMatchingValidations}
                     <span className="float-right">
