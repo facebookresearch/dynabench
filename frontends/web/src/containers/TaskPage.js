@@ -576,24 +576,31 @@ class TaskPage extends React.Component {
               onHide={() => this.setState({ showTaskOwnerSettingsModal: false })}
               >
                 <Modal.Header closeButton>
-                  <Modal.Title>Task Owner Settings</Modal.Title>
+                  <Modal.Title>Task Owner Console</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                  <Form.Check
-                    checked={this.state.validateNonFooling}
-                    label="Validate non-model-fooling examples?"
-                    onChange={() => {
-                        this.setState(
-                          { validateNonFooling: !this.state.validateNonFooling },
-                          () => this.context.api.updateTaskSettings(this.state.task.id, { validate_non_fooling: this.state.validateNonFooling, num_matching_validations: this.state.numMatchingValidations })
-                        );
+                  <Modal.Title style={{fontSize: 20}}>Settings</Modal.Title>
+                  <hr/>
+                  Validate non-model-fooling examples? &nbsp;
+                  <span className="float-right">
+                    <Form.Check
+                      checked={this.state.validateNonFooling}
+                      onChange={() => {
+                          this.setState(
+                            { validateNonFooling: !this.state.validateNonFooling },
+                            () => this.context.api.updateTaskSettings(this.state.task.id, { validate_non_fooling: this.state.validateNonFooling, num_matching_validations: this.state.numMatchingValidations })
+                          );
+                        }
                       }
-                    }
-                  />
-                  <InputGroup className="align-items-center">
-                    Number of matching validations needed
-                    <Col sm="3">
+                    />
+                  </span>
+                  <hr/>
+                  Maximum number of correct, incorrect, <br/> or flagged marks before an example
+                  <span className="float-right">
+                    {this.state.numMatchingValidations}
+                    <span className="float-right">
                       <Form.Control
+                        className="p-1"
                         type="range"
                         min="1"
                         max="10"
@@ -607,9 +614,12 @@ class TaskPage extends React.Component {
                           }
                         }
                       />
-                    </Col>
-                    {this.state.numMatchingValidations}
-                  </InputGroup>
+                    </span>
+                  </span>
+                  <br/> is no longer shown to validators?
+                  <hr/>
+                  <Modal.Title style={{fontSize: 20}}>Actions</Modal.Title>
+                  <hr/>
                   <DropdownButton className="border-0 blue-color font-weight-bold pt-2" id="dropdown-basic-button" title="Export Data">
                     <Dropdown.Item onClick={this.exportCurrentRoundData}>Export current round</Dropdown.Item>
                     <Dropdown.Item onClick={this.exportAllTaskData}>Export all</Dropdown.Item>
