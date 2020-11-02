@@ -1,33 +1,39 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
 
 import sqlalchemy as db
-from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
-from common.config import *
+from sqlalchemy.orm import scoped_session, sessionmaker
+
+from common.config import config
+
 
 Base = declarative_base()
 
 # now this is very ugly..
+
+
 def connect_db():
-    engine_url = 'mysql+pymysql://{}:{}@{}:3306/{}'.format(config['db_user'], config['db_password'], config['db_host'],
-                                                           config['db_name'])
+    engine_url = "mysql+pymysql://{}:{}@{}:3306/{}".format(
+        config["db_user"], config["db_password"], config["db_host"], config["db_name"]
+    )
     engine = db.create_engine(engine_url, pool_pre_ping=True, pool_recycle=3600)
-    connection = engine.connect()
+    engine.connect()
     Base.metadata.bind = engine
-    Session = scoped_session( sessionmaker() )
+    Session = scoped_session(sessionmaker())
     return Session
-    #DBSession = sessionmaker(bind=engine)
-    #return DBSession()
+    # DBSession = sessionmaker(bind=engine)
+    # return DBSession()
+
 
 DBSession = connect_db()
 
-class BaseModel():
+
+class BaseModel:
     def __init__(self, model):
         self.model = model
-        #self.dbs = dbs #connect_db()
+        # self.dbs = dbs #connect_db()
         self.dbs = DBSession()
+
     def __del__(self):
         self.dbs.close()
 

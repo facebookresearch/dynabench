@@ -1,17 +1,18 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
 
 import datetime
+
 import sqlalchemy as db
-from .base import Base, BaseModel
-from .user import User, UserModel
 
 from common.logging import logger
 
+from .base import Base, BaseModel
+from .user import UserModel
+
+
 class Badge(Base):
-    __tablename__ = 'badges'
-    __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
+    __tablename__ = "badges"
+    __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_general_ci"}
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -54,7 +55,7 @@ class Badge(Base):
     awarded = db.Column(db.DateTime, nullable=True)
 
     def __repr__(self):
-        return '<Badge {} uid {}>'.format(self.name, self.uid)
+        return f"<Badge {self.name} uid {self.uid}>"
 
     def to_dict(self, safe=True):
         d = {}
@@ -62,26 +63,30 @@ class Badge(Base):
             d[column.name] = getattr(self, column.name)
         return d
 
+
 class BadgeModel(BaseModel):
     def __init__(self):
-        super(BadgeModel, self).__init__(Badge)
+        super().__init__(Badge)
 
     def updateSubmitCountsAndCheckBadgesEarned(self, user, example, type):
         def _badgeobj(name):
-            return {'uid': user.id, 'name': name, 'metadata': None}
+            return {"uid": user.id, "name": name, "metadata": None}
 
         badges = []
-        #badges.append('TESTING_BADGES')
+        # badges.append('TESTING_BADGES')
 
-        if type == 'validate':
+        if type == "validate":
             # Validate beginner badges
             if user.examples_verified == 1:
-                badges.append('FIRST_VERIFIED')
-            if user.total_verified_fooled == 1 and 'FIRST_VALIDATED_FOOLING'\
-                    not in map(lambda badge: badge.name, self.getByUid(user.id)):
-                badges.append('FIRST_VALIDATED_FOOLING')
+                badges.append("FIRST_VERIFIED")
+            if (
+                user.total_verified_fooled == 1
+                and "FIRST_VALIDATED_FOOLING"
+                not in map(lambda badge: badge.name, self.getByUid(user.id))
+            ):
+                badges.append("FIRST_VALIDATED_FOOLING")
 
-        elif type == 'create':
+        elif type == "create":
             user.examples_submitted = user.examples_submitted + 1
             streak_days_increased = False
             if example.model_wrong:
@@ -90,10 +95,12 @@ class BadgeModel(BaseModel):
                 if user.streak_days_last_model_wrong is None:
                     user.streak_days_last_model_wrong = now
                 else:
-                    one_day_passed = user.streak_days_last_model_wrong \
-                            + datetime.timedelta(days=1)
-                    two_days_passed = user.streak_days_last_model_wrong \
-                            + datetime.timedelta(days=2)
+                    one_day_passed = (
+                        user.streak_days_last_model_wrong + datetime.timedelta(days=1)
+                    )
+                    two_days_passed = (
+                        user.streak_days_last_model_wrong + datetime.timedelta(days=2)
+                    )
                     if now > one_day_passed:
                         if now <= two_days_passed:
                             streak_days_increased = True
@@ -107,40 +114,40 @@ class BadgeModel(BaseModel):
             self.dbs.commit()
             # Create beginner badges
             if user.examples_submitted == 1:
-                badges.append('FIRST_CREATED')
+                badges.append("FIRST_CREATED")
             if user.examples_submitted == 10:
-                badges.append('FIRST_TEN_CREATED')
+                badges.append("FIRST_TEN_CREATED")
 
             # Example streaks
             if user.streak_examples == 5:
-                badges.append('EXAMPLE_STREAK_5')
+                badges.append("EXAMPLE_STREAK_5")
             elif user.streak_examples == 10:
-                badges.append('EXAMPLE_STREAK_10')
+                badges.append("EXAMPLE_STREAK_10")
             elif user.streak_examples == 20:
-                badges.append('EXAMPLE_STREAK_20')
+                badges.append("EXAMPLE_STREAK_20")
             elif user.streak_examples == 50:
-                badges.append('EXAMPLE_STREAK_50')
+                badges.append("EXAMPLE_STREAK_50")
             elif user.streak_examples == 100:
-                badges.append('EXAMPLE_STREAK_100')
+                badges.append("EXAMPLE_STREAK_100")
 
             # Day streaks
             if streak_days_increased:
                 if user.streak_days == 2:
-                    badges.append('DAY_STREAK_2')
+                    badges.append("DAY_STREAK_2")
                 elif user.streak_days == 3:
-                    badges.append('DAY_STREAK_3')
+                    badges.append("DAY_STREAK_3")
                 elif user.streak_days == 5:
-                    badges.append('DAY_STREAK_5')
+                    badges.append("DAY_STREAK_5")
                 elif user.streak_days == 7:
-                    badges.append('DAY_STREAK_1_WEEK')
+                    badges.append("DAY_STREAK_1_WEEK")
                 elif user.streak_days == 14:
-                    badges.append('DAY_STREAK_2_WEEK')
+                    badges.append("DAY_STREAK_2_WEEK")
                 elif user.streak_days == 30:
-                    badges.append('DAY_STREAK_1_MONTH')
+                    badges.append("DAY_STREAK_1_MONTH")
                 elif user.streak_days == 90:
-                    badges.append('DAY_STREAK_3_MONTH')
+                    badges.append("DAY_STREAK_3_MONTH")
                 elif user.streak_days == 365:
-                    badges.append('DAY_STREAK_1_YEAR')
+                    badges.append("DAY_STREAK_1_YEAR")
         else:
             raise ValueError(' "' + type + '" not recognized as a badge type.')
 
@@ -151,23 +158,26 @@ class BadgeModel(BaseModel):
         return [_badgeobj(b) for b in badges]
 
     def addBadge(self, badge):
-        self.create(badge['uid'], \
-                badge['name'], \
-                badge['metadata'] if 'metadata' in badge \
-                    else None)
+        self.create(
+            badge["uid"],
+            badge["name"],
+            badge["metadata"] if "metadata" in badge else None,
+        )
 
     def getByUid(self, uid):
         try:
-            return self.dbs.query(Badge) \
-                    .filter(Badge.uid == uid).all()
+            return self.dbs.query(Badge).filter(Badge.uid == uid).all()
         except db.orm.exc.NoResultFound:
             return False
 
     def getBadgesByName(self, uid, name):
         try:
-            return self.dbs.query(Badge) \
-                    .filter(Badge.uid == uid) \
-                    .filter(Badge.name == name).all()
+            return (
+                self.dbs.query(Badge)
+                .filter(Badge.uid == uid)
+                .filter(Badge.name == name)
+                .all()
+            )
         except db.orm.exc.NoResultFound:
             return False
 
@@ -178,17 +188,17 @@ class BadgeModel(BaseModel):
             if not user:
                 return False
 
-            b = Badge( \
-                    user=user, \
-                    name=name, \
-                    metadata_json=metadata_json, \
-                    awarded=db.sql.func.now() \
-                    )
+            b = Badge(
+                user=user,
+                name=name,
+                metadata_json=metadata_json,
+                awarded=db.sql.func.now(),
+            )
             self.dbs.add(b)
             self.dbs.flush()
             self.dbs.commit()
-            logger.info('Awarded badge to user (%s, %s)' % (b.id, b.uid))
+            logger.info(f"Awarded badge to user ({b.id}, {b.uid})")
         except Exception as error_message:
-            logger.error('Could not create badge (%s)' % error_message)
+            logger.error("Could not create badge (%s)" % error_message)
             return False
         return b.id

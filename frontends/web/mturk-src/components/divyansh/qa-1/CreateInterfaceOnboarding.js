@@ -16,7 +16,7 @@ import { TokenAnnotator, TextAnnotator } from 'react-text-annotate'
 class ContextInfoAns extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {text :'national enquirer the national enquirer ( also commonly known as the enquirer ) is an american supermarket tabloid published by american media inc ( ami ) . founded in 1926 , the tabloid has gone through a number of changes over the years . the " enquirer " openly acknowledges that it will pay sources for tips , a practice generally disapproved of by the mainstream press . the tabloid has struggled with declining circulation figures because of competition from glossy tabloid publications . in may 2014 , american media announced a decision to shift the headquarters of the " national enquirer " from florida , where it had been located since 1971'}; 
+    this.state = {text :'national enquirer the national enquirer ( also commonly known as the enquirer ) is an american supermarket tabloid published by american media inc ( ami ) . founded in 1926 , the tabloid has gone through a number of changes over the years . the " enquirer " openly acknowledges that it will pay sources for tips , a practice generally disapproved of by the mainstream press . the tabloid has struggled with declining circulation figures because of competition from glossy tabloid publications . in may 2014 , american media announced a decision to shift the headquarters of the " national enquirer " from florida , where it had been located since 1971'};
   }
   render() {
     return (
@@ -68,7 +68,7 @@ class CreateInterfaceOnboardingAns extends React.Component {
     this.api = props.api;
     this.state = {hypothesis: "", task: {}, answer: [], answerNotSelected: true, target: 0};
     this.handleResponseChange = this.handleResponseChange.bind(this);
-    this.updateAnswer = this.updateAnswer.bind(this);    
+    this.updateAnswer = this.updateAnswer.bind(this);
   }
   updateAnswer(value) {
     if (value.length > 0) {
@@ -98,7 +98,7 @@ class CreateInterfaceOnboardingAns extends React.Component {
       if (answers[this.props.step].includes(answer_text))
         {answer_correct = <Row>Correct Answer.</Row>;}
       else if (answer_text.includes(answers[this.props.step][0])){
-        if (this.props.step==2) 
+        if (this.props.step==2)
           {answer_correct = <Row>Your answer is partially correct, the correct answer is {answers[this.props.step][0]}. Remember to select the shortest possible span of text that completely answers the given question.</Row>;}
         else
           {answer_correct = <Row>Your answer is partially correct, the correct answer is {answers[this.props.step][0]} or {answers[this.props.step][1]}. Remember to select the shortest possible span of text that completely answers the given question.</Row>;}
@@ -126,7 +126,7 @@ class CreateInterfaceOnboardingAns extends React.Component {
           {this.props.step!=10 && <InputGroup>
               <br />Question: {questions[this.props.step-1]}<br /><br />
             </InputGroup>}
-          {this.props.step==10 && <> 
+          {this.props.step==10 && <>
             <InputGroup>
               <FormControl
                 style={{ width: '100%', margin: 2 }}
@@ -137,7 +137,7 @@ class CreateInterfaceOnboardingAns extends React.Component {
             </InputGroup>
             <InputGroup>
               <small className="form-text text-muted">Please enter your input. Remember, the goal is to generate an example in accordance with the instructions. Load time may be slow; please be patient.</small> <br />
-            </InputGroup> 
+            </InputGroup>
           </>}
         </Row>
         {answer_correct}
@@ -191,4 +191,3 @@ class CreateInterfaceOnboardingQues extends React.Component {
 }
 
 export { CreateInterfaceOnboardingAns, CreateInterfaceOnboardingQues };
-
