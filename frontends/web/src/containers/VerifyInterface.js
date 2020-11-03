@@ -23,17 +23,9 @@ import {
   BadgeOverlay,
   Annotation
 } from "./Overlay"
-
-const ValidatorHateSpeechDropdown = ({ validatorHateType, dataIndex, onClick}) => {
-  return (
-    <DropdownButton variant="light" size="sm" title={validatorHateType ? "Your corrected type of hate: " + validatorHateType : "Your corrected type of hate"}>
-      {
-        ["Threatening language", "Supporting hateful entities", "Derogation", "Dehumanizing language", "Animosity", "None selected"].map((type, index) =>
-        <Dropdown.Item data-index={dataIndex} data={type} onClick={onClick} key={index} index={index}>{type}</Dropdown.Item>)
-      }
-    </DropdownButton>
-  );
-};
+import {
+  HateSpeechDropdown
+} from "./HateSpeechDropdown.js"
 
 function ContextInfo({ needAnswer, text, answer, updateAnswer }) {
   return needAnswer ? (
@@ -127,10 +119,18 @@ class VerifyInterface extends React.Component {
   }
 
   resetValidatorSelections(callback) {
-    return this.setState({ correctSelected: false, flaggedSelected: false,
-      incorrectSelected: false, validatorLabel: '', flagReason: null,
-      labelExplanation: null, creatorAttemptExplanation: null,
-      validatorHateType: null}, callback);
+    return this.setState(
+      {
+        correctSelected: false,
+        flaggedSelected: false,
+        incorrectSelected: false,
+        validatorLabel: '',
+        flagReason: null,
+        labelExplanation: null,
+        creatorAttemptExplanation: null,
+        validatorHateType: null
+      },
+      callback);
   }
 
   getNewExample() {
@@ -179,11 +179,11 @@ class VerifyInterface extends React.Component {
       }
 
       if (this.state.labelExplanation !== null) {
-        metadata['label_explanation'] = this.state.labelExplanation;
+        metadata['example_explanation'] = this.state.labelExplanation;
       }
 
       if (this.state.creatorAttemptExplanation !== null) {
-        metadata['creator_attempt_explanation'] = this.state.creatorAttemptExplanation;
+        metadata['model_explanation'] = this.state.creatorAttemptExplanation;
       }
 
       if (this.state.validatorHateType !== null) {
@@ -495,8 +495,8 @@ class VerifyInterface extends React.Component {
                                     onChange={(e) => this.setState({ creatorAttemptExplanation: e.target.value })} />
                                 </div>
                                 {this.state.task.shortname === "Hate Speech" ?
-                                    <ValidatorHateSpeechDropdown
-                                      validatorHateType={this.state.validatorHateType}
+                                    <HateSpeechDropdown
+                                      hateType={this.state.validatorHateType}
                                       dataIndex={this.props.index}
                                       onClick={(e) => this.setState({ validatorHateType: e.target.getAttribute("data") })}
                                     />
