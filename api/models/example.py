@@ -162,14 +162,11 @@ class ExampleModel(BaseModel):
             return False
         return True
 
-    def get_anon_uid(self, secret, uid, cache={}):
-        if (secret, uid) in cache:
-            return cache[(secret, uid)]
+    def get_anon_uid(self, secret, uid):
         anon_uid = hashlib.sha1()
-        anon_uid.update(secret.encode('utf-8'))
-        anon_uid.update(str(uid).encode('utf-8'))
-        cache[(secret, uid)] = anon_uid.hexdigest()
-        return cache[(secret, uid)]
+        anon_uid.update(secret.encode("utf-8"))
+        anon_uid.update(str(uid).encode("utf-8"))
+        return anon_uid.hexdigest()
 
     def getUserLeaderByTid(self, tid, n=5, offset=0, min_cnt=0, downstream=False):
         cnt = db.sql.func.sum(case([(Example.model_wrong == 1, 1)], else_=0)).label(
@@ -234,12 +231,7 @@ class ExampleModel(BaseModel):
     def getByTidAndRidWithValidationIds(self, tid, rid):
         try:
             validations_query = (
-                self.dbs.query(
-                    Example,
-                    db.func.group_concat(
-                        Validation.id
-                    ),
-                )
+                self.dbs.query(Example, db.func.group_concat(Validation.id))
                 .join(Context, Example.cid == Context.id)
                 .join(Round, Context.r_realid == Round.id)
                 .filter(Round.tid == tid)
