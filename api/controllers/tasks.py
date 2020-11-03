@@ -11,6 +11,7 @@ from models.round import RoundModel
 from models.score import ScoreModel
 from models.task import TaskModel
 from models.user import UserModel
+from models.validation import ValidationModel
 
 
 @bottle.get("/tasks")
@@ -81,46 +82,76 @@ def get_leaderboard_by_task_and_round(tid, rid):
         bottle.abort(400, "Invalid task/round detail")
 
 
-@bottle.get("/tasks/<tid:int>/rounds/<rid:int>/export")
+def get_round_data_for_export(tid, rid):
+    e = ExampleModel()
+    examples_with_validation_ids = e.getByTidAndRidWithValidationIds(tid, rid)
+    example_and_validations_dicts = []
+    rm = RoundModel()
+    secret = rm.getByTidAndRid(tid, rid).secret
+    vm = ValidationModel()
+    turk_cache = {}
+    cache = {}
+    for example, validation_ids in examples_with_validation_ids:
+        if example.uid or (example.metadata_json and json.loads(
+                example.metadata_json)['annotator_id']):
+            example_and_validations_dict = example.to_dict()
+            if example.uid:
+                example_and_validations_dict['anon_uid'] = e.get_anon_uid(
+                    secret, example.uid, cache)
+            else:
+                example_and_validations_dict['anon_uid'] = e.get_anon_uid(
+                    secret, json.loads(example.metadata_json)['annotator_id'],
+                    turk_cache)
+            example_and_validations_dict['validations'] = []
+            for validation_id in [int(id) for id in filter(
+                    lambda item: item != '', validation_ids.split(','))]:
+                validation = vm.get(validation_id)
+                if validation.uid or (
+                        validation.metadata_json and json.loads(
+                            validation.metadata_json)['annotator_id']):
+                    if validation.uid:
+                        example_and_validations_dict['validations'].append(
+                            (validation.label.name,
+                             validation.mode.name,
+                             e.get_anon_uid(
+                                 secret + '-validator', validation.uid, cache)))
+                    else:
+                        example_and_validations_dict['validations'].append(
+                            (validation.label.name,
+                             validation.mode.name,
+                             e.get_anon_uid(
+                                 secret + '-validator',
+                                 json.loads(
+                                     validation.metadata_json)['annotator_id'],
+                                 cache)))
+            example_and_validations_dicts.append(example_and_validations_dict)
+    return example_and_validations_dicts
+
+@bottle.get('/tasks/<tid:int>/rounds/<rid:int>/export')
 @_auth.requires_auth
 def export_current_round_data(credentials, tid, rid):
     um = UserModel()
-    user = um.get(credentials["id"])
+    user = um.get(credentials['id'])
     if not user.admin:
-        if (tid, "owner") not in [
-            (perm.tid, perm.type) for perm in user.task_permissions
-        ]:
-            bottle.abort(403, "Access denied")
-    e = ExampleModel()
-    examples = e.getByTidAndRidWithAnonymizedValidations(tid, rid)
-    example_dicts = []
-    for example in examples:
-        example_dict = example[0].to_dict()
-        example_labels = eval("[" + example[1] + "]")
-        example_dict["validation_labels"] = example_labels
-        example_dicts.append(example_dict)
-    return util.json_encode(example_dicts)
+        if (tid, 'owner') not in [
+                (perm.tid, perm.type) for perm in user.task_permissions]:
+            bottle.abort(403, 'Access denied')
+    return util.json_encode(get_round_data_for_export(tid, rid))
 
-
-@bottle.get("/tasks/<tid:int>/export")
+@bottle.get('/tasks/<tid:int>/export')
 @_auth.requires_auth
 def export_task_data(credentials, tid):
     um = UserModel()
-    user = um.get(credentials["id"])
+    user = um.get(credentials['id'])
     if not user.admin:
-        if (tid, "owner") not in [
-            (perm.tid, perm.type) for perm in user.task_permissions
-        ]:
-            bottle.abort(403, "Access denied")
-    e = ExampleModel()
-    examples = e.getByTidWithAnonymizedValidations(tid)
-    example_dicts = []
-    for example in examples:
-        example_dict = example[0].to_dict()
-        example_labels = eval("[" + example[1] + "]")
-        example_dict["validation_labels"] = example_labels
-        example_dicts.append(example_dict)
-    return util.json_encode(example_dicts)
+        if (tid, 'owner') not in [
+                (perm.tid, perm.type) for perm in user.task_permissions]:
+            bottle.abort(403, 'Access denied')
+    rm = RoundModel()
+    example_and_validations_dicts = []
+    for rid in [round.rid for round in rm.getByTid(tid)]:
+        example_and_validations_dicts += get_round_data_for_export(tid, rid)
+    return util.json_encode(example_and_validations_dicts)
 
 
 @bottle.put("/tasks/<tid:int>/settings")
