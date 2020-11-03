@@ -68,7 +68,7 @@ class ModelModel(BaseModel):
         return (
             self.dbs.query(Model)
             .filter(Model.id == id)
-            .filter(Model.is_published is True)
+            .filter(Model.is_published == True)  # noqa
             .one()
         )
 
@@ -78,7 +78,7 @@ class ModelModel(BaseModel):
     def getUserModelsByUid(self, uid, is_current_user=False, n=5, offset=0):
         query_res = self.dbs.query(Model).filter(Model.uid == uid)
         if not is_current_user:
-            query_res = query_res.filter(Model.is_published is True)
+            query_res = query_res.filter(Model.is_published == True)  # noqa
         return query_res.limit(n).offset(offset * n), util.get_query_count(query_res)
 
     def getUserModelsByUidAndMid(self, uid, mid, is_current_user=False):
@@ -86,7 +86,7 @@ class ModelModel(BaseModel):
             self.dbs.query(Model).filter(Model.uid == uid).filter(Model.id == mid)
         )
         if not is_current_user:
-            return query_res.filter(Model.is_published is True).one()
+            return query_res.filter(Model.is_published == True).one()  # noqa
         return query_res.one()
 
     def getModelUserByMid(self, id):

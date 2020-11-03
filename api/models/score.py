@@ -124,7 +124,7 @@ class ScoreModel(BaseModel):
             .join(Score, Score.mid == Model.id)
             .join(User, User.id == Model.uid)
             .filter(Model.tid == tid)
-            .filter(Model.is_published is True)
+            .filter(Model.is_published == True)  # noqa
             .group_by(Model.id)
             .order_by(db.sql.func.avg(Score.perf).desc())
         )
@@ -147,7 +147,7 @@ class ScoreModel(BaseModel):
             .join(Round, Round.id == Score.rid, isouter=True)
             .filter(Model.tid == tid)
             .filter(Round.rid == rid)
-            .filter(Model.is_published is True)
+            .filter(Model.is_published == True)  # noqa
             .order_by((Score.perf).desc())
         )
 
@@ -159,7 +159,7 @@ class ScoreModel(BaseModel):
             self.dbs.query(Model.id.label("m_id"), Model.name)
             .join(Score, Score.mid == Model.id)
             .filter(Model.tid == tid)
-            .filter(Model.is_published is True)
+            .filter(Model.is_published == True)  # noqa
             .group_by(Model.id)
             .order_by(db.sql.func.avg(Score.perf).desc())
             .limit(n)

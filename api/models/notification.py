@@ -58,7 +58,7 @@ class NotificationModel(BaseModel):
         for n in (
             self.dbs.query(Notification)
             .filter(Notification.uid == uid)
-            .filter(Notification.seen is False)
+            .filter(Notification.seen == False)  # noqa
             .all()
         ):
             n.seen = True
