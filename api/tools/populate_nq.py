@@ -52,7 +52,7 @@ print(rounds)
 dbs = tm.dbs
 
 for rid in contexts.keys():
-    if rid not in rounds:
+    if int(rid) not in rounds:
         round = Round(
             task=task, rid=int(rid), secret=secrets.token_hex(), url="https://TBD"
         )
