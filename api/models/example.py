@@ -289,7 +289,9 @@ class ExampleModel(BaseModel):
         except db.orm.exc.NoResultFound:
             return False
 
-    def getRandom(self, rid, validate_non_fooling, num_matching_validations, n=1, my_uid=None):
+    def getRandom(
+        self, rid, validate_non_fooling, num_matching_validations, n=1, my_uid=None
+    ):
         cnt_correct = db.sql.func.sum(
             case([(Validation.label == LabelEnum.correct, 1)], else_=0)
         ).label("cnt_correct")
@@ -306,11 +308,11 @@ class ExampleModel(BaseModel):
             self.dbs.query(Example)
             .join(Context, Example.cid == Context.id)
             .filter(Context.r_realid == rid)
-            .filter(Example.retracted is False)
+            .filter(Example.retracted == False)  # noqa
         )
 
         if not validate_non_fooling:
-            result = result.filter(Example.model_wrong == True)
+            result = result.filter(Example.model_wrong == True)  # noqa
 
         result_partially_validated = (
             result.join(Validation, Example.id == Validation.eid)
@@ -338,9 +340,11 @@ class ExampleModel(BaseModel):
         if my_uid is not None:
             result = result.filter(Example.uid != my_uid)
         result = (
-            result.order_by(db.not_(Example.model_wrong),
-                            Example.total_verified.asc(),
-                            db.sql.func.rand())
+            result.order_by(
+                db.not_(Example.model_wrong),
+                Example.total_verified.asc(),
+                db.sql.func.rand(),
+            )
             .limit(n)
             .all()
         )
@@ -363,11 +367,11 @@ class ExampleModel(BaseModel):
             self.dbs.query(Example)
             .join(Context, Example.cid == Context.id)
             .filter(Context.r_realid == rid)
-            .filter(Example.retracted is False)
+            .filter(Example.retracted == False)  # noqa
         )
 
         if not validate_non_fooling:
-            result = result.filter(Example.model_wrong == True)
+            result = result.filter(Example.model_wrong == True)  # noqa
 
         result_not_validated = result.filter(
             db.not_(db.exists().where(Validation.eid == Example.id))
@@ -411,9 +415,11 @@ class ExampleModel(BaseModel):
             result = result.union(result_not_validated)
 
         result = (
-            result.order_by(db.not_(Example.model_wrong),
-                            Example.total_verified.asc(),
-                            db.sql.func.rand())
+            result.order_by(
+                db.not_(Example.model_wrong),
+                Example.total_verified.asc(),
+                db.sql.func.rand(),
+            )
             .limit(n)
             .all()
         )

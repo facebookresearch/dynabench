@@ -6,11 +6,11 @@ import json
 import os
 from urllib.parse import urlparse
 
-import bottle
 import sqlalchemy as db
 from sqlalchemy.orm import lazyload
 from transformers.data.metrics.squad_metrics import compute_f1
 
+import bottle
 import common.auth as _auth
 from common.logging import logger
 
@@ -39,6 +39,17 @@ def json_encode(obj):
     return json.dumps(obj, default=_alchemyencoder)
 
 
+def check_data_path_exists(path):
+    if not os.path.exists(path):
+        logger.warning(
+            f"Dataset path for {path.split(os.path.sep)[-1]} does not exist "
+            f"at {path}. Proceeding with empty dataset!"
+        )
+        return False
+    else:
+        return True
+
+
 # TODO need to change it in future - to read the test data from db of
 # config files
 def read_nli_round_labels(root_path):
@@ -48,7 +59,11 @@ def read_nli_round_labels(root_path):
     :return: Dict object
     """
 
-    full_path = root_path + "/data/anli_v1.0"
+    full_path = os.path.join(root_path, "data", "anli_v1.0")
+
+    if not check_data_path_exists(full_path):
+        return {}
+
     r_file_paths = [
         name
         for name in os.listdir(full_path)
@@ -72,7 +87,11 @@ def read_hate_speech_round_labels(root_path):
     :return: Dict object
     """
 
-    full_path = root_path + "/data/hate_speech_v1.0"
+    full_path = os.path.join(root_path, "data", "hate_speech_v1.0")
+
+    if not check_data_path_exists(full_path):
+        return {}
+
     r_file_paths = [
         name
         for name in os.listdir(full_path)
@@ -95,7 +114,11 @@ def read_qa_round_labels(root_path):
     :return: Dict object
     """
 
-    full_path = root_path + "/data/aqa_v1.0"
+    full_path = os.path.join(root_path, "data", "aqa_v1.0")
+
+    if not check_data_path_exists(full_path):
+        return {}
+
     r_file_paths = [
         name
         for name in os.listdir(full_path)
