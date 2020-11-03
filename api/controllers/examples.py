@@ -3,7 +3,6 @@
 import json
 
 import bottle
-
 import common.auth as _auth
 import common.helpers as util
 from common.logging import logger
@@ -35,7 +34,7 @@ def get_random_filtered_example(
     validate_non_fooling = False
     if task.settings_json:
         settings = json.loads(task.settings_json)
-        validate_non_fooling = settings['validate_non_fooling']
+        validate_non_fooling = settings["validate_non_fooling"]
     rm = RoundModel()
     round = rm.getByTidAndRid(tid, rid)
     em = ExampleModel()
@@ -63,21 +62,23 @@ def get_random_example(credentials, tid, rid):
     num_matching_validations = 3
     if task.settings_json:
         settings = json.loads(task.settings_json)
-        validate_non_fooling = settings['validate_non_fooling']
-        num_matching_validations = settings['num_matching_validations']
+        validate_non_fooling = settings["validate_non_fooling"]
+        num_matching_validations = settings["num_matching_validations"]
     rm = RoundModel()
     round = rm.getByTidAndRid(tid, rid)
     em = ExampleModel()
-    if credentials['id'] != 'turk':
+    if credentials["id"] != "turk":
         example = em.getRandom(
             round.id,
             validate_non_fooling,
             num_matching_validations,
             n=1,
-            my_uid=credentials['id']
+            my_uid=credentials["id"],
         )
     else:
-        example = em.getRandom(round.id, validate_non_fooling, num_matching_validations, n=1)
+        example = em.getRandom(
+            round.id, validate_non_fooling, num_matching_validations, n=1
+        )
     if not example:
         bottle.abort(500, f"No examples available ({round.id})")
     example = example[0].to_dict()

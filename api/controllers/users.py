@@ -5,7 +5,6 @@ import uuid
 from datetime import datetime, timedelta
 
 import bottle
-
 import common.auth as _auth
 import common.helpers as util
 import common.mail_service as mail

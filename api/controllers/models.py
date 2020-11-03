@@ -2,9 +2,9 @@
 
 import json
 
-import bottle
 import sqlalchemy as db
 
+import bottle
 import common.auth as _auth
 import common.helpers as util
 from common.logging import logger
@@ -121,7 +121,7 @@ def do_upload(credentials):
                 overall_perf=f"{overall_accuracy:.2f}",
             )
             s = ScoreModel()
-            _ = s.bulk_create(
+            s.bulk_create(
                 model_id=model.id,
                 score_objs=score_obj_list,
                 raw_upload_data=json.dumps(raw_upload_data),

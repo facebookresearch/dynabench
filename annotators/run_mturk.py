@@ -19,18 +19,11 @@ from mephisto.server.blueprints.static_react_task.static_react_blueprint import 
 )
 from mephisto.utils.scripts import load_db_and_process_config
 from omegaconf import DictConfig
+
 from util import get_qualifications
 
 
 CURRENT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
-
-defaults = [
-    {"mephisto/blueprint": BLUEPRINT_TYPE},
-    {"mephisto/architect": "local"},
-    {"mephisto/provider": "mock"},
-    "conf/base",
-    {"conf": "nli_r1"},
-]
 
 
 @dataclass
@@ -42,7 +35,15 @@ class DynaBenchConfig:
 
 @dataclass
 class TestScriptConfig(RunScriptConfig):
-    defaults: List[Any] = field(default_factory=lambda: defaults)
+    defaults: List[Any] = field(  # noqa
+        default_factory=lambda: [
+            {"mephisto/blueprint": BLUEPRINT_TYPE},
+            {"mephisto/architect": "local"},
+            {"mephisto/provider": "mock"},
+            "conf/base",
+            {"conf": "nli_r1"},
+        ]
+    )
     dynabench: DynaBenchConfig = DynaBenchConfig()
     num_jobs: int = 10
     preselected_qualifications: List[str] = ("100_hits_approved", "english_only")

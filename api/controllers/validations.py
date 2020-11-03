@@ -3,7 +3,6 @@
 import json
 
 import bottle
-
 import common.auth as _auth
 import common.helpers as util
 from models.badge import BadgeModel
@@ -62,8 +61,8 @@ def validate_example(credentials, eid):
         if validation.uid == credentials["id"] and mode != "owner":
             bottle.abort(403, "Access denied (you have already validated this example)")
 
-    if 'metadata' in data:
-        current_validation_metadata = data['metadata']
+    if "metadata" in data:
+        current_validation_metadata = data["metadata"]
     else:
         current_validation_metadata = {}
 
@@ -96,12 +95,15 @@ def validate_example(credentials, eid):
     task = tm.get(context.round.task.id)
     num_matching_validations = 3
     if task.settings_json:
-        num_matching_validations = json.loads(task.settings_json)['num_matching_validations']
+        num_matching_validations = json.loads(task.settings_json)[
+            "num_matching_validations"
+        ]
 
     rm = RoundModel()
     rm.updateLastActivity(context.r_realid)
-    if label_counts['correct'] >= num_matching_validations or (
-            mode == 'owner' and label == 'correct'):
+    if label_counts["correct"] >= num_matching_validations or (
+        mode == "owner" and label == "correct"
+    ):
         rm.incrementVerifiedFooledCount(context.r_realid)
         um.incrementVerifiedFooledCount(example.uid)
 
