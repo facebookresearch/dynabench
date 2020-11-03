@@ -12,7 +12,7 @@ from models.context import ContextModel
 from models.example import ExampleModel
 from models.notification import NotificationModel
 from models.round import RoundModel
-from model.task import TaskModel
+from models.task import TaskModel
 from models.user import UserModel
 
 
