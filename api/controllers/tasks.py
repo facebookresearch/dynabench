@@ -3,6 +3,7 @@
 import json
 
 import bottle
+
 import common.auth as _auth
 import common.helpers as util
 from common.logging import logger
@@ -91,62 +92,87 @@ def get_round_data_for_export(tid, rid):
     vm = ValidationModel()
     turk_cache = {}
     cache = {}
+
+    def get_anon_uid_with_cache(secret, uid, cache):
+        if (secret, uid) not in cache:
+            cache[(secret, uid)] = e.get_anon_uid(secret, uid)
+        return cache[(secret, uid)]
+
     for example, validation_ids in examples_with_validation_ids:
-        if example.uid or (example.metadata_json and json.loads(
-                example.metadata_json)['annotator_id']):
+        if example.uid or (
+            example.metadata_json and json.loads(example.metadata_json)["annotator_id"]
+        ):
             example_and_validations_dict = example.to_dict()
             if example.uid:
-                example_and_validations_dict['anon_uid'] = e.get_anon_uid(
-                    secret, example.uid, cache)
+                example_and_validations_dict["anon_uid"] = get_anon_uid_with_cache(
+                    secret, example.uid, cache
+                )
             else:
-                example_and_validations_dict['anon_uid'] = e.get_anon_uid(
-                    secret, json.loads(example.metadata_json)['annotator_id'],
-                    turk_cache)
-            example_and_validations_dict['validations'] = []
-            for validation_id in [int(id) for id in filter(
-                    lambda item: item != '', validation_ids.split(','))]:
+                example_and_validations_dict["anon_uid"] = get_anon_uid_with_cache(
+                    secret,
+                    json.loads(example.metadata_json)["annotator_id"],
+                    turk_cache,
+                )
+            example_and_validations_dict["validations"] = []
+            for validation_id in [
+                int(id)
+                for id in filter(lambda item: item != "", validation_ids.split(","))
+            ]:
                 validation = vm.get(validation_id)
                 if validation.uid or (
-                        validation.metadata_json and json.loads(
-                            validation.metadata_json)['annotator_id']):
+                    validation.metadata_json
+                    and json.loads(validation.metadata_json)["annotator_id"]
+                ):
                     if validation.uid:
-                        example_and_validations_dict['validations'].append(
-                            (validation.label.name,
-                             validation.mode.name,
-                             e.get_anon_uid(
-                                 secret + '-validator', validation.uid, cache)))
+                        validation_info = [
+                            validation.label.name,
+                            validation.mode.name,
+                            get_anon_uid_with_cache(
+                                secret + "-validator", validation.uid, cache
+                            ),
+                        ]
                     else:
-                        example_and_validations_dict['validations'].append(
-                            (validation.label.name,
-                             validation.mode.name,
-                             e.get_anon_uid(
-                                 secret + '-validator',
-                                 json.loads(
-                                     validation.metadata_json)['annotator_id'],
-                                 cache)))
+                        validation_info = [
+                            validation.label.name,
+                            validation.mode.name,
+                            get_anon_uid_with_cache(
+                                secret + "-validator",
+                                json.loads(validation.metadata_json)["annotator_id"],
+                                cache,
+                            ),
+                        ]
+
+                    if validation.metadata_json:
+                        validation_info.append(json.loads(validation.metadata_json))
+
+                    example_and_validations_dict["validations"].append(validation_info)
             example_and_validations_dicts.append(example_and_validations_dict)
     return example_and_validations_dicts
 
-@bottle.get('/tasks/<tid:int>/rounds/<rid:int>/export')
+
+@bottle.get("/tasks/<tid:int>/rounds/<rid:int>/export")
 @_auth.requires_auth
 def export_current_round_data(credentials, tid, rid):
     um = UserModel()
-    user = um.get(credentials['id'])
+    user = um.get(credentials["id"])
     if not user.admin:
-        if (tid, 'owner') not in [
-                (perm.tid, perm.type) for perm in user.task_permissions]:
-            bottle.abort(403, 'Access denied')
+        if (tid, "owner") not in [
+            (perm.tid, perm.type) for perm in user.task_permissions
+        ]:
+            bottle.abort(403, "Access denied")
     return util.json_encode(get_round_data_for_export(tid, rid))
 
-@bottle.get('/tasks/<tid:int>/export')
+
+@bottle.get("/tasks/<tid:int>/export")
 @_auth.requires_auth
 def export_task_data(credentials, tid):
     um = UserModel()
-    user = um.get(credentials['id'])
+    user = um.get(credentials["id"])
     if not user.admin:
-        if (tid, 'owner') not in [
-                (perm.tid, perm.type) for perm in user.task_permissions]:
-            bottle.abort(403, 'Access denied')
+        if (tid, "owner") not in [
+            (perm.tid, perm.type) for perm in user.task_permissions
+        ]:
+            bottle.abort(403, "Access denied")
     rm = RoundModel()
     example_and_validations_dicts = []
     for rid in [round.rid for round in rm.getByTid(tid)]:
