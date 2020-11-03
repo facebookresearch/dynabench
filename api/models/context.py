@@ -1,13 +1,13 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
 
 import sqlalchemy as db
+
 from .base import Base, BaseModel
 
+
 class Context(Base):
-    __tablename__ = 'contexts'
-    __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
+    __tablename__ = "contexts"
+    __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_general_ci"}
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -16,14 +16,14 @@ class Context(Base):
 
     context = db.Column(db.Text)
 
-    metadata_json = db.Column(db.Text) # e.g. source, or whatever
+    metadata_json = db.Column(db.Text)  # e.g. source, or whatever
 
     total_used = db.Column(db.Integer, default=0)
 
     last_used = db.Column(db.DateTime, nullable=True)
 
     def __repr__(self):
-        return '<Context {}>'.format(self.context)
+        return f"<Context {self.context}>"
 
     def to_dict(self, safe=True):
         d = {}
@@ -31,22 +31,36 @@ class Context(Base):
             d[column.name] = getattr(self, column.name)
         return d
 
+
 class ContextModel(BaseModel):
     def __init__(self):
-        super(ContextModel, self).__init__(Context)
+        super().__init__(Context)
 
     def getRandom(self, rid, n=1):
         # https://stackoverflow.com/questions/60805/getting-random-row-through-sqlalchemy
-        #return dbs.query(Context).filter(Context.tid == tid).filter(Context.rid == rid).options(db.orm.load_only('id')).offset(
+        # return dbs.query(Context).filter(Context.tid == tid).filter(
+        #       Context.rid == rid).options(db.orm.load_only('id')).offset(
         #        db.sql.func.floor(
         #            db.sql.func.random() *
         #            dbs.query(db.sql.func.count(Context.id))
         #        )
         #    ).limit(n).all()
-        return self.dbs.query(Context).filter(Context.r_realid == rid).order_by(db.sql.func.rand()).limit(n).all()
+        return (
+            self.dbs.query(Context)
+            .filter(Context.r_realid == rid)
+            .order_by(db.sql.func.rand())
+            .limit(n)
+            .all()
+        )
 
     def getRandomMin(self, rid, n=1):
-        return self.dbs.query(Context).filter(Context.r_realid == rid).order_by(Context.total_used.asc(), db.sql.func.rand()).limit(n).all()
+        return (
+            self.dbs.query(Context)
+            .filter(Context.r_realid == rid)
+            .order_by(Context.total_used.asc(), db.sql.func.rand())
+            .limit(n)
+            .all()
+        )
 
     def incrementCountDate(self, cid):
         c = self.get(cid)

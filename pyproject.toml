@@ -1,0 +1,33 @@
+[tool.isort]
+# This is required to make sorting same as fbcode as all absolute imports
+# are considered third party there
+known_third_party = [
+    "transformers", "yoyo", "boto3", "aiohttp", "pyjwt", "jwt", "cheroot",
+    "numpy", "sqlalchemy", "numpy", "pymysql", "six", "SQLAlchemy",
+    "torch", "werkzeug", "cryptography",
+]
+skip_glob = "**/build/**,frontends/**"
+combine_as_imports = true
+force_grid_wrap = false
+include_trailing_comma = true
+line_length = 88
+multi_line_output = 3
+use_parentheses = true
+lines_after_imports = 2
+
+[tool.black]
+line-length = 88
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | website
+)/
+'''

@@ -1,19 +1,17 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
 
 import sqlalchemy as db
-from .base import Base, BaseModel
 
 from common import helpers as util
 from common.logging import logger
+from models.user import UserModel
 
-from models.user import User, UserModel
+from .base import Base, BaseModel
 
 
 class Notification(Base):
-    __tablename__ = 'notifications'
-    __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
+    __tablename__ = "notifications"
+    __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_general_ci"}
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -35,7 +33,7 @@ class Notification(Base):
     created = db.Column(db.DateTime, nullable=True)
 
     def __repr__(self):
-        return '<Notification {}>'.format(self.message)
+        return f"<Notification {self.message}>"
 
     def to_dict(self, safe=True):
         d = {}
@@ -43,22 +41,27 @@ class Notification(Base):
             d[column.name] = getattr(self, column.name)
         return d
 
+
 class NotificationModel(BaseModel):
     def __init__(self):
-        super(NotificationModel, self).__init__(Notification)
+        super().__init__(Notification)
 
     def getByUid(self, uid, n=10, offset=0):
-        query_res = self.dbs.query(Notification) \
-                .filter(Notification.uid == uid) \
-                .order_by(Notification.created.desc())
+        query_res = (
+            self.dbs.query(Notification)
+            .filter(Notification.uid == uid)
+            .order_by(Notification.created.desc())
+        )
         return query_res.limit(n).offset(offset * n), util.get_query_count(query_res)
 
     def setAllSeen(self, uid):
-        for n in self.dbs.query(Notification) \
-            .filter(Notification.uid == uid) \
-            .filter(Notification.seen == False) \
-            .all():
-                n.seen = True
+        for n in (
+            self.dbs.query(Notification)
+            .filter(Notification.uid == uid)
+            .filter(Notification.seen is False)
+            .all()
+        ):
+            n.seen = True
         um = UserModel()
         um.resetNotificationCount(uid)
         return self.dbs.commit()
@@ -69,19 +72,16 @@ class NotificationModel(BaseModel):
         if not u:
             return False
         try:
-            n = Notification( \
-                    user=u, \
-                    type=type, \
-                    message=message, \
-                    created=db.sql.func.now(), \
-                    **kwargs)
+            n = Notification(
+                user=u, type=type, message=message, created=db.sql.func.now(), **kwargs
+            )
             self.dbs.add(n)
             self.dbs.flush()
             self.dbs.commit()
             um.incrementNotificationCount(uid)
-            logger.info('Added notification (%s)' % (n.id))
+            logger.info("Added notification (%s)" % (n.id))
         except Exception as error_message:
-            logger.error('Could not create notification (%s)' % error_message)
+            logger.error("Could not create notification (%s)" % error_message)
             return False
 
         return n.id

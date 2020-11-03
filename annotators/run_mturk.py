@@ -1,27 +1,26 @@
 #!/usr/bin/env python3
 
 # Copyright (c) Facebook, Inc. and its affiliates.
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
+#
 
 import os
-import shutil
 import subprocess
+from dataclasses import dataclass, field
+from typing import Any, List
+
+import hydra
+from mephisto.core.hydra_config import RunScriptConfig, register_script_config
 from mephisto.core.operator import Operator
-from mephisto.utils.scripts import load_db_and_process_config
-from mephisto.server.blueprints.static_react_task.static_react_blueprint import (
-    BLUEPRINT_TYPE,
-)
 from mephisto.server.blueprints.abstract.static_task.static_blueprint import (
     SharedStaticTaskState,
 )
-
-import hydra
+from mephisto.server.blueprints.static_react_task.static_react_blueprint import (
+    BLUEPRINT_TYPE,
+)
+from mephisto.utils.scripts import load_db_and_process_config
 from omegaconf import DictConfig
-from dataclasses import dataclass, field
-from typing import List, Any
-
 from util import get_qualifications
+
 
 CURRENT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
@@ -33,11 +32,10 @@ defaults = [
     {"conf": "nli_r1"},
 ]
 
-from mephisto.core.hydra_config import RunScriptConfig, register_script_config
 
 @dataclass
 class DynaBenchConfig:
-    task_name: str = 'no_task'
+    task_name: str = "no_task"
     task_id: int = 0
     round_id: int = 0
 
@@ -48,7 +46,7 @@ class TestScriptConfig(RunScriptConfig):
     dynabench: DynaBenchConfig = DynaBenchConfig()
     num_jobs: int = 10
     preselected_qualifications: List[str] = ("100_hits_approved", "english_only")
-    frontend_dir: str = f'{CURRENT_DIRECTORY}/../frontends'
+    frontend_dir: str = f"{CURRENT_DIRECTORY}/../frontends"
 
 
 register_script_config(name="scriptconfig", module=TestScriptConfig)
@@ -57,7 +55,6 @@ register_script_config(name="scriptconfig", module=TestScriptConfig)
 def build_frontend(frontend_dir):
     # automatically build frontend:
     frontend_source_dir = os.path.join(frontend_dir, "web")
-    frontend_build_dir = os.path.join(frontend_source_dir, "build")
 
     return_dir = os.getcwd()
     os.chdir(frontend_source_dir)
@@ -88,7 +85,7 @@ def main(cfg: DictConfig) -> None:
     mturk_specific_qualifications = get_qualifications(cfg.preselected_qualifications)
     # mturk_specific_qualifications
 
-    #TODO: How to set onboarding ready?
+    # TODO: How to set onboarding ready?
     def onboarding_always_valid(onboarding_data):
         return True
 
@@ -99,7 +96,9 @@ def main(cfg: DictConfig) -> None:
     )
 
     # We need to implicitly add 'mturk_specific_qualifications' here like this.
-    shared_state.__setattr__("mturk_specific_qualifications", mturk_specific_qualifications)
+    shared_state.__setattr__(
+        "mturk_specific_qualifications", mturk_specific_qualifications
+    )
     # qualifications will be picked up at mturk_provider.py
 
     build_frontend(cfg.frontend_dir)

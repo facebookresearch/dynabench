@@ -88,9 +88,9 @@ class TaskOnboardingInstructions extends React.Component {
   render() {
     return <>
         <br />
-        <small> <strong>Onboarding:</strong> During the onboarding phase, you will be able to familiarize yourself with the annotation platform. 
-        <br /><br />(1) <strong>First,</strong> we will show you a passage and five questions and ask you to highlight the right answer — a contiguous region within the passage. 
-        <br /><br />(2) <strong>Following that,</strong> you will be presented with a passage and four answers and you will be required to write one question for each highlighted answer. 
+        <small> <strong>Onboarding:</strong> During the onboarding phase, you will be able to familiarize yourself with the annotation platform.
+        <br /><br />(1) <strong>First,</strong> we will show you a passage and five questions and ask you to highlight the right answer — a contiguous region within the passage.
+        <br /><br />(2) <strong>Following that,</strong> you will be presented with a passage and four answers and you will be required to write one question for each highlighted answer.
         <br /><br />(3) <strong>In the last step,</strong> you will be provided with a passage and you will be required to:
         <ul>
         <li><strong>write a question</strong> — whose answer is contained in the passage.</li>
@@ -150,7 +150,7 @@ class TaskModelInstructions extends React.Component {
         </ul>
         Be sure to  (i) ensure that the question is coherent; (ii) that the answer is unambiguous — any competent reader shown the same question and passage should select the same (or highly overlapping) answer.
         <br />
-        After entering your question and selecting the answer, press “Submit”. The app will then highlight the AI’s predicted answer. If the AI got it wrong, then you fooled the machine! 
+        After entering your question and selecting the answer, press “Submit”. The app will then highlight the AI’s predicted answer. If the AI got it wrong, then you fooled the machine!
         <br />You are required to follow the above process 5 times for each passage <b>(remember that each question is standalone)</b>. Once you've submitted all 5 question-answer pairs, Submit HIT button will appear. You will be provided a bonus of 15 cents for every question that fools the machine! Try to write questions that do not highly overlap with passage text.
         <br /><br /></small>
         <small style={{ color: 'red' }}><i>Submissions will be audited for quality so do not try to write incoherent questions or choose incorrect answers. </i></small><small><b>Please email us at NoahTurkProject.1041@gmail.com if you do not understand any parts of the instructions or if there is anything else that we can help with. We will try to respond as quickly as possible.</b>
@@ -184,7 +184,7 @@ class DivyanshQATaskMain extends React.Component {
     else {
       return <>
           <Container>
-          <Row> 
+          <Row>
           <h2>Generate Questions for Reading Comprehension Tasks</h2> &nbsp; &nbsp; <Button className="btn" onClick={this.showInstructions}>{this.state.showInstructions ? "Hide" : "Show" } instructions </Button>
           </Row>
           {this.state.showInstructions && <Row> <TaskNoModelInstructions /> </Row>}

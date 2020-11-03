@@ -1,31 +1,35 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
 
-import json
 import logging
 import os
-import ast
-import hashlib
-import sys
+
+import torch
+from torch.utils.data import DataLoader, SequentialSampler
+from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
+from transformers.data.metrics.squad_metrics import compute_exact, compute_f1
+from transformers.data.processors.squad import (
+    SquadResult,
+    squad_convert_examples_to_features,
+)
+
+from captum.attr import LayerIntegratedGradients
+from qa_utils import compute_predictions_logits, convert_to_squad_example
+from settings import my_secret
+from shared import (
+    captum_qa_forward,
+    check_fields,
+    construct_input_ref_pair,
+    generate_response_signature,
+    get_n_steps_for_interpretability,
+    get_word_token,
+    handler_initialize,
+    summarize_attributions,
+)
+from ts.torch_handler.base_handler import BaseHandler
+
+
 logger = logging.getLogger(__name__)
 
-from transformers import AutoConfig, AutoTokenizer, AutoModelForQuestionAnswering
-import torch
-import torch.nn.functional as F
-from ts.torch_handler.base_handler import BaseHandler
-from captum.attr import LayerIntegratedGradients
-
-from settings import my_secret, my_model_no
-from shared import generate_response_signature, check_fields, handler_initialize, remove_sp_chars, \
-     construct_input_ref_pair, captum_qa_forward, summarize_attributions, get_word_token, \
-     get_n_steps_for_interpretability
-
-# QA specific libraries
-from qa_utils import convert_to_squad_example, compute_predictions_logits
-from transformers.data.processors.squad import squad_convert_examples_to_features, SquadResult
-from torch.utils.data import DataLoader, SequentialSampler
-from transformers.data.metrics.squad_metrics import compute_f1, compute_exact
 
 THRESHOLD_F1 = 0.4
 QA_CONFIG = {
@@ -46,15 +50,16 @@ class TransformersQAHandler(BaseHandler):
     """
 
     def __init__(self):
-        super(TransformersQAHandler, self).__init__()
+        super().__init__()
         self.initialized = False
 
     def initialize(self, ctx):
         """
         Initializes the model and tokenizer during server start up
         """
-        model_dir, model_pt_path, self.device, self.setup_config \
-                  = handler_initialize(ctx)
+        model_dir, model_pt_path, self.device, self.setup_config = handler_initialize(
+            ctx
+        )
 
         self.my_task_id = self.setup_config["my_task_id"]
         self.my_round_id = self.setup_config["my_round_id"]
@@ -69,8 +74,9 @@ class TransformersQAHandler(BaseHandler):
                 logger.warning("Loading trained model")
                 config = AutoConfig.from_pretrained(model_dir)
                 self.model = AutoModelForQuestionAnswering.from_pretrained(
-                        model_dir, config=config)
-            else :
+                    model_dir, config=config
+                )
+            else:
                 raise FileNotFoundError("Missing model-specific config.json file")
 
         self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
@@ -78,17 +84,19 @@ class TransformersQAHandler(BaseHandler):
 
         self.model.to(self.device)
         self.model.eval()
-        logger.debug("Transformer model from path {0} loaded successfully".format(model_dir))
+        logger.debug(f"Transformer model from path {model_dir} loaded successfully")
 
-        # ------------------------------- Captum initialization ----------------------------#
-        self.lig = LayerIntegratedGradients(captum_qa_forward, getattr(self.model, self.model.base_model_prefix).embeddings)
+        # ---------------- Captum initialization -------------#
+        self.lig = LayerIntegratedGradients(
+            captum_qa_forward,
+            getattr(self.model, self.model.base_model_prefix).embeddings,
+        )
         self.initialized = True
 
     def preprocess(self, data):
         """
         Basic text preprocessing
         """
-        max_length = self.setup_config["max_length"]
         logger.info("In preprocess, data's value: '%s'", data)
         body = data[0]["body"]
         if not body:
@@ -124,25 +132,35 @@ class TransformersQAHandler(BaseHandler):
             response = {"start_importances": [], "words": [], "status": "not supported"}
             return [response]
 
-        input_ids, ref_input_ids, attention_mask = construct_input_ref_pair(\
-                    example[0]["question"], example[0]["passage"], self.tokenizer, self.device)
+        input_ids, ref_input_ids, attention_mask = construct_input_ref_pair(
+            example[0]["question"], example[0]["passage"], self.tokenizer, self.device
+        )
         all_tokens = get_word_token(input_ids, self.tokenizer)
-        n_steps = get_n_steps_for_interpretability(n_tokens=len(all_tokens), max_n_steps=8)
+        n_steps = get_n_steps_for_interpretability(
+            n_tokens=len(all_tokens), max_n_steps=8
+        )
         logger.info("Word Tokens = '%s'", all_tokens)
 
         position_qa_model = 0
-        attributions_start, delta_start = self.lig.attribute(inputs=input_ids,
-                                    baselines=ref_input_ids,
-                                    additional_forward_args=(attention_mask, position_qa_model, self.model),
-                                    return_convergence_delta=True, n_steps=n_steps)
+        attributions_start, delta_start = self.lig.attribute(
+            inputs=input_ids,
+            baselines=ref_input_ids,
+            additional_forward_args=(attention_mask, position_qa_model, self.model),
+            return_convergence_delta=True,
+            n_steps=n_steps,
+        )
         attributions_start_sum = summarize_attributions(attributions_start).tolist()
 
         attributions_end_sum = []
         if compute_end_importances:
             position_qa_model = 1
-            attributions_end, delta_end = self.lig.attribute(inputs=input_ids, baselines=ref_input_ids,
-                                        additional_forward_args=(attention_mask, position_qa_model, self.model),
-                                        return_convergence_delta=True, n_steps=n_steps)
+            attributions_end, delta_end = self.lig.attribute(
+                inputs=input_ids,
+                baselines=ref_input_ids,
+                additional_forward_args=(attention_mask, position_qa_model, self.model),
+                return_convergence_delta=True,
+                n_steps=n_steps,
+            )
             attributions_end_sum = summarize_attributions(attributions_end).tolist()
 
         response = {}
@@ -156,34 +174,41 @@ class TransformersQAHandler(BaseHandler):
         Predict the class (or classes) of the received text using the serialized
         transformers checkpoint.
         """
+
         def to_list(tensor):
             return tensor.detach().cpu().tolist()
+
         # Handling inference for question answering
         self.model.eval()
         with torch.no_grad():
             # Convert all to SQuAD Examples
-            examples = [convert_to_squad_example(passage=ex["passage"], question=ex["question"])
-                for ex in examples]
+            examples = [
+                convert_to_squad_example(passage=ex["passage"], question=ex["question"])
+                for ex in examples
+            ]
 
             print("The examples after convert_to_squad", examples)
             # Featurise the examples
-            features, dataset = squad_convert_examples_to_features(examples=examples,\
-                 tokenizer=self.tokenizer, max_seq_length=QA_CONFIG["max_seq_length"],\
-                doc_stride=QA_CONFIG["doc_stride"], max_query_length=QA_CONFIG["max_query_length"],\
-                is_training=False, return_dataset="pt" )
+            features, dataset = squad_convert_examples_to_features(
+                examples=examples,
+                tokenizer=self.tokenizer,
+                max_seq_length=QA_CONFIG["max_seq_length"],
+                doc_stride=QA_CONFIG["doc_stride"],
+                max_query_length=QA_CONFIG["max_query_length"],
+                is_training=False,
+                return_dataset="pt",
+            )
 
             eval_sampler = SequentialSampler(dataset)
-            eval_dataloader = DataLoader(dataset, sampler=eval_sampler,\
-            batch_size=QA_CONFIG["eval_batch_size"])
+            eval_dataloader = DataLoader(
+                dataset, sampler=eval_sampler, batch_size=QA_CONFIG["eval_batch_size"]
+            )
 
             all_results = []
             predictions = {}
 
             for batch in eval_dataloader:
-                inputs = {
-                    "input_ids": batch[0],
-                    "attention_mask": batch[1],
-                }
+                inputs = {"input_ids": batch[0], "attention_mask": batch[1]}
                 example_indices = batch[3]
                 outputs = self.model(**inputs)
 
@@ -198,14 +223,29 @@ class TransformersQAHandler(BaseHandler):
 
                     all_results.append(result)
 
-                batch_predictions = compute_predictions_logits(examples, features, \
-                all_results, QA_CONFIG["n_best_per_passage_size"], QA_CONFIG["max_answer_length"],\
-                    QA_CONFIG["do_lower_case"], None, None, None, False, False, 0.0, self.tokenizer)
+                batch_predictions = compute_predictions_logits(
+                    examples,
+                    features,
+                    all_results,
+                    QA_CONFIG["n_best_per_passage_size"],
+                    QA_CONFIG["max_answer_length"],
+                    QA_CONFIG["do_lower_case"],
+                    None,
+                    None,
+                    None,
+                    False,
+                    False,
+                    0.0,
+                    self.tokenizer,
+                )
                 predictions.update(batch_predictions)
 
             predictions_by_examples = [predictions[ex.qas_id] for ex in examples]
             predictions_by_example = predictions_by_examples[0]
-            logger.info("predictions_by_example at the end of inference %s",predictions_by_example)
+            logger.info(
+                "predictions_by_example at the end of inference %s",
+                predictions_by_example,
+            )
             return predictions_by_example
 
     def postprocess(self, predictions_by_example, example, answer):
@@ -228,29 +268,35 @@ class TransformersQAHandler(BaseHandler):
         response["model_is_correct"] = response["eval_f1"] > THRESHOLD_F1
 
         # The inputs are concatenated to generate signature
-        stringlist = [str(response["model_is_correct"]) + "|" + str(response["text"]),\
-            contx, data]
+        stringlist = [
+            str(response["model_is_correct"]) + "|" + str(response["text"]),
+            contx,
+            data,
+        ]
         # pred_str = '|'.join(str(x) for x in response["prediction"])
         # stringlist = [pred_str,data,contx]
 
-        response["signed"] = generate_response_signature( self.my_task_id, self.my_round_id, \
-            my_secret, stringlist)
+        response["signed"] = generate_response_signature(
+            self.my_task_id, self.my_round_id, my_secret, stringlist
+        )
         logger.info("response before return '%s'", response)
 
         return [response]
+
 
 _service = TransformersQAHandler()
 
 
 def handle(data, context):
     """
-    This function handles the requests for the model and returns a postprocessed response
+    This function handles the requests for the model and returns
+    a postprocessed response
     #sample input {
-        "answer": "pretend you are reviewing a place",
-        "context": "Please pretend you are reviewing a place, product, book or movie",
-        "hypothesis": "What should i pretend?",
-        "insight": true
-        } and output response is probabilities
+      "answer": "pretend you are reviewing a place",
+      "context": "Please pretend you are reviewing a place, product, book or movie",
+      "hypothesis": "What should i pretend?",
+      "insight": true
+    } and output response is probabilities
     """
     try:
         if not _service.initialized:

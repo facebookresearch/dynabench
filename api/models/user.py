@@ -1,16 +1,16 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
 
-import sqlalchemy as db
-from .base import Base, BaseModel
 import secrets
 
-from werkzeug.security import generate_password_hash, check_password_hash
+import sqlalchemy as db
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from .base import Base, BaseModel
+
 
 class User(Base):
-    __tablename__ = 'users'
-    __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
+    __tablename__ = "users"
+    __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_general_ci"}
 
     id = db.Column(db.Integer, primary_key=True)
     admin = db.Column(db.Boolean)
@@ -43,7 +43,7 @@ class User(Base):
     avatar_url = db.Column(db.Text)
 
     def __repr__(self):
-        return '<User {}>'.format(self.username)
+        return f"<User {self.username}>"
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -54,14 +54,20 @@ class User(Base):
     def to_dict(self, safe=True):
         d = {}
         for column in self.__table__.columns:
-            if safe and column.name in ['password', 'refresh_token', 'forgot_password_token',
-                                        'forgot_password_token_expiry_date']: continue
+            if safe and column.name in [
+                "password",
+                "refresh_token",
+                "forgot_password_token",
+                "forgot_password_token_expiry_date",
+            ]:
+                continue
             d[column.name] = getattr(self, column.name)
         return d
 
+
 class UserModel(BaseModel):
     def __init__(self):
-        super(UserModel, self).__init__(User)
+        super().__init__(User)
 
     def create(self, email, password, username, **kwargs):
         u = User(email=email, username=username, **kwargs)
@@ -74,16 +80,19 @@ class UserModel(BaseModel):
             return self.dbs.query(User).filter(User.id == id).one()
         except db.orm.exc.NoResultFound:
             return False
+
     def getByEmail(self, email):
         try:
             return self.dbs.query(User).filter(User.email == email).one()
         except db.orm.exc.NoResultFound:
             return False
+
     def getByUsername(self, username):
         try:
             return self.dbs.query(User).filter(User.username == username).one()
         except db.orm.exc.NoResultFound:
             return False
+
     def getByEmailAndPassword(self, email, password):
         try:
             user = self.dbs.query(User).filter(User.email == email).one()
@@ -93,16 +102,25 @@ class UserModel(BaseModel):
             return user
         else:
             return False
+
     def getByRefreshToken(self, refresh_token):
         try:
-            return self.dbs.query(User).filter(User.refresh_token == refresh_token).one()
+            return (
+                self.dbs.query(User).filter(User.refresh_token == refresh_token).one()
+            )
         except db.orm.exc.NoResultFound:
             return False
+
     def getByForgotPasswordToken(self, forgot_password_token):
         try:
-            return self.dbs.query(User).filter(User.forgot_password_token == forgot_password_token).one()
+            return (
+                self.dbs.query(User)
+                .filter(User.forgot_password_token == forgot_password_token)
+                .one()
+            )
         except db.orm.exc.NoResultFound:
             return False
+
     def generate_password_reset_token(self):
         return secrets.token_hex(64)
 
@@ -110,9 +128,12 @@ class UserModel(BaseModel):
         if email is not None:
             return self.dbs.query(User.id).filter_by(email=email).scalar() is not None
         elif username is not None:
-            return self.dbs.query(User.id).filter_by(username=username).scalar() is not None
+            return (
+                self.dbs.query(User.id).filter_by(username=username).scalar()
+                is not None
+            )
         else:
-            return True # wtf?
+            return True  # wtf?
 
     def list(self):
         users = self.dbs.query(User).all()
@@ -122,37 +143,44 @@ class UserModel(BaseModel):
         u = self.dbs.query(User).filter(User.id == id)
         u.update(kwargs)
         self.dbs.commit()
+
     def updateValidatedCount(self, uid):
         u = self.get(uid)
         if u:
             u.examples_verified = u.examples_verified + 1
             self.dbs.commit()
         return u
+
     def incrementModelSubmitCount(self, uid):
         u = self.get(uid)
         if u:
             u.models_submitted = u.models_submitted + 1
             self.dbs.commit()
+
     def incrementVerifiedFooledCount(self, uid):
         u = self.get(uid)
         if u:
             u.total_verified_fooled = u.total_verified_fooled + 1
             self.dbs.commit()
+
     def incrementFooledCount(self, uid):
         u = self.get(uid)
         if u:
             u.total_fooled = u.total_fooled + 1
             self.dbs.commit()
+
     def incrementRetractedCount(self, uid):
         u = self.get(uid)
         if u:
-            u.total_retracted= u.total_retracted + 1
+            u.total_retracted = u.total_retracted + 1
             self.dbs.commit()
+
     def incrementNotificationCount(self, uid):
         u = self.get(uid)
         if u:
             u.unseen_notifications = u.unseen_notifications + 1
             self.dbs.commit()
+
     def resetNotificationCount(self, uid):
         u = self.get(uid)
         if u:

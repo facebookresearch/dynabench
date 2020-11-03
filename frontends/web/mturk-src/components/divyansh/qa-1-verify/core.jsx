@@ -50,11 +50,11 @@ class DivyanshVerifyQATaskMain extends React.Component {
     console.log(this.props);
     return <>
         <Container>
-        <Row> 
+        <Row>
         <h2>Generate Questions for Reading Comprehension Tasks</h2> &nbsp; &nbsp; <Button className="btn" onClick={this.showInstructions}>{this.state.showInstructions ? "Hide" : "Show" } instructions </Button>
         </Row>
 	{this.state.showInstructions && <Row> <TaskInstructions /> </Row>}
-        </Container> 
+        </Container>
         <VerifyInterface api={this.api} {...this.props} />
 	</>;
   }
