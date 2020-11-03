@@ -24,6 +24,17 @@ import {
   Annotation
 } from "./Overlay"
 
+const ValidatorHateSpeechDropdown = ({ validatorHateType, dataIndex, onClick}) => {
+  return (
+    <DropdownButton variant="light" size="sm" title={validatorHateType ? "Your corrected type of hate: " + validatorHateType : "Your corrected type of hate"}>
+      {
+        ["Threatening language", "Supporting hateful entities", "Derogation", "Dehumanizing language", "Animosity", "None selected"].map((type, index) =>
+        <Dropdown.Item data-index={dataIndex} data={type} onClick={onClick} key={index} index={index}>{type}</Dropdown.Item>)
+      }
+    </DropdownButton>
+  );
+};
+
 function ContextInfo({ needAnswer, text, answer, updateAnswer }) {
   return needAnswer ? (
     <TokenAnnotator
@@ -58,7 +69,10 @@ class VerifyInterface extends React.Component {
       incorrectSelected: false,
       flaggedSelected: false,
       validatorLabel: '',
-      flagReason: null
+      flagReason: null,
+      labelExplanation: null,
+      creatorAttemptExplanation: null,
+      validatorHateType: null
     };
     this.getNewExample = this.getNewExample.bind(this);
     this.resetValidatorSelections = this.resetValidatorSelections.bind(this);
@@ -113,7 +127,10 @@ class VerifyInterface extends React.Component {
   }
 
   resetValidatorSelections(callback) {
-    return this.setState({ correctSelected: false, flaggedSelected: false, incorrectSelected: false, validatorLabel: '', flagReason: null}, callback);
+    return this.setState({ correctSelected: false, flaggedSelected: false,
+      incorrectSelected: false, validatorLabel: '', flagReason: null,
+      labelExplanation: null, creatorAttemptExplanation: null,
+      validatorHateType: null}, callback);
   }
 
   getNewExample() {
@@ -159,6 +176,18 @@ class VerifyInterface extends React.Component {
 
       if (this.state.flagReason !== null) {
         metadata['flag_reason'] = this.state.flagReason;
+      }
+
+      if (this.state.labelExplanation !== null) {
+        metadata['label_explanation'] = this.state.labelExplanation;
+      }
+
+      if (this.state.creatorAttemptExplanation !== null) {
+        metadata['creator_attempt_explanation'] = this.state.creatorAttemptExplanation;
+      }
+
+      if (this.state.validatorHateType !== null) {
+        metadata['validator_hate_type'] = this.state.validatorHateType;
       }
 
       this.context.api.validateExample(this.state.example.id, action, mode, metadata)
@@ -443,6 +472,39 @@ class VerifyInterface extends React.Component {
                                 : ""}
                               </InputGroup>
                         </p>
+                        {this.state.incorrectSelected || this.state.correctSelected || this.state.flaggedSelected ?
+                          <div>
+                          <h6 className="text-uppercase dark-blue-color spaced-header">
+                          Optionally, provide an explanation for this example:
+                          </h6>
+                            <p>
+                              <div className="mt-3">
+                                {(this.state.incorrectSelected || this.state.correctSelected) ?
+                                    <div>
+                                      <Form.Control
+                                        type="text"
+                                        placeholder={
+                                          "Explain why " + (this.state.task.shortname === "QA" ? (this.state.correctSelected ? "the given answer" : "your proposed answer") : (this.state.correctSelected ? "the given label" : "your proposed label")) + " is correct"}
+                                        onChange={(e) => this.setState({ labelExplanation: e.target.value })} />
+                                    </div>
+                                  : ""}
+                                <div>
+                                  <Form.Control
+                                    type="text"
+                                    placeholder="Explain what you think the creator did to try to trick the model"
+                                    onChange={(e) => this.setState({ creatorAttemptExplanation: e.target.value })} />
+                                </div>
+                                {this.state.task.shortname === "Hate Speech" ?
+                                    <ValidatorHateSpeechDropdown
+                                      validatorHateType={this.state.validatorHateType}
+                                      dataIndex={this.props.index}
+                                      onClick={(e) => this.setState({ validatorHateType: e.target.getAttribute("data") })}
+                                    />
+                                  : ""}
+                              </div>
+                            </p>
+                          </div>
+                          : ""}
                       </Col>
                     </Row>
                   </Card.Body>
