@@ -45,6 +45,7 @@ def get_random_filtered_example(
         max_num_flags,
         min_num_disagreements,
         max_num_disagreements,
+        validate_non_fooling,
         n=1,
     )
     if not example:

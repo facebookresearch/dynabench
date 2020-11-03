@@ -353,6 +353,7 @@ class ExampleModel(BaseModel):
         max_num_flags,
         min_num_disagreements,
         max_num_disagreements,
+        validate_non_fooling,
         n=1,
     ):
         cnt_owner_validated = db.sql.func.sum(

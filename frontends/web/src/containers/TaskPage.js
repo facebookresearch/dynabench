@@ -620,10 +620,14 @@ class TaskPage extends React.Component {
                   <hr/>
                   <Modal.Title style={{fontSize: 20}}>Actions</Modal.Title>
                   <hr/>
-                  <DropdownButton className="border-0 blue-color font-weight-bold pt-2" id="dropdown-basic-button" title="Export Data">
-                    <Dropdown.Item onClick={this.exportCurrentRoundData}>Export current round</Dropdown.Item>
-                    <Dropdown.Item onClick={this.exportAllTaskData}>Export all</Dropdown.Item>
-                  </DropdownButton>
+                  <span className="float-right">
+                    <DropdownButton className="border-0 blue-color font-weight-bold p-1" id="dropdown-basic-button" title="Export Data">
+                      <Dropdown.Item onClick={this.exportCurrentRoundData}>Export current round</Dropdown.Item>
+                      <Dropdown.Item onClick={this.exportAllTaskData}>Export all</Dropdown.Item>
+                    </DropdownButton>
+                  </span>
+                  Click here to export data from the <br/>
+                  current round or all rounds
                 </Modal.Body>
             </Modal>
             </div>
