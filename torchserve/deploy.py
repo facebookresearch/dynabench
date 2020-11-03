@@ -8,8 +8,8 @@ import subprocess
 import tarfile
 
 import boto3
-import requests
 
+import requests
 import sagemaker
 from common import shared
 from sagemaker.model import Model

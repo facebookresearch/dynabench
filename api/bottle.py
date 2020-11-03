@@ -287,9 +287,9 @@ class DictProperty:
 
 
 class cached_property:
-    """ A property that is only computed once per instance and then replaces
-        itself with an ordinary attribute. Deleting the attribute resets the
-        property. """
+    """A property that is only computed once per instance and then replaces
+    itself with an ordinary attribute. Deleting the attribute resets the
+    property."""
 
     def __init__(self, func):
         update_wrapper(self, func)
@@ -336,8 +336,8 @@ class RouteError(BottleException):
 
 
 class RouteReset(BottleException):
-    """ If raised by a plugin or request handler, the route is reset and all
-        plugins are re-applied. """
+    """If raised by a plugin or request handler, the route is reset and all
+    plugins are re-applied."""
 
 
 class RouterUnknownModeError(RouteError):
@@ -354,8 +354,8 @@ class RouteBuildError(RouteError):
 
 
 def _re_flatten(p):
-    """ Turn all capturing groups in a regular expression pattern into
-        non-capturing groups. """
+    """Turn all capturing groups in a regular expression pattern into
+    non-capturing groups."""
     if "(" not in p:
         return p
     return re.sub(
@@ -366,15 +366,15 @@ def _re_flatten(p):
 
 
 class Router:
-    """ A Router is an ordered collection of route->target pairs. It is used to
-        efficiently match WSGI requests against a number of routes and return
-        the first target that satisfies the request. The target may be anything,
-        usually a string, ID or callable object. A route consists of a path-rule
-        and a HTTP method.
+    """A Router is an ordered collection of route->target pairs. It is used to
+    efficiently match WSGI requests against a number of routes and return
+    the first target that satisfies the request. The target may be anything,
+    usually a string, ID or callable object. A route consists of a path-rule
+    and a HTTP method.
 
-        The path-rule is either a static path (e.g. `/contact`) or a dynamic
-        path that contains wildcards (e.g. `/wiki/<page>`). The wildcard syntax
-        and details on the matching order are described in docs:`routing`.
+    The path-rule is either a static path (e.g. `/contact`) or a dynamic
+    path that contains wildcards (e.g. `/wiki/<page>`). The wildcard syntax
+    and details on the matching order are described in docs:`routing`.
     """
 
     default_pattern = "[^/]+"
@@ -401,9 +401,9 @@ class Router:
         }
 
     def add_filter(self, name, func):
-        """ Add a filter. The provided function is called with the configuration
+        """Add a filter. The provided function is called with the configuration
         string as parameter and must return a (regexp, to_python, to_url) tuple.
-        The first element is a string, the last two are callables or None. """
+        The first element is a string, the last two are callables or None."""
         self.filters[name] = func
 
     rule_syntax = re.compile(
@@ -580,9 +580,9 @@ class Router:
 
 
 class Route:
-    """ This class wraps a route callback along with route specific metadata and
-        configuration and applies Plugins on demand. It is also responsible for
-        turning an URL path rule into a regular expression usable by the Router.
+    """This class wraps a route callback along with route specific metadata and
+    configuration and applies Plugins on demand. It is also responsible for
+    turning an URL path rule into a regular expression usable by the Router.
     """
 
     def __init__(
@@ -618,13 +618,13 @@ class Route:
 
     @cached_property
     def call(self):
-        """ The route callback with all plugins applied. This property is
-            created on demand and then cached to speed up subsequent requests."""
+        """The route callback with all plugins applied. This property is
+        created on demand and then cached to speed up subsequent requests."""
         return self._make_callback()
 
     def reset(self):
-        """ Forget any cached values. The next time :attr:`call` is accessed,
-            all plugins are re-applied. """
+        """Forget any cached values. The next time :attr:`call` is accessed,
+        all plugins are re-applied."""
         self.__dict__.pop("call", None)
 
     def prepare(self):
@@ -661,8 +661,8 @@ class Route:
         return callback
 
     def get_undecorated_callback(self):
-        """ Return the callback. If the callback is a decorated function, try to
-            recover the original function. """
+        """Return the callback. If the callback is a decorated function, try to
+        recover the original function."""
         func = self.callback
         func = getattr(func, "__func__" if py3k else "im_func", func)
         closure_attr = "__closure__" if py3k else "func_closure"
@@ -681,14 +681,14 @@ class Route:
         return func
 
     def get_callback_args(self):
-        """ Return a list of argument names the callback (most likely) accepts
-            as keyword arguments. If the callback is a decorated function, try
-            to recover the original function before inspection. """
+        """Return a list of argument names the callback (most likely) accepts
+        as keyword arguments. If the callback is a decorated function, try
+        to recover the original function before inspection."""
         return getargspec(self.get_undecorated_callback())[0]
 
     def get_config(self, key, default=None):
-        """ Lookup a config field and return its value, first checking the
-            route.config, then route.app.config."""
+        """Lookup a config field and return its value, first checking the
+        route.config, then route.app.config."""
         depr(
             0,
             13,
@@ -709,12 +709,12 @@ class Route:
 
 
 class Bottle:
-    """ Each Bottle object represents a single, distinct web application and
-        consists of routes, callbacks, plugins, resources and configuration.
-        Instances are callable WSGI applications.
+    """Each Bottle object represents a single, distinct web application and
+    consists of routes, callbacks, plugins, resources and configuration.
+    Instances are callable WSGI applications.
 
-        :param catchall: If true (default), handle all exceptions. Turn off to
-                         let debugging middleware handle exceptions.
+    :param catchall: If true (default), handle all exceptions. Turn off to
+                     let debugging middleware handle exceptions.
     """
 
     @lazy_attribute
@@ -774,15 +774,15 @@ class Bottle:
         return {name: [] for name in self.__hook_names}
 
     def add_hook(self, name, func):
-        """ Attach a callback to a hook. Three hooks are currently implemented:
+        """Attach a callback to a hook. Three hooks are currently implemented:
 
-            before_request
-                Executed once before each request. The request context is
-                available, but no routing has happened yet.
-            after_request
-                Executed once after each request regardless of its outcome.
-            app_reset
-                Called whenever :meth:`Bottle.reset` is called.
+        before_request
+            Executed once before each request. The request context is
+            available, but no routing has happened yet.
+        after_request
+            Executed once after each request regardless of its outcome.
+        app_reset
+            Called whenever :meth:`Bottle.reset` is called.
         """
         if name in self.__hook_reversed:
             self._hooks[name].insert(0, func)
@@ -800,8 +800,8 @@ class Bottle:
         return [hook(*args, **kwargs) for hook in self._hooks[__name][:]]
 
     def hook(self, name):
-        """ Return a decorator that attaches a callback to a hook. See
-            :meth:`add_hook` for details."""
+        """Return a decorator that attaches a callback to a hook. See
+        :meth:`add_hook` for details."""
 
         def decorator(func):
             self.add_hook(name, func)
@@ -889,25 +889,25 @@ class Bottle:
             self.add_route(route)
 
     def mount(self, prefix, app, **options):
-        """ Mount an application (:class:`Bottle` or plain WSGI) to a specific
-            URL prefix. Example::
+        """Mount an application (:class:`Bottle` or plain WSGI) to a specific
+        URL prefix. Example::
 
-                parent_app.mount('/prefix/', child_app)
+            parent_app.mount('/prefix/', child_app)
 
-            :param prefix: path prefix or `mount-point`.
-            :param app: an instance of :class:`Bottle` or a WSGI application.
+        :param prefix: path prefix or `mount-point`.
+        :param app: an instance of :class:`Bottle` or a WSGI application.
 
-            Plugins from the parent application are not applied to the routes
-            of the mounted child application. If you need plugins in the child
-            application, install them separately.
+        Plugins from the parent application are not applied to the routes
+        of the mounted child application. If you need plugins in the child
+        application, install them separately.
 
-            While it is possible to use path wildcards within the prefix path
-            (:class:`Bottle` childs only), it is highly discouraged.
+        While it is possible to use path wildcards within the prefix path
+        (:class:`Bottle` childs only), it is highly discouraged.
 
-            The prefix path must end with a slash. If you want to access the
-            root of the child application via `/prefix` in addition to
-            `/prefix/`, consider adding a route with a 307 redirect to the
-            parent application.
+        The prefix path must end with a slash. If you want to access the
+        root of the child application via `/prefix` in addition to
+        `/prefix/`, consider adding a route with a 307 redirect to the
+        parent application.
         """
 
         if not prefix.startswith("/"):
@@ -919,19 +919,19 @@ class Bottle:
             return self._mount_wsgi(prefix, app, **options)
 
     def merge(self, routes):
-        """ Merge the routes of another :class:`Bottle` application or a list of
-            :class:`Route` objects into this application. The routes keep their
-            'owner', meaning that the :data:`Route.app` attribute is not
-            changed. """
+        """Merge the routes of another :class:`Bottle` application or a list of
+        :class:`Route` objects into this application. The routes keep their
+        'owner', meaning that the :data:`Route.app` attribute is not
+        changed."""
         if isinstance(routes, Bottle):
             routes = routes.routes
         for route in routes:
             self.add_route(route)
 
     def install(self, plugin):
-        """ Add a plugin to the list of plugins and prepare it for being
-            applied to all routes of this application. A plugin may be a simple
-            decorator or an object that implements the :class:`Plugin` API.
+        """Add a plugin to the list of plugins and prepare it for being
+        applied to all routes of this application. A plugin may be a simple
+        decorator or an object that implements the :class:`Plugin` API.
         """
         if hasattr(plugin, "setup"):
             plugin.setup(self)
@@ -942,10 +942,10 @@ class Bottle:
         return plugin
 
     def uninstall(self, plugin):
-        """ Uninstall plugins. Pass an instance to remove a specific plugin, a type
-            object to remove all plugins that match that type, a string to remove
-            all plugins with a matching ``name`` attribute or ``True`` to remove all
-            plugins. Return the list of removed plugins. """
+        """Uninstall plugins. Pass an instance to remove a specific plugin, a type
+        object to remove all plugins that match that type, a string to remove
+        all plugins with a matching ``name`` attribute or ``True`` to remove all
+        plugins. Return the list of removed plugins."""
         removed, remove = [], plugin
         for i, plugin in list(enumerate(self.plugins))[::-1]:
             if (
@@ -963,9 +963,9 @@ class Bottle:
         return removed
 
     def reset(self, route=None):
-        """ Reset all routes (force plugins to be re-applied) and clear all
-            caches. If an ID or route object is given, only that specific route
-            is affected. """
+        """Reset all routes (force plugins to be re-applied) and clear all
+        caches. If an ID or route object is given, only that specific route
+        is affected."""
         if route is None:
             routes = self.routes
         elif isinstance(route, Route):
@@ -990,9 +990,9 @@ class Bottle:
         run(self, **kwargs)
 
     def match(self, environ):
-        """ Search for a matching route and return a (:class:`Route`, urlargs)
-            tuple. The second value is a dictionary with parameters extracted
-            from the URL. Raise :exc:`HTTPError` (404/405) on a non-match."""
+        """Search for a matching route and return a (:class:`Route`, urlargs)
+        tuple. The second value is a dictionary with parameters extracted
+        from the URL. Raise :exc:`HTTPError` (404/405) on a non-match."""
         return self.router.match(environ)
 
     def get_url(self, routename, **kargs):
@@ -1002,8 +1002,8 @@ class Bottle:
         return urljoin(urljoin("/", scriptname), location)
 
     def add_route(self, route):
-        """ Add a route object, but do not change the :data:`Route.app`
-            attribute."""
+        """Add a route object, but do not change the :data:`Route.app`
+        attribute."""
         self.routes.append(route)
         self.router.add(route.rule, route.method, route, name=route.name)
         if DEBUG:
@@ -1019,30 +1019,30 @@ class Bottle:
         skip=None,
         **config,
     ):
-        """ A decorator to bind a function to a request URL. Example::
+        """A decorator to bind a function to a request URL. Example::
 
-                @app.route('/hello/<name>')
-                def hello(name):
-                    return 'Hello %s' % name
+            @app.route('/hello/<name>')
+            def hello(name):
+                return 'Hello %s' % name
 
-            The ``<name>`` part is a wildcard. See :class:`Router` for syntax
-            details.
+        The ``<name>`` part is a wildcard. See :class:`Router` for syntax
+        details.
 
-            :param path: Request path or a list of paths to listen to. If no
-              path is specified, it is automatically generated from the
-              signature of the function.
-            :param method: HTTP method (`GET`, `POST`, `PUT`, ...) or a list of
-              methods to listen to. (default: `GET`)
-            :param callback: An optional shortcut to avoid the decorator
-              syntax. ``route(..., callback=func)`` equals ``route(...)(func)``
-            :param name: The name for this route. (default: None)
-            :param apply: A decorator or plugin or a list of plugins. These are
-              applied to the route callback in addition to installed plugins.
-            :param skip: A list of plugins, plugin classes or names. Matching
-              plugins are not installed to this route. ``True`` skips all.
+        :param path: Request path or a list of paths to listen to. If no
+          path is specified, it is automatically generated from the
+          signature of the function.
+        :param method: HTTP method (`GET`, `POST`, `PUT`, ...) or a list of
+          methods to listen to. (default: `GET`)
+        :param callback: An optional shortcut to avoid the decorator
+          syntax. ``route(..., callback=func)`` equals ``route(...)(func)``
+        :param name: The name for this route. (default: None)
+        :param apply: A decorator or plugin or a list of plugins. These are
+          applied to the route callback in addition to installed plugins.
+        :param skip: A list of plugins, plugin classes or names. Matching
+          plugins are not installed to this route. ``True`` skips all.
 
-            Any additional keyword arguments are stored as route-specific
-            configuration and passed to plugins (see :meth:`Plugin.apply`).
+        Any additional keyword arguments are stored as route-specific
+        configuration and passed to plugins (see :meth:`Plugin.apply`).
         """
         if callable(path):
             path, callback = None, path
@@ -1091,17 +1091,17 @@ class Bottle:
         return self.route(path, method, **options)
 
     def error(self, code=500, callback=None):
-        """ Register an output handler for a HTTP error code. Can
-            be used as a decorator or called directly ::
+        """Register an output handler for a HTTP error code. Can
+        be used as a decorator or called directly ::
 
-                def error_handler_500(error):
-                    return 'error_handler_500'
+            def error_handler_500(error):
+                return 'error_handler_500'
 
-                app.error(code=500, callback=error_handler_500)
+            app.error(code=500, callback=error_handler_500)
 
-                @app.error(404)
-                def error_handler_404(error):
-                    return 'error_handler_404'
+            @app.error(404)
+            def error_handler_404(error):
+                return 'error_handler_404'
 
         """
 
@@ -1177,7 +1177,7 @@ class Bottle:
         return out
 
     def _cast(self, out, peek=None):
-        """ Try to convert the parameter into something WSGI compatible and set
+        """Try to convert the parameter into something WSGI compatible and set
         correct HTTP headers when possible.
         Support: False, str, unicode, dict, HTTPResponse, HTTPError, file-like,
         iterable of strings and iterable of unicodes
@@ -1313,12 +1313,12 @@ class Bottle:
 
 
 class BaseRequest:
-    """ A wrapper for WSGI environment dictionaries that adds a lot of
-        convenient access methods and properties. Most of them are read-only.
+    """A wrapper for WSGI environment dictionaries that adds a lot of
+    convenient access methods and properties. Most of them are read-only.
 
-        Adding new attributes to a request actually adds them to the environ
-        dictionary (as 'bottle.request.ext.<name>'). This is the recommended
-        way to store and access request-specific data.
+    Adding new attributes to a request actually adds them to the environ
+    dictionary (as 'bottle.request.ext.<name>'). This is the recommended
+    way to store and access request-specific data.
     """
 
     __slots__ = ("environ",)
@@ -1350,8 +1350,8 @@ class BaseRequest:
 
     @property
     def path(self):
-        """ The value of ``PATH_INFO`` with exactly one prefixed slash (to fix
-            broken clients and avoid the "empty path" edge case). """
+        """The value of ``PATH_INFO`` with exactly one prefixed slash (to fix
+        broken clients and avoid the "empty path" edge case)."""
         return "/" + self.environ.get("PATH_INFO", "").lstrip("/")
 
     @property
@@ -1361,8 +1361,8 @@ class BaseRequest:
 
     @DictProperty("environ", "bottle.request.headers", read_only=True)
     def headers(self):
-        """ A :class:`WSGIHeaderDict` that provides case-insensitive access to
-            HTTP request headers. """
+        """A :class:`WSGIHeaderDict` that provides case-insensitive access to
+        HTTP request headers."""
         return WSGIHeaderDict(self.environ)
 
     def get_header(self, name, default=None):
@@ -1371,16 +1371,16 @@ class BaseRequest:
 
     @DictProperty("environ", "bottle.request.cookies", read_only=True)
     def cookies(self):
-        """ Cookies parsed into a :class:`FormsDict`. Signed cookies are NOT
-            decoded. Use :meth:`get_cookie` if you expect signed cookies. """
+        """Cookies parsed into a :class:`FormsDict`. Signed cookies are NOT
+        decoded. Use :meth:`get_cookie` if you expect signed cookies."""
         cookies = SimpleCookie(self.environ.get("HTTP_COOKIE", "")).values()
         return FormsDict((c.key, c.value) for c in cookies)
 
     def get_cookie(self, key, default=None, secret=None, digestmod=hashlib.sha256):
-        """ Return the content of a cookie. To read a `Signed Cookie`, the
-            `secret` must match the one used to create the cookie (see
-            :meth:`BaseResponse.set_cookie`). If anything goes wrong (missing
-            cookie or wrong signature), return a default value. """
+        """Return the content of a cookie. To read a `Signed Cookie`, the
+        `secret` must match the one used to create the cookie (see
+        :meth:`BaseResponse.set_cookie`). If anything goes wrong (missing
+        cookie or wrong signature), return a default value."""
         value = self.cookies.get(key)
         if secret:
             # See BaseResponse.set_cookie for details on signed cookies.
@@ -1396,10 +1396,10 @@ class BaseRequest:
 
     @DictProperty("environ", "bottle.request.query", read_only=True)
     def query(self):
-        """ The :attr:`query_string` parsed into a :class:`FormsDict`. These
-            values are sometimes called "URL arguments" or "GET parameters", but
-            not to be confused with "URL wildcards" as they are provided by the
-            :class:`Router`. """
+        """The :attr:`query_string` parsed into a :class:`FormsDict`. These
+        values are sometimes called "URL arguments" or "GET parameters", but
+        not to be confused with "URL wildcards" as they are provided by the
+        :class:`Router`."""
         get = self.environ["bottle.get"] = FormsDict()
         pairs = _parse_qsl(self.environ.get("QUERY_STRING", ""))
         for key, value in pairs:
@@ -1408,10 +1408,10 @@ class BaseRequest:
 
     @DictProperty("environ", "bottle.request.forms", read_only=True)
     def forms(self):
-        """ Form values parsed from an `url-encoded` or `multipart/form-data`
-            encoded POST or PUT request body. The result is returned as a
-            :class:`FormsDict`. All keys and values are strings. File uploads
-            are stored separately in :attr:`files`. """
+        """Form values parsed from an `url-encoded` or `multipart/form-data`
+        encoded POST or PUT request body. The result is returned as a
+        :class:`FormsDict`. All keys and values are strings. File uploads
+        are stored separately in :attr:`files`."""
         forms = FormsDict()
         forms.recode_unicode = self.POST.recode_unicode
         for name, item in self.POST.allitems():
@@ -1421,8 +1421,8 @@ class BaseRequest:
 
     @DictProperty("environ", "bottle.request.params", read_only=True)
     def params(self):
-        """ A :class:`FormsDict` with the combined values of :attr:`query` and
-            :attr:`forms`. File uploads are stored in :attr:`files`. """
+        """A :class:`FormsDict` with the combined values of :attr:`query` and
+        :attr:`forms`. File uploads are stored in :attr:`files`."""
         params = FormsDict()
         for key, value in self.query.allitems():
             params[key] = value
@@ -1432,8 +1432,8 @@ class BaseRequest:
 
     @DictProperty("environ", "bottle.request.files", read_only=True)
     def files(self):
-        """ File uploads parsed from `multipart/form-data` encoded POST or PUT
-            request body. The values are instances of :class:`FileUpload`.
+        """File uploads parsed from `multipart/form-data` encoded POST or PUT
+        request body. The values are instances of :class:`FileUpload`.
 
         """
         files = FormsDict()
@@ -1445,11 +1445,11 @@ class BaseRequest:
 
     @DictProperty("environ", "bottle.request.json", read_only=True)
     def json(self):
-        """ If the ``Content-Type`` header is ``application/json`` or
-            ``application/json-rpc``, this property holds the parsed content
-            of the request body. Only requests smaller than :attr:`MEMFILE_MAX`
-            are processed to avoid memory exhaustion.
-            Invalid JSON raises a 400 error response.
+        """If the ``Content-Type`` header is ``application/json`` or
+        ``application/json-rpc``, this property holds the parsed content
+        of the request body. Only requests smaller than :attr:`MEMFILE_MAX`
+        are processed to avoid memory exhaustion.
+        Invalid JSON raises a 400 error response.
         """
         ctype = self.environ.get("CONTENT_TYPE", "").lower().split(";")[0]
         if ctype in ("application/json", "application/json-rpc"):
@@ -1525,8 +1525,8 @@ class BaseRequest:
         return body
 
     def _get_body_string(self, maxread):
-        """ Read body into a string. Raise HTTPError(413) on requests that are
-            to large. """
+        """Read body into a string. Raise HTTPError(413) on requests that are
+        to large."""
         if self.content_length > maxread:
             raise HTTPError(413, "Request entity too large")
         data = self.body.read(maxread + 1)
@@ -1536,11 +1536,11 @@ class BaseRequest:
 
     @property
     def body(self):
-        """ The HTTP request body as a seek-able file-like object. Depending on
-            :attr:`MEMFILE_MAX`, this is either a temporary file or a
-            :class:`io.BytesIO` instance. Accessing this property for the first
-            time reads and replaces the ``wsgi.input`` environ variable.
-            Subsequent accesses just do a `seek(0)` on the file object. """
+        """The HTTP request body as a seek-able file-like object. Depending on
+        :attr:`MEMFILE_MAX`, this is either a temporary file or a
+        :class:`io.BytesIO` instance. Accessing this property for the first
+        time reads and replaces the ``wsgi.input`` environ variable.
+        Subsequent accesses just do a `seek(0)` on the file object."""
         self._body.seek(0)
         return self._body
 
@@ -1554,9 +1554,9 @@ class BaseRequest:
 
     @DictProperty("environ", "bottle.request.post", read_only=True)
     def POST(self):
-        """ The values of :attr:`forms` and :attr:`files` combined into a single
-            :class:`FormsDict`. Values are either strings (form values) or
-            instances of :class:`cgi.FieldStorage` (file uploads).
+        """The values of :attr:`forms` and :attr:`files` combined into a single
+        :class:`FormsDict`. Values are either strings (form values) or
+        instances of :class:`cgi.FieldStorage` (file uploads).
         """
         post = FormsDict()
         # We default to application/x-www-form-urlencoded for everything that
@@ -1590,18 +1590,18 @@ class BaseRequest:
 
     @property
     def url(self):
-        """ The full request URI including hostname and scheme. If your app
-            lives behind a reverse proxy or load balancer and you get confusing
-            results, make sure that the ``X-Forwarded-Host`` header is set
-            correctly. """
+        """The full request URI including hostname and scheme. If your app
+        lives behind a reverse proxy or load balancer and you get confusing
+        results, make sure that the ``X-Forwarded-Host`` header is set
+        correctly."""
         return self.urlparts.geturl()
 
     @DictProperty("environ", "bottle.request.urlparts", read_only=True)
     def urlparts(self):
-        """ The :attr:`url` string as an :class:`urlparse.SplitResult` tuple.
-            The tuple contains (scheme, host, path, query_string and fragment),
-            but the fragment is always empty because it is not visible to the
-            server. """
+        """The :attr:`url` string as an :class:`urlparse.SplitResult` tuple.
+        The tuple contains (scheme, host, path, query_string and fragment),
+        but the fragment is always empty because it is not visible to the
+        server."""
         env = self.environ
         http = env.get("HTTP_X_FORWARDED_PROTO") or env.get("wsgi.url_scheme", "http")
         host = env.get("HTTP_X_FORWARDED_HOST") or env.get("HTTP_HOST")
@@ -1621,25 +1621,25 @@ class BaseRequest:
 
     @property
     def query_string(self):
-        """ The raw :attr:`query` part of the URL (everything in between ``?``
-            and ``#``) as a string. """
+        """The raw :attr:`query` part of the URL (everything in between ``?``
+        and ``#``) as a string."""
         return self.environ.get("QUERY_STRING", "")
 
     @property
     def script_name(self):
-        """ The initial portion of the URL's `path` that was removed by a higher
-            level (server or routing middleware) before the application was
-            called. This script path is returned with leading and tailing
-            slashes. """
+        """The initial portion of the URL's `path` that was removed by a higher
+        level (server or routing middleware) before the application was
+        called. This script path is returned with leading and tailing
+        slashes."""
         script_name = self.environ.get("SCRIPT_NAME", "").strip("/")
         return "/" + script_name + "/" if script_name else "/"
 
     def path_shift(self, shift=1):
-        """ Shift path segments from :attr:`path` to :attr:`script_name` and
-            vice versa.
+        """Shift path segments from :attr:`path` to :attr:`script_name` and
+         vice versa.
 
-           :param shift: The number of path segments to shift. May be negative
-                         to change the shift direction. (default: 1)
+        :param shift: The number of path segments to shift. May be negative
+                      to change the shift direction. (default: 1)
         """
         script, path = path_shift(
             self.environ.get("SCRIPT_NAME", "/"), self.path, shift
@@ -1648,9 +1648,9 @@ class BaseRequest:
 
     @property
     def content_length(self):
-        """ The request body length as an integer. The client is responsible to
-            set this header. Otherwise, the real length of the body is unknown
-            and -1 is returned. In this case, :attr:`body` will be empty. """
+        """The request body length as an integer. The client is responsible to
+        set this header. Otherwise, the real length of the body is unknown
+        and -1 is returned. In this case, :attr:`body` will be empty."""
         return int(self.environ.get("CONTENT_LENGTH") or -1)
 
     @property
@@ -1660,9 +1660,9 @@ class BaseRequest:
 
     @property
     def is_xhr(self):
-        """ True if the request was triggered by a XMLHttpRequest. This only
-            works with JavaScript libraries that support the `X-Requested-With`
-            header (most of the popular libraries do). """
+        """True if the request was triggered by a XMLHttpRequest. This only
+        works with JavaScript libraries that support the `X-Requested-With`
+        header (most of the popular libraries do)."""
         requested_with = self.environ.get("HTTP_X_REQUESTED_WITH", "")
         return requested_with.lower() == "xmlhttprequest"
 
@@ -1673,12 +1673,12 @@ class BaseRequest:
 
     @property
     def auth(self):
-        """ HTTP authentication data as a (user, password) tuple. This
-            implementation currently supports basic (not digest) authentication
-            only. If the authentication happened at a higher level (e.g. in the
-            front web-server or a middleware), the password field is None, but
-            the user field is looked up from the ``REMOTE_USER`` environ
-            variable. On any errors, None is returned. """
+        """HTTP authentication data as a (user, password) tuple. This
+        implementation currently supports basic (not digest) authentication
+        only. If the authentication happened at a higher level (e.g. in the
+        front web-server or a middleware), the password field is None, but
+        the user field is looked up from the ``REMOTE_USER`` environ
+        variable. On any errors, None is returned."""
         basic = parse_auth(self.environ.get("HTTP_AUTHORIZATION", ""))
         if basic:
             return basic
@@ -1689,10 +1689,10 @@ class BaseRequest:
 
     @property
     def remote_route(self):
-        """ A list of all IPs that were involved in this request, starting with
-            the client IP and followed by zero or more proxies. This does only
-            work if all proxies support the ```X-Forwarded-For`` header. Note
-            that this information can be forged by malicious clients. """
+        """A list of all IPs that were involved in this request, starting with
+        the client IP and followed by zero or more proxies. This does only
+        work if all proxies support the ```X-Forwarded-For`` header. Note
+        that this information can be forged by malicious clients."""
         proxy = self.environ.get("HTTP_X_FORWARDED_FOR")
         if proxy:
             return [ip.strip() for ip in proxy.split(",")]
@@ -1701,8 +1701,8 @@ class BaseRequest:
 
     @property
     def remote_addr(self):
-        """ The client IP as a string. Note that this information can be forged
-            by malicious clients. """
+        """The client IP as a string. Note that this information can be forged
+        by malicious clients."""
         route = self.remote_route
         return route[0] if route else None
 
@@ -1807,19 +1807,19 @@ class HeaderProperty:
 
 
 class BaseResponse:
-    """ Storage class for a response body as well as headers and cookies.
+    """Storage class for a response body as well as headers and cookies.
 
-        This class does support dict-like case-insensitive item-access to
-        headers, but is NOT a dict. Most notably, iterating over a response
-        yields parts of the body and not the headers.
+    This class does support dict-like case-insensitive item-access to
+    headers, but is NOT a dict. Most notably, iterating over a response
+    yields parts of the body and not the headers.
 
-        :param body: The response body as one of the supported types.
-        :param status: Either an HTTP status code (e.g. 200) or a status line
-                       including the reason phrase (e.g. '200 OK').
-        :param headers: A dictionary or a list of name-value pairs.
+    :param body: The response body as one of the supported types.
+    :param status: Either an HTTP status code (e.g. 200) or a status line
+                   including the reason phrase (e.g. '200 OK').
+    :param headers: A dictionary or a list of name-value pairs.
 
-        Additional keyword arguments are added to the list of headers.
-        Underscores in the header name are replaced with dashes.
+    Additional keyword arguments are added to the list of headers.
+    Underscores in the header name are replaced with dashes.
     """
 
     default_status = 200
@@ -1923,8 +1923,8 @@ class BaseResponse:
 
     @property
     def headers(self):
-        """ An instance of :class:`HeaderDict`, a case-insensitive dict-like
-            view on the response headers. """
+        """An instance of :class:`HeaderDict`, a case-insensitive dict-like
+        view on the response headers."""
         hdict = HeaderDict()
         hdict.dict = self._headers
         return hdict
@@ -1942,13 +1942,13 @@ class BaseResponse:
         self._headers[_hkey(name)] = [_hval(value)]
 
     def get_header(self, name, default=None):
-        """ Return the value of a previously defined header. If there is no
-            header with that name, return a default value. """
+        """Return the value of a previously defined header. If there is no
+        header with that name, return a default value."""
         return self._headers.get(_hkey(name), [default])[-1]
 
     def set_header(self, name, value):
-        """ Create a new response header, replacing any previously defined
-            headers with the same name. """
+        """Create a new response header, replacing any previously defined
+        headers with the same name."""
         self._headers[_hkey(name)] = [_hval(value)]
 
     def add_header(self, name, value):
@@ -1956,8 +1956,8 @@ class BaseResponse:
         self._headers.setdefault(_hkey(name), []).append(_hval(value))
 
     def iter_headers(self):
-        """ Yield (header, value) tuples, skipping headers that are not
-            allowed with the current response status code. """
+        """Yield (header, value) tuples, skipping headers that are not
+        allowed with the current response status code."""
         return self.headerlist
 
     def _wsgi_status_line(self):
@@ -2000,44 +2000,44 @@ class BaseResponse:
         return default
 
     def set_cookie(self, name, value, secret=None, digestmod=hashlib.sha256, **options):
-        """ Create a new cookie or replace an old one. If the `secret` parameter is
-            set, create a `Signed Cookie` (described below).
+        """Create a new cookie or replace an old one. If the `secret` parameter is
+        set, create a `Signed Cookie` (described below).
 
-            :param name: the name of the cookie.
-            :param value: the value of the cookie.
-            :param secret: a signature key required for signed cookies.
+        :param name: the name of the cookie.
+        :param value: the value of the cookie.
+        :param secret: a signature key required for signed cookies.
 
-            Additionally, this method accepts all RFC 2109 attributes that are
-            supported by :class:`cookie.Morsel`, including:
+        Additionally, this method accepts all RFC 2109 attributes that are
+        supported by :class:`cookie.Morsel`, including:
 
-            :param maxage: maximum age in seconds. (default: None)
-            :param expires: a datetime object or UNIX timestamp. (default: None)
-            :param domain: the domain that is allowed to read the cookie.
-              (default: current domain)
-            :param path: limits the cookie to a given path (default: current path)
-            :param secure: limit the cookie to HTTPS connections (default: off).
-            :param httponly: prevents client-side javascript to read this cookie
-              (default: off, requires Python 2.6 or newer).
-            :param samesite: Control or disable third-party use for this cookie.
-              Possible values: `lax`, `strict` or `none` (default).
+        :param maxage: maximum age in seconds. (default: None)
+        :param expires: a datetime object or UNIX timestamp. (default: None)
+        :param domain: the domain that is allowed to read the cookie.
+          (default: current domain)
+        :param path: limits the cookie to a given path (default: current path)
+        :param secure: limit the cookie to HTTPS connections (default: off).
+        :param httponly: prevents client-side javascript to read this cookie
+          (default: off, requires Python 2.6 or newer).
+        :param samesite: Control or disable third-party use for this cookie.
+          Possible values: `lax`, `strict` or `none` (default).
 
-            If neither `expires` nor `maxage` is set (default), the cookie will
-            expire at the end of the browser session (as soon as the browser
-            window is closed).
+        If neither `expires` nor `maxage` is set (default), the cookie will
+        expire at the end of the browser session (as soon as the browser
+        window is closed).
 
-            Signed cookies may store any pickle-able object and are
-            cryptographically signed to prevent manipulation. Keep in mind that
-            cookies are limited to 4kb in most browsers.
+        Signed cookies may store any pickle-able object and are
+        cryptographically signed to prevent manipulation. Keep in mind that
+        cookies are limited to 4kb in most browsers.
 
-            Warning: Pickle is a potentially dangerous format. If an attacker
-            gains access to the secret key, he could forge cookies that execute
-            code on server side if unpickled. Using pickle is discouraged and
-            support for it will be removed in later versions of bottle.
+        Warning: Pickle is a potentially dangerous format. If an attacker
+        gains access to the secret key, he could forge cookies that execute
+        code on server side if unpickled. Using pickle is discouraged and
+        support for it will be removed in later versions of bottle.
 
-            Warning: Signed cookies are not encrypted (the client can still see
-            the content) and not copy-protected (the client can restore an old
-            cookie). The main intention is to make pickling and unpickling
-            save, not to store secret information at client side.
+        Warning: Signed cookies are not encrypted (the client can still see
+        the content) and not copy-protected (the client can restore an old
+        cookie). The main intention is to make pickling and unpickling
+        save, not to store secret information at client side.
         """
         if not self._cookies:
             self._cookies = SimpleCookie()
@@ -2085,8 +2085,8 @@ class BaseResponse:
             self._cookies[name][key] = value
 
     def delete_cookie(self, key, **kwargs):
-        """ Delete a cookie. Be sure to use the same `domain` and `path`
-            settings as used to create the cookie. """
+        """Delete a cookie. Be sure to use the same `domain` and `path`
+        settings as used to create the cookie."""
         kwargs["max_age"] = -1
         kwargs["expires"] = 0
         self.set_cookie(key, "", **kwargs)
@@ -2117,21 +2117,21 @@ def _local_property():
 
 
 class LocalRequest(BaseRequest):
-    """ A thread-local subclass of :class:`BaseRequest` with a different
-        set of attributes for each thread. There is usually only one global
-        instance of this class (:data:`request`). If accessed during a
-        request/response cycle, this instance always refers to the *current*
-        request (even on a multithreaded server). """
+    """A thread-local subclass of :class:`BaseRequest` with a different
+    set of attributes for each thread. There is usually only one global
+    instance of this class (:data:`request`). If accessed during a
+    request/response cycle, this instance always refers to the *current*
+    request (even on a multithreaded server)."""
 
     bind = BaseRequest.__init__
     environ = _local_property()
 
 
 class LocalResponse(BaseResponse):
-    """ A thread-local subclass of :class:`BaseResponse` with a different
-        set of attributes for each thread. There is usually only one global
-        instance of this class (:data:`response`). Its attributes are used
-        to build the HTTP response at the end of the request/response cycle.
+    """A thread-local subclass of :class:`BaseResponse` with a different
+    set of attributes for each thread. There is usually only one global
+    instance of this class (:data:`response`). Its attributes are used
+    to build the HTTP response at the end of the request/response cycle.
     """
 
     bind = BaseResponse.__init__
@@ -2238,10 +2238,10 @@ class JSONPlugin:
 
 
 class TemplatePlugin:
-    """ This plugin applies the :func:`view` decorator to all routes with a
-        `template` config parameter. If the parameter is a tuple, the second
-        element must be a dict with additional options (e.g. `template_engine`)
-        or default variables for the template. """
+    """This plugin applies the :func:`view` decorator to all routes with a
+    `template` config parameter. If the parameter is a tuple, the second
+    element must be a dict with additional options (e.g. `template_engine`)
+    or default variables for the template."""
 
     name = "template"
     api = 2
@@ -2297,9 +2297,9 @@ class _ImportRedirect:
 
 
 class MultiDict(DictMixin):
-    """ This dict stores multiple values per key, but behaves exactly like a
-        normal dict in that it returns only the newest value for any given key.
-        There are special methods available to access the full list of values.
+    """This dict stores multiple values per key, but behaves exactly like a
+    normal dict in that it returns only the newest value for any given key.
+    There are special methods available to access the full list of values.
     """
 
     def __init__(self, *a, **k):
@@ -2366,14 +2366,14 @@ class MultiDict(DictMixin):
             return [(k, v) for k, vl in self.dict.iteritems() for v in vl]
 
     def get(self, key, default=None, index=-1, type=None):
-        """ Return the most recent value for a key.
+        """Return the most recent value for a key.
 
-            :param default: The default value to be returned if the key is not
-                   present or the type conversion fails.
-            :param index: An index for the list of available values.
-            :param type: If defined, this callable is used to cast the value
-                    into a specific type. Exception are suppressed and result in
-                    the default value to be returned.
+        :param default: The default value to be returned if the key is not
+               present or the type conversion fails.
+        :param index: An index for the list of available values.
+        :param type: If defined, this callable is used to cast the value
+                into a specific type. Exception are suppressed and result in
+                the default value to be returned.
         """
         try:
             val = self.dict[key][index]
@@ -2400,12 +2400,12 @@ class MultiDict(DictMixin):
 
 
 class FormsDict(MultiDict):
-    """ This :class:`MultiDict` subclass is used to store request form data.
-        Additionally to the normal dict-like item access methods (which return
-        unmodified data as native strings), this container also supports
-        attribute-like access to its values. Attributes are automatically de-
-        or recoded to match :attr:`input_encoding` (default: 'utf8'). Missing
-        attributes default to an empty string. """
+    """This :class:`MultiDict` subclass is used to store request form data.
+    Additionally to the normal dict-like item access methods (which return
+    unmodified data as native strings), this container also supports
+    attribute-like access to its values. Attributes are automatically de-
+    or recoded to match :attr:`input_encoding` (default: 'utf8'). Missing
+    attributes default to an empty string."""
 
     #: Encoding used for attribute values.
     input_encoding = "utf8"
@@ -2422,9 +2422,9 @@ class FormsDict(MultiDict):
             return s
 
     def decode(self, encoding=None):
-        """ Returns a copy with all keys and values de- or recoded to match
-            :attr:`input_encoding`. Some libraries (e.g. WTForms) want a
-            unicode dictionary. """
+        """Returns a copy with all keys and values de- or recoded to match
+        :attr:`input_encoding`. Some libraries (e.g. WTForms) want a
+        unicode dictionary."""
         copy = FormsDict()
         enc = copy.input_encoding = encoding or self.input_encoding
         copy.recode_unicode = False
@@ -2447,8 +2447,8 @@ class FormsDict(MultiDict):
 
 
 class HeaderDict(MultiDict):
-    """ A case-insensitive version of :class:`MultiDict` that defaults to
-        replace the old value instead of appending it. """
+    """A case-insensitive version of :class:`MultiDict` that defaults to
+    replace the old value instead of appending it."""
 
     def __init__(self, *a, **ka):
         self.dict = {}
@@ -2486,15 +2486,15 @@ class HeaderDict(MultiDict):
 
 
 class WSGIHeaderDict(DictMixin):
-    """ This dict-like class wraps a WSGI environ dict and provides convenient
-        access to HTTP_* fields. Keys and values are native strings
-        (2.x bytes or 3.x unicode) and keys are case-insensitive. If the WSGI
-        environment contains non-native string values, these are de- or encoded
-        using a lossless 'latin1' character set.
+    """This dict-like class wraps a WSGI environ dict and provides convenient
+    access to HTTP_* fields. Keys and values are native strings
+    (2.x bytes or 3.x unicode) and keys are case-insensitive. If the WSGI
+    environment contains non-native string values, these are de- or encoded
+    using a lossless 'latin1' character set.
 
-        The API will remain stable even on changes to the relevant PEPs.
-        Currently PEP 333, 444 and 3333 are supported. (PEP 444 is the only one
-        that uses non-native strings.)
+    The API will remain stable even on changes to the relevant PEPs.
+    Currently PEP 333, 444 and 3333 are supported. (PEP 444 is the only one
+    that uses non-native strings.)
     """
 
     #: List of keys that do not have a ``HTTP_`` prefix.
@@ -2550,11 +2550,11 @@ _UNSET = object()
 
 
 class ConfigDict(dict):
-    """ A dict-like configuration storage with additional support for
-        namespaces, validators, meta-data, overlays and more.
+    """A dict-like configuration storage with additional support for
+    namespaces, validators, meta-data, overlays and more.
 
-        This dict-like class is heavily optimized for read access. All read-only
-        methods as well as item access should be as fast as the built-in dict.
+    This dict-like class is heavily optimized for read access. All read-only
+    methods as well as item access should be as fast as the built-in dict.
     """
 
     __slots__ = (
@@ -2579,22 +2579,22 @@ class ConfigDict(dict):
     def load_module(self, path, squash=True):
         """Load values from a Python module.
 
-           Example modue ``config.py``::
+        Example modue ``config.py``::
 
-                DEBUG = True
-                SQLITE = {
-                    "db": ":memory:"
-                }
+             DEBUG = True
+             SQLITE = {
+                 "db": ":memory:"
+             }
 
 
-           >>> c = ConfigDict()
-           >>> c.load_module('config')
-           {DEBUG: True, 'SQLITE.DB': 'memory'}
-           >>> c.load_module("config", False)
-           {'DEBUG': True, 'SQLITE': {'DB': 'memory'}}
+        >>> c = ConfigDict()
+        >>> c.load_module('config')
+        {DEBUG: True, 'SQLITE.DB': 'memory'}
+        >>> c.load_module("config", False)
+        {'DEBUG': True, 'SQLITE': {'DB': 'memory'}}
 
-           :param squash: If true (default), dictionary values are assumed to
-                          represent namespaces (see :meth:`load_dict`).
+        :param squash: If true (default), dictionary values are assumed to
+                       represent namespaces (see :meth:`load_dict`).
         """
         config_obj = load(path)
         obj = {
@@ -2608,32 +2608,32 @@ class ConfigDict(dict):
         return self
 
     def load_config(self, filename, **options):
-        """ Load values from an ``*.ini`` style config file.
+        """Load values from an ``*.ini`` style config file.
 
-            A configuration file consists of sections, each led by a
-            ``[section]`` header, followed by key/value entries separated by
-            either ``=`` or ``:``. Section names and keys are case-insensitive.
-            Leading and trailing whitespace is removed from keys and values.
-            Values can be omitted, in which case the key/value delimiter may
-            also be left out. Values can also span multiple lines, as long as
-            they are indented deeper than the first line of the value. Commands
-            are prefixed by ``#`` or ``;`` and may only appear on their own on
-            an otherwise empty line.
+        A configuration file consists of sections, each led by a
+        ``[section]`` header, followed by key/value entries separated by
+        either ``=`` or ``:``. Section names and keys are case-insensitive.
+        Leading and trailing whitespace is removed from keys and values.
+        Values can be omitted, in which case the key/value delimiter may
+        also be left out. Values can also span multiple lines, as long as
+        they are indented deeper than the first line of the value. Commands
+        are prefixed by ``#`` or ``;`` and may only appear on their own on
+        an otherwise empty line.
 
-            Both section and key names may contain dots (``.``) as namespace
-            separators. The actual configuration parameter name is constructed
-            by joining section name and key name together and converting to
-            lower case.
+        Both section and key names may contain dots (``.``) as namespace
+        separators. The actual configuration parameter name is constructed
+        by joining section name and key name together and converting to
+        lower case.
 
-            The special sections ``bottle`` and ``ROOT`` refer to the root
-            namespace and the ``DEFAULT`` section defines default values for all
-            other sections.
+        The special sections ``bottle`` and ``ROOT`` refer to the root
+        namespace and the ``DEFAULT`` section defines default values for all
+        other sections.
 
-            With Python 3, extended string interpolation is enabled.
+        With Python 3, extended string interpolation is enabled.
 
-            :param filename: The path of a config file, or a list of paths.
-            :param options: All keyword parameters are passed to the underlying
-                :class:`python:configparser.ConfigParser` constructor call.
+        :param filename: The path of a config file, or a list of paths.
+        :param options: All keyword parameters are passed to the underlying
+            :class:`python:configparser.ConfigParser` constructor call.
 
         """
         options.setdefault("allow_no_value", True)
@@ -2650,12 +2650,12 @@ class ConfigDict(dict):
         return self
 
     def load_dict(self, source, namespace=""):
-        """ Load values from a dictionary structure. Nesting can be used to
-            represent namespaces.
+        """Load values from a dictionary structure. Nesting can be used to
+        represent namespaces.
 
-            >>> c = ConfigDict()
-            >>> c.load_dict({'some': {'namespace': {'key': 'value'} } })
-            {'some.namespace.key': 'value'}
+        >>> c = ConfigDict()
+        >>> c.load_dict({'some': {'namespace': {'key': 'value'} } })
+        {'some.namespace.key': 'value'}
         """
         for key, value in source.items():
             if isinstance(key, basestring):
@@ -2669,11 +2669,11 @@ class ConfigDict(dict):
         return self
 
     def update(self, *a, **ka):
-        """ If the first parameter is a string, all keys are prefixed with this
-            namespace. Apart from that it works just as the usual dict.update().
+        """If the first parameter is a string, all keys are prefixed with this
+        namespace. Apart from that it works just as the usual dict.update().
 
-            >>> c = ConfigDict()
-            >>> c.update('some.namespace', key='value')
+        >>> c = ConfigDict()
+        >>> c.update('some.namespace', key='value')
         """
         prefix = ""
         if a and isinstance(a[0], basestring):
@@ -2720,8 +2720,8 @@ class ConfigDict(dict):
                 overlay._delete_virtual(key)
 
     def _set_virtual(self, key, value):
-        """ Recursively set or update virtual keys. Do nothing if non-virtual
-            value is present. """
+        """Recursively set or update virtual keys. Do nothing if non-virtual
+        value is present."""
         if key in self and key not in self._virtual_keys:
             return  # Do nothing for non-virtual keys.
 
@@ -2733,8 +2733,7 @@ class ConfigDict(dict):
             overlay._set_virtual(key, value)
 
     def _delete_virtual(self, key):
-        """ Recursively delete virtual entry. Do nothing if key is not virtual.
-        """
+        """Recursively delete virtual entry. Do nothing if key is not virtual."""
         if key not in self._virtual_keys:
             return  # Do nothing for non-virtual keys.
 
@@ -2782,28 +2781,28 @@ class ConfigDict(dict):
                 yield overlay
 
     def _make_overlay(self):
-        """ (Unstable) Create a new overlay that acts like a chained map: Values
-            missing in the overlay are copied from the source map. Both maps
-            share the same meta entries.
+        """(Unstable) Create a new overlay that acts like a chained map: Values
+        missing in the overlay are copied from the source map. Both maps
+        share the same meta entries.
 
-            Entries that were copied from the source are called 'virtual'. You
-            can not delete virtual keys, but overwrite them, which turns them
-            into non-virtual entries. Setting keys on an overlay never affects
-            its source, but may affect any number of child overlays.
+        Entries that were copied from the source are called 'virtual'. You
+        can not delete virtual keys, but overwrite them, which turns them
+        into non-virtual entries. Setting keys on an overlay never affects
+        its source, but may affect any number of child overlays.
 
-            Other than collections.ChainMap or most other implementations, this
-            approach does not resolve missing keys on demand, but instead
-            actively copies all values from the source to the overlay and keeps
-            track of virtual and non-virtual keys internally. This removes any
-            lookup-overhead. Read-access is as fast as a build-in dict for both
-            virtual and non-virtual keys.
+        Other than collections.ChainMap or most other implementations, this
+        approach does not resolve missing keys on demand, but instead
+        actively copies all values from the source to the overlay and keeps
+        track of virtual and non-virtual keys internally. This removes any
+        lookup-overhead. Read-access is as fast as a build-in dict for both
+        virtual and non-virtual keys.
 
-            Changes are propagated recursively and depth-first. A failing
-            on-change handler in an overlay stops the propagation of virtual
-            values and may result in an partly updated tree. Take extra care
-            here and make sure that on-change handlers never fail.
+        Changes are propagated recursively and depth-first. A failing
+        on-change handler in an overlay stops the propagation of virtual
+        values and may result in an partly updated tree. Take extra care
+        here and make sure that on-change handlers never fail.
 
-            Used by Route.config
+        Used by Route.config
         """
         # Cleanup dead references
         self._overlays[:] = [ref for ref in self._overlays if ref() is not None]
@@ -2858,8 +2857,8 @@ class WSGIFileWrapper:
 
 
 class _closeiter:
-    """ This only exists to be able to attach a .close method to iterators that
-        do not support attribute assignment (most of itertools). """
+    """This only exists to be able to attach a .close method to iterators that
+    do not support attribute assignment (most of itertools)."""
 
     def __init__(self, iterator, close=None):
         self.iterator = iterator
@@ -2874,13 +2873,13 @@ class _closeiter:
 
 
 class ResourceManager:
-    """ This class manages a list of search paths and helps to find and open
-        application-bound resources (files).
+    """This class manages a list of search paths and helps to find and open
+    application-bound resources (files).
 
-        :param base: default value for :meth:`add_path` calls.
-        :param opener: callable used to open resources.
-        :param cachemode: controls which lookups are cached. One of 'all',
-                         'found' or 'none'.
+    :param base: default value for :meth:`add_path` calls.
+    :param opener: callable used to open resources.
+    :param cachemode: controls which lookups are cached. One of 'all',
+                     'found' or 'none'.
     """
 
     def __init__(self, base="./", opener=open, cachemode="all"):
@@ -2894,21 +2893,21 @@ class ResourceManager:
         self.cache = {}
 
     def add_path(self, path, base=None, index=None, create=False):
-        """ Add a new path to the list of search paths. Return False if the
-            path does not exist.
+        """Add a new path to the list of search paths. Return False if the
+        path does not exist.
 
-            :param path: The new search path. Relative paths are turned into
-                an absolute and normalized form. If the path looks like a file
-                (not ending in `/`), the filename is stripped off.
-            :param base: Path used to absolutize relative search paths.
-                Defaults to :attr:`base` which defaults to ``os.getcwd()``.
-            :param index: Position within the list of search paths. Defaults
-                to last index (appends to the list).
+        :param path: The new search path. Relative paths are turned into
+            an absolute and normalized form. If the path looks like a file
+            (not ending in `/`), the filename is stripped off.
+        :param base: Path used to absolutize relative search paths.
+            Defaults to :attr:`base` which defaults to ``os.getcwd()``.
+        :param index: Position within the list of search paths. Defaults
+            to last index (appends to the list).
 
-            The `base` parameter makes it easy to reference files installed
-            along with a python module or package::
+        The `base` parameter makes it easy to reference files installed
+        along with a python module or package::
 
-                res.add_path('./resources/', __file__)
+            res.add_path('./resources/', __file__)
         """
         base = os.path.abspath(os.path.dirname(base or self.base))
         path = os.path.abspath(os.path.join(base, os.path.dirname(path)))
@@ -2939,11 +2938,11 @@ class ResourceManager:
                     yield full
 
     def lookup(self, name):
-        """ Search for a resource and return an absolute file path, or `None`.
+        """Search for a resource and return an absolute file path, or `None`.
 
-            The :attr:`path` list is searched in order. The first match is
-            returend. Symlinks are followed. The result is cached to speed up
-            future lookups. """
+        The :attr:`path` list is searched in order. The first match is
+        returend. Symlinks are followed. The result is cached to speed up
+        future lookups."""
         if name not in self.cache or DEBUG:
             for path in self.path:
                 fpath = os.path.join(path, name)
@@ -2984,13 +2983,13 @@ class FileUpload:
 
     @cached_property
     def filename(self):
-        """ Name of the file on the client file system, but normalized to ensure
-            file system compatibility. An empty filename is returned as 'empty'.
+        """Name of the file on the client file system, but normalized to ensure
+        file system compatibility. An empty filename is returned as 'empty'.
 
-            Only ASCII letters, digits, dashes, underscores and dots are
-            allowed in the final filename. Accents are removed, if possible.
-            Whitespace is replaced by a single dash. Leading or tailing dots
-            or dashes are removed. The filename is limited to 255 characters.
+        Only ASCII letters, digits, dashes, underscores and dots are
+        allowed in the final filename. Accents are removed, if possible.
+        Whitespace is replaced by a single dash. Leading or tailing dots
+        or dashes are removed. The filename is limited to 255 characters.
         """
         fname = self.raw_filename
         if not isinstance(fname, unicode):
@@ -3012,13 +3011,13 @@ class FileUpload:
         self.file.seek(offset)
 
     def save(self, destination, overwrite=False, chunk_size=2 ** 16):
-        """ Save file to disk or copy its content to an open file(-like) object.
-            If *destination* is a directory, :attr:`filename` is added to the
-            path. Existing files are not overwritten by default (IOError).
+        """Save file to disk or copy its content to an open file(-like) object.
+        If *destination* is a directory, :attr:`filename` is added to the
+        path. Existing files are not overwritten by default (IOError).
 
-            :param destination: File path, directory or file(-like) object.
-            :param overwrite: If True, replace existing files. (default: False)
-            :param chunk_size: Bytes to read at a time. (default: 64kb)
+        :param destination: File path, directory or file(-like) object.
+        :param overwrite: If True, replace existing files. (default: False)
+        :param chunk_size: Bytes to read at a time. (default: 64kb)
         """
         if isinstance(destination, basestring):  # Except file-likes here
             if os.path.isdir(destination):
@@ -3042,8 +3041,8 @@ def abort(code=500, text="Unknown Error."):
 
 
 def redirect(url, code=None):
-    """ Aborts execution and causes a 303 or 302 redirect, depending on
-        the HTTP protocol version. """
+    """Aborts execution and causes a 303 or 302 redirect, depending on
+    the HTTP protocol version."""
     if not code:
         code = 303 if request.get("SERVER_PROTOCOL") == "HTTP/1.1" else 302
     res = response.copy(cls=HTTPResponse)
@@ -3054,8 +3053,8 @@ def redirect(url, code=None):
 
 
 def _file_iter_range(fp, offset, bytes, maxread=1024 * 1024, close=False):
-    """ Yield chunks from a range in a file, optionally closing it at the end.
-        No chunk is bigger than maxread. """
+    """Yield chunks from a range in a file, optionally closing it at the end.
+    No chunk is bigger than maxread."""
     fp.seek(offset)
     while bytes > 0:
         part = fp.read(min(bytes, maxread))
@@ -3076,35 +3075,35 @@ def static_file(
     etag=None,
     headers=None,
 ):
-    """ Open a file in a safe way and return an instance of :exc:`HTTPResponse`
-        that can be sent back to the client.
+    """Open a file in a safe way and return an instance of :exc:`HTTPResponse`
+    that can be sent back to the client.
 
-        :param filename: Name or path of the file to send, relative to ``root``.
-        :param root: Root path for file lookups. Should be an absolute directory
-            path.
-        :param mimetype: Provide the content-type header (default: guess from
-            file extension)
-        :param download: If True, ask the browser to open a `Save as...` dialog
-            instead of opening the file with the associated program. You can
-            specify a custom filename as a string. If not specified, the
-            original filename is used (default: False).
-        :param charset: The charset for files with a ``text/*`` mime-type.
-            (default: UTF-8)
-        :param etag: Provide a pre-computed ETag header. If set to ``False``,
-            ETag handling is disabled. (default: auto-generate ETag header)
-        :param headers: Additional headers dict to add to the response.
+    :param filename: Name or path of the file to send, relative to ``root``.
+    :param root: Root path for file lookups. Should be an absolute directory
+        path.
+    :param mimetype: Provide the content-type header (default: guess from
+        file extension)
+    :param download: If True, ask the browser to open a `Save as...` dialog
+        instead of opening the file with the associated program. You can
+        specify a custom filename as a string. If not specified, the
+        original filename is used (default: False).
+    :param charset: The charset for files with a ``text/*`` mime-type.
+        (default: UTF-8)
+    :param etag: Provide a pre-computed ETag header. If set to ``False``,
+        ETag handling is disabled. (default: auto-generate ETag header)
+    :param headers: Additional headers dict to add to the response.
 
-        While checking user input is always a good idea, this function provides
-        additional protection against malicious ``filename`` parameters from
-        breaking out of the ``root`` directory and leaking sensitive information
-        to an attacker.
+    While checking user input is always a good idea, this function provides
+    additional protection against malicious ``filename`` parameters from
+    breaking out of the ``root`` directory and leaking sensitive information
+    to an attacker.
 
-        Read-protected files or files outside of the ``root`` directory are
-        answered with ``403 Access Denied``. Missing files result in a
-        ``404 Not Found`` response. Conditional requests (``If-Modified-Since``,
-        ``If-None-Match``) are answered with ``304 Not Modified`` whenever
-        possible. ``HEAD`` and ``Range`` requests (used by download managers to
-        check or continue partial downloads) are also handled automatically.
+    Read-protected files or files outside of the ``root`` directory are
+    answered with ``403 Access Denied``. Missing files result in a
+    ``404 Not Found`` response. Conditional requests (``If-Modified-Since``,
+    ``If-None-Match``) are answered with ``304 Not Modified`` whenever
+    possible. ``HEAD`` and ``Range`` requests (used by download managers to
+    check or continue partial downloads) are also handled automatically.
 
     """
 
@@ -3192,7 +3191,7 @@ def static_file(
 
 
 def debug(mode=True):
-    """ Change the debug level.
+    """Change the debug level.
     There is only one debug level supported at the moment."""
     global DEBUG
     if mode:
@@ -3226,8 +3225,8 @@ def parse_date(ims):
 
 
 def parse_auth(header):
-    """ Parse rfc2617 HTTP authentication header string (basic) and
-        return (user,pass) tuple or None"""
+    """Parse rfc2617 HTTP authentication header string (basic) and
+    return (user,pass) tuple or None"""
     try:
         method, data = header.split(None, 1)
         if method.lower() == "basic":
@@ -3238,8 +3237,8 @@ def parse_auth(header):
 
 
 def parse_range_header(header, maxlen=0):
-    """ Yield (start, end) ranges parsed from a HTTP Range header. Skip
-        unsatisfiable ranges. The end index is non-inclusive."""
+    """Yield (start, end) ranges parsed from a HTTP Range header. Skip
+    unsatisfiable ranges. The end index is non-inclusive."""
     if not header or header[:6] != "bytes=":
         return
     ranges = [r.split("-", 1) for r in header[6:].split(",") if "-" in r]
@@ -3262,7 +3261,7 @@ _hsplit = re.compile('(?:(?:"((?:[^"\\\\]|\\\\.)*)")|([^;,=]+))([;,=]?)').findal
 
 
 def _parse_http_header(h):
-    """ Parses a typical multi-valued and parametrised HTTP header
+    """Parses a typical multi-valued and parametrised HTTP header
         (e.g. Accept headers) and returns a list of values
         and parameters. For non-standard or broken input,
         this implementation may return partial results.
@@ -3312,8 +3311,8 @@ def _parse_qsl(qs):
 
 
 def _lscmp(a, b):
-    """ Compares two strings in a cryptographically safe way:
-        Runtime is not affected by length of common prefix. """
+    """Compares two strings in a cryptographically safe way:
+    Runtime is not affected by length of common prefix."""
     return not sum(0 if x == y else 1 for x, y in zip(a, b)) and len(a) == len(b)
 
 
@@ -3373,7 +3372,7 @@ def html_quote(string):
 
 
 def yieldroutes(func):
-    """ Return a generator for routes that match the signature (name, args)
+    """Return a generator for routes that match the signature (name, args)
     of the func parameter. This may yield more than one route if the function
     takes optional keyword arguments. The output is best described by example::
 
@@ -3393,13 +3392,13 @@ def yieldroutes(func):
 
 
 def path_shift(script_name, path_info, shift=1):
-    """ Shift path fragments from PATH_INFO to SCRIPT_NAME and vice versa.
+    """Shift path fragments from PATH_INFO to SCRIPT_NAME and vice versa.
 
-        :return: The modified paths.
-        :param script_name: The SCRIPT_NAME path.
-        :param script_name: The PATH_INFO path.
-        :param shift: The number of path fragments to shift. May be negative to
-          change the shift direction. (default: 1)
+    :return: The modified paths.
+    :param script_name: The SCRIPT_NAME path.
+    :param script_name: The PATH_INFO path.
+    :param shift: The number of path fragments to shift. May be negative to
+      change the shift direction. (default: 1)
     """
     if shift == 0:
         return script_name, path_info
@@ -3428,8 +3427,8 @@ def path_shift(script_name, path_info, shift=1):
 
 
 def auth_basic(check, realm="private", text="Access denied"):
-    """ Callback decorator to require HTTP auth (basic).
-        TODO: Add route(check_auth=...) parameter. """
+    """Callback decorator to require HTTP auth (basic).
+    TODO: Add route(check_auth=...) parameter."""
 
     def decorator(func):
         @functools.wraps(func)
@@ -3720,9 +3719,9 @@ class DieselServer(ServerAdapter):
 
 
 class GeventServer(ServerAdapter):
-    """ Untested. Options:
+    """Untested. Options:
 
-        * See gevent.wsgi.WSGIServer() documentation for more options.
+    * See gevent.wsgi.WSGIServer() documentation for more options.
     """
 
     def run(self, handler):
@@ -3767,13 +3766,13 @@ class GunicornServer(ServerAdapter):
 
 
 class EventletServer(ServerAdapter):
-    """ Untested. Options:
+    """Untested. Options:
 
-        * `backlog` adjust the eventlet backlog parameter which is the maximum
-          number of queued connections. Should be at least 1; the maximum
-          value is system-dependent.
-        * `family`: (default is 2) socket family, optional. See socket
-          documentation for available families.
+    * `backlog` adjust the eventlet backlog parameter which is the maximum
+      number of queued connections. Should be at least 1; the maximum
+      value is system-dependent.
+    * `family`: (default is 2) socket family, optional. See socket
+      documentation for available families.
     """
 
     def run(self, handler):
@@ -3815,9 +3814,9 @@ class AsyncioServerAdapter(ServerAdapter):
 
 
 class AiohttpServer(AsyncioServerAdapter):
-    """ Asynchronous HTTP client/server framework for asyncio
-        https://pypi.python.org/pypi/aiohttp/
-        https://pypi.org/project/aiohttp-wsgi/
+    """Asynchronous HTTP client/server framework for asyncio
+    https://pypi.python.org/pypi/aiohttp/
+    https://pypi.org/project/aiohttp-wsgi/
     """
 
     def get_event_loop(self):
@@ -3842,7 +3841,7 @@ class AiohttpServer(AsyncioServerAdapter):
 
 class AiohttpUVLoopServer(AiohttpServer):
     """uvloop
-       https://github.com/MagicStack/uvloop
+    https://github.com/MagicStack/uvloop
     """
 
     def get_event_loop(self):
@@ -3900,15 +3899,15 @@ server_names = {
 
 
 def load(target, **namespace):
-    """ Import a module or fetch an object from a module.
+    """Import a module or fetch an object from a module.
 
-        * ``package.module`` returns `module` as a module object.
-        * ``pack.mod:name`` returns the module variable `name` from `pack.mod`.
-        * ``pack.mod:func()`` calls `pack.mod.func()` and returns the result.
+    * ``package.module`` returns `module` as a module object.
+    * ``pack.mod:name`` returns the module variable `name` from `pack.mod`.
+    * ``pack.mod:func()`` calls `pack.mod.func()` and returns the result.
 
-        The last form accepts not only function calls, but any type of
-        expression. Keyword arguments passed to this function are available as
-        local variables. Example: ``import_string('re:compile(x)', x='[a-z]')``
+    The last form accepts not only function calls, but any type of
+    expression. Keyword arguments passed to this function are available as
+    local variables. Example: ``import_string('re:compile(x)', x='[a-z]')``
     """
     module, target = target.split(":", 1) if ":" in target else (target, None)
     if module not in sys.modules:
@@ -3923,9 +3922,9 @@ def load(target, **namespace):
 
 
 def load_app(target):
-    """ Load a bottle application from a module and make sure that the import
-        does not affect the current default application, but returns a separate
-        application object. See :func:`load` for the target parameter. """
+    """Load a bottle application from a module and make sure that the import
+    does not affect the current default application, but returns a separate
+    application object. See :func:`load` for the target parameter."""
     global NORUN
     NORUN, nr_old = True, NORUN
     tmp = default_app.push()  # Create a new "default application"
@@ -3954,22 +3953,22 @@ def run(
     config=None,
     **kargs,
 ):
-    """ Start a server instance. This method blocks until the server terminates.
+    """Start a server instance. This method blocks until the server terminates.
 
-        :param app: WSGI application or target string supported by
-               :func:`load_app`. (default: :func:`default_app`)
-        :param server: Server adapter to use. See :data:`server_names` keys
-               for valid names or pass a :class:`ServerAdapter` subclass.
-               (default: `wsgiref`)
-        :param host: Server address to bind to. Pass ``0.0.0.0`` to listens on
-               all interfaces including the external one. (default: 127.0.0.1)
-        :param port: Server port to bind to. Values below 1024 require root
-               privileges. (default: 8080)
-        :param reloader: Start auto-reloading server? (default: False)
-        :param interval: Auto-reloader interval in seconds (default: 1)
-        :param quiet: Suppress output to stdout and stderr? (default: False)
-        :param options: Options passed to the server adapter.
-     """
+    :param app: WSGI application or target string supported by
+           :func:`load_app`. (default: :func:`default_app`)
+    :param server: Server adapter to use. See :data:`server_names` keys
+           for valid names or pass a :class:`ServerAdapter` subclass.
+           (default: `wsgiref`)
+    :param host: Server address to bind to. Pass ``0.0.0.0`` to listens on
+           all interfaces including the external one. (default: 127.0.0.1)
+    :param port: Server port to bind to. Values below 1024 require root
+           privileges. (default: 8080)
+    :param reloader: Start auto-reloading server? (default: False)
+    :param interval: Auto-reloader interval in seconds (default: 1)
+    :param quiet: Suppress output to stdout and stderr? (default: False)
+    :param options: Options passed to the server adapter.
+    """
     if NORUN:
         return
     if reloader and not os.environ.get("BOTTLE_CHILD"):
@@ -4061,8 +4060,8 @@ def run(
 
 
 class FileCheckerThread(threading.Thread):
-    """ Interrupt main-thread as soon as a changed module file is detected,
-        the lockfile gets deleted or gets too old. """
+    """Interrupt main-thread as soon as a changed module file is detected,
+    the lockfile gets deleted or gets too old."""
 
     def __init__(self, lockfile, interval):
         threading.Thread.__init__(self)
@@ -4129,7 +4128,7 @@ class BaseTemplate:
     def __init__(
         self, source=None, name=None, lookup=None, encoding="utf8", **settings
     ):
-        """ Create a new template.
+        """Create a new template.
         If the source parameter (str or buffer) is missing, the name argument
         is used to guess a template filename. Subclasses can assume that
         self.source and/or self.filename are set. Both are strings.
@@ -4156,8 +4155,8 @@ class BaseTemplate:
 
     @classmethod
     def search(cls, name, lookup=None):
-        """ Search name in all directories specified in lookup.
-        First without, then with common extensions. Return first hit. """
+        """Search name in all directories specified in lookup.
+        First without, then with common extensions. Return first hit."""
         if not lookup:
             raise depr(
                 0,
@@ -4195,14 +4194,14 @@ class BaseTemplate:
             return cls.settings[key]
 
     def prepare(self, **options):
-        """ Run preparations (parsing, caching, ...).
+        """Run preparations (parsing, caching, ...).
         It should be possible to call this again to refresh a template or to
         update settings.
         """
         raise NotImplementedError
 
     def render(self, *args, **kwargs):
-        """ Render the template with the specified local variables and return
+        """Render the template with the specified local variables and return
         a single byte or unicode string. If it is a byte string, the encoding
         must match self.encoding. This method must be thread-safe!
         Local variables may be provided in dictionaries (args)
@@ -4609,14 +4608,14 @@ jinja2_template = functools.partial(template, template_adapter=Jinja2Template)
 
 
 def view(tpl_name, **defaults):
-    """ Decorator: renders a template for a handler.
-        The handler can control its behavior like that:
+    """Decorator: renders a template for a handler.
+    The handler can control its behavior like that:
 
-          - return a dict of template vars to fill out the template
-          - return something other than a dict and the view decorator will not
-            process the template, but return the handler result as is.
-            This includes returning a HTTPResponse(dict) to get,
-            for instance, JSON with autojson or other castfilters.
+      - return a dict of template vars to fill out the template
+      - return something other than a dict and the view decorator will not
+        process the template, but return the handler result as is.
+        This includes returning a HTTPResponse(dict) to get,
+        for instance, JSON with autojson or other castfilters.
     """
 
     def decorator(func):

@@ -1,7 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import bottle
-
 import common.auth as _auth
 import common.helpers as util
 from common.logging import logger

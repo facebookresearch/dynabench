@@ -17,8 +17,8 @@ from os import listdir
 from os.path import isfile, join
 
 import boto3
-import requests
 
+import requests
 import sagemaker
 from common import TransformerUtils
 from sagemaker.model import Model

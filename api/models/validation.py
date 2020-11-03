@@ -55,7 +55,13 @@ class ValidationModel(BaseModel):
                     eid=eid, label=label, mode=mode, metadata_json=json.dumps(metadata)
                 )
             else:
-                validation = Validation(uid=uid, eid=eid, label=label, mode=mode, metadata_json=json.dumps(metadata))
+                validation = Validation(
+                    uid=uid,
+                    eid=eid,
+                    label=label,
+                    mode=mode,
+                    metadata_json=json.dumps(metadata),
+                )
             self.dbs.add(validation)
             return self.dbs.commit()
         except Exception as error_message:

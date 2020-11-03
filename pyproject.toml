@@ -4,7 +4,7 @@
 known_third_party = [
     "transformers", "yoyo", "boto3", "aiohttp", "pyjwt", "jwt", "cheroot",
     "numpy", "sqlalchemy", "numpy", "pymysql", "six", "SQLAlchemy",
-    "torch", "werkzeug", "cryptography",
+    "torch", "werkzeug", "cryptography", "mephisto", "omegaconf", "hydra"
 ]
 skip_glob = "**/build/**,frontends/**"
 combine_as_imports = true

@@ -6,19 +6,20 @@ import os
 import sys
 
 import boto3
-import bottle
 
+import bottle
 from common.config import config
 from common.cors import *  # noqa
 from common.helpers import (
     check_fields,
     is_fields_blank,
+    read_hate_speech_round_labels,
     read_nli_round_labels,
     read_qa_round_labels,
-    read_hate_speech_round_labels
 )
 from common.logging import init_logger
 from common.mail_service import get_mail_session
+from common.migrator import run_migrations
 from controllers.auth import *  # noqa
 from controllers.contexts import *  # noqa
 from controllers.endpoints import *  # noqa
@@ -29,7 +30,6 @@ from controllers.notifications import *  # noqa
 from controllers.tasks import *  # noqa
 from controllers.users import *  # noqa
 from controllers.validations import *  # noqa
-from common.migrator import run_migrations
 
 
 assert len(sys.argv) == 2, "Missing arg (prod or dev?)"
@@ -77,9 +77,9 @@ if "smtp_user" in config and config["smtp_user"] != "":
 # add the nli test labels in app context -to reduce the turnaround time
 ROOT_PATH = os.path.dirname(os.path.realpath("__file__"))
 nli_labels = read_nli_round_labels(ROOT_PATH)
-app.config['nli_labels'] = nli_labels
-app.config['hate_speech_labels'] = read_hate_speech_round_labels(ROOT_PATH)
-app.config['qa_labels'] = read_qa_round_labels(ROOT_PATH)
+app.config["nli_labels"] = nli_labels
+app.config["hate_speech_labels"] = read_hate_speech_round_labels(ROOT_PATH)
+app.config["qa_labels"] = read_qa_round_labels(ROOT_PATH)
 
 # initialize sagemaker endpoint if set
 if "aws_access_key_id" in config and config["aws_access_key_id"] != "":

@@ -3,7 +3,6 @@
 import json
 
 import bottle
-
 import common.auth as _auth
 import common.helpers as util
 from common.logging import logger
@@ -123,32 +122,34 @@ def export_task_data(credentials, tid):
         example_dicts.append(example_dict)
     return util.json_encode(example_dicts)
 
-@bottle.put('/tasks/<tid:int>/settings')
+
+@bottle.put("/tasks/<tid:int>/settings")
 @_auth.requires_auth
 def update_task_settings(credentials, tid):
     data = bottle.request.json
 
     um = UserModel()
-    user = um.get(credentials['id'])
+    user = um.get(credentials["id"])
     if not user.admin:
-        if (tid, 'owner') not in [
+        if (tid, "owner") not in [
             (perm.tid, perm.type) for perm in user.task_permissions
         ]:
-            bottle.abort(403, 'Access denied')
+            bottle.abort(403, "Access denied")
     tm = TaskModel()
     task = tm.getWithRound(tid)
     if not task:
-        bottle.abort(404, 'Not found')
+        bottle.abort(404, "Not found")
 
-    if 'settings' not in data:
-        bottle.abort(400, 'Missing settings data')
+    if "settings" not in data:
+        bottle.abort(400, "Missing settings data")
     try:
-        tm.update(tid, {'settings_json': json.dumps(data['settings'])})
+        tm.update(tid, {"settings_json": json.dumps(data["settings"])})
 
-        return util.json_encode({'success': 'ok'})
-    except Exception as e:
-        logger.error('Error updating task settings {}: {}'.format(tid, task))
-        bottle.abort(500, {'error': str(task)})
+        return util.json_encode({"success": "ok"})
+    except Exception:
+        logger.error(f"Error updating task settings {tid}: {task}")
+        bottle.abort(500, {"error": str(task)})
+
 
 def construct_user_board_response_json(query_result, total_count=0):
     list_objs = []
