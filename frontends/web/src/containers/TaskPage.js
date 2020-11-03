@@ -19,7 +19,10 @@ import {
   OverlayTrigger,
   Pagination,
   DropdownButton,
-  Dropdown
+  Dropdown,
+  Modal,
+  Form,
+  InputGroup
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import UserContext from "./UserContext";
@@ -205,14 +208,6 @@ const TaskActionButtons = (props) => {
         </Annotation>
       </Nav.Item>
     ) : null}
-    {props.api.isTaskOwner(props.user, props.task.id) || props.user.admin ?
-      <Nav.Item className="task-action-btn ml-auto">
-        <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" id="dropdown-basic-button" title="Export">
-          <Dropdown.Item onClick={props.exportCurrentRoundData}>Export current round</Dropdown.Item>
-          <Dropdown.Item onClick={props.exportAllTaskData}>Export all</Dropdown.Item>
-        </DropdownButton>
-      </Nav.Item>
-      : null}
   </Nav>
   );
 };
@@ -387,9 +382,12 @@ class TaskPage extends React.Component {
       userLeaderBoardPage: 0,
       isEndOfUserLeaderPage: true,
       pageLimit: 5,
+      validateNonFooling: false,
+      numMatchingValidations: 3,
     };
 
     this.exportAllTaskData = this.exportAllTaskData.bind(this);
+    this.getSavedTaskSettings = this.getSavedTaskSettings.bind(this);
     this.exportCurrentRoundData = this.exportCurrentRoundData.bind(this);
   }
 
@@ -399,7 +397,7 @@ class TaskPage extends React.Component {
         .getTask(this.state.taskId)
         .then((result) => {
           this.setState({task: result, displayRoundId: result.cur_round, round: result.round}, function() {
-            this.refreshData();
+            this.refreshData(); this.getSavedTaskSettings();
           });
         }, (error) => {
           console.log(error);
@@ -426,6 +424,18 @@ class TaskPage extends React.Component {
             }
           });
       });
+    }
+  }
+
+  getSavedTaskSettings() {
+    if (this.state.task.settings_json) {
+      const settings_json = JSON.parse(this.state.task.settings_json);
+      if (settings_json.hasOwnProperty('validate_non_fooling')) {
+        this.setState({ validateNonFooling: settings_json['validate_non_fooling'] });
+      }
+      if (settings_json.hasOwnProperty('num_matching_validations')) {
+        this.setState({ numMatchingValidations: settings_json['num_matching_validations'] });
+      }
     }
   }
 
@@ -553,7 +563,73 @@ class TaskPage extends React.Component {
                   }
                 </OverlayContext.Consumer>
               </Annotation>
+              {this.context.api.isTaskOwner(this.context.user, this.state.task.id) || this.context.user.admin
+                ? <Annotation placement="top" tooltip="Click to adjust your owner task settings">
+                    <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
+                      onClick={() => { this.setState({showTaskOwnerSettingsModal: true}) }}
+                    ><i className="fa fa-cog"></i></button>
+                  </Annotation>
+                : ""}
             </ButtonGroup>
+            <Modal
+              show={this.state.showTaskOwnerSettingsModal}
+              onHide={() => this.setState({ showTaskOwnerSettingsModal: false })}
+              >
+                <Modal.Header closeButton>
+                  <Modal.Title>Task Owner Console</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                  <Modal.Title style={{fontSize: 20}}>Settings</Modal.Title>
+                  <hr/>
+                  Validate non-model-fooling examples? &nbsp;
+                  <span className="float-right">
+                    <Form.Check
+                      checked={this.state.validateNonFooling}
+                      onChange={() => {
+                          this.setState(
+                            { validateNonFooling: !this.state.validateNonFooling },
+                            () => this.context.api.updateTaskSettings(this.state.task.id, { validate_non_fooling: this.state.validateNonFooling, num_matching_validations: this.state.numMatchingValidations })
+                          );
+                        }
+                      }
+                    />
+                  </span>
+                  <hr/>
+                  Number of correct, incorrect, <br/> or flagged marks when an example
+                  <span className="float-right">
+                    {this.state.numMatchingValidations}
+                    <span className="float-right">
+                      <Form.Control
+                        className="p-1"
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="1"
+                        defaultValue={this.state.numMatchingValidations}
+                        onChange={(e) => {
+                            this.setState(
+                              { numMatchingValidations: parseInt(e.target.value) },
+                              () => this.context.api.updateTaskSettings(this.state.task.id, { validate_non_fooling: this.state.validateNonFooling, num_matching_validations: this.state.numMatchingValidations })
+                            );
+                          }
+                        }
+                      />
+                    </span>
+                  </span>
+                  <br/> is no longer shown to validators?
+                  <hr/>
+                  <Modal.Title style={{fontSize: 20}}>Actions</Modal.Title>
+                  <hr/>
+                  <span className="float-right">
+                    <DropdownButton className="border-0 blue-color font-weight-bold p-1" id="dropdown-basic-button" title="Export Data">
+                      <Dropdown.Item onClick={this.exportCurrentRoundData}>Export current round</Dropdown.Item>
+                      <Dropdown.Item onClick={this.exportAllTaskData}>Export all</Dropdown.Item>
+                    </DropdownButton>
+                  </span>
+                  Click here to export data from the <br/>
+                  current round or all rounds
+                </Modal.Body>
+            </Modal>
             </div>
             <p>{this.state.task.desc}</p>
             {this.props.location.hash === "#overall" ? (
@@ -567,8 +643,6 @@ class TaskPage extends React.Component {
                   taskId={this.state.taskId}
                   user={this.context.user}
                   task={this.state.task}
-                  exportCurrentRoundData={this.exportCurrentRoundData}
-                  exportAllTaskData={this.exportAllTaskData}
                 />
               </>
             ) :

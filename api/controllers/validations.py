@@ -11,6 +11,7 @@ from models.context import ContextModel
 from models.example import ExampleModel
 from models.notification import NotificationModel
 from models.round import RoundModel
+from models.task import TaskModel
 from models.user import UserModel
 from models.validation import ValidationModel
 
@@ -91,9 +92,16 @@ def validate_example(credentials, eid):
 
     em.update(example.id, {"total_verified": example.total_verified + 1})
 
+    tm = TaskModel()
+    task = tm.get(context.round.task.id)
+    num_matching_validations = 3
+    if task.settings_json:
+        num_matching_validations = json.loads(task.settings_json)['num_matching_validations']
+
     rm = RoundModel()
     rm.updateLastActivity(context.r_realid)
-    if label_counts["correct"] >= 5 or (mode == "owner" and label == "correct"):
+    if label_counts['correct'] >= num_matching_validations or (
+            mode == 'owner' and label == 'correct'):
         rm.incrementVerifiedFooledCount(context.r_realid)
         um.incrementVerifiedFooledCount(example.uid)
 

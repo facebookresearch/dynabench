@@ -12,6 +12,7 @@ from models.context import ContextModel
 from models.example import ExampleModel
 from models.notification import NotificationModel
 from models.round import RoundModel
+from models.task import TaskModel
 from models.user import UserModel
 
 
@@ -29,6 +30,12 @@ def get_random_filtered_example(
     min_num_disagreements,
     max_num_disagreements,
 ):
+    tm = TaskModel()
+    task = tm.get(tid)
+    validate_non_fooling = False
+    if task.settings_json:
+        settings = json.loads(task.settings_json)
+        validate_non_fooling = settings['validate_non_fooling']
     rm = RoundModel()
     round = rm.getByTidAndRid(tid, rid)
     em = ExampleModel()
@@ -38,6 +45,7 @@ def get_random_filtered_example(
         max_num_flags,
         min_num_disagreements,
         max_num_disagreements,
+        validate_non_fooling,
         n=1,
     )
     if not example:
@@ -49,13 +57,27 @@ def get_random_filtered_example(
 @bottle.get("/examples/<tid:int>/<rid:int>")
 @_auth.requires_auth_or_turk
 def get_random_example(credentials, tid, rid):
+    tm = TaskModel()
+    task = tm.get(tid)
+    validate_non_fooling = False
+    num_matching_validations = 3
+    if task.settings_json:
+        settings = json.loads(task.settings_json)
+        validate_non_fooling = settings['validate_non_fooling']
+        num_matching_validations = settings['num_matching_validations']
     rm = RoundModel()
     round = rm.getByTidAndRid(tid, rid)
     em = ExampleModel()
-    if credentials["id"] != "turk":
-        example = em.getRandomWrong(round.id, n=1, my_uid=credentials["id"])
+    if credentials['id'] != 'turk':
+        example = em.getRandom(
+            round.id,
+            validate_non_fooling,
+            num_matching_validations,
+            n=1,
+            my_uid=credentials['id']
+        )
     else:
-        example = em.getRandomWrong(round.id, n=1)
+        example = em.getRandom(round.id, validate_non_fooling, num_matching_validations, n=1)
     if not example:
         bottle.abort(500, f"No examples available ({round.id})")
     example = example[0].to_dict()

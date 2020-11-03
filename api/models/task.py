@@ -39,6 +39,8 @@ class Task(Base):
     has_context = db.Column(db.Boolean, default=True)
     has_answer = db.Column(db.Boolean, default=False)
 
+    settings_json = db.Column(db.Text)
+
     def __repr__(self):
         return f"<Task {self.name}>"
 
