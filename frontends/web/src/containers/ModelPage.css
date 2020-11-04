@@ -1,0 +1,14 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+ .modelCard h2 {
+   color: #cccccc;
+   display: inline-block;
+   font-size: 16px;
+   font-weight: 600;
+   margin: 0px;
+   padding: 0px;
+ }

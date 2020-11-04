@@ -14,9 +14,12 @@ import {
   Button,
   Table,
 } from "react-bootstrap";
+import Moment from "react-moment";
+import Markdown from "react-markdown";
 import { Link } from "react-router-dom";
 import TasksContext from "./TasksContext";
 import UserContext from "./UserContext";
+import "./ModelPage.css";
 
 class ModelPage extends React.Component {
   static contextType = UserContext;
@@ -149,6 +152,9 @@ class ModelPage extends React.Component {
                           <span className="blue-color">
                             {model.name || "Unknown"}
                           </span>
+                          <span className="float-right">
+                            uploaded <Moment fromNow>{model.upload_date}</Moment>
+                          </span>
                           {isModelOwner && model.is_published === "True" ? (
                             <Badge variant="success" className="ml-2">
                               Published
@@ -160,6 +166,30 @@ class ModelPage extends React.Component {
                             </Badge>
                           ) : null}
                         </h5>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colSpan={2}>
+                        <h6 className="blue-color">Performance</h6>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{paddingLeft: 50}}>
+                        Overall
+                      </td>
+                      <td>{model.overall_perf}%</td>
+                    </tr>
+                    {orderedScores.map((data) => {
+                      return (
+                        <tr key={data.round_id}>
+                          <td style={{paddingLeft: 50}}>Round {data.round_id}</td>
+                          <td>{Number(data.accuracy).toFixed(2)}%</td>
+                        </tr>
+                      );
+                    })}
+                    <tr>
+                      <td colSpan={2}>
+                        <h6 className="blue-color">Model Information</h6>
                       </td>
                     </tr>
                     <tr>
@@ -190,29 +220,36 @@ class ModelPage extends React.Component {
                     </tr>
                     <tr>
                       <td>
-                        Description
+                        Summary
                       </td>
                       <td>{model.longdesc}</td>
                     </tr>
                     <tr>
-                      <td colSpan={2}>
-                        <h6 className="blue-color">Performance</h6>
+                      <td>
+                        # Parameters
                       </td>
+                      <td>{model.params}</td>
                     </tr>
                     <tr>
-                      <td style={{paddingLeft: 50}}>
-                        Overall
+                      <td>
+                        Language(s)
                       </td>
-                      <td>{model.overall_perf}%</td>
+                      <td>{model.languages}</td>
                     </tr>
-                    {orderedScores.map((data) => {
-                      return (
-                        <tr key={data.round_id}>
-                          <td style={{paddingLeft: 50}}>Round {data.round_id}</td>
-                          <td>{Number(data.accuracy).toFixed(2)}%</td>
-                        </tr>
-                      );
-                    })}
+                    <tr>
+                      <td>
+                        License(s)
+                      </td>
+                      <td>{model.license}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ verticalAlign: 'middle'}}>
+                        Model Card
+                      </td>
+                      <td className="modelCard">
+                        <Markdown>{model.model_card}</Markdown>
+                      </td>
+                    </tr>
                   </tbody>
                 </Table>
               ) : (

@@ -6,11 +6,11 @@ import json
 import os
 from urllib.parse import urlparse
 
+import bottle
 import sqlalchemy as db
 from sqlalchemy.orm import lazyload
 from transformers.data.metrics.squad_metrics import compute_f1
 
-import bottle
 import common.auth as _auth
 from common.logging import logger
 
