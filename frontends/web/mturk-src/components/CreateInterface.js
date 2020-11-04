@@ -133,7 +133,7 @@ class CreateInterface extends React.Component {
         context: this.state.context.context,
         hypothesis: this.state.hypothesis,
         answer: answer_text,
-	insight: false,
+        insight: false,
       };
       this.api.getModelResponse(this.state.task.round.url, modelInputs)
         .then(result => {
