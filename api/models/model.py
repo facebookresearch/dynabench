@@ -1,16 +1,16 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
 
 import sqlalchemy as db
+
+from common import helpers as util
+from models.user import User
+
 from .base import Base, BaseModel
 
-from models.user import User
-from common import helpers as util
 
 class Model(Base):
-    __tablename__ = 'models'
-    __table_args__ = { 'mysql_charset': 'utf8mb4', 'mysql_collate': 'utf8mb4_general_ci' }
+    __tablename__ = "models"
+    __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_general_ci"}
 
     id = db.Column(db.Integer, primary_key=True)
     tid = db.Column(db.Integer, db.ForeignKey("tasks.id"), nullable=False)
@@ -25,12 +25,19 @@ class Model(Base):
     longdesc = db.Column(db.Text)
     papers = db.Column(db.Text)
 
+    # Model cards
+    params = db.Column(db.BigInteger)
+    languages = db.Column(db.Text)
+    license = db.Column(db.Text)
+    upload_date = db.Column(db.Date)
+    model_card = db.Column(db.Text)
+
     overall_perf = db.Column(db.Text)
 
     is_published = db.Column(db.BOOLEAN, default=False)
 
     def __repr__(self):
-        return '<Model {}>'.format(self.id)
+        return f"<Model {self.id}>"
 
     def to_dict(self, safe=True):
         d = {}
@@ -38,9 +45,10 @@ class Model(Base):
             d[column.name] = getattr(self, column.name)
         return d
 
+
 class ModelModel(BaseModel):
     def __init__(self):
-        super(ModelModel, self).__init__(Model)
+        super().__init__(Model)
 
     def create(self, task_id, user_id, **kwargs):
         m = Model(tid=task_id, uid=user_id, **kwargs)
@@ -61,10 +69,15 @@ class ModelModel(BaseModel):
 
     def getUnpublishedModelByMid(self, id):
         # Model owner to fetch by id
-       return self.dbs.query(Model).filter(Model.id == id).one()
+        return self.dbs.query(Model).filter(Model.id == id).one()
 
     def get(self, id):
-       return self.dbs.query(Model).filter(Model.id == id).filter(Model.is_published == True).one()
+        return (
+            self.dbs.query(Model)
+            .filter(Model.id == id)
+            .filter(Model.is_published == True)  # noqa
+            .one()
+        )
 
     def getByTid(self, tid):
         return self.dbs.query(Model).filter(Model.tid == tid).all()
@@ -72,15 +85,21 @@ class ModelModel(BaseModel):
     def getUserModelsByUid(self, uid, is_current_user=False, n=5, offset=0):
         query_res = self.dbs.query(Model).filter(Model.uid == uid)
         if not is_current_user:
-            query_res = query_res.filter(Model.is_published == True)
+            query_res = query_res.filter(Model.is_published == True)  # noqa
         return query_res.limit(n).offset(offset * n), util.get_query_count(query_res)
 
     def getUserModelsByUidAndMid(self, uid, mid, is_current_user=False):
-        query_res = self.dbs.query(Model).filter(Model.uid == uid).filter(Model.id == mid)
+        query_res = (
+            self.dbs.query(Model).filter(Model.uid == uid).filter(Model.id == mid)
+        )
         if not is_current_user:
-            return query_res.filter(Model.is_published == True).one()
+            return query_res.filter(Model.is_published == True).one()  # noqa
         return query_res.one()
 
     def getModelUserByMid(self, id):
-        return self.dbs.query(Model, User).join(User, User.id == Model.uid)\
-                .filter(Model.id == id).one()
+        return (
+            self.dbs.query(Model, User)
+            .join(User, User.id == Model.uid)
+            .filter(Model.id == id)
+            .one()
+        )

@@ -10,20 +10,41 @@ import {
   Row,
   Col,
   Card,
-  InputGroup,
   DropdownButton,
   Dropdown,
-  OverlayTrigger,
-  Tooltip,
-  Modal
+  Modal,
+  Form,
+  InputGroup
 } from "react-bootstrap";
 import UserContext from "./UserContext";
-import BootstrapSwitchButton from 'bootstrap-switch-button-react'
+import { TokenAnnotator } from "react-text-annotate";
 import {
   OverlayProvider,
   BadgeOverlay,
   Annotation
 } from "./Overlay"
+import {
+  HateSpeechDropdown
+} from "./HateSpeechDropdown.js"
+
+function ContextInfo({ needAnswer, text, answer, updateAnswer }) {
+  return needAnswer ? (
+    <TokenAnnotator
+      className="mb-1 p-3 light-gray-bg qa-context"
+      tokens={text.split(/\b/)}
+      value={answer}
+      onChange={updateAnswer}
+      getSpan={(span) => ({
+        ...span,
+        tag: "ANS",
+      })}
+    />
+  ) : (
+    <div className="mb-1 p-3 light-gray-bg">
+      {text.replace("<br>", "\n")}
+    </div>
+  );
+}
 
 class VerifyInterface extends React.Component {
   static contextType = UserContext;
@@ -36,8 +57,18 @@ class VerifyInterface extends React.Component {
       owner_mode: false,
       ownerValidationFlagFilter: "Any",
       ownerValidationDisagreementFilter: "Any",
+      correctSelected: false,
+      incorrectSelected: false,
+      flaggedSelected: false,
+      validatorLabel: '',
+      flagReason: null,
+      labelExplanation: null,
+      creatorAttemptExplanation: null,
+      validatorHateType: null
     };
     this.getNewExample = this.getNewExample.bind(this);
+    this.resetValidatorSelections = this.resetValidatorSelections.bind(this);
+    this.updateAnswer = this.updateAnswer.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
     this.setRangesAndGetRandomFilteredExample = this.setRangesAndGetRandomFilteredExample.bind(this);
     this.updateUserSettings = this.updateUserSettings.bind(this);
@@ -87,40 +118,79 @@ class VerifyInterface extends React.Component {
     });
   }
 
-  getNewExample() {
-    (this.state.owner_mode
-      ? this.setRangesAndGetRandomFilteredExample()
-      : this.context.api.getRandomExample(this.state.taskId, this.state.task.selected_round))
-      .then((result) => {
-        if (this.state.task.type !== 'extract') {
-          result.target = this.state.task.targets[parseInt(result.target_pred)];
-        }
-        this.setState({
-          example: result,
-        });
-      }, (error) => {
-        console.log(error);
-        this.setState({
-          example: false
-        });
-      });
+  resetValidatorSelections(callback) {
+    return this.setState(
+      {
+        correctSelected: false,
+        flaggedSelected: false,
+        incorrectSelected: false,
+        validatorLabel: '',
+        flagReason: null,
+        labelExplanation: null,
+        creatorAttemptExplanation: null,
+        validatorHateType: null
+      },
+      callback);
   }
-  handleResponse(action) {
-    var action_label = null;
-    switch(action) {
-      case 'correct':
-        action_label = 'correct';
-        break;
-      case 'incorrect':
-        action_label = 'incorrect';
-        break;
-      case 'flag':
-        action_label = 'flagged';
-        break;
+
+  getNewExample() {
+    this.resetValidatorSelections(() =>
+      (this.state.owner_mode
+        ? this.setRangesAndGetRandomFilteredExample()
+        : this.context.api.getRandomExample(this.state.taskId, this.state.task.selected_round))
+        .then((result) => {
+          if (this.state.task.type !== 'extract') {
+            result.target = this.state.task.targets[parseInt(result.target_pred)];
+          }
+          this.setState({
+            example: result,
+          });
+        }, (error) => {
+          console.log(error);
+          this.setState({
+            example: false
+          });
+        })
+    );
+  }
+  handleResponse() {
+    var action;
+    if (this.state.correctSelected) {
+      action = 'correct'
+    } else if (this.state.incorrectSelected) {
+      action = 'incorrect'
+    } else if (this.state.flaggedSelected) {
+      action = 'flagged'
     }
-    if (action_label !== null) {
-      const mode = this.state.owner_mode ? "owner" : "user";
-      this.context.api.validateExample(this.state.example.id, action_label, mode)
+
+    const mode = this.state.owner_mode ? "owner" : "user";
+    if ((action === 'correct')
+        || (action === 'incorrect' && (this.state.task.shortname === "Sentiment" || this.state.task.shortname === "Hate Speech")) || (action === 'incorrect' && this.state.validatorLabel !== '')
+        || (action === 'flagged' && this.state.flagReason)
+        ) {
+      var metadata = {};
+
+      if (this.state.validatorLabel !== '') {
+        metadata['validator_label'] = this.state.validatorLabel;
+      }
+
+      if (this.state.flagReason !== null) {
+        metadata['flag_reason'] = this.state.flagReason;
+      }
+
+      if (this.state.labelExplanation !== null) {
+        metadata['example_explanation'] = this.state.labelExplanation;
+      }
+
+      if (this.state.creatorAttemptExplanation !== null) {
+        metadata['model_explanation'] = this.state.creatorAttemptExplanation;
+      }
+
+      if (this.state.validatorHateType !== null) {
+        metadata['validator_hate_type'] = this.state.validatorHateType;
+      }
+
+      this.context.api.validateExample(this.state.example.id, action, mode, metadata)
         .then((result) => {
           this.getNewExample();
           if (!!result.badges) {
@@ -185,6 +255,17 @@ class VerifyInterface extends React.Component {
     });
   }
 
+  updateAnswer(value) {
+    // Only keep the last answer annotated
+    if (value.length > 0) {
+      this.setState({
+        validatorLabel: [value[value.length - 1]],
+      });
+    } else {
+      this.setState({ validatorLabel: value});
+    }
+  }
+
   render() {
     return (
       <OverlayProvider initiallyHide={true}>
@@ -196,7 +277,7 @@ class VerifyInterface extends React.Component {
         </BadgeOverlay>
         <Container className="mb-5 pb-5">
           <Col className="m-auto" lg={12}>
-            {this.state.owner_mode
+            {this.context.api.isTaskOwner(this.context.user, this.state.task.id) || this.context.user.admin
               ? <div style={{float: "right"}}>
                   <Annotation placement="top" tooltip="Click to adjust your owner validation filters">
                     <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
@@ -211,12 +292,26 @@ class VerifyInterface extends React.Component {
                         <Modal.Title>Owner Validation Filters</Modal.Title>
                       </Modal.Header>
                       <Modal.Body>
-                        <DropdownButton variant="light" className="p-1" title={this.state.ownerValidationFlagFilter.toString() + " flag" + (this.state.ownerValidationFlagFilter === 1 ? "" : "s")}>
-                          {["Any",0,1,2,3,4,5].map((target, index) => <Dropdown.Item onClick={() => this.updateOwnerValidationFlagFilter(target)} key={index} index={index}>{target}</Dropdown.Item>)}
-                        </DropdownButton>
-                        <DropdownButton variant="light" className="p-1" title={this.state.ownerValidationDisagreementFilter.toString() + " correct/incorrect disagreement" + (this.state.ownerValidationDisagreementFilter === 1 ? "" : "s")}>
-                          {["Any",0,1,2,3,4].map((target, index) => <Dropdown.Item onClick={() => this.updateOwnerValidationDisagreementFilter(target)} key={index} index={index}>{target}</Dropdown.Item>)}
-                        </DropdownButton>
+                        <Form.Check
+                          checked={this.state.owner_mode}
+                          label="Enter task owner mode?"
+                          onChange={() => {
+                              this.setState({ owner_mode: !this.state.owner_mode },
+                              this.componentDidMount()
+                            );}
+                          }
+                        />
+                        {this.state.owner_mode
+                          ? <div>
+                              <DropdownButton variant="light" className="p-1" title={this.state.ownerValidationFlagFilter.toString() + " flag" + (this.state.ownerValidationFlagFilter === 1 ? "" : "s")}>
+                                {["Any",0,1,2,3,4,5].map((target, index) => <Dropdown.Item onClick={() => this.updateOwnerValidationFlagFilter(target)} key={index} index={index}>{target}</Dropdown.Item>)}
+                              </DropdownButton>
+                              <DropdownButton variant="light" className="p-1" title={this.state.ownerValidationDisagreementFilter.toString() + " correct/incorrect disagreement" + (this.state.ownerValidationDisagreementFilter === 1 ? "" : "s")}>
+                                {["Any",0,1,2,3,4].map((target, index) => <Dropdown.Item onClick={() => this.updateOwnerValidationDisagreementFilter(target)} key={index} index={index}>{target}</Dropdown.Item>)}
+                              </DropdownButton>
+                            </div>
+                          : ""
+                        }
                       </Modal.Body>
                   </Modal>
                 </div>
@@ -237,7 +332,14 @@ class VerifyInterface extends React.Component {
             <Card className="profile-card overflow-hidden">
               <div className="mb-1 p-3 light-gray-bg">
                 <h6 className="text-uppercase dark-blue-color spaced-header">Context:</h6>
-                {this.state.example.context && this.state.example.context.context.replace("<br>", "\n")}
+                {this.state.example.context && this.state.example.context.context ?
+                    <ContextInfo
+                      text={this.state.example.context.context}
+                      needAnswer={this.state.incorrectSelected && this.state.task.shortname === 'QA'}
+                      answer={this.state.validatorLabel}
+                      updateAnswer={this.updateAnswer}
+                    />
+                  : ""}
               </div>
               <Card.Body className="overflow-auto pt-2" style={{ height: 400 }}>
                 <Card
@@ -272,55 +374,145 @@ class VerifyInterface extends React.Component {
                             <p>
                             {this.state.example.text}
                             </p>
-                            {this.state.example.metadata_json
-                              ? JSON.parse(this.state.example.metadata_json).hasOwnProperty('hate_target')
-                                ? <div>
-                                    <h6 className="text-uppercase dark-blue-color spaced-header">
-                                    Hate Target:
-                                    </h6>
-                                    <p>
-                                    {JSON.parse(this.state.example.metadata_json).hate_target}
-                                    </p>
-                                  </div>
-                                : ""
-                              : ""
-                            }
                             <h6 className="text-uppercase dark-blue-color spaced-header">
                             Label:
                             </h6>
                             <p>
                             {this.state.example.target}
                             </p>
+                            {this.state.example.example_explanation ?
+                              <>
+                                <h6 className="text-uppercase dark-blue-color spaced-header">
+                                Example explanation <small>(why target label is correct)</small>
+                                </h6>
+                                <p>
+                                {this.state.example.example_explanation}
+                                </p>
+                              </>
+                              : ""
+                            }
+                            {this.state.example.model_explanation ?
+                              <>
+                                <h6 className="text-uppercase dark-blue-color spaced-header">
+                                Model explanation <small>({this.state.example.model_wrong ? "why model was fooled" : "how they tried to trick the model"})</small>
+                                </h6>
+                                <p>
+                                {this.state.example.model_explanation}
+                                </p>
+                              </>
+                              : ""
+                            }
+                            {this.state.example.metadata_json
+                              ? JSON.parse(this.state.example.metadata_json).hasOwnProperty('hate_type')
+                                ? <>
+                                    <h6 className="text-uppercase dark-blue-color spaced-header">
+                                    Hate Target:
+                                    </h6>
+                                    <p>
+                                    {JSON.parse(this.state.example.metadata_json).hate_type}
+                                    </p>
+                                  </>
+                                : ""
+                              : ""
+                            }
                           </div>
                         }
+                        <h6 className="text-uppercase dark-blue-color spaced-header">
+                        Actions:
+                        </h6>
+                        <p>
+                          <InputGroup className="align-items-center">
+                            <Form.Check
+                              checked={this.state.correctSelected}
+                              type="radio"
+                              onChange={() => this.resetValidatorSelections(() => this.setState({ correctSelected: true }))}
+                            />
+                            <i className="fas fa-thumbs-up"></i>  &nbsp; {this.state.owner_mode ? "Verified " : ""} Correct
+                          </InputGroup>
+                          <InputGroup className="align-items-center">
+                            <Form.Check
+                              checked={this.state.incorrectSelected}
+                              type="radio"
+                              onChange={() => this.resetValidatorSelections(() => this.setState({ incorrectSelected: true }))}
+                            />
+                            <i className="fas fa-thumbs-down"></i>  &nbsp; {this.state.owner_mode ? "Verified " : ""} Incorrect
+                          </InputGroup>
+                          <InputGroup className="ml-3">
+                            {this.state.incorrectSelected ?
+                                {
+                                  'NLI': <DropdownButton className="p-1" title={"Your corrected label: " + this.state.validatorLabel}>
+                                           {["entailing", "neutral", "contradictory"].filter((target, _) => target !== this.state.example.target)
+                                             .map((target, index) => <Dropdown.Item onClick={() => this.setState({ validatorLabel: target })} key={index} index={index}>{target}</Dropdown.Item>)}
+                                         </DropdownButton>,
+                                  'QA': 'Please select the correct answer in the context. If it is not in the context, then flag this example.',
+                                  'Hate Speech': <div>You have proposed that the correct answer is <b>{['hateful', 'not-hateful'].filter((target, _) => target !== this.state.example.target)[0]}</b></div>,
+                                  'Sentiment': <div>You have proposed that the correct answer is <b>{['positive', 'negative'].filter((target, _) => target !== this.state.example.target)[0]}</b></div>
+                                }[this.state.task.shortname]
+                              : ""}
+                          </InputGroup>
+                            {this.state.owner_mode ?
+                                ""
+                              : <InputGroup className="align-items-center">
+                                  <Form.Check
+                                    checked={this.state.flaggedSelected}
+                                    type="radio"
+                                    onChange={() => this.resetValidatorSelections(() => this.setState({ flaggedSelected: true }))}
+                                  />
+                                  <i className="fas fa-flag"></i> &nbsp; Flag
+                                </InputGroup>}
+                              <InputGroup className="ml-3">
+                              {this.state.flaggedSelected ?
+                                  <Col sm="12 p-1">
+                                    <Form.Control
+                                      type="text"
+                                      placeholder="Reason for flagging"
+                                      onChange={(e) => this.setState({ flagReason: e.target.value })}
+                                    />
+                                  </Col>
+                                : ""}
+                              </InputGroup>
+                        </p>
+                        {this.state.incorrectSelected || this.state.correctSelected || this.state.flaggedSelected ?
+                          <div>
+                          <h6 className="text-uppercase dark-blue-color spaced-header">
+                          Optionally, provide an explanation for this example:
+                          </h6>
+                            <p>
+                              <div className="mt-3">
+                                {(this.state.incorrectSelected || this.state.correctSelected) ?
+                                    <div>
+                                      <Form.Control
+                                        type="text"
+                                        placeholder={
+                                          "Explain why " + (this.state.task.shortname === "QA" ? (this.state.correctSelected ? "the given answer" : "your proposed answer") : (this.state.correctSelected ? "the given label" : "your proposed label")) + " is correct"}
+                                        onChange={(e) => this.setState({ labelExplanation: e.target.value })} />
+                                    </div>
+                                  : ""}
+                                <div>
+                                  <Form.Control
+                                    type="text"
+                                    placeholder="Explain what you think the creator did to try to trick the model"
+                                    onChange={(e) => this.setState({ creatorAttemptExplanation: e.target.value })} />
+                                </div>
+                                {this.state.task.shortname === "Hate Speech" ?
+                                    <HateSpeechDropdown
+                                      hateType={this.state.validatorHateType}
+                                      dataIndex={this.props.index}
+                                      onClick={(e) => this.setState({ validatorHateType: e.target.getAttribute("data") })}
+                                    />
+                                  : ""}
+                              </div>
+                            </p>
+                          </div>
+                          : ""}
                       </Col>
                     </Row>
                   </Card.Body>
                   <Card.Footer>
-                    <button
-                      data-index={this.props.index}
-                      onClick={() => this.handleResponse("correct")}
-                      type="button"
-                      className="btn btn-light btn-sm">
-                        <i className="fas fa-thumbs-up"></i> {this.state.owner_mode ? "Verified " : ""} Correct
-                    </button>{" "}
-                    <button
-                      data-index={this.props.index}
-                      onClick={() => this.handleResponse("incorrect")}
-                      type="button"
-                      className="btn btn-light btn-sm">
-                        <i className="fas fa-thumbs-down"></i> {this.state.owner_mode ? "Verified " : ""} Incorrect
-                    </button>{" "}
-                    {this.state.owner_mode ?
-                      ""
-                      : <button
-                          data-index={this.props.index}
-                          onClick={() => this.handleResponse("flag")}
-                          type="button"
-                          className="btn btn-light btn-sm">
-                            <i className="fas fa-flag"></i> Flag
-                        </button>
-                    }{" "}
+                  <InputGroup className="align-items-center">
+                    <button type="button" className="btn btn-primary t btn-sm"
+                      onClick={() => this.handleResponse()}
+                    > Submit </button>
                     <button
                       data-index={this.props.index}
                       onClick={this.getNewExample}
@@ -328,6 +520,7 @@ class VerifyInterface extends React.Component {
                       className="btn btn-light btn-sm pull-right">
                         <i className="fas fa-undo-alt"></i> Skip and load new example
                     </button>
+                  </InputGroup>
                   </Card.Footer>
                   </>
                   :
@@ -340,32 +533,6 @@ class VerifyInterface extends React.Component {
                   </Card.Body>
                 }
                 </Card>
-                <div className="p-3">
-                  {this.context.api.isTaskOwner(this.context.user, this.state.task.id) || this.context.user.admin ?
-                    <OverlayTrigger
-                      placement="bottom"
-                      delay={{ show: 250, hide: 400 }}
-                      overlay={(props) => <Tooltip id="button-tooltip" {...props}>Switch between task owner and regular annotation mode.</Tooltip>}
-                    >
-                      <span>
-                        <BootstrapSwitchButton
-                          checked={!this.state.owner_mode}
-                          onlabel="Regular Mode"
-                          onstyle="primary blue-bg"
-                          offstyle="warning"
-                          offlabel="Task Owner Mode"
-                          width={180}
-                          onChange={(checked) => {
-                            this.setState({ owner_mode: !checked },
-                            this.componentDidMount()
-                          );
-                          }}
-                        />
-                      </span>
-                    </OverlayTrigger>
-                   : ""
-                  }
-                </div>
                 <div className="p-2">
                 {this.state.owner_mode ?
                     <p style={{'color': 'red'}}>WARNING: You are in "Task owner mode." You can verify examples as correct or incorrect without input from anyone else!!</p>

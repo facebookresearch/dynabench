@@ -34,6 +34,9 @@ import {
   OverlayContext,
   BadgeOverlay
 } from "./Overlay"
+import {
+  HateSpeechDropdown
+} from "./HateSpeechDropdown.js"
 import "./CreateInterface.css";
 
 const Explainer = (props) => (
@@ -105,14 +108,16 @@ const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName, onChang
   );
 };
 
-const HateSpeechDropdown = ({ hateTarget, dataIndex, onClick }) => {
+const ExplainFeedback = ({explainSaved}) => {
   return (
-    <DropdownButton variant="light" className="p-1" title={hateTarget ? "Target of hate: " + hateTarget : "Target of hate"}>
-      {
-        ["Threatening language", "Supporting hateful entities", "Derogation", "Dehumanizing language", "Animosity", "None selected"].map((target, index) =>
-        <Dropdown.Item data-index={dataIndex} data={target} onClick={onClick} key={index} index={index}>{target}</Dropdown.Item>)
+    <span style={{float: "right"}}>
+      { explainSaved === null
+        ? <span style={{color: "#b58c14"}}>Draft. Click out of input box to save.</span>
+        : explainSaved === false
+          ? "Saving..."
+          : <span style={{color: "#085756"}}>Saved!</span>
       }
-    </DropdownButton>
+    </span>
   );
 };
 
@@ -293,15 +298,14 @@ class ResponseInfo extends React.Component {
     });
   }
   updateHateSpeechTargetMetadata(e) {
-    const hate_target = e.target.getAttribute("data");
+    const hate_type = e.target.getAttribute("data");
     const idx = e.target.getAttribute("data-index");
-    this.setState({explainSaved: false});
-    this.setState({hate_target: hate_target});
+    this.setState({explainSaved: false, hate_type: hate_type});
     this.context.api
       .getExampleMetadata(this.props.mapKeyToExampleId[idx])
       .then((result) => {
         var metadata = JSON.parse(result);
-        metadata['hate_target'] = hate_target;
+        metadata['hate_type'] = hate_type;
         this.context.api
           .setExampleMetadata(this.props.mapKeyToExampleId[idx], metadata)
           .then((result) => {
@@ -479,22 +483,7 @@ class ResponseInfo extends React.Component {
                 <span>
                   Optionally, provide an explanation for your example:
                 </span>
-                <span style={{float: "right"}}>
-                  { this.state.explainSaved === null
-                    ? <span style={{color: "#b58c14"}}>Draft. Click out of input box to save.</span>
-                    : this.state.explainSaved === false
-                      ? "Saving..."
-                      : <span style={{color: "#085756"}}>Saved!</span>
-                  }
-                </span>
-                { this.props.taskName === "Hate Speech"
-                  ? <HateSpeechDropdown
-                      hateTarget={this.state.hate_target}
-                      dataIndex={this.props.index}
-                      onClick={this.updateHateSpeechTargetMetadata}
-                    />
-                  : ""
-                }
+                <ExplainFeedback explainSaved={this.state.explainSaved} />
                 <div>
                   <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
                     "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is the correct answer"}
@@ -505,34 +494,38 @@ class ResponseInfo extends React.Component {
                     placeholder="Explain why you think the model made a mistake"
                     data-index={this.props.index} data-type="model" onChange={() => this.setState({explainSaved: null})} onBlur={this.explainExample} />
                 </div>
+                {this.props.taskName === "Hate Speech" ?
+                  <HateSpeechDropdown
+                    hateType={this.state.hate_type}
+                    dataIndex={this.props.index}
+                    onClick={this.updateHateSpeechTargetMetadata}
+                  />
+                  : ""}
               </div>
             )
-            :
+            : /* not fooled */
             <div className="mt-3">
               <span>
                 Optionally, provide an explanation for your example:
               </span>
-              <span style={{float: "right"}}>
-                { this.state.explainSaved === null
-                  ? <span style={{color: "#b58c14"}}>Draft. Click out of input box to save.</span>
-                  : this.state.explainSaved === false
-                    ? "Saving..."
-                    : <span style={{color: "#085756"}}>Saved!</span>
-                }
-              </span>
-              { this.props.taskName === "Hate Speech"
-                ? <HateSpeechDropdown
-                    hateTarget={this.state.hate_target}
-                    dataIndex={this.props.index}
-                    onClick={this.updateHateSpeechTargetMetadata}
-                  />
-                : ""
-              }
+              <ExplainFeedback explainSaved={this.state.explainSaved} />
               <div>
                 <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
                   "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is the correct answer"}
                   data-index={this.props.index} data-type="example" onChange={() => this.setState({explainSaved: null})} onBlur={this.explainExample} />
               </div>
+              <div>
+                <input type="text" style={{width: 100+'%'}}
+                  placeholder="Explain what you did to try to trick the model"
+                  data-index={this.props.index} data-type="model" onChange={() => this.setState({explainSaved: null})} onBlur={this.explainExample} />
+              </div>
+              {this.props.taskName === "Hate Speech" ?
+                <HateSpeechDropdown
+                  hateType={this.state.hate_type}
+                  dataIndex={this.props.index}
+                  onClick={this.updateHateSpeechTargetMetadata}
+                />
+                : ""}
             </div>
         }
         <div className="mb-3">

@@ -80,6 +80,13 @@ export default class ApiService {
     });
   }
 
+  updateTaskSettings(taskId, settings) {
+    return this.fetch(`${this.domain}/tasks/${taskId}/settings`, {
+      method: "PUT",
+      body: JSON.stringify({settings: settings}),
+    });
+  }
+
   updateProfilePic(userId, file) {
     const formData = new FormData();
     formData.append("file", file);
@@ -121,12 +128,16 @@ export default class ApiService {
     });
   }
 
-  publishModel({ modelId, name, description }) {
+  publishModel({ modelId, name, description, params, languages, license, model_card }) {
     return this.fetch(`${this.domain}/models/${modelId}/publish`, {
       method: "PUT",
       body: JSON.stringify({
         name,
         description,
+        params,
+        languages,
+        license,
+        model_card
       }),
     });
   }
@@ -322,8 +333,8 @@ export default class ApiService {
     return user.task_permissions?.filter((task_permission) => tid === task_permission.tid && "owner" === task_permission.type).length > 0;
   }
 
-  validateExample(id, label, mode, uid = null) {
-    let obj = {label: label, mode: mode};
+  validateExample(id, label, mode, metadata = {}, uid = null) {
+    let obj = {label: label, mode: mode, metadata: metadata};
     if (this.mode == 'mturk') {
       obj.uid = uid;
     }

@@ -132,7 +132,8 @@ class CreateInterface extends React.Component {
       let modelInputs = {
         context: this.state.context.context,
         hypothesis: this.state.hypothesis,
-        answer: answer_text
+        answer: answer_text,
+        insight: false,
       };
       this.api.getModelResponse(this.state.task.round.url, modelInputs)
         .then(result => {
@@ -167,7 +168,7 @@ class CreateInterface extends React.Component {
             'agentId': this.props.agentId,
             'assignmentId': this.props.assignmentId,
             'fullresponse': this.state.task.type == 'extract' ? JSON.stringify(this.state.answer) : this.state.target
-          }; 
+          };
           this.api.storeExample(
             this.state.task.id,
             this.state.task.cur_round,

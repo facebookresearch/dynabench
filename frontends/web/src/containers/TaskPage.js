@@ -5,6 +5,7 @@
  */
 
 import React from "react";
+import "./TaskPage.css";
 import {
   Container,
   Row,
@@ -18,7 +19,10 @@ import {
   OverlayTrigger,
   Pagination,
   DropdownButton,
-  Dropdown
+  Dropdown,
+  Modal,
+  Form,
+  InputGroup
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import UserContext from "./UserContext";
@@ -185,7 +189,7 @@ const TaskActionButtons = (props) => {
         </OverlayTrigger>
       </Annotation>
     </Nav.Item>
-    {props.task.shortname === "NLI" || props.task.shortname === "QA" ? (
+    {props.task.shortname === "NLI" || props.task.shortname === "QA" || props.task.shortname === "Hate Speech" ? (
       <Nav.Item className="task-action-btn">
         <Annotation placement="right" tooltip="Click here to submit your model predictions for previous rounds.">
           <OverlayTrigger
@@ -204,14 +208,6 @@ const TaskActionButtons = (props) => {
         </Annotation>
       </Nav.Item>
     ) : null}
-    {props.api.isTaskOwner(props.user, props.task.id) || props.user.admin ?
-      <Nav.Item className="task-action-btn ml-auto">
-        <DropdownButton className="border-0 blue-color font-weight-bold light-gray-bg" id="dropdown-basic-button" title="Export">
-          <Dropdown.Item onClick={props.exportCurrentRoundData}>Export current round</Dropdown.Item>
-          <Dropdown.Item onClick={props.exportAllTaskData}>Export all</Dropdown.Item>
-        </DropdownButton>
-      </Nav.Item>
-      : null}
   </Nav>
   );
 };
@@ -259,10 +255,13 @@ const OverallModelLeaderBoard = (props) => {
       <thead>
         <tr>
           <th>Model</th>
-          {props.task === "QA" ? (
-            <th>Mean F1</th>
+          {props.tags.map((tag) => {
+            return (<th className="text-right" key={`th-${tag}`}>{tag}</th>)
+          })}
+          {props.taskShortName === "QA" ? (
+            <th className="text-right pr-4">Overall F1</th>
           ) : (
-            <th>Mean Accuracy</th>
+            <th className="text-right pr-4">Mean Accuracy</th>
           )}
         </tr>
       </thead>
@@ -281,7 +280,17 @@ const OverallModelLeaderBoard = (props) => {
                   ({data.owner})
                 </Link>
               </td>
-              <td>{parseFloat(data.accuracy).toFixed(2)}%</td>
+              {props.tags.map((tag) => {
+                let tag_result = '-';
+                if (data.metadata_json && data.metadata_json.perf_by_tag) {
+                  let selected_tag = data.metadata_json.perf_by_tag.filter(t => t.tag == tag);
+                  if (selected_tag.length > 0) tag_result = parseFloat(selected_tag[0].perf).toFixed(2)+'%';
+                };
+                return (
+                  <td className="text-right" key={`${tag}-${data.model_id}`}>{tag_result}</td>
+                )
+              })}
+              <td className="text-right pr-4">{parseFloat(data.accuracy).toFixed(2)}%</td>
             </tr>
           );
         })}
@@ -296,8 +305,8 @@ const OverallUserLeaderBoard = (props) => {
       <thead>
         <tr>
           <th>User</th>
-          <th>Mean MER</th>
-          <th>Total</th>
+          <th className="text-right">Mean MER</th>
+          <th className="text-right pr-4">Total</th>
         </tr>
       </thead>
       <tbody>
@@ -315,8 +324,8 @@ const OverallUserLeaderBoard = (props) => {
                   {data.username}
                 </Link>
               </td>
-              <td>{data.MER}%</td>
-              <td>{data.total}</td>
+              <td className="text-right">{data.MER}%</td>
+              <td className="text-right pr-4">{data.total}</td>
             </tr>
           );
         })}
@@ -366,15 +375,19 @@ class TaskPage extends React.Component {
       task: {},
       trendScore: [],
       modelLeaderBoardData: [],
+      modelLeaderBoardTags: [],
       userLeaderBoardData: [],
       modelLeaderBoardPage: 0,
       isEndOfModelLeaderPage: true,
       userLeaderBoardPage: 0,
       isEndOfUserLeaderPage: true,
       pageLimit: 5,
+      validateNonFooling: false,
+      numMatchingValidations: 3,
     };
 
     this.exportAllTaskData = this.exportAllTaskData.bind(this);
+    this.getSavedTaskSettings = this.getSavedTaskSettings.bind(this);
     this.exportCurrentRoundData = this.exportCurrentRoundData.bind(this);
   }
 
@@ -384,7 +397,7 @@ class TaskPage extends React.Component {
         .getTask(this.state.taskId)
         .then((result) => {
           this.setState({task: result, displayRoundId: result.cur_round, round: result.round}, function() {
-            this.refreshData();
+            this.refreshData(); this.getSavedTaskSettings();
           });
         }, (error) => {
           console.log(error);
@@ -411,6 +424,18 @@ class TaskPage extends React.Component {
             }
           });
       });
+    }
+  }
+
+  getSavedTaskSettings() {
+    if (this.state.task.settings_json) {
+      const settings_json = JSON.parse(this.state.task.settings_json);
+      if (settings_json.hasOwnProperty('validate_non_fooling')) {
+        this.setState({ validateNonFooling: settings_json['validate_non_fooling'] });
+      }
+      if (settings_json.hasOwnProperty('num_matching_validations')) {
+        this.setState({ numMatchingValidations: settings_json['num_matching_validations'] });
+      }
     }
   }
 
@@ -465,6 +490,7 @@ class TaskPage extends React.Component {
         this.setState({
           isEndOfModelLeaderPage: isEndOfPage,
           modelLeaderBoardData: result.data,
+          modelLeaderBoardTags: result.leaderboard_tags,
         });
       }, (error) => {
         console.log(error);
@@ -537,7 +563,73 @@ class TaskPage extends React.Component {
                   }
                 </OverlayContext.Consumer>
               </Annotation>
+              {this.context.api.isTaskOwner(this.context.user, this.state.task.id) || this.context.user.admin
+                ? <Annotation placement="top" tooltip="Click to adjust your owner task settings">
+                    <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
+                      onClick={() => { this.setState({showTaskOwnerSettingsModal: true}) }}
+                    ><i className="fa fa-cog"></i></button>
+                  </Annotation>
+                : ""}
             </ButtonGroup>
+            <Modal
+              show={this.state.showTaskOwnerSettingsModal}
+              onHide={() => this.setState({ showTaskOwnerSettingsModal: false })}
+              >
+                <Modal.Header closeButton>
+                  <Modal.Title>Task Owner Console</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                  <Modal.Title style={{fontSize: 20}}>Settings</Modal.Title>
+                  <hr/>
+                  Validate non-model-fooling examples? &nbsp;
+                  <span className="float-right">
+                    <Form.Check
+                      checked={this.state.validateNonFooling}
+                      onChange={() => {
+                          this.setState(
+                            { validateNonFooling: !this.state.validateNonFooling },
+                            () => this.context.api.updateTaskSettings(this.state.task.id, { validate_non_fooling: this.state.validateNonFooling, num_matching_validations: this.state.numMatchingValidations })
+                          );
+                        }
+                      }
+                    />
+                  </span>
+                  <hr/>
+                  Number of correct, incorrect, <br/> or flagged marks when an example
+                  <span className="float-right">
+                    {this.state.numMatchingValidations}
+                    <span className="float-right">
+                      <Form.Control
+                        className="p-1"
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="1"
+                        defaultValue={this.state.numMatchingValidations}
+                        onChange={(e) => {
+                            this.setState(
+                              { numMatchingValidations: parseInt(e.target.value) },
+                              () => this.context.api.updateTaskSettings(this.state.task.id, { validate_non_fooling: this.state.validateNonFooling, num_matching_validations: this.state.numMatchingValidations })
+                            );
+                          }
+                        }
+                      />
+                    </span>
+                  </span>
+                  <br/> is no longer shown to validators?
+                  <hr/>
+                  <Modal.Title style={{fontSize: 20}}>Actions</Modal.Title>
+                  <hr/>
+                  <span className="float-right">
+                    <DropdownButton className="border-0 blue-color font-weight-bold p-1" id="dropdown-basic-button" title="Export Data">
+                      <Dropdown.Item onClick={this.exportCurrentRoundData}>Export current round</Dropdown.Item>
+                      <Dropdown.Item onClick={this.exportAllTaskData}>Export all</Dropdown.Item>
+                    </DropdownButton>
+                  </span>
+                  Click here to export data from the <br/>
+                  current round or all rounds
+                </Modal.Body>
+            </Modal>
             </div>
             <p>{this.state.task.desc}</p>
             {this.props.location.hash === "#overall" ? (
@@ -551,8 +643,6 @@ class TaskPage extends React.Component {
                   taskId={this.state.taskId}
                   user={this.context.user}
                   task={this.state.task}
-                  exportCurrentRoundData={this.exportCurrentRoundData}
-                  exportAllTaskData={this.exportAllTaskData}
                 />
               </>
             ) :
@@ -573,18 +663,21 @@ class TaskPage extends React.Component {
               </Col>
             </Row>
             <Row>
-              <Col xs={12} md={6}>
+              <Col xs={12} md={this.props.location.hash === "#overall" ? 6 : 12}>
                 {this.state.modelLeaderBoardData.length ? (
                   <Annotation placement="left" tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round">
                   <Card className="my-4">
                     <Card.Header className="p-3 light-gray-bg">
                       <h2 className="text-uppercase m-0 text-reset">
-                        Overall Model Leaderboard
+                        {this.props.location.hash === "#overall" ? "Overall Model Leaderboard" : (
+                          "Round " + this.state.displayRoundId + " Model Leaderboard"
+                          )}
                       </h2>
                     </Card.Header>
-                    <Card.Body className="p-0">
+                    <Card.Body className="p-0 leaderboard-container">
                       <OverallModelLeaderBoard
                         data={this.state.modelLeaderBoardData}
+                        tags={this.state.modelLeaderBoardTags}
                         taskShortName={this.state.task.shortname}
                       />
                     </Card.Body>
@@ -612,10 +705,12 @@ class TaskPage extends React.Component {
                   <Card className="my-4">
                     <Card.Header className="p-3 light-gray-bg">
                       <h2 className="text-uppercase m-0 text-reset">
-                        Overall User Leaderboard
+                        {this.props.location.hash === "#overall" ? "Overall User Leaderboard" : (
+                          "Round " + this.state.displayRoundId + " User Leaderboard"
+                          )}
                       </h2>
                     </Card.Header>
-                    <Card.Body className="p-0">
+                    <Card.Body className="p-0 leaderboard-container">
                       <OverallUserLeaderBoard
                         data={this.state.userLeaderBoardData}
                       />
@@ -640,14 +735,17 @@ class TaskPage extends React.Component {
                   </Annotation>
                 ) : null}
               </Col>
-              <Col xs={12} md={6}>
-                {this.props.location.hash === "#overall" &&
-                this.state.trendScore.length ? (
-                  <Annotation placement="top-end" tooltip="As tasks progress over time, we can follow their trend, which is shown here">
-                    <TaskTrend data={this.state.trendScore} />
-                  </Annotation>
-                ) : null}
-              </Col>
+
+              {this.props.location.hash === "#overall" ? (
+                <Col xs={12} md={6}>
+                  {this.props.location.hash === "#overall" &&
+                  this.state.trendScore.length ? (
+                    <Annotation placement="top-end" tooltip="As tasks progress over time, we can follow their trend, which is shown here">
+                      <TaskTrend data={this.state.trendScore} />
+                    </Annotation>
+                  ) : null}
+                </Col>
+              ) : null}
             </Row>
           </Col>
         </Row>

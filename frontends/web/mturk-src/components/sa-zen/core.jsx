@@ -37,7 +37,7 @@ class SentimentTaskPreview extends React.Component {
               Specifically, we suggest that you fool the model using examples that require <b>multi-step reasoning</b>.
               </p>
               <p>
-              Here is an example that is <i>positive</i> that the AI model predicts is <i>negative</i>: 
+              Here is an example that is <i>positive</i> that the AI model predicts is <i>negative</i>:
               </p>
               <p>
                 <center>
@@ -108,9 +108,9 @@ class SentimentTaskOnboarder extends React.Component {
   completeOnboarding() {
 
     // check if they filled out correctly for all the questions.
-    if(this.state.q1 == "yes" && this.state.q2 == "yes" && 
+    if(this.state.q1 == "yes" && this.state.q2 == "yes" &&
       this.state.q3 == "yes" && this.state.q4 == "yes" &&
-      this.state.q5 == "yes") { 
+      this.state.q5 == "yes") {
       this.props.onSubmit({ success: true }); // if they failed, set to false
     } else if(counter == 9) {
       // only give n times.
@@ -138,7 +138,7 @@ class SentimentTaskOnboarder extends React.Component {
 
           <Jumbotron className="jumbotron">
               <p>
-                Here is an example that is <i>positive</i> that the AI model predicts is <i>negative</i>: 
+                Here is an example that is <i>positive</i> that the AI model predicts is <i>negative</i>:
                 </p>
                 <p>
                   <center>
@@ -146,13 +146,13 @@ class SentimentTaskOnboarder extends React.Component {
                   </center>
                 </p>
                 <p>
-                  In other words you enter a <b>positive</b> sentence but the AI model predicts <b>negative</b>. 
+                  In other words you enter a <b>positive</b> sentence but the AI model predicts <b>negative</b>.
                   You successfully fool the powerful AI model!
                 </p>
                 <img className="example-img" src="https://i.ibb.co/85DRYzJ/example-SA.png" alt="Logo" />
                 <p>
-                  Following the example above, you will input your sentence into the textbox. We made the task a little easier by providing 
-                  you a context, and <b> you just need to modify the prompt to generate your own sentence tha fools the model</b>. Once you are finished, you can 
+                  Following the example above, you will input your sentence into the textbox. We made the task a little easier by providing
+                  you a context, and <b> you just need to modify the prompt to generate your own sentence tha fools the model</b>. Once you are finished, you can
                   hit the <b>Submit</b> button to submit your result. Note that it may take some time for the model to generate the prediction.
                 </p>
           </Jumbotron>
@@ -195,7 +195,7 @@ class SentimentTaskOnboarder extends React.Component {
                   <br/>
                   <input type="radio" name="dgoal" value="no" onChange={this.handleOptionChange}/> True
                   <br/>
-                
+
               <br/>
 
                 You will be <b> modifying a provided prompt </b> to generate your own sentence.
@@ -204,7 +204,7 @@ class SentimentTaskOnboarder extends React.Component {
                     <br/>
                     <input type="radio" name="egoal" value="yes" onChange={this.handleOptionChange}/> True
                     <br/>
-                  
+
               <br/>
             </div>
 
