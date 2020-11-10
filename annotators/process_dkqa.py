@@ -1,3 +1,4 @@
+import ast
 import pandas as pd
 
 df = pd.read_json("export.json")
@@ -11,6 +12,8 @@ for itr, val in enumerate(df['metadata_json']):
         agentIds.append(float('nan'))
 df['agentId'] = agentIds
 unique_ids = list(df['agentId'].unique())
+keep = []
+BONUS = 0.15
 for agentId in unique_ids:
     temp_df = df[df['agentId']==agentId]
     temp_df.reset_index(drop=True, inplace=True)
