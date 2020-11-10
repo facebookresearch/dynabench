@@ -112,16 +112,12 @@ class VerifyInterface extends React.Component {
       }
   }
   render() {
-    console.log(this.state);
     var content;
     if (this.state.example.context) {
-      console.log(this.state.example)
       var example_metadata = JSON.parse(this.state.example.metadata_json)
       var ans = JSON.parse(example_metadata['fullresponse'])
       var ans_start = ans[0].start
       var ans_end = ans[0].end
-      {/*var ans_start = this.state.example.metadata_json.fullresponse.start;
-      var ans_end = this.state.example.metadata_json.fullresponse.end;*/}
       var answer = [{start:ans_start, end:ans_end, tag:"ANS"}]
       content = <ContextInfo
                    answer={answer}
@@ -133,9 +129,6 @@ class VerifyInterface extends React.Component {
             <div className="mb-1 p-3 light-gray-bg">
               <h6 className="text-uppercase dark-blue-color spaced-header">Context:</h6>
               <Card.Body style={{height: 200, overflowY: 'scroll'}}>
-                {/*this.state.example.context && <ContextInfo
-                                                answer={[{start:JSON.parse(this.state.example.target_pred)[0].start, end:JSON.parse(this.state.example.target_pred)[0].end, tag:"ANS"}]}
-                                                context={this.state.example.context.context}/>*/}
 	        {this.state.example.context && content}
               </Card.Body>
             </div>
@@ -158,16 +151,6 @@ class VerifyInterface extends React.Component {
                         </p>
                       </div>
                     </Col>
-		    {/*<InputGroup>
-                    <small className="form-text text-muted">[OPTIONAL] Before selecting the label, if there is something wrong with this example (such as if the question is unanswerable by the passage etc.), please inform us using this comment box.</small>
-                    </InputGroup>
-		    <InputGroup>
-                      <FormControl
-                       style={{ width: '100%', margin: 2 }}
-                       placeholder={'Enter comments here.'}
-		       onChange={this.setComment}
-                      />
-                    </InputGroup>*/}
                   </Row>
                 </Card.Body>
                 <Card.Footer>
