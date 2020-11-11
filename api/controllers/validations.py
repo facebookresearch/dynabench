@@ -102,11 +102,19 @@ def validate_example(credentials, eid):
 
     rm = RoundModel()
     rm.updateLastActivity(context.r_realid)
-    if label_counts["correct"] >= num_matching_validations or (
-        mode == "owner" and label == "correct"
-    ):
-        rm.incrementVerifiedFooledCount(context.r_realid)
-        um.incrementVerifiedFooledCount(example.uid)
+
+    if example.model_wrong:
+        if label_counts["correct"] >= num_matching_validations or (
+            mode == "owner" and label == "correct"
+        ):
+            rm.incrementVerifiedFooledCount(context.r_realid)
+            um.incrementVerifiedFooledCount(example.uid)
+        elif (
+            label_counts["incorrect"] >= num_matching_validations
+            or label_counts["flagged"] >= num_matching_validations
+            or (mode == "owner" and label != "correct")
+        ):
+            um.incrementVerifiedNotFooledCount(example.uid)
 
     ret = example.to_dict()
     if credentials["id"] != "turk":
