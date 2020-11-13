@@ -189,7 +189,7 @@ def post_example(credentials):
         bm = BadgeModel()
         nm = NotificationModel()
         user = um.get(credentials["id"])
-        badges = bm.updateSubmitCountsAndCheckBadgesEarned(user, example, "create")
+        badges = bm.handleCreateInterface(user, example)
         for badge in badges:
             bm.addBadge(badge)
             nm.create(credentials["id"], "NEW_BADGE_EARNED", badge["name"])

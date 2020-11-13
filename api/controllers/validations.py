@@ -107,6 +107,16 @@ def validate_example(credentials, eid):
     ):
         rm.incrementVerifiedFooledCount(context.r_realid)
         um.incrementVerifiedFooledCount(example.uid)
+    if (
+        (label_counts["incorrect"] >= num_matching_validations)
+        or (label_counts["flagged"] >= num_matching_validations)
+        or (mode == "owner" and (label == "incorrect" or label == "flagged"))
+    ):
+        user = um.get(example.uid)
+        metadata = json.loads(user.metadata_json)
+        metadata[task.shortname + "_fooling_no_verified_incorrect_or_flagged"] -= 1
+        user.metadata_json = json.dumps(metadata)
+        um.dbs.commit()
 
     ret = example.to_dict()
     if credentials["id"] != "turk":
@@ -114,7 +124,7 @@ def validate_example(credentials, eid):
 
         bm = BadgeModel()
         nm = NotificationModel()
-        badges = bm.updateSubmitCountsAndCheckBadgesEarned(user, example, "validate")
+        badges = bm.handleValidateInterface(user)
         for badge in badges:
             bm.addBadge(badge)
             nm.create(credentials["id"], "NEW_BADGE_EARNED", badge["name"])
