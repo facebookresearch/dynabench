@@ -14,6 +14,7 @@ import {
   Button,
   Form,
 } from "react-bootstrap";
+import Markdown from "react-markdown";
 import { Formik } from "formik";
 import UserContext from "./UserContext";
 import "./SubmitInterface.css";
@@ -55,6 +56,18 @@ class PublishInterface extends React.Component {
     if (!values.name || values.name.trim() === '') {
       errors.name = "Required";
     }
+    if (!values.description || values.description.trim() === '') {
+      errors.description = "Required";
+    }
+    if (!values.params || values.params >>> 0 !== parseFloat(values.params)){
+      errors.params = "Required";
+    }
+    if (!values.languages || values.languages.trim() === '') {
+      errors.languages = "Required";
+    }
+    if (!values.license || values.license.trim() === '') {
+      values.license = "Required";
+    }
     return errors;
   };
   handleSubmit = (values, { setSubmitting }) => {
@@ -62,6 +75,10 @@ class PublishInterface extends React.Component {
       modelId: this.state.model.id,
       name: values.name,
       description: values.description,
+      params: values.params,
+      languages: values.languages,
+      license: values.license,
+      model_card: values.model_card,
     };
     this.context.api
       .publishModel(reqObj)
@@ -81,6 +98,20 @@ class PublishInterface extends React.Component {
     let orderedScores = (model.scores || []).sort(
       (a, b) => a.round_id - b.round_id
     );
+
+    let modelCardTemplate=
+`## Model Details
+(Enter your model details here)
+
+## Data
+* Training data: (Enter your training data here)
+* Evaluation data: (Enter your dev data here)
+
+## Additional Information
+(Enter additional information here)
+
+## Ethical and Fairness Considerations
+(Enter ethical and fairness considerations here)`;
 
     return (
       <Container>
@@ -116,6 +147,10 @@ class PublishInterface extends React.Component {
                     initialValues={{
                       name: model.name || "",
                       description: model.longdesc || "",
+                      params: model.params || "",
+                      languages: model.languages || "",
+                      license: model.license || "",
+                      model_card: model.model_card || modelCardTemplate,
                     }}
                     validate={this.handleValidation}
                     onSubmit={this.handleSubmit}
@@ -146,15 +181,81 @@ class PublishInterface extends React.Component {
                           </Form.Group>
                           <Form.Group>
                             <Form.Label>
-                              <b>Description</b>
+                              <b>Summary</b>
+                            </Form.Label>
+                            <Form.Control
+                              name="description"
+                              type="text"
+                              style={{
+                                borderColor: errors.description ? "red" : null,
+                              }}
+                              placeholder="Provide a description of your model"
+                              onChange={handleChange}
+                              value={values.description}
+                            />
+                          </Form.Group>
+                          <Form.Group>
+                            <Form.Label>
+                              <b>Number of Parameters</b>
+                            </Form.Label>
+                            <Form.Control
+                              name="params"
+                              type="int"
+                              style={{
+                                borderColor: errors.params ? "red" : null,
+                              }}
+                              onChange={handleChange}
+                              value={values.params}
+                              aria-describedby="paramsHelpBlock"
+                            />
+                            <Form.Text id="paramsHelpBlock" muted>
+                            <Markdown>To count the number of parameters, you can run `sum(p.numel() for p in model.parameters() if p.requires_grad)` in PyTorch.</Markdown>
+                            </Form.Text>
+                          </Form.Group>
+                          <Form.Group>
+                            <Form.Label>
+                              <b>Language(s)</b>
+                            </Form.Label>
+                            <Form.Control
+                              name="languages"
+                              type="text"
+                              style={{
+                                borderColor: errors.languages ? "red" : null,
+                              }}
+                              placeholder="e.g. English, Chinese"
+                              onChange={handleChange}
+                              value={values.languages}
+                            />
+                          </Form.Group>
+                          <Form.Group>
+                            <Form.Label>
+                              <b>License(s)</b>
+                            </Form.Label>
+                            <Form.Control
+                              name="license"
+                              type="text"
+                              style={{
+                                borderColor: errors.license ? "red" : null,
+                              }}
+                              placeholder="e.g. Apache 2.0"
+                              onChange={handleChange}
+                              value={values.license}
+                            />
+                          </Form.Group>
+                          <Form.Group>
+                            <Form.Label>
+                              <b>Model Card</b>
                             </Form.Label>
                             <Form.Control
                               as="textarea"
-                              name="description"
-                              defaultValue={values.description}
-                              rows="3"
+                              name="model_card"
+                              defaultValue={values.model_card}
+                              rows="12"
                               onChange={handleChange}
                             />
+                            <Form.Text id="paramsHelpBlock" muted>
+                              <Markdown>The text will be rendered as [markdown](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet) in model page. For more details on [model cards](https://arxiv.org/abs/1810.03993).</Markdown>
+                            </Form.Text>
                           </Form.Group>
 
                           {model.is_published == "False" ? (

@@ -6,8 +6,8 @@ import os
 import sys
 
 import boto3
-
 import bottle
+
 from common.config import config
 from common.cors import *  # noqa
 from common.helpers import (

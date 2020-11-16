@@ -8,12 +8,12 @@ import subprocess
 import tarfile
 
 import boto3
-
 import requests
 import sagemaker
-from common import shared
 from sagemaker.model import Model
 from sagemaker.predictor import Predictor
+
+from common import shared
 
 
 def delete_existing_endpoints(client, sm_model_name):

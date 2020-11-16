@@ -32,8 +32,6 @@ class Example(Base):
     uid = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
     user = db.orm.relationship("User", foreign_keys="Example.uid")
 
-    anon_id = db.Column(db.Text)
-
     text = db.Column(db.Text)
     # why is X the label for this example
     example_explanation = db.Column(db.Text)
@@ -129,10 +127,7 @@ class ExampleModel(BaseModel):
                 metadata_json=json.dumps(metadata),
             )
 
-            # store uid/annotator_id and anon_id
-            e.anon_id = self.get_anon_id(
-                c.round.secret, uid if uid != "turk" else metadata["annotator_id"]
-            )
+            # store uid/annotator_id
             if uid != "turk":
                 um = UserModel()
                 user = um.get(uid)
@@ -173,11 +168,11 @@ class ExampleModel(BaseModel):
             return False
         return True
 
-    def get_anon_id(self, secret, uid):
-        anon_id = hashlib.sha1()
-        anon_id.update(secret.encode("utf-8"))
-        anon_id.update(str(uid).encode("utf-8"))
-        return anon_id.hexdigest()
+    def get_anon_uid(self, secret, uid):
+        anon_uid = hashlib.sha1()
+        anon_uid.update(secret.encode("utf-8"))
+        anon_uid.update(str(uid).encode("utf-8"))
+        return anon_uid.hexdigest()
 
     def getUserLeaderByTid(self, tid, n=5, offset=0, min_cnt=0, downstream=False):
         cnt = db.sql.func.sum(case([(Example.model_wrong == 1, 1)], else_=0)).label(
@@ -239,15 +234,10 @@ class ExampleModel(BaseModel):
         except db.orm.exc.NoResultFound:
             return False
 
-    def getByTidAndRidWithAnonymizedValidations(self, tid, rid):
+    def getByTidAndRidWithValidationIds(self, tid, rid):
         try:
             validations_query = (
-                self.dbs.query(
-                    Example,
-                    db.func.group_concat(
-                        '("' + Validation.label + '","' + Validation.mode + '")'
-                    ),
-                )
+                self.dbs.query(Example, db.func.group_concat(Validation.id))
                 .join(Context, Example.cid == Context.id)
                 .join(Round, Context.r_realid == Round.id)
                 .filter(Round.tid == tid)
@@ -261,33 +251,6 @@ class ExampleModel(BaseModel):
                 .join(Round, Context.r_realid == Round.id)
                 .filter(Round.tid == tid)
                 .filter(Round.rid == rid)
-                .filter(db.not_(db.exists().where(Validation.eid == Example.id)))
-                .group_by(Example.id)
-            )
-            return validations_query.union(no_validations_query).all()
-        except db.orm.exc.NoResultFound:
-            return False
-
-    def getByTidWithAnonymizedValidations(self, tid):
-        try:
-            validations_query = (
-                self.dbs.query(
-                    Example,
-                    db.func.group_concat(
-                        '("' + Validation.label + '","' + Validation.mode + '")'
-                    ),
-                )
-                .join(Context, Example.cid == Context.id)
-                .join(Round, Context.r_realid == Round.id)
-                .filter(Round.tid == tid)
-                .join(Validation, Validation.eid == Example.id)
-                .group_by(Validation.eid)
-            )
-            no_validations_query = (
-                self.dbs.query(Example, db.func.group_concat(""))
-                .join(Context, Example.cid == Context.id)
-                .join(Round, Context.r_realid == Round.id)
-                .filter(Round.tid == tid)
                 .filter(db.not_(db.exists().where(Validation.eid == Example.id)))
                 .group_by(Example.id)
             )

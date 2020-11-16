@@ -17,12 +17,12 @@ from os import listdir
 from os.path import isfile, join
 
 import boto3
-
 import requests
 import sagemaker
-from common import TransformerUtils
 from sagemaker.model import Model
 from sagemaker.predictor import Predictor  # RealTimePredictor
+
+from common import TransformerUtils
 
 
 def setup_env(sagemaker_role):

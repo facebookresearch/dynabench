@@ -2,9 +2,9 @@
 
 import json
 
+import bottle
 import sqlalchemy as db
 
-import bottle
 import common.auth as _auth
 import common.helpers as util
 from common.logging import logger
@@ -119,6 +119,7 @@ def do_upload(credentials):
                 longdesc="",
                 desc="",
                 overall_perf=f"{overall_accuracy:.2f}",
+                upload_date=db.sql.func.now(),
             )
             s = ScoreModel()
             s.bulk_create(
@@ -171,7 +172,14 @@ def publish_model(credentials, mid):
             bottle.abort(401, "Operation not authorized")
 
         model = m.update(
-            model.id, name=data["name"], longdesc=data["description"], is_published=True
+            model.id,
+            name=data["name"],
+            longdesc=data["description"],
+            params=data["params"],
+            languages=data["languages"],
+            license=data["license"],
+            model_card=data["model_card"],
+            is_published=True,
         )
 
         return {"status": "success"}

@@ -3,9 +3,8 @@
 import datetime
 import secrets
 
-import jwt
-
 import bottle
+import jwt
 
 
 class AuthorizationError(Exception):
