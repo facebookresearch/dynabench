@@ -12,7 +12,7 @@ from models.round import RoundModel
 from models.score import ScoreModel
 from models.task import TaskModel
 from models.user import UserModel
-from models.validation import ValidationModel
+from models.validation import Validation, ValidationModel
 
 
 @bottle.get("/tasks")
@@ -90,6 +90,10 @@ def get_round_data_for_export(tid, rid):
     rm = RoundModel()
     secret = rm.getByTidAndRid(tid, rid).secret
     vm = ValidationModel()
+    validations = vm.dbs.query(Validation)
+    validation_dict = {}
+    for validation in validations:
+        validation_dict[validation.id] = validation
     turk_cache = {}
     cache = {}
 
@@ -118,7 +122,7 @@ def get_round_data_for_export(tid, rid):
                 int(id)
                 for id in filter(lambda item: item != "", validation_ids.split(","))
             ]:
-                validation = vm.get(validation_id)
+                validation = validation_dict[validation_id]
                 if validation.uid or (
                     validation.metadata_json
                     and json.loads(validation.metadata_json)["annotator_id"]

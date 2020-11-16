@@ -24,7 +24,7 @@ for n in contexts.keys():
         fpath = os.path.join("anli_v0.1", "R" + n, fname)
         print(fpath)
         contexts[n].extend(
-            [json.loads(l)["context"] for l in codecs.open(fpath, "r", "utf8")]
+            [json.loads(ll)["context"] for ll in codecs.open(fpath, "r", "utf8")]
         )
     contexts[n] = list(set(contexts[n]))
 print({k: len(contexts[k]) for k in contexts.keys()})
