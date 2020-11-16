@@ -93,11 +93,15 @@ class ExampleModel(BaseModel):
         # If task has_answer, handle here (specifically target_pred and
         # model_wrong)
         if c.round.task.has_answer:
+            if "model_is_correct" not in response or "text" not in response:
+                return False
             pred = str(response["model_is_correct"]) + "|" + str(response["text"])
             model_wrong = not response["model_is_correct"]
             if "model_id" in response:
                 pred += "|" + str(response["model_id"])
         else:
+            if "prob" not in response:
+                return False
             pred = response["prob"]
             model_wrong = tgt != np.argmax(pred)
 
@@ -109,7 +113,9 @@ class ExampleModel(BaseModel):
         if uid == "turk" and "model" in metadata and metadata["model"] == "no-model":
             pass  # ignore signature when we don't have a model in the loop with turkers
         else:
-            if not self.verify_signature(response["signed"], c, hypothesis, pred_str):
+            if "signed" not in response or not self.verify_signature(
+                response["signed"], c, hypothesis, pred_str
+            ):
                 return False
 
         try:

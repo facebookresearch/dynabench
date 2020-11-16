@@ -19,7 +19,7 @@ contexts = {"1": [], "2": []}
 for n in contexts.keys():
     fpath = os.path.join(fname)
     print(fpath)
-    this_contexts = [json.loads(l) for l in codecs.open(fpath, "r", "utf8")]
+    this_contexts = [json.loads(ll) for ll in codecs.open(fpath, "r", "utf8")]
     this_contexts = [
         {
             "context": c["passage"],
@@ -51,7 +51,7 @@ print(rounds)
 dbs = tm.dbs
 
 for rid in contexts.keys():
-    if rid not in rounds:
+    if int(rid) not in rounds:
         round = Round(
             task=task, rid=int(rid), secret=secrets.token_hex(), url="https://TBD"
         )
