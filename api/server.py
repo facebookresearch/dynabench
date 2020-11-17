@@ -113,6 +113,7 @@ if running_mode == "dev":
         debug=True,
         server="cheroot",
         reloader=True,
+        timeout=60,
         certfile=config["ssl_cert_file_path"],
         keyfile=config["ssl_org_pem_file_path"],
     )
@@ -146,5 +147,5 @@ elif running_mode == "prod":
 
     app.config["mode"] = "prod"
     bottle.run(
-        host="0.0.0.0", port=8080, debug=True, server="cheroot"
+        host="0.0.0.0", port=8080, debug=True, server="cheroot", timeout=60
     )  # , certfile='', keyfile=''
