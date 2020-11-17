@@ -24,11 +24,26 @@ def apply_step(conn):
     um = UserModel()
     users = um.dbs.query(User)
     for user in users:
+        # Correct total_verified_not_fooled
         cursor.execute(
             "UPDATE users SET total_verified_not_fooled = (SELECT COUNT(*) FROM "
             + "examples e WHERE ((e.model_wrong = True) and ((SELECT COUNT(*) "
             + 'FROM validations v where v.eid = e.id and (v.label = "incorrect" '
             + 'or v.label = "flagged")) > (select json_extract((select settings_json '
+            + "from tasks t where t.id = (select tid from rounds r where r.id = "
+            + "(SELECT r_realid from contexts c where c.id = e.cid))), "
+            + '"$.num_matching_validations"))) and (e.uid = '
+            + str(user.id)
+            + "))) where id = "
+            + str(user.id)
+        )
+
+        # Correct total_verfied_fooled
+        cursor.execute(
+            "UPDATE users SET total_verified_fooled = (SELECT COUNT(*) FROM "
+            + "examples e WHERE ((e.model_wrong = True) and ((SELECT COUNT(*) "
+            + 'FROM validations v where v.eid = e.id and (v.label = "correct")) '
+            + "> (select json_extract((select settings_json "
             + "from tasks t where t.id = (select tid from rounds r where r.id = "
             + "(SELECT r_realid from contexts c where c.id = e.cid))), "
             + '"$.num_matching_validations"))) and (e.uid = '
