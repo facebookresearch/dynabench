@@ -61,6 +61,7 @@ def validate_example(credentials, eid):
         label_counts[validation.label.name] += 1
         if validation.uid == credentials["id"] and mode != "owner":
             bottle.abort(403, "Access denied (you have already validated this example)")
+    label_counts[label] += 1
 
     if "metadata" in data:
         current_validation_metadata = data["metadata"]
