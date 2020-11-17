@@ -1,9 +1,12 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+import json
+
 from yoyo import step
 
-from models.task import Task, TaskModel
+from models.example import Example, ExampleModel
 from models.user import User, UserModel
+from models.validation import Validation, ValidationModel
 
 
 def apply_step(conn):
@@ -11,46 +14,93 @@ def apply_step(conn):
 
     cursor.execute("ALTER TABLE users ADD total_verified_not_fooled int default 0")
 
-    tm = TaskModel()
-    tasks = tm.dbs.query(Task)
-    for task in tasks:
-        cursor.execute(
-            "UPDATE tasks SET settings_json = '{\"num_matching_validations\": 3}' "
-            + "where (id = "
-            + task.id
-            + " and settings_json is NULL)"
-        )
+    vm = ValidationModel()
+    validations = vm.dbs.query(Validation)
+    eid_to_validations = {}
+    for validation in validations:
+        if validation.eid in eid_to_validations:
+            eid_to_validations[validation.eid].append(validation)
+        else:
+            eid_to_validations[validation.eid] = [validation]
+
+    em = ExampleModel()
+    examples = em.dbs.query(Example)
+    uid_to_total_verified_fooled = {}
+    uid_to_total_verified_not_fooled = {}
+    for example in examples:
+        if example.id in eid_to_validations:
+            task = example.context.round.task
+            num_matching_validations = 3
+
+            if task.settings_json:
+                settings = json.loads(task.settings_json)
+                if "num_matching_validations" in settings:
+                    num_matching_validations = settings["num_matching_validations"]
+
+            if (
+                len(
+                    list(
+                        filter(
+                            lambda validation: validation.label == "flagged"
+                            or validation.label == "incorrect",
+                            eid_to_validations[example.id],
+                        )
+                    )
+                )
+                > num_matching_validations
+                or len(
+                    list(
+                        filter(
+                            lambda validation: (
+                                validation.label == "flagged"
+                                or validation.label == "incorrect"
+                            )
+                            and validation.mode == "owner",
+                            eid_to_validations[example.id],
+                        )
+                    )
+                )
+                >= 1
+            ):
+                if example.uid in uid_to_total_verified_not_fooled:
+                    uid_to_total_verified_not_fooled[example.uid] += 1
+                else:
+                    uid_to_total_verified_not_fooled[example.uid] = 1
+            if (
+                len(
+                    list(
+                        filter(
+                            lambda validation: validation.label == "correct",
+                            eid_to_validations[example.id],
+                        )
+                    )
+                )
+                > num_matching_validations
+                or len(
+                    list(
+                        filter(
+                            lambda validation: (validation.label == "correct")
+                            and validation.mode == "owner",
+                            eid_to_validations[example.id],
+                        )
+                    )
+                )
+                >= 1
+            ):
+                if example.uid in uid_to_total_verified_not_fooled:
+                    uid_to_total_verified_fooled[example.uid] += 1
+                else:
+                    uid_to_total_verified_not_fooled[example.uid] = 1
 
     um = UserModel()
     users = um.dbs.query(User)
     for user in users:
-        # Correct total_verified_not_fooled
-        cursor.execute(
-            "UPDATE users SET total_verified_not_fooled = (SELECT COUNT(*) FROM "
-            + "examples e WHERE ((e.model_wrong = True) and ((SELECT COUNT(*) "
-            + 'FROM validations v where v.eid = e.id and (v.label = "incorrect" '
-            + 'or v.label = "flagged")) > (select json_extract((select settings_json '
-            + "from tasks t where t.id = (select tid from rounds r where r.id = "
-            + "(SELECT r_realid from contexts c where c.id = e.cid))), "
-            + '"$.num_matching_validations"))) and (e.uid = '
-            + str(user.id)
-            + "))) where id = "
-            + str(user.id)
-        )
+        if user.id in uid_to_total_verified_fooled:
+            user.total_verified_fooled = uid_to_total_verified_fooled[user.id]
+        if user.id in uid_to_total_verified_not_fooled:
+            user.total_verified_not_fooled = uid_to_total_verified_not_fooled[user.id]
 
-        # Correct total_verfied_fooled
-        cursor.execute(
-            "UPDATE users SET total_verified_fooled = (SELECT COUNT(*) FROM "
-            + "examples e WHERE ((e.model_wrong = True) and ((SELECT COUNT(*) "
-            + 'FROM validations v where v.eid = e.id and (v.label = "correct")) '
-            + "> (select json_extract((select settings_json "
-            + "from tasks t where t.id = (select tid from rounds r where r.id = "
-            + "(SELECT r_realid from contexts c where c.id = e.cid))), "
-            + '"$.num_matching_validations"))) and (e.uid = '
-            + str(user.id)
-            + "))) where id = "
-            + str(user.id)
-        )
+    um.dbs.commit()
 
 
 def rollback_step(conn):
