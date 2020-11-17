@@ -282,7 +282,7 @@ export default class ApiService {
     return this.fetch(export_link, {
       method: "GET",
     }).then((res) => {
-      res = JSON.stringify(res);
+      res = new TextEncoder("utf-8").encode(JSON.stringify(res));
       return download(res, "export.json", "text/json");
     });
   }
