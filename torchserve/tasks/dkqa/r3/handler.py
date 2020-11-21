@@ -96,7 +96,8 @@ class TransformersSeqClassifierHandler(BaseHandler):
 
         # ---------------- Captum initialization ----------------#
         self.lig = LayerIntegratedGradients(
-            captum_qa_forward, self.model.bert.embeddings
+            captum_qa_forward,
+            getattr(self.model, self.model.base_model_prefix).embeddings,
         )
         self.initialized = True
 
