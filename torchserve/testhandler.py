@@ -46,11 +46,11 @@ if __name__ == '__main__':
             sys.path.append('tasks/nli/r4/anli-public/src')
 
         import handler
-        if config['task'] == 'qa':
+        if config['task'] == 'qa' or config['task'] == 'dk_qa':
             data = [{"body": { \
-                "answer": "pretend you are reviewing a place", \
-                "context": "Please pretend you are reviewing a place, product, book or movie", \
-                "hypothesis": "What should i pretend?"
+                "answer": "Vietnam War", \
+                "context": "Vietnam War [ SEP ] The Vietnam War ( ) , also known as the Second Indochina War , and in Vietnam as the Resistance War Against America ( ) or simply the American War , was a conflict that occurred in Vietnam , Laos , and Cambodia from 1 November 1955 to the fall of Saigon on 30 April 1975 . It was the second of the Indochina Wars and was officially fought between North Vietnam and the government of South Vietnam . The North Vietnamese army was supported by the Soviet Union , China , and other communist allies ; the South Vietnamese army was supported by the United States , South Korea , the", \
+                "hypothesis": "Another name for the Second Indochina war?"
             }}]
         elif config['task'] == 'nli':
             data = [{"body": {
