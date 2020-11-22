@@ -78,6 +78,7 @@ class TransformersQAHandler(BaseHandler):
 
         self.model.to(self.device)
         self.model.eval()
+
         logger.debug("Transformer model from path {0} loaded successfully".format(model_dir))
         
         self.lig = None
