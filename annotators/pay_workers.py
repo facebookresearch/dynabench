@@ -2,12 +2,18 @@
 
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+import os
+import sys
+
 from mephisto.core.data_browser import DataBrowser as MephistoDataBrowser
 from mephisto.core.local_database import LocalMephistoDB
 from mephisto.data_model.assignment import Unit
 from mephisto.data_model.worker import Worker
 
 import pandas as pd
+
+
+sys.path.append(os.path.abspath("./Mephisto"))
 
 
 parsed_validations = pd.read_csv(
@@ -61,7 +67,10 @@ def format_for_printing_data(data):
 #### CONDITION WHETHER VALIDATION EXISTS
 
 for itr, agentId in enumerate(parsed_validations["agentId"]):
-    unit = db.get_units(agent_id=int(agentId))[0]
+    try:
+        unit = db.find_units(agent_id=int(agentId))[0]
+    except (Exception e):
+        continue
     if unit.get_status() == "completed":
         try:
             print(
@@ -78,7 +87,7 @@ for itr, agentId in enumerate(parsed_validations["agentId"]):
             if sendbonus > 0:
                 unit.get_assigned_agent().get_worker().bonus_worker(
                     amount=sendbonus,
-                    reason="Bonus for questions that fooled the model",
+                    reason="Thanks for your incredible work and your patience.",
                     unit=unit,
                 )
         elif keep == "r":
