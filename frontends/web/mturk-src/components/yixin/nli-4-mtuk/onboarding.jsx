@@ -36,7 +36,7 @@ class ExampleCard extends React.Component {
         const selection_text = {
             0: "Definitely Correct",
             1: "Definitely Incorrect",
-            2: "neither Definitely Correct or Definitely Incorrect",
+            2: "Neither Definitely Correct nor Definitely Incorrect",
         }
 
         const selection_items = selection_list.map((is_selected, key) => {
@@ -51,10 +51,10 @@ class ExampleCard extends React.Component {
             <h5 className="card-title">Question {this.props.eid + 1}</h5>
             <p className="card-text">
             <strong>Passage:</strong> {this.props.passage}<br />
-            <strong>Hypothesis:</strong> {this.props.hypothesis}
+            <strong>Statement:</strong> {this.props.hypothesis}
             </p>
             <div className="card-text">
-            <em>Given the Passage, the Hypothesis is (choose one of the answers listed below):</em>
+            <em>Given the passage, the statement is (choose one of the answers listed below):</em>
             <ul className="list-group">
                 {selection_items}
             </ul>
@@ -63,6 +63,79 @@ class ExampleCard extends React.Component {
                 {warning_alert}
             </div>
         </div>
+    }
+}
+
+class Phase2QuestionCard extends React.Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            label_explanation: "",
+            model_explanation: "",
+            show_expert_annotation: false
+        }
+    }
+
+    handleChangeModel = (e) => {
+        this.setState({model_explanation: e.target.value});
+    }
+
+    handleChangeLabel = (e) => {
+        this.setState({label_explanation: e.target.value});
+    }
+
+    render() {
+
+        const true_label_text = {
+            0: 'definitely correct',
+            1: 'neither definitely correct nor definitely incorrect',
+            2: 'definitely incorrect',
+        }
+
+        // const label_explanation_question_text =
+
+        const expertLabelExplanation = this.props.showExpert ? <div className="alert alert-success" role="alert">
+                            Expert explanation: {this.props.expertLabelExplanation}
+        </div> : <div></div>
+        const expertModelExplanation = this.props.showExpert ? <div className="alert alert-success" role="alert">
+                            Expert explanation: {this.props.expertModelExplanation}
+                        </div> : <div></div>;
+
+        const main_panel = <div className="card">
+            <div className="card-body">
+            <h5 className="card-title">Question {this.props.eid + 1}</h5>
+            <p className="card-text">
+            <strong>Passage:</strong> {this.props.passage}<br />
+            <strong>Statement:</strong> {this.props.hypothesis}<br />
+            <strong>The AI thinks that the statement is:</strong>
+            <ul>
+                <li>Definitely Correct: {(this.props.modelPrediction[0] * 100).toFixed(2)} %</li>
+                <li>Definitely Incorrect: {(this.props.modelPrediction[2] * 100).toFixed(2)} %</li>
+                <li>Neither: {(this.props.modelPrediction[1] * 100).toFixed(2)} %</li>
+            </ul>
+            </p>
+            <div className="card-text">
+            <em>We can see that the AI made a mistake because the <strong>statement should be {true_label_text[this.props.true_label]}</strong>.</em>
+            </div>
+            <label>Now, we would like you to explain:</label>
+                <div className="card">
+                    <ul className="list-group list-group-flush">
+                        <li className="list-group-item"><strong>Why do you think the statement is <em>{true_label_text[this.props.true_label]}</em>?</strong><br />
+                            <input type="text" className="form-control" placeholder={`Why do you think the statement is ${true_label_text[this.props.true_label]}?`} onChange={this.handleChangeLabel}/>
+                            {expertLabelExplanation}
+                        </li>
+
+                        <li className="list-group-item"><strong>Why do you think the AI might get it wrong?</strong><br />
+                            <input type="text" className="form-control" placeholder="Why do you think the AI might get it wrong? ..." onChange={this.handleChangeModel}/>
+                            {expertModelExplanation}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>;
+
+        return <>{main_panel}</>;
     }
 }
 
@@ -106,29 +179,40 @@ class NLIR4TaskOnboarder extends React.Component {
             passage: "Eduard Schulte was one of the first to warn the Allies and tell the world of the Holocaust and systematic exterminations of Jews in Nazi Germany occupied Europe.",
             hypothesis: "Eduard Schulte is the only person to warn the Allies of the atrocities of the Nazis.",
             true_answer: 2,
-            tip: "Eduard Schulte is one of the first to warn the Allies. There might be others.",
+            tip: "Eduard Schulte is one of the first to warn the Allies. There are others who also warn the Allies.",
         },
     ]
 
     this.phase_2_data = [
         {
             eid: 0, //  example id
-            passage: "Kota Ramakrishna Karanth was an Indian lawyer and politician. He was the elder brother of noted Kannada novelist K. Shivarama Karanth.\n",
+            passage: "Kota Ramakrishna Karanth was an Indian lawyer and politician. " +
+                "He was the elder brother of noted Kannada novelist K. Shivarama Karanth.",
             hypothesis: "Kota Ramakrishna Karanth has a brother who was both a novelist and a politician.",
             true_answer: 1,
-            reason: "Kota Ramakrishna Karanth has a brother who was a novelist. But we’re not sure whether he is a politician or not.",
-            reason_type: 0,
+            model_pred: [0.9947, 0.004884, 0.0004061],
+            expert_label_explanation: "Kota Ramakrishna Karanth is a politician and has a brother who was a novelist. But we’re not sure whether the brother is a politician or not. Therefore, the statement is neither correct nor incorrect.",
+            expert_model_explanation: "The passage states that Kota Ramakrishna Karanth is a politician and his brother is a novelist. " +
+                "The AI might not be able to understand the grammar and mistakenly thinks that since the passage contains both \"politician\" and \"novelist\" then the statement is correct.",
         },
+
         {
             eid: 1, //  example id
-            passage: "Kota Ramakrishna Karanth was an Indian lawyer and politician. He was the elder brother of noted Kannada novelist K. Shivarama Karanth.\n",
-            hypothesis: "Kota Ramakrishna Karanth has a brother who was both a novelist and a politician.",
+            passage: "I found out my cat is pregnant. " +
+                "I had no idea why she was making all these funny noises. She would hide a lot under my bed. " +
+                "A friend told me this behavior was of a pregnant animal. I cannot wait to see the kittens.",
+            hypothesis: "The woman is pregnant and has a cat.",
             true_answer: 1,
-            reason: "The model is able to detect the words overlap \"novelist\" and \"politician\" but it can not sort out the correct relations and think the hypothesis is correct. However, the fact is that Kota Ramakrishna Karanth is a politician and he has a brother who was novelist.",
-            reason_type: 1,
+            model_pred: [0.982749, 0.0169381, 0.00031238],
+            expert_label_explanation: "First of all, there is no woman in the passage. " +
+                "We cannot assume that the person is a woman. Secondly, the person does have a cat, but it is not known whether the person is pregnant or not. " +
+                "The passage only states that the cat might be pregnant.",
+            expert_model_explanation: "The passage and statement have a lot of word overlap. " +
+                "This might make the AI believe that the statement is \"definitely correct\".",
         }
     ]
 
+    const startDate = new Date();
 
     this.state = {
         is_correct: [null, null, null, null, null],     // null means not answered.
@@ -139,17 +223,21 @@ class NLIR4TaskOnboarder extends React.Component {
 
         remaining_trial_count: 5,
         phase_1_finished: false,
-
-        phase_2_selections: [[-1, -1], [-1, -1]],
-        phase_2_submitted_once: false,
-        phase_2_remaining_trial_count: 3,
+        start_time: startDate,
+        phase_1_finished_time: null,
+        phase_2_finished_time: null,
+        // phase_2_selections: [[-1, -1], [-1, -1]],
+        // phase_2_submitted_once: false,
+        // phase_2_remaining_trial_count: 3,
+        phase_2_started: false,
+        phase_2_finished: false,
     }
-
 
     this.completeOnboarding = this.completeOnboarding.bind(this);
   }
 
   completeOnboarding() {
+    // Backend API. Do something here to log relevant information.
     this.props.onSubmit({ success: true }); // if they failed, set to false
   }
 
@@ -157,7 +245,7 @@ class NLIR4TaskOnboarder extends React.Component {
 
     // check phase 1 correctness.
     let cur_is_correct = this.state.is_correct
-    console.log(this)
+    // console.log(this)
     let example_data = this.data
     this.state.selections.forEach(function (value, i) {
         if (value === -1) {
@@ -166,14 +254,17 @@ class NLIR4TaskOnboarder extends React.Component {
             cur_is_correct[i] = example_data[i].true_answer === value
         }
     })
+
     this.setState({is_correct: cur_is_correct})
 
     const is_finished = cur_is_correct.every((v) => !(v === null))
     const all_correct = cur_is_correct.every((v) => v)
 
     if (is_finished && all_correct) {
+        const curDate = new Date()
         this.setState({
-            phase_1_finished: true
+            phase_1_finished: true,
+            phase_1_finished_time: curDate,
         })
 
     } else if (!is_finished) {
@@ -188,14 +279,24 @@ class NLIR4TaskOnboarder extends React.Component {
         })
     }
 
-
+    // if we failed...
     if (this.state.remaining_trial_count === 0) {
+        // Backend API. Do something here to log relevant information.
+        const curDate = new Date()
+        // remember to also set phase_2_finished_time here.
+
         // this.props.onSubmit({ success: false });
     }
   }
 
-  submitPhase2 = () => {
+  // isPhase2Submittable = () => {
+  //
+  // }
 
+  submitPhase2 = () => {
+    const curDate = new Date()
+    this.setState({phase_2_finished: true, phase_2_finished_time: curDate})
+    // console.log(this.state)
   }
 
   // this.submitPhase1 = this.submitPhase1.bind(this);
@@ -218,9 +319,13 @@ class NLIR4TaskOnboarder extends React.Component {
     let updatedSelection = this.state.selections
     updatedSelection[eid] = remap[selection_id]
     // updatedSelection[parseInt(e.currentTarget.getAttribute['data-eid'])] = parseInt(remap[parseInt(e.currentTarget.getAttribute['data-key'])]);
-    console.log(updatedSelection)
+    // console.log(updatedSelection)
     this.setState({'selection': updatedSelection})
 
+  }
+
+  phase_1_to_2_button = () => {
+      this.setState({phase_2_started: true})
   }
 
   render() {
@@ -242,9 +347,9 @@ class NLIR4TaskOnboarder extends React.Component {
 
     let phase_1_warning = <div></div>
     if (this.state.phase_1_missing_selections) {
-        phase_1_warning = <div className="alert alert-warning">It looks like you haven't made selection for some questions. Please made your selection for all the questions.</div>
-    } else if (this.state.phase_1_submitted_but_failed) {
-        phase_1_warning = <div className="alert alert-warning">Some of your selections are incorrect. Please read the tip and modify your selection. You have <strong>{this.state.remaining_trial_count}</strong> trials remaining.</div>
+        phase_1_warning = <div className="alert alert-warning">It looks like you haven't made selections for some questions. Please made your selection for all the questions.</div>
+    } else if (this.state.phase_1_submitted_but_failed && !this.state.phase_1_finished) {
+        phase_1_warning = <div className="alert alert-warning">Some of your selections are incorrect. Please read the tip and modify your selections. You have <strong>{this.state.remaining_trial_count}</strong> trials remaining.</div>
     }
 
 
@@ -265,22 +370,22 @@ class NLIR4TaskOnboarder extends React.Component {
         />
     });
 
-    const phase_1_panel = <div className="card">
+    let phase_1_panel = <div className="card">
       <div className="card-body">
       <h3 className="card-title">Phase One - (5 Questions)</h3>
-      <h4 className="card-subtitle">The goal of this phase is to help you understand and differentiate the relation between a passage and a hypothesis.</h4>
+      <h4 className="card-subtitle">The goal of this phase is to help you understand and differentiate the relation between a passage and a statement.</h4>
       <hr />
       <div className="card-text">
       <strong>Instruction:</strong><br />
 
-        Given a passage, a hypothesis can be either:
+        Given a passage, a statement can be either:
         <ul>
         <li><strong>Definitely correct; or</strong></li>
         <li><strong>Definitely incorrect; or</strong></li>
         <li><strong>Neither.</strong></li>
         </ul>
 
-        <p><em>In each of 5 following questions, you will be given a passage, and a hypothesis. Please choose the correct category for each hypothesis.</em></p>
+        <p><em>In each of 5 following questions, you will be given a passage, and a statement. Please choose the correct category for each statement.</em></p>
 
       <strong>Questions:</strong>
       {questions}
@@ -290,36 +395,97 @@ class NLIR4TaskOnboarder extends React.Component {
       </div>
       </div>;
 
-    const phase_2_panel = <div className="card">
+    const phase2questions = this.phase_2_data.map((currentExample, eid) => {
+        return <Phase2QuestionCard
+            key={eid}
+            eid={eid}
+            passage={currentExample.passage}
+            hypothesis={currentExample.hypothesis}
+            true_label={currentExample.true_answer}
+            modelPrediction={currentExample.model_pred}
+            expertLabelExplanation={currentExample.expert_label_explanation}
+            expertModelExplanation={currentExample.expert_model_explanation}
+            selection={this.state.selections[eid]}
+            showExpert={this.state.phase_2_finished}
+            />
+    });
+
+    let phase_2_panel = <div className="card">
       <div className="card-body">
       <h3 className="card-title">Phase Two - (2 Questions)</h3>
-      <h4 className="card-subtitle">The goal of this phase is to help you understand and differentiate the two separated types of reason we would like you provide later.</h4>
+      <h4 className="card-subtitle">The goal of this phase is to help you write the explanations.</h4>
       <hr />
       <div className="card-text">
       <strong>Instruction:</strong><br />
-        <p>In the main HITs, if you successfully fool the AI with a hypothesis, we would like you to additionally give <strong>two separated reasons</strong> for:</p>
+        <p>In the main task, you will be asked to give explanations for:</p>
           <ul>
-            <li> Why do you think the hypothesis belongs to the given category?</li>
-            <li> Why do you think the AI gives the wrong prediction?</li>
+            <li>Why do you think the statement is definitely correct, definitely incorrect, or neither?</li>
+            <li>Why do you think the AI might get it wrong?</li>
           </ul>
-        <p><em>In each of 2 following questions, you will be given a reason for each example. Please choose the correct category for the reasons.</em></p>
+        <p><em>Please write the explanations for the following examples.</em></p>
 
       <strong>Questions:</strong>
-      {/*{questions}*/}
+          {phase2questions}
       <Button className="btn btn-primary btn-success" onClick={this.submitPhase2}>Complete Phase Two</Button>
-      {/*{phase_1_warning}*/}
       </div>
       </div>
       </div>;
 
+    let phase_1_to_2_panel = <div>
+        Congratulations! You have passed the Phase One of the Onboarding.<br />
+        Now, click the button below to continue to Phase Two.<br />
+        <Button className="btn btn-primary btn-success" onClick={this.phase_1_to_2_button}>Continue</Button>
+    </div>
+
+    let finishing_panel = <div>
+        Thank you for your input. We provide the explanations from experts for the questions above.<br />
+        Please read them and try to write accordingly in the main task.<br />
+        More examples will be provided in the main task and we recommend you to read the examples before you write your statement and explanations.
+
+        Congratulations! You have passed the Onboarding. Click the button below to continue.<br />
+        <Button className="btn btn-primary btn-success" onClick={this.completeOnboarding}>Finish Onboarding Test</Button>
+    </div>
+
+    if (!this.state.phase_1_finished) {
+        phase_1_to_2_panel = <></>
+        phase_2_panel = <></>
+        finishing_panel = <></>
+    } else if (this.state.phase_1_finished && !this.state.phase_2_started) {
+        phase_1_panel = <></>
+        phase_2_panel = <></>
+        finishing_panel = <></>
+    } else if (this.state.phase_1_finished && this.state.phase_2_started) {
+        phase_1_panel = <></>
+        phase_1_to_2_panel = <></>
+        finishing_panel = <></>
+    }
+
+    if (this.state.phase_1_finished && this.state.phase_2_finished) {
+        phase_1_panel = <></>
+        phase_1_to_2_panel = <></>
+        finishing_panel = <div>
+            <br />
+            Thank you for your input. We provide the explanations from experts for the questions above.<br />
+            <strong>Please read them and try to write accordingly in the main task.</strong><br />
+            More examples will be provided in the main task and we recommend you to read the examples before you write your statement and explanations.
+
+            Congratulations! You have passed the Onboarding. Click the button below to continue.<br />
+            <Button className="btn btn-primary btn-success" onClick={this.completeOnboarding}>Finish Onboarding Test</Button>
+        </div>;
+    }
+
     return <React.Fragment>
-      <h1>Onboarding Test - Write to fool the AI</h1>
+      <h1>Onboarding Test - Write sentences and fool the AI!</h1>
       <p>Welcome! This is your first time working on this task. We would like you to take a quick qualification test. The qualification test will have <strong>two phases</strong>.<br />
         Please read the instructions and take the test carefully. <br />
         <span style={{color: "red"}}><b> Warning:</b></span>You have only <strong>one</strong> chance to take the test and failure to pass the test will <strong>disqualify</strong> you from working on these HITs.
       </p>
         {phase_1_panel}
+        {phase_1_to_2_panel}
         {phase_2_panel}
+       <p>
+        {finishing_panel}
+       </p>
       </React.Fragment>;
   }
 }

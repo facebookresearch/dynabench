@@ -18,51 +18,59 @@ class ExampleGoodCards extends React.Component {
 
         this.data = [
             {
-                passage: "Family members and friends told Fox News that the couple had been fighting over several things, including Luong's girlfriend, on Sunday evening, and Monday morning. Luong later drove off with his four children, whom he reported missing to the police and claimed he had left them with his girlfriend who lives in a hotel. Police however became suspicious due to \"holes in his story\" and he later changed his story. The Associated Press says that the authorities believe that Dauphin Island Bridge is where Luong threw the four children, of which he was the biological father of three, into the water.",
-                hypothesis: "Luong put holes in his story on purpose because the police were suspicious of him.",
-                targetLabel: 2,
-                modelPrediction: [0.001, 0.998, 0.001],
-                labelExplanation: "The police became suspicious because of the holes. Luong didn't put holes in his story because the police become suspicious. The causal relation is reversed.",
-                modelExplanation: "The model probably made a mistake because of the added accurate statement that the police were suspicious of him.",
-            },
-            {
-                passage: "CHICAGO (AP) — Nicole Branagh and Jenny Kropp won the AVP Kingston Chicago Open on Sunday, beating Kim DiCello and Kendra Van Zwieten 21-16, 21-19. After falling to the second-seeded DiCello and Van Zwieten in the third round of the double-elimination tournament Saturday, Branagh and Kropp rebounded to set up the rematch. The title was Kropp s first, and Branagh s 17th. Brad Keenan and Ty Tramblie won the men s title in their first event together, beating top-seeded Ryan Doherty and John Mayer 21-19, 22-20.",
-                hypothesis: "Ryan Doherty won the tournament in Chicago.",
-                targetLabel: 1,
-                modelPrediction: [0.998, 0.001, 0.001],
-                labelExplanation: "Doherty and Mayer did compete in the tournament in Chicago, and the article talks about other people winning.",
-                modelExplanation: "The model might be confused about Ryan Doherty with other people who actually won.",
-            },
-            {
-                passage: "Kevin Vincent, 44, of Arlington, Va., said his wife buys store brand acetaminophen and he wanted to find out more about the problem.",
-                hypothesis: "Kevin was a middle-aged man who bought store brand acetaminophen.",
-                targetLabel: 2,
-                modelPrediction: [0.6658, 0.1804, 0.1538],
-                labelExplanation: "Kevin's wife bought the store brand acetaminophen, not him. And the fact that he thought it was a problem, means he would not buy it.",
-                modelExplanation: "A part of the statement was correct (Kevin was a middle-aged man) and the other part was in a complex sentence (relative clause). The model might make a mistake because of the correct part.",
-            },
-            {
                 passage: "I found out my cat is pregnant. I had no idea why she was making all these funny noises. She would hide a lot under my bed. A friend told me this behavior was of a pregnant animal. I cannot wait to see the kittens.",
                 hypothesis: "The woman is pregnant and has a cat.",
                 targetLabel: 1,
                 modelPrediction: [0.8643, 0.0032, 0.1325],
-                labelExplanation: "The woman does have a cat, but it is not known whether she is pregnant or not.",
-                modelExplanation: "The context and premise have a lot of word overlap. This might lead to the model give a wrong prediction to “definitely correct”. And also maybe because \"the women are pregnant\" may have a high joint distribution.",
+                labelExplanation: "First of all, there is no woman in the passage. We cannot assume that the person is a woman. Secondly, the person does have a cat, but it is not known whether the person is pregnant or not. The passage only states that the cat might be pregnant.",
+                modelExplanation: "The passage and statement have a lot of word overlap. The AI might not be able to understand which entity is pregnant. This might make the AI believe that the statement is \"definitely correct\".",
             },
             {
-                passage: "I found out my cat is pregnant. I had no idea why she was making all these funny noises. She would hide a lot under my bed. A friend told me this behavior was of a pregnant animal. I cannot wait to see the kittens.",
-                hypothesis: "The woman is pregnant and has a cat.",
+                passage: "The 2015 Red Bull Air Race of Fort Worth was the seventh round of the 2015 Red Bull Air Race World Championship season, the tenth season of the Red Bull Air Race World Championship. The event was held at the Texas Motor Speedway in Fort Worth, Texas.",
+                hypothesis: "The Red Bull Air Race of Fort Worth was first held in Texas in 2015. The Air Race was never held in Texas prior to that.",
                 targetLabel: 1,
-                modelPrediction: [0.8643, 0.0032, 0.1325],
-                labelExplanation: "The woman does have a cat, but it is not known whether she is pregnant or not.",
-                modelExplanation: "The context and premise have a lot of word overlap. This might lead to the model give a wrong prediction to “definitely correct”. And also maybe because \"the women are pregnant\" may have a high joint distribution.",
-            }
+                modelPrediction: [0.9979540, 0.001679135, 0.000366835884],
+                labelExplanation: "The passage states that the 2015 Red Bull Air Race of Fort Worth was held in Fort Worth, Texas. But it didn’t say whether the race has been held in Fort Worth, Texas previously. It is possible that the 2014 Red Bull Air Race also took place in Fort Worth, Texas. Therefore, we cannot be certain about whether 2015 is the first time.",
+                modelExplanation: "I tried to reuse words in the passage so the AI will think the statement paraphrases the passage,  and then should be ‘definitely correct’. I don’t think the AI is able to reason about the time. It doesn’t know that some events like Air Race can be held twice or three times in the same city or state. Or maybe the AI just doesn’t know that cities can host competitions or exhibitions.",
+            },
+            {
+                passage: "The 2015 Red Bull Air Race of Fort Worth was the seventh round of the 2015 Red Bull Air Race World Championship season, the tenth season of the Red Bull Air Race World Championship. The event was held at the Texas Motor Speedway in Fort Worth, Texas.",
+                hypothesis: "There is no airport in Fort Worth, Texas.",
+                targetLabel: 2,
+                modelPrediction: [0.00020863, 0.93687433, 0.062917076],
+                labelExplanation: "Since an Air Race happened in Fort Worth, there must be an airport in the city. An Air Race is a race between airplanes and airplanes only race in the air and must land in airports. It is also a fact that Dallas/Fort Worth Airport exists.",
+                modelExplanation: "I write the statement by first thinking about what facts are needed for the event described in the passage to happen. A city needs an airport to be able to hold the Red Bull Air Race. Then, I negated that fact to create a statement that is definitely incorrect. The AI might not know what is required for an Air Race to happen. It also might not know what an Air Race is.",
+            },
+            {
+                passage: "The 2015 Red Bull Air Race of Fort Worth was the seventh round of the 2015 Red Bull Air Race World Championship season, the tenth season of the Red Bull Air Race World Championship. The event was held at the Texas Motor Speedway in Fort Worth, Texas.",
+                hypothesis: "In 2014, the Blue Air Race happened in Texas. In 2015, the Red Bull Air Race happened in Texas. What a coincidence!",
+                targetLabel: 1,
+                modelPrediction: [0.9782385826, 0.0136522576212883, 0.008109178394079208],
+                labelExplanation: "The passage doesn’t say anything about what happened in 2014 and doesn’t mention any Blue Air Race. It is possible though that there was a Blue Air Race in 2014 and it is also possible it took place in Texas. But since we don’t know for sure, the statement cannot be correct or incorrect.",
+                modelExplanation: "I wrote an uncertain sentence first and then wrote a certainly correct sentence afterwards to try to confuse the model. The AI might think that the entire statement is correct simply because the second sentence in the statement is correct. The AI probably won’t know that all the facts in the statement need to be correct based on the passage for the whole statement to be correct.",
+            },
+            {
+                passage: "The 2015 Red Bull Air Race of Fort Worth was the seventh round of the 2015 Red Bull Air Race World Championship season, the tenth season of the Red Bull Air Race World Championship. The event was held at the Texas Motor Speedway in Fort Worth, Texas.",
+                hypothesis: "People will look up to the sky during the event.",
+                targetLabel: 0,
+                modelPrediction: [0.007144447881728411, 0.9927288889884949, 0.00012666970724239945],
+                labelExplanation: "When people go to see an Air Race, they plan  to watch airplanes. Since airplanes fly in the sky, people watching them will definitely look up to the sky.",
+                modelExplanation: "The AI might not understand what people plan to do when they watch an air race and also might not know what an air race is. The AI might wrongly determine that the passage and the statement are unrelated because there is almost no word overlap between the two.",
+            },
+            {
+                passage: "Kota Ramakrishna Karanth was an Indian lawyer and politician. He was the elder brother of noted Kannada novelist K. Shivarama Karanth.",
+                hypothesis: "Kota Ramakrishna Karanth has a brother who was both a novelist and a politician.",
+                targetLabel: 2,
+                modelPrediction: [0.9947, 0.0004, 0.0049],
+                labelExplanation: "Kota Ramakrishna Karanth is a politician and has a brother who was a novelist. But we’re not sure whether the brother is a politician or not. Therefore, the statement is neither correct nor incorrect.",
+                modelExplanation: "The passage states that Kota Ramakrishna Karanth is a politician and his brother is a novelist. The AI might not be able to understand the grammar and mistakenly thinks that since the passage contains both \"politician\" and \"novelist\" then the statement is correct.",
+            },
         ]
 
         this.label_mappiing = {
-            0: "Definitely Correct",
-            1: "neither Definitely Correct nor Definitely Incorrect",
-            2: "Definitely Incorrect",
+            0: "definitely correct",
+            1: "neither definitely correct nor definitely incorrect",
+            2: "definitely incorrect",
         }
     }
 
@@ -72,13 +80,13 @@ class ExampleGoodCards extends React.Component {
             curExample: this.data[randomIndex],
             show: true
         })
-        console.log(this)
-        console.log(this.state)
+        // console.log(this)
+        // console.log(this.state)
         // randomly pick one example
     }
 
     render() {
-        const showExampleButtonText = this.state.show ?  "Switch Example" : "Show Example"
+        const showExampleButtonText = this.state.show ?  "Next Example" : "Show Example"
         const showExampleButton = <Button className="btn btn-primary btn-success" onClick={this.showExample}>{showExampleButtonText}</Button>
         const hideExampleButton = <Button className="btn btn-primary btn-success" onClick={() => this.setState({show: false, curExample: null})}>Hide Example</Button>
 
@@ -86,28 +94,40 @@ class ExampleGoodCards extends React.Component {
         if (this.state.curExample !== null) {
             curExamplePanel = <div className="card">
                 <div className="card-body">
-                    <div style={{color: "blue"}} className="card-text">
-                        <strong>Passage:</strong> {this.state.curExample.passage}
+                    <div className="card-text">
+                        <p>
+                        <strong>Passage:</strong><br /> <span style={{color: "blue"}}>{this.state.curExample.passage}</span>
+                        </p>
                     </div>
-                    <div style={{color: "red"}} className="card-text">
-                        <strong>Based on the passage, write a hypothesis that
-                            is <u>{this.label_mappiing[this.state.curExample.targetLabel]}</u></strong>: {this.state.curExample.hypothesis}
+                    <div className="card-text">
+                        <p>
+                        Based on the passage, write a <strong>statement</strong> that
+                            is <em>{this.label_mappiing[this.state.curExample.targetLabel]}</em>:<br /> <span style={{color: "red"}}><u>{this.state.curExample.hypothesis}</u></span>
+                        </p>
                     </div>
-                    <div style={{color: "blue"}} className="card-text">
-                        <strong>The AI system thinks that your hypothesis is:</strong>
+                    <div className="card-text">
+                        <p>
+                        <strong>Why do you think the statement
+                        is <em>{this.label_mappiing[this.state.curExample.targetLabel]}</em>?:</strong><br /> <span style={{color: "red"}}><u>{this.state.curExample.labelExplanation}</u></span>
+                        </p>
+                    </div>
+                    <div className="card-text">
+                        <p>
+                        <strong>Why do you think the AI might get it wrong?:</strong><br /> <span style={{color: "red"}}><u>{this.state.curExample.modelExplanation}</u></span>
+                        </p>
+                    </div>
+
+                    <div className="card-text">
+                        <p>
+                        <strong>The AI thinks that the statement is:</strong>
+                        <div style={{color: "blue"}}>
                         <ul>
                             <li>Definitely Correct: {(this.state.curExample.modelPrediction[0] * 100).toFixed(2)} %</li>
                             <li>Definitely Incorrect: {(this.state.curExample.modelPrediction[2] * 100).toFixed(2)} %</li>
                             <li>Neither: {(this.state.curExample.modelPrediction[1] * 100).toFixed(2)} %</li>
                         </ul>
-                    </div>
-                    <div style={{color: "red"}} className="card-text">
-                        <strong>Why do you think the hypothesis
-                        is <u>{this.label_mappiing[this.state.curExample.targetLabel]}</u></strong>: {this.state.curExample.labelExplanation}
-                    </div>
-
-                    <div style={{color: "red"}} className="card-text">
-                        <strong>Why do you think the model gives the wrong prediction</strong>: {this.state.curExample.modelExplanation}
+                        </div>
+                        </p>
                     </div>
 
                 </div>
@@ -120,7 +140,8 @@ class ExampleGoodCards extends React.Component {
         }
 
         return <React.Fragment>
-            <div>Click the Button to show an example. We hope that the examples can help you understand the task and get inspired if you find it hard to fool the AI.</div>
+            <h3>Get Help</h3>
+            <div>AI can be very clever. Get help by clicking the "Show Example" below to see good examples. We hope that the examples can help you understand the task and get inspired if you find it hard to fool the AI.</div>
             {showExampleButton}&nbsp;&nbsp;{hideExampleButton}
             {curExamplePanel}
             </React.Fragment>
