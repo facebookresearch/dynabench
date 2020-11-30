@@ -1,46 +1,51 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
 
+import ast
+import hashlib
+import json
 import logging
 import os
+import sys
 
 import torch
+import torch.nn.functional as F
+from captum.attr import LayerIntegratedGradients
 from torch.utils.data import DataLoader, SequentialSampler
-from transformers import (
-    AutoConfig,
-    AutoModelForQuestionAnswering,
-    AutoTokenizer,
-    BertTokenizer,
-)
+from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
 from transformers.data.metrics.squad_metrics import compute_exact, compute_f1
 from transformers.data.processors.squad import (
     SquadResult,
     squad_convert_examples_to_features,
 )
+from ts.torch_handler.base_handler import BaseHandler
 
-from captum.attr import LayerIntegratedGradients
+# QA specific libraries
 from qa_utils import compute_predictions_logits, convert_to_squad_example
-from settings import my_secret
+from settings import my_model_no, my_secret
 from shared import (
     captum_qa_forward,
     check_fields,
     construct_input_ref_pair,
     generate_response_signature,
+    get_n_steps_for_interpretability,
     get_word_token,
     handler_initialize,
+    remove_sp_chars,
     summarize_attributions,
 )
-from ts.torch_handler.base_handler import BaseHandler
 
 
 logger = logging.getLogger(__name__)
 
 
-THRESHOLD_F1 = 0.4
+THRESHOLD_EM = 0.5
 QA_CONFIG = {
     "max_seq_length": 256,
     "max_query_length": 64,
     "max_answer_length": 30,
-    "do_lower_case": False,
+    "do_lower_case": True,
     "doc_stride": 128,
     "eval_batch_size": 8,
     "n_best_size": 1,
@@ -48,13 +53,13 @@ QA_CONFIG = {
 }
 
 
-class TransformersSeqClassifierHandler(BaseHandler):
+class TransformersQAHandler(BaseHandler):
     """
     Transformers handler class for question answering
     """
 
     def __init__(self):
-        super().__init__()
+        super(TransformersQAHandler, self).__init__()
         self.initialized = False
 
     def initialize(self, ctx):
@@ -75,35 +80,32 @@ class TransformersSeqClassifierHandler(BaseHandler):
             self.model = torch.jit.load(model_pt_path)
         elif self.setup_config["save_mode"] == "pretrained":
             if os.path.isfile(os.path.join(model_dir, "config.json")):
-                logger.warning("Loading pretrained model")
+                logger.warning("Loading trained model")
                 config = AutoConfig.from_pretrained(model_dir)
                 self.model = AutoModelForQuestionAnswering.from_pretrained(
                     model_dir, config=config
                 )
             else:
-                raise FileNotFoundError("Missing config file")
+                raise FileNotFoundError("Missing model-specific config.json file")
 
-        if os.path.isfile(os.path.join(model_dir, "vocab.json")):
-            self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
-            logger.info("Using provided vocab")
-        else:
-            self.tokenizer = BertTokenizer.from_pretrained("bert-large-uncased")
-            logger.info("Using default vocab")
+        self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
+        logger.info("Tokenizer initialized")
 
         self.model.to(self.device)
         self.model.eval()
-        logger.debug(f"Transformer model from path {model_dir} loaded successfully")
 
-        # ---------------- Captum initialization ----------------#
-        self.lig = LayerIntegratedGradients(
-            captum_qa_forward, self.model.bert.embeddings
+        logger.debug(
+            "Transformer model from path {0} loaded successfully".format(model_dir)
         )
+
+        self.lig = None
         self.initialized = True
 
     def preprocess(self, data):
         """
         Basic text preprocessing
         """
+        max_length = self.setup_config["max_length"]
         logger.info("In preprocess, data's value: '%s'", data)
         body = data[0]["body"]
         if not body:
@@ -112,10 +114,14 @@ class TransformersSeqClassifierHandler(BaseHandler):
         attribute_list = ["answer", "context", "hypothesis", "insight"]
         check_fields(body, attribute_list)
 
+        if "compute_end_importances" not in body:
+            body["compute_end_importances"] = False
+
         passage = body["context"]
         question = body["hypothesis"]
         answer = body["answer"]
         insight = body["insight"]
+        compute_end_importances = body["compute_end_importances"]
         logger.info("In preprocess, body's value: '%s'", body)
         logger.info("In preprocess, passage's value: '%s'", passage)
         logger.info("In preprocess, questions's value: '%s'", question)
@@ -123,7 +129,54 @@ class TransformersSeqClassifierHandler(BaseHandler):
 
         example = {"passage": passage.strip(), "question": question.strip()}
 
-        return [example], answer, insight
+        return [example], answer, insight, compute_end_importances
+
+    def inspect(self, example, compute_end_importances):
+        """
+        This function calls the layer integrated gradient to get word importance
+        of the question and the passage. The word importance is obtained for
+        start and end position of the predicted answer
+        """
+        if self.lig is None:
+            response = {"start_importances": [], "words": [], "status": "not supported"}
+            return [response]
+
+        input_ids, ref_input_ids, attention_mask = construct_input_ref_pair(
+            example[0]["question"], example[0]["passage"], self.tokenizer, self.device
+        )
+        all_tokens = get_word_token(input_ids, self.tokenizer)
+        n_steps = get_n_steps_for_interpretability(
+            n_tokens=len(all_tokens), max_n_steps=8
+        )
+        logger.info("Word Tokens = '%s'", all_tokens)
+
+        position_qa_model = 0
+        attributions_start, delta_start = self.lig.attribute(
+            inputs=input_ids,
+            baselines=ref_input_ids,
+            additional_forward_args=(attention_mask, position_qa_model, self.model),
+            return_convergence_delta=True,
+            n_steps=n_steps,
+        )
+        attributions_start_sum = summarize_attributions(attributions_start).tolist()
+
+        attributions_end_sum = []
+        if compute_end_importances:
+            position_qa_model = 1
+            attributions_end, delta_end = self.lig.attribute(
+                inputs=input_ids,
+                baselines=ref_input_ids,
+                additional_forward_args=(attention_mask, position_qa_model, self.model),
+                return_convergence_delta=True,
+                n_steps=n_steps,
+            )
+            attributions_end_sum = summarize_attributions(attributions_end).tolist()
+
+        response = {}
+        response["start_importances"] = attributions_start_sum
+        response["end_importances"] = attributions_end_sum
+        response["words"] = all_tokens
+        return [response]
 
     def inference(self, examples):
         """
@@ -174,7 +227,10 @@ class TransformersSeqClassifierHandler(BaseHandler):
 
                     output = [to_list(output[i]) for output in outputs]
 
-                    start_logits, end_logits = output
+                    if len(output) == 2:
+                        start_logits, end_logits = output
+                    else:
+                        start_logits, end_logits, _ = output
                     result = SquadResult(unique_id, start_logits, end_logits)
 
                     all_results.append(result)
@@ -214,14 +270,14 @@ class TransformersSeqClassifierHandler(BaseHandler):
 
         logger.info("response without sign '%s'", response)
         response["text"] = predictions_by_example["text"]
-        response["prob"] = max(1.0, min(0.0, predictions_by_example["model_conf"]))
+        response["prob"] = max(0.0, min(1.0, predictions_by_example["model_conf"]))
         # this is what the frontend expects
 
         # Evaluate the model prediction against the human answer
         human_ans = str(answer).strip()
         response["eval_f1"] = compute_f1(human_ans, response["text"])
         response["eval_exact"] = compute_exact(human_ans, response["text"])
-        response["model_is_correct"] = response["eval_f1"] > THRESHOLD_F1
+        response["model_is_correct"] = response["eval_exact"] > THRESHOLD_EM
 
         # The inputs are concatenated to generate signature
         stringlist = [
@@ -240,49 +296,12 @@ class TransformersSeqClassifierHandler(BaseHandler):
         return [response]
 
 
-_service = TransformersSeqClassifierHandler()
-
-
-def get_insights(example, tokenizer, device, lig, model):
-    """
-    This function calls the layer integrated gradient to get word importance
-    of the question and the passage. The word importance is obtained for
-    start and end position of the predicted answer
-    """
-    input_ids, ref_input_ids, attention_mask = construct_input_ref_pair(
-        example[0]["question"], example[0]["passage"], tokenizer, device
-    )
-    all_tokens = get_word_token(input_ids, tokenizer)
-    logger.info("Word Tokens = '%s'", all_tokens)
-    attributions_start, delta_start = lig.attribute(
-        inputs=input_ids,
-        baselines=ref_input_ids,
-        additional_forward_args=(attention_mask, 0, model),
-        return_convergence_delta=True,
-        n_steps=20,
-    )
-
-    attributions_end, delta_end = lig.attribute(
-        inputs=input_ids,
-        baselines=ref_input_ids,
-        additional_forward_args=(attention_mask, 1, model),
-        return_convergence_delta=True,
-        n_steps=20,
-    )
-
-    attributions_start_sum = summarize_attributions(attributions_start)
-    attributions_end_sum = summarize_attributions(attributions_end)
-    response = {}
-    response["start_importances"] = attributions_start_sum.tolist()
-    response["end_importances"] = attributions_end_sum.tolist()
-    response["words"] = all_tokens
-    return [response]
+_service = TransformersQAHandler()
 
 
 def handle(data, context):
     """
-    This function handles the requests for the model and returns a
-    postprocessed response
+    This function handles the requests for the model and returns a postprocessed response
     #sample input {
         "answer": "pretend you are reviewing a place",
         "context": "Please pretend you are reviewing a place, product, book or movie",
@@ -297,19 +316,13 @@ def handle(data, context):
         if data is None:
             return None
 
-        example, answer, insight = _service.preprocess(data)
+        example, answer, insight, compute_end_importances = _service.preprocess(data)
         if not insight:
             predictions_by_example = _service.inference(example)
             response = _service.postprocess(predictions_by_example, example, answer)
             return response
         else:
-            response = get_insights(
-                example,
-                _service.tokenizer,
-                _service.device,
-                _service.lig,
-                _service.model,
-            )
+            response = _service.inspect(example, compute_end_importances)
             return response
 
     except Exception as e:
