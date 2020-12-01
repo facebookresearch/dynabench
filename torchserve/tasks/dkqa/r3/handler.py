@@ -2,16 +2,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import ast
-import hashlib
-import json
 import logging
 import os
-import sys
 
 import torch
-import torch.nn.functional as F
-from captum.attr import LayerIntegratedGradients
 from torch.utils.data import DataLoader, SequentialSampler
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
 from transformers.data.metrics.squad_metrics import compute_exact, compute_f1
@@ -19,22 +13,20 @@ from transformers.data.processors.squad import (
     SquadResult,
     squad_convert_examples_to_features,
 )
-from ts.torch_handler.base_handler import BaseHandler
 
 # QA specific libraries
 from qa_utils import compute_predictions_logits, convert_to_squad_example
-from settings import my_model_no, my_secret
+from settings import my_secret
 from shared import (
-    captum_qa_forward,
     check_fields,
     construct_input_ref_pair,
     generate_response_signature,
     get_n_steps_for_interpretability,
     get_word_token,
     handler_initialize,
-    remove_sp_chars,
     summarize_attributions,
 )
+from ts.torch_handler.base_handler import BaseHandler
 
 
 logger = logging.getLogger(__name__)
@@ -59,7 +51,7 @@ class TransformersQAHandler(BaseHandler):
     """
 
     def __init__(self):
-        super(TransformersQAHandler, self).__init__()
+        super().__init__()
         self.initialized = False
 
     def initialize(self, ctx):
@@ -94,9 +86,7 @@ class TransformersQAHandler(BaseHandler):
         self.model.to(self.device)
         self.model.eval()
 
-        logger.debug(
-            "Transformer model from path {0} loaded successfully".format(model_dir)
-        )
+        logger.debug(f"Transformer model from path {model_dir} loaded successfully")
 
         self.lig = None
         self.initialized = True
@@ -105,7 +95,6 @@ class TransformersQAHandler(BaseHandler):
         """
         Basic text preprocessing
         """
-        max_length = self.setup_config["max_length"]
         logger.info("In preprocess, data's value: '%s'", data)
         body = data[0]["body"]
         if not body:
@@ -301,10 +290,12 @@ _service = TransformersQAHandler()
 
 def handle(data, context):
     """
-    This function handles the requests for the model and returns a postprocessed response
+    This function handles the requests for the model and returns a
+    postprocessed response
     #sample input {
         "answer": "pretend you are reviewing a place",
-        "context": "Please pretend you are reviewing a place, product, book or movie",
+        "context": "Please pretend you are reviewing a place, " +
+        "product, book or movie",
         "hypothesis": "What should i pretend?",
         "insight": true
         } and output response is probabilities

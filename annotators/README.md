@@ -41,7 +41,6 @@ For details, please refer to [this link](https://github.com/facebookresearch/mep
 
 # Payment Script
 
-Once you are ready to pay your workers, whether its based on outcome of a validation HIT or some other criteria, you must export the data for your current round from Dynabench. It will create a JSON file of the data. You will need to process that JSON file to extract Agent ID for a particular HIT, whether you are approving the HIT or not, and what amount of bonus you intend to pay for that HIT, and output a TSV file with that information. That TSV file will then be read by pay_workers.py which will accept/reject all the HITs and pay the relevant workers. An example of a data processing script is shown in preprocess_dkqa.py. 
+Once you are ready to pay your workers, whether its based on outcome of a validation HIT or some other criteria, you must export the data for your current round from Dynabench. It will create a JSON file of the data. You will need to process that JSON file to extract Agent ID for a particular HIT, whether you are approving the HIT or not, and what amount of bonus you intend to pay for that HIT, and output a TSV file with that information. That TSV file will then be read by pay_workers.py which will accept/reject all the HITs and pay the relevant workers. An example of a data processing script is shown in preprocess_dkqa.py.
 
 If you want to manually approve each HIT one by one, use the examine_results.py instead of pay_workers.py
-
