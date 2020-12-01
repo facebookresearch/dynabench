@@ -102,26 +102,30 @@ class VerifyInterface extends React.Component {
     if (action_label !== null) {
       this.setState({'label':action_label});
       console.log(this.state);
+      metadata = {"annotator_id": this.props.providerWorkerId}
       this.api
-        .validateExample(this.state.example.id, action, "user")
+        .validateExample(this.state.example.id, action, "user", metadata)
             .then(result => {
 		    this.props.onSubmit(this.state);
-	    }), (error) => { 
-		    console.log(error); 
+	    }), (error) => {
+		    console.log(error);
 	    }
       }
   }
   render() {
     var content;
+    console.log(this.state);
     if (this.state.example.context) {
       var example_metadata = JSON.parse(this.state.example.metadata_json)
       var ans = JSON.parse(example_metadata['fullresponse'])
-      var ans_start = ans[0].start
-      var ans_end = ans[0].end
-      var answer = [{start:ans_start, end:ans_end, tag:"ANS"}]
-      content = <ContextInfo
+      if (ans[0].start && ans[0].end && example_metadata.model == 'bert-nqfirstpsg') {
+          var ans_start = ans[0].start
+          var ans_end = ans[0].end
+          var answer = [{start:ans_start, end:ans_end, tag:"ANS"}]
+          content = <ContextInfo
                    answer={answer}
 		   context={this.state.example.context.context}/>}
+    }
     return (
       <Container className="mb-5 pb-5">
         <Col className="m-auto" lg={12}>
