@@ -2,7 +2,6 @@
  * Copyright (c) Facebook, Inc. and its affiliates.
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
- * Revised Terms
  */
 
 import React from "react";
@@ -18,7 +17,7 @@ const TermsPage = () => (
         These Terms of Use (“Terms”) govern the use of the Dynabench website
         (the “Website”). These Terms constitute an agreement between you and
         Facebook, Inc. (“Facebook,” “us,”, “we”, “our”) so it is important that
-        you review them carefully.We reserve the right to change these Terms at
+        you review them carefully. We reserve the right to change these Terms at
         any time. Your continued use of the Website following the posting of
         changes will confirm that you accept the changed Terms. If you do not
         agree to (or cannot comply with) the changed Terms, you must stop using
@@ -56,7 +55,7 @@ const TermsPage = () => (
         interactions you may have with our AI systems (collectively, “Submit”).
         Examples include any text, photos, videos, or other media or content.
         “User Model” means any AI model, tasks, software, services,
-        applications, or datasets that a user Submits.You assume all risks
+        applications, or datasets that a user Submits. You assume all risks
         associated with the use of your User Content and your User Models,
         including any disclosure of your User Content or User Models that may
         personally identify you or any third party. We are not obligated to
