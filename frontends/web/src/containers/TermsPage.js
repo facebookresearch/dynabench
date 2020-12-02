@@ -17,7 +17,11 @@ const TermsPage = () => (
         These Terms of Use (“Terms”) govern the use of the Dynabench website
         (the “Website”). These Terms constitute an agreement between you and
         Facebook, Inc. (“Facebook,” “us,”, “we”, “our”) so it is important that
-        you review them carefully.
+        you review them carefully.We reserve the right to change these Terms at
+        any time. Your continued use of the Website following the posting of
+        changes will confirm that you accept the changed Terms. If you do not
+        agree to (or cannot comply with) the changed Terms, you must stop using
+        the Website.
       </p>
       <p>
         <strong>Content</strong>
@@ -29,54 +33,51 @@ const TermsPage = () => (
         jurisdiction from which you are accessing the Website.
       </p>
       <p>
-        We make no representations or warranties of any kind as to the accuracy,
-        currency, or completeness of the information and other materials made
-        available through the Website. We are not liable for any decisions you
-        may make in reliance on this content.
-      </p>
-      <p>
         <strong>Ownership</strong>
       </p>
       <p>
-        Excluding any User Content (defined below) that you may provide, you
-        acknowledge that all intellectual property rights, including copyrights,
-        patents, trademarks, and trade secrets, in the Website and their content
-        are owned by us or our suppliers. Neither these Terms nor your access to
-        the Website transfers to you or any third party any rights, title or
-        interest in or to such intellectual property rights. We reserve all
-        rights not granted in these Terms.
+        Excluding any User Content and User Models (both terms defined below)
+        that you may Submit (defined below), you acknowledge that all
+        intellectual property rights, including copyrights, patents, trademarks,
+        and trade secrets, in the Website and their content are owned by us or
+        our suppliers. Neither these Terms nor your access to the Website
+        transfers to you or any third party any rights, title or interest in or
+        to such intellectual property rights. We reserve all rights not granted
+        in these Terms.
       </p>
       <p>
-        <strong>User-Generated Content</strong>
+        <strong>User Content and User Models</strong>
       </p>
       <p>
-        “User –Generated Content” means any information and content that a user
-        submits to, or uses with, the Website (including messaging and any
-        interactions you may have with our AI systems). This includes any
-        content or submission that you upload, post or otherwise share with us
-        on our Website. Examples include any text, photos, videos, or other
-        media or content. You assume all risks associated with the use of your
-        User Content, including any disclosure of your User Content that
-        personally identifies you or any third party. Unless otherwise
-        specified, we are not obligated to backup any User Content. You are
-        solely responsible for creating and maintaining your own backup copies
-        of your User Content if you desire.
+        “User Content” means any information and content, other than User
+        Models, that a user uploads, shares, submits, provides, or otherwise
+        makes available or uses with, the Website, including messaging and any
+        interactions you may have with our AI systems (collectively, “Submit”).
+        Examples include any text, photos, videos, or other media or content.
+        “User Model” means any AI model, tasks, software, services,
+        applications, or datasets that a user Submits.You assume all risks
+        associated with the use of your User Content and your User Models,
+        including any disclosure of your User Content or User Models that may
+        personally identify you or any third party. We are not obligated to
+        backup or save any User Content or User Models. You are solely
+        responsible for creating and maintaining your own backup copies of your
+        User Content and User Models if you desire.
       </p>
       <p>
         We reserve the right (but have no obligation) to review any User
-        Content, and to investigate and/or take appropriate action against you
-        in our sole discretion if you violate any other provision of these
-        Terms. Such action may include removing or modifying your User Content
-        and terminating your account.
+        Content and User Models, and to investigate and/or take appropriate
+        action against you in our sole discretion if you violate any other
+        provision of these Terms. Such action may include removing or modifying
+        your User Content and User Models and terminating your account.
       </p>
       <p>
-        We ask that you do not submit or provide any confidential, private or
-        personal information when interacting with our AI systems since the
-        information provided may be later made public as part of an open source
-        dataset that we will make available on our Website.
+        You will not submit any confidential, private or personal information
+        when interacting with our AI systems since the information you Submit
+        may be later made public as part of an open source dataset that we will
+        make available on our Website.
       </p>
       <p>
-        To the extent that you provide User Content (e.g. when you interact with
+        To the extent that you submit User Content (e.g. when you interact with
         our AI systems), you hereby grant us (and represent and warrant that you
         have the right to grant) an irrevocable, non-exclusive, royalty-free and
         fully-paid-up, worldwide license to reproduce, distribute, publicly
@@ -84,7 +85,17 @@ const TermsPage = () => (
         works and otherwise use and exploit such User Content, and to grant
         sublicenses of the foregoing rights. You hereby irrevocably waive (and
         agree to cause to be waived) any claims and assertions of moral rights
-        or attribution with respect to your User Content.
+        or attribution with respect to any User Content you submit.
+      </p>
+      <p>
+        To the extent that you submit User Models, you hereby grant us (and
+        represent and warrant that you have the right to grant) an irrevocable,
+        non-exclusive, royalty-free and fully-paid-up, worldwide license to
+        reproduce, distribute, publicly display and perform, and otherwise use
+        such User Models for the purpose of providing the Website to users, and
+        to grant sublicenses of the foregoing rights. You hereby irrevocably
+        waive (and agree to cause to be waived) any claims and assertions of
+        moral rights or attribution with respect to any User Models you submit.
       </p>
       <p>
         <strong>Accounts</strong>
@@ -137,13 +148,13 @@ const TermsPage = () => (
           sending spam);
         </li>
         <li>
-          submit content that infringes on the copyright, trademark, patent, or
-          other intellectual property rights of any third party, are false,
-          misleading, libelous, defamatory, obscene, abusive, hateful, or
-          sexually-explicit, violate a third party’s right to privacy or
-          publicity, or degrade others on the basis of gender, race, class,
-          ethnicity, national origin, religion, sexual preference, disability,
-          or other classification; and
+          Submit User Content or User Models that infringes on the copyright,
+          trademark, patent, or other intellectual property rights of any third
+          party, are false, misleading, libelous, defamatory, obscene, abusive,
+          hateful, or sexually-explicit, violate a third party’s right to
+          privacy or publicity, or degrade others on the basis of gender, race,
+          class, ethnicity, national origin, religion, sexual preference,
+          disability, or other classification; and
         </li>
         <li>
           engage in any other conduct that restricts or inhibits any person from
@@ -163,11 +174,12 @@ const TermsPage = () => (
         <strong>Limitation of liability</strong>
       </p>
       <p>
-        Your use of the Website is at your own risk. The Website is provided “as
-        is” without warranties of any kind, either express or implied, including
-        without limitation warranties of merchantability, fitness for a
-        particular purpose, non-infringement, or other violation of rights. We
-        do not warrant the adequacy, currency, accuracy, likely results, or
+        Your use of the Website is at your own risk. The Website, content and
+        information available on the Website are provided “as is” without
+        warranties of any kind, either express or implied, including without
+        limitation warranties of merchantability, fitness for a particular
+        purpose, non-infringement, or other violation of rights. We do not
+        warrant the adequacy, currency, accuracy, likely results, or
         completeness of the Website or any third-party sites linked to or from
         the Website, or that the functions provided will be uninterrupted,
         virus, or error-free. We expressly disclaim any liability for any errors
@@ -180,7 +192,7 @@ const TermsPage = () => (
         apply to you.
       </p>
       <p>
-        In no event will we, or our owner, subsidiaries, affiliates, directors,
+        In no event will we, or our subsidiaries, affiliates, directors,
         officers, employees, agents, and assigns be liable for any direct or
         indirect, special, incidental, consequential or punitive damages, lost
         profits, or other damages whatsoever arising in connection with the use
@@ -195,15 +207,15 @@ const TermsPage = () => (
         <strong>Indemnification</strong>
       </p>
       <p>
-        You agree to indemnify, defend, and hold us and our owner, subsidiaries,
+        You agree to indemnify, defend, and hold us and our subsidiaries,
         affiliates, directors, officers, employees, agents and assigns harmless
         from and against any and all loss, costs, expenses (including reasonable
         attorneys’ fees and expenses), claims, damages, and liabilities related
-        to or associated with your use of the Website and any alleged violation
-        by you of these Terms. We reserve the right to assume the exclusive
-        defense of any claim for which we are entitled to indemnification under
-        this section. In such event, you shall provide us with such cooperation
-        as we reasonably request.
+        to or associated with the User Content, the User Models, your use of the
+        Website and any alleged violation by you of these Terms. We reserve the
+        right to assume the exclusive defense of any claim for which we are
+        entitled to indemnification under this section. In such event, you shall
+        provide us with such cooperation as we reasonably request.
       </p>
       <p>
         <strong>Modification</strong>
@@ -211,8 +223,11 @@ const TermsPage = () => (
       <p>
         We reserve the right, at any time, to modify, suspend, or discontinue
         all or any elements of the Website (in whole or in part) with or without
-        notice to you. You agree that we will not be liable to you or to any
-        third party for any such modification, suspension, or discontinuation.
+        notice to you. In particular, we may remove, at our discretion, any User
+        Content and/or User Models from the Website at any time without any
+        notice or explanation. You agree that we will not be liable to you or to
+        any third party for any such modification, suspension, or
+        discontinuation.
       </p>
       <p>
         <strong>Third Party Materials</strong>
@@ -251,10 +266,7 @@ const TermsPage = () => (
         <li>
           These Terms make up the entire agreement regarding your use of the
           Website. If any portion of these Terms is found to be unenforceable,
-          the remaining portion will remain in full force and effect. If we fail
-          to enforce any of these Terms, it will not be considered a waiver. Any
-          amendment to or waiver of these Terms must be made in writing and
-          signed by us.
+          the remaining portion will remain in full force and effect.
         </li>
         <li>
           You agree that no joint venture, partnership, employment, or agency

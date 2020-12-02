@@ -84,7 +84,8 @@ const DataPolicyPage = () => (
           </strong>{" "}
           This includes any content or submission that you upload, post or
           otherwise share with us on our Website. Examples include any text,
-          photos, videos, or other media or content. We collect this data
+          photos, videos, AI models, tasks, software, services, applications,
+          datasets, or other media or content. We collect this data
           directly from you and use the data to test the ability of our existing
           AI systems to make accurate predictions, regardless of the context or
           terminology that you used.
@@ -108,10 +109,13 @@ const DataPolicyPage = () => (
           different contexts using different terminology and expressions, we
           draw inferences from the data that you provide as user-generated
           content. We use this data to further train these AI models and systems
-          and to release new datasets. As mentioned above in the section
-          relating to user-generated content, we ask that you do not submit or
-          provide any confidential, private or personal information when
-          interacting with the AI systems.
+          and to release new datasets. If you submit to us any AI models, tasks,
+          software, services, applications, or datasets, we may use such
+          submissions to draw inferences based on data provided to us. As
+          mentioned above in the section relating to user-generated content, we
+          ask that you do not submit or provide any confidential, private or
+          personal information when interacting with the AI systems.
+
         </li>
       </ul>
 
@@ -124,9 +128,11 @@ const DataPolicyPage = () => (
       </p>
       <ul>
         <li>
-          You: We collect the content, communications, and other information you
+          You: We collect the content, communications, AI models, tasks, software,
+          services, applications, datasets and other information you
           provide when you use the Website, including your interactions with the
-          AI systems.
+          AI systems.Information collected from other users is collected in the
+          same way in order to train AI models.
         </li>
       </ul>
 
@@ -385,7 +391,21 @@ const DataPolicyPage = () => (
           when you consent.
         </li>
       </ul>
-
+      <p>
+        <strong>Your rights provided under the GDPR</strong>
+      </p>
+      <p>
+        Under the General Data Protection Regulation, you have the right to
+        access, rectify and erase your data under certain circumstances. You
+        also have the right to object to and restrict certain processing of
+        your data. Please note that to protect your information, we may need to
+        verify your identity before processing your request. In some cases,
+        we may need to collect additional information to verify your identity,
+        such as a government issued ID. To exercise your rights under the GDPR,
+        you can email{" "}
+        <a href="mailto:dynabench@fb.com">dynabench@fb.com</a> or contact us by
+        mail at the address provided below.
+      </p>
       <p>
         <strong>A note about children</strong>
       </p>
