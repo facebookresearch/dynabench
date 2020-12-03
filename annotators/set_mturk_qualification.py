@@ -25,6 +25,7 @@ e.g.,
 
 from mephisto.core.local_database import LocalMephistoDB
 
+
 db = LocalMephistoDB()
 reqs = db.find_requesters(provider_type="mturk")
 names = [r.requester_name for r in reqs]
@@ -42,30 +43,32 @@ restricted_pool_qual_id = input("Provide the qualification id: ")
 
 update_or_query = input("(g)rant or (q)uery? : ")
 if update_or_query == "g":
-    user_id = input("Provide the worker id that you want to add into the qualification: ")
+    user_id = input(
+        "Provide the worker id that you want to add into the qualification: "
+    )
     restricted_jsons = mturk_client.associate_qualification_with_worker(
-                                            QualificationTypeId=restricted_pool_qual_id,
-                                            SendNotification=True,
-                                            IntegerValue=0,
-                                            WorkerId=user_id
-                                        )
+        QualificationTypeId=restricted_pool_qual_id,
+        SendNotification=True,
+        IntegerValue=0,
+        WorkerId=user_id,
+    )
 elif update_or_query == "q":
-    restricted_pool = set([])
+    restricted_pool = set()
     pagination_token = None
     while 1:
         if pagination_token:
             restricted_jsons = mturk_client.list_workers_with_qualification_type(
-                                                QualificationTypeId=restricted_pool_qual_id,
-                                                Status='Granted',
-                                                MaxResults=100,
-                                                NextToken=pagination_token
-                                            )
+                QualificationTypeId=restricted_pool_qual_id,
+                Status="Granted",
+                MaxResults=100,
+                NextToken=pagination_token,
+            )
         else:
             restricted_jsons = mturk_client.list_workers_with_qualification_type(
-                                                QualificationTypeId=restricted_pool_qual_id,
-                                                Status='Granted',
-                                                MaxResults=100
-                                            )
+                QualificationTypeId=restricted_pool_qual_id,
+                Status="Granted",
+                MaxResults=100,
+            )
         if len(restricted_jsons["Qualifications"]) == 0:
             break
         pagination_token = restricted_jsons["NextToken"]
@@ -78,4 +81,4 @@ elif update_or_query == "q":
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/mturk.html#id48
 else:
     print("ERR: invalid inputs")
-    assert(False)
+    assert False
