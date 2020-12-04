@@ -7,7 +7,7 @@
 import React from "react";
 import {Row, Container, Button, InputGroup } from 'react-bootstrap';
 
-import { VerifyInterface } from './VerifyInterface.js';
+import { VerifyInterface } from './VerifyInterfaceQA.js';
 class DivyanshVerifyQATaskPreview extends React.Component {
   constructor(props) {
     super(props);
@@ -15,7 +15,7 @@ class DivyanshVerifyQATaskPreview extends React.Component {
   render() {
     return <>
         <h1>Generate Questions for Reading Comprehension</h1>
-        <p>In this task, you will be asked to generate Question-Answer pairs for reading comprehension tasks.</p>
+        <p>In this task, you will be asked to verify whether a phrase correctly answers a Question.</p>
       </>;
   }
 }
@@ -30,7 +30,7 @@ class TaskInstructions extends React.Component {
   render() {
     return <>
         <br />
-	<small>You are provided a question, the answer to which lies in the passage. A candidate answer is also presented to you below. Please select whether the candidate answer is <i>Correct</i> or <i>Incorrect</i>.</small>
+	<small>Below, you are shown a question, and a passage of text. A candidate answer to the question is highlighted in the passage. Please mark whether it is the correct answer or not. If the selected answer is incorrect and the correct answer is not in the context, then flag this example.</small>
 	<br />
 	</>;
   }
@@ -51,9 +51,10 @@ class DivyanshVerifyQATaskMain extends React.Component {
     return <>
         <Container>
         <Row>
-        <h2>Generate Questions for Reading Comprehension Tasks</h2> &nbsp; &nbsp; <Button className="btn" onClick={this.showInstructions}>{this.state.showInstructions ? "Hide" : "Show" } instructions </Button>
+        <h2>Does the highlighted span correctly answer the question?</h2> &nbsp; &nbsp; <Button className="btn" onClick={this.showInstructions}>{this.state.showInstructions ? "Hide" : "Show" } instructions </Button>
         </Row>
 	{this.state.showInstructions && <Row> <TaskInstructions /> </Row>}
+	<br />
         </Container>
         <VerifyInterface api={this.api} {...this.props} />
 	</>;

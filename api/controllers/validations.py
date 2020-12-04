@@ -61,6 +61,7 @@ def validate_example(credentials, eid):
         label_counts[validation.label.name] += 1
         if validation.uid == credentials["id"] and mode != "owner":
             bottle.abort(403, "Access denied (you have already validated this example)")
+    label_counts[label] += 1
 
     if "metadata" in data:
         current_validation_metadata = data["metadata"]
@@ -102,21 +103,24 @@ def validate_example(credentials, eid):
 
     rm = RoundModel()
     rm.updateLastActivity(context.r_realid)
-    if label_counts["correct"] >= num_matching_validations or (
-        mode == "owner" and label == "correct"
-    ):
-        rm.incrementVerifiedFooledCount(context.r_realid)
-        um.incrementVerifiedFooledCount(example.uid)
-    if (
-        (label_counts["incorrect"] >= num_matching_validations)
-        or (label_counts["flagged"] >= num_matching_validations)
-        or (mode == "owner" and (label == "incorrect" or label == "flagged"))
-    ):
-        user = um.get(example.uid)
-        metadata = json.loads(user.metadata_json)
-        metadata[task.shortname + "_fooling_no_verified_incorrect_or_flagged"] -= 1
-        user.metadata_json = json.dumps(metadata)
-        um.dbs.commit()
+
+    if example.model_wrong:
+        if label_counts["correct"] >= num_matching_validations or (
+            mode == "owner" and label == "correct"
+        ):
+            rm.incrementVerifiedFooledCount(context.r_realid)
+            um.incrementVerifiedFooledCount(example.uid)
+        elif (
+            label_counts["incorrect"] >= num_matching_validations
+            or label_counts["flagged"] >= num_matching_validations
+            or (mode == "owner" and label != "correct")
+        ):
+            um.incrementVerifiedNotFooledCount(example.uid)
+            user = um.get(example.uid)
+            metadata = json.loads(user.metadata_json)
+            metadata[task.shortname + "_fooling_no_verified_incorrect_or_flagged"] -= 1
+            user.metadata_json = json.dumps(metadata)
+            um.dbs.commit()
 
     ret = example.to_dict()
     if credentials["id"] != "turk":

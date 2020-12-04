@@ -63,6 +63,7 @@ function ContextInfo({ taskType, taskName, text, answer, updateAnswer }) {
   ) : (
     <div className="mb-1 p-3 light-gray-bg">
       {taskName === "NLI" ? <h6 className="text-uppercase dark-blue-color spaced-header">Context:</h6> : ''}
+      {taskName === "Sentiment" ? <h6 className="text-uppercase dark-blue-color spaced-header">Prompt:</h6> : ''}
       {text.replace("<br>", "\n")}
     </div>
   );
@@ -200,13 +201,12 @@ const SentimentTaskInstructions = () => {
   return (
     <div>
       <p>
-        Your objective is to come up with a statement that is either <strong>positive</strong>, or
-        <strong>negative</strong>, in such a way that you fool the model. Your statement should be classified
+        Your objective is to come up with a statement that is either <strong>positive</strong>, <strong>neutral</strong> or
+        {" "}<strong>negative</strong>, in such a way that you fool the model. Your statement should be classified
         correctly by another person!
       </p>
       <p>
-        Try to come up with creative ways to fool the model. Please make sure that your statement actually
-        is sentiment-laden, i.e. that it actually expresses a sentiment.
+        Try to come up with creative ways to fool the model. The prompt is meant as a starting point to give you inspiration.
       </p>
     </div>
   );
