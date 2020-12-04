@@ -9,15 +9,16 @@ from dataclasses import dataclass, field
 from typing import Any, List
 
 import hydra
-from mephisto.core.hydra_config import RunScriptConfig, register_script_config
-from mephisto.core.operator import Operator
-from mephisto.server.blueprints.abstract.static_task.static_blueprint import (
-    SharedStaticTaskState,
-)
-from mephisto.server.blueprints.static_react_task.static_react_blueprint import (
+from mephisto.operations.hydra_config import RunScriptConfig, register_script_config
+from mephisto.operations.operator import Operator
+from mephisto.abstractions.blueprints.static_react_task.static_react_blueprint import (
     BLUEPRINT_TYPE,
 )
-from mephisto.utils.scripts import load_db_and_process_config
+from mephisto.abstractions.blueprints.abstract.static_task.static_blueprint import (
+    SharedStaticTaskState,
+)
+
+from mephisto.tools.scripts import load_db_and_process_config
 from omegaconf import DictConfig
 
 from util import get_qualifications

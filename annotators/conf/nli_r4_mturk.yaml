@@ -4,12 +4,11 @@ mephisto:
     onboarding_qualification: nli-4-mturk-qualification
   task:
     task_name: nli-4-mturk
-    task_title: Fool the model - Natural Language Inference
+    task_title: Write sentences and fool the AI
     task_description: >
-      Your job is to find examples that fool
-      AI models
-    task_reward: 0.3
-    task_tags: "nli,testing"
+      You will be trying to beat an AI at a game. The AI is trying to understand English.
+    task_reward: 1.0
+    task_tags: "writing,AI,understand,English,game,ai"
 dynabench:
   task_name: nli-4-mturk
   task_id: 1
