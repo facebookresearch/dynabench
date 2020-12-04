@@ -150,8 +150,10 @@ class ExampleModel(BaseModel):
 
         fields_to_sign = []
         fields_to_sign.append(pred_str.encode("utf-8"))
-        if context.round.task.has_context:
-            # no context for e.g. sentiment
+        if (
+            context.round.task.has_context
+            and context.round.task.shortname != "Sentiment"
+        ):
             fields_to_sign.append(context_str.encode("utf-8"))
         fields_to_sign.append(hypothesis.encode("utf-8"))
         fields_to_sign.append(f"{tid}{rid}{secret}".encode("utf-8"))
