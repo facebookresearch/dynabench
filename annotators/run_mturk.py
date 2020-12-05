@@ -9,15 +9,10 @@ from dataclasses import dataclass, field
 from typing import Any, List
 
 import hydra
+from mephisto.abstractions.blueprints.abstract.static_task.static_blueprint import SharedStaticTaskState
+from mephisto.abstractions.blueprints.static_react_task.static_react_blueprint import BLUEPRINT_TYPE
 from mephisto.operations.hydra_config import RunScriptConfig, register_script_config
 from mephisto.operations.operator import Operator
-from mephisto.abstractions.blueprints.static_react_task.static_react_blueprint import (
-    BLUEPRINT_TYPE,
-)
-from mephisto.abstractions.blueprints.abstract.static_task.static_blueprint import (
-    SharedStaticTaskState,
-)
-
 from mephisto.tools.scripts import load_db_and_process_config
 from omegaconf import DictConfig
 
@@ -85,6 +80,7 @@ def main(cfg: DictConfig) -> None:
     num_jobs = cfg.num_jobs
     static_task_data = [{} for _ in range(num_jobs)]
     mturk_specific_qualifications = get_qualifications(cfg.preselected_qualifications)
+
     # mturk_specific_qualifications
 
     # TODO: How to set onboarding ready?
