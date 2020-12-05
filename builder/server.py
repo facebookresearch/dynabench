@@ -4,7 +4,7 @@ import time
 import boto3
 
 
-sys.path.append('../api')  # noqa
+sys.path.append("../api")  # noqa
 from common.config import config  # noqa isort:skip
 
 if __name__ == "__main__":
