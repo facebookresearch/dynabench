@@ -3,7 +3,11 @@
 import sys
 
 from mephisto.abstractions.databases.local_database import LocalMephistoDB
-from mephisto.abstractions.providers.mturk.mturk_utils import expire_and_dispose_hits, get_outstanding_hits
+from mephisto.abstractions.providers.mturk.mturk_utils import (
+    expire_and_dispose_hits,
+    get_outstanding_hits,
+)
+
 
 sys.path.append("./Mephisto")
 db = LocalMephistoDB()

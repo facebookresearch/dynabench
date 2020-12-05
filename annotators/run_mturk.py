@@ -9,14 +9,19 @@ from dataclasses import dataclass, field
 from typing import Any, List
 
 import hydra
-from mephisto.abstractions.blueprints.abstract.static_task.static_blueprint import SharedStaticTaskState
-from mephisto.abstractions.blueprints.static_react_task.static_react_blueprint import BLUEPRINT_TYPE
+from mephisto.abstractions.blueprints.abstract.static_task.static_blueprint import (
+    SharedStaticTaskState,
+)
+from mephisto.abstractions.blueprints.static_react_task.static_react_blueprint import (
+    BLUEPRINT_TYPE,
+)
 from mephisto.operations.hydra_config import RunScriptConfig, register_script_config
 from mephisto.operations.operator import Operator
 from mephisto.tools.scripts import load_db_and_process_config
 from omegaconf import DictConfig
 
 from util import get_qualifications
+
 
 CURRENT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
