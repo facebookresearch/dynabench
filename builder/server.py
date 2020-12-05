@@ -3,8 +3,9 @@ import time
 
 import boto3
 
-sys.path.append("../api")
-from common.config import config
+
+sys.path.append('../api')  # noqa
+from common.config import config  # noqa isort:skip
 
 if __name__ == "__main__":
     sqs_service = boto3.client(
