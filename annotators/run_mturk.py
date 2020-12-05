@@ -18,7 +18,6 @@ from omegaconf import DictConfig
 
 from util import get_qualifications
 
-
 CURRENT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
 
