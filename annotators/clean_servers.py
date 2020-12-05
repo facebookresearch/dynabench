@@ -17,4 +17,4 @@ client = requester._get_client(requester._requester_name)
 outstanding_hits = get_outstanding_hits(client)
 
 for hit_type in outstanding_hits:
-    expire_and_dispose_hits(client, outstanding_hits[hit_type])  # Linter fixed
+    expire_and_dispose_hits(client, outstanding_hits[hit_type])  # Linter fixed done
