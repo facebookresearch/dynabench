@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
-
 # Copyright (c) Facebook, Inc. and its affiliates.
+
+import os
+import sys
+sys.path.append(os.path.abspath("./Mephisto"))
 
 from mephisto.core.data_browser import DataBrowser as MephistoDataBrowser
 from mephisto.core.local_database import LocalMephistoDB
@@ -61,19 +64,24 @@ def format_for_printing_data(data):
 #### CONDITION WHETHER VALIDATION EXISTS
 
 for itr, agentId in enumerate(parsed_validations["agentId"]):
-    unit = db.get_units(agent_id=int(agentId))[0]
+    unit_list = db.find_units(agent_id=int(agentId))
+    if len(unit_list) == 0:
+        continue
+    unit = unit_list[0]
+    if unit.get_assigned_agent() is None:
+        continue
     if unit.get_status() == "completed":
         try:
             print(
                 format_for_printing_data(mephisto_data_browser.get_data_from_unit(unit))
             )
-        except Exception:
+        except:
             if unit.get_assigned_agent() is None:
                 continue
         keep = parsed_validations.loc[itr, "keep"]
         sendbonus = parsed_validations.loc[itr, "sendbonus"]
         if keep == "a":
-            unit.get_assigned_agent().approve_work()
+            # unit.get_assigned_agent().approve_work()
             sendbonus = round(sendbonus, 2)
             if sendbonus > 0:
                 unit.get_assigned_agent().get_worker().bonus_worker(
