@@ -193,8 +193,6 @@ def post_example(credentials):
         {
             "success": "ok",
             "id": example.id,
-            "badges": "|".join(badge_names)
-            if (credentials["id"] != "turk" and badge_names)
-            else None,
+            "badges": "|".join(badge_names) if (credentials["id"] != "turk") else None,
         }
     )

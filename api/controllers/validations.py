@@ -144,7 +144,6 @@ def validate_example(credentials, eid):
 
         bm = BadgeModel()
         badge_names = bm.handleValidateInterface(user, example)
-        if badge_names:
-            ret["badges"] = "|".join(badge_names)
+        ret["badges"] = "|".join(badge_names)
 
     return util.json_encode(ret)
