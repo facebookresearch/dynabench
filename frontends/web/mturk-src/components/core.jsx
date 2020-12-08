@@ -12,6 +12,7 @@ import { DivyanshQATaskPreview, DivyanshQATaskOnboarder, DivyanshQATaskMain } fr
 import { NLITaskPreview, NLITaskOnboarder, NLITaskMain } from './nli-1/core.jsx';
 import { DivyanshVerifyQATaskPreview, DivyanshVerifyQATaskOnboarder, DivyanshVerifyQATaskMain } from './divyansh/qa-1-verify/core.jsx';
 import { SentimentTaskPreview, SentimentTaskOnboarder, SentimentTaskMain } from './sa-zen/core.jsx';
+import { NLIR4TaskPreview, NLIR4TaskOnboarder, NLIR4TaskMain } from './yixin/nli-4-mtuk/core.jsx';
 
 const TaskComponents = {
   'yixin-1': [YixinTaskPreview, YixinTaskOnboarder, YixinTaskMain],
@@ -19,9 +20,11 @@ const TaskComponents = {
   'divyansh-qa-1': [DivyanshQATaskPreview, DivyanshQATaskOnboarder, DivyanshQATaskMain],
   'divyansh-qa-1-verify': [DivyanshVerifyQATaskPreview, DivyanshVerifyQATaskOnboarder, DivyanshVerifyQATaskMain],
   'nli-1': [NLITaskPreview, NLITaskOnboarder, NLITaskMain],
+  'nli-4-mturk': [NLIR4TaskPreview, NLIR4TaskOnboarder, NLIR4TaskMain],
   'sa-zen': [SentimentTaskPreview, SentimentTaskOnboarder, SentimentTaskMain]
   // TODO: New tasks are added here
 };
+
 
 class TaskFrontend extends React.Component {
   constructor(props) {
@@ -36,6 +39,7 @@ class TaskFrontend extends React.Component {
       throw "No task ID specified";
     }
   }
+
   render() {
     const [ TaskPreview, TaskOnboarder, TaskMain ] = TaskComponents[this.task];
     if (this.props.isPreview) {
@@ -46,6 +50,7 @@ class TaskFrontend extends React.Component {
       return <TaskMain {...this.props} />;
     }
   }
+
 }
 
 export { TaskFrontend };
