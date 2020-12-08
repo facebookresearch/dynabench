@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates.
 
-import os
-import sys
-
-if os.path.exists("./Mephisto"):  # noqa
-    sys.path.append(os.path.abspath("./Mephisto"))  # noqa
-    print("WARNING: Loading Mephisto from local directory")  # noqa
-
+import os  # isort:skip
+import sys  # isort:skip
 from mephisto.core.data_browser import DataBrowser as MephistoDataBrowser
 from mephisto.core.local_database import LocalMephistoDB
 from mephisto.data_model.assignment import Unit
 from mephisto.data_model.worker import Worker
 
 import pandas as pd
+
+
+if os.path.exists("./Mephisto"):  # isort:skip
+    sys.path.append(os.path.abspath("./Mephisto"))  # isort:skip
+    print("WARNING: Loading Mephisto from local directory")  # isort:skip
 
 
 parsed_validations = pd.read_csv(
@@ -78,7 +78,8 @@ for itr, agentId in enumerate(parsed_validations["agentId"]):
             print(
                 format_for_printing_data(mephisto_data_browser.get_data_from_unit(unit))
             )
-        except:
+        except Exception as e:
+            print(e.message)
             if unit.get_assigned_agent() is None:
                 continue
         keep = parsed_validations.loc[itr, "keep"]
