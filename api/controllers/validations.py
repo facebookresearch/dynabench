@@ -9,7 +9,6 @@ import common.helpers as util
 from models.badge import BadgeModel
 from models.context import ContextModel
 from models.example import ExampleModel
-from models.notification import NotificationModel
 from models.round import RoundModel
 from models.task import TaskModel
 from models.user import UserModel
@@ -127,12 +126,8 @@ def validate_example(credentials, eid):
         user = um.updateValidatedCount(credentials["id"])
 
         bm = BadgeModel()
-        nm = NotificationModel()
-        badges = bm.handleValidateInterface(user)
-        for badge in badges:
-            bm.addBadge(badge)
-            nm.create(credentials["id"], "NEW_BADGE_EARNED", badge["name"])
-        if badges:
-            ret["badges"] = "|".join([badge["name"] for badge in badges])
+        badge_names = bm.handleValidateInterface(user, example)
+        if badge_names:
+            ret["badges"] = "|".join([badge_names])
 
     return util.json_encode(ret)

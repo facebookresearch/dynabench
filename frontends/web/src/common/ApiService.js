@@ -106,6 +106,12 @@ export default class ApiService {
     });
   }
 
+  getAsyncBadges() {
+    return this.fetch(`${this.domain}/badges/getasync`, {
+      method: "GET",
+    });
+  }
+
   getTasks() {
     return this.fetch(`${this.domain}/tasks`, {
       method: "GET",
