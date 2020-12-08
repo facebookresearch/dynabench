@@ -101,9 +101,9 @@ class VerifyInterface extends React.Component {
     }
     if (action_label !== null) {
       this.setState({'label':action_label});
-      console.log(this.state);
+      var metadata = {"annotator_id": this.props.providerWorkerId}
       this.api
-        .validateExample(this.state.example.id, action, "user")
+        .validateExample(this.state.example.id, action, "user", metadata)
             .then(result => {
 		    this.props.onSubmit(this.state);
 	    }), (error) => {
