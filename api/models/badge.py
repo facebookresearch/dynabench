@@ -127,6 +127,89 @@ class BadgeModel(BaseModel):
     def _badgeobj(self, uid, name, metadata=None):
         return {"uid": uid, "name": name, "metadata": metadata}
 
+    def addBadge(self, badge):
+        self.create(
+            badge["uid"],
+            badge["name"],
+            badge["metadata"] if "metadata" in badge else None,
+        )
+
+    def getByUid(self, uid):
+        try:
+            return self.dbs.query(Badge).filter(Badge.uid == uid).all()
+        except db.orm.exc.NoResultFound:
+            return False
+
+    def getBadgesByName(self, uid, name):
+        try:
+            return (
+                self.dbs.query(Badge)
+                .filter(Badge.uid == uid)
+                .filter(Badge.name == name)
+                .all()
+            )
+        except db.orm.exc.NoResultFound:
+            return False
+
+    def create(self, uid, name, metadata_json):
+        try:
+            um = UserModel()
+            user = um.get(uid)
+            if not user:
+                return False
+
+            b = Badge(
+                user=user,
+                name=name,
+                metadata_json=metadata_json,
+                awarded=db.sql.func.now(),
+            )
+            self.dbs.add(b)
+            self.dbs.flush()
+            self.dbs.commit()
+            logger.info(f"Awarded badge to user ({b.id}, {b.uid})")
+        except Exception as error_message:
+            logger.error("Could not create badge (%s)" % error_message)
+            return False
+        return b.id
+
+    def createNotificationsAndRemoveBadges(self, badges_to_remove, type):
+        self.dbs.query(Badge).filter(
+            Badge.id.in_([badge.id for badge in badges_to_remove])
+        ).delete(synchronize_session="fetch")
+        nm = NotificationModel()
+        for badge in badges_to_remove:
+            nm.create(badge.uid, type, badge.name)
+        self.dbs.commit()
+
+    def createNotificationsAndAddBadges(self, badge_dicts_to_add):
+        nm = NotificationModel()
+        for badge_dict in badge_dicts_to_add:
+            self.addBadge(badge_dict)
+            nm.create(badge_dict["uid"], "NEW_BADGE_EARNED", badge_dict["name"])
+        self.dbs.commit()
+
+    def incrementUserMetadataField(self, user, key, value=1):
+        if user.metadata_json:
+            metadata = json.loads(user.metadata_json)
+            if key in metadata:
+                metadata[key] += value
+            else:
+                metadata[key] = value
+        else:
+            metadata = {key: value}
+        user.metadata_json = json.dumps(metadata)
+        self.dbs.commit()
+
+    def getFieldsFromMetadata(self, metadata, value_if_absent, fields):
+        values = []
+        for field in fields:
+            if field in metadata:
+                values.append(metadata[field])
+            else:
+                values.append(value_if_absent)
+        return values
+
     def handleCronjob(self):
         one_week_ago = datetime.datetime.now() - datetime.timedelta(days=7)
         badges_to_remove = []
@@ -306,7 +389,7 @@ class BadgeModel(BaseModel):
                         _,
                     ) in self.contributor_type_num_required_creations_and_validations:
                         if badge.name == "DYNABENCH_" + contributor_type:
-                            num_created_by_task = self._get_fields_from_metadata(
+                            num_created_by_task = self.getFieldsFromMetadata(
                                 metadata,
                                 0,
                                 [
@@ -384,35 +467,19 @@ class BadgeModel(BaseModel):
             user.metadata_json = json.dumps(metadata)
             for name in metadata["async_badges_to_award"]:
                 badges_to_add.append(self._badgeobj(user.id, name))
-        self.create_notifications_and_remove_badges(
+        self.createNotificationsAndRemoveBadges(
             badges_to_remove, "BADGE_REMOVED_STREAK"
         )
-        self.create_notifications_and_add_badges(badges_to_add)
-
-    def create_notifications_and_remove_badges(self, badges_to_remove, type):
-        self.dbs.query(Badge).filter(
-            Badge.id.in_([badge.id for badge in badges_to_remove])
-        ).delete(synchronize_session="fetch")
-        nm = NotificationModel()
-        for badge in badges_to_remove:
-            nm.create(badge.uid, type, badge.name)
-        self.dbs.commit()
-
-    def create_notifications_and_add_badges(self, badge_dicts_to_add):
-        nm = NotificationModel()
-        for badge_dict in badge_dicts_to_add:
-            self.addBadge(badge_dict)
-            nm.create(badge_dict["uid"], "NEW_BADGE_EARNED", badge_dict["name"])
-        self.dbs.commit()
+        self.createNotificationsAndAddBadges(badges_to_add)
 
     def handleUnpublishModel(self, user, model):
-        self.increment_user_metadata_field(
+        self.incrementUserMetadataField(
             user, model.task.shortname + "_models_published", -1
         )
 
         badges_to_remove = []
         existing_badges = self.getByUid(user.id)
-        models_published = self._get_fields_from_metadata(
+        models_published = self.getFieldsFromMetadata(
             json.loads(user.metadata_json),
             0,
             [
@@ -433,24 +500,10 @@ class BadgeModel(BaseModel):
                 or (badge.name == "MULTITASKER" and 0 in models_published)
             ):
                 badges_to_remove.append(badge)
-        self.create_notifications_and_remove_badges(
-            badges_to_remove, "BADGE_REMOVED_MODEL"
-        )
-
-    def increment_user_metadata_field(self, user, key, value=1):
-        if user.metadata_json:
-            metadata = json.loads(user.metadata_json)
-            if key in metadata:
-                metadata[key] += value
-            else:
-                metadata[key] = value
-        else:
-            metadata = {key: value}
-        user.metadata_json = json.dumps(metadata)
-        self.dbs.commit()
+        self.createNotificationsAndRemoveBadges(badges_to_remove, "BADGE_REMOVED_MODEL")
 
     def handlePublishModel(self, user, model):
-        self.increment_user_metadata_field(
+        self.incrementUserMetadataField(
             user, model.task.shortname + "_models_published"
         )
 
@@ -486,7 +539,7 @@ class BadgeModel(BaseModel):
                     badges.append(self._badgeobj(user.id, "SOTA", {"mid": model.id}))
                     break
 
-        models_published = self._get_fields_from_metadata(
+        models_published = self.getFieldsFromMetadata(
             json.loads(user.metadata_json),
             0,
             [
@@ -532,7 +585,7 @@ class BadgeModel(BaseModel):
             if 0 not in models_published:
                 badges.append(self._badgeobj(user.id, "MULTITASKER"))
 
-        self.create_notifications_and_add_badges(badges)
+        self.createNotificationsAndAddBadges(badges)
         return [badge["name"] for badge in badges]
 
     def handleHomePage(self, user):
@@ -554,7 +607,7 @@ class BadgeModel(BaseModel):
         user.examples_submitted = user.examples_submitted + 1
         streak_days_increased = False
         if example.model_wrong:
-            self.increment_user_metadata_field(
+            self.incrementUserMetadataField(
                 user,
                 example.context.round.task.shortname
                 + "_fooling_no_verified_incorrect_or_flagged",
@@ -633,7 +686,7 @@ class BadgeModel(BaseModel):
             ) in self.contributor_type_num_required_creations_and_validations:
                 if (
                     sum(
-                        self._get_fields_from_metadata(
+                        self.getFieldsFromMetadata(
                             metadata,
                             0,
                             [
@@ -644,7 +697,7 @@ class BadgeModel(BaseModel):
                     )
                     >= num_creations_required
                     and sum(
-                        self._get_fields_from_metadata(
+                        self.getFieldsFromMetadata(
                             metadata,
                             0,
                             [
@@ -681,20 +734,11 @@ class BadgeModel(BaseModel):
                     badges.append("DAY_STREAK_" + streak_type)
 
         badges = [self._badgeobj(user.id, name) for name in badges]
-        self.create_notifications_and_add_badges(badges)
+        self.createNotificationsAndAddBadges(badges)
         return [badge["name"] for badge in badges]
 
-    def _get_fields_from_metadata(self, metadata, value_if_absent, fields):
-        values = []
-        for field in fields:
-            if field in metadata:
-                values.append(metadata[field])
-            else:
-                values.append(value_if_absent)
-        return values
-
     def handleValidateInterface(self, user, example):
-        self.increment_user_metadata_field(
+        self.incrementUserMetadataField(
             user, example.context.round.task.shortname + "_validated"
         )
         badges = []
@@ -707,7 +751,7 @@ class BadgeModel(BaseModel):
         # Contributor badges
         if user.metadata_json:
             metadata = json.loads(user.metadata_json)
-            num_created_by_task = self._get_fields_from_metadata(
+            num_created_by_task = self.getFieldsFromMetadata(
                 metadata,
                 0,
                 [
@@ -715,7 +759,7 @@ class BadgeModel(BaseModel):
                     for task_name in self.task_shortname_to_badge_name
                 ],
             )
-            num_validated_by_task = self._get_fields_from_metadata(
+            num_validated_by_task = self.getFieldsFromMetadata(
                 metadata,
                 0,
                 [
@@ -760,51 +804,5 @@ class BadgeModel(BaseModel):
                         badges.append("DYNABENCH_" + contributor_type)
 
         badges = [self._badgeobj(user.id, name) for name in badges]
-        self.create_notifications_and_add_badges(badges)
+        self.createNotificationsAndAddBadges(badges)
         return [badge["name"] for badge in badges]
-
-    def addBadge(self, badge):
-        self.create(
-            badge["uid"],
-            badge["name"],
-            badge["metadata"] if "metadata" in badge else None,
-        )
-
-    def getByUid(self, uid):
-        try:
-            return self.dbs.query(Badge).filter(Badge.uid == uid).all()
-        except db.orm.exc.NoResultFound:
-            return False
-
-    def getBadgesByName(self, uid, name):
-        try:
-            return (
-                self.dbs.query(Badge)
-                .filter(Badge.uid == uid)
-                .filter(Badge.name == name)
-                .all()
-            )
-        except db.orm.exc.NoResultFound:
-            return False
-
-    def create(self, uid, name, metadata_json):
-        try:
-            um = UserModel()
-            user = um.get(uid)
-            if not user:
-                return False
-
-            b = Badge(
-                user=user,
-                name=name,
-                metadata_json=metadata_json,
-                awarded=db.sql.func.now(),
-            )
-            self.dbs.add(b)
-            self.dbs.flush()
-            self.dbs.commit()
-            logger.info(f"Awarded badge to user ({b.id}, {b.uid})")
-        except Exception as error_message:
-            logger.error("Could not create badge (%s)" % error_message)
-            return False
-        return b.id
