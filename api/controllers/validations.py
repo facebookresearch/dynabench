@@ -116,8 +116,25 @@ def validate_example(credentials, eid):
         ):
             um.incrementVerifiedNotFooledCount(example.uid)
             user = um.get(example.uid)
-            metadata = json.loads(user.metadata_json)
-            metadata[task.shortname + "_fooling_no_verified_incorrect_or_flagged"] -= 1
+            if user.metadata_json:
+                metadata = json.loads(user.metadata_json)
+                if (
+                    task.shortname + "_fooling_no_verified_incorrect_or_flagged"
+                    in metadata
+                ):
+                    metadata[
+                        task.shortname + "_fooling_no_verified_incorrect_or_flagged"
+                    ] -= 1
+                else:
+                    # Start recording this field now
+                    metadata[
+                        task.shortname + "_fooling_no_verified_incorrect_or_flagged"
+                    ] = 0
+            else:
+                # Start recording this field now
+                metadata = {
+                    task.shortname + "_fooling_no_verified_incorrect_or_flagged": 0
+                }
             user.metadata_json = json.dumps(metadata)
             um.dbs.commit()
 
@@ -128,6 +145,6 @@ def validate_example(credentials, eid):
         bm = BadgeModel()
         badge_names = bm.handleValidateInterface(user, example)
         if badge_names:
-            ret["badges"] = "|".join([badge_names])
+            ret["badges"] = "|".join(badge_names)
 
     return util.json_encode(ret)
