@@ -1,0 +1,2 @@
+my_secret = "b7a65254215340ae976e3e19ae87c4eaa0d10e30f7424c72888df7086a8a6846"
+my_model_no = "1"
