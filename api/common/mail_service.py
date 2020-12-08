@@ -60,7 +60,9 @@ def close_mail_session(server):
     return True
 
 
-def send(server=None, contacts=[], template_name="", msg_dict={}, subject=""):
+def send(
+    server=None, config=None, contacts=[], template_name="", msg_dict={}, subject=""
+):
     """
     Mail handler to send email to specific contacts through smtp service
 
@@ -75,6 +77,9 @@ def send(server=None, contacts=[], template_name="", msg_dict={}, subject=""):
             smtp_user=app.config["smtp_user"],
             smtp_secret=app.config["smtp_secret"],
         )
+    if not config:
+        logger.info("Using default bottle app config")
+        config = app.config
     try:
         message_template = read_template(template_name)
         for contact in contacts:
@@ -83,7 +88,7 @@ def send(server=None, contacts=[], template_name="", msg_dict={}, subject=""):
             message = message_template.substitute(msg_dict)
             # setup the parameters of the message
             msg["From"] = email.utils.formataddr(
-                (app.config["email_sender_name"], app.config["smtp_from_email_address"])
+                (config["email_sender_name"], config["smtp_from_email_address"])
             )
             msg["To"] = contact
             msg["Subject"] = subject
