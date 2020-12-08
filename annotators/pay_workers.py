@@ -3,7 +3,10 @@
 
 import os
 import sys
-sys.path.append(os.path.abspath("./Mephisto"))
+
+if os.path.exists("./Mephisto"):  # noqa
+    sys.path.append(os.path.abspath("./Mephisto"))  # noqa
+    print("WARNING: Loading Mephisto from local directory")  # noqa
 
 from mephisto.core.data_browser import DataBrowser as MephistoDataBrowser
 from mephisto.core.local_database import LocalMephistoDB
@@ -81,7 +84,7 @@ for itr, agentId in enumerate(parsed_validations["agentId"]):
         keep = parsed_validations.loc[itr, "keep"]
         sendbonus = parsed_validations.loc[itr, "sendbonus"]
         if keep == "a":
-            # unit.get_assigned_agent().approve_work()
+            unit.get_assigned_agent().approve_work()
             sendbonus = round(sendbonus, 2)
             if sendbonus > 0:
                 unit.get_assigned_agent().get_worker().bonus_worker(
