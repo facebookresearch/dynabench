@@ -210,6 +210,9 @@ class BadgeModel(BaseModel):
                 values.append(value_if_absent)
         return values
 
+    def lengthOfFilteredList(self, function, iterable):
+        return len(list(filter(function, iterable)))
+
     def handleCronjob(self):
         one_week_ago = datetime.datetime.now() - datetime.timedelta(days=7)
         badges_to_remove = []
@@ -292,46 +295,26 @@ class BadgeModel(BaseModel):
                             example_validations = []
 
                         if (
-                            len(
-                                list(
-                                    filter(
-                                        lambda validation: validation.label.name
-                                        == "flagged",
-                                        example_validations,
-                                    )
-                                )
+                            self.lengthOfFilteredList(
+                                lambda validation: validation.label.name == "flagged",
+                                example_validations,
                             )
                             >= num_matching_validations
-                            or len(
-                                list(
-                                    filter(
-                                        lambda validation: validation.label.name
-                                        == "incorrect",
-                                        example_validations,
-                                    )
-                                )
+                            or self.lengthOfFilteredList(
+                                lambda validation: validation.label.name == "incorrect",
+                                example_validations,
                             )
                             >= num_matching_validations
-                            or len(
-                                list(
-                                    filter(
-                                        lambda validation: validation.label.name
-                                        == "flagged"
-                                        and validation.mode.name == "owner",
-                                        example_validations,
-                                    )
-                                )
+                            or self.lengthOfFilteredList(
+                                lambda validation: validation.label.name == "flagged"
+                                and validation.mode.name == "owner",
+                                example_validations,
                             )
                             >= 1
-                            or len(
-                                list(
-                                    filter(
-                                        lambda validation: validation.label.name
-                                        == "incorrect"
-                                        and validation.mode.name == "owner",
-                                        example_validations,
-                                    )
-                                )
+                            or self.lengthOfFilteredList(
+                                lambda validation: validation.label.name == "incorrect"
+                                and validation.mode.name == "owner",
+                                example_validations,
                             )
                             >= 1
                         ):
@@ -512,14 +495,10 @@ class BadgeModel(BaseModel):
 
         # SOTA badge
         if (
-            len(
-                list(
-                    filter(
-                        lambda badge: badge.name == "SOTA"
-                        and json.loads(badge.metadata_json)["mid"] == model.id,
-                        existing_badges,
-                    )
-                )
+            self.lengthOfFilteredList(
+                lambda badge: badge.name == "SOTA"
+                and json.loads(badge.metadata_json)["mid"] == model.id,
+                existing_badges,
             )
             == 0
         ):
@@ -551,12 +530,8 @@ class BadgeModel(BaseModel):
 
         # SERIAL_PREDICTOR badge
         if (
-            len(
-                list(
-                    filter(
-                        lambda badge: badge.name == "SERIAL_PREDICTOR", existing_badges
-                    )
-                )
+            self.lengthOfFilteredList(
+                lambda badge: badge.name == "SERIAL_PREDICTOR", existing_badges
             )
             == 0
         ):
@@ -565,10 +540,8 @@ class BadgeModel(BaseModel):
 
         # MODEL_BUILDER badge
         if (
-            len(
-                list(
-                    filter(lambda badge: badge.name == "MODEL_BUILDER", existing_badges)
-                )
+            self.lengthOfFilteredList(
+                lambda badge: badge.name == "MODEL_BUILDER", existing_badges
             )
             == 0
         ):
@@ -577,8 +550,8 @@ class BadgeModel(BaseModel):
 
         # MULTITASKER badge
         if (
-            len(
-                list(filter(lambda badge: badge.name == "MULTITASKER", existing_badges))
+            self.lengthOfFilteredList(
+                lambda badge: badge.name == "MULTITASKER", existing_badges
             )
             == 0
         ):
@@ -657,19 +630,13 @@ class BadgeModel(BaseModel):
                             == num_required
                         ):
                             if (
-                                len(
-                                    list(
-                                        filter(
-                                            lambda badge: badge.name
-                                            == "DYNABENCH_"
-                                            + self.task_shortname_to_badge_name[
-                                                task_name
-                                            ]
-                                            + "_"
-                                            + contributor_type,
-                                            existing_badges,
-                                        )
-                                    )
+                                self.lengthOfFilteredList(
+                                    lambda badge: badge.name
+                                    == "DYNABENCH_"
+                                    + self.task_shortname_to_badge_name[task_name]
+                                    + "_"
+                                    + contributor_type,
+                                    existing_badges,
                                 )
                                 == 0
                             ):
@@ -709,14 +676,9 @@ class BadgeModel(BaseModel):
                     >= num_validations_required
                 ):
                     if (
-                        len(
-                            list(
-                                filter(
-                                    lambda badge: badge.name
-                                    == "DYNABENCH_" + contributor_type,
-                                    existing_badges,
-                                )
-                            )
+                        self.lengthOfFilteredList(
+                            lambda badge: badge.name == "DYNABENCH_" + contributor_type,
+                            existing_badges,
                         )
                         == 0
                     ):
@@ -769,13 +731,8 @@ class BadgeModel(BaseModel):
             )
             if 0 not in num_created_by_task + num_validated_by_task:
                 if (
-                    len(
-                        list(
-                            filter(
-                                lambda badge: badge.name == "ALL_TASKS_COVERED",
-                                existing_badges,
-                            )
-                        )
+                    self.lengthOfFilteredList(
+                        lambda badge: badge.name == "ALL_TASKS_COVERED", existing_badges
                     )
                     == 0
                 ):
@@ -790,14 +747,9 @@ class BadgeModel(BaseModel):
                     and sum(num_validated_by_task) >= num_validations_required
                 ):
                     if (
-                        len(
-                            list(
-                                filter(
-                                    lambda badge: badge.name
-                                    == "DYNABENCH_" + contributor_type,
-                                    existing_badges,
-                                )
-                            )
+                        self.lengthOfFilteredList(
+                            lambda badge: badge.name == "DYNABENCH_" + contributor_type,
+                            existing_badges,
                         )
                         == 0
                     ):
