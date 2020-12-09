@@ -116,27 +116,28 @@ def validate_example(credentials, eid):
         ):
             um.incrementVerifiedNotFooledCount(example.uid)
             user = um.get(example.uid)
-            if user.metadata_json:
-                metadata = json.loads(user.metadata_json)
-                if (
-                    task.shortname + "_fooling_no_verified_incorrect_or_flagged"
-                    in metadata
-                ):
-                    metadata[
+            if user:
+                if user.metadata_json:
+                    metadata = json.loads(user.metadata_json)
+                    if (
                         task.shortname + "_fooling_no_verified_incorrect_or_flagged"
-                    ] -= 1
+                        in metadata
+                    ):
+                        metadata[
+                            task.shortname + "_fooling_no_verified_incorrect_or_flagged"
+                        ] -= 1
+                    else:
+                        # Start recording this field now
+                        metadata[
+                            task.shortname + "_fooling_no_verified_incorrect_or_flagged"
+                        ] = 0
                 else:
                     # Start recording this field now
-                    metadata[
-                        task.shortname + "_fooling_no_verified_incorrect_or_flagged"
-                    ] = 0
-            else:
-                # Start recording this field now
-                metadata = {
-                    task.shortname + "_fooling_no_verified_incorrect_or_flagged": 0
-                }
-            user.metadata_json = json.dumps(metadata)
-            um.dbs.commit()
+                    metadata = {
+                        task.shortname + "_fooling_no_verified_incorrect_or_flagged": 0
+                    }
+                user.metadata_json = json.dumps(metadata)
+                um.dbs.commit()
 
     ret = example.to_dict()
     if credentials["id"] != "turk":

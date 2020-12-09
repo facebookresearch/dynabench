@@ -66,7 +66,7 @@ class Badge(Base):
     EXAMPLE_STREAK_100
     DAY_STREAK_2
     DAY_STREAK_3
-    DAY_STREAK_3
+    DAY_STREAK_5
     DAY_STREAK_1_WEEK
     DAY_STREAK_2_WEEK
     DAY_STREAK_1_MONTH
@@ -366,23 +366,28 @@ class BadgeModel(BaseModel):
                                 recomputed_day_streak_badge_names.remove(badge.name)
                             else:
                                 badges_to_remove.append(badge)
+
+                    num_created_by_task = self.getFieldsFromMetadata(
+                        metadata,
+                        0,
+                        [
+                            task_name + "_fooling_no_verified_incorrect_or_flagged"
+                            for task_name in self.task_shortname_to_badge_name
+                        ],
+                    )
+
                     for (
                         contributor_type,
                         num_required_creations,
                         _,
                     ) in self.contributor_type_num_required_creations_and_validations:
                         if badge.name == "DYNABENCH_" + contributor_type:
-                            num_created_by_task = self.getFieldsFromMetadata(
-                                metadata,
-                                0,
-                                [
-                                    task_name
-                                    + "_fooling_no_verified_incorrect_or_flagged"
-                                    for task_name in self.task_shortname_to_badge_name
-                                ],
-                            )
                             if sum(num_created_by_task) < num_required_creations:
                                 badges_to_remove.append(badge)
+
+                    if badge.name == "ALL_TASKS_COVERED" and 0 in num_created_by_task:
+                        badges_to_remove.append(badge)
+
                     for task_name in self.task_shortname_to_badge_name:
                         for (
                             contributor_type,
@@ -507,18 +512,18 @@ class BadgeModel(BaseModel):
             scores = sm.getByMid(model.id)
             for score in scores:
                 round = rm.get(score.rid)
-                if model.id == sm.getOverallModelPerfByTask(round.tid)[0][0].id:
+                if model.id == sm.getOverallModelPerfByTask(round.tid)[0][0][0]:
                     badges_to_add.append(
-                        self._badgeobj(user.id, "SOTA", {"mid": model.id})
+                        self._badgeobj(user.id, "SOTA", json.dumps({"mid": model.id}))
                     )
                     break
 
                 if (
                     model.id
-                    == sm.getModelPerfByTidAndRid(round.tid, round.rid)[0][0].id
+                    == sm.getModelPerfByTidAndRid(round.tid, round.rid)[0][0][0]
                 ):
                     badges_to_add.append(
-                        self._badgeobj(user.id, "SOTA", {"mid": model.id})
+                        self._badgeobj(user.id, "SOTA", json.dumps({"mid": model.id}))
                     )
                     break
 
@@ -589,7 +594,7 @@ class BadgeModel(BaseModel):
                 example.context.round.task.shortname
                 + "_fooling_no_verified_incorrect_or_flagged",
             )
-            user.streak_examples = user.streak_examples + 1
+            user.streak_examples += 1
             now = datetime.datetime.now()
             if user.streak_days_last_model_wrong is None:
                 user.streak_days_last_model_wrong = now
@@ -648,34 +653,32 @@ class BadgeModel(BaseModel):
                                 + "_"
                                 + contributor_type
                             )
+
+            num_created_by_task = self.getFieldsFromMetadata(
+                metadata,
+                0,
+                [
+                    task_name + "_fooling_no_verified_incorrect_or_flagged"
+                    for task_name in self.task_shortname_to_badge_name
+                ],
+            )
+            num_validated_by_task = self.getFieldsFromMetadata(
+                metadata,
+                0,
+                [
+                    task_name + "_validated"
+                    for task_name in self.task_shortname_to_badge_name
+                ],
+            )
+
             for (
                 contributor_type,
                 num_creations_required,
                 num_validations_required,
             ) in self.contributor_type_num_required_creations_and_validations:
                 if (
-                    sum(
-                        self.getFieldsFromMetadata(
-                            metadata,
-                            0,
-                            [
-                                task_name + "_fooling_no_verified_incorrect_or_flagged"
-                                for task_name in self.task_shortname_to_badge_name
-                            ],
-                        )
-                    )
-                    >= num_creations_required
-                    and sum(
-                        self.getFieldsFromMetadata(
-                            metadata,
-                            0,
-                            [
-                                task_name + "_validated"
-                                for task_name in self.task_shortname_to_badge_name
-                            ],
-                        )
-                    )
-                    >= num_validations_required
+                    sum(num_created_by_task) >= num_creations_required
+                    and sum(num_validated_by_task) >= num_validations_required
                     and self.lengthOfFilteredList(
                         lambda badge: badge.name == "DYNABENCH_" + contributor_type,
                         existing_badges,
@@ -683,6 +686,15 @@ class BadgeModel(BaseModel):
                     == 0
                 ):
                     badge_names_to_add.append("DYNABENCH_" + contributor_type)
+
+        if (
+            0 not in num_created_by_task + num_validated_by_task
+            and self.lengthOfFilteredList(
+                lambda badge: badge.name == "ALL_TASKS_COVERED", existing_badges
+            )
+            == 0
+        ):
+            badge_names_to_add.append("ALL_TASKS_COVERED")
 
         # Example streaks
         for num_required in self.example_streak_num_required:

@@ -30,6 +30,9 @@ const Badge = (props) => {
     case 'DYNABENCH_PLATINUM':
       desc = 'Dynabench platinum!';
     break;
+    case 'DYNABENCH_DIAMOND':
+      desc = 'Dynabench diamond!';
+    break;
     case 'DYNABENCH_HS_BRONZE':
       desc = 'Dynabench hate speech bronze!';
     break;
@@ -40,6 +43,9 @@ const Badge = (props) => {
       desc = 'Dynabench hate speech silver!';
     break;
     case 'DYNABENCH_HS_PLATINUM':
+      desc = 'Dynabench hate speech platinum!';
+    break;
+    case 'DYNABENCH_HS_DIAMOND':
       desc = 'Dynabench hate speech platinum!';
     break;
     case 'DYNABENCH_NLI_BRONZE':
@@ -54,6 +60,9 @@ const Badge = (props) => {
     case 'DYNABENCH_NLI_PLATINUM':
       desc = 'Dynabench natrual language inference platinum!';
     break;
+    case 'DYNABENCH_NLI_DIAMOND':
+      desc = 'Dynabench natrual language inference diamond!';
+    break;
     case 'DYNABENCH_QA_BRONZE':
       desc = 'Dynabench question answering bronze!';
     break;
@@ -66,6 +75,9 @@ const Badge = (props) => {
     case 'DYNABENCH_QA_PLATINUM':
       desc = 'Dynabench question answering platinum!';
     break;
+    case 'DYNABENCH_QA_DIAMOND':
+      desc = 'Dynabench question answering diamond!';
+    break;
     case 'DYNABENCH_SENT_BRONZE':
       desc = 'Dynabench sentiment analysis bronze!';
     break;
@@ -77,6 +89,9 @@ const Badge = (props) => {
     break;
     case 'DYNABENCH_SENT_PLATINUM':
       desc = 'Dynabench sentiment analysis platinum!';
+    break;
+    case 'DYNABENCH_SENT_DIAMOND':
+      desc = 'Dynabench sentiment analysis diamond!';
     break;
     case 'TESTING_BADGES':
       desc = 'Test badge!';
@@ -132,8 +147,8 @@ const Badge = (props) => {
     case 'DAY_STREAK_3':
       desc = 'Three day streak!';
     break;
-    case 'DAY_STREAK_3':
-      desc = 'Three day streak!';
+    case 'DAY_STREAK_5':
+      desc = 'Five day streak!';
     break;
     case 'DAY_STREAK_1_WEEK':
       desc = 'One week streak!';
