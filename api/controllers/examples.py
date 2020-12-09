@@ -172,6 +172,10 @@ def post_example(credentials):
     elif int(data["uid"]) != credentials["id"]:
         bottle.abort(403, "Access denied")
 
+    tag = None
+    if "tag" in data:
+        tag = data["tag"]
+
     em = ExampleModel()
     example = em.create(
         tid=data["tid"],
@@ -182,6 +186,7 @@ def post_example(credentials):
         tgt=data["target"],
         response=data["response"],
         metadata=data["metadata"],
+        tag=tag,
     )
     if not example:
         bottle.abort(400, "Could not create example")

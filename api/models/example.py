@@ -75,7 +75,7 @@ class ExampleModel(BaseModel):
     def __init__(self):
         super().__init__(Example)
 
-    def create(self, tid, rid, uid, cid, hypothesis, tgt, response, metadata):
+    def create(self, tid, rid, uid, cid, hypothesis, tgt, response, metadata, tag=None):
         if uid == "turk" and "annotator_id" not in metadata:
             logger.error("Annotator id not specified but received Turk example")
             return False
@@ -126,6 +126,7 @@ class ExampleModel(BaseModel):
                 model_wrong=model_wrong,
                 generated_datetime=db.sql.func.now(),
                 metadata_json=json.dumps(metadata),
+                tag=tag,
             )
 
             # store uid/annotator_id

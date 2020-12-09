@@ -375,7 +375,7 @@ export default class ApiService {
     );
   }
 
-  storeExample(tid, rid, uid, cid, hypothesis, target, response, metadata) {
+  storeExample(tid, rid, uid, cid, hypothesis, target, response, metadata, tag=null) {
     return this.fetch(`${this.domain}/examples`, {
       method: "POST",
       body: JSON.stringify({
@@ -387,6 +387,7 @@ export default class ApiService {
         target: target,
         response: response,
         metadata: metadata,
+        tag: tag,
       }),
     });
   }
