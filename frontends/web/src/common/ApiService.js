@@ -203,21 +203,30 @@ export default class ApiService {
     });
   }
 
-  getRandomContext(tid, rid) {
+  getRandomContext(tid, rid, tags=null) {
     return this.fetch(`${this.domain}/contexts/${tid}/${rid}`, {
-      method: "GET",
+      method: "POST",
+      body: JSON.stringify({
+        tags: tags,
+      }),
     });
   }
 
-  getRandomExample(tid, rid) {
+  getRandomExample(tid, rid, tags=null) {
     return this.fetch(`${this.domain}/examples/${tid}/${rid}`, {
-      method: "GET",
+      method: "POST",
+      body: JSON.stringify({
+        tags: tags,
+      }),
     });
   }
 
-  getRandomFilteredExample(tid, rid, minNumFlags, maxNumFlags, minNumDisagreements, maxNumDisagreements) {
+  getRandomFilteredExample(tid, rid, minNumFlags, maxNumFlags, minNumDisagreements, maxNumDisagreements, tags=null) {
     return this.fetch(`${this.domain}/examples/${tid}/${rid}/filtered/${minNumFlags}/${maxNumFlags}/${minNumDisagreements}/${maxNumDisagreements}`, {
-      method: "GET",
+      method: "POST",
+      body: JSON.stringify({
+        tags: tags,
+      }),
     });
   }
 

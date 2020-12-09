@@ -16,7 +16,7 @@ from models.task import TaskModel
 from models.user import UserModel
 
 
-@bottle.get(
+@bottle.post(
     "/examples/<tid:int>/<rid:int>/filtered/<min_num_flags:int>/"
     + "<max_num_flags:int>/<min_num_disagreements:int>/<max_num_disagreements:int>"
 )
@@ -30,6 +30,11 @@ def get_random_filtered_example(
     min_num_disagreements,
     max_num_disagreements,
 ):
+    data = bottle.request.json
+    tags = None
+    if "tags" in data:
+        tags = data["tags"]
+
     tm = TaskModel()
     task = tm.get(tid)
     validate_non_fooling = False
@@ -47,6 +52,7 @@ def get_random_filtered_example(
         max_num_disagreements,
         validate_non_fooling,
         n=1,
+        tags=tags,
     )
     if not example:
         bottle.abort(500, f"No examples available ({round.id})")
@@ -54,9 +60,14 @@ def get_random_filtered_example(
     return util.json_encode(example)
 
 
-@bottle.get("/examples/<tid:int>/<rid:int>")
+@bottle.post("/examples/<tid:int>/<rid:int>")
 @_auth.requires_auth_or_turk
 def get_random_example(credentials, tid, rid):
+    data = bottle.request.json
+    tags = None
+    if "tags" in data:
+        tags = data["tags"]
+
     tm = TaskModel()
     task = tm.get(tid)
     validate_non_fooling = False
@@ -75,6 +86,7 @@ def get_random_example(credentials, tid, rid):
             num_matching_validations,
             n=1,
             my_uid=credentials["id"],
+            tags=tags,
         )
     else:
         example = em.getRandom(
