@@ -581,7 +581,7 @@ class BadgeModel(BaseModel):
 
     def handleCreateInterface(self, user, example):
         badge_names_to_add = []
-        user.examples_submitted = user.examples_submitted + 1
+        user.examples_submitted += 1
         streak_days_increased = False
         if example.model_wrong:
             self.incrementUserMetadataField(
@@ -632,24 +632,22 @@ class BadgeModel(BaseModel):
                                 task_name + "_fooling_no_verified_incorrect_or_flagged"
                             ]
                             == num_required
+                            and self.lengthOfFilteredList(
+                                lambda badge: badge.name
+                                == "DYNABENCH_"
+                                + self.task_shortname_to_badge_name[task_name]
+                                + "_"
+                                + contributor_type,
+                                existing_badges,
+                            )
+                            == 0
                         ):
-                            if (
-                                self.lengthOfFilteredList(
-                                    lambda badge: badge.name
-                                    == "DYNABENCH_"
-                                    + self.task_shortname_to_badge_name[task_name]
-                                    + "_"
-                                    + contributor_type,
-                                    existing_badges,
-                                )
-                                == 0
-                            ):
-                                badge_names_to_add.append(
-                                    "DYNABENCH_"
-                                    + self.task_shortname_to_badge_name[task_name]
-                                    + "_"
-                                    + contributor_type
-                                )
+                            badge_names_to_add.append(
+                                "DYNABENCH_"
+                                + self.task_shortname_to_badge_name[task_name]
+                                + "_"
+                                + contributor_type
+                            )
             for (
                 contributor_type,
                 num_creations_required,
@@ -678,15 +676,13 @@ class BadgeModel(BaseModel):
                         )
                     )
                     >= num_validations_required
+                    and self.lengthOfFilteredList(
+                        lambda badge: badge.name == "DYNABENCH_" + contributor_type,
+                        existing_badges,
+                    )
+                    == 0
                 ):
-                    if (
-                        self.lengthOfFilteredList(
-                            lambda badge: badge.name == "DYNABENCH_" + contributor_type,
-                            existing_badges,
-                        )
-                        == 0
-                    ):
-                        badge_names_to_add.append("DYNABENCH_" + contributor_type)
+                    badge_names_to_add.append("DYNABENCH_" + contributor_type)
 
         # Example streaks
         for num_required in self.example_streak_num_required:
@@ -733,14 +729,14 @@ class BadgeModel(BaseModel):
                     for task_name in self.task_shortname_to_badge_name
                 ],
             )
-            if 0 not in num_created_by_task + num_validated_by_task:
-                if (
-                    self.lengthOfFilteredList(
-                        lambda badge: badge.name == "ALL_TASKS_COVERED", existing_badges
-                    )
-                    == 0
-                ):
-                    badge_names_to_add.append("ALL_TASKS_COVERED")
+            if (
+                0 not in num_created_by_task + num_validated_by_task
+                and self.lengthOfFilteredList(
+                    lambda badge: badge.name == "ALL_TASKS_COVERED", existing_badges
+                )
+                == 0
+            ):
+                badge_names_to_add.append("ALL_TASKS_COVERED")
             for (
                 contributor_type,
                 num_creations_required,
@@ -749,15 +745,13 @@ class BadgeModel(BaseModel):
                 if (
                     sum(num_created_by_task) >= num_creations_required
                     and sum(num_validated_by_task) >= num_validations_required
+                    and self.lengthOfFilteredList(
+                        lambda badge: badge.name == "DYNABENCH_" + contributor_type,
+                        existing_badges,
+                    )
+                    == 0
                 ):
-                    if (
-                        self.lengthOfFilteredList(
-                            lambda badge: badge.name == "DYNABENCH_" + contributor_type,
-                            existing_badges,
-                        )
-                        == 0
-                    ):
-                        badge_names_to_add.append("DYNABENCH_" + contributor_type)
+                    badge_names_to_add.append("DYNABENCH_" + contributor_type)
 
         badges_to_add = [self._badgeobj(user.id, name) for name in badge_names_to_add]
         self.createNotificationsAndAddBadges(badges_to_add)
