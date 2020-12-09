@@ -213,7 +213,7 @@ class BadgeModel(BaseModel):
     def lengthOfFilteredList(self, function, iterable):
         return len(list(filter(function, iterable)))
 
-    def handleCronjob(self):
+    def handleAsync(self):
         one_week_ago = datetime.datetime.now() - datetime.timedelta(days=7)
         badges_to_remove = []
         badges_to_add = []
@@ -490,7 +490,7 @@ class BadgeModel(BaseModel):
             user, model.task.shortname + "_models_published"
         )
 
-        badges = []
+        badges_to_add = []
         existing_badges = self.getByUid(user.id)
 
         # SOTA badge
@@ -508,14 +508,18 @@ class BadgeModel(BaseModel):
             for score in scores:
                 round = rm.get(score.rid)
                 if model.id == sm.getOverallModelPerfByTask(round.tid)[0][0].id:
-                    badges.append(self._badgeobj(user.id, "SOTA", {"mid": model.id}))
+                    badges_to_add.append(
+                        self._badgeobj(user.id, "SOTA", {"mid": model.id})
+                    )
                     break
 
                 if (
                     model.id
                     == sm.getModelPerfByTidAndRid(round.tid, round.rid)[0][0].id
                 ):
-                    badges.append(self._badgeobj(user.id, "SOTA", {"mid": model.id}))
+                    badges_to_add.append(
+                        self._badgeobj(user.id, "SOTA", {"mid": model.id})
+                    )
                     break
 
         models_published = self.getFieldsFromMetadata(
@@ -536,7 +540,7 @@ class BadgeModel(BaseModel):
             == 0
         ):
             if models_published_sum > 1:
-                badges.append(self._badgeobj(user.id, "SERIAL_PREDICTOR"))
+                badges_to_add.append(self._badgeobj(user.id, "SERIAL_PREDICTOR"))
 
         # MODEL_BUILDER badge
         if (
@@ -546,7 +550,7 @@ class BadgeModel(BaseModel):
             == 0
         ):
             if models_published_sum > 0:
-                badges.append(self._badgeobj(user.id, "MODEL_BUILDER"))
+                badges_to_add.append(self._badgeobj(user.id, "MODEL_BUILDER"))
 
         # MULTITASKER badge
         if (
@@ -556,10 +560,10 @@ class BadgeModel(BaseModel):
             == 0
         ):
             if 0 not in models_published:
-                badges.append(self._badgeobj(user.id, "MULTITASKER"))
+                badges_to_add.append(self._badgeobj(user.id, "MULTITASKER"))
 
-        self.createNotificationsAndAddBadges(badges)
-        return [badge["name"] for badge in badges]
+        self.createNotificationsAndAddBadges(badges_to_add)
+        return [badge["name"] for badge in badges_to_add]
 
     def handleHomePage(self, user):
         badge_names = []
@@ -576,7 +580,7 @@ class BadgeModel(BaseModel):
         return badge_names
 
     def handleCreateInterface(self, user, example):
-        badges = []
+        badge_names_to_add = []
         user.examples_submitted = user.examples_submitted + 1
         streak_days_increased = False
         if example.model_wrong:
@@ -609,9 +613,9 @@ class BadgeModel(BaseModel):
 
         # beginner badges
         if user.examples_submitted == 1:
-            badges.append("FIRST_CREATED")
+            badge_names_to_add.append("FIRST_CREATED")
         if user.examples_submitted == 10:
-            badges.append("FIRST_TEN_CREATED")
+            badge_names_to_add.append("FIRST_TEN_CREATED")
 
         # Contributor badges
         existing_badges = self.getByUid(user.id)
@@ -640,7 +644,7 @@ class BadgeModel(BaseModel):
                                 )
                                 == 0
                             ):
-                                badges.append(
+                                badge_names_to_add.append(
                                     "DYNABENCH_"
                                     + self.task_shortname_to_badge_name[task_name]
                                     + "_"
@@ -682,33 +686,33 @@ class BadgeModel(BaseModel):
                         )
                         == 0
                     ):
-                        badges.append("DYNABENCH_" + contributor_type)
+                        badge_names_to_add.append("DYNABENCH_" + contributor_type)
 
         # Example streaks
         for num_required in self.example_streak_num_required:
             if user.streak_examples == num_required:
-                badges.append("EXAMPLE_STREAK_" + str(num_required))
+                badge_names_to_add.append("EXAMPLE_STREAK_" + str(num_required))
 
         # Day streaks
         if streak_days_increased:
             for streak_type, num_required in self.day_streak_type_and_num_required_days:
                 if user.streak_days == num_required:
-                    badges.append("DAY_STREAK_" + streak_type)
+                    badge_names_to_add.append("DAY_STREAK_" + streak_type)
 
-        badges = [self._badgeobj(user.id, name) for name in badges]
-        self.createNotificationsAndAddBadges(badges)
-        return [badge["name"] for badge in badges]
+        badges_to_add = [self._badgeobj(user.id, name) for name in badge_names_to_add]
+        self.createNotificationsAndAddBadges(badges_to_add)
+        return badge_names_to_add
 
     def handleValidateInterface(self, user, example):
         self.incrementUserMetadataField(
             user, example.context.round.task.shortname + "_validated"
         )
-        badges = []
+        badge_names_to_add = []
         existing_badges = self.getByUid(user.id)
 
         # Validate beginner badges
         if user.examples_verified == 1:
-            badges.append("FIRST_VERIFIED")
+            badge_names_to_add.append("FIRST_VERIFIED")
 
         # Contributor badges
         if user.metadata_json:
@@ -736,7 +740,7 @@ class BadgeModel(BaseModel):
                     )
                     == 0
                 ):
-                    badges.append("ALL_TASKS_COVERED")
+                    badge_names_to_add.append("ALL_TASKS_COVERED")
             for (
                 contributor_type,
                 num_creations_required,
@@ -753,8 +757,8 @@ class BadgeModel(BaseModel):
                         )
                         == 0
                     ):
-                        badges.append("DYNABENCH_" + contributor_type)
+                        badge_names_to_add.append("DYNABENCH_" + contributor_type)
 
-        badges = [self._badgeobj(user.id, name) for name in badges]
-        self.createNotificationsAndAddBadges(badges)
-        return [badge["name"] for badge in badges]
+        badges_to_add = [self._badgeobj(user.id, name) for name in badge_names_to_add]
+        self.createNotificationsAndAddBadges(badges_to_add)
+        return badge_names_to_add
