@@ -10,6 +10,9 @@ from models.user import User, UserModel
 from models.validation import Validation, ValidationModel
 
 
+__depends__ = {"20201208_add-tag-to-examples-and-contexts"}
+
+
 def apply_step(conn):
     cursor = conn.cursor()
 

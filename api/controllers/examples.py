@@ -16,9 +16,10 @@ from models.task import TaskModel
 from models.user import UserModel
 
 
-@bottle.post(
+@bottle.get(
     "/examples/<tid:int>/<rid:int>/filtered/<min_num_flags:int>/"
-    + "<max_num_flags:int>/<min_num_disagreements:int>/<max_num_disagreements:int>"
+    + "<max_num_flags:int>/<min_num_disagreements:int>/<max_num_disagreements:int>/"
+    + "<tags>"
 )
 @_auth.requires_auth
 def get_random_filtered_example(
@@ -29,11 +30,9 @@ def get_random_filtered_example(
     max_num_flags,
     min_num_disagreements,
     max_num_disagreements,
+    tags,
 ):
-    data = bottle.request.json
-    tags = None
-    if "tags" in data:
-        tags = data["tags"]
+    tags = json.loads(tags)["tags"]
 
     tm = TaskModel()
     task = tm.get(tid)
@@ -60,13 +59,10 @@ def get_random_filtered_example(
     return util.json_encode(example)
 
 
-@bottle.post("/examples/<tid:int>/<rid:int>")
+@bottle.get("/examples/<tid:int>/<rid:int>/<tags>")
 @_auth.requires_auth_or_turk
-def get_random_example(credentials, tid, rid):
-    data = bottle.request.json
-    tags = None
-    if "tags" in data:
-        tags = data["tags"]
+def get_random_example(credentials, tid, rid, tags):
+    tags = json.loads(tags)["tags"]
 
     tm = TaskModel()
     task = tm.get(tid)

@@ -1,5 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+import json
+
 import bottle
 
 import common.auth as _auth
@@ -8,24 +10,18 @@ from models.context import ContextModel
 from models.round import RoundModel
 
 
-@bottle.post("/contexts/<tid:int>/<rid:int>")
-@bottle.post("/contexts/<tid:int>/<rid:int>/min")
-def getContext(tid, rid):
-    data = bottle.request.json
-    tags = None
-    if "tags" in data:
-        tags = data["tags"]
+@bottle.get("/contexts/<tid:int>/<rid:int>/<tags>")
+@bottle.get("/contexts/<tid:int>/<rid:int>/<tags>/min")
+def getContext(tid, rid, tags):
+    tags = json.loads(tags)["tags"]
 
     return _getContext(tid, rid, tags=tags)
 
 
-@bottle.post("/contexts/<tid:int>/<rid:int>/uniform")
+@bottle.get("/contexts/<tid:int>/<rid:int>/<tags>/uniform")
 @_auth.requires_auth_or_turk
-def getUniformContext(credentials, tid, rid):
-    data = bottle.request.json
-    tags = None
-    if "tags" in data:
-        tags = data["tags"]
+def getUniformContext(credentials, tid, rid, tags):
+    tags = json.loads(tags)["tags"]
 
     return _getContext(tid, rid, "uniform", tags)
 
