@@ -1,7 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
-from urllib.parse import unquote
+from urllib.parse import parse_qs
 
 import bottle
 
@@ -31,10 +31,10 @@ def get_random_filtered_example(
     min_num_disagreements,
     max_num_disagreements,
 ):
-    try:
-        tags = json.loads(unquote(bottle.request.query_string))["tags"]
-    except Exception:
-        bottle.abort(500, {"error getting tags"})
+    query_dict = parse_qs(bottle.request.query_string)
+    tags = None
+    if "tags" in query_dict and len(query_dict["tags"]) > 0:
+        tags = query_dict["tags"][0].split("|")
 
     tm = TaskModel()
     task = tm.get(tid)
@@ -64,10 +64,10 @@ def get_random_filtered_example(
 @bottle.get("/examples/<tid:int>/<rid:int>")
 @_auth.requires_auth_or_turk
 def get_random_example(credentials, tid, rid):
-    try:
-        tags = json.loads(unquote(bottle.request.query_string))["tags"]
-    except Exception:
-        bottle.abort(500, {"error getting tags"})
+    query_dict = parse_qs(bottle.request.query_string)
+    tags = None
+    if "tags" in query_dict and len(query_dict["tags"]) > 0:
+        tags = query_dict["tags"][0].split("|")
 
     tm = TaskModel()
     task = tm.get(tid)

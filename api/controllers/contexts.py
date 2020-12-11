@@ -1,7 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
-import json
-from urllib.parse import unquote
+from urllib.parse import parse_qs
 
 import bottle
 
@@ -14,10 +13,10 @@ from models.round import RoundModel
 @bottle.get("/contexts/<tid:int>/<rid:int>")
 @bottle.get("/contexts/<tid:int>/<rid:int>/min")
 def getContext(tid, rid):
-    try:
-        tags = json.loads(unquote(bottle.request.query_string))["tags"]
-    except Exception:
-        bottle.abort(500, {"error getting tags"})
+    query_dict = parse_qs(bottle.request.query_string)
+    tags = None
+    if "tags" in query_dict and len(query_dict["tags"]) > 0:
+        tags = query_dict["tags"][0].split("|")
 
     return _getContext(tid, rid, tags=tags)
 
@@ -25,10 +24,10 @@ def getContext(tid, rid):
 @bottle.get("/contexts/<tid:int>/<rid:int>/uniform")
 @_auth.requires_auth_or_turk
 def getUniformContext(credentials, tid, rid):
-    try:
-        tags = json.loads(unquote(bottle.request.query_string))["tags"]
-    except Exception:
-        bottle.abort(500, {"error getting tags"})
+    query_dict = parse_qs(bottle.request.query_string)
+    tags = None
+    if "tags" in query_dict and len(query_dict["tags"]) > 0:
+        tags = query_dict["tags"][0].split("|")
 
     return _getContext(tid, rid, "uniform", tags)
 
