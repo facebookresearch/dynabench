@@ -1,6 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
+from urllib.parse import unquote
 
 import bottle
 
@@ -10,18 +11,24 @@ from models.context import ContextModel
 from models.round import RoundModel
 
 
-@bottle.get("/contexts/<tid:int>/<rid:int>/<tags>")
-@bottle.get("/contexts/<tid:int>/<rid:int>/<tags>/min")
-def getContext(tid, rid, tags):
-    tags = json.loads(tags)["tags"]
+@bottle.get("/contexts/<tid:int>/<rid:int>")
+@bottle.get("/contexts/<tid:int>/<rid:int>/min")
+def getContext(tid, rid):
+    try:
+        tags = json.loads(unquote(bottle.request.query_string))["tags"]
+    except Exception:
+        bottle.abort(500, {"error getting tags"})
 
     return _getContext(tid, rid, tags=tags)
 
 
-@bottle.get("/contexts/<tid:int>/<rid:int>/<tags>/uniform")
+@bottle.get("/contexts/<tid:int>/<rid:int>/uniform")
 @_auth.requires_auth_or_turk
-def getUniformContext(credentials, tid, rid, tags):
-    tags = json.loads(tags)["tags"]
+def getUniformContext(credentials, tid, rid):
+    try:
+        tags = json.loads(unquote(bottle.request.query_string))["tags"]
+    except Exception:
+        bottle.abort(500, {"error getting tags"})
 
     return _getContext(tid, rid, "uniform", tags)
 

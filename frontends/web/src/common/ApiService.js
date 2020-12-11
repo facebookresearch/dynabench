@@ -204,7 +204,7 @@ export default class ApiService {
   }
 
   getRandomContext(tid, rid, tags=null) {
-    return this.fetch(`${this.domain}/contexts/${tid}/${rid}/${JSON.stringify({tags: tags})}`, {
+    return this.fetch(`${this.domain}/contexts/${tid}/${rid}?${JSON.stringify({tags: tags})}`, {
       method: "GET",
       tags: JSON.stringify({
         tags: tags,
@@ -213,13 +213,13 @@ export default class ApiService {
   }
 
   getRandomExample(tid, rid, tags=null) {
-    return this.fetch(`${this.domain}/examples/${tid}/${rid}/${JSON.stringify({tags: tags})}`, {
+    return this.fetch(`${this.domain}/examples/${tid}/${rid}?${JSON.stringify({tags: tags})}`, {
       method: "GET",
     });
   }
 
   getRandomFilteredExample(tid, rid, minNumFlags, maxNumFlags, minNumDisagreements, maxNumDisagreements, tags=null) {
-    return this.fetch(`${this.domain}/examples/${tid}/${rid}/filtered/${minNumFlags}/${maxNumFlags}/${minNumDisagreements}/${maxNumDisagreements}/${JSON.stringify({tags: tags})}`, {
+    return this.fetch(`${this.domain}/examples/${tid}/${rid}/filtered/${minNumFlags}/${maxNumFlags}/${minNumDisagreements}/${maxNumDisagreements}?${JSON.stringify({tags: tags})}`, {
       method: "GET",
       tags: JSON.stringify({
         tags: tags,

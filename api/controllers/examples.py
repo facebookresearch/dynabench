@@ -1,6 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
+from urllib.parse import unquote
 
 import bottle
 
@@ -18,8 +19,7 @@ from models.user import UserModel
 
 @bottle.get(
     "/examples/<tid:int>/<rid:int>/filtered/<min_num_flags:int>/"
-    + "<max_num_flags:int>/<min_num_disagreements:int>/<max_num_disagreements:int>/"
-    + "<tags>"
+    + "<max_num_flags:int>/<min_num_disagreements:int>/<max_num_disagreements:int>"
 )
 @_auth.requires_auth
 def get_random_filtered_example(
@@ -30,9 +30,11 @@ def get_random_filtered_example(
     max_num_flags,
     min_num_disagreements,
     max_num_disagreements,
-    tags,
 ):
-    tags = json.loads(tags)["tags"]
+    try:
+        tags = json.loads(unquote(bottle.request.query_string))["tags"]
+    except Exception:
+        bottle.abort(500, {"error getting tags"})
 
     tm = TaskModel()
     task = tm.get(tid)
@@ -59,10 +61,13 @@ def get_random_filtered_example(
     return util.json_encode(example)
 
 
-@bottle.get("/examples/<tid:int>/<rid:int>/<tags>")
+@bottle.get("/examples/<tid:int>/<rid:int>")
 @_auth.requires_auth_or_turk
-def get_random_example(credentials, tid, rid, tags):
-    tags = json.loads(tags)["tags"]
+def get_random_example(credentials, tid, rid):
+    try:
+        tags = json.loads(unquote(bottle.request.query_string))["tags"]
+    except Exception:
+        bottle.abort(500, {"error getting tags"})
 
     tm = TaskModel()
     task = tm.get(tid)
