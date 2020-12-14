@@ -10,7 +10,7 @@ To run `async_badge_handler.py`, start the cron job editor with:
 
 Now enter the cronjob, remembering to source the file containing your conda setup and activate a conda environment if you use one.
 
-`0 1 * * * source ~/<.zshrc or equivalent depending on your setup> && conda activate <your environment> && cd /path/to/dynabench/api/cron && python async_badge_handler.py >handler_output.txt 2>handler_error.txt; conda deactivate`
+`0 1 * * * source ~/<.zshrc or equivalent depending on your setup> && conda activate <your environment> && cd /path/to/dynabench/api/cron && export PYTHONPATH=$PYTHONPATH:/path/to/dynabench/api && python async_badge_handler.py >handler_output.txt 2>handler_error.txt; conda deactivate`
 
 This example command runs the job at 1:00AM every day.
 If you are on the west coast of the US, then this is 9:00AM UTC.
