@@ -1,0 +1,17 @@
+#@package _global_
+mephisto:
+  blueprint:
+    onboarding_qualification: max-qa-1-onboarding
+  # architect:
+  #   port: 4000
+  task:
+    task_name: max-qa-1
+    task_title: Beat the AI at Reading Comprehension
+    task_description: >
+      You will be asked to write questions and select answers for a given question. An AI will then try to answer your question - if it answers incorrectly, you win, but if it gets the answer right, you lose and will have to try again. Good luck!
+    task_reward: 0.75
+    task_tags: "question answering, question, beat the AI, reading comprehension, AI"
+dynabench:
+  task_name: max-qa-1
+  task_id: 2
+  round_id: 2

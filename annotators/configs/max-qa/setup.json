@@ -1,0 +1,11 @@
+{
+    "task_name": "max-1",
+    "task_id": 11,
+    "round_id": 1,
+    "task_title": "Max's QA job",
+    "task_description": "Your job is ...",
+    "reward_in_dollars": 0.75,
+    "tags": "testing",
+    "onboarding_qualification_name": "max-qa-1-onboarding",
+    "qualifications": ["1000_hits_approved", "98_percent_approved", "english_only"]
+}
