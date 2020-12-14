@@ -459,6 +459,7 @@ class BadgeModel(BaseModel):
             badges_to_remove, "BADGE_REMOVED_STREAK"
         )
         self.createNotificationsAndAddBadges(badges_to_add)
+        print("Completed job")
 
     def handleUnpublishModel(self, user, model):
         self.incrementUserMetadataField(
@@ -687,14 +688,14 @@ class BadgeModel(BaseModel):
                 ):
                     badge_names_to_add.append("DYNABENCH_" + contributor_type)
 
-        if (
-            0 not in num_created_by_task + num_validated_by_task
-            and self.lengthOfFilteredList(
-                lambda badge: badge.name == "ALL_TASKS_COVERED", existing_badges
-            )
-            == 0
-        ):
-            badge_names_to_add.append("ALL_TASKS_COVERED")
+            if (
+                0 not in num_created_by_task + num_validated_by_task
+                and self.lengthOfFilteredList(
+                    lambda badge: badge.name == "ALL_TASKS_COVERED", existing_badges
+                )
+                == 0
+            ):
+                badge_names_to_add.append("ALL_TASKS_COVERED")
 
         # Example streaks
         for num_required in self.example_streak_num_required:

@@ -102,6 +102,9 @@ const Badge = (props) => {
     case 'FIRST_CREATED':
       desc = 'First example!';
     break;
+    case 'FIRST_STEPS':
+      desc = 'First steps!';
+    break;
     case 'FIRST_VALIDATED_FOOLING':
       desc = 'First time fooled!';
     break;
