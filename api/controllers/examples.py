@@ -1,6 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
+from urllib.parse import parse_qs
 
 import bottle
 
@@ -29,6 +30,11 @@ def get_random_filtered_example(
     min_num_disagreements,
     max_num_disagreements,
 ):
+    query_dict = parse_qs(bottle.request.query_string)
+    tags = None
+    if "tags" in query_dict and len(query_dict["tags"]) > 0:
+        tags = query_dict["tags"][0].split("|")
+
     tm = TaskModel()
     task = tm.get(tid)
     validate_non_fooling = False
@@ -46,6 +52,7 @@ def get_random_filtered_example(
         max_num_disagreements,
         validate_non_fooling,
         n=1,
+        tags=tags,
     )
     if not example:
         bottle.abort(500, f"No examples available ({round.id})")
@@ -56,6 +63,11 @@ def get_random_filtered_example(
 @bottle.get("/examples/<tid:int>/<rid:int>")
 @_auth.requires_auth_or_turk
 def get_random_example(credentials, tid, rid):
+    query_dict = parse_qs(bottle.request.query_string)
+    tags = None
+    if "tags" in query_dict and len(query_dict["tags"]) > 0:
+        tags = query_dict["tags"][0].split("|")
+
     tm = TaskModel()
     task = tm.get(tid)
     validate_non_fooling = False
@@ -74,6 +86,7 @@ def get_random_example(credentials, tid, rid):
             num_matching_validations,
             n=1,
             my_uid=credentials["id"],
+            tags=tags,
         )
     else:
         example = em.getRandom(
@@ -159,6 +172,10 @@ def post_example(credentials):
     elif int(data["uid"]) != credentials["id"]:
         bottle.abort(403, "Access denied")
 
+    tag = None
+    if "tag" in data:
+        tag = data["tag"]
+
     em = ExampleModel()
     example = em.create(
         tid=data["tid"],
@@ -169,6 +186,7 @@ def post_example(credentials):
         tgt=data["target"],
         response=data["response"],
         metadata=data["metadata"],
+        tag=tag,
     )
     if not example:
         bottle.abort(400, "Could not create example")

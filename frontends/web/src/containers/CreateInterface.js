@@ -63,7 +63,7 @@ function ContextInfo({ taskType, taskName, text, answer, updateAnswer }) {
   ) : (
     <div className="mb-1 p-3 light-gray-bg">
       {taskName === "NLI" ? <h6 className="text-uppercase dark-blue-color spaced-header">Context:</h6> : ''}
-      {taskName === "Sentiment" ? <h6 className="text-uppercase dark-blue-color spaced-header">Prompt:</h6> : ''}
+      {taskName === "Sentiment" ? <h6 className="text-uppercase dark-blue-color spaced-header">Inspiration Prompt:</h6> : ''}
       {text.replace("<br>", "\n")}
     </div>
   );
@@ -449,13 +449,13 @@ class ResponseInfo extends React.Component {
       }
 
       userFeedback = <>
-        <div>Model prediction: <strong>{this.props.obj.modelPredStr}</strong></div>
         {this.props.obj.fooled
           ? <span>
-              <strong>Well done!</strong> You fooled the model.
+              <strong>You fooled the model!</strong> It predicted <strong>{this.props.obj.modelPredStr}</strong>{" "}
+              but a person would say <strong>{this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]}</strong>
             </span>
           : <span>
-              <strong>Try again!</strong> The model wasn't fooled.
+              <strong>Try again!</strong> The model correctly predicted <strong>{this.props.obj.modelPredStr}</strong>
             </span>
         }
         {!this.state.livemode

@@ -209,20 +209,20 @@ export default class ApiService {
     });
   }
 
-  getRandomContext(tid, rid) {
-    return this.fetch(`${this.domain}/contexts/${tid}/${rid}`, {
+  getRandomContext(tid, rid, tags=[]) {
+    return this.fetch(`${this.domain}/contexts/${tid}/${rid}?tags=${encodeURIComponent(tags.join('|'))}`, {
       method: "GET",
     });
   }
 
-  getRandomExample(tid, rid) {
-    return this.fetch(`${this.domain}/examples/${tid}/${rid}`, {
+  getRandomExample(tid, rid, tags=[]) {
+    return this.fetch(`${this.domain}/examples/${tid}/${rid}?tags=${encodeURIComponent(tags.join('|'))}`, {
       method: "GET",
     });
   }
 
-  getRandomFilteredExample(tid, rid, minNumFlags, maxNumFlags, minNumDisagreements, maxNumDisagreements) {
-    return this.fetch(`${this.domain}/examples/${tid}/${rid}/filtered/${minNumFlags}/${maxNumFlags}/${minNumDisagreements}/${maxNumDisagreements}`, {
+  getRandomFilteredExample(tid, rid, minNumFlags, maxNumFlags, minNumDisagreements, maxNumDisagreements, tags=[]) {
+    return this.fetch(`${this.domain}/examples/${tid}/${rid}/filtered/${minNumFlags}/${maxNumFlags}/${minNumDisagreements}/${maxNumDisagreements}?tags=${encodeURIComponent(tags.join('|'))}`, {
       method: "GET",
     });
   }
@@ -372,7 +372,7 @@ export default class ApiService {
     );
   }
 
-  storeExample(tid, rid, uid, cid, hypothesis, target, response, metadata) {
+  storeExample(tid, rid, uid, cid, hypothesis, target, response, metadata, tag=null) {
     return this.fetch(`${this.domain}/examples`, {
       method: "POST",
       body: JSON.stringify({
@@ -384,6 +384,7 @@ export default class ApiService {
         target: target,
         response: response,
         metadata: metadata,
+        tag: tag,
       }),
     });
   }

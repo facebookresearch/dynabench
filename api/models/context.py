@@ -16,6 +16,8 @@ class Context(Base):
 
     context = db.Column(db.Text)
 
+    tag = db.Column(db.Text)
+
     metadata_json = db.Column(db.Text)  # e.g. source, or whatever
 
     total_used = db.Column(db.Integer, default=0)
@@ -36,7 +38,7 @@ class ContextModel(BaseModel):
     def __init__(self):
         super().__init__(Context)
 
-    def getRandom(self, rid, n=1):
+    def getRandom(self, rid, n=1, tags=None):
         # https://stackoverflow.com/questions/60805/getting-random-row-through-sqlalchemy
         # return dbs.query(Context).filter(Context.tid == tid).filter(
         #       Context.rid == rid).options(db.orm.load_only('id')).offset(
@@ -45,18 +47,27 @@ class ContextModel(BaseModel):
         #            dbs.query(db.sql.func.count(Context.id))
         #        )
         #    ).limit(n).all()
+
+        result = self.dbs.query(Context)
+
+        if tags:
+            result = result.filter(Context.tag.in_(tags))  # noqa
+
         return (
-            self.dbs.query(Context)
-            .filter(Context.r_realid == rid)
+            result.filter(Context.r_realid == rid)
             .order_by(db.sql.func.rand())
             .limit(n)
             .all()
         )
 
-    def getRandomMin(self, rid, n=1):
+    def getRandomMin(self, rid, n=1, tags=None):
+        result = self.dbs.query(Context)
+
+        if tags:
+            result = result.filter(Context.tag.in_(tags))  # noqa
+
         return (
-            self.dbs.query(Context)
-            .filter(Context.r_realid == rid)
+            result.filter(Context.r_realid == rid)
             .order_by(Context.total_used.asc(), db.sql.func.rand())
             .limit(n)
             .all()
