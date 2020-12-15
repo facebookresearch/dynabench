@@ -2,18 +2,15 @@
 
 import json
 
+import sqlalchemy as db
+from sqlalchemy import MetaData
+from sqlalchemy.orm import scoped_session, sessionmaker
 from yoyo import step
 
-from models.example import Example, ExampleModel
-from models.round import Round, RoundModel
-from models.user import User, UserModel
-from models.validation import Validation, ValidationModel
+from common.config import config
 
 
-__depends__ = {
-    "20201208_add_metadata_json_to_users",
-    "20201208_add-tag-to-examples-and-contexts",
-}
+__depends__ = {}
 
 
 def apply_step(conn):
@@ -23,23 +20,56 @@ def apply_step(conn):
     cursor.execute("ALTER TABLE rounds ADD total_verified_fooled int default 0")
     cursor.execute("ALTER TABLE users ADD total_verified_not_fooled int default 0")
 
-    vm = ValidationModel()
-    validations = vm.dbs.query(Validation)
+    engine_url = "mysql+pymysql://{}:{}@{}:3306/{}".format(
+        config["db_user"], config["db_password"], config["db_host"], config["db_name"]
+    )
+    engine = db.create_engine(engine_url, pool_pre_ping=True, pool_recycle=3600)
+    engine.connect()
+    Session = scoped_session(sessionmaker())
+
+    META_DATA = MetaData(bind=engine, reflect=True)
+
+    Users = META_DATA.tables["users"]
+    Examples = META_DATA.tables["examples"]
+    Rounds = META_DATA.tables["rounds"]
+    Validations = META_DATA.tables["validations"]
+    Contexts = META_DATA.tables["contexts"]
+    Tasks = META_DATA.tables["tasks"]
+
+    users = Session.query(Users)
+    examples = Session.query(Examples)
+    rounds = Session.query(Rounds)
+    validations = Session.query(Validations)
+    contexts = Session.query(Contexts)
+    tasks = Session.query(Tasks)
+
     eid_to_validations = {}
     for validation in validations:
         if validation.eid in eid_to_validations:
             eid_to_validations[validation.eid].append(validation)
         else:
             eid_to_validations[validation.eid] = [validation]
-
-    em = ExampleModel()
-    examples = em.dbs.query(Example)
+    tid_to_task = {}
+    for task in tasks:
+        tid_to_task[task.id] = task
+    r_realid_to_task = {}
+    for round in rounds:
+        if round.tid in tid_to_task:
+            r_realid_to_task[round.id] = tid_to_task[round.tid]
+    cid_to_task = {}
+    for context in contexts:
+        if context.r_realid in r_realid_to_task:
+            cid_to_task[context.id] = r_realid_to_task[context.r_realid]
+    eid_to_task = {}
+    for example in examples:
+        if example.cid in cid_to_task:
+            eid_to_task[example.id] = cid_to_task[example.cid]
     uid_to_total_verified_fooled = {}
     uid_to_total_verified_not_fooled = {}
     rid_to_total_verified_fooled = {}
     for example in examples:
         if example.id in eid_to_validations:
-            task = example.context.round.task
+            task = eid_to_task[example.id]
             num_matching_validations = 3
 
             if task.settings_json:
@@ -51,8 +81,8 @@ def apply_step(conn):
                 len(
                     list(
                         filter(
-                            lambda validation: validation.label.name == "flagged"
-                            or validation.label.name == "incorrect",
+                            lambda validation: validation.label == "flagged"
+                            or validation.label == "incorrect",
                             eid_to_validations[example.id],
                         )
                     )
@@ -62,10 +92,10 @@ def apply_step(conn):
                     list(
                         filter(
                             lambda validation: (
-                                validation.label.name == "flagged"
-                                or validation.label.name == "incorrect"
+                                validation.label == "flagged"
+                                or validation.label == "incorrect"
                             )
-                            and validation.mode.name == "owner",
+                            and validation.mode == "owner",
                             eid_to_validations[example.id],
                         )
                     )
@@ -80,7 +110,7 @@ def apply_step(conn):
                 len(
                     list(
                         filter(
-                            lambda validation: validation.label.name == "correct",
+                            lambda validation: validation.label == "correct",
                             eid_to_validations[example.id],
                         )
                     )
@@ -89,8 +119,8 @@ def apply_step(conn):
                 or len(
                     list(
                         filter(
-                            lambda validation: (validation.label.name == "correct")
-                            and validation.mode.name == "owner",
+                            lambda validation: (validation.label == "correct")
+                            and validation.mode == "owner",
                             eid_to_validations[example.id],
                         )
                     )
@@ -108,21 +138,17 @@ def apply_step(conn):
                 else:
                     rid_to_total_verified_fooled[example.context.r_realid] = 1
 
-    um = UserModel()
-    users = um.dbs.query(User)
     for user in users:
         if user.id in uid_to_total_verified_fooled:
             user.total_verified_fooled = uid_to_total_verified_fooled[user.id]
         if user.id in uid_to_total_verified_not_fooled:
             user.total_verified_not_fooled = uid_to_total_verified_not_fooled[user.id]
 
-    rm = RoundModel()
-    rounds = rm.dbs.query(Round)
     for round in rounds:
         if round.id in rid_to_total_verified_fooled:
             round.total_verified_fooled = rid_to_total_verified_fooled[round.id]
 
-    um.dbs.commit()
+    Session.commit()
 
 
 def rollback_step(conn):
