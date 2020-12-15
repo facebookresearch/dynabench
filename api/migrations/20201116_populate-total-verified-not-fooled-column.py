@@ -10,7 +10,10 @@ from models.user import User, UserModel
 from models.validation import Validation, ValidationModel
 
 
-__depends__ = {"20201208_add-tag-to-examples-and-contexts"}
+__depends__ = {
+    "20201208_add_metadata_json_to_users",
+    "20201208_add-tag-to-examples-and-contexts",
+}
 
 
 def apply_step(conn):

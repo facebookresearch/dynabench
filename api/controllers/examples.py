@@ -11,7 +11,6 @@ from common.logging import logger
 from models.badge import BadgeModel
 from models.context import ContextModel
 from models.example import ExampleModel
-from models.notification import NotificationModel
 from models.round import RoundModel
 from models.task import TaskModel
 from models.user import UserModel
@@ -205,19 +204,13 @@ def post_example(credentials):
         if example.model_wrong:
             um.incrementFooledCount(example.uid)
         bm = BadgeModel()
-        nm = NotificationModel()
         user = um.get(credentials["id"])
-        badges = bm.updateSubmitCountsAndCheckBadgesEarned(user, example, "create")
-        for badge in badges:
-            bm.addBadge(badge)
-            nm.create(credentials["id"], "NEW_BADGE_EARNED", badge["name"])
+        badge_names = bm.handleCreateInterface(user, em.get(example.id))
 
     return util.json_encode(
         {
             "success": "ok",
             "id": example.id,
-            "badges": "|".join([badge["name"] for badge in badges])
-            if (credentials["id"] != "turk" and badges)
-            else None,
+            "badges": "|".join(badge_names) if (credentials["id"] != "turk") else None,
         }
     )

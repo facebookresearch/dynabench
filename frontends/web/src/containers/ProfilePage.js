@@ -169,7 +169,24 @@ const NotificationsSubPage = (props) => {
                     message = (
                       <span>You've earned a new badge: <Badge format="text" name={notification.message} /></span>
                     );
+                  } else if (notification.type === "BADGE_REMOVED_STREAK") {
+                    message = (
+                      <span>
+                        At least one of your examples was validated as incorrect or flagged, which resulted in the removal of the badge:
+                        {" "}"<Badge format="text" name={notification.message}/>"
+                        . Win it back by generating more examples!
+                      </span>
+                    );
+                  } else if (notification.type === "BADGE_REMOVED_MODEL") {
+                    message = (
+                      <span>
+                        At least one of your models was unpublished, which resulted in the removal of the badge:
+                        {" "}"<Badge format="text" name={notification.message}/>"
+                        . Win it back by publishing more models!
+                      </span>
+                    );
                   }
+
                   if (!notification.seen) {
                     message = <strong><u>{message}</u></strong>;
                     created = <strong><u>{created}</u></strong>;

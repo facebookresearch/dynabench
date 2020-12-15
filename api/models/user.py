@@ -30,6 +30,7 @@ class User(Base):
     total_fooled = db.Column(db.Integer, default=0)
 
     settings_json = db.Column(db.Text)
+    metadata_json = db.Column(db.Text)
 
     examples_submitted = db.Column(db.Integer, default=0)
     examples_verified = db.Column(db.Integer, default=0)

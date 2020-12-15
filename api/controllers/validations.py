@@ -9,7 +9,6 @@ import common.helpers as util
 from models.badge import BadgeModel
 from models.context import ContextModel
 from models.example import ExampleModel
-from models.notification import NotificationModel
 from models.round import RoundModel
 from models.task import TaskModel
 from models.user import UserModel
@@ -116,18 +115,36 @@ def validate_example(credentials, eid):
             or (mode == "owner" and label != "correct")
         ):
             um.incrementVerifiedNotFooledCount(example.uid)
+            user = um.get(example.uid)
+            if user:
+                if user.metadata_json:
+                    metadata = json.loads(user.metadata_json)
+                    if (
+                        task.shortname + "_fooling_no_verified_incorrect_or_flagged"
+                        in metadata
+                    ):
+                        metadata[
+                            task.shortname + "_fooling_no_verified_incorrect_or_flagged"
+                        ] -= 1
+                    else:
+                        # Start recording this field now
+                        metadata[
+                            task.shortname + "_fooling_no_verified_incorrect_or_flagged"
+                        ] = 0
+                else:
+                    # Start recording this field now
+                    metadata = {
+                        task.shortname + "_fooling_no_verified_incorrect_or_flagged": 0
+                    }
+                user.metadata_json = json.dumps(metadata)
+                um.dbs.commit()
 
     ret = example.to_dict()
     if credentials["id"] != "turk":
         user = um.updateValidatedCount(credentials["id"])
 
         bm = BadgeModel()
-        nm = NotificationModel()
-        badges = bm.updateSubmitCountsAndCheckBadgesEarned(user, example, "validate")
-        for badge in badges:
-            bm.addBadge(badge)
-            nm.create(credentials["id"], "NEW_BADGE_EARNED", badge["name"])
-        if badges:
-            ret["badges"] = "|".join([badge["name"] for badge in badges])
+        badge_names = bm.handleValidateInterface(user, example)
+        ret["badges"] = "|".join(badge_names)
 
     return util.json_encode(ret)
