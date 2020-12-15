@@ -26,6 +26,8 @@ from util import get_qualifications
 CURRENT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
 if os.path.exists("./Mephisto"):  # noqa
+    import sys
+
     sys.path.insert(0, "./Mephisto")  # noqa
     print("WARNING: Loading Mephisto from local directory")  # noqa
 import mephisto  # noqa isort:skip
