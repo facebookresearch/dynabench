@@ -112,6 +112,12 @@ export default class ApiService {
     });
   }
 
+  getAPIToken() {
+    return this.fetch(`${this.domain}/authenticate/generate_api_token`, {
+      method: "GET",
+    })
+  }
+
   getTasks() {
     return this.fetch(`${this.domain}/tasks`, {
       method: "GET",

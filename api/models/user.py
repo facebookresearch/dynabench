@@ -42,6 +42,8 @@ class User(Base):
     streak_days = db.Column(db.Integer, default=0)
     streak_days_last_model_wrong = db.Column(db.DateTime, nullable=True)
 
+    api_token = db.Column(db.String(length=255))
+
     avatar_url = db.Column(db.Text)
 
     def __repr__(self):
@@ -61,6 +63,7 @@ class User(Base):
                 "refresh_token",
                 "forgot_password_token",
                 "forgot_password_token_expiry_date",
+                "api_token",
             ]:
                 continue
             d[column.name] = getattr(self, column.name)
@@ -123,7 +126,16 @@ class UserModel(BaseModel):
         except db.orm.exc.NoResultFound:
             return False
 
+    def getByAPIToken(self, api_token):
+        try:
+            return self.dbs.query(User).filter(User.api_token == api_token).one()
+        except db.orm.exc.NoResultFound:
+            return False
+
     def generate_password_reset_token(self):
+        return self.generate_secret_token()
+
+    def generate_secret_token(self):
         return secrets.token_hex(64)
 
     def exists(self, email=None, username=None):
