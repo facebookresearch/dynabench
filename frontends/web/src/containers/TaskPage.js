@@ -25,10 +25,12 @@ import {
   InputGroup
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
+import { Formik } from "formik";
 import UserContext from "./UserContext";
 import { LineRechart } from "../components/Rechart";
 import { Avatar } from "../components/Avatar/Avatar";
 import Moment from "react-moment";
+import DragAndDrop from "../components/DragAndDrop/DragAndDrop";
 import {
   OverlayProvider,
   Annotation,
@@ -516,6 +518,43 @@ class TaskPage extends React.Component {
       });
   }
 
+  escapeRegExp = (string) => {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  handleValidation = (values) => {
+    const errors = {};
+    let allowedTaskExtension = ".jsonl";
+    const allowedExtensions = new RegExp(this.escapeRegExp(allowedTaskExtension)+"$", "i");
+
+    if (!values.file) {
+      errors.file = "Required";
+      values.result = "";
+    } else if (!allowedExtensions.exec(values.file.name)) {
+      errors.file = "Invalid file type - Please upload in "+allowedTaskExtension+" format";
+      values.result = "";
+    }
+    return errors;
+  };
+
+  handleSubmit = (values, { setFieldValue, setSubmitting }) => {
+    const reqObj = {
+      taskId: this.state.taskId,
+      file: values.file,
+    };
+    this.context.api
+      .submitContexts(reqObj)
+      .then((result) => {
+        setSubmitting(false);
+        setFieldValue("file", null, false);
+        setFieldValue("result", "Submitted!", false);
+      }, (error) => {
+        setSubmitting(false);
+        setFieldValue("result", "Failed To Submit. Plese try again");
+        console.log(error);
+      });
+  };
+
   paginate = (component, state) => {
     const componentPageState =
       component === "model" ? "modelLeaderBoardPage" : "userLeaderBoardPage";
@@ -628,6 +667,92 @@ class TaskPage extends React.Component {
                   </span>
                   Click here to export data from the <br/>
                   current round or all rounds
+                  <hr/>
+                  Add new contexts to the current round by uploading them here, as a jsonl where each datum has three fields: <br/> <br/>
+                  <b>text</b>: a string representation of the context <br/>
+                  <b>tag</b>: a string that associates this context with a set of other contexts <br/>
+                  <b>metadata</b>: a dictionary in json format representing any other data that is useful to you <br/> <br/>
+                  <Formik
+                    initialValues={{
+                      file: null,
+                      result: "",
+                    }}
+                    validate={this.handleValidation}
+                    onSubmit={this.handleSubmit}
+                  >
+                    {({
+                      values,
+                      errors,
+                      handleChange,
+                      setFieldValue,
+                      handleSubmit,
+                      isSubmitting,
+                      setValues,
+                    }) => (
+                        <form
+                          onSubmit={handleSubmit}
+                          encType="multipart/form-data"
+                        >
+                          <Container>
+                            <Form.Group>
+                              {values.file ? (
+                                <div className="UploadResult">
+                                  <Card>
+                                    <Card.Body>
+                                      <Container>
+                                        <Row>
+                                          <Col md={10}>{values.file.name}</Col>
+                                          <Col md={2}>
+                                            <Button
+                                              variant="outline-danger"
+                                              size="sm"
+                                              onClick={(event) => {
+                                                setFieldValue("result", "");
+                                                setFieldValue("file", null);
+                                              }}
+                                            >
+                                              Delete
+                                            </Button>
+                                          </Col>
+                                        </Row>
+                                      </Container>
+                                    </Card.Body>
+                                  </Card>
+                                </div>
+                              ) : (
+                                <DragAndDrop
+                                  handleChange={(event) => {
+                                    setValues({
+                                      ...values,
+                                      file: event.currentTarget.files[0],
+                                      result: "",
+                                    });
+                                  }}
+                                  required={errors.file}
+                                  name="file"
+                                >
+                                  Drag
+                                </DragAndDrop>
+                              )}
+                              <small className="form-text text-muted">
+                                {errors.file}
+                                {values.result}
+                              </small>
+                              <InputGroup>
+                              <Button
+                                type="submit"
+                                variant="primary"
+                                className="fadeIn third submitBtn button-ellipse"
+                                disabled={isSubmitting}
+                              >
+                                Upload Contexts
+                              </Button>
+                              </InputGroup>
+                            </Form.Group>
+                          </Container>
+                        </form>
+                    )}
+                  </Formik>
                 </Modal.Body>
             </Modal>
             </div>
