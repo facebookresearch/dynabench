@@ -1,1 +1,1 @@
-{"model_name": "bert-large", "mode": "question_answering", "do_lower_case": "True", "num_labels": "2", "save_mode": "pretrained", "max_length": "256", "my_task_id": 10, "my_round_id": 3}
+{"model_name": "electra-large", "mode": "question_answering", "do_lower_case": "True", "num_labels": "2", "save_mode": "pretrained", "max_length": "256", "my_task_id": 10, "my_round_id": 3}
