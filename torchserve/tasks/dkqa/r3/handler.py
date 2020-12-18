@@ -40,7 +40,7 @@ QA_CONFIG = {
     "max_seq_length": 256,
     "max_query_length": 64,
     "max_answer_length": 30,
-    "do_lower_case": False,
+    "do_lower_case": True,
     "doc_stride": 128,
     "eval_batch_size": 8,
     "n_best_size": 1,
