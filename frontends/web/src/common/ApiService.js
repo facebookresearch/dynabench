@@ -140,6 +140,20 @@ export default class ApiService {
     });
   }
 
+  submitContexts(data) {
+    const token = this.getToken();
+    const formData = new FormData();
+    formData.append("file", data.file);
+    formData.append("taskId", data.taskId);
+    return this.fetch(`${this.domain}/contexts/upload`, {
+      method: "POST",
+      body: formData,
+      headers: {
+        Authorization: token ? "Bearer " + token : "None",
+      },
+    });
+  }
+
   publishModel({ modelId, name, description, params, languages, license, model_card }) {
     return this.fetch(`${this.domain}/models/${modelId}/publish`, {
       method: "PUT",
