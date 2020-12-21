@@ -1,5 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+import secrets
+
 import bottle
 
 import common.auth as _auth
@@ -48,3 +50,33 @@ def refresh_auth():
     refresh_token = _auth.set_refresh_token()
     u.update(user.id, {"refresh_token": refresh_token})
     return util.json_encode({"token": token})
+
+
+@bottle.get("/authenticate/refresh_from_api")
+def refresh_api_auth():
+    api_token = bottle.request.query.get("api_token")
+    logger.info(f"Received refresh api token request with token {api_token}")
+    u = UserModel()
+    user = u.getByAPIToken(api_token)
+    token = _auth.get_token({"id": user.id, "username": user.username})
+    # We don't update api_token because it is a long lived token.
+    # and needs to be persistent
+    return util.json_encode({"token": token})
+
+
+@bottle.get("/authenticate/generate_api_token")
+@_auth.requires_auth
+def get_api_token(credentials):
+    u = UserModel()
+    user = u.get(credentials["id"])
+    logger.info(f"Received generate api token request from user with id {user.id}")
+    if user.api_token:
+        api_token = user.api_token
+        logger.info(
+            f"Token already exists, won't regenerate for user with id {user.id}"
+        )
+    else:
+        api_token = secrets.token_hex()
+        u.update(user.id, {"api_token": api_token})
+
+    return util.json_encode({"api_token": api_token})

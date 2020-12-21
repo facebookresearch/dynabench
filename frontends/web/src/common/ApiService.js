@@ -112,6 +112,12 @@ export default class ApiService {
     });
   }
 
+  getAPIToken() {
+    return this.fetch(`${this.domain}/authenticate/generate_api_token`, {
+      method: "GET",
+    })
+  }
+
   getTasks() {
     return this.fetch(`${this.domain}/tasks`, {
       method: "GET",
@@ -126,6 +132,20 @@ export default class ApiService {
     formData.append("taskId", data.taskId);
     formData.append("taskShortName", data.taskShortName);
     return this.fetch(`${this.domain}/models/upload`, {
+      method: "POST",
+      body: formData,
+      headers: {
+        Authorization: token ? "Bearer " + token : "None",
+      },
+    });
+  }
+
+  submitContexts(data) {
+    const token = this.getToken();
+    const formData = new FormData();
+    formData.append("file", data.file);
+    formData.append("taskId", data.taskId);
+    return this.fetch(`${this.domain}/contexts/upload`, {
       method: "POST",
       body: formData,
       headers: {
