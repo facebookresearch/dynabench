@@ -50,80 +50,80 @@ const StatsSubPage = (props) => {
                   <td>
                     Total examples:
                   </td>
-                  <td className="text-right">
+                  <td className="text-center">
                     {props.user.examples_submitted}
                   </td>
-                 </tr>
-                   <OverlayTrigger
-                     placement="bottom"
-                     delay={{ show: 250, hide: 400 }}
-                     overlay={METooltip}
-                   >
-                     <tr>
-                       <td>
-                         Model error rate (verified/unverified):
-                       </td>
-                       <td className="text-right">
-                         {props.user.examples_submitted && (100 *
-                           (props.user.total_fooled - props.user.total_verified_not_fooled) /
-                           props.user.examples_submitted
-                         ).toFixed(2)}% (
-                         {props.user.total_fooled - props.user.total_verified_not_fooled}/{props.user.examples_submitted}) / {" "}
-                         {props.user.examples_submitted && (100 *
-                           props.user.total_fooled /
-                           props.user.examples_submitted
-                         ).toFixed(2)}% (
-                         {props.user.total_fooled}/{props.user.examples_submitted})
-                       </td>
-                     </tr>
-                   </OverlayTrigger>
-                    <OverlayTrigger
-                      placement="bottom"
-                      delay={{ show: 250, hide: 400 }}
-                      overlay={RejectionTooltip}
-                    >
-                      <tr>
-                        <td>
-                          Rejection rate:
-                        </td>
-                        <td className="text-right">
-                          {props.user.examples_submitted && (100 *
-                            props.user.total_verified_not_fooled /
-                            props.user.examples_submitted
-                          ).toFixed(2)}% (
-                          {props.user.examples_submitted &&
-                            props.user.total_verified_not_fooled
-                          }/{props.user.examples_submitted})
-                        </td>
-                      </tr>
-                    </OverlayTrigger>
-                    <OverlayTrigger
-                      placement="bottom"
-                      delay={{ show: 250, hide: 400 }}
-                      overlay={RetractionTooltip}
-                    >
-                      <tr>
-                        <td>
-                          Retraction rate:
-                        </td>
-                        <td className="text-right">
-                        {props.user.examples_submitted && (100 *
-                          props.user.total_retracted/
-                          props.user.examples_submitted
-                        ).toFixed(2)}% (
-                        {props.user.total_retracted}/
-                        {props.user.examples_submitted})
-                        </td>
-                      </tr>
-                    </OverlayTrigger>
+                </tr>
+                <tr>
+                 <td>
+                   Model error rate (verified/unverified):
+                 </td>
+                 <OverlayTrigger
+                   placement="bottom"
+                   delay={{ show: 250, hide: 400 }}
+                   overlay={METooltip}
+                 >
+                   <td className="text-center" style={{cursor:'pointer'}}>
+                     {props.user.examples_submitted && (100 *
+                       (props.user.total_fooled - props.user.total_verified_not_fooled) /
+                       props.user.examples_submitted
+                     ).toFixed(2)}% (
+                     {props.user.total_fooled - props.user.total_verified_not_fooled}/{props.user.examples_submitted}) / {" "}
+                     {props.user.examples_submitted && (100 *
+                       props.user.total_fooled /
+                       props.user.examples_submitted
+                     ).toFixed(2)}% (
+                     {props.user.total_fooled}/{props.user.examples_submitted})
+                   </td>
+                 </OverlayTrigger>
+                </tr>
+                <tr>
+                  <td>
+                    Rejection rate:
+                  </td>
+                  <OverlayTrigger
+                    placement="bottom"
+                    delay={{ show: 250, hide: 400 }}
+                    overlay={RejectionTooltip}
+                  >
+                    <td className="text-center" style={{cursor:'pointer'}}>
+                      {props.user.examples_submitted && (100 *
+                        props.user.total_verified_not_fooled /
+                        props.user.examples_submitted
+                      ).toFixed(2)}% (
+                      {props.user.examples_submitted &&
+                        props.user.total_verified_not_fooled
+                      }/{props.user.examples_submitted})
+                    </td>
+                  </OverlayTrigger>
+                </tr>
+                <tr>
+                  <td>
+                    Retraction rate:
+                  </td>
+                  <OverlayTrigger
+                    placement="bottom"
+                    delay={{ show: 250, hide: 400 }}
+                    overlay={RetractionTooltip}
+                  >
+                    <td className="text-center" style={{cursor:'pointer'}}>
+                    {props.user.examples_submitted && (100 *
+                      props.user.total_retracted/
+                      props.user.examples_submitted
+                    ).toFixed(2)}% (
+                    {props.user.total_retracted}/
+                    {props.user.examples_submitted})
+                    </td>
+                  </OverlayTrigger>
+                </tr>
                 <tr>
                   <td>
                     Total validations:
                   </td>
-                  <td className="text-right">
+                  <td className="text-center">
                     {props.user.examples_verified}
                   </td>
-                 </tr>
+                </tr>
               </tbody>
             </Table>
           </Card.Body>
