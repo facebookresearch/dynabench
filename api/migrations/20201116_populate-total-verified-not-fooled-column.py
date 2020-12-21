@@ -3,7 +3,7 @@
 import json
 
 import sqlalchemy as db
-from sqlalchemy import MetaData
+from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 from yoyo import step
 
@@ -25,16 +25,19 @@ def apply_step(conn):
     )
     engine = db.create_engine(engine_url, pool_pre_ping=True, pool_recycle=3600)
     engine.connect()
+
     Session = scoped_session(sessionmaker())
+    Session.configure(bind=engine)
 
-    META_DATA = MetaData(bind=engine, reflect=True)
+    Base = automap_base()
+    Base.prepare(engine, reflect=True)
 
-    Users = META_DATA.tables["users"]
-    Examples = META_DATA.tables["examples"]
-    Rounds = META_DATA.tables["rounds"]
-    Validations = META_DATA.tables["validations"]
-    Contexts = META_DATA.tables["contexts"]
-    Tasks = META_DATA.tables["tasks"]
+    Users = Base.classes.users
+    Examples = Base.classes.examples
+    Rounds = Base.classes.rounds
+    Validations = Base.classes.validations
+    Contexts = Base.classes.contexts
+    Tasks = Base.classes.tasks
 
     users = Session.query(Users)
     examples = Session.query(Examples)
