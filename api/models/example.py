@@ -11,7 +11,7 @@ from common import helpers as util
 from common.logging import logger
 from models.context import Context
 from models.round import Round
-from models.task import Task
+from models.task import Task, TaskModel
 from models.user import User
 from models.validation import LabelEnum, ModeEnum, Validation
 
@@ -179,6 +179,107 @@ class ExampleModel(BaseModel):
         return anon_uid.hexdigest()
 
     def getUserLeaderByTid(self, tid, n=5, offset=0, min_cnt=0, downstream=False):
+        task = TaskModel().get(tid)
+        num_matching_validations = 3
+        if task.settings_json:
+            metadata = json.loads(task.settings_json)
+            if "num_matching_validations" in metadata:
+                num_matching_validations = metadata["num_matching_validations"]
+        cnt = db.sql.func.sum(case([(Example.model_wrong == 1, 1)], else_=0)).label(
+            "cnt"
+        )
+        cnt_incorrect = db.sql.func.sum(
+            case(
+                [
+                    (
+                        db.true()
+                        if Validation.label.name == "incorrect"
+                        else db.false(),
+                        1,
+                    )
+                ],
+                else_=0,
+            )
+        ).label("cnt_incorrect")
+        cnt_flagged = db.sql.func.sum(
+            case(
+                [(db.true() if Validation.label.name == "flagged" else db.false(), 1)],
+                else_=0,
+            )
+        ).label("cnt_flagged")
+        cnt_incorrect_owner = db.sql.func.sum(
+            case(
+                [
+                    (
+                        db.and_(
+                            db.true()
+                            if Validation.label.name == "incorrect"
+                            else db.false(),
+                            db.true()
+                            if Validation.mode.name == "owner"
+                            else db.false(),
+                        ),
+                        1,
+                    )
+                ],
+                else_=0,
+            )
+        ).label("cnt_incorrect_owner")
+        cnt_flagged_owner = db.sql.func.sum(
+            case(
+                [
+                    (
+                        db.and_(
+                            db.true()
+                            if Validation.label.name == "flagged"
+                            else db.false(),
+                            db.true()
+                            if Validation.mode.name == "owner"
+                            else db.false(),
+                        ),
+                        1,
+                    )
+                ],
+                else_=0,
+            )
+        ).label("cnt_flagged_owner")
+        query_res = (
+            self.dbs.query(
+                User.id,
+                User.username,
+                User.avatar_url,
+                cnt,
+                (cnt / db.func.count()),
+                db.func.count(),
+            )
+            .join(Example, User.id == Example.uid)
+            .join(Context, Example.cid == Context.id)
+            .join(Round, Context.r_realid == Round.id)
+            .join(Task, Round.tid == Task.id)
+            .join(Validation, Validation.eid == Example.id)
+            .filter(Task.id == tid)
+            .filter(Example.model_wrong == 1)
+            .group_by(User.id, Example.id)
+            .having(db.func.count() > min_cnt)
+            # .group_by(Example.id)
+            .having(
+                db.and_(
+                    cnt_incorrect < num_matching_validations,
+                    cnt_flagged < num_matching_validations,
+                    cnt_incorrect_owner == 0,
+                    cnt_flagged_owner == 0,
+                )
+            )
+            .order_by(db.func.count().desc())
+        )
+        if not downstream:
+            return (
+                query_res.limit(n).offset(n * offset),
+                util.get_query_count(query_res),
+            )
+        return query_res
+
+        """
         cnt = db.sql.func.sum(case([(Example.model_wrong == 1, 1)], else_=0)).label(
             "cnt"
         )
@@ -206,6 +307,7 @@ class ExampleModel(BaseModel):
                 util.get_query_count(query_res),
             )
         return query_res
+        """
 
     def getUserLeaderByTidAndRid(self, tid, rid, n=5, offset=0, min_cnt=0):
         query_res = self.getUserLeaderByTid(
