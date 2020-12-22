@@ -50,7 +50,7 @@ const StatsSubPage = (props) => {
                   <td>
                     Total examples:
                   </td>
-                  <td className="text-center">
+                  <td className="text-right">
                     {props.user.examples_submitted}
                   </td>
                 </tr>
@@ -59,11 +59,11 @@ const StatsSubPage = (props) => {
                    Model error rate (verified/unverified):
                  </td>
                  <OverlayTrigger
-                   placement="bottom"
+                   placement="right"
                    delay={{ show: 250, hide: 400 }}
                    overlay={METooltip}
                  >
-                   <td className="text-center" style={{cursor:'pointer'}}>
+                   <td className="text-right" style={{cursor:'pointer'}}>
                      {props.user.examples_submitted && (100 *
                        (props.user.total_fooled - props.user.total_verified_not_fooled) /
                        props.user.examples_submitted
@@ -82,11 +82,11 @@ const StatsSubPage = (props) => {
                     Rejection rate:
                   </td>
                   <OverlayTrigger
-                    placement="bottom"
+                    placement="right"
                     delay={{ show: 250, hide: 400 }}
                     overlay={RejectionTooltip}
                   >
-                    <td className="text-center" style={{cursor:'pointer'}}>
+                    <td className="text-right" style={{cursor:'pointer'}}>
                       {props.user.examples_submitted && (100 *
                         props.user.total_verified_not_fooled /
                         props.user.examples_submitted
@@ -102,11 +102,11 @@ const StatsSubPage = (props) => {
                     Retraction rate:
                   </td>
                   <OverlayTrigger
-                    placement="bottom"
+                    placement="right"
                     delay={{ show: 250, hide: 400 }}
                     overlay={RetractionTooltip}
                   >
-                    <td className="text-center" style={{cursor:'pointer'}}>
+                    <td className="text-right" style={{cursor:'pointer'}}>
                     {props.user.examples_submitted && (100 *
                       props.user.total_retracted/
                       props.user.examples_submitted
@@ -120,7 +120,7 @@ const StatsSubPage = (props) => {
                   <td>
                     Total validations:
                   </td>
-                  <td className="text-center">
+                  <td className="text-right">
                     {props.user.examples_verified}
                   </td>
                 </tr>

@@ -190,7 +190,7 @@ class UserPage extends React.Component {
                             <Form.Control
                               plaintext
                               readOnly
-                              className="text-center"
+                              className="text-right"
                               defaultValue={this.state.user.username}
                             />
                           </Col>
@@ -203,7 +203,7 @@ class UserPage extends React.Component {
                             <Form.Control
                               plaintext
                               readOnly
-                              className="text-center"
+                              className="text-right"
                               defaultValue={this.state.user.affiliation}
                             />
                           </Col>
@@ -214,14 +214,14 @@ class UserPage extends React.Component {
                           </Form.Label>
                           <Col sm="4">
                             <OverlayTrigger
-                              placement="bottom"
+                              placement="right"
                               delay={{ show: 250, hide: 400 }}
                               overlay={METooltip}
                             >
                               <Form.Control
                                 plaintext
                                 readOnly
-                                className="text-center"
+                                className="text-right"
                                 style={{cursor:'pointer'}}
                                 defaultValue={
                                   this.state.user.examples_submitted > 0 ?
@@ -236,7 +236,7 @@ class UserPage extends React.Component {
                                       this.state.user.examples_submitted
                                     ).toFixed(2).toString() + "% (" +
                                     (this.state.user.total_fooled - this.state.user.total_verified_not_fooled).toString() + "/" +
-                                    this.state.user.examples_submitted + ") "
+                                    this.state.user.examples_submitted + ")"
                                   : 'N/A'}
                               />
                             </OverlayTrigger>
@@ -248,14 +248,14 @@ class UserPage extends React.Component {
                           </Form.Label>
                           <Col sm="4">
                             <OverlayTrigger
-                              placement="bottom"
+                              placement="right"
                               delay={{ show: 250, hide: 400 }}
                               overlay={RejectionTooltip}
                             >
                               <Form.Control
                                 plaintext
                                 readOnly
-                                className="text-center"
+                                className="text-right"
                                 style={{cursor:'pointer'}}
                                 defaultValue={
                                   this.state.user.examples_submitted > 0 ?
@@ -276,14 +276,14 @@ class UserPage extends React.Component {
                           </Form.Label>
                           <Col sm="4">
                             <OverlayTrigger
-                              placement="bottom"
+                              placement="right"
                               delay={{ show: 250, hide: 400 }}
                               overlay={RetractionTooltip}
                             >
                               <Form.Control
                                 plaintext
                                 readOnly
-                                className="text-center"
+                                className="text-right"
                                 style={{cursor:'pointer'}}
                                 defaultValue={
                                   this.state.user.examples_submitted > 0 ?
