@@ -186,10 +186,11 @@ class UserPage extends React.Component {
                           <Form.Label column sm="6" className="text-right">
                             Username:
                           </Form.Label>
-                          <Col sm="6">
+                          <Col sm="4">
                             <Form.Control
                               plaintext
                               readOnly
+                              className="text-right"
                               defaultValue={this.state.user.username}
                             />
                           </Col>
@@ -198,59 +199,64 @@ class UserPage extends React.Component {
                           <Form.Label column sm="6" className="text-right">
                             Affiliation:
                           </Form.Label>
-                          <Col sm="6">
+                          <Col sm="4">
                             <Form.Control
                               plaintext
                               readOnly
+                              className="text-right"
                               defaultValue={this.state.user.affiliation}
                             />
                           </Col>
                         </Form.Group>
-                        <OverlayTrigger
-                          placement="bottom"
-                          delay={{ show: 250, hide: 400 }}
-                          overlay={METooltip}
-                        >
-                          <Form.Group as={Row}>
-                            <Form.Label column sm="6" className="text-right">
-                              Model error rate (verified/unverified):
-                            </Form.Label>
-                            <Col sm="6">
+                        <Form.Group as={Row}>
+                          <Form.Label column sm="6" className="text-right">
+                            Model error rate (verified/unverified):
+                          </Form.Label>
+                          <Col sm="4">
+                            <OverlayTrigger
+                              placement="right"
+                              delay={{ show: 250, hide: 400 }}
+                              overlay={METooltip}
+                            >
                               <Form.Control
                                 plaintext
                                 readOnly
+                                className="text-right"
+                                style={{cursor:'pointer'}}
                                 defaultValue={
                                   this.state.user.examples_submitted > 0 ?
                                     (100 *
-                                      this.state.user.total_fooled /
+                                      (this.state.user.total_fooled - this.state.user.total_verified_not_fooled)  /
                                       this.state.user.examples_submitted
                                     ).toFixed(2).toString() + "% (" +
                                     this.state.user.total_fooled.toString() + "/" +
                                     this.state.user.examples_submitted + ") / " +
                                     (100 *
-                                      (this.state.user.total_fooled - this.state.user.total_verified_not_fooled) /
+                                      this.state.user.total_fooled /
                                       this.state.user.examples_submitted
                                     ).toFixed(2).toString() + "% (" +
                                     (this.state.user.total_fooled - this.state.user.total_verified_not_fooled).toString() + "/" +
-                                    this.state.user.examples_submitted + ") "
-                      : 'N/A'}
+                                    this.state.user.examples_submitted + ")"
+                                  : 'N/A'}
                               />
-                            </Col>
-                          </Form.Group>
-                        </OverlayTrigger>
-                        <OverlayTrigger
-                          placement="bottom"
-                          delay={{ show: 250, hide: 400 }}
-                          overlay={RejectionTooltip}
-                        >
-                          <Form.Group as={Row}>
-                            <Form.Label column sm="6" className="text-right">
-                              Rejection rate:
-                            </Form.Label>
-                            <Col sm="6">
+                            </OverlayTrigger>
+                          </Col>
+                        </Form.Group>
+                        <Form.Group as={Row}>
+                          <Form.Label column sm="6" className="text-right">
+                            Rejection rate:
+                          </Form.Label>
+                          <Col sm="4">
+                            <OverlayTrigger
+                              placement="right"
+                              delay={{ show: 250, hide: 400 }}
+                              overlay={RejectionTooltip}
+                            >
                               <Form.Control
                                 plaintext
                                 readOnly
+                                className="text-right"
+                                style={{cursor:'pointer'}}
                                 defaultValue={
                                   this.state.user.examples_submitted > 0 ?
                                     (100 *
@@ -259,24 +265,26 @@ class UserPage extends React.Component {
                                     ).toFixed(2).toString() + "% (" +
                                     this.state.user.total_verified_not_fooled.toString() + "/" +
                                     this.state.user.examples_submitted + ")"
-                      : 'N/A'}
+                                  : 'N/A'}
                               />
-                            </Col>
-                          </Form.Group>
-                        </OverlayTrigger>
-                        <OverlayTrigger
-                          placement="bottom"
-                          delay={{ show: 250, hide: 400 }}
-                          overlay={RetractionTooltip}
-                        >
-                          <Form.Group as={Row}>
-                            <Form.Label column sm="6" className="text-right">
-                              Retraction rate:
-                            </Form.Label>
-                            <Col sm="6">
+                            </OverlayTrigger>
+                          </Col>
+                        </Form.Group>
+                        <Form.Group as={Row}>
+                          <Form.Label column sm="6" className="text-right">
+                            Retraction rate:
+                          </Form.Label>
+                          <Col sm="4">
+                            <OverlayTrigger
+                              placement="right"
+                              delay={{ show: 250, hide: 400 }}
+                              overlay={RetractionTooltip}
+                            >
                               <Form.Control
                                 plaintext
                                 readOnly
+                                className="text-right"
+                                style={{cursor:'pointer'}}
                                 defaultValue={
                                   this.state.user.examples_submitted > 0 ?
                                     (100 * this.state.user.total_retracted /
@@ -284,11 +292,11 @@ class UserPage extends React.Component {
                                     ).toFixed(2).toString() + '% (' +
                                     this.state.user.total_retracted.toString() + '/' +
                                     this.state.user.examples_submitted + ')'
-                      : 'N/A'}
+                                  : 'N/A'}
                               />
-                            </Col>
-                          </Form.Group>
-                        </OverlayTrigger>
+                            </OverlayTrigger>
+                          </Col>
+                        </Form.Group>
                       </Card.Body>
                       {this.state.user.id == this.context.user.id && (
                         <Card.Footer>

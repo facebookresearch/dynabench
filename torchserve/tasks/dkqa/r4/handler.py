@@ -17,19 +17,14 @@ from transformers.data.processors.squad import (
     squad_convert_examples_to_features,
 )
 
-from captum.attr import LayerIntegratedGradients
+# from captum.attr import LayerIntegratedGradients
 from qa_utils import compute_predictions_logits, convert_to_squad_example
 from settings import my_secret
-from shared import (
-    captum_qa_forward,
-    check_fields,
-    construct_input_ref_pair,
-    generate_response_signature,
-    get_word_token,
-    handler_initialize,
-    summarize_attributions,
-)
+from shared import check_fields, generate_response_signature, handler_initialize
 from ts.torch_handler.base_handler import BaseHandler
+
+
+# import pdb
 
 
 logger = logging.getLogger(__name__)
@@ -40,7 +35,7 @@ QA_CONFIG = {
     "max_seq_length": 256,
     "max_query_length": 64,
     "max_answer_length": 30,
-    "do_lower_case": False,
+    "do_lower_case": True,
     "doc_stride": 128,
     "eval_batch_size": 8,
     "n_best_size": 1,
@@ -49,18 +44,12 @@ QA_CONFIG = {
 
 
 class TransformersSeqClassifierHandler(BaseHandler):
-    """
-    Transformers handler class for question answering
-    """
-
     def __init__(self):
         super().__init__()
         self.initialized = False
 
     def initialize(self, ctx):
-        """
-        Initializes the model and tokenizer during server start up
-        """
+        # Initializes the model and tokenizer during server start up
         model_dir, model_pt_path, self.device, self.setup_config = handler_initialize(
             ctx
         )
@@ -68,8 +57,8 @@ class TransformersSeqClassifierHandler(BaseHandler):
         self.my_task_id = self.setup_config["my_task_id"]
         self.my_round_id = self.setup_config["my_round_id"]
 
-        """ Loading the model and tokenizer from checkpoint and config files based on
-        the user's choice of mode further setup config can be added."""
+        # Loading the model and tokenizer from checkpoint and config files based on
+        # the user's choice of mode further setup config can be added.
         if self.setup_config["save_mode"] == "torchscript":
             logger.warning("Loading torchscript model")
             self.model = torch.jit.load(model_pt_path)
@@ -83,7 +72,8 @@ class TransformersSeqClassifierHandler(BaseHandler):
             else:
                 raise FileNotFoundError("Missing config file")
 
-        if os.path.isfile(os.path.join(model_dir, "vocab.json")):
+        # pdb.set_trace()
+        if os.path.isfile(os.path.join(model_dir, "vocab.txt")):
             self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
             logger.info("Using provided vocab")
         else:
@@ -95,15 +85,13 @@ class TransformersSeqClassifierHandler(BaseHandler):
         logger.debug(f"Transformer model from path {model_dir} loaded successfully")
 
         # ---------------- Captum initialization ----------------#
-        self.lig = LayerIntegratedGradients(
-            captum_qa_forward, self.model.bert.embeddings
-        )
+        # self.lig = LayerIntegratedGradients(
+        #    captum_qa_forward, self.model.bert.embeddings
+        # )
         self.initialized = True
 
     def preprocess(self, data):
-        """
-        Basic text preprocessing
-        """
+        # Basic text preprocessing
         logger.info("In preprocess, data's value: '%s'", data)
         body = data[0]["body"]
         if not body:
@@ -126,10 +114,8 @@ class TransformersSeqClassifierHandler(BaseHandler):
         return [example], answer, insight
 
     def inference(self, examples):
-        """
-        Predict the class (or classes) of the received text using the serialized
-        transformers checkpoint.
-        """
+        # Predict the class (or classes) of the received text using the serialized
+        # transformers checkpoint.
 
         def to_list(tensor):
             return tensor.detach().cpu().tolist()
@@ -205,9 +191,7 @@ class TransformersSeqClassifierHandler(BaseHandler):
             return predictions_by_example
 
     def postprocess(self, predictions_by_example, example, answer):
-        """
-        Post-processing of the model predictions to handle signature
-        """
+        # Post-processing of the model predictions to handle signature
         contx = example[0]["passage"]
         data = example[0]["question"]
         response = {}
@@ -243,53 +227,15 @@ class TransformersSeqClassifierHandler(BaseHandler):
 _service = TransformersSeqClassifierHandler()
 
 
-def get_insights(example, tokenizer, device, lig, model):
-    """
-    This function calls the layer integrated gradient to get word importance
-    of the question and the passage. The word importance is obtained for
-    start and end position of the predicted answer
-    """
-    input_ids, ref_input_ids, attention_mask = construct_input_ref_pair(
-        example[0]["question"], example[0]["passage"], tokenizer, device
-    )
-    all_tokens = get_word_token(input_ids, tokenizer)
-    logger.info("Word Tokens = '%s'", all_tokens)
-    attributions_start, delta_start = lig.attribute(
-        inputs=input_ids,
-        baselines=ref_input_ids,
-        additional_forward_args=(attention_mask, 0, model),
-        return_convergence_delta=True,
-        n_steps=20,
-    )
-
-    attributions_end, delta_end = lig.attribute(
-        inputs=input_ids,
-        baselines=ref_input_ids,
-        additional_forward_args=(attention_mask, 1, model),
-        return_convergence_delta=True,
-        n_steps=20,
-    )
-
-    attributions_start_sum = summarize_attributions(attributions_start)
-    attributions_end_sum = summarize_attributions(attributions_end)
-    response = {}
-    response["start_importances"] = attributions_start_sum.tolist()
-    response["end_importances"] = attributions_end_sum.tolist()
-    response["words"] = all_tokens
-    return [response]
-
-
 def handle(data, context):
-    """
-    This function handles the requests for the model and returns a
-    postprocessed response
-    #sample input {
-        "answer": "pretend you are reviewing a place",
-        "context": "Please pretend you are reviewing a place, product, book or movie",
-        "hypothesis": "What should i pretend?",
-        "insight": true
-        } and output response is probabilities
-    """
+    # This function handles the requests for the model and returns a
+    # postprocessed response
+    # sample input {
+    #    "answer": "pretend you are reviewing a place",
+    #    "context": "Please pretend you are reviewing a place, product, book or movie",
+    #    "hypothesis": "What should i pretend?",
+    #    "insight": true
+    #    } and output response is probabilities
     try:
         if not _service.initialized:
             _service.initialize(context)
@@ -301,15 +247,6 @@ def handle(data, context):
         if not insight:
             predictions_by_example = _service.inference(example)
             response = _service.postprocess(predictions_by_example, example, answer)
-            return response
-        else:
-            response = get_insights(
-                example,
-                _service.tokenizer,
-                _service.device,
-                _service.lig,
-                _service.model,
-            )
             return response
 
     except Exception as e:
