@@ -17,6 +17,7 @@ import ProfilePage from "./ProfilePage";
 import AboutPage from "./AboutPage";
 import TaskPage from "./TaskPage";
 import ContactPage from "./ContactPage";
+import EducationPage from "./EducationPage";
 import TermsPage from "./TermsPage";
 import DataPolicyPage from "./DataPolicyPage";
 import UserContext from "./UserContext";
@@ -152,6 +153,9 @@ class App extends React.Component {
                     <Nav.Link as={Link} to="/about">
                       About
                     </Nav.Link>
+                    <Nav.Link as={Link} to="/education">
+                      Education
+                    </Nav.Link>
                   </Nav.Item>
                   <NavDropdown title="Tasks" id="basic-nav-dropdown">
                     {NavItems}
@@ -217,6 +221,7 @@ class App extends React.Component {
             <div id="content">
               <Switch>
                 <Route path="/about" component={AboutPage} />
+                <Route path="/education" component={EducationPage} />
                 <Route path="/contact" component={ContactPage} />
                 <Route path="/termsofuse" component={TermsPage} />
                 <Route path="/datapolicy" component={DataPolicyPage} />
