@@ -217,6 +217,7 @@ class ExampleModel(BaseModel):
                 ]
             if (
                 eid_to_example[key].model_wrong
+                and not eid_to_example[key].retracted
                 and len(
                     list(
                         filter(
