@@ -50,7 +50,7 @@ def get_user_leaderboard(tid):
     e = ExampleModel()
     limit, offset = util.get_limit_and_offset_from_request()
     try:
-        query_result, total_count = e.getUserLeaderByTid(
+        query_result, total_count = e.getUserLeaderByTidAndRid(
             tid=tid, n=limit, offset=offset
         )
         return construct_user_board_response_json(
