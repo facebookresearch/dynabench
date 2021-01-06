@@ -26,7 +26,7 @@ class User(Base):
 
     total_retracted = db.Column(db.Integer, default=0)
     total_verified_fooled = db.Column(db.Integer, default=0)
-    total_verified_not_fooled = db.Column(db.Integer, default=0)
+    total_verified_not_correct_fooled = db.Column(db.Integer, default=0)
     total_fooled = db.Column(db.Integer, default=0)
 
     settings_json = db.Column(db.Text)
@@ -177,10 +177,12 @@ class UserModel(BaseModel):
             u.total_verified_fooled = u.total_verified_fooled + 1
             self.dbs.commit()
 
-    def incrementVerifiedNotFooledCount(self, uid):
+    def incrementVerifiedNotCorrectFooledCount(self, uid):
         u = self.get(uid)
         if u:
-            u.total_verified_not_fooled = u.total_verified_not_fooled + 1
+            u.total_verified_not_correct_fooled = (
+                u.total_verified_not_correct_fooled + 1
+            )
             self.dbs.commit()
 
     def incrementFooledCount(self, uid):
