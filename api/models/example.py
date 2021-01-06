@@ -180,6 +180,7 @@ class ExampleModel(BaseModel):
     def getUserLeaderByTidAndRid(
         self, tid, rid=None, n=5, offset=0, min_cnt=0, downstream=False
     ):
+        # Get task settings that determine what counts as verified
         task = TaskModel().get(tid)
         num_matching_validations = 3
         if task.settings_json:
@@ -190,6 +191,16 @@ class ExampleModel(BaseModel):
             examples = self.getByTid(tid)
         else:
             examples = self.getByTidAndRid(tid, rid)
+
+        # Form and return a list of lists for each user, where a sublist contains:
+        # 1. the user id
+        # 2. the username
+        # 3. the user avatar url
+        # 4. the user's number of fooling examples for a task (and optionally,
+        #    round) that are not retracted or validated as incorrect or flagged
+        # 5. the fraction of item 4. over item 6. (this is the vMER)
+        # 6. the user's total number of examples for that task
+        #    (and optionally, round)
         validations = self.dbs.query(Validation)
         users = self.dbs.query(User)
         eid_to_example = {}
