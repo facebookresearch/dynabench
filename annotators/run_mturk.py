@@ -9,21 +9,28 @@ from dataclasses import dataclass, field
 from typing import Any, List
 
 import hydra
-from mephisto.core.hydra_config import RunScriptConfig, register_script_config
-from mephisto.core.operator import Operator
-from mephisto.server.blueprints.abstract.static_task.static_blueprint import (
+from mephisto.abstractions.blueprints.abstract.static_task.static_blueprint import (
     SharedStaticTaskState,
 )
-from mephisto.server.blueprints.static_react_task.static_react_blueprint import (
+from mephisto.abstractions.blueprints.static_react_task.static_react_blueprint import (
     BLUEPRINT_TYPE,
 )
-from mephisto.utils.scripts import load_db_and_process_config
+from mephisto.operations.hydra_config import RunScriptConfig, register_script_config
+from mephisto.operations.operator import Operator
+from mephisto.tools.scripts import load_db_and_process_config
 from omegaconf import DictConfig
 
 from util import get_qualifications
 
 
 CURRENT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+
+if os.path.exists("./Mephisto"):  # noqa
+    import sys
+
+    sys.path.insert(0, "./Mephisto")  # noqa
+    print("WARNING: Loading Mephisto from local directory")  # noqa
+import mephisto  # noqa isort:skip
 
 
 @dataclass
@@ -45,7 +52,7 @@ class TestScriptConfig(RunScriptConfig):
         ]
     )
     dynabench: DynaBenchConfig = DynaBenchConfig()
-    num_jobs: int = 10
+    num_jobs: int = 3
     preselected_qualifications: List[str] = ("100_hits_approved", "english_only")
     frontend_dir: str = f"{CURRENT_DIRECTORY}/../frontends"
 
@@ -84,6 +91,7 @@ def main(cfg: DictConfig) -> None:
     num_jobs = cfg.num_jobs
     static_task_data = [{} for _ in range(num_jobs)]
     mturk_specific_qualifications = get_qualifications(cfg.preselected_qualifications)
+
     # mturk_specific_qualifications
 
     # TODO: How to set onboarding ready?

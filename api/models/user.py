@@ -26,10 +26,11 @@ class User(Base):
 
     total_retracted = db.Column(db.Integer, default=0)
     total_verified_fooled = db.Column(db.Integer, default=0)
-    total_verified_not_fooled = db.Column(db.Integer, default=0)
+    total_verified_not_correct_fooled = db.Column(db.Integer, default=0)
     total_fooled = db.Column(db.Integer, default=0)
 
     settings_json = db.Column(db.Text)
+    metadata_json = db.Column(db.Text)
 
     examples_submitted = db.Column(db.Integer, default=0)
     examples_verified = db.Column(db.Integer, default=0)
@@ -40,6 +41,8 @@ class User(Base):
     streak_examples = db.Column(db.Integer, default=0)
     streak_days = db.Column(db.Integer, default=0)
     streak_days_last_model_wrong = db.Column(db.DateTime, nullable=True)
+
+    api_token = db.Column(db.String(length=255))
 
     avatar_url = db.Column(db.Text)
 
@@ -60,6 +63,7 @@ class User(Base):
                 "refresh_token",
                 "forgot_password_token",
                 "forgot_password_token_expiry_date",
+                "api_token",
             ]:
                 continue
             d[column.name] = getattr(self, column.name)
@@ -122,7 +126,16 @@ class UserModel(BaseModel):
         except db.orm.exc.NoResultFound:
             return False
 
+    def getByAPIToken(self, api_token):
+        try:
+            return self.dbs.query(User).filter(User.api_token == api_token).one()
+        except db.orm.exc.NoResultFound:
+            return False
+
     def generate_password_reset_token(self):
+        return self.generate_secret_token()
+
+    def generate_secret_token(self):
         return secrets.token_hex(64)
 
     def exists(self, email=None, username=None):
@@ -164,10 +177,12 @@ class UserModel(BaseModel):
             u.total_verified_fooled = u.total_verified_fooled + 1
             self.dbs.commit()
 
-    def incrementVerifiedNotFooledCount(self, uid):
+    def incrementVerifiedNotCorrectFooledCount(self, uid):
         u = self.get(uid)
         if u:
-            u.total_verified_not_fooled = u.total_verified_not_fooled + 1
+            u.total_verified_not_correct_fooled = (
+                u.total_verified_not_correct_fooled + 1
+            )
             self.dbs.commit()
 
     def incrementFooledCount(self, uid):

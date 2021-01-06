@@ -1,6 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
+from urllib.parse import parse_qs
 
 import bottle
 
@@ -10,7 +11,6 @@ from common.logging import logger
 from models.badge import BadgeModel
 from models.context import ContextModel
 from models.example import ExampleModel
-from models.notification import NotificationModel
 from models.round import RoundModel
 from models.task import TaskModel
 from models.user import UserModel
@@ -30,6 +30,11 @@ def get_random_filtered_example(
     min_num_disagreements,
     max_num_disagreements,
 ):
+    query_dict = parse_qs(bottle.request.query_string)
+    tags = None
+    if "tags" in query_dict and len(query_dict["tags"]) > 0:
+        tags = query_dict["tags"][0].split("|")
+
     tm = TaskModel()
     task = tm.get(tid)
     validate_non_fooling = False
@@ -47,6 +52,7 @@ def get_random_filtered_example(
         max_num_disagreements,
         validate_non_fooling,
         n=1,
+        tags=tags,
     )
     if not example:
         bottle.abort(500, f"No examples available ({round.id})")
@@ -57,6 +63,11 @@ def get_random_filtered_example(
 @bottle.get("/examples/<tid:int>/<rid:int>")
 @_auth.requires_auth_or_turk
 def get_random_example(credentials, tid, rid):
+    query_dict = parse_qs(bottle.request.query_string)
+    tags = None
+    if "tags" in query_dict and len(query_dict["tags"]) > 0:
+        tags = query_dict["tags"][0].split("|")
+
     tm = TaskModel()
     task = tm.get(tid)
     validate_non_fooling = False
@@ -75,6 +86,7 @@ def get_random_example(credentials, tid, rid):
             num_matching_validations,
             n=1,
             my_uid=credentials["id"],
+            tags=tags,
         )
     else:
         example = em.getRandom(
@@ -137,6 +149,8 @@ def update_example(credentials, eid):
         if "retracted" in data and data["retracted"] is True:
             um = UserModel()
             um.incrementRetractedCount(example.uid)
+            if example.model_wrong:
+                um.incrementVerifiedNotCorrectFooledCount(example.uid)
         return util.json_encode({"success": "ok"})
     except Exception as e:
         logger.error(f"Error updating example {eid}: {e}")
@@ -160,6 +174,10 @@ def post_example(credentials):
     elif int(data["uid"]) != credentials["id"]:
         bottle.abort(403, "Access denied")
 
+    tag = None
+    if "tag" in data:
+        tag = data["tag"]
+
     em = ExampleModel()
     example = em.create(
         tid=data["tid"],
@@ -170,6 +188,7 @@ def post_example(credentials):
         tgt=data["target"],
         response=data["response"],
         metadata=data["metadata"],
+        tag=tag,
     )
     if not example:
         bottle.abort(400, "Could not create example")
@@ -187,19 +206,13 @@ def post_example(credentials):
         if example.model_wrong:
             um.incrementFooledCount(example.uid)
         bm = BadgeModel()
-        nm = NotificationModel()
         user = um.get(credentials["id"])
-        badges = bm.updateSubmitCountsAndCheckBadgesEarned(user, example, "create")
-        for badge in badges:
-            bm.addBadge(badge)
-            nm.create(credentials["id"], "NEW_BADGE_EARNED", badge["name"])
+        badge_names = bm.handleCreateInterface(user, em.get(example.id))
 
     return util.json_encode(
         {
             "success": "ok",
             "id": example.id,
-            "badges": "|".join([badge["name"] for badge in badges])
-            if (credentials["id"] != "turk" and badges)
-            else None,
+            "badges": "|".join(badge_names) if (credentials["id"] != "turk") else None,
         }
     )

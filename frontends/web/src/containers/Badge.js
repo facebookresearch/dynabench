@@ -15,6 +15,84 @@ import Moment from "react-moment";
 const Badge = (props) => {
   var desc = 'Unknown badge';
   switch (props.name) {
+    case 'ALL_TASKS_COVERED':
+      desc = 'All tasks covered!';
+    break;
+    case 'DYNABENCH_BRONZE':
+      desc = 'Dynabench bronze!';
+    break;
+    case 'DYNABENCH_GOLD':
+      desc = 'Dynabench gold!';
+    break;
+    case 'DYNABENCH_SILVER':
+      desc = 'Dynabench silver!';
+    break;
+    case 'DYNABENCH_PLATINUM':
+      desc = 'Dynabench platinum!';
+    break;
+    case 'DYNABENCH_DIAMOND':
+      desc = 'Dynabench diamond!';
+    break;
+    case 'DYNABENCH_HS_BRONZE':
+      desc = 'Dynabench hate speech bronze!';
+    break;
+    case 'DYNABENCH_HS_GOLD':
+      desc = 'Dynabench hate speech gold!';
+    break;
+    case 'DYNABENCH_HS_SILVER':
+      desc = 'Dynabench hate speech silver!';
+    break;
+    case 'DYNABENCH_HS_PLATINUM':
+      desc = 'Dynabench hate speech platinum!';
+    break;
+    case 'DYNABENCH_HS_DIAMOND':
+      desc = 'Dynabench hate speech platinum!';
+    break;
+    case 'DYNABENCH_NLI_BRONZE':
+      desc = 'Dynabench natrual language inference bronze!';
+    break;
+    case 'DYNABENCH_NLI_GOLD':
+      desc = 'Dynabench natrual language inference gold!';
+    break;
+    case 'DYNABENCH_NLI_SILVER':
+      desc = 'Dynabench natrual language inference silver!';
+    break;
+    case 'DYNABENCH_NLI_PLATINUM':
+      desc = 'Dynabench natrual language inference platinum!';
+    break;
+    case 'DYNABENCH_NLI_DIAMOND':
+      desc = 'Dynabench natrual language inference diamond!';
+    break;
+    case 'DYNABENCH_QA_BRONZE':
+      desc = 'Dynabench question answering bronze!';
+    break;
+    case 'DYNABENCH_QA_GOLD':
+      desc = 'Dynabench question answering gold!';
+    break;
+    case 'DYNABENCH_QA_SILVER':
+      desc = 'Dynabench question answering silver!';
+    break;
+    case 'DYNABENCH_QA_PLATINUM':
+      desc = 'Dynabench question answering platinum!';
+    break;
+    case 'DYNABENCH_QA_DIAMOND':
+      desc = 'Dynabench question answering diamond!';
+    break;
+    case 'DYNABENCH_SENT_BRONZE':
+      desc = 'Dynabench sentiment analysis bronze!';
+    break;
+    case 'DYNABENCH_SENT_GOLD':
+      desc = 'Dynabench sentiment analysis gold!';
+    break;
+    case 'DYNABENCH_SENT_SILVER':
+      desc = 'Dynabench sentiment analysis silver!';
+    break;
+    case 'DYNABENCH_SENT_PLATINUM':
+      desc = 'Dynabench sentiment analysis platinum!';
+    break;
+    case 'DYNABENCH_SENT_DIAMOND':
+      desc = 'Dynabench sentiment analysis diamond!';
+    break;
     case 'TESTING_BADGES':
       desc = 'Test badge!';
     break;
@@ -23,6 +101,9 @@ const Badge = (props) => {
     break;
     case 'FIRST_CREATED':
       desc = 'First example!';
+    break;
+    case 'FIRST_STEPS':
+      desc = 'First steps!';
     break;
     case 'FIRST_VALIDATED_FOOLING':
       desc = 'First time fooled!';
@@ -69,8 +150,8 @@ const Badge = (props) => {
     case 'DAY_STREAK_3':
       desc = 'Three day streak!';
     break;
-    case 'DAY_STREAK_3':
-      desc = 'Three day streak!';
+    case 'DAY_STREAK_5':
+      desc = 'Five day streak!';
     break;
     case 'DAY_STREAK_1_WEEK':
       desc = 'One week streak!';
@@ -86,6 +167,9 @@ const Badge = (props) => {
     break;
     case 'DAY_STREAK_1_YEAR':
       desc = 'One year streak!';
+    break;
+    case 'WEEKLY_WINNER':
+      desc = 'Most examples created weekly winner!';
     break;
     default:
     break;

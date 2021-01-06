@@ -106,6 +106,18 @@ export default class ApiService {
     });
   }
 
+  getAsyncBadges() {
+    return this.fetch(`${this.domain}/badges/getasync`, {
+      method: "GET",
+    });
+  }
+
+  getAPIToken() {
+    return this.fetch(`${this.domain}/authenticate/generate_api_token`, {
+      method: "GET",
+    })
+  }
+
   getTasks() {
     return this.fetch(`${this.domain}/tasks`, {
       method: "GET",
@@ -120,6 +132,20 @@ export default class ApiService {
     formData.append("taskId", data.taskId);
     formData.append("taskShortName", data.taskShortName);
     return this.fetch(`${this.domain}/models/upload`, {
+      method: "POST",
+      body: formData,
+      headers: {
+        Authorization: token ? "Bearer " + token : "None",
+      },
+    });
+  }
+
+  submitContexts(data) {
+    const token = this.getToken();
+    const formData = new FormData();
+    formData.append("file", data.file);
+    formData.append("taskId", data.taskId);
+    return this.fetch(`${this.domain}/contexts/upload`, {
       method: "POST",
       body: formData,
       headers: {
@@ -203,20 +229,20 @@ export default class ApiService {
     });
   }
 
-  getRandomContext(tid, rid) {
-    return this.fetch(`${this.domain}/contexts/${tid}/${rid}`, {
+  getRandomContext(tid, rid, tags=[]) {
+    return this.fetch(`${this.domain}/contexts/${tid}/${rid}?tags=${encodeURIComponent(tags.join('|'))}`, {
       method: "GET",
     });
   }
 
-  getRandomExample(tid, rid) {
-    return this.fetch(`${this.domain}/examples/${tid}/${rid}`, {
+  getRandomExample(tid, rid, tags=[]) {
+    return this.fetch(`${this.domain}/examples/${tid}/${rid}?tags=${encodeURIComponent(tags.join('|'))}`, {
       method: "GET",
     });
   }
 
-  getRandomFilteredExample(tid, rid, minNumFlags, maxNumFlags, minNumDisagreements, maxNumDisagreements) {
-    return this.fetch(`${this.domain}/examples/${tid}/${rid}/filtered/${minNumFlags}/${maxNumFlags}/${minNumDisagreements}/${maxNumDisagreements}`, {
+  getRandomFilteredExample(tid, rid, minNumFlags, maxNumFlags, minNumDisagreements, maxNumDisagreements, tags=[]) {
+    return this.fetch(`${this.domain}/examples/${tid}/${rid}/filtered/${minNumFlags}/${maxNumFlags}/${minNumDisagreements}/${maxNumDisagreements}?tags=${encodeURIComponent(tags.join('|'))}`, {
       method: "GET",
     });
   }
@@ -366,7 +392,7 @@ export default class ApiService {
     );
   }
 
-  storeExample(tid, rid, uid, cid, hypothesis, target, response, metadata) {
+  storeExample(tid, rid, uid, cid, hypothesis, target, response, metadata, tag=null) {
     return this.fetch(`${this.domain}/examples`, {
       method: "POST",
       body: JSON.stringify({
@@ -378,6 +404,7 @@ export default class ApiService {
         target: target,
         response: response,
         metadata: metadata,
+        tag: tag,
       }),
     });
   }

@@ -29,6 +29,7 @@ import CreateInterface from "./CreateInterface.js";
 import VerifyInterface from "./VerifyInterface.js";
 import SubmitInterface from "./SubmitInterface.js";
 import PublishInterface from "./PublishInterface.js";
+import GenerateAPITokenPage from "./GenerateAPITokenPage.js"
 import { Avatar } from "../components/Avatar/Avatar";
 import ReactGA from "react-ga";
 
@@ -245,6 +246,7 @@ class App extends React.Component {
                 />
                 <Route path="/tasks/:taskId" component={TaskPage} />
                 <Route path="/login" component={LoginPage} />
+                <Route path="/generate_api_token" component={GenerateAPITokenPage} />
                 <Route path="/forgot-password" component={ForgotPassword} />
                 <Route
                   path="/reset-password/:token"

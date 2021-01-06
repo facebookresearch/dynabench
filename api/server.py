@@ -21,6 +21,7 @@ from common.logging import init_logger
 from common.mail_service import get_mail_session
 from common.migrator import run_migrations
 from controllers.auth import *  # noqa
+from controllers.badges import *  # noqa
 from controllers.contexts import *  # noqa
 from controllers.endpoints import *  # noqa
 from controllers.examples import *  # noqa

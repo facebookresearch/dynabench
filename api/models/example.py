@@ -31,6 +31,7 @@ class Example(Base):
 
     uid = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
     user = db.orm.relationship("User", foreign_keys="Example.uid")
+    tag = db.Column(db.Text)
 
     text = db.Column(db.Text)
     # why is X the label for this example
@@ -74,7 +75,7 @@ class ExampleModel(BaseModel):
     def __init__(self):
         super().__init__(Example)
 
-    def create(self, tid, rid, uid, cid, hypothesis, tgt, response, metadata):
+    def create(self, tid, rid, uid, cid, hypothesis, tgt, response, metadata, tag=None):
         if uid == "turk" and "annotator_id" not in metadata:
             logger.error("Annotator id not specified but received Turk example")
             return False
@@ -125,6 +126,7 @@ class ExampleModel(BaseModel):
                 model_wrong=model_wrong,
                 generated_datetime=db.sql.func.now(),
                 metadata_json=json.dumps(metadata),
+                tag=tag,
             )
 
             # store uid/annotator_id
@@ -261,7 +263,13 @@ class ExampleModel(BaseModel):
             return False
 
     def getRandom(
-        self, rid, validate_non_fooling, num_matching_validations, n=1, my_uid=None
+        self,
+        rid,
+        validate_non_fooling,
+        num_matching_validations,
+        n=1,
+        my_uid=None,
+        tags=None,
     ):
         cnt_correct = db.sql.func.sum(
             case([(Validation.label == LabelEnum.correct, 1)], else_=0)
@@ -281,6 +289,9 @@ class ExampleModel(BaseModel):
             .filter(Context.r_realid == rid)
             .filter(Example.retracted == False)  # noqa
         )
+
+        if tags:
+            result = result.filter(Example.tag.in_(tags))  # noqa
 
         if not validate_non_fooling:
             result = result.filter(Example.model_wrong == True)  # noqa
@@ -330,6 +341,7 @@ class ExampleModel(BaseModel):
         max_num_disagreements,
         validate_non_fooling,
         n=1,
+        tags=None,
     ):
         cnt_owner_validated = db.sql.func.sum(
             case([(Validation.mode == ModeEnum.owner, 1)], else_=0)
@@ -340,6 +352,9 @@ class ExampleModel(BaseModel):
             .filter(Context.r_realid == rid)
             .filter(Example.retracted == False)  # noqa
         )
+
+        if tags:
+            result = result.filter(Example.tag.in_(tags))  # noqa
 
         if not validate_non_fooling:
             result = result.filter(Example.model_wrong == True)  # noqa

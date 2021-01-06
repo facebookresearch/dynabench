@@ -171,7 +171,7 @@ def publish_model(credentials, mid):
             )
             bottle.abort(401, "Operation not authorized")
 
-        model = m.update(
+        m.update(
             model.id,
             name=data["name"],
             longdesc=data["description"],
@@ -181,8 +181,12 @@ def publish_model(credentials, mid):
             model_card=data["model_card"],
             is_published=True,
         )
-
-        return {"status": "success"}
+        model = m.get(mid)
+        um = UserModel()
+        user = um.get(model.uid)
+        bm = BadgeModel()
+        badge_names = bm.handlePublishModel(user, model)
+        return {"status": "success", "badges": "|".join(badge_names)}
     except db.orm.exc.NoResultFound:
         bottle.abort(404, "Model Not found")
     except Exception as e:
@@ -204,8 +208,15 @@ def revert_model_status(credentials, mid):
             )
             bottle.abort(401, "Operation not authorized")
 
-        model = m.update(model.id, is_published=not model.is_published)
-
+        m.update(model.id, is_published=not model.is_published)
+        model = m.getUnpublishedModelByMid(mid)
+        um = UserModel()
+        user = um.get(model.uid)
+        bm = BadgeModel()
+        if model.is_published:
+            badge_names = bm.handlePublishModel(user, model)
+            return {"status": "success", "badges": "|".join(badge_names)}
+        bm.handleUnpublishModel(user, model)
         return {"status": "success"}
     except db.orm.exc.NoResultFound:
         bottle.abort(404, "Model Not found")

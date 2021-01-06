@@ -18,6 +18,10 @@ import Markdown from "react-markdown";
 import { Formik } from "formik";
 import UserContext from "./UserContext";
 import "./SubmitInterface.css";
+import {
+  OverlayProvider,
+  BadgeOverlay,
+} from "./Overlay"
 
 class PublishInterface extends React.Component {
   static contextType = UserContext;
@@ -82,11 +86,15 @@ class PublishInterface extends React.Component {
     };
     this.context.api
       .publishModel(reqObj)
-      .then(() => {
-        this.props.history.push({
-          pathname: `/models/${this.state.model.id}`,
-          state: { src: 'publish' },
-        });
+      .then((result) => {
+        if (!!result.badges) {
+          this.setState({showBadges: result.badges})
+        } else {
+          this.props.history.push({
+            pathname: `/models/${this.state.model.id}`,
+            state: { src: 'publish' },
+          });
+        }
       }, (error) => {
         console.log(error);
         setSubmitting(false);
@@ -114,179 +122,190 @@ class PublishInterface extends React.Component {
 (Enter ethical and fairness considerations here)`;
 
     return (
-      <Container>
-        <Row>
-          <h2 className="text-uppercase blue-color">Publish your model </h2>
-        </Row>
-        <Row>
-          <CardGroup style={{ marginTop: 20, width: "100%" }}>
-            <Card>
-              <Card.Body>
-                <Container>
-                  <Row className="mt-4">
-                    <Col sm="4" className="mb-2">
-                      <b>Your Performance</b>
-                    </Col>
-                    <Col sm="8">
-                      <b>{model.overall_perf}%</b>
-                    </Col>
-                  </Row>
-                  {orderedScores.map((data) => {
-                    return (
-                      <Row key={data.round_id}>
-                        <Col sm="4" className="row-wise">
-                          Round {data.round_id}
-                        </Col>
-                        <Col sm="7">{Number(data.accuracy).toFixed(2)}%</Col>
-                      </Row>
-                    );
-                  })}
-                </Container>
-                {Object.keys(model).length ? (
-                  <Formik
-                    initialValues={{
-                      name: model.name || "",
-                      description: model.longdesc || "",
-                      params: model.params || "",
-                      languages: model.languages || "",
-                      license: model.license || "",
-                      model_card: model.model_card || modelCardTemplate,
-                    }}
-                    validate={this.handleValidation}
-                    onSubmit={this.handleSubmit}
-                  >
-                    {({
-                      values,
-                      errors,
-                      handleChange,
-                      handleSubmit,
-                      isSubmitting,
-                    }) => (
-                      <>
-                        <form onSubmit={handleSubmit} className="mt-5 ml-2">
-                          <Form.Group>
-                            <Form.Label>
-                              <b>Model Name</b>
-                            </Form.Label>
-                            <Form.Control
-                              name="name"
-                              type="text"
-                              style={{
-                                borderColor: errors.name ? "red" : null,
-                              }}
-                              placeholder="Provide a name for your model"
-                              onChange={handleChange}
-                              value={values.name}
-                            />
-                          </Form.Group>
-                          <Form.Group>
-                            <Form.Label>
-                              <b>Summary</b>
-                            </Form.Label>
-                            <Form.Control
-                              name="description"
-                              type="text"
-                              style={{
-                                borderColor: errors.description ? "red" : null,
-                              }}
-                              placeholder="Provide a description of your model"
-                              onChange={handleChange}
-                              value={values.description}
-                            />
-                          </Form.Group>
-                          <Form.Group>
-                            <Form.Label>
-                              <b>Number of Parameters</b>
-                            </Form.Label>
-                            <Form.Control
-                              name="params"
-                              type="int"
-                              style={{
-                                borderColor: errors.params ? "red" : null,
-                              }}
-                              onChange={handleChange}
-                              value={values.params}
-                              aria-describedby="paramsHelpBlock"
-                            />
-                            <Form.Text id="paramsHelpBlock" muted>
-                            <Markdown>To count the number of parameters, you can run `sum(p.numel() for p in model.parameters() if p.requires_grad)` in PyTorch.</Markdown>
-                            </Form.Text>
-                          </Form.Group>
-                          <Form.Group>
-                            <Form.Label>
-                              <b>Language(s)</b>
-                            </Form.Label>
-                            <Form.Control
-                              name="languages"
-                              type="text"
-                              style={{
-                                borderColor: errors.languages ? "red" : null,
-                              }}
-                              placeholder="e.g. English, Chinese"
-                              onChange={handleChange}
-                              value={values.languages}
-                            />
-                          </Form.Group>
-                          <Form.Group>
-                            <Form.Label>
-                              <b>License(s)</b>
-                            </Form.Label>
-                            <Form.Control
-                              name="license"
-                              type="text"
-                              style={{
-                                borderColor: errors.license ? "red" : null,
-                              }}
-                              placeholder="e.g. Apache 2.0"
-                              onChange={handleChange}
-                              value={values.license}
-                            />
-                          </Form.Group>
-                          <Form.Group>
-                            <Form.Label>
-                              <b>Model Card</b>
-                            </Form.Label>
-                            <Form.Control
-                              as="textarea"
-                              name="model_card"
-                              defaultValue={values.model_card}
-                              rows="12"
-                              onChange={handleChange}
-                            />
-                            <Form.Text id="paramsHelpBlock" muted>
-                              <Markdown>The text will be rendered as [markdown](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet) in model page. For more details on [model cards](https://arxiv.org/abs/1810.03993).</Markdown>
-                            </Form.Text>
-                          </Form.Group>
+      <OverlayProvider initiallyHide={true}>
+        <BadgeOverlay
+          badgeTypes={this.state.showBadges}
+          show={!!this.state.showBadges}
+          onHide={() => {this.setState({showBadges: ""}); this.props.history.push({
+            pathname: `/models/${this.state.model.id}`,
+            state: { src: 'publish' },
+          });}}
+        >
+        </BadgeOverlay>
+        <Container>
+          <Row>
+            <h2 className="text-uppercase blue-color">Publish your model </h2>
+          </Row>
+          <Row>
+            <CardGroup style={{ marginTop: 20, width: "100%" }}>
+              <Card>
+                <Card.Body>
+                  <Container>
+                    <Row className="mt-4">
+                      <Col sm="4" className="mb-2">
+                        <b>Your Performance</b>
+                      </Col>
+                      <Col sm="8">
+                        <b>{model.overall_perf}%</b>
+                      </Col>
+                    </Row>
+                    {orderedScores.map((data) => {
+                      return (
+                        <Row key={data.round_id}>
+                          <Col sm="4" className="row-wise">
+                            Round {data.round_id}
+                          </Col>
+                          <Col sm="7">{Number(data.accuracy).toFixed(2)}%</Col>
+                        </Row>
+                      );
+                    })}
+                  </Container>
+                  {Object.keys(model).length ? (
+                    <Formik
+                      initialValues={{
+                        name: model.name || "",
+                        description: model.longdesc || "",
+                        params: model.params || "",
+                        languages: model.languages || "",
+                        license: model.license || "",
+                        model_card: model.model_card || modelCardTemplate,
+                      }}
+                      validate={this.handleValidation}
+                      onSubmit={this.handleSubmit}
+                    >
+                      {({
+                        values,
+                        errors,
+                        handleChange,
+                        handleSubmit,
+                        isSubmitting,
+                      }) => (
+                        <>
+                          <form onSubmit={handleSubmit} className="mt-5 ml-2">
+                            <Form.Group>
+                              <Form.Label>
+                                <b>Model Name</b>
+                              </Form.Label>
+                              <Form.Control
+                                name="name"
+                                type="text"
+                                style={{
+                                  borderColor: errors.name ? "red" : null,
+                                }}
+                                placeholder="Provide a name for your model"
+                                onChange={handleChange}
+                                value={values.name}
+                              />
+                            </Form.Group>
+                            <Form.Group>
+                              <Form.Label>
+                                <b>Summary</b>
+                              </Form.Label>
+                              <Form.Control
+                                name="description"
+                                type="text"
+                                style={{
+                                  borderColor: errors.description ? "red" : null,
+                                }}
+                                placeholder="Provide a description of your model"
+                                onChange={handleChange}
+                                value={values.description}
+                              />
+                            </Form.Group>
+                            <Form.Group>
+                              <Form.Label>
+                                <b>Number of Parameters</b>
+                              </Form.Label>
+                              <Form.Control
+                                name="params"
+                                type="int"
+                                style={{
+                                  borderColor: errors.params ? "red" : null,
+                                }}
+                                onChange={handleChange}
+                                value={values.params}
+                                aria-describedby="paramsHelpBlock"
+                              />
+                              <Form.Text id="paramsHelpBlock" muted>
+                              <Markdown>To count the number of parameters, you can run `sum(p.numel() for p in model.parameters() if p.requires_grad)` in PyTorch.</Markdown>
+                              </Form.Text>
+                            </Form.Group>
+                            <Form.Group>
+                              <Form.Label>
+                                <b>Language(s)</b>
+                              </Form.Label>
+                              <Form.Control
+                                name="languages"
+                                type="text"
+                                style={{
+                                  borderColor: errors.languages ? "red" : null,
+                                }}
+                                placeholder="e.g. English, Chinese"
+                                onChange={handleChange}
+                                value={values.languages}
+                              />
+                            </Form.Group>
+                            <Form.Group>
+                              <Form.Label>
+                                <b>License(s)</b>
+                              </Form.Label>
+                              <Form.Control
+                                name="license"
+                                type="text"
+                                style={{
+                                  borderColor: errors.license ? "red" : null,
+                                }}
+                                placeholder="e.g. Apache 2.0"
+                                onChange={handleChange}
+                                value={values.license}
+                              />
+                            </Form.Group>
+                            <Form.Group>
+                              <Form.Label>
+                                <b>Model Card</b>
+                              </Form.Label>
+                              <Form.Control
+                                as="textarea"
+                                name="model_card"
+                                defaultValue={values.model_card}
+                                rows="12"
+                                onChange={handleChange}
+                              />
+                              <Form.Text id="paramsHelpBlock" muted>
+                                <Markdown>The text will be rendered as [markdown](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet) in model page. For more details on [model cards](https://arxiv.org/abs/1810.03993).</Markdown>
+                              </Form.Text>
+                            </Form.Group>
 
-                          {model.is_published == "False" ? (
-                            <Button
-                              type="submit"
-                              variant="primary"
-                              className="fadeIn third submitBtn button-ellipse"
-                              disabled={isSubmitting}
-                            >
-                              Publish
-                            </Button>
-                          ) : (
-                            <Button
-                              type="submit"
-                              variant="primary"
-                              className="fadeIn third submitBtn button-ellipse"
-                              disabled={isSubmitting}
-                            >
-                              Update
-                            </Button>
-                          )}
-                        </form>
-                      </>
-                    )}
-                  </Formik>
-                ) : null}
-              </Card.Body>
-            </Card>
-          </CardGroup>
-        </Row>
-      </Container>
+                            {model.is_published == "False" ? (
+                              <Button
+                                type="submit"
+                                variant="primary"
+                                className="fadeIn third submitBtn button-ellipse"
+                                disabled={isSubmitting}
+                              >
+                                Publish
+                              </Button>
+                            ) : (
+                              <Button
+                                type="submit"
+                                variant="primary"
+                                className="fadeIn third submitBtn button-ellipse"
+                                disabled={isSubmitting}
+                              >
+                                Update
+                              </Button>
+                            )}
+                          </form>
+                        </>
+                      )}
+                    </Formik>
+                  ) : null}
+                </Card.Body>
+              </Card>
+            </CardGroup>
+          </Row>
+        </Container>
+      </OverlayProvider>
     );
   }
 }
