@@ -65,10 +65,10 @@ const StatsSubPage = (props) => {
                  >
                    <td className="text-right" style={{cursor:'pointer'}}>
                      {props.user.examples_submitted && (100 *
-                       (props.user.total_fooled - props.user.total_verified_not_fooled) /
+                       (props.user.total_fooled - props.user.total_verified_not_correct_fooled) /
                        props.user.examples_submitted
                      ).toFixed(2)}% (
-                     {props.user.total_fooled - props.user.total_verified_not_fooled}/{props.user.examples_submitted}) / {" "}
+                     {props.user.total_fooled - props.user.total_verified_not_correct_fooled}/{props.user.examples_submitted}) / {" "}
                      {props.user.examples_submitted && (100 *
                        props.user.total_fooled /
                        props.user.examples_submitted
@@ -88,11 +88,11 @@ const StatsSubPage = (props) => {
                   >
                     <td className="text-right" style={{cursor:'pointer'}}>
                       {props.user.examples_submitted && (100 *
-                        props.user.total_verified_not_fooled /
+                        props.user.total_verified_not_correct_fooled /
                         props.user.examples_submitted
                       ).toFixed(2)}% (
                       {props.user.examples_submitted &&
-                        props.user.total_verified_not_fooled
+                        props.user.total_verified_not_correct_fooled
                       }/{props.user.examples_submitted})
                     </td>
                   </OverlayTrigger>

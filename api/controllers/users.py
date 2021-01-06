@@ -43,7 +43,7 @@ def get_user(credentials, id):
             "examples_submitted",
             "total_fooled",
             "total_verified_fooled",
-            "total_verified_not_fooled",
+            "total_verified_not_correct_fooled",
             "total_retracted",
         ]:
             nu[f] = u[f]
@@ -74,7 +74,7 @@ def get_user_with_badges(credentials, id):
             "examples_submitted",
             "total_fooled",
             "total_verified_fooled",
-            "total_verified_not_fooled",
+            "total_verified_not_correct_fooled",
             "total_retracted",
         ]:
             nu[f] = u[f]

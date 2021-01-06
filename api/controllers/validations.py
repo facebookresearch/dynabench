@@ -114,7 +114,7 @@ def validate_example(credentials, eid):
             or label_counts["flagged"] >= num_matching_validations
             or (mode == "owner" and label != "correct")
         ):
-            um.incrementVerifiedNotFooledCount(example.uid)
+            um.incrementVerifiedNotCorrectFooledCount(example.uid)
             user = um.get(example.uid)
             if user:
                 if user.metadata_json:
