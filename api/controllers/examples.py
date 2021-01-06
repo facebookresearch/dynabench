@@ -149,6 +149,8 @@ def update_example(credentials, eid):
         if "retracted" in data and data["retracted"] is True:
             um = UserModel()
             um.incrementRetractedCount(example.uid)
+            if example.model_wrong:
+                um.incrementVerifiedNotCorrectFooledCount(example.uid)
         return util.json_encode({"success": "ok"})
     except Exception as e:
         logger.error(f"Error updating example {eid}: {e}")

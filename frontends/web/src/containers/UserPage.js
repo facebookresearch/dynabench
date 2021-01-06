@@ -226,16 +226,16 @@ class UserPage extends React.Component {
                                 defaultValue={
                                   this.state.user.examples_submitted > 0 ?
                                     (100 *
-                                      (this.state.user.total_fooled - this.state.user.total_verified_not_fooled)  /
+                                      (this.state.user.total_fooled - this.state.user.total_verified_not_correct_fooled)  /
                                       this.state.user.examples_submitted
                                     ).toFixed(2).toString() + "% (" +
-                                    this.state.user.total_fooled.toString() + "/" +
+                                    (this.state.user.total_fooled - this.state.user.total_verified_not_fooled).toString() + "/" +
                                     this.state.user.examples_submitted + ") / " +
                                     (100 *
                                       this.state.user.total_fooled /
                                       this.state.user.examples_submitted
                                     ).toFixed(2).toString() + "% (" +
-                                    (this.state.user.total_fooled - this.state.user.total_verified_not_fooled).toString() + "/" +
+                                    this.state.user.total_fooled.toString() + "/" +
                                     this.state.user.examples_submitted + ")"
                                   : 'N/A'}
                               />
@@ -260,10 +260,10 @@ class UserPage extends React.Component {
                                 defaultValue={
                                   this.state.user.examples_submitted > 0 ?
                                     (100 *
-                                      this.state.user.total_verified_not_fooled /
+                                      this.state.user.total_verified_not_correct_fooled /
                                       this.state.user.examples_submitted
                                     ).toFixed(2).toString() + "% (" +
-                                    this.state.user.total_verified_not_fooled.toString() + "/" +
+                                    this.state.user.total_verified_not_correct_fooled.toString() + "/" +
                                     this.state.user.examples_submitted + ")"
                                   : 'N/A'}
                               />
