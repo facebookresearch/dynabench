@@ -123,15 +123,17 @@ class HomePage extends React.Component {
     this.hideJumbo = this.hideJumbo.bind(this);
   }
   componentDidMount() {
-    this.context.api
-      .getAsyncBadges()
-      .then((result) => {
-        if (!!result.badges) {
-          this.setState({showBadges: result.badges})
-        }
-      }, (error) => {
-        console.log(error);
-      });
+    if (this.context.api.loggedIn()) {
+      this.context.api
+        .getAsyncBadges()
+        .then((result) => {
+          if (!!result.badges) {
+            this.setState({showBadges: result.badges})
+          }
+        }, (error) => {
+          console.log(error);
+        });
+    }
   }
   hideJumbo() {
     this.setState({ showjumbo: false });
