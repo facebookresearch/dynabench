@@ -307,7 +307,7 @@ const OverallUserLeaderBoard = (props) => {
       <thead>
         <tr>
           <th>User</th>
-          <th className="text-right">verified MER</th>
+          <th className="text-right">Verified MER</th>
           <th className="text-right pr-4">Totals</th>
         </tr>
       </thead>
