@@ -67,6 +67,11 @@ def do_upload(credentials):
         bottle.abort(404, "User information not found")
 
     task_id = bottle.request.forms.get("taskId")
+    try:
+        task_id = int(task_id)
+    except ValueError:
+        bottle.abort(404, "Valid task id not found")
+
     if not user.admin and not (
         (task_id, "owner") in [(perm.tid, perm.type) for perm in user.task_permissions]
     ):
