@@ -132,9 +132,9 @@ class UserPage extends React.Component {
   render() {
     const pageHash = this.props.location.hash;
     return (
-      <div className="container-area">
-        <div className="left-sidebar">
-          <div className="left-sticky-sidebar">
+      <Container fluid>
+        <Row>
+          <Col lg={2} className="p-0 border">
             <Nav className="flex-lg-column sidebar-wrapper sticky-top">
               <Nav.Item>
                 <Nav.Link
@@ -157,247 +157,247 @@ class UserPage extends React.Component {
                 </Nav.Link>
               </Nav.Item>
             </Nav>
-          </div>
-        </div>
-        <div id="content-area" className="snippet-hidden">
-          <Container>
-            {pageHash === "#profile" ? (
-              <>
-                <h1 className="my-4 pt-3 text-uppercase text-center">
-                  User Overview
-                </h1>
-                <Col className="m-auto" lg={12}>
-                  {this.state.user.id && (
-                    <>
-                    <Card>
-                      <Container className="mt-3">
-                        <Row>
-                          <Col>
-                            <Avatar
-                              avatar_url={this.state.user.avatar_url}
-                              username={this.state.user.username}
-                              theme="blue"
-                            />
-                          </Col>
-                        </Row>
-                      </Container>
-                      <Card.Body>
-                        <Form.Group as={Row}>
-                          <Form.Label column sm="6" className="text-right">
-                            Username:
-                          </Form.Label>
-                          <Col sm="4">
-                            <Form.Control
-                              plaintext
-                              readOnly
-                              className="text-right"
-                              defaultValue={this.state.user.username}
-                            />
-                          </Col>
-                        </Form.Group>
-                        <Form.Group as={Row}>
-                          <Form.Label column sm="6" className="text-right">
-                            Affiliation:
-                          </Form.Label>
-                          <Col sm="4">
-                            <Form.Control
-                              plaintext
-                              readOnly
-                              className="text-right"
-                              defaultValue={this.state.user.affiliation}
-                            />
-                          </Col>
-                        </Form.Group>
-                        <Form.Group as={Row}>
-                          <Form.Label column sm="6" className="text-right">
-                            Model error rate (verified/unverified):
-                          </Form.Label>
-                          <Col sm="4">
-                            <OverlayTrigger
-                              placement="right"
-                              delay={{ show: 250, hide: 400 }}
-                              overlay={METooltip}
-                            >
-                              <Form.Control
-                                plaintext
-                                readOnly
-                                className="text-right"
-                                style={{cursor:'pointer'}}
-                                defaultValue={
-                                  this.state.user.examples_submitted > 0 ?
-                                    (100 *
-                                      (this.state.user.total_fooled - this.state.user.total_verified_not_correct_fooled)  /
-                                      this.state.user.examples_submitted
-                                    ).toFixed(2).toString() + "% (" +
-                                    (this.state.user.total_fooled - this.state.user.total_verified_not_correct_fooled).toString() + "/" +
-                                    this.state.user.examples_submitted + ") / " +
-                                    (100 *
-                                      this.state.user.total_fooled /
-                                      this.state.user.examples_submitted
-                                    ).toFixed(2).toString() + "% (" +
-                                    this.state.user.total_fooled.toString() + "/" +
-                                    this.state.user.examples_submitted + ")"
-                                  : 'N/A'}
-                              />
-                            </OverlayTrigger>
-                          </Col>
-                        </Form.Group>
-                        <Form.Group as={Row}>
-                          <Form.Label column sm="6" className="text-right">
-                            Rejection rate:
-                          </Form.Label>
-                          <Col sm="4">
-                            <OverlayTrigger
-                              placement="right"
-                              delay={{ show: 250, hide: 400 }}
-                              overlay={RejectionTooltip}
-                            >
-                              <Form.Control
-                                plaintext
-                                readOnly
-                                className="text-right"
-                                style={{cursor:'pointer'}}
-                                defaultValue={
-                                  this.state.user.examples_submitted > 0 ?
-                                    (100 *
-                                      this.state.user.total_verified_not_correct_fooled /
-                                      this.state.user.examples_submitted
-                                    ).toFixed(2).toString() + "% (" +
-                                    this.state.user.total_verified_not_correct_fooled.toString() + "/" +
-                                    this.state.user.examples_submitted + ")"
-                                  : 'N/A'}
-                              />
-                            </OverlayTrigger>
-                          </Col>
-                        </Form.Group>
-                        <Form.Group as={Row}>
-                          <Form.Label column sm="6" className="text-right">
-                            Retraction rate:
-                          </Form.Label>
-                          <Col sm="4">
-                            <OverlayTrigger
-                              placement="right"
-                              delay={{ show: 250, hide: 400 }}
-                              overlay={RetractionTooltip}
-                            >
-                              <Form.Control
-                                plaintext
-                                readOnly
-                                className="text-right"
-                                style={{cursor:'pointer'}}
-                                defaultValue={
-                                  this.state.user.examples_submitted > 0 ?
-                                    (100 * this.state.user.total_retracted /
-                                      this.state.user.examples_submitted
-                                    ).toFixed(2).toString() + '% (' +
-                                    this.state.user.total_retracted.toString() + '/' +
-                                    this.state.user.examples_submitted + ')'
-                                  : 'N/A'}
-                              />
-                            </OverlayTrigger>
-                          </Col>
-                        </Form.Group>
-                      </Card.Body>
-                      {this.state.user.id == this.context.user.id && (
-                        <Card.Footer>
+          </Col>
+          <Col>
+            <Container>
+              {pageHash === "#profile" ? (
+                <>
+                  <h1 className="my-4 pt-3 text-uppercase text-center">
+                    User Overview
+                  </h1>
+                  <Col className="m-auto" lg={12}>
+                    {this.state.user.id && (
+                      <>
+                      <Card>
+                        <Container className="mt-3">
                           <Row>
-                            <Col className="text-center">
-                              <Link className="" to="/account#profile">
-                                Looking for your profile?
-                              </Link>
+                            <Col>
+                              <Avatar
+                                avatar_url={this.state.user.avatar_url}
+                                username={this.state.user.username}
+                                theme="blue"
+                              />
                             </Col>
                           </Row>
-                        </Card.Footer>
-                      )}
-                    </Card>
-                    <BadgeGrid user={this.state.user} />
-                    </>
-                  )}
-                </Col>
-              </>
-            ) : null}
-            {pageHash === "#models" ? (
-              <>
-                <h1 className="my-4 pt-3 text-uppercase text-center">
-                  User Models
-                </h1>
-                <Col className="m-auto" lg={8}>
-                  <Card className="profile-card">
-                    <Card.Body>
-                      <Table className="mb-0">
-                        <thead className="blue-color border-bottom">
-                          <tr>
-                            <td>
-                              <b>Name</b>
-                            </td>
-                            <td>
-                              <b>Task</b>
-                            </td>
-                            <td className="text-right">
-                              <b>Performance</b>
-                            </td>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {!this.state.userModels.length ? (
+                        </Container>
+                        <Card.Body>
+                          <Form.Group as={Row}>
+                            <Form.Label column sm="6" className="text-right">
+                              Username:
+                            </Form.Label>
+                            <Col sm="4">
+                              <Form.Control
+                                plaintext
+                                readOnly
+                                className="text-right"
+                                defaultValue={this.state.user.username}
+                              />
+                            </Col>
+                          </Form.Group>
+                          <Form.Group as={Row}>
+                            <Form.Label column sm="6" className="text-right">
+                              Affiliation:
+                            </Form.Label>
+                            <Col sm="4">
+                              <Form.Control
+                                plaintext
+                                readOnly
+                                className="text-right"
+                                defaultValue={this.state.user.affiliation}
+                              />
+                            </Col>
+                          </Form.Group>
+                          <Form.Group as={Row}>
+                            <Form.Label column sm="6" className="text-right">
+                              Model error rate (verified/unverified):
+                            </Form.Label>
+                            <Col sm="4">
+                              <OverlayTrigger
+                                placement="right"
+                                delay={{ show: 250, hide: 400 }}
+                                overlay={METooltip}
+                              >
+                                <Form.Control
+                                  plaintext
+                                  readOnly
+                                  className="text-right"
+                                  style={{cursor:'pointer'}}
+                                  defaultValue={
+                                    this.state.user.examples_submitted > 0 ?
+                                      (100 *
+                                        (this.state.user.total_fooled - this.state.user.total_verified_not_correct_fooled)  /
+                                        this.state.user.examples_submitted
+                                      ).toFixed(2).toString() + "% (" +
+                                      (this.state.user.total_fooled - this.state.user.total_verified_not_correct_fooled).toString() + "/" +
+                                      this.state.user.examples_submitted + ") / " +
+                                      (100 *
+                                        this.state.user.total_fooled /
+                                        this.state.user.examples_submitted
+                                      ).toFixed(2).toString() + "% (" +
+                                      this.state.user.total_fooled.toString() + "/" +
+                                      this.state.user.examples_submitted + ")"
+                                    : 'N/A'}
+                                />
+                              </OverlayTrigger>
+                            </Col>
+                          </Form.Group>
+                          <Form.Group as={Row}>
+                            <Form.Label column sm="6" className="text-right">
+                              Rejection rate:
+                            </Form.Label>
+                            <Col sm="4">
+                              <OverlayTrigger
+                                placement="right"
+                                delay={{ show: 250, hide: 400 }}
+                                overlay={RejectionTooltip}
+                              >
+                                <Form.Control
+                                  plaintext
+                                  readOnly
+                                  className="text-right"
+                                  style={{cursor:'pointer'}}
+                                  defaultValue={
+                                    this.state.user.examples_submitted > 0 ?
+                                      (100 *
+                                        this.state.user.total_verified_not_correct_fooled /
+                                        this.state.user.examples_submitted
+                                      ).toFixed(2).toString() + "% (" +
+                                      this.state.user.total_verified_not_correct_fooled.toString() + "/" +
+                                      this.state.user.examples_submitted + ")"
+                                    : 'N/A'}
+                                />
+                              </OverlayTrigger>
+                            </Col>
+                          </Form.Group>
+                          <Form.Group as={Row}>
+                            <Form.Label column sm="6" className="text-right">
+                              Retraction rate:
+                            </Form.Label>
+                            <Col sm="4">
+                              <OverlayTrigger
+                                placement="right"
+                                delay={{ show: 250, hide: 400 }}
+                                overlay={RetractionTooltip}
+                              >
+                                <Form.Control
+                                  plaintext
+                                  readOnly
+                                  className="text-right"
+                                  style={{cursor:'pointer'}}
+                                  defaultValue={
+                                    this.state.user.examples_submitted > 0 ?
+                                      (100 * this.state.user.total_retracted /
+                                        this.state.user.examples_submitted
+                                      ).toFixed(2).toString() + '% (' +
+                                      this.state.user.total_retracted.toString() + '/' +
+                                      this.state.user.examples_submitted + ')'
+                                    : 'N/A'}
+                                />
+                              </OverlayTrigger>
+                            </Col>
+                          </Form.Group>
+                        </Card.Body>
+                        {this.state.user.id == this.context.user.id && (
+                          <Card.Footer>
+                            <Row>
+                              <Col className="text-center">
+                                <Link className="" to="/account#profile">
+                                  Looking for your profile?
+                                </Link>
+                              </Col>
+                            </Row>
+                          </Card.Footer>
+                        )}
+                      </Card>
+                      <BadgeGrid user={this.state.user} />
+                      </>
+                    )}
+                  </Col>
+                </>
+              ) : null}
+              {pageHash === "#models" ? (
+                <>
+                  <h1 className="my-4 pt-3 text-uppercase text-center">
+                    User Models
+                  </h1>
+                  <Col className="m-auto" lg={8}>
+                    <Card className="profile-card">
+                      <Card.Body>
+                        <Table className="mb-0">
+                          <thead className="blue-color border-bottom">
                             <tr>
-                              <td colSpan="3">
-                                <div className="text-center">No data found</div>
+                              <td>
+                                <b>Name</b>
+                              </td>
+                              <td>
+                                <b>Task</b>
+                              </td>
+                              <td className="text-right">
+                                <b>Performance</b>
                               </td>
                             </tr>
-                          ) : null}
-                          {this.state.userModels.map((model) => {
-                            return (
-                              <tr key={model.id}>
-                                <td>
-                                  <Link to={`/models/${model.id}`}>
-                                    {model.name || "Unknown"}
-                                  </Link>
-                                </td>
-                                <td>
-                                  <TasksContext.Consumer>
-                                    {({ tasks }) => {
-                                      const task =
-                                        model &&
-                                        tasks.filter((e) => e.id == model.tid);
-                                      return (
-                                        task && task.length && task[0].shortname
-                                      );
-                                    }}
-                                  </TasksContext.Consumer>
-                                </td>
-                                <td className="text-right">
-                                  {model.overall_perf}
+                          </thead>
+                          <tbody>
+                            {!this.state.userModels.length ? (
+                              <tr>
+                                <td colSpan="3">
+                                  <div className="text-center">No data found</div>
                                 </td>
                               </tr>
-                            );
-                          })}
-                        </tbody>
-                      </Table>
-                    </Card.Body>
-                    <Card.Footer className="text-center">
-                      <Pagination className="mb-0 float-right" size="sm">
-                        <Pagination.Item
-                          disabled={!this.state.userModelsPage}
-                          onClick={() => this.paginate("prev")}
-                        >
-                          Previous
-                        </Pagination.Item>
-                        <Pagination.Item
-                          disabled={this.state.isEndOfUserModelsPage}
-                          onClick={() => this.paginate("next")}
-                        >
-                          Next
-                        </Pagination.Item>
-                      </Pagination>
-                    </Card.Footer>
-                  </Card>
-                </Col>
-              </>
-            ) : null}
-          </Container>
-        </div>
-      </div>
+                            ) : null}
+                            {this.state.userModels.map((model) => {
+                              return (
+                                <tr key={model.id}>
+                                  <td>
+                                    <Link to={`/models/${model.id}`}>
+                                      {model.name || "Unknown"}
+                                    </Link>
+                                  </td>
+                                  <td>
+                                    <TasksContext.Consumer>
+                                      {({ tasks }) => {
+                                        const task =
+                                          model &&
+                                          tasks.filter((e) => e.id == model.tid);
+                                        return (
+                                          task && task.length && task[0].shortname
+                                        );
+                                      }}
+                                    </TasksContext.Consumer>
+                                  </td>
+                                  <td className="text-right">
+                                    {model.overall_perf}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </Table>
+                      </Card.Body>
+                      <Card.Footer className="text-center">
+                        <Pagination className="mb-0 float-right" size="sm">
+                          <Pagination.Item
+                            disabled={!this.state.userModelsPage}
+                            onClick={() => this.paginate("prev")}
+                          >
+                            Previous
+                          </Pagination.Item>
+                          <Pagination.Item
+                            disabled={this.state.isEndOfUserModelsPage}
+                            onClick={() => this.paginate("next")}
+                          >
+                            Next
+                          </Pagination.Item>
+                        </Pagination>
+                      </Card.Footer>
+                    </Card>
+                  </Col>
+                </>
+              ) : null}
+            </Container>
+          </Col>
+        </Row>
+      </Container>
     );
   }
 }
