@@ -510,9 +510,9 @@ class ProfilePage extends React.Component {
 
   render() {
     return (
-      <div className="container-area">
-        <div className="left-sidebar">
-          <div className="left-sticky-sidebar">
+      <Container fluid>
+        <Row>
+          <Col lg={2} className="p-0 border">
             <Nav className="flex-lg-column sidebar-wrapper sticky-top">
               <Nav.Item>
                 <Nav.Link
@@ -555,188 +555,187 @@ class ProfilePage extends React.Component {
                 </Nav.Link>
               </Nav.Item>
             </Nav>
-          </div>
-        </div>
-        <div id="content-area" className="snippet-hidden">
-          {this.props.location.hash === "#profile" ? (
-            <Container className="mb-5 pb-5">
-              <h1 className="my-4 pt-3 text-uppercase text-center">
-                Your Profile
-              </h1>
-              <Col className="m-auto" lg={8}>
-                <Card>
-                  <Container className="mt-3">
-                    <Row>
-                      <Col>
-                        <UserContext.Consumer>
-                          {(props) => (
-                            <Avatar
-                              avatar_url={this.state.user.avatar_url}
-                              username={this.state.user.username}
-                              isEditable={true}
-                              theme="blue"
-                              loader={this.state.loader}
-                              handleUpdate={(e) =>
-                                this.handleAvatarChange(e, props)
-                              }
-                            />
+          </Col>
+          <Col>
+            {this.props.location.hash === "#profile" ? (
+              <Container className="mb-5 pb-5">
+                <h1 className="my-4 pt-3 text-uppercase text-center">
+                  Your Profile
+                </h1>
+                <Col className="m-auto" lg={8}>
+                  <Card>
+                    <Container className="mt-3">
+                      <Row>
+                        <Col>
+                          <UserContext.Consumer>
+                            {(props) => (
+                              <Avatar
+                                avatar_url={this.state.user.avatar_url}
+                                username={this.state.user.username}
+                                isEditable={true}
+                                theme="blue"
+                                loader={this.state.loader}
+                                handleUpdate={(e) =>
+                                  this.handleAvatarChange(e, props)
+                                }
+                              />
+                            )}
+                          </UserContext.Consumer>
+                          {this.state.invalidFileUpload ? (
+                            <div className="text-center mt-4">
+                              *Upload a valid file
+                            </div>
+                          ) : null}
+                        </Col>
+                      </Row>
+                    </Container>
+                    <Card.Body className="mt-4">
+                      {this.state.user.email ? (
+                        <Formik
+                          initialValues={{
+                            username: this.state.user.username,
+                            realname: this.state.user.realname,
+                            affiliation: this.state.user.affiliation,
+                          }}
+                          onSubmit={this.handleSubmit}
+                        >
+                          {({
+                            values,
+                            errors,
+                            handleChange,
+                            handleSubmit,
+                            isSubmitting,
+                            dirty,
+                          }) => (
+                            <>
+                              <form className="px-4" onSubmit={handleSubmit}>
+                                <Container>
+                                  <Form.Group
+                                    as={Row}
+                                    controlId="username"
+                                    className="py-3 my-0 border-bottom"
+                                  >
+                                    <Form.Label column sm="4">
+                                      Username
+                                    </Form.Label>
+                                    <Col sm="8">
+                                      <Form.Control
+                                        type="text"
+                                        defaultValue={this.state.user.username}
+                                        onChange={handleChange}
+                                      />
+                                    </Col>
+                                  </Form.Group>
+                                  <Form.Group
+                                    as={Row}
+                                    controlId="email"
+                                    className="py-3 my-0 border-bottom"
+                                  >
+                                    <Form.Label column sm="4">
+                                      Email
+                                    </Form.Label>
+                                    <Col sm="8">
+                                      <Form.Control
+                                        plaintext
+                                        disabled
+                                        defaultValue={this.state.user.email}
+                                      />
+                                    </Col>
+                                  </Form.Group>
+                                  <Form.Group
+                                    as={Row}
+                                    controlId="realname"
+                                    className="py-3 my-0 border-bottom"
+                                  >
+                                    <Form.Label column sm="4">
+                                      Real name
+                                    </Form.Label>
+                                    <Col sm="8">
+                                      <Form.Control
+                                        type="text"
+                                        defaultValue={this.state.user.realname}
+                                        onChange={handleChange}
+                                      />
+                                    </Col>
+                                  </Form.Group>
+                                  <Form.Group
+                                    as={Row}
+                                    controlId="affiliation"
+                                    className="py-3 my-0"
+                                  >
+                                    <Form.Label column sm="4">
+                                      Affiliation
+                                    </Form.Label>
+                                    <Col sm="8">
+                                      <Form.Control
+                                        type="text"
+                                        defaultValue={this.state.user.affiliation}
+                                        onChange={handleChange}
+                                      />
+                                    </Col>
+                                  </Form.Group>
+                                  <Form.Group
+                                    as={Row}
+                                    controlId="affiliation"
+                                    className="py-3 my-0"
+                                  >
+                                    <Col sm="8">
+                                      <small className="form-text text-muted">
+                                        {errors.accept}
+                                      </small>
+                                    </Col>
+                                  </Form.Group>
+                                  <Row className="justify-content-md-center">
+                                    <Col md={5} sm={12}>
+                                      {dirty ? (
+                                        <Button
+                                          type="submit"
+                                          variant="primary"
+                                          type="submit"
+                                          className="submit-btn button-ellipse text-uppercase my-4"
+                                          disabled={isSubmitting}
+                                        >
+                                          Save
+                                        </Button>
+                                      ) : null}
+                                    </Col>
+                                  </Row>
+                                </Container>
+                              </form>
+                            </>
                           )}
-                        </UserContext.Consumer>
-                        {this.state.invalidFileUpload ? (
-                          <div className="text-center mt-4">
-                            *Upload a valid file
-                          </div>
-                        ) : null}
-                      </Col>
-                    </Row>
-                  </Container>
-
-                  <Card.Body className="mt-4">
-                    {this.state.user.email ? (
-                      <Formik
-                        initialValues={{
-                          username: this.state.user.username,
-                          realname: this.state.user.realname,
-                          affiliation: this.state.user.affiliation,
-                        }}
-                        onSubmit={this.handleSubmit}
-                      >
-                        {({
-                          values,
-                          errors,
-                          handleChange,
-                          handleSubmit,
-                          isSubmitting,
-                          dirty,
-                        }) => (
-                          <>
-                            <form className="px-4" onSubmit={handleSubmit}>
-                              <Container>
-                                <Form.Group
-                                  as={Row}
-                                  controlId="username"
-                                  className="py-3 my-0 border-bottom"
-                                >
-                                  <Form.Label column sm="4">
-                                    Username
-                                  </Form.Label>
-                                  <Col sm="8">
-                                    <Form.Control
-                                      type="text"
-                                      defaultValue={this.state.user.username}
-                                      onChange={handleChange}
-                                    />
-                                  </Col>
-                                </Form.Group>
-                                <Form.Group
-                                  as={Row}
-                                  controlId="email"
-                                  className="py-3 my-0 border-bottom"
-                                >
-                                  <Form.Label column sm="4">
-                                    Email
-                                  </Form.Label>
-                                  <Col sm="8">
-                                    <Form.Control
-                                      plaintext
-                                      disabled
-                                      defaultValue={this.state.user.email}
-                                    />
-                                  </Col>
-                                </Form.Group>
-                                <Form.Group
-                                  as={Row}
-                                  controlId="realname"
-                                  className="py-3 my-0 border-bottom"
-                                >
-                                  <Form.Label column sm="4">
-                                    Real name
-                                  </Form.Label>
-                                  <Col sm="8">
-                                    <Form.Control
-                                      type="text"
-                                      defaultValue={this.state.user.realname}
-                                      onChange={handleChange}
-                                    />
-                                  </Col>
-                                </Form.Group>
-                                <Form.Group
-                                  as={Row}
-                                  controlId="affiliation"
-                                  className="py-3 my-0"
-                                >
-                                  <Form.Label column sm="4">
-                                    Affiliation
-                                  </Form.Label>
-                                  <Col sm="8">
-                                    <Form.Control
-                                      type="text"
-                                      defaultValue={this.state.user.affiliation}
-                                      onChange={handleChange}
-                                    />
-                                  </Col>
-                                </Form.Group>
-                                <Form.Group
-                                  as={Row}
-                                  controlId="affiliation"
-                                  className="py-3 my-0"
-                                >
-                                  <Col sm="8">
-                                    <small className="form-text text-muted">
-                                      {errors.accept}
-                                    </small>
-                                  </Col>
-                                </Form.Group>
-                                <Row className="justify-content-md-center">
-                                  <Col md={5} sm={12}>
-                                    {dirty ? (
-                                      <Button
-                                        type="submit"
-                                        variant="primary"
-                                        type="submit"
-                                        className="submit-btn button-ellipse text-uppercase my-4"
-                                        disabled={isSubmitting}
-                                      >
-                                        Save
-                                      </Button>
-                                    ) : null}
-                                  </Col>
-                                </Row>
-                              </Container>
-                            </form>
-                          </>
-                        )}
-                      </Formik>
-                    ) : (
-                      ""
-                    )}
-                  </Card.Body>
-                </Card>
-              </Col>
-            </Container>
-          ) : null}
-          {this.props.location.hash === "#models" ?
-            <ModelSubPage
-              userModels={this.state.userModels}
-              userModelsPage={this.state.userModelsPage}
-              isEndOfUserModelsPage={this.state.isEndOfUserModelsPage}
-              paginate={this.paginateUserModels}
-              {...this.props}
-            /> : null}
-          {this.props.location.hash === "#notifications" ?
-            <NotificationsSubPage
-              notifications={this.state.notifications}
-              notificationsPage={this.state.notificationsPage}
-              isEndOfNotificationsPage={this.state.isEndOfNotificationsPage}
-              paginate={this.paginateNotifications}
-              {...this.props}
-              />
-           : null}
-          {this.props.location.hash === "#stats" ?
-            <StatsSubPage user={this.state.user} />
-           : null}
-        </div>
-      </div>
+                        </Formik>
+                      ) : (
+                        ""
+                      )}
+                    </Card.Body>
+                  </Card>
+                </Col>
+              </Container>
+            ) : null}
+            {this.props.location.hash === "#models" ?
+              <ModelSubPage
+                userModels={this.state.userModels}
+                userModelsPage={this.state.userModelsPage}
+                isEndOfUserModelsPage={this.state.isEndOfUserModelsPage}
+                paginate={this.paginateUserModels}
+                {...this.props}
+              /> : null}
+            {this.props.location.hash === "#notifications" ?
+              <NotificationsSubPage
+                notifications={this.state.notifications}
+                notificationsPage={this.state.notificationsPage}
+                isEndOfNotificationsPage={this.state.isEndOfNotificationsPage}
+                paginate={this.paginateNotifications}
+                {...this.props}
+                />
+             : null}
+            {this.props.location.hash === "#stats" ?
+              <StatsSubPage user={this.state.user} />
+             : null}
+          </Col>
+        </Row>
+      </Container>
     );
   }
 }
