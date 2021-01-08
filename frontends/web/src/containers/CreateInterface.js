@@ -5,6 +5,8 @@
  */
 
 import React from "react";
+// Temporal hardcoded path.
+import pizza from "./pizza.png"
 import {
   Container,
   Row,
@@ -69,6 +71,7 @@ function ContextInfo({ taskType, taskName, text, answer, updateAnswer }) {
   );
 }
 
+
 const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName, onChange }) => {
   const otherTargets = targets.filter((_, index) => index !== curTarget);
   const otherTargetStr = otherTargets.join(" or ");
@@ -90,10 +93,10 @@ const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName, onChang
     <div className={"mb-3"}>
       <div className={"mt-3 p-3 rounded " + colorBg}>
         {
-          taskType === "extract"
+          targets.length === 1
             ? <InputGroup className="align-items-center">
                 <i className="fas fa-flag-checkered mr-1"></i>
-                <span>Your goal: enter a question and select an answer in the context, such that the model is fooled.</span>
+                <span>Your goal: enter a question {taskShortName === "QA" ? "and select an answer in the context," : "based on the image below,"} such that the model is fooled.</span>
               </InputGroup>
             : <InputGroup className="align-items-center">
                 <i className="fas fa-flag-checkered mr-1"></i>
@@ -275,6 +278,25 @@ const QATaskInstructions = () => {
     </div>
   );
 };
+
+class AtomicImage  extends React.Component {
+  constructor(props) {
+       super(props);
+       this.onImgLoad = this.onImgLoad.bind(this);
+       this.fixedWidth = 500
+   }
+   onImgLoad({target:img}) {
+      const ratio =  img.naturalHeight / img.naturalWidth
+      img.width = this.fixedWidth
+      img.height = ratio * this.fixedWidth
+   }
+   render(){
+       const {src} = this.props;
+       return (
+        <img onLoad={this.onImgLoad} src={src}/>
+      );
+   }
+}
 
 class ResponseInfo extends React.Component {
   static contextType = UserContext;
@@ -1100,23 +1122,30 @@ class CreateInterface extends React.Component {
           </Annotation>
           <Card className="profile-card overflow-hidden">
             {contextContent}
-            <Card.Body className="overflow-auto pt-2" style={{ height: 385 }} ref={this.chatContainerRef}>
-              {content}
-              <div
-                className="bottom-anchor"
-                ref={this.bottomAnchorRef}
-              />
-            </Card.Body>
+            {
+              this.state.task.shortname !== "VQA" ?
+                (<Card.Body className="overflow-auto pt-2" style={{  height: 385 }} ref={this.chatContainerRef}>
+                  {content}
+                  <div
+                    className="bottom-anchor"
+                    ref={this.bottomAnchorRef}
+                  />
+                </Card.Body>)
+                : (
+                   <AtomicImage src={pizza}/>
+                )
+            }
             <Form>
               <Annotation placement="top" tooltip="Enter your example here">
               <InputGroup>
                   <FormControl
                     className="m-3 p-3 rounded-1 thick-border h-auto light-gray-bg"
                     placeholder={
-                      ["NLI", "QA", "Sentiment", "Hate Speech"].includes(this.state.task.shortname)
+                      ["NLI", "QA", "VQA", "Sentiment", "Hate Speech"].includes(this.state.task.shortname)
                       ? {
                           "NLI": "Enter " + this.state.task.targets[this.state.target] + " hypothesis..",
                           "QA": "Enter question..",
+                          "VQA": "Enter question..",
                           "Sentiment": "Enter " + this.state.task.targets[this.state.target] + " statement..",
                           "Hate Speech": "Enter " + this.state.task.targets[this.state.target] + " statement..",
                         }[this.state.task.shortname]
