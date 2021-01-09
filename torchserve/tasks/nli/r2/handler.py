@@ -6,6 +6,7 @@ import uuid
 
 import torch
 import torch.nn.functional as F
+from ts.torch_handler.base_handler import BaseHandler
 
 from allennlp.data.iterators import BasicIterator
 from captum.attr import LayerIntegratedGradients
@@ -22,7 +23,6 @@ from shared import (
     remove_sp_chars,
     summarize_attributions,
 )
-from ts.torch_handler.base_handler import BaseHandler
 
 
 logger = logging.getLogger(__name__)

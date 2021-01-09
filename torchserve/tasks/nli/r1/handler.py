@@ -9,6 +9,7 @@ import uuid
 
 import torch
 import torch.nn.functional as F
+from ts.torch_handler.base_handler import BaseHandler
 
 from allennlp.data.iterators import BasicIterator
 from allennlp.nn.util import move_to_device
@@ -24,7 +25,6 @@ from shared import (
     handler_initialize,
     remove_sp_chars,
 )
-from ts.torch_handler.base_handler import BaseHandler
 
 
 sys.path.append("/home/model-server/anli/src")

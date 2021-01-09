@@ -11,6 +11,7 @@ from transformers.data.processors.squad import (
     SquadResult,
     squad_convert_examples_to_features,
 )
+from ts.torch_handler.base_handler import BaseHandler
 
 from captum.attr import LayerIntegratedGradients
 from qa_utils import compute_predictions_logits, convert_to_squad_example
@@ -25,7 +26,6 @@ from shared import (
     handler_initialize,
     summarize_attributions,
 )
-from ts.torch_handler.base_handler import BaseHandler
 
 
 logger = logging.getLogger(__name__)

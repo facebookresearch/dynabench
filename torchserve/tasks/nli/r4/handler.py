@@ -6,6 +6,7 @@ import sys
 import traceback
 
 import torch
+from ts.torch_handler.base_handler import BaseHandler
 
 from settings import my_model_no, my_secret
 from shared import (
@@ -15,7 +16,6 @@ from shared import (
     remove_sp_chars,
     summarize_attributions,
 )
-from ts.torch_handler.base_handler import BaseHandler
 
 
 logger = logging.getLogger(__name__)
