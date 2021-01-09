@@ -26,6 +26,7 @@ import {
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import UserContext from "./UserContext";
+import AtomicImage from "./AtomicImage"
 import { TokenAnnotator } from "react-text-annotate";
 import { PieRechart } from "../components/Rechart";
 import { formatWordImportances } from "../utils/color";
@@ -93,19 +94,24 @@ const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName, onChang
     <div className={"mb-3"}>
       <div className={"mt-3 p-3 rounded " + colorBg}>
         {
-          targets.length === 1
+          taskType === "extract"
             ? <InputGroup className="align-items-center">
                 <i className="fas fa-flag-checkered mr-1"></i>
-                <span>Your goal: enter a question {taskShortName === "QA" ? "and select an answer in the context," : "based on the image below,"} such that the model is fooled.</span>
+                <span>Your goal: enter a question and select an answer in the context, such that the model is fooled.</span>
               </InputGroup>
-            : <InputGroup className="align-items-center">
+            : taskType === "VQA" ?
+              <InputGroup className="align-items-center">
                 <i className="fas fa-flag-checkered mr-1"></i>
-                Your goal: enter {indefiniteArticle}
-                <DropdownButton variant="light" className="p-1" title={targets[curTarget] ? targets[curTarget] : "Loading.."}>
-                  {targets.map((target, index) => <Dropdown.Item onClick={onChange} key={index} index={index}>{target}</Dropdown.Item>).filter((_, index) => index !== curTarget)}
-                </DropdownButton>
-                statement that fools the model into predicting {otherTargetStr}.
+                <span>Your goal: enter a question based on the image below, such that the model is fooled.</span>
               </InputGroup>
+              : <InputGroup className="align-items-center">
+                  <i className="fas fa-flag-checkered mr-1"></i>
+                  Your goal: enter {indefiniteArticle}
+                  <DropdownButton variant="light" className="p-1" title={targets[curTarget] ? targets[curTarget] : "Loading.."}>
+                    {targets.map((target, index) => <Dropdown.Item onClick={onChange} key={index} index={index}>{target}</Dropdown.Item>).filter((_, index) => index !== curTarget)}
+                  </DropdownButton>
+                  statement that fools the model into predicting {otherTargetStr}.
+                </InputGroup>
         }
       </div>
     </div>
@@ -278,25 +284,6 @@ const QATaskInstructions = () => {
     </div>
   );
 };
-
-class AtomicImage  extends React.Component {
-  constructor(props) {
-       super(props);
-       this.onImgLoad = this.onImgLoad.bind(this);
-       this.fixedWidth = 500
-   }
-   onImgLoad({target:img}) {
-      const ratio =  img.naturalHeight / img.naturalWidth
-      img.width = this.fixedWidth
-      img.height = ratio * this.fixedWidth
-   }
-   render(){
-       const {src} = this.props;
-       return (
-        <img onLoad={this.onImgLoad} src={src}/>
-      );
-   }
-}
 
 class ResponseInfo extends React.Component {
   static contextType = UserContext;
@@ -1115,7 +1102,7 @@ class CreateInterface extends React.Component {
             <GoalMessage
               targets={this.state.task.targets}
               curTarget={this.state.target}
-              taskType={this.state.task.type}
+              taskType={this.state.task.shortname === "VQA" ? this.state.task.shortname : this.state.task.type}
               taskShortName={this.state.task.shortname}
               onChange={this.handleGoalMessageTargetChange}
             />
@@ -1123,16 +1110,16 @@ class CreateInterface extends React.Component {
           <Card className="profile-card overflow-hidden">
             {contextContent}
             {
-              this.state.task.shortname !== "VQA" ?
-                (<Card.Body className="overflow-auto pt-2" style={{  height: 385 }} ref={this.chatContainerRef}>
-                  {content}
-                  <div
-                    className="bottom-anchor"
-                    ref={this.bottomAnchorRef}
-                  />
-                </Card.Body>)
+              this.state.task.shortname === "VQA" ?
+                <AtomicImage src={pizza}/>
                 : (
-                   <AtomicImage src={pizza}/>
+                  <Card.Body className="overflow-auto pt-2" style={{  height: 385 }} ref={this.chatContainerRef}>
+                    {content}
+                    <div
+                      className="bottom-anchor"
+                      ref={this.bottomAnchorRef}
+                    />
+                  </Card.Body>
                 )
             }
             <Form>
