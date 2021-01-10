@@ -90,7 +90,7 @@ def get_random_example(credentials, tid, rid):
         )
     else:
         example = em.getRandom(
-            round.id, validate_non_fooling, num_matching_validations, n=1
+            round.id, validate_non_fooling, num_matching_validations, n=1, tags=tags
         )
     if not example:
         bottle.abort(500, f"No examples available ({round.id})")
