@@ -1,11 +1,21 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+import enum
+
 import sqlalchemy as db
 
 from common import helpers as util
 from models.user import User
 
 from .base import Base, BaseModel
+
+
+class DeploymentStatusEnum(enum.Enum):
+    uploaded = "uploaded"
+    processing = "processing"
+    deployed = "deployed"
+    failed = "failed"
+    unknown = "unknown"
 
 
 class Model(Base):
@@ -35,6 +45,14 @@ class Model(Base):
     overall_perf = db.Column(db.Text)
 
     is_published = db.Column(db.BOOLEAN, default=False)
+
+    # deployment
+    upload_timestamp = db.Column(db.BigInteger)
+    s3_uri = db.Column(db.Text)
+    endpoint_url = db.Column(db.Text)
+    deployment_status = db.Column(
+        db.Enum(DeploymentStatusEnum), default=DeploymentStatusEnum.unknown
+    )
 
     def __repr__(self):
         return f"<Model {self.id}>"
