@@ -4,6 +4,7 @@ cheroot
 PyJWT==1.7.1
 numpy
 pymysql
+sagemaker
 six
 SQLAlchemy
 torch
