@@ -11,31 +11,12 @@ from models.context import Context
 from models.round import Round, RoundModel
 from models.task import TaskModel
 
-if not os.path.exists("image_info_test2017.zip"):
-    os.system("wget http://images.cocodataset.org/annotations/image_info_test2017.zip")
-if not os.path.exists("annotations"):
-    os.system("unzip image_info_test2017.zip")
+base_url = "http://images.cocodataset.org/annotations"
 
-with open('annotations/image_info_test2017.json') as json_file:
-    anns = json.load(json_file)
-    print(f'File containing {len(anns["images"])}')
-
-data = []
-for image in anns["images"]:
-    data.append(
-        {
-            "contexts": image["coco_url"],
-            "metadata_json": json.dumps(
-                {
-                    "id": image["id"],
-                    "file_name": image["file_name"],
-                    "height": image["height"],
-                    "width": image["width"],
-                    "date_captured": image["date_captured"]
-                }
-            ),
-        }
-    )
+datasets = {
+                "annotations_trainval2014": ["person_keypoints_train2014", "person_keypoints_val2014"],
+                "image_info_test2015": ["image_info_test2015"]
+            }
 
 rid = 1
 
@@ -45,15 +26,41 @@ dbs = tm.dbs
 
 task = tm.getByShortName("VQA")
 round = rm.getByTidAndRid(task.id, rid)
-print(rm.getByTid(task.id))
 
-for context in data:
-    print(task.id, rid, context)
-    c = Context(
-        round=round, context=context["context"], metadata_json=context["metadata_json"]
-    )
-    print(c)
-    dbs.add(c)
-    dbs.flush()
+for ds in datasets:
 
-dbs.commit()
+    if not os.path.exists(f'{ds}.zip'):
+        os.system(f'wget {base_url}/{ds}.zip')
+        os.system(f'unzip {ds}.zip')
+
+    for f in datasets[ds]:
+
+        with open(f'annotations/{f}.json', 'r') as json_file:
+            anns = json.load(json_file)
+
+        set_name = f.split('_')[-1]
+        data = []
+        for image in anns["images"]:
+            data.append(
+                {
+                    "contexts": f'https://s3.us-east-1.amazonaws.com/images.cocodataset.org/{set_name}/{image["id"]}.jpg',
+                    "metadata_json": json.dumps(
+                        {
+                            "id": image["id"],
+                            "file_name": image["file_name"],
+                            "height": image["height"],
+                            "width": image["width"],
+                            "date_captured": image["date_captured"]
+                        }
+                    ),
+                }
+            )
+
+        for context in data:
+            c = Context(
+                round=round, context=context["context"], metadata_json=context["metadata_json"]
+            )
+            dbs.add(c)
+            dbs.flush()
+
+        dbs.commit()
