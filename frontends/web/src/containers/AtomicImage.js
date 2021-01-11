@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import React from "react";
 
 class AtomicImage  extends React.Component {
@@ -14,7 +20,7 @@ class AtomicImage  extends React.Component {
      render(){
          const {src} = this.props;
          return (
-          <img onLoad={this.onImgLoad} src={src} />
+          <img onLoad={this.onImgLoad} src="http://images.cocodataset.org/test2017/000000178453.jpg" />
         );
      }
   }
