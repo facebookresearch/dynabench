@@ -87,7 +87,7 @@ def read_hate_speech_round_labels(root_path):
     :return: Dict object
     """
 
-    full_path = os.path.join(root_path, "data", "hate_speech_v1.0")
+    full_path = os.path.join(root_path, "data", "hate_speech_v0.1")
 
     if not check_data_path_exists(full_path):
         return {}
@@ -97,14 +97,23 @@ def read_hate_speech_round_labels(root_path):
         for name in os.listdir(full_path)
         if os.path.isdir(os.path.join(full_path, name))
     ]
-    hate_speech_labels = {}
+    hs_labels = {}
     for r_file_path in r_file_paths:
         r_num = r_file_path[len(r_file_path) - 1 : len(r_file_path)]
         r_file_path = full_path + "/" + r_file_path
-        hate_speech_labels[int(r_num)] = [
-            l.rstrip()[-1] for l in open(f"{r_file_path}/test.tsv").readlines()
+        loaded_data = [
+            json.loads(l) for l in open(f"{r_file_path}/test.jsonl").read().splitlines()
         ]
-    return hate_speech_labels
+        hs_labels[int(r_num)] = [
+            {
+                "id": example["id"],
+                "answer": example["answer"],
+                "tags": example["tags"] if "tags" in example else "",
+            }
+            for example in loaded_data
+        ]
+    print("hs_label_len:", len(hs_labels))
+    return hs_labels
 
 
 def read_qa_round_labels(root_path):
@@ -182,10 +191,13 @@ def validate_prediction(r_objects, prediction, task_shortname="nli"):
         target_labels = app.config["nli_labels"]
         eval_fn = get_accuracy
     elif task_shortname == "hate speech":
-        target_labels = app.config["hate_speech_labels"]
+        target_examples = app.config["hate_speech_labels"]
         eval_fn = get_accuracy
     elif task_shortname == "qa":
         target_examples = app.config["qa_labels"]
+        eval_fn = get_f1
+
+    if task_shortname in ["qa", "hate speech"]:
         target_ids = {
             r_id: [x["id"] for x in target_examples[r_id]] for r_id in target_examples
         }
@@ -200,9 +212,8 @@ def validate_prediction(r_objects, prediction, task_shortname="nli"):
         # the target labels
         aligned_prediction = []
         for r_id in sorted(target_examples):
-            aligned_prediction += [prediction.get(qid, "") for qid in target_ids[r_id]]
-        prediction = aligned_prediction
-        eval_fn = get_f1
+            aligned_prediction += [prediction.get(id, None) for id in target_ids[r_id]]
+        prediction = list(filter((None).__ne__, aligned_prediction))
 
     # validate prediction and target labels length
     if len(r_objects) > 1 and len(prediction) != len(sum(target_labels.values(), [])):
