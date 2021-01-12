@@ -13,6 +13,7 @@ baseUrl = "http://images.cocodataset.org/annotations"
 
 datasets = {
     "annotations_trainval2014": [
+        # Could be any of the jsons in the zip.
         "person_keypoints_train2014",
         "person_keypoints_val2014",
     ],
