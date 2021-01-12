@@ -6,7 +6,7 @@
 
 import React from "react";
 
-class AtomicImage  extends React.Component {
+class AtomicImage extends React.Component {
     constructor(props) {
          super(props);
          this.onImgLoad = this.onImgLoad.bind(this);
