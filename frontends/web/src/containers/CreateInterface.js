@@ -5,8 +5,6 @@
  */
 
 import React from "react";
-// Temporal hardcoded path.
-import pizza from "./pizza.png"
 import {
   Container,
   Row,
@@ -1111,7 +1109,7 @@ class CreateInterface extends React.Component {
             {contextContent}
             {
               this.state.task.shortname === "VQA" ?
-                <AtomicImage src={pizza}/>
+                <AtomicImage />
                 : (
                   <Card.Body className="overflow-auto pt-2" style={{  height: 385 }} ref={this.chatContainerRef}>
                     {content}

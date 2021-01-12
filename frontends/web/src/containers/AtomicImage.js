@@ -18,9 +18,9 @@ class AtomicImage  extends React.Component {
         img.height = ratio * this.fixedWidth
      }
      render(){
-         const {src} = this.props;
+         const src = this.props.src ? this.props.src : "https://s3.us-east-1.amazonaws.com/images.cocodataset.org/train2017/000000072023.jpg";
          return (
-          <img onLoad={this.onImgLoad} src="http://images.cocodataset.org/test2017/000000178453.jpg" style={{ alignSelf: 'center' }} />
+          <img onLoad={this.onImgLoad} src={src} style={{ alignSelf: 'center' }} />
         );
      }
   }
