@@ -8,15 +8,12 @@ import React from "react";
 
 class AtomicImage extends React.Component {
 
-    constructor(props) {
-         super(props);
-         this.fixedWidth = 500
-         this.onImgLoad = ({target:img}) => {
-            const ratio =  img.naturalHeight / img.naturalWidth
-            img.width = this.fixedWidth
-            img.height = ratio * this.fixedWidth
-         }
-     }
+     onImgLoad = ({target:img}) => {
+         const fixedWidth = 500
+         const ratio =  img.naturalHeight / img.naturalWidth
+         img.width = fixedWidth
+         img.height = ratio * fixedWidth
+      }
 
      render(){
          const {src} = this.props
