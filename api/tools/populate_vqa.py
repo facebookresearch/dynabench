@@ -6,7 +6,7 @@ import sys
 
 
 # This was needed to import the models package.
-sys.path.append("/Users/albertolm9115/dynabench/api")
+sys.path.append("..")
 
 
 baseUrl = "http://images.cocodataset.org/annotations"
