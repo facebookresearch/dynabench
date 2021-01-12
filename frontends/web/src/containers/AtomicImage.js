@@ -7,21 +7,29 @@
 import React from "react";
 
 class AtomicImage extends React.Component {
+
     constructor(props) {
          super(props);
-         this.onImgLoad = this.onImgLoad.bind(this);
          this.fixedWidth = 500
+         this.onImgLoad = ({target:img}) => {
+            const ratio =  img.naturalHeight / img.naturalWidth
+            img.width = this.fixedWidth
+            img.height = ratio * this.fixedWidth
+         }
      }
-     onImgLoad({target:img}) {
-        const ratio =  img.naturalHeight / img.naturalWidth
-        img.width = this.fixedWidth
-        img.height = ratio * this.fixedWidth
-     }
+
      render(){
-         const src = this.props.src ? this.props.src : "https://s3.us-east-1.amazonaws.com/images.cocodataset.org/train2017/000000072023.jpg";
+         const {src} = this.props
+         if(src && src.length > 0){
+            return (
+               <img onLoad={this.onImgLoad} src={src} style={{ alignSelf: 'center' }} />
+            );
+         }
          return (
-          <img onLoad={this.onImgLoad} src={src} style={{ alignSelf: 'center' }} />
-        );
+            <div className="mb-1 p-3 light-gray-bg">
+               There are no available images
+            </div>
+         )
      }
   }
 

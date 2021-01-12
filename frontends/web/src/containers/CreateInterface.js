@@ -40,6 +40,9 @@ import {
 } from "./HateSpeechDropdown.js"
 import "./CreateInterface.css";
 
+// Temporal hardcoded url for demo.
+const url = "https://s3.us-east-1.amazonaws.com/images.cocodataset.org/train2017/000000072023.jpg"
+
 const Explainer = (props) => (
   <div className="mt-4 mb-1 pt-3">
     <p className="text-uppercase mb-0 spaced-header">{props.taskName || <span>&nbsp;</span>}</p>
@@ -70,6 +73,9 @@ function ContextInfo({ taskType, taskName, text, answer, updateAnswer }) {
   );
 }
 
+function getNotSelectedTargets(targets, curTarget, onChange){
+  return targets.map((target, index) => <Dropdown.Item onClick={onChange} key={index} index={index}>{target}</Dropdown.Item>).filter((_, index) => index !== curTarget)
+}
 
 const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName, onChange }) => {
   const otherTargets = targets.filter((_, index) => index !== curTarget);
@@ -105,8 +111,8 @@ const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName, onChang
               : <InputGroup className="align-items-center">
                   <i className="fas fa-flag-checkered mr-1"></i>
                   Your goal: enter {indefiniteArticle}
-                  <DropdownButton variant="light" className="p-1" title={targets[curTarget] ? targets[curTarget] : "Loading.."}>
-                    {targets.map((target, index) => <Dropdown.Item onClick={onChange} key={index} index={index}>{target}</Dropdown.Item>).filter((_, index) => index !== curTarget)}
+                  <DropdownButton variant="light" className="p-1" title={targets[curTarget] ? targets[curTarget] : "Loading..."}>
+                    {getNotSelectedTargets(targets, curTarget, onChange)}
                   </DropdownButton>
                   statement that fools the model into predicting {otherTargetStr}.
                 </InputGroup>
