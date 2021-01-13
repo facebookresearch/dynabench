@@ -3,8 +3,8 @@
 # are considered third party there
 known_third_party = [
     "transformers", "yoyo", "boto3", "bottle", "aiohttp", "pyjwt", "jwt", "cheroot",
-    "numpy", "sqlalchemy", "numpy", "pymysql", "requests", "six", "SQLAlchemy", "sagemaker",
-    "torch", "werkzeug", "cryptography", "mephisto", "omegaconf", "hydra"
+    "numpy", "sqlalchemy", "pymysql", "requests", "six", "SQLAlchemy", "sagemaker",
+    "torch", "tqdm", "werkzeug", "cryptography", "mephisto", "omegaconf", "hydra"
 ]
 skip_glob = "**/build/**,frontends/**"
 combine_as_imports = true

@@ -4,22 +4,21 @@ import sys
 import time
 
 import boto3
-import bottle
 
 from deploy_config import deploy_config
-from utils import ModelDeployer, logger
+from utils.deployer import ModelDeployer
+from utils.logging import init_logger, logger
 
 
 sys.path.append("../api")  # noqa
 import common.mail_service as mail  # isort:skip
 from common.config import config  # noqa isort:skip
-from common.logging import init_logger  # isort:skip
 from models.model import DeploymentStatusEnum, ModelModel  # isort:skip
 from models.notification import NotificationModel  # isort:skip
 
-init_logger("builder")
-
 if __name__ == "__main__":
+    init_logger("builder")
+    logger.info("Start build server")
     sqs = boto3.resource(
         "sqs",
         aws_access_key_id=deploy_config["aws_access_key_id"],
@@ -34,7 +33,7 @@ if __name__ == "__main__":
             if set(msg.keys()) == {"model_id"}:
                 model_id = msg["model_id"]
 
-                logger.info(f"Deploying model {model_id}")
+                logger.info(f"Start to deploy model {model_id}")
 
                 m = ModelModel()
                 model = m.getUnpublishedModelByMid(model_id)
