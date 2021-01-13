@@ -61,13 +61,16 @@ function ContextInfo({ taskType, taskName, text, answer, updateAnswer }) {
         tag: "ANS",
       })}
     />
-  ) : (
-    <div className="mb-1 p-3 light-gray-bg">
-      {taskName === "NLI" ? <h6 className="text-uppercase dark-blue-color spaced-header">Context:</h6> : ''}
-      {taskName === "Sentiment" ? <h6 className="text-uppercase dark-blue-color spaced-header">Inspiration Prompt:</h6> : ''}
-      {text.replace("<br>", "\n")}
-    </div>
-  );
+    ) : taskType == "VQA" ? (
+      <AtomicImage src={text}/>
+    ) :
+    (
+      <div className="mb-1 p-3 light-gray-bg">
+        {taskName === "NLI" ? <h6 className="text-uppercase dark-blue-color spaced-header">Context:</h6> : ''}
+        {taskName === "Sentiment" ? <h6 className="text-uppercase dark-blue-color spaced-header">Inspiration Prompt:</h6> : ''}
+        {text.replace("<br>", "\n")}
+      </div>
+    );
 }
 
 function getNotSelectedTargets(targets, curTarget, onChange){
@@ -1110,19 +1113,13 @@ class CreateInterface extends React.Component {
           </Annotation>
           <Card className="profile-card overflow-hidden">
             {contextContent}
-            {
-              this.state.task.type === "VQA" ?
-                <AtomicImage />
-                : (
-                  <Card.Body className="overflow-auto pt-2" style={{  height: 385 }} ref={this.chatContainerRef}>
-                    {content}
-                    <div
-                      className="bottom-anchor"
-                      ref={this.bottomAnchorRef}
-                    />
-                  </Card.Body>
-                )
-            }
+            <Card.Body className="overflow-auto pt-2" style={{  height: 385 }} ref={this.chatContainerRef}>
+              {content}
+              <div
+                className="bottom-anchor"
+                ref={this.bottomAnchorRef}
+              />
+            </Card.Body>
             <Form>
               <Annotation placement="top" tooltip="Enter your example here">
               <InputGroup>
