@@ -40,9 +40,6 @@ import {
 } from "./HateSpeechDropdown.js"
 import "./CreateInterface.css";
 
-// Temporal hardcoded url for demo.
-const url = "https://s3.us-east-1.amazonaws.com/images.cocodataset.org/train2017/000000072023.jpg"
-
 const Explainer = (props) => (
   <div className="mt-4 mb-1 pt-3">
     <p className="text-uppercase mb-0 spaced-header">{props.taskName || <span>&nbsp;</span>}</p>
@@ -1106,7 +1103,7 @@ class CreateInterface extends React.Component {
             <GoalMessage
               targets={this.state.task.targets}
               curTarget={this.state.target}
-              taskType={this.state.task.shortname === "VQA" ? this.state.task.shortname : this.state.task.type}
+              taskType={this.state.task.type}
               taskShortName={this.state.task.shortname}
               onChange={this.handleGoalMessageTargetChange}
             />
@@ -1114,7 +1111,7 @@ class CreateInterface extends React.Component {
           <Card className="profile-card overflow-hidden">
             {contextContent}
             {
-              this.state.task.shortname === "VQA" ?
+              this.state.task.type === "VQA" ?
                 <AtomicImage />
                 : (
                   <Card.Body className="overflow-auto pt-2" style={{  height: 385 }} ref={this.chatContainerRef}>
