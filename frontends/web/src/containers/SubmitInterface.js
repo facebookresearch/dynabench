@@ -132,6 +132,7 @@ class SubmitInterface extends React.Component {
 
               {this.state.task.shortname === "Hate Speech" ? (
                 <p>
+                  The Dynabench hate speech test sets can be found <a href="https://github.com/bvidgen/Dynamically-Generated-Hate-Speech-Dataset"> here </a>.
                   Upload predicted answers as a <em>.json</em> file in the format <code>{'{'}"id_1": "answer_1", "id_2": "answer_2", ...{'}'}</code> (i.e. standard SQuAD prediction format) where an answer is either "hate" or "nothate".
                   If you submit for multiple rounds in one go (i.e., overall), simply concatenate the answers from each round into your prediction file.
                 </p>
