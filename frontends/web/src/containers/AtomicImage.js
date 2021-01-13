@@ -19,7 +19,7 @@ class AtomicImage extends React.Component {
          const {src} = this.props
          if(src && src.length > 0){
             return (
-               <img onLoad={this.onImgLoad} src={src} style={{ alignSelf: 'center' }} />
+               <img onLoad={this.onImgLoad} src={src} style={{ alignSelf: 'center', marginTop: '20px' } } />
             );
          }
          return (

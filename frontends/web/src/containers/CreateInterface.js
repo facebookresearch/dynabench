@@ -1113,7 +1113,7 @@ class CreateInterface extends React.Component {
           </Annotation>
           <Card className="profile-card overflow-hidden">
             {contextContent}
-            <Card.Body className="overflow-auto pt-2" style={{  height: 385 }} ref={this.chatContainerRef}>
+            <Card.Body className="overflow-auto pt-2" style={{ height: this.state.task.type == "VQA" ? 0 : 385 }} ref={this.chatContainerRef}>
               {content}
               <div
                 className="bottom-anchor"
