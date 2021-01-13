@@ -72,7 +72,7 @@ def main():
             for image in images:
                 data.append(
                     {
-                        "contexts": getImageUrl(setName, image["id"]),
+                        "context": getImageUrl(setName, image["id"]),
                         "metadata_json": json.dumps(
                             {
                                 "id": image["id"],
@@ -85,14 +85,17 @@ def main():
                     }
                 )
 
-        for context in data:
+            # for context in data:
+            print(setName)
+            context = data[0]
+            print(context)
             url = context["context"]
             md = context["metadata_json"]
-            c = Context(round=round, context=url, metadata_json=md)
+            c = Context(round=round, context=url, metadata_json=md, tag=setName)
             dbs.add(c)
             dbs.flush()
 
-        dbs.commit()
+            dbs.commit()
 
 
 if __name__ == "__main__":
