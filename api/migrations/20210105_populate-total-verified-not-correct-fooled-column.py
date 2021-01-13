@@ -1,13 +1,16 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
+import sys
 
 import sqlalchemy as db
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 from yoyo import step
 
-from common.config import config
+
+sys.path.append(".")
+from common.config import config  # isort:skip
 
 
 __depends__ = {"20201116_populate-total-verified-not-fooled-column"}
