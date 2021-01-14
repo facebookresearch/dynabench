@@ -4,17 +4,13 @@ import json
 import os
 import sys
 
-import httplib2
-
 
 # This was needed to import the models package.
 sys.path.append("..")
 
 baseUrl = "http://images.cocodataset.org/annotations"
 
-imageUrl = "https://s3.us-east-1.amazonaws.com/images.cocodataset.org/{}/{}.jpg"
-
-h = httplib2.Http()
+imageUrl = "https://dl.fbaipublicfiles.com/dynabench/coco/{}/{}.jpg"
 
 datasets = {
     "image_info_test2015": ["image_info_test2015"],
@@ -31,19 +27,6 @@ def getImagesFromFile(fileName):
     with open(path) as jsonFile:
         anns = json.load(jsonFile)
         return anns["images"]
-
-
-def getUrlById(id):
-    possibleUrls = [imageUrl.format("train2017", id), imageUrl.format("val2017", id)]
-    for url in possibleUrls:
-        if isValidUrl(url):
-            return url
-    return None
-
-
-def isValidUrl(url):
-    resp = h.request(url, "HEAD")
-    return int(resp[0]["status"]) < 400
 
 
 def main():
@@ -70,33 +53,26 @@ def main():
         for f in datasets[ds]:
 
             setName = f.split("_")[-1]
-            setType = setName[:-4]
             images = getImagesFromFile(f)
             data = []
             # for image in images:
-            print(setName)
             for i in range(5):
                 image = images[i]
-                id = image["file_name"].split("_")[-1].split(".")[0]
-                url = (
-                    getUrlById(id)
-                    if setType == "val"
-                    else imageUrl.format(f"{setType}2017", id)
-                )
+                fileName = image["file_name"]
+                url = baseUrl.format(setName, fileName)
                 if url is not None:
                     data.append(
                         {
                             "context": url,
                             "metadata_json": json.dumps(
                                 {
-                                    "id": id,
-                                    "file_name": image["file_name"],
+                                    "id": image["id"],
+                                    "file_name": fileName,
                                     "date_captured": image["date_captured"],
                                 }
                             ),
                         }
                     )
-                print(i)
 
             for context in data:
                 url = context["context"]
