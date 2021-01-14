@@ -10,7 +10,7 @@ sys.path.append("..")
 
 baseUrl = "http://images.cocodataset.org/annotations"
 
-imageUrl = "https://dl.fbaipublicfiles.com/dynabench/coco/{}/{}.jpg"
+imageUrl = "https://dl.fbaipublicfiles.com/dynabench/coco/{}/{}"
 
 datasets = {
     "image_info_test2015": ["image_info_test2015"],
@@ -55,24 +55,22 @@ def main():
             setName = f.split("_")[-1]
             images = getImagesFromFile(f)
             data = []
-            # for image in images:
-            for i in range(5):
-                image = images[i]
+            print(setName)
+            for image in images:
                 fileName = image["file_name"]
-                url = baseUrl.format(setName, fileName)
-                if url is not None:
-                    data.append(
-                        {
-                            "context": url,
-                            "metadata_json": json.dumps(
-                                {
-                                    "id": image["id"],
-                                    "file_name": fileName,
-                                    "date_captured": image["date_captured"],
-                                }
-                            ),
-                        }
-                    )
+                url = imageUrl.format(setName, fileName)
+                data.append(
+                    {
+                        "context": url,
+                        "metadata_json": json.dumps(
+                            {
+                                "id": image["id"],
+                                "file_name": fileName,
+                                "date_captured": image["date_captured"],
+                            }
+                        ),
+                    }
+                )
 
             for context in data:
                 url = context["context"]
