@@ -17,7 +17,8 @@ A. If you are running the notebook from the Terminal:
 		pip install -r requirements.txt
 	- Start/Run code with the following command: 
 		Jupyter Notebook
-	- If you want to activate pre-commit git hooks (black, flake8, and isort): 		pre-commit install
+	- If you want to activate pre-commit git hooks (black, flake8, and isort):
+		pre-commit install
 (Note: The prerequisites are that you have installed pip, python and jupyter notebook.)
 
 B. If you are running the notebook from either Google Colab or Amazon Sagemaker then do the following:
