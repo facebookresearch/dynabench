@@ -1,13 +1,16 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
+import sys
 
 import sqlalchemy as db
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 from yoyo import step
 
-from common.config import config
+
+sys.path.append(".")
+from common.config import config  # isort:skip
 
 
 __depends__ = {}
@@ -60,9 +63,11 @@ def apply_step(conn):
         if round.tid in tid_to_task:
             r_realid_to_task[round.id] = tid_to_task[round.tid]
     cid_to_task = {}
+    cid_to_context = {}
     for context in contexts:
         if context.r_realid in r_realid_to_task:
             cid_to_task[context.id] = r_realid_to_task[context.r_realid]
+        cid_to_context[context.id] = context
     eid_to_task = {}
     for example in examples:
         if example.cid in cid_to_task:
@@ -136,10 +141,14 @@ def apply_step(conn):
                 else:
                     uid_to_total_verified_fooled[example.uid] = 1
 
-                if example.context.r_realid in rid_to_total_verified_fooled:
-                    rid_to_total_verified_fooled[example.context.r_realid] += 1
+                if cid_to_context[example.cid].r_realid in rid_to_total_verified_fooled:
+                    rid_to_total_verified_fooled[
+                        cid_to_context[example.cid].r_realid
+                    ] += 1
                 else:
-                    rid_to_total_verified_fooled[example.context.r_realid] = 1
+                    rid_to_total_verified_fooled[
+                        cid_to_context[example.cid].r_realid
+                    ] = 1
 
     for user in users:
         if user.id in uid_to_total_verified_fooled:
