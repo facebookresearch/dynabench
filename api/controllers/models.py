@@ -1,18 +1,23 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
+import time
 
+import boto3
 import bottle
+import sagemaker
 import sqlalchemy as db
 
 import common.auth as _auth
 import common.helpers as util
+from common.config import config
 from common.logging import logger
 from models.badge import BadgeModel
-from models.model import ModelModel
+from models.model import DeploymentStatusEnum, ModelModel
 from models.notification import NotificationModel
 from models.round import RoundModel
 from models.score import ScoreModel
+from models.task import TaskModel
 from models.user import UserModel
 
 
@@ -223,3 +228,71 @@ def revert_model_status(credentials, mid):
     except Exception as e:
         logger.exception("Could not update model details: %s" % (e))
         bottle.abort(400, "Could not update model details: %s" % (e))
+
+
+@bottle.post("/models/upload/s3")
+@_auth.requires_auth
+def upload_to_s3(credentials):
+    # Authentication
+    u = UserModel()
+    user_id = credentials["id"]
+    user = u.get(user_id)
+    if not user:
+        logger.error("Invalid user detail for id (%s)" % (user_id))
+        bottle.abort(404, "User information not found")
+
+    # Upload file to S3
+    model_name = bottle.request.forms.get("name")
+    task_id = bottle.request.forms.get("taskId")
+    tarball = bottle.request.files.get("tarball")
+
+    session = boto3.Session(
+        aws_access_key_id=config["aws_access_key_id"],
+        aws_secret_access_key=config["aws_secret_access_key"],
+        region_name=config["aws_region"],
+    )
+    sagemaker_session = sagemaker.Session(boto_session=session)
+    bucket_name = sagemaker_session.default_bucket()
+
+    ts = int(time.time())
+    unique_name = f"ts{ts}-{model_name}"
+    s3_filename = f"{unique_name}.tar.gz"
+    t = TaskModel()
+    taskname = "_".join(t.getWithRound(task_id)["shortname"].lower().split())
+    s3_path = f"torchserve/models/{taskname}/{s3_filename}"
+
+    logger.info(f"Uploading {model_name} to S3 at {s3_path} for user {user_id}")
+
+    try:
+        s3_client = session.client("s3")
+        response = s3_client.upload_fileobj(tarball.file, bucket_name, s3_path)
+        if response:
+            logger.info(f"Response from the mar file upload to s3 {response}")
+    except Exception as ex:
+        logger.exception(ex)
+        bottle.abort(400, "upload failed")
+
+    # Update database entry
+    m = ModelModel()
+    model = m.create(
+        task_id=task_id,
+        user_id=user_id,
+        name=model_name,
+        shortname="",
+        longdesc="",
+        desc="",
+        overall_perf="",
+        upload_date=db.sql.func.now(),
+        upload_timestamp=ts,
+        s3_uri=f"s3://{bucket_name}/{s3_path}",
+        deployment_status=DeploymentStatusEnum.uploaded,
+    )
+
+    um = UserModel()
+    um.incrementModelSubmitCount(user.to_dict()["id"])
+
+    # send SQS message
+    logger.info(f"Send message to sqs - enqueue model {model_name} for deployment")
+    sqs = session.resource("sqs")
+    queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
+    queue.send_message(MessageBody=json.dumps({"model_id": model.id}))

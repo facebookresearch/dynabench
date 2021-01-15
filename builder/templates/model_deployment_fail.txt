@@ -1,0 +1,7 @@
+The deployment of your model $name has failed because of the following reasons:
+
+$exception
+
+Thanks,
+
+The Dynabench Team
