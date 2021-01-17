@@ -1,7 +1,7 @@
 #@package _global_
 mephisto:
-  blueprint:
-    onboarding_qualification: nli-4-mturk-qualification
+  architect:
+    port: 4000
   task:
     task_name: nli-4-mturk
     task_title: Write sentences and fool the AI

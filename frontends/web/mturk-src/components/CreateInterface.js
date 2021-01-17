@@ -135,6 +135,7 @@ class CreateInterface extends React.Component {
         answer: answer_text,
         insight: false,
       };
+      console.log(this.state.task.round.url);
       this.api.getModelResponse(this.state.task.round.url, modelInputs)
         .then(result => {
           if (this.state.task.type != 'extract') {

@@ -14,12 +14,13 @@ function delay(t, v) {
 
 export default class ApiService {
   constructor(domain) {
+    console.log(`domainParam = ${domain}`)
     if (!process.env.NODE_ENV || process.env.NODE_ENV === "development") {
       this.domain = domain || "https://dev.dynabench.org:8081";
     } else {
       this.domain = domain || "https://www.dynabench.org:8080";
     }
-
+    console.log(`domain = ${this.domain}`)
     this.fetch = this.fetch.bind(this);
     this.setToken = this.setToken.bind(this);
     this.getToken = this.getToken.bind(this);
@@ -73,10 +74,13 @@ export default class ApiService {
     });
   }
 
-  updateExample(id, target, fooled) {
+  updateExample(id, target, fooled, uid=null) {
     var obj = {};
     obj.target_pred = target;
     obj.model_wrong = fooled;
+    if (this.mode === 'mturk') {
+      obj.uid = uid;
+    }
     return this.fetch(`${this.domain}/examples/${id}`, {
       method: "PUT",
       body: JSON.stringify(obj),

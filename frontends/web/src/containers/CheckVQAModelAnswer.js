@@ -29,22 +29,18 @@ class CheckVQAModelAnswer extends React.Component {
 
     updateExample(target, modelState) {
         const { exampleId } = this.props;
-        this.setState({feedbackSaved: false}, () => {
-            this.context.api
-            .updateExample(exampleId, target, modelState)
-            .then((result) => {
-                if (modelState === this.MODEL_STATES.INCORRECT) {
-                    this.props.getNewContext();
-                } else if (modelState === this.MODEL_STATES.CORRECT) {
-                    this.setState({feedbackSaved: true});
-                    this.props.setModelState(modelState);
-                }
-            }, (error) => {
-                console.log(error);
+        this.context.api
+        .updateExample(exampleId, target, modelState)
+        .then((result) => {
+            if (modelState === this.MODEL_STATES.INCORRECT) {
+                this.props.getNewContext();
+            } else if (modelState === this.MODEL_STATES.CORRECT) {
+                this.setState({feedbackSaved: true});
+                this.props.setModelState(modelState);
             }
-        )
+        }, (error) => {
+            console.log(error);
         });
-
     }
 
     handleKeyPress(e) {
@@ -56,15 +52,27 @@ class CheckVQAModelAnswer extends React.Component {
     submitUserAnswer() {
         const formattedAnswer = this.state.correctAnswer.trim();
         if (formattedAnswer.length > 0) {
-            this.setState({disbaleSubmitButton: true})
-            this.updateExample(formattedAnswer, this.MODEL_STATES.INCORRECT);
+            this.setState({
+                disbaleSubmitButton: true,
+                feedbackSaved: false
+            }, () => {
+                if (this.props.mode === "mturk") {
+                    this.props.handleSubmitCorrectAnswer(formattedAnswer, this.MODEL_STATES.INCORRECT);
+                } else {
+                    this.updateExample(formattedAnswer, this.MODEL_STATES.INCORRECT);
+                }
+            });
         }
-      }
+    }
 
     handleCorrectButtonClick(e) {
         e.preventDefault();
-        this.setState({disableCorrectButton: true})
-        this.updateExample(this.props.modelPredStr, this.MODEL_STATES.CORRECT);
+        this.setState({ disableCorrectButton: true })
+        if (this.props.mode === "mturk") {
+            this.props.handleSubmitCorrectAnswer(this.props.modelPredStr, this.MODEL_STATES.CORRECT);
+        } else {
+            this.updateExample(this.props.modelPredStr, this.MODEL_STATES.CORRECT);
+        }
     }
 
     handleIncorrectButtonClick(e) {

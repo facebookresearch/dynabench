@@ -37,7 +37,8 @@ function App() {
 
   const backend_host = (taskConfig && 'provider_type' in taskConfig && taskConfig['provider_type'] === 'mturk') ?
     'https://api.dynabench.org' : process.env.REACT_APP_API_HOST;
-  let api = new ApiService(backend_host);
+  // let api = new ApiService(backend_host);
+  let api = new ApiService("https://localhost:8081");
   api.setMturkMode();
 
   if (isLoading) {
