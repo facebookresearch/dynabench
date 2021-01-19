@@ -167,7 +167,7 @@ class ModelPage extends React.Component {
                               {model.name || "Unknown"}
                             </span>
                             <span className="float-right">
-                              uploaded <Moment fromNow>{model.upload_date}</Moment>
+                              uploaded <Moment fromNow>{model.upload_datetime}</Moment>
                             </span>
                             {isModelOwner && model.is_published === "True" ? (
                               <Badge variant="success" className="ml-2">
@@ -196,7 +196,7 @@ class ModelPage extends React.Component {
                       {orderedScores.map((data) => {
                         return (
                           <tr key={data.round_id}>
-                            <td style={{paddingLeft: 50}}>Round {data.round_id}</td>
+                            <td style={{paddingLeft: 50, whiteSpace: 'nowrap'}}>Round {data.round_id}</td>
                             <td>{Number(data.accuracy).toFixed(2)}%</td>
                           </tr>
                         );
@@ -239,7 +239,7 @@ class ModelPage extends React.Component {
                         <td>{model.longdesc}</td>
                       </tr>
                       <tr>
-                        <td>
+                        <td style={{whiteSpace: 'nowrap'}}>
                           # Parameters
                         </td>
                         <td>{model.params}</td>

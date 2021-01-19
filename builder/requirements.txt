@@ -1,0 +1,9 @@
+boto3
+jwt
+pymysql
+sagemaker
+sqlalchemy
+torch-model-archiver
+transformers
+tqdm
+werkzeug

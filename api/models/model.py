@@ -39,7 +39,7 @@ class Model(Base):
     params = db.Column(db.BigInteger)
     languages = db.Column(db.Text)
     license = db.Column(db.Text)
-    upload_date = db.Column(db.Date)
+    upload_datetime = db.Column(db.DateTime)
     model_card = db.Column(db.Text)
 
     overall_perf = db.Column(db.Text)

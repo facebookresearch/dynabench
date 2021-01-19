@@ -124,7 +124,7 @@ def do_upload(credentials):
                 longdesc="",
                 desc="",
                 overall_perf=f"{overall_accuracy:.2f}",
-                upload_date=db.sql.func.now(),
+                upload_datetime=db.sql.func.now(),
             )
             s = ScoreModel()
             s.bulk_create(
@@ -282,7 +282,7 @@ def upload_to_s3(credentials):
         longdesc="",
         desc="",
         overall_perf="",
-        upload_date=db.sql.func.now(),
+        upload_datetime=db.sql.func.now(),
         upload_timestamp=ts,
         s3_uri=f"s3://{bucket_name}/{s3_path}",
         deployment_status=DeploymentStatusEnum.uploaded,
