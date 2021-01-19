@@ -1,25 +1,15 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
+# flake8: noqa
 
-import json
-import os
-import sys
+import json  # isort:skip
+import os  # isort:skip
+import sys  # isort:skip
 
+sys.path.append("..")  # isort:skip
 
-# This was needed to import the models package.
-sys.path.append("..")
-
-baseUrl = "http://images.cocodataset.org/annotations"
-
-imageUrl = "https://dl.fbaipublicfiles.com/dynabench/coco/{}/{}"
-
-datasets = {
-    "image_info_test2015": ["image_info_test2015"],
-    "annotations_trainval2014": [
-        # Could be any of the jsons in the zip.
-        "person_keypoints_train2014",
-        "person_keypoints_val2014",
-    ],
-}
+from models.context import Context  # isort:skip
+from models.round import RoundModel  # isort:skip
+from models.task import TaskModel  # isort:skip
 
 
 def getImagesFromFile(fileName):
@@ -31,9 +21,18 @@ def getImagesFromFile(fileName):
 
 def main():
 
-    from models.context import Context
-    from models.round import RoundModel
-    from models.task import TaskModel
+    baseUrl = "http://images.cocodataset.org/annotations"
+
+    imageUrl = "https://dl.fbaipublicfiles.com/dynabench/coco/{}/{}"
+
+    datasets = {
+        "image_info_test2015": ["image_info_test2015"],
+        "annotations_trainval2014": [
+            # Could be any of the jsons in the zip.
+            "person_keypoints_train2014",
+            "person_keypoints_val2014",
+        ],
+    }
 
     rid = 1
     tm = TaskModel()
@@ -72,14 +71,14 @@ def main():
                     }
                 )
 
-            for context in data:
-                url = context["context"]
-                md = context["metadata_json"]
-                c = Context(round=round, context=url, metadata_json=md, tag=setName)
-                dbs.add(c)
-                dbs.flush()
+    #         for context in data:
+    #             url = context["context"]
+    #             md = context["metadata_json"]
+    #             c = Context(round=round, context=url, metadata_json=md, tag=setName)
+    #             dbs.add(c)
+    #             dbs.flush()
 
-            dbs.commit()
+    #         dbs.commit()
 
 
 if __name__ == "__main__":
