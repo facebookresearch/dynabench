@@ -71,14 +71,14 @@ def main():
                     }
                 )
 
-    #         for context in data:
-    #             url = context["context"]
-    #             md = context["metadata_json"]
-    #             c = Context(round=round, context=url, metadata_json=md, tag=setName)
-    #             dbs.add(c)
-    #             dbs.flush()
+            for context in data:
+                url = context["context"]
+                md = context["metadata_json"]
+                c = Context(round=round, context=url, metadata_json=md, tag=setName)
+                dbs.add(c)
+                dbs.flush()
 
-    #         dbs.commit()
+            dbs.commit()
 
 
 if __name__ == "__main__":
