@@ -1,0 +1,1 @@
+{"model_name": "roberta-base", "mode": "sequence_classification", "do_lower_case": "True", "num_labels": "2", "max_length": "512", "save_mode": "pretrained", "my_task_id": 5, "my_round_id": 4}
