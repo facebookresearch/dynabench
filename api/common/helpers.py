@@ -193,7 +193,9 @@ def validate_prediction(r_objects, prediction, task_shortname="nli"):
         if task_shortname == "hate speech":
             target_examples = app.config["hate_speech_labels"]
             eval_fn = get_accuracy
-        if task_shortname == "qa":
+        else:
+            if task_shortname != "qa":
+                raise AssertionError("Unrecognized task")
             target_examples = app.config["qa_labels"]
             eval_fn = get_f1
 
