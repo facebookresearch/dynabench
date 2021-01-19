@@ -7,16 +7,16 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 import boto3
 import sagemaker
 from sagemaker.model import Model
 from sagemaker.predictor import Predictor
+from tqdm import tqdm
 
 from deploy_config import deploy_config
-
-
-logger = logging.getLogger("builder")
+from utils.logging import logger
 
 
 class ModelDeployer:
@@ -62,7 +62,7 @@ class ModelDeployer:
         save_tarball = f"{self.unique_name}.tar.gz"
         response = self.env["s3_client"].download_file(s3_bucket, s3_path, save_tarball)
         if response:
-            logger.info(f"Response from fetching S3 folder {response}")
+            logger.debug(f"Response from fetching S3 folder {response}")
 
         subprocess.run(shlex.split(f"tar xf {shlex.quote(save_tarball)}"))
 
@@ -151,10 +151,23 @@ class ModelDeployer:
             )
             logger.info(f"- Deleting the docker repository {self.unique_name:}")
         except self.env["ecr_client"].exceptions.RepositoryNotFoundException:
-            logger.info(f"Repository {self.unique_name} will be created")
+            logger.info(
+                f"Repository {self.unique_name} not found. If deploying, this will be created"
+            )
         else:
             if response:
                 logger.info(f"Response from deleting ECR repository {response}")
+
+    def _parse_docker_build_status(self, line):
+        ## TODO: use re for this function
+        status_start = line.find("[")
+        status_end = line.find("]")
+        if status_start != -1:
+            status = line[status_start + 1 : status_end]
+            if "/" in status:
+                cur, N = [int(n.strip()) for n in status.split("/")]
+                return cur, N
+        return None
 
     def build_docker(self):
         docker_dir = os.path.join(sys.path[0], "dockerfiles")
@@ -162,20 +175,48 @@ class ModelDeployer:
             shutil.copyfile(os.path.join(docker_dir, f), os.path.join(self.tmp_dir, f))
 
         # build docker
-        # FIXME: import this function from dynalab test to make sure they are exactly the same
         docker_build_args = f"--build-arg tarball_name={shlex.quote(self.unique_name)} --build-arg requirements={shlex.quote(str(self.config['requirements']))} --build-arg setup={shlex.quote(str(self.config['setup']))}"
         docker_build_command = f"docker build -t {shlex.quote(self.unique_name)} -f Dockerfile {docker_build_args} ."
-        process = subprocess.run(
+        with subprocess.Popen(
             shlex.split(docker_build_command),
+            bufsize=1,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True,
-        )
-        if process.returncode != 0:
-            logger.exception(process.stderr)
-            raise RuntimeError("Error in docker build")
-        else:
-            logger.info(process.stdout)
+        ) as process:
+            N = 0
+            nextline = process.stderr.readline().rstrip("\n")
+            while nextline or process.poll() is None:
+                if nextline:
+                    logger.debug(nextline)
+                    status = self._parse_docker_build_status(nextline)
+                    if status:
+                        N = status[1]
+                        break
+                else:
+                    time.sleep(1)
+                nextline = process.stderr.readline().rstrip("\n")
+            with tqdm(total=N + 1, unit="steps", desc="docker build") as t:
+                while nextline or process.poll() is None:
+                    if nextline:
+                        logger.debug(nextline)
+                        status = self._parse_docker_build_status(nextline)
+                        if status:
+                            cur = status[0]
+                            if cur > t.n:
+                                t.update(cur - t.n)
+                                time.sleep(0.1)
+                    else:
+                        time.sleep(1)
+                    nextline = process.stderr.readline().rstrip("\n")
+                _, stderr = process.communicate()
+                logger.debug(stderr)
+                while t.n < t.total:
+                    t.update(1)
+
+            if process.returncode != 0:
+                logger.exception(f"Error in docker build for model {self.name}")
+                raise RuntimeError("Error in docker build")
 
     def build_and_push_docker(self):
         logger.info(f"Building docker for model {self.name}")
@@ -196,7 +237,7 @@ class ModelDeployer:
             logger.exception(process.stderr)
             raise RuntimeError("Error in docker login")
         else:
-            logger.info(process.stdout)
+            logger.debug(process.stdout)
         # tag docker
         repository_name = self.unique_name
         image_ecr_path = f"{self.env['ecr_registry']}/{repository_name}"
@@ -212,19 +253,20 @@ class ModelDeployer:
             logger.exception(process.stderr)
             raise RuntimeError("Error in docker tag")
         else:
-            logger.info(process.stdout)
+            logger.debug(process.stdout)
 
         # create ECR repo
+        logger.info(f"Create ECR repository for model {self.name}")
         try:
             response = self.env["ecr_client"].create_repository(
                 repositoryName=self.unique_name,
                 imageScanningConfiguration={"scanOnPush": True},
             )
         except self.env["ecr_client"].exceptions.RepositoryAlreadyExistsException as e:
-            logger.info(f"Reuse existing repository since {e}")
+            logger.debug(f"Reuse existing repository since {e}")
         else:
             if response:
-                logger.info(f"Response from creating ECR repository {response}")
+                logger.debug(f"Response from creating ECR repository {response}")
 
         # push docker
         logger.info(f"Pushing docker instance {image_ecr_path} for model {self.name}")
@@ -238,12 +280,13 @@ class ModelDeployer:
             logger.exception(process.stderr)
             raise RuntimeError("Error in docker push")
         else:
-            logger.info(process.stdout)
+            logger.debug(process.stdout)
         return image_ecr_path
 
     def archive_and_upload_model(self):
         # torchserve archive model to .tar.gz (.mar)
         # TODO: allow proper model versioning together with docker tag
+        logger.info(f"Archiving the model {self.name} ...")
         archive_command = [
             "torch-model-archiver",
             "--model-name",
@@ -271,9 +314,10 @@ class ModelDeployer:
             logger.exception(process.stderr)
             raise RuntimeError("Error in torch-model-archiver")
         else:
-            logger.info(process.stdout)
+            logger.debug(process.stdout)
 
         # tarball the .mar
+        logger.info(f"Tarballing the archived model {self.name} ...")
         tarball_name = f"{self.archive_name}.tar.gz"
         mar_name = f"{self.archive_name}.mar"
         tarball_command = [
@@ -292,20 +336,21 @@ class ModelDeployer:
             logger.exception(process.stderr)
             raise RuntimeError("Error in tarballing archived torch model")
         else:
-            logger.info(process.stdout)
+            logger.debug(process.stdout)
 
         # upload model tarball to S3
+        logger.info(f"Uploading the archived model {self.name} to S3 ...")
         tarball = f"{self.archive_name}.tar.gz"
         response = self.env["s3_client"].upload_file(
             tarball, self.env["bucket_name"], f"{self.s3_dir}/{tarball}"
         )
         if response:
-            logger.info(f"Response from the mar file upload to s3 {response}")
+            logger.debug(f"Response from the mar file upload to s3 {response}")
         model_s3_path = f"s3://{self.env['bucket_name']}/{self.s3_dir}/{tarball}"
         return model_s3_path
 
     def deploy_model(self, image_ecr_path, model_s3_path):
-        logger.info("Deploying model to Sagemaker")
+        logger.info(f"Deploying model {self.name} to Sagemaker")
         torchserve_model = Model(
             model_data=model_s3_path,
             image_uri=image_ecr_path,
