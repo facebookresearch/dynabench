@@ -112,7 +112,6 @@ def read_hate_speech_round_labels(root_path):
             }
             for example in loaded_data
         ]
-    print("hs_label_len:", len(hs_labels))
     return hs_labels
 
 
@@ -190,14 +189,14 @@ def validate_prediction(r_objects, prediction, task_shortname="nli"):
     if task_shortname == "nli":
         target_labels = app.config["nli_labels"]
         eval_fn = get_accuracy
-    elif task_shortname == "hate speech":
-        target_examples = app.config["hate_speech_labels"]
-        eval_fn = get_accuracy
-    elif task_shortname == "qa":
-        target_examples = app.config["qa_labels"]
-        eval_fn = get_f1
+    else:
+        if task_shortname == "hate speech":
+            target_examples = app.config["hate_speech_labels"]
+            eval_fn = get_accuracy
+        if task_shortname == "qa":
+            target_examples = app.config["qa_labels"]
+            eval_fn = get_f1
 
-    if task_shortname in ["qa", "hate speech"]:
         target_ids = {
             r_id: [x["id"] for x in target_examples[r_id]] for r_id in target_examples
         }
