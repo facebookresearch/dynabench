@@ -5,6 +5,7 @@ import json  # isort:skip
 import os  # isort:skip
 import sys  # isort:skip
 
+
 sys.path.append("..")  # isort:skip
 
 from models.context import Context  # isort:skip
@@ -62,11 +63,7 @@ def main():
                     {
                         "context": url,
                         "metadata_json": json.dumps(
-                            {
-                                "id": image["id"],
-                                "file_name": fileName,
-                                "date_captured": image["date_captured"],
-                            }
+                            {"id": image["id"], "file_name": fileName}
                         ),
                     }
                 )
