@@ -186,18 +186,24 @@ def validate_prediction(r_objects, prediction, task_shortname="nli"):
 
     app = bottle.default_app()
     target_tags = None
+
+    # TODO: Make this consistent across tasks
     if task_shortname == "nli":
+        # for NLI, we use the ordered list of labels and accuracy
         target_labels = app.config["nli_labels"]
         eval_fn = get_accuracy
+    elif task_shortname == "hate speech":
+        # for HS, we use {id: label} and accuracy
+        target_examples = app.config["hate_speech_labels"]
+        eval_fn = get_accuracy
+    elif task_shortname == "qa":
+        # for QA, we use {id: answer} and F1
+        target_examples = app.config["qa_labels"]
+        eval_fn = get_f1
     else:
-        if task_shortname == "hate speech":
-            target_examples = app.config["hate_speech_labels"]
-            eval_fn = get_accuracy
-        else:
-            if task_shortname != "qa":
-                raise AssertionError("Unrecognized task")
-            target_examples = app.config["qa_labels"]
-            eval_fn = get_f1
+        raise AssertionError("Unrecognized task")
+
+    if task_shortname in ["qa", "hate speech"]:
 
         target_ids = {
             r_id: [x["id"] for x in target_examples[r_id]] for r_id in target_examples
@@ -213,8 +219,10 @@ def validate_prediction(r_objects, prediction, task_shortname="nli"):
         # the target labels
         aligned_prediction = []
         for r_id in sorted(target_examples):
-            aligned_prediction += [prediction.get(id, None) for id in target_ids[r_id]]
-        prediction = list(filter((None).__ne__, aligned_prediction))
+            for id in target_ids[r_id]:
+                if id in prediction:
+                    aligned_prediction.append(prediction[id])
+        prediction = aligned_prediction
 
     # validate prediction and target labels length
     if len(r_objects) > 1 and len(prediction) != len(sum(target_labels.values(), [])):
