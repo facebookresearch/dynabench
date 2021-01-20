@@ -50,7 +50,7 @@ const Explainer = (props) => (
 );
 
 function ContextInfo({ taskType, taskName, text, answer, updateAnswer }) {
-  return taskType == "extract" ? (
+  return taskType === "extract" ? (
     <TokenAnnotator
       className="mb-1 p-3 light-gray-bg qa-context"
       tokens={text.split(/\b/)}
@@ -61,7 +61,7 @@ function ContextInfo({ taskType, taskName, text, answer, updateAnswer }) {
         tag: "ANS",
       })}
     />
-    ) : taskType == "VQA" ? (
+    ) : taskType === "VQA" ? (
       <AtomicImage src={text}/>
     ) :
     (
@@ -395,7 +395,7 @@ class ResponseInfo extends React.Component {
       .inspectModel(content[idx].url, {
         answer: selectedAnswer,
         context: content[0].text,
-        hypothesis: content[idx].cls == "hypothesis" ? content[idx].text : "",
+        hypothesis: content[idx].cls === "hypothesis" ? content[idx].text : "",
         insight: true,
         target,
       })
@@ -435,7 +435,7 @@ class ResponseInfo extends React.Component {
       });
   };
   render() {
-    const selectedAnswer = this.props.taskType != "extract" ? "" : (
+    const selectedAnswer = this.props.taskType !== "extract" ? "" : (
       this.props.answer && this.props.answer.length ? this.props.answer[this.props.answer.length - 1].tokens.join("") : ""
     );
     var classNames = this.props.obj.cls + " rounded border m-3";
@@ -465,7 +465,7 @@ class ResponseInfo extends React.Component {
         {this.props.obj.fooled
           ? <span>
               <strong>You fooled the model!</strong> It predicted <strong>{this.props.obj.modelPredStr}</strong>{" "}
-              but a person would say <strong>{this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]}</strong>
+              but a person would say <strong>{this.props.taskType === "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]}</strong>
             </span>
           : <span>
               <strong>Try again!</strong> The model correctly predicted <strong>{this.props.obj.modelPredStr}</strong>
@@ -499,7 +499,7 @@ class ResponseInfo extends React.Component {
                 <ExplainFeedback explainSaved={this.state.explainSaved} />
                 <div>
                   <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
-                    "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is the correct answer"}
+                    "Explain why " + (this.props.taskType === "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is the correct answer"}
                     data-index={this.props.index} data-type="example" onChange={() => this.setState({explainSaved: null})} onBlur={this.explainExample} />
                 </div>
                 <div>
@@ -524,7 +524,7 @@ class ResponseInfo extends React.Component {
               <ExplainFeedback explainSaved={this.state.explainSaved} />
               <div>
                 <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
-                  "Explain why " + (this.props.taskType == "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is the correct answer"}
+                  "Explain why " + (this.props.taskType === "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is the correct answer"}
                   data-index={this.props.index} data-type="example" onChange={() => this.setState({explainSaved: null})} onBlur={this.explainExample} />
               </div>
               <div>
@@ -558,7 +558,7 @@ class ResponseInfo extends React.Component {
                 />
                 <div className="mt-3">
                   <span>
-                    The model inspector shows the <a href="https://captum.ai/docs/extension/integrated_gradients" target="_blank">layer integrated gradients</a> for the input token layer of the model.
+                    The model inspector shows the <a href="https://captum.ai/docs/extension/integrated_gradients" target="_blank" rel="noopener noreferrer">layer integrated gradients</a> for the input token layer of the model.
                   </span>
                 </div>
               </>);
@@ -720,7 +720,7 @@ class CreateInterface extends React.Component {
 
   updateSelectedRound(e) {
     const selected = parseInt(e.target.getAttribute('index'));
-    if (selected != this.state.task.selected_round) {
+    if (selected !== this.state.task.selected_round) {
       this.context.api.getTaskRound(this.state.task.id, selected)
         .then((result) => {
           var task = {...this.state.task};
@@ -764,11 +764,11 @@ class CreateInterface extends React.Component {
   handleResponse(e) {
     e.preventDefault();
     this.setState({ submitDisabled: true, refreshDisabled: true }, () => {
-      if (this.state.hypothesis.length == 0) {
+      if (this.state.hypothesis.length === 0) {
         this.setState({ submitDisabled: false, refreshDisabled: false });
         return;
       }
-      if (this.state.task.type == "extract" && this.state.answer.length == 0) {
+      if (this.state.task.type === "extract" && this.state.answer.length === 0) {
         this.setState({
           submitDisabled: false,
           refreshDisabled: false,
@@ -777,16 +777,15 @@ class CreateInterface extends React.Component {
         return;
       }
 
-      if (this.state.task.type == "extract") {
-        var answer_text = "";
+      var answer_text = null;
+      if (this.state.task.type === "extract") {
+        answer_text = "";
         if (this.state.answer.length > 0) {
           var last_answer = this.state.answer[this.state.answer.length - 1];
-          var answer_text = last_answer.tokens.join(""); // NOTE: no spaces required as tokenising by word boundaries
+          answer_text = last_answer.tokens.join(""); // NOTE: no spaces required as tokenising by word boundaries
           // Update the target with the answer text since this is defined by the annotator in QA (unlike NLI)
           this.setState({ target: answer_text });
         }
-      } else {
-        var answer_text = null;
       }
 
       let modelInputs = {
@@ -812,7 +811,7 @@ class CreateInterface extends React.Component {
               });
             }
 
-            if (this.state.task.type == "extract") {
+            if (this.state.task.type === "extract") {
               var modelPredIdx = null;
               var modelPredStr = result.text;
               var modelFooled = !result.model_is_correct;
@@ -1009,16 +1008,16 @@ class CreateInterface extends React.Component {
     for (let i = rounds; i > 0; i--) {
       let cur = '';
       let active = false;
-      if (i == this.state.task.cur_round) {
+      if (i === this.state.task.cur_round) {
         cur = ' (active)';
       }
-      if (i == this.state.task.selected_round) {
+      if (i === this.state.task.selected_round) {
         active = true;
       }
       roundNavs.push(
         <Dropdown.Item key={i} index={i} onClick={this.updateSelectedRound} active={active}>Round {i}{cur}</Dropdown.Item>
       );
-      if (i == this.state.task.cur_round) {
+      if (i === this.state.task.cur_round) {
         roundNavs.push(
           <Dropdown.Divider key={'div'+i} />
         );
@@ -1113,7 +1112,7 @@ class CreateInterface extends React.Component {
           </Annotation>
           <Card className="profile-card overflow-hidden">
             {contextContent}
-            <Card.Body className="overflow-auto pt-2" style={{ height: this.state.task.type == "VQA" ? 0 : 385 }} ref={this.chatContainerRef}>
+            <Card.Body className="overflow-auto pt-2" style={{ height: this.state.task.type === "VQA" ? 0 : 385 }} ref={this.chatContainerRef}>
               {content}
               <div
                 className="bottom-anchor"

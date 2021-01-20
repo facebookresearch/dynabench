@@ -330,12 +330,12 @@ export default class ApiService {
 
   explainExample(id, type, explanation, uid = null) {
     var obj = {};
-    if (type == 'example') {
+    if (type === 'example') {
       obj.example_explanation = explanation;
-    } else if (type == 'model') {
+    } else if (type === 'model') {
       obj.model_explanation = explanation;
     }
-    if (this.mode == 'mturk') {
+    if (this.mode === 'mturk') {
       obj.uid = uid;
     }
     return this.fetch(`${this.domain}/examples/${id}`, {
@@ -346,7 +346,7 @@ export default class ApiService {
 
   retractExample(id, uid = null) {
     let obj = {retracted: true};
-    if (this.mode == 'mturk') {
+    if (this.mode === 'mturk') {
       obj.uid = uid;
     }
     return this.fetch(`${this.domain}/examples/${id}`, {
@@ -361,7 +361,7 @@ export default class ApiService {
 
   validateExample(id, label, mode, metadata = {}, uid = null) {
     let obj = {label: label, mode: mode, metadata: metadata};
-    if (this.mode == 'mturk') {
+    if (this.mode === 'mturk') {
       obj.uid = uid;
     }
     return this.fetch(`${this.domain}/validations/${id}`, {
@@ -372,7 +372,7 @@ export default class ApiService {
 
   flagExample(id, uid = null) {
     let obj = {flagged: true};
-    if (this.mode == 'mturk') {
+    if (this.mode === 'mturk') {
       obj.uid = uid;
     }
     return this.fetch(`${this.domain}/examples/${id}`, {
@@ -494,12 +494,12 @@ export default class ApiService {
   }
 
   doFetch(url, options, includeCredentials = false) {
-    const token = (this.mode != 'mturk') ? this.getToken() : null;
+    const token = (this.mode !== 'mturk') ? this.getToken() : null;
     const headers = {
       "Accept": "application/json",
       "Content-Type": "application/json",
       "Authorization": token ? "Bearer " + token :
-        (this.mode == "mturk" ? "turk" : "None"),
+        (this.mode === "mturk" ? "turk" : "None"),
     };
     options = {
       headers,
@@ -513,7 +513,7 @@ export default class ApiService {
   }
 
   fetch(url, options) {
-    const token = (this.mode != 'mturk') ? this.getToken() : null;
+    const token = (this.mode !== 'mturk') ? this.getToken() : null;
     if (
       !!token &&
       this.isTokenExpired(token) &&

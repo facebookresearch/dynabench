@@ -285,7 +285,7 @@ const OverallModelLeaderBoard = (props) => {
               {props.tags.map((tag) => {
                 let tag_result = '-';
                 if (data.metadata_json && data.metadata_json.perf_by_tag) {
-                  let selected_tag = data.metadata_json.perf_by_tag.filter(t => t.tag == tag);
+                  let selected_tag = data.metadata_json.perf_by_tag.filter(t => t.tag === tag);
                   if (selected_tag.length > 0) tag_result = parseFloat(selected_tag[0].perf).toFixed(2)+'%';
                 };
                 return (
@@ -411,7 +411,7 @@ class TaskPage extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.location.hash !== this.props.location.hash || this.props.match.params.taskId != this.state.taskId) {
+    if (prevProps.location.hash !== this.props.location.hash || this.props.match.params.taskId !== this.state.taskId) {
       this.setState({taskId: this.props.match.params.taskId}, function() {
         this.context.api
           .getTask(this.state.taskId)

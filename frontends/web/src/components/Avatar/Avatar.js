@@ -29,21 +29,21 @@ export const Avatar = ({
 
   return (
     <>
-      {loader && <img className="upload-loader pic" src="/loader.gif" />}
+      {loader && <img className="upload-loader pic" src="/loader.gif" alt="loader" />}
       {avatar_url && !avatar_url !== "" && avatar_url !== "None" ? (
         <div
           className={`avatar-circle ${
             isThumbnail ? "sm inline-block mr-1" : null
           }`}
         >
-          <img className="profile-pic" src={avatar_url} />
+          <img className="profile-pic" src={avatar_url} alt="profile pic" />
           {isEditable ? (
             <div
               className={`editPic ${
                 theme === "light" ? "white-bg" : "blue-bg"
               }`}
             >
-              <img className="edit-pic-icon" src="/camera.png" />
+              <img className="edit-pic-icon" src="/camera.png" alt="edit pic" />
               <input
                 className="pic-file-upload"
                 type="file"
@@ -68,7 +68,7 @@ export const Avatar = ({
           </span>
           {isEditable ? (
             <div className="editPic blue-bg">
-              <img className="edit-pic-icon" src="/camera.png" />
+              <img className="edit-pic-icon" src="/camera.png" alt="edit pic" />
               <input
                 className="pic-file-upload"
                 type="file"

@@ -225,7 +225,7 @@ class ModelPage extends React.Component {
                             <TasksContext.Consumer>
                               {({ tasks }) => {
                                 const task =
-                                  model && tasks.filter((e) => e.id == model.tid);
+                                  model && tasks.filter((e) => e.id === model.tid);
                                 return task && task.length && task[0].shortname;
                               }}
                             </TasksContext.Consumer>

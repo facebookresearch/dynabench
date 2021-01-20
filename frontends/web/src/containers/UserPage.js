@@ -14,7 +14,6 @@ import {
   Table,
   Form,
   Nav,
-  Tooltip,
   OverlayTrigger,
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
@@ -89,12 +88,11 @@ class UserPage extends React.Component {
   };
 
   paginate = (state) => {
+    var isNext = state === "next"
+    var newUserModelsPage = isNext ? this.state.userModelsPage + 1 : this.state.userModelsPage - 1
     this.setState(
       {
-        userModelsPage:
-          state === "next"
-            ? ++this.state.userModelsPage
-            : --this.state.userModelsPage,
+        userModelsPage: newUserModelsPage
       },
       () => {
         this.fetchModel(this.state.userModelsPage);
@@ -297,7 +295,7 @@ class UserPage extends React.Component {
                             </Col>
                           </Form.Group>
                         </Card.Body>
-                        {this.state.user.id == this.context.user.id && (
+                        {this.state.user.id === this.context.user.id && (
                           <Card.Footer>
                             <Row>
                               <Col className="text-center">
@@ -358,7 +356,7 @@ class UserPage extends React.Component {
                                       {({ tasks }) => {
                                         const task =
                                           model &&
-                                          tasks.filter((e) => e.id == model.tid);
+                                          tasks.filter((e) => e.id === model.tid);
                                         return (
                                           task && task.length && task[0].shortname
                                         );

@@ -276,7 +276,7 @@ class PublishInterface extends React.Component {
                               </Form.Text>
                             </Form.Group>
 
-                            {model.is_published == "False" ? (
+                            {model.is_published === "False" ? (
                               <Button
                                 type="submit"
                                 variant="primary"
