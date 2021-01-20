@@ -24,6 +24,7 @@ import {
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import UserContext from "./UserContext";
+import AtomicImage from "./AtomicImage"
 import { TokenAnnotator } from "react-text-annotate";
 import { PieRechart } from "../components/Rechart";
 import { formatWordImportances } from "../utils/color";
@@ -60,13 +61,20 @@ function ContextInfo({ taskType, taskName, text, answer, updateAnswer }) {
         tag: "ANS",
       })}
     />
-  ) : (
-    <div className="mb-1 p-3 light-gray-bg">
-      {taskName === "NLI" ? <h6 className="text-uppercase dark-blue-color spaced-header">Context:</h6> : ''}
-      {taskName === "Sentiment" ? <h6 className="text-uppercase dark-blue-color spaced-header">Inspiration Prompt:</h6> : ''}
-      {text.replace("<br>", "\n")}
-    </div>
-  );
+    ) : taskType == "VQA" ? (
+      <AtomicImage src={text}/>
+    ) :
+    (
+      <div className="mb-1 p-3 light-gray-bg">
+        {taskName === "NLI" ? <h6 className="text-uppercase dark-blue-color spaced-header">Context:</h6> : ''}
+        {taskName === "Sentiment" ? <h6 className="text-uppercase dark-blue-color spaced-header">Inspiration Prompt:</h6> : ''}
+        {text.replace("<br>", "\n")}
+      </div>
+    );
+}
+
+function getNotSelectedTargets(targets, curTarget, onChange){
+  return targets.map((target, index) => <Dropdown.Item onClick={onChange} key={index} index={index}>{target}</Dropdown.Item>).filter((_, index) => index !== curTarget)
 }
 
 const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName, onChange }) => {
@@ -95,14 +103,19 @@ const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName, onChang
                 <i className="fas fa-flag-checkered mr-1"></i>
                 <span>Your goal: enter a question and select an answer in the context, such that the model is fooled.</span>
               </InputGroup>
-            : <InputGroup className="align-items-center">
+            : taskType === "VQA" ?
+              <InputGroup className="align-items-center">
                 <i className="fas fa-flag-checkered mr-1"></i>
-                Your goal: enter {indefiniteArticle}
-                <DropdownButton variant="light" className="p-1" title={targets[curTarget] ? targets[curTarget] : "Loading.."}>
-                  {targets.map((target, index) => <Dropdown.Item onClick={onChange} key={index} index={index}>{target}</Dropdown.Item>).filter((_, index) => index !== curTarget)}
-                </DropdownButton>
-                statement that fools the model into predicting {otherTargetStr}.
+                <span>Your goal: enter a question based on the image below, such that the model is fooled.</span>
               </InputGroup>
+              : <InputGroup className="align-items-center">
+                  <i className="fas fa-flag-checkered mr-1"></i>
+                  Your goal: enter {indefiniteArticle}
+                  <DropdownButton variant="light" className="p-1" title={targets[curTarget] ? targets[curTarget] : "Loading..."}>
+                    {getNotSelectedTargets(targets, curTarget, onChange)}
+                  </DropdownButton>
+                  statement that fools the model into predicting {otherTargetStr}.
+                </InputGroup>
         }
       </div>
     </div>
@@ -1100,7 +1113,7 @@ class CreateInterface extends React.Component {
           </Annotation>
           <Card className="profile-card overflow-hidden">
             {contextContent}
-            <Card.Body className="overflow-auto pt-2" style={{ height: 385 }} ref={this.chatContainerRef}>
+            <Card.Body className="overflow-auto pt-2" style={{ height: this.state.task.type == "VQA" ? 0 : 385 }} ref={this.chatContainerRef}>
               {content}
               <div
                 className="bottom-anchor"
@@ -1113,10 +1126,11 @@ class CreateInterface extends React.Component {
                   <FormControl
                     className="m-3 p-3 rounded-1 thick-border h-auto light-gray-bg"
                     placeholder={
-                      ["NLI", "QA", "Sentiment", "Hate Speech"].includes(this.state.task.shortname)
+                      ["NLI", "QA", "VQA", "Sentiment", "Hate Speech"].includes(this.state.task.shortname)
                       ? {
                           "NLI": "Enter " + this.state.task.targets[this.state.target] + " hypothesis..",
                           "QA": "Enter question..",
+                          "VQA": "Enter question..",
                           "Sentiment": "Enter " + this.state.task.targets[this.state.target] + " statement..",
                           "Hate Speech": "Enter " + this.state.task.targets[this.state.target] + " statement..",
                         }[this.state.task.shortname]
