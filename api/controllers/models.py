@@ -24,7 +24,7 @@ from models.user import UserModel
 @bottle.get("/models/<mid:int>")
 def get_model(mid):
     m = ModelModel()
-    model = m.get(mid)
+    model = m.getPublishedModel(mid)
     if not model:
         bottle.abort(404, "Not found")
     # Also get this model's scores?

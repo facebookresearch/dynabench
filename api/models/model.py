@@ -89,7 +89,7 @@ class ModelModel(BaseModel):
         # Model owner to fetch by id
         return self.dbs.query(Model).filter(Model.id == id).one()
 
-    def get(self, id):
+    def getPublishedModel(self, id):
         return (
             self.dbs.query(Model)
             .filter(Model.id == id)
