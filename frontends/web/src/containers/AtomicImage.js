@@ -20,7 +20,7 @@ class AtomicImage extends React.Component {
    }
 
    render() {
-      const { src, maxSize } = this.props;
+      const { src, maxWidth, maxHeight } = this.props;
       if (src && src.length > 0) {
          return (
             <>
@@ -28,18 +28,15 @@ class AtomicImage extends React.Component {
                   onLoad={() => this.setState({ isImgLoaded: true })}
                   src={src}
                   style={{
-                     marginTop: "20px",
                      display: this.state.isImgLoaded ? "block" : "none",
                      alignSelf: "center",
-                     maxHeight: maxSize,
-                     maxWidth: maxSize
+                     maxHeight,
+                     maxWidth
                   }
                } />
                {!this.state.isImgLoaded &&
                   <div className="d-flex align-items-center justify-content-center" style={{ height: 200 }}>
-                     <div className="spinner-border" role="status">
-                     {/* <span className="sr-only">Loading...</span> */}
-                     </div>
+                     <div className="spinner-border" role="status"/>
                   </div>
                }
             </>
