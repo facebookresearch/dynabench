@@ -6,6 +6,7 @@
 
 var path = require("path");
 var webpack = require("webpack");
+var dotenv = require('dotenv').config({ path: __dirname + '/.env' });
 
 module.exports = {
   entry: "./mturk-src/index.js",
@@ -51,4 +52,9 @@ module.exports = {
       },
     ],
   },
+  plugins: [
+    new webpack.DefinePlugin({
+      "process.env": JSON.stringify(dotenv.parsed)
+    }),
+  ]
 };

@@ -10,6 +10,15 @@
   margin: 5px;
 }
 
+.response-warning {
+  background-color: #fffcf4;
+  border: 1px solid #fbe5c8;
+}
+
+.light-green-bg {
+  background-color: #e9ffe8;
+}
+
 .context {
   background-color: rgba(108, 117, 125, 0.1);
   padding: 10px;

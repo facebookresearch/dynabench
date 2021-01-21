@@ -31,7 +31,7 @@ class CheckVQAModelAnswer extends React.Component {
             this.setState({disableSubmitButton: true})
             this.props.updateExample(formattedAnswer, this.MODEL_STATES.INCORRECT);
         }
-      }
+    }
 
     handleCorrectButtonClick = (e) => {
         e.preventDefault();
@@ -47,6 +47,12 @@ class CheckVQAModelAnswer extends React.Component {
     render() {
         if (this.props.modelState === this.MODEL_STATES.CORRECT) {
             return null;
+        } else if (this.props.loadingResponse) {
+            return (
+                <div className="d-flex align-items-center justify-content-center" style={{ width: "100%", height: 120 }}>
+                    <div className="spinner-border" role="status"/>
+                </div>
+            )
         }
         return (
             <div className="mt-3">
@@ -60,7 +66,7 @@ class CheckVQAModelAnswer extends React.Component {
                         className={`btn btn-sm ${this.props.modelState === this.MODEL_STATES.CORRECT ? " btn-success" : " btn-outline-success"}`}
                         style={{marginRight: 5}}
                         onClick={this.handleCorrectButtonClick}
-                        disabled={this.state.disableCorrectButton}>
+                        disabled={this.state.disableCorrectButton || this.props.feedbackSaved}>
                             Correct
                     </button>
                     <button

@@ -19,7 +19,6 @@ export default class ApiService {
     } else {
       this.domain = domain || "https://www.dynabench.org:8080";
     }
-
     this.fetch = this.fetch.bind(this);
     this.setToken = this.setToken.bind(this);
     this.getToken = this.getToken.bind(this);
@@ -73,10 +72,13 @@ export default class ApiService {
     });
   }
 
-  updateExample(id, target, fooled) {
+  updateExample(id, target, fooled, uid=null) {
     var obj = {};
     obj.target_pred = target;
     obj.model_wrong = fooled;
+    if (this.mode === 'mturk') {
+      obj.uid = uid;
+    }
     return this.fetch(`${this.domain}/examples/${id}`, {
       method: "PUT",
       body: JSON.stringify(obj),

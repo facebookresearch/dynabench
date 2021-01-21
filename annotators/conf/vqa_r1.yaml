@@ -1,7 +1,5 @@
 #@package _global_
 mephisto:
-  blueprint:
-    onboarding_qualification: vqa-1-qualification
   architect:
     port: 4000
   task:
