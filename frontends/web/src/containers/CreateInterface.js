@@ -24,7 +24,9 @@ import {
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import UserContext from "./UserContext";
-import AtomicImage from "./AtomicImage"
+import AtomicImage from "./AtomicImage";
+import ExplainFeedback from "./ExplainFeedback";
+import CheckVQAModelAnswer from "./CheckVQAModelAnswer"
 import { TokenAnnotator } from "react-text-annotate";
 import { PieRechart } from "../components/Rechart";
 import { formatWordImportances } from "../utils/color";
@@ -62,7 +64,7 @@ function ContextInfo({ taskType, taskName, text, answer, updateAnswer }) {
       })}
     />
     ) : taskType === "VQA" ? (
-      <AtomicImage src={text}/>
+      <AtomicImage src={text} maxSize={500}/>
     ) :
     (
       <div className="mb-1 p-3 light-gray-bg">
@@ -119,19 +121,6 @@ const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName, onChang
         }
       </div>
     </div>
-  );
-};
-
-const ExplainFeedback = ({explainSaved}) => {
-  return (
-    <span style={{float: "right"}}>
-      { explainSaved === null
-        ? <span style={{color: "#b58c14"}}>Draft. Click out of input box to save.</span>
-        : explainSaved === false
-          ? "Saving..."
-          : <span style={{color: "#085756"}}>Saved!</span>
-      }
-    </span>
   );
 };
 
@@ -210,6 +199,7 @@ const NLITaskInstructions = () => {
     </div>
   );
 };
+
 const SentimentTaskInstructions = () => {
   return (
     <div>
@@ -224,6 +214,7 @@ const SentimentTaskInstructions = () => {
     </div>
   );
 };
+
 const HateSpeechTaskInstructions = () => {
   return (
     <div>
@@ -296,18 +287,23 @@ class ResponseInfo extends React.Component {
     this.retractExample = this.retractExample.bind(this);
     this.flagExample = this.flagExample.bind(this);
     this.explainExample = this.explainExample.bind(this);
+    this.setModelState = this.setModelState.bind(this);
     this.updateHateSpeechTargetMetadata = this.updateHateSpeechTargetMetadata.bind(this);
+    this.MODEL_STATES = { "UNKNOWN": -1, "CORRECT": 0, "INCORRECT": 1 };
     this.state = {
       loader: true,
       inspectError: false,
-      livemode: this.props.livemode
+      livemode: this.props.livemode,
+      modelState: (this.props.obj.fooled === true ? this.MODEL_STATES.INCORRECT :
+        (this.props.obj.fooled === false ? this.MODEL_STATES.CORRECT : this.MODEL_STATES.UNKNOWN)
+      ),
     };
   }
   componentDidMount() {
     this.setState({
       loader: false,
       inspectError: false,
-      explainSaved: null
+      explainSaved: null,
     });
   }
   updateHateSpeechTargetMetadata(e) {
@@ -349,6 +345,9 @@ class ResponseInfo extends React.Component {
         });
     }
   }
+  setModelState(newModelState) {
+    this.setState({ modelState: newModelState });
+  }
   retractExample(e) {
     e.preventDefault();
     var idx = e.target.getAttribute("data-index");
@@ -389,8 +388,7 @@ class ResponseInfo extends React.Component {
     if (!isNaN(parseInt(curTarget))) {
       target = curTarget;
     }
-    const selectedAnswer =
-      answer && answer.length ? answer[answer.length - 1].tokens.join("") : "";
+    const selectedAnswer = answer && answer.length ? answer[answer.length - 1].tokens.join("") : "";
     this.context.api
       .inspectModel(content[idx].url, {
         answer: selectedAnswer,
@@ -434,10 +432,55 @@ class ResponseInfo extends React.Component {
         this.setState({ inspectError: true, loader: false });
       });
   };
+
+
   render() {
-    const selectedAnswer = this.props.taskType !== "extract" ? "" : (
-      this.props.answer && this.props.answer.length ? this.props.answer[this.props.answer.length - 1].tokens.join("") : ""
-    );
+    let selectedAnswer = null;
+    if (this.props.taskType === "extract") {
+      selectedAnswer = this.props.answer && this.props.answer.length ? this.props.answer[this.props.answer.length - 1].tokens.join("") : "";
+    } else if (this.props.taskType === "clf") {
+      selectedAnswer = this.props.targets[this.props.curTarget];
+    }
+
+    let submissionResults = null;
+    if (this.state.modelState === this.MODEL_STATES.CORRECT) {
+      submissionResults = (
+        <span>
+          <strong>Try again!</strong> The model correctly predicted <strong>{this.props.obj.modelPredStr}</strong>
+        </span>
+      );
+    } else if (this.state.modelState === this.MODEL_STATES.INCORRECT && selectedAnswer) {
+      submissionResults = (
+        <span>
+          <strong>You fooled the model!</strong> It predicted <strong>{this.props.obj.modelPredStr}</strong>{" "}
+          but a person would say <strong>{selectedAnswer}</strong>
+        </span>
+      )
+    }
+
+    let sandboxContent = null;
+    if (!this.state.livemode && submissionResults) {
+      sandboxContent = (
+        <div>
+          This example was not stored because you are in sandbox mode.
+          { this.context.api.loggedIn()
+            ? ""
+            : <div>
+                <Link
+                  to={"/register?msg=" +
+                      encodeURIComponent("Please sign up or log in so that you can get credit for your generated examples.") +
+                      "&src=" +
+                      encodeURIComponent("/tasks/" + this.props.taskId + "/create")
+                      }
+                >
+                  Sign up now
+                </Link>{" "}
+                to make sure your examples are stored and you get credit for your examples!
+              </div>
+          }
+        </div>
+      )
+    }
     var classNames = this.props.obj.cls + " rounded border m-3";
     var userFeedback = null;
     if (this.props.obj.retracted) {
@@ -454,57 +497,65 @@ class ResponseInfo extends React.Component {
         predicted <strong>{this.props.obj.modelPredStr}</strong>.
       </span>;
     } else {
-
-      if (this.props.obj.fooled) {
+      if (this.state.modelState === this.MODEL_STATES.INCORRECT) {
         classNames += " light-green-bg"
-      } else {
+      } else if (this.state.modelState === this.MODEL_STATES.CORRECT) {
         classNames += " response-warning"
+      } else {
+        classNames += " bg-light"
       }
-
       userFeedback = <>
-        {this.props.obj.fooled
-          ? <span>
-              <strong>You fooled the model!</strong> It predicted <strong>{this.props.obj.modelPredStr}</strong>{" "}
-              but a person would say <strong>{this.props.taskType === "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]}</strong>
-            </span>
-          : <span>
-              <strong>Try again!</strong> The model correctly predicted <strong>{this.props.obj.modelPredStr}</strong>
-            </span>
-        }
-        {!this.state.livemode
-          ? <div>
-              This example was not stored because you are in sandbox mode.
-              { this.context.api.loggedIn()
-                ? ""
-                : <div>
-                    <Link
-                      to={"/register?msg=" +
-                          encodeURIComponent("Please sign up or log in so that you can get credit for your generated examples.") +
-                          "&src=" +
-                          encodeURIComponent("/tasks/" + this.props.taskId + "/create")
-                          }
-                    >
-                      Sign up now
-                    </Link>{" "}
-                    to make sure your examples are stored and you get credit for your examples!
+        {this.props.taskType === "VQA"
+          ?
+            <CheckVQAModelAnswer
+              exampleId={this.props.mapKeyToExampleId[this.props.index]}
+              modelPredStr={this.props.obj.modelPredStr}
+              modelState={this.state.modelState}
+              setModelState={this.setModelState}
+              getNewContext={this.props.getNewContext}
+              MODEL_STATES={this.MODEL_STATES}
+            />
+          :
+            this.state.modelState === this.MODEL_STATES.CORRECT
+              ? (
+                <div className="mt-3">
+                  <span>
+                    Optionally, provide an explanation for your example:
+                  </span>
+                  <ExplainFeedback feedbackSaved={this.state.explainSaved} type="explanation" />
+                  <div>
+                    <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
+                      "Explain why " + (this.props.taskType == "clf" ? this.props.targets[this.props.curTarget] : selectedAnswer) + " is the correct answer"}
+                      data-index={this.props.index} data-type="example" onChange={() => this.setState({explainSaved: null})} onBlur={this.explainExample} />
                   </div>
-              }
-            </div>
-          : this.props.obj.fooled
-            ? (
+                  <div>
+                    <input type="text" style={{width: 100+'%'}}
+                      placeholder="Explain why you think the model made a mistake"
+                      data-index={this.props.index} data-type="model" onChange={() => this.setState({explainSaved: null})} onBlur={this.explainExample} />
+                  </div>
+                  {this.props.taskName === "Hate Speech" ?
+                    <HateSpeechDropdown
+                      hateType={this.state.hate_type}
+                      dataIndex={this.props.index}
+                      onClick={this.updateHateSpeechTargetMetadata}
+                    />
+                    : ""}
+                </div>
+              )
+              : /* not fooled */
               <div className="mt-3">
                 <span>
                   Optionally, provide an explanation for your example:
                 </span>
-                <ExplainFeedback explainSaved={this.state.explainSaved} />
+                <ExplainFeedback feedbackSaved={this.state.explainSaved} type="explanation" />
                 <div>
                   <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
-                    "Explain why " + (this.props.taskType === "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is the correct answer"}
+                    "Explain why " + (selectedAnswer) + " is the correct answer"}
                     data-index={this.props.index} data-type="example" onChange={() => this.setState({explainSaved: null})} onBlur={this.explainExample} />
                 </div>
                 <div>
                   <input type="text" style={{width: 100+'%'}}
-                    placeholder="Explain why you think the model made a mistake"
+                    placeholder="Explain what you did to try to trick the model"
                     data-index={this.props.index} data-type="model" onChange={() => this.setState({explainSaved: null})} onBlur={this.explainExample} />
                 </div>
                 {this.props.taskName === "Hate Speech" ?
@@ -515,31 +566,6 @@ class ResponseInfo extends React.Component {
                   />
                   : ""}
               </div>
-            )
-            : /* not fooled */
-            <div className="mt-3">
-              <span>
-                Optionally, provide an explanation for your example:
-              </span>
-              <ExplainFeedback explainSaved={this.state.explainSaved} />
-              <div>
-                <input type="text" style={{width: 100+'%', marginBottom: '1px'}} placeholder={
-                  "Explain why " + (this.props.taskType === "extract" ? selectedAnswer : this.props.targets[this.props.curTarget]) + " is the correct answer"}
-                  data-index={this.props.index} data-type="example" onChange={() => this.setState({explainSaved: null})} onBlur={this.explainExample} />
-              </div>
-              <div>
-                <input type="text" style={{width: 100+'%'}}
-                  placeholder="Explain what you did to try to trick the model"
-                  data-index={this.props.index} data-type="model" onChange={() => this.setState({explainSaved: null})} onBlur={this.explainExample} />
-              </div>
-              {this.props.taskName === "Hate Speech" ?
-                <HateSpeechDropdown
-                  hateType={this.state.hate_type}
-                  dataIndex={this.props.index}
-                  onClick={this.updateHateSpeechTargetMetadata}
-                />
-                : ""}
-            </div>
         }
         <div className="mb-3">
           {this.state.inspectError ? (
@@ -576,12 +602,14 @@ class ResponseInfo extends React.Component {
             <Col xs={12} md={7}>
               <div className="mb-3">{this.props.obj.text}</div>
               <small>
+                {submissionResults}
                 {userFeedback}
+                {sandboxContent}
               </small>
             </Col>
             <Col xs={12} md={5}>
               <PieRechart
-                data={this.props.obj.response.prob}
+                data={this.props.obj.prob}
                 labels={this.props.targets}
               />
             </Col>
@@ -617,24 +645,25 @@ class ResponseInfo extends React.Component {
                       <i className="fas fa-flag"></i> Flag
                   </button>
                 </OverlayTrigger>
-                <OverlayTrigger
-                  placement="top"
-                  delay={{ show: 250, hide: 400 }}
-                  overlay={(props) => <Tooltip {...props}>Want more insight into how this decision was made?</Tooltip>}
-                >
-                  <button
-                    data-index={this.props.index}
-                    onClick={this.inspectExample}
-                    type="button"
-                    className="btn btn-light btn-sm">
-                      <i className="fas fa-search"></i> Inspect
-                      {this.state.loader ? (<>
-                        {" "}<span>(this may take a while)</span><Spinner className="ml-2" animation="border" role="status" size="sm">
-                          <span className="sr-only">Loading...</span>
-                        </Spinner>
-                      </>) : null}
-                  </button>
-                </OverlayTrigger>
+                { this.props.taskType != "VQA" &&
+                  <OverlayTrigger
+                    placement="top"
+                    delay={{ show: 250, hide: 400 }}
+                    overlay={(props) => <Tooltip {...props}>Want more insight into how this decision was made?</Tooltip>}
+                  >
+                    <button
+                      data-index={this.props.index}
+                      onClick={this.inspectExample}
+                      type="button"
+                      className="btn btn-light btn-sm">
+                        <i className="fas fa-search"></i> Inspect
+                        {this.state.loader ? (<>
+                          {" "}<span>(this may take a while)</span><Spinner className="ml-2" animation="border" role="status" size="sm">
+                            <span className="sr-only">Loading...</span>
+                          </Spinner>
+                        </>) : null}
+                    </button>
+                  </OverlayTrigger>}
               </div>
             }
         </Card.Footer>}
@@ -673,8 +702,8 @@ class CreateInterface extends React.Component {
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
     this.chatContainerRef = React.createRef();
     this.bottomAnchorRef = React.createRef();
-
   }
+
   getNewContext() {
     this.setState(
       { answer: [], submitDisabled: true, refreshDisabled: true },
@@ -761,6 +790,7 @@ class CreateInterface extends React.Component {
       content: [this.state.content[0]]
     });
   }
+
   handleResponse(e) {
     e.preventDefault();
     this.setState({ submitDisabled: true, refreshDisabled: true }, () => {
@@ -789,6 +819,8 @@ class CreateInterface extends React.Component {
       }
 
       let modelInputs = {
+        image_url: this.state.context.context,
+        question: this.state.hypothesis,
         context: this.state.context.context,
         hypothesis: this.state.hypothesis,
         answer: answer_text,
@@ -811,21 +843,24 @@ class CreateInterface extends React.Component {
               });
             }
 
-            if (this.state.task.type === "extract") {
-              var modelPredIdx = null;
-              var modelPredStr = result.text;
-              var modelFooled = !result.model_is_correct;
+            var modelPredIdx = null
+            var modelPredStr = null
+            var modelFooled = null
+            if (this.state.task.type == "clf") {
+              modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
+              modelPredStr = this.state.task.targets[modelPredIdx];
+              modelFooled = modelPredIdx !== this.state.target;
+            } else {
               // TODO: handle this more elegantly
               result.prob = [result.prob, 1 - result.prob];
               this.state.task.targets = ["confidence", "uncertainty"];
-            } else {
-              var modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
-              var modelPredStr = this.state.task.targets[modelPredIdx];
-              var modelFooled =
-                result.prob.indexOf(Math.max(...result.prob)) !==
-                this.state.target;
+              if (this.state.task.type === "extract") {
+                modelFooled = !result.model_is_correct;
+                modelPredStr = result.text;
+              } else if (this.state.task.type === "VQA") {
+                modelPredStr = result.answer;
+              }
             }
-
             this.setState({
               content: [
                 ...this.state.content,
@@ -837,16 +872,17 @@ class CreateInterface extends React.Component {
                   text: this.state.hypothesis,
                   url: this.state.randomModel,
                   retracted: false,
-                  response: result,
+                  prob: result.prob,
                 },
               ],
             },
             function () {
               this.smoothlyAnimateToBottom();
+              // Save examples.
               if (!this.state.livemode) {
-                // We are in sandbox
+                // We are in sandbox.
                 this.setState({
-                  hypothesis: this.state.retainInput? this.state.hypothesis : "",
+                  hypothesis: this.state.retainInput ? this.state.hypothesis : "",
                   submitDisabled: false,
                   refreshDisabled: false,
                 });
@@ -866,6 +902,7 @@ class CreateInterface extends React.Component {
                 )
                 .then((result) => {
                   var key = this.state.content.length - 1;
+                  // Reset state variables and store example id.
                   this.setState({
                     hypothesis: this.state.retainInput? this.state.hypothesis : "",
                     submitDisabled: false,
@@ -875,7 +912,6 @@ class CreateInterface extends React.Component {
                       [key]: result.id,
                     },
                   });
-
                   if (!!result.badges) {
                     this.setState({showBadges: result.badges})
                   }
@@ -887,7 +923,8 @@ class CreateInterface extends React.Component {
                     refreshDisabled: false,
                   });
                 });
-              });
+              }
+            );
           }
         }, (error) => {
           console.log(error);
@@ -898,9 +935,11 @@ class CreateInterface extends React.Component {
         });
     });
   }
+
   handleResponseChange(e) {
     this.setState({ hypothesis: e.target.value });
   }
+
   switchLiveMode(checked) {
     if (checked === true && !this.context.api.loggedIn()) {
       this.props.history.push(
@@ -914,6 +953,7 @@ class CreateInterface extends React.Component {
     }
     this.setState({ livemode: checked });
   }
+
   componentDidMount() {
     const {
       match: { params },
@@ -953,6 +993,7 @@ class CreateInterface extends React.Component {
         });
     });
   }
+
   updateAnswer(value) {
     // Only keep the last answer annotated
     if (value.length > 0) {
@@ -964,6 +1005,7 @@ class CreateInterface extends React.Component {
       this.setState({ answer: value, answerNotSelected: false });
     }
   }
+
   render() {
     const contextContent = this.state.content
       .filter(item => item.cls === "context")
@@ -984,7 +1026,7 @@ class CreateInterface extends React.Component {
           />
         </Annotation>
       ));
-    const content = this.state.content.map((item, index) =>
+    const responseContent = this.state.content.map((item, index) =>
       item.cls === "context" ? undefined : (
         <ResponseInfo
           randomModel={this.state.randomModel}
@@ -999,6 +1041,7 @@ class CreateInterface extends React.Component {
           obj={item}
           mapKeyToExampleId={this.state.mapKeyToExampleId}
           content={this.state.content}
+          getNewContext={this.getNewContext}
         />
       )
     ).filter(item => item !== undefined);
@@ -1112,8 +1155,8 @@ class CreateInterface extends React.Component {
           </Annotation>
           <Card className="profile-card overflow-hidden">
             {contextContent}
-            <Card.Body className="overflow-auto pt-2" style={{ height: this.state.task.type === "VQA" ? 0 : 385 }} ref={this.chatContainerRef}>
-              {content}
+            <Card.Body className="overflow-auto pt-2" style={{ height:  "auto" }} ref={this.chatContainerRef}>
+              {responseContent}
               <div
                 className="bottom-anchor"
                 ref={this.bottomAnchorRef}
@@ -1128,8 +1171,8 @@ class CreateInterface extends React.Component {
                       ["NLI", "QA", "VQA", "Sentiment", "Hate Speech"].includes(this.state.task.shortname)
                       ? {
                           "NLI": "Enter " + this.state.task.targets[this.state.target] + " hypothesis..",
-                          "QA": "Enter question..",
-                          "VQA": "Enter question..",
+                          "QA": "Enter question...",
+                          "VQA": "Enter question...",
                           "Sentiment": "Enter " + this.state.task.targets[this.state.target] + " statement..",
                           "Hate Speech": "Enter " + this.state.task.targets[this.state.target] + " statement..",
                         }[this.state.task.shortname]
@@ -1212,7 +1255,7 @@ class CreateInterface extends React.Component {
                       onClick={this.handleResponse}
                       disabled={this.state.submitDisabled}
                     >
-                      Submit{" "}
+                      {"Submit "}
                       <i
                         className={
                           this.state.submitDisabled ? "fa fa-cog fa-spin" : ""

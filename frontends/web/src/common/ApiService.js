@@ -73,6 +73,16 @@ export default class ApiService {
     });
   }
 
+  updateExample(id, target, fooled) {
+    var obj = {};
+    obj.target_pred = target;
+    obj.model_wrong = fooled;
+    return this.fetch(`${this.domain}/examples/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(obj),
+    });
+  }
+
   updateUser(userId, body) {
     return this.fetch(`${this.domain}/users/${userId}`, {
       method: "PUT",
@@ -283,7 +293,7 @@ export default class ApiService {
     );
   }
 
-  getModelResponse(modelUrl, { context, hypothesis, answer, insight }) {
+  getModelResponse(modelUrl, { context, hypothesis, answer, image_url, question, insight }) {
     return this.doFetch(
       modelUrl,
       {
@@ -292,6 +302,8 @@ export default class ApiService {
           context,
           hypothesis,
           answer,
+          image_url,
+          question,
           insight,
         }),
       },
@@ -315,6 +327,12 @@ export default class ApiService {
 
   getExampleMetadata(id) {
     return this.fetch(`${this.domain}/examples/${id}/metadata`, {
+      method: "GET",
+    });
+  }
+
+  getExample(id) {
+    return this.fetch(`${this.domain}/examples/${id}`, {
       method: "GET",
     });
   }

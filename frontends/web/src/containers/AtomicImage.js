@@ -4,30 +4,51 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 
-class AtomicImage extends React.Component {
+const AtomicImage = ({ src, maxSize }) => {
 
-     onImgLoad = ({target:img}) => {
-         const fixedWidth = 500
-         const ratio =  img.naturalHeight / img.naturalWidth
-         img.width = fixedWidth
-         img.height = ratio * fixedWidth
-      }
+   const [isImgLoaded, setIsImgLoaded] = useState(false);
 
-     render(){
-         const {src} = this.props
-         if(src && src.length > 0){
-            return (
-               <img onLoad={this.onImgLoad} src={src} style={{ alignSelf: 'center', marginTop: '20px' } } />
-            );
+   const onImgLoad = ({target:img}) => {
+      if(Math.max(img.naturalHeight, img.naturalWidth) > maxSize) {
+         const aspectRatio =  img.naturalHeight / img.naturalWidth
+         if (img.naturalHeight > img.naturalWidth) {
+            img.height = maxSize;
+            img.width = maxSize / aspectRatio;
+         } else {
+            img.width = maxSize;
+            img.height = aspectRatio * maxSize;
          }
-         return (
-            <div className="mb-1 p-3 light-gray-bg">
-               There are no available images
-            </div>
-         )
-     }
-  }
+      }
+      setIsImgLoaded(true);
+   }
+
+   useEffect(() => {
+      setIsImgLoaded(false);
+   }, [src])
+
+   if (src && src.length > 0) {
+      return (
+         <>
+            <img onLoad={onImgLoad} src={src} style={{ marginTop: '20px', display: isImgLoaded ? "block" : "none", alignSelf: "center" }} />
+            {!isImgLoaded &&
+               <div className="d-flex align-items-center justify-content-center" style={{ height: 200 }}>
+                  <div className="spinner-border" role="status">
+                  <span className="sr-only">Loading...</span>
+                  </div>
+               </div>
+            }
+         </>
+      )
+   } else {
+      return (
+         <div className="mb-1 p-3 light-gray-bg">
+            There are no available images
+         </div>
+      )
+   }
+}
+
 
   export default AtomicImage;
