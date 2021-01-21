@@ -45,6 +45,7 @@ def get_user(credentials, id):
             "total_verified_fooled",
             "total_verified_not_correct_fooled",
             "total_retracted",
+            "avatar_url",
         ]:
             nu[f] = u[f]
         return util.json_encode(nu)
@@ -76,6 +77,7 @@ def get_user_with_badges(credentials, id):
             "total_verified_fooled",
             "total_verified_not_correct_fooled",
             "total_retracted",
+            "avatar_url",
         ]:
             nu[f] = u[f]
 
