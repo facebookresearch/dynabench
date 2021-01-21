@@ -441,7 +441,7 @@ class VerifyInterface extends React.Component {
                             {this.state.incorrectSelected ?
                                 {
                                   'NLI': <DropdownButton className="p-1" title={"Your corrected label: " + this.state.validatorLabel}>
-                                           {["entailing", "neutral", "contradictory"].filter((target, _) => target !== this.state.example.target)
+                                           {["entailed", "neutral", "contradictory"].filter((target, _) => target !== this.state.example.target)
                                              .map((target, index) => <Dropdown.Item onClick={() => this.setState({ validatorLabel: target })} key={index} index={index}>{target}</Dropdown.Item>)}
                                          </DropdownButton>,
                                   'QA': 'Please select the correct answer in the context. If it is not in the context, then flag this example.',

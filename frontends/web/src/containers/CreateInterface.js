@@ -80,7 +80,7 @@ const GoalMessage = ({ targets = [], curTarget, taskType, taskShortName, onChang
   const warningBg = "light-yellow-transparent-bg";
   const dangerBg = "light-red-transparent-bg";
   const specialBgTasks = {
-    "NLI": {"entailing": successBg, "neutral": warningBg, "contradictory": dangerBg},
+    "NLI": {"entailed": successBg, "neutral": warningBg, "contradictory": dangerBg},
     "Sentiment": {"positive": successBg, "negative": dangerBg},
     "Hate Speech": {"not-hateful": successBg, "hateful": dangerBg}
   };

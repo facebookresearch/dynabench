@@ -20,7 +20,7 @@ tasks = [
             "Natural Language Inference is classifying context-hypothesis pairs "
             + "into whether they entail, contradict or are neutral."
         ),
-        "targets": "entailing|neutral|contradictory",
+        "targets": "entailed|neutral|contradictory",
         "has_context": True,
         "type": "clf",
         "has_answer": False,
