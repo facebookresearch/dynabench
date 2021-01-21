@@ -113,9 +113,14 @@ def get_token(payload):
     payload["exp"] = datetime.datetime.utcnow() + datetime.timedelta(
         seconds=app.config["jwtexp"]
     )
-    return jwt.encode(
+    encoded = jwt.encode(
         payload, app.config["jwtsecret"], algorithm=app.config["jwtalgo"]
-    ).decode("utf-8")
+    )
+    if isinstance(encoded, bytes):
+        # For PyJWT <= 1.7.1
+        return encoded.decode("utf-8")
+
+    return encoded
 
 
 def set_refresh_token():
