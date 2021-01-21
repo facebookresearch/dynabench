@@ -1,9 +1,9 @@
 {
     "task": "sentiment",
     "task_id": 3,
-    "round_id": 1,
+    "round_id": 3,
     "model_no": 1,
-    "model_url": "http://dl.fbaipublicfiles.com/dynabench/sentiment/roberta_round1-1.bin",
+    "model_url": "http://dl.fbaipublicfiles.com/dynabench/sentiment/roberta_round3-1.bin",
     "initial_instance_count" : 1,
     "gateway_url": "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict",
     "sagemaker_role": "AmazonSageMaker-ExecutionRole-20200629T161149",

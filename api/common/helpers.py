@@ -115,6 +115,43 @@ def read_hate_speech_round_labels(root_path):
     return hs_labels
 
 
+def read_sentiment_round_labels(root_path):
+    """
+    Load the files from the Sentiment directory and label them automatically
+    :param root_path: We assume sentiment_v1 test sets from
+        https://github.com/cgpotts/dynasent in individual round folders
+        are present in api folder.
+    :return: Dict object
+    """
+
+    full_path = os.path.join(root_path, "data", "sentiment_v1")
+
+    if not check_data_path_exists(full_path):
+        return {}
+
+    r_file_paths = [
+        name
+        for name in os.listdir(full_path)
+        if os.path.isdir(os.path.join(full_path, name))
+    ]
+    sent_labels = {}
+    for r_file_path in r_file_paths:
+        r_num = r_file_path[len(r_file_path) - 1 : len(r_file_path)]
+        r_file_path = full_path + "/" + r_file_path
+        loaded_data = [
+            json.loads(l) for l in open(f"{r_file_path}/test.jsonl").read().splitlines()
+        ]
+        sent_labels[int(r_num)] = [
+            {
+                "id": example["text_id"],
+                "answer": example["gold_label"],
+                "tags": example["tags"] if "tags" in example else "",
+            }
+            for example in loaded_data
+        ]
+    return sent_labels
+
+
 def read_qa_round_labels(root_path):
     """
     Load the files from QA directory and label them automatically
@@ -196,6 +233,9 @@ def validate_prediction(r_objects, prediction, task_shortname="nli"):
         # for HS, we use {id: label} and accuracy
         target_examples = app.config["hate_speech_labels"]
         eval_fn = get_accuracy
+    elif task_shortname == "sentiment":
+        target_examples = app.config["sentiment_labels"]
+        eval_fn = get_accuracy
     elif task_shortname == "qa":
         # for QA, we use {id: answer} and F1
         target_examples = app.config["qa_labels"]
@@ -203,7 +243,7 @@ def validate_prediction(r_objects, prediction, task_shortname="nli"):
     else:
         raise AssertionError("Unrecognized task")
 
-    if task_shortname in ["qa", "hate speech"]:
+    if task_shortname in ["qa", "hate speech", "sentiment"]:
 
         target_ids = {
             r_id: [x["id"] for x in target_examples[r_id]] for r_id in target_examples

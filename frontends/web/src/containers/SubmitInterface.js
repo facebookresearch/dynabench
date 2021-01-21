@@ -60,9 +60,9 @@ class SubmitInterface extends React.Component {
 
   handleValidation = (values) => {
     const errors = {};
-    let allowedTaskExtension = ".txt";
-    if (this.state.task.shortname === "QA" || this.state.task.shortname === "Hate Speech") {
-      allowedTaskExtension = ".json";
+    let allowedTaskExtension = ".json";
+    if (this.state.task.shortname === "NLI") {
+      allowedTaskExtension = ".txt";
     }
     const allowedExtensions = new RegExp(this.escapeRegExp(allowedTaskExtension)+"$", "i");
     if (!values.roundType) {
@@ -134,6 +134,14 @@ class SubmitInterface extends React.Component {
                 <p>
                   The Dynabench hate speech test sets can be found <a href="https://github.com/bvidgen/Dynamically-Generated-Hate-Speech-Dataset"> here</a>.
                   Upload predicted answers as a <em>.json</em> file in the format <code>{'{'}"id_1": "answer_1", "id_2": "answer_2", ...{'}'}</code> (i.e. standard SQuAD prediction format) where an answer is either "hate" or "nothate".
+                  If you submit for multiple rounds in one go (i.e., overall), simply concatenate the answers from each round into your prediction file.
+                </p>
+              ) : null}
+
+              {this.state.task.shortname === "Sentiment" ? (
+                <p>
+                  The DynaSent test sets can be found <a href="https://github.com/cgpotts/dynasent"> here</a>.
+                  Upload predicted answers as a <em>.json</em> file in the format <code>{'{'}"text_id_1": "answer_1", "text_id_2": "answer_2", ...{'}'}</code> (i.e. standard SQuAD prediction format) where an answer is "positive", "negative", or "neutral".
                   If you submit for multiple rounds in one go (i.e., overall), simply concatenate the answers from each round into your prediction file.
                 </p>
               ) : null}
