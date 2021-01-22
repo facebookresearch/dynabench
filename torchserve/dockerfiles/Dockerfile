@@ -33,6 +33,7 @@ RUN pip install --no-cache-dir psutil \
                 --no-cache-dir torchvision
 
 RUN pip install transformers
+RUN pip install git+git://github.com/facebookresearch/mmf.git@079f71d8c217001fd0a88c2efd0cac51ad4b3aef
 ADD serve serve
 RUN pip install ../serve/
 

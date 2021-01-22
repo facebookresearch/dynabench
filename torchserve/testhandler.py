@@ -118,6 +118,16 @@ if __name__ == "__main__":
                     }
                 }
             ]
+        elif config["task"] == "vqa":
+            data = [
+                {
+                    "body": {
+                        "image_url": "https://s3.us-east-1.amazonaws.com/"
+                        + "images.cocodataset.org/val2017/000000173033.jpg",
+                        "question": "Which animal is shown here?",
+                    }
+                }
+            ]
         context = Context(config)
         if args.inspect:
             data[0]["body"]["insight"] = True
