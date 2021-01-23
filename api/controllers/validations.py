@@ -3,6 +3,7 @@
 import json
 
 import bottle
+import sqlalchemy as db
 
 import common.auth as _auth
 import common.helpers as util
@@ -10,7 +11,7 @@ from models.badge import BadgeModel
 from models.context import ContextModel
 from models.example import ExampleModel
 from models.round import RoundModel
-from models.task import TaskModel
+from models.task import TaskModel, TaskUserExampleInfo
 from models.user import UserModel
 from models.validation import ValidationModel
 
@@ -114,6 +115,20 @@ def validate_example(credentials, eid):
             or label_counts["flagged"] >= num_matching_validations
             or (mode == "owner" and label != "correct")
         ):
+            info = (
+                RoundModel()
+                .dbs.query(TaskUserExampleInfo)
+                .filter(
+                    db.and_(
+                        TaskUserExampleInfo.tid == context.round.task.id,
+                        TaskUserExampleInfo.uid == example.uid,
+                    )
+                )
+                .one()
+            )
+            info.not_verified_incorrect_or_flagged -= 1
+            info.dbs.commit()
+
             um.incrementVerifiedNotCorrectFooledCount(example.uid)
             user = um.get(example.uid)
             if user:
