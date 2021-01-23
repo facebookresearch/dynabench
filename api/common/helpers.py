@@ -118,13 +118,13 @@ def read_hate_speech_round_labels(root_path):
 def read_sentiment_round_labels(root_path):
     """
     Load the files from the Sentiment directory and label them automatically
-    :param root_path: We assume sentiment_v1 test sets from
+    :param root_path: We assume sentiment_v1.1 test sets from
         https://github.com/cgpotts/dynasent in individual round folders
         are present in api folder.
     :return: Dict object
     """
 
-    full_path = os.path.join(root_path, "data", "sentiment_v1")
+    full_path = os.path.join(root_path, "data", "sentiment_v1.1")
 
     if not check_data_path_exists(full_path):
         return {}
