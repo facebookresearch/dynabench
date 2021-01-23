@@ -248,6 +248,7 @@ class HomePage extends React.Component {
                   </Modal>
 
                   <img
+                    alt="video-thumbnail"
                     onClick={() => {
                       this.setState({ showVideo: true });
                     }}

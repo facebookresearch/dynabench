@@ -6,7 +6,6 @@
 
 import React from "react";
 import {
-  Card,
   OverlayTrigger,
   Tooltip,
 } from "react-bootstrap";
@@ -114,9 +113,6 @@ const Badge = (props) => {
     case 'FIRST_TEN_CREATED':
       desc = 'First ten examples!';
     break;
-    case 'ALL_TASKS_COVERED':
-      desc = 'All tasks covered!';
-    break;
     case 'MODEL_BUILDER':
       desc = 'Model builder!';
     break;
@@ -187,7 +183,7 @@ const Badge = (props) => {
         Awarded <Moment utc fromNow>{awarded}</Moment>
         </Tooltip>}
     >
-      <img src={"/badges/"+props.name+".png"} style={{width: 50, marginBottom: 10, cursor: 'pointer'}} />
+      <img src={"/badges/"+props.name+".png"} style={{width: 50, marginBottom: 10, cursor: 'pointer'}} alt="badge"/>
     </OverlayTrigger>
   );
 }

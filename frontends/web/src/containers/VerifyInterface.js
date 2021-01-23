@@ -351,7 +351,7 @@ class VerifyInterface extends React.Component {
                   <Card.Body className="p-3">
                     <Row>
                       <Col xs={12} md={7}>
-                        {this.state.task.type == "extract" ?
+                        {this.state.task.type === "extract" ?
                           <div className="mb-3">
                             <h6 className="text-uppercase dark-blue-color spaced-header">
                             Question:

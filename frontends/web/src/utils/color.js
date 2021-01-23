@@ -12,7 +12,7 @@ export const formatWordImportances = ({ words, importances }, target) => {
   )
     return "<td></td>";
   let tags = ["<td>"];
-  words.map((word, i) => {
+  words.forEach((word, i) => {
     const formatedWord = formatSpecialTokens(word);
     const color = getColor(importances[i], target);
     const unwrapped_tag = `<mark style="background-color: ${color}; opacity:1.0;
