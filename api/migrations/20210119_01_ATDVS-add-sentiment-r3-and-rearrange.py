@@ -1,7 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 """
-Add semtiment r3 and rearrange rounds to be consistent with the rounds in DynaSent repo.
+Add sentiment r3 and rearrange rounds to be consistent with the rounds in DynaSent repo.
 """
 
 
