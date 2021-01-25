@@ -16,6 +16,7 @@ from common.helpers import (
     read_hate_speech_round_labels,
     read_nli_round_labels,
     read_qa_round_labels,
+    read_sentiment_round_labels,
 )
 from common.logging import init_logger
 from common.mail_service import get_mail_session
@@ -81,6 +82,7 @@ nli_labels = read_nli_round_labels(ROOT_PATH)
 app.config["nli_labels"] = nli_labels
 app.config["hate_speech_labels"] = read_hate_speech_round_labels(ROOT_PATH)
 app.config["qa_labels"] = read_qa_round_labels(ROOT_PATH)
+app.config["sentiment_labels"] = read_sentiment_round_labels(ROOT_PATH)
 
 # initialize sagemaker endpoint if set
 if "aws_access_key_id" in config and config["aws_access_key_id"] != "":

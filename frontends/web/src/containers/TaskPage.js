@@ -191,7 +191,7 @@ const TaskActionButtons = (props) => {
         </OverlayTrigger>
       </Annotation>
     </Nav.Item>
-    {props.task.shortname === "NLI" || props.task.shortname === "QA" || props.task.shortname === "Hate Speech" ? (
+    {props.task.shortname === "NLI" || props.task.shortname === "QA" || props.task.shortname === "Hate Speech" || props.task.shortname === "Sentiment" ? (
       <Nav.Item className="task-action-btn">
         <Annotation placement="right" tooltip="Click here to submit your model predictions for previous rounds.">
           <OverlayTrigger
