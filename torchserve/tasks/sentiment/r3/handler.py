@@ -11,6 +11,7 @@ from transformers import (
     AutoModelForSequenceClassification,
     RobertaTokenizer,
 )
+from ts.torch_handler.base_handler import BaseHandler
 
 from captum.attr import LayerIntegratedGradients
 from settings import my_secret
@@ -23,7 +24,6 @@ from shared import (
     handler_initialize,
     summarize_attributions,
 )
-from ts.torch_handler.base_handler import BaseHandler
 
 
 logger = logging.getLogger(__name__)
