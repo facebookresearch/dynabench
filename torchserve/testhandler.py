@@ -19,7 +19,10 @@ class Context:
             self.manifest = {
                 "model": {"serializedFile": os.path.join(config["round_path"], fname)}
             }
-        self.system_properties = {"model_dir": config["round_path"]}
+        self.system_properties = {
+            "model_dir": config["round_path"],
+            "gpu_id": config.get("gpu_id", None),
+        }
         # Create symlinks for everything in model_dir to simulate the flattened
         # structure when served
         round_model_files = [
