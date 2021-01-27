@@ -17,9 +17,7 @@ import {
   Pagination,
   Badge as BBadge,
   OverlayTrigger,
-  Tooltip,
 } from "react-bootstrap";
-import { Link } from "react-router-dom";
 import { Formik } from "formik";
 import TasksContext from "./TasksContext";
 import UserContext from "./UserContext";
@@ -281,7 +279,7 @@ const ModelSubPage = (props) => {
                           {({ tasks }) => {
                             const task =
                               model &&
-                              tasks.filter((e) => e.id == model.tid);
+                              tasks.filter((e) => e.id === model.tid);
                             return (
                               task && task.length && task[0].shortname
                             );
@@ -391,12 +389,11 @@ class ProfilePage extends React.Component {
   };
 
   paginateUserModels = (state) => {
+    var is_next = (state === "next")
+    var newUserModelsPage = is_next ? this.state.userModelsPage + 1 : this.state.userModelsPage - 1
     this.setState(
       {
-        userModelsPage:
-          state === "next"
-            ? ++this.state.userModelsPage
-            : --this.state.userModelsPage,
+        userModelsPage: newUserModelsPage
       },
       () => {
         this.fetchModels(this.state.userModelsPage);
@@ -405,12 +402,11 @@ class ProfilePage extends React.Component {
   };
 
   paginateNotifications = (state) => {
+    var is_next = (state === "next")
+    var newNotificationsPage = is_next ? this.state.notificationsPage + 1 : this.state.notificationsPage - 1
     this.setState(
       {
-        notificationsPage:
-          state === "next"
-            ? ++this.state.notificationsPage
-            : --this.state.notificationsPage,
+        notificationsPage: newNotificationsPage
       },
       () => {
         this.fetchNotifications(this.state.notificationsPage);

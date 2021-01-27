@@ -39,7 +39,7 @@ export const LineRechart = ({
 }) => {
   const mergedObject = Object.assign({}, ...data);
   // This only handles up to 10 chart lines, not sure what we can do if there's more.
-  const dataset = Object.keys(mergedObject).filter((item) => item != "round");
+  const dataset = Object.keys(mergedObject).filter((item) => item !== "round");
   if (dataset.length > 10) {
     const difference = dataset.length - 10;
     for (let i = 0; i < difference; i++) {

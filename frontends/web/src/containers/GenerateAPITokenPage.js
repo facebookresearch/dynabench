@@ -19,7 +19,6 @@ class GenerateAPITokenPage extends React.Component {
     }
 
     fetchData() {
-        const user = this.context.api.getCredentials();
         this.context.api
             .getAPIToken()
             .then(
@@ -59,7 +58,7 @@ class GenerateAPITokenPage extends React.Component {
         if (this.state.errorState) {
             return (
                 <Container className="mb-5 pb-5">
-                    <h2/>
+                    <br/>
                     <Col className="m-auto" lg={9}>
                         <div className="mb-5 text-center">
                         Some error happened! Please <Link to="/contact">contact us</Link>.
@@ -71,7 +70,7 @@ class GenerateAPITokenPage extends React.Component {
 
             return (
                 <Container className="mb-5 pb-5">
-                    <h2/>
+                    <br/>
                     <Col className="m-auto" lg={9}>
                         <div className="mb-5 text-center">
                             Your API token is {this.state.apiToken}
