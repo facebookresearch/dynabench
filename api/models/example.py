@@ -192,6 +192,19 @@ class ExampleModel(BaseModel):
         else:
             examples = self.getByTidAndRid(tid, rid)
 
+        return self.getUsers(
+            examples, num_matching_validations, n, offset, min_cnt, downstream
+        )
+
+    def getUsers(
+        self,
+        examples,
+        num_matching_validations=3,
+        n=5,
+        offset=0,
+        min_cnt=0,
+        downstream=False,
+    ):
         # Form and return a list of lists for each user, where a sublist contains:
         # 1. the user id
         # 2. the username
@@ -281,6 +294,18 @@ class ExampleModel(BaseModel):
             return (result_list[n * offset : n * (offset + 1)], len(result_list))
         return result_list
 
+    def getAll(self):
+        try:
+            return (
+                self.dbs.query(Example)
+                .join(Context, Example.cid == Context.id)
+                .join(Round, Context.r_realid == Round.id)
+                .all()
+            )
+        except db.orm.exc.NoResultFound as e:
+            print(f"Exception: {e.description}")
+            return False
+
     def getByTid(self, tid):
         try:
             return (
@@ -290,7 +315,8 @@ class ExampleModel(BaseModel):
                 .filter(Round.tid == tid)
                 .all()
             )
-        except db.orm.exc.NoResultFound:
+        except db.orm.exc.NoResultFound as e:
+            print(f"Exception: {e.description}")
             return False
 
     def getByTidAndRid(self, tid, rid):
@@ -303,7 +329,8 @@ class ExampleModel(BaseModel):
                 .filter(Round.rid == rid)
                 .all()
             )
-        except db.orm.exc.NoResultFound:
+        except db.orm.exc.NoResultFound as e:
+            print(f"Exception: {e.description}")
             return False
 
     def getByTidAndRidWithValidationIds(self, tid, rid):
@@ -327,7 +354,8 @@ class ExampleModel(BaseModel):
                 .group_by(Example.id)
             )
             return validations_query.union(no_validations_query).all()
-        except db.orm.exc.NoResultFound:
+        except db.orm.exc.NoResultFound as e:
+            print(f"Exception: {e.description}")
             return False
 
     def getRandom(

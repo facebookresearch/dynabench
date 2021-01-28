@@ -28,9 +28,9 @@ import { Link } from "react-router-dom";
 import { Formik } from "formik";
 import UserContext from "./UserContext";
 import { LineRechart } from "../components/Rechart";
-import { Avatar } from "../components/Avatar/Avatar";
 import Moment from "react-moment";
 import DragAndDrop from "../components/DragAndDrop/DragAndDrop";
+import { OverallUserLeaderBoard } from "./OverallUserLeaderboard";
 import {
   OverlayProvider,
   Annotation,
@@ -301,41 +301,6 @@ const OverallModelLeaderBoard = (props) => {
   );
 };
 
-const OverallUserLeaderBoard = (props) => {
-  return (
-    <Table hover className="mb-0">
-      <thead>
-        <tr>
-          <th>User</th>
-          <th className="text-right">Verified MER</th>
-          <th className="text-right pr-4">Totals</th>
-        </tr>
-      </thead>
-      <tbody>
-        {props.data.map((data) => {
-          return (
-            <tr key={data.uid}>
-              <td>
-                <Avatar
-                  avatar_url={data.avatar_url}
-                  username={data.username}
-                  isThumbnail={true}
-                  theme="blue"
-                />
-                <Link to={`/users/${data.uid}#profile`} className="btn-link">
-                  {data.username}
-                </Link>
-              </td>
-              <td className="text-right">{data.MER}%</td>
-              <td className="text-right pr-4">{data.total}</td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </Table>
-  );
-};
-
 class RoundDescription extends React.Component {
   constructor(props) {
     super(props);
@@ -501,7 +466,7 @@ class TaskPage extends React.Component {
 
   fetchOverallUserLeaderboard(page) {
     this.context.api
-      .getOverallUserLeaderboard(
+      .getUserLeaderboardForTask(
         this.state.taskId,
         this.props.location.hash.replace("#", ""),
         this.state.pageLimit,

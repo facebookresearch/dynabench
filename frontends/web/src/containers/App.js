@@ -16,6 +16,7 @@ import RegisterPage from "./RegisterPage";
 import ProfilePage from "./ProfilePage";
 import AboutPage from "./AboutPage";
 import TaskPage from "./TaskPage";
+import UsersPage from "./UsersPage";
 import ContactPage from "./ContactPage";
 import TermsPage from "./TermsPage";
 import DataPolicyPage from "./DataPolicyPage";
@@ -156,6 +157,11 @@ class App extends React.Component {
                   <NavDropdown title="Tasks" id="basic-nav-dropdown">
                     {NavItems}
                   </NavDropdown>
+                  <Nav.Item>
+                    <Nav.Link as={Link} to="/users">
+                      Users
+                    </Nav.Link>
+                  </Nav.Item>
                 </Nav>
                 <Nav className="justify-content-end">
                   {this.state.user.id ? (
@@ -217,6 +223,7 @@ class App extends React.Component {
             <div id="content">
               <Switch>
                 <Route path="/about" component={AboutPage} />
+                <Route path="/users" component={UsersPage} />
                 <Route path="/contact" component={ContactPage} />
                 <Route path="/termsofuse" component={TermsPage} />
                 <Route path="/datapolicy" component={DataPolicyPage} />

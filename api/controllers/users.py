@@ -11,6 +11,7 @@ import common.helpers as util
 import common.mail_service as mail
 from common.logging import logger
 from models.badge import BadgeModel
+from models.example import ExampleModel
 from models.model import ModelModel
 from models.notification import NotificationModel
 from models.user import UserModel
@@ -23,6 +24,21 @@ def users():
     u = UserModel()
     users = u.list()
     return util.json_encode(users)
+
+
+@bottle.get("/users/leaderboard")
+def get_users_leaderboard():
+    e = ExampleModel()
+    limit, offset = util.get_limit_and_offset_from_request()
+    try:
+        examples = e.getAll()
+        query_result, total_count = e.getUsers(examples, n=limit, offset=offset)
+        return util.construct_user_board_response_json(
+            query_result=query_result, total_count=total_count
+        )
+    except Exception as ex:
+        logger.exception(f"User leader board data loading failed: {ex}")
+        bottle.abort(400, f"Leaderboard fetch failed. {ex}")
 
 
 @bottle.get("/users/<id:int>")

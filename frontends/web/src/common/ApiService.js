@@ -197,14 +197,20 @@ export default class ApiService {
     });
   }
 
-  getOverallUserLeaderboard(taskId, round, limit, offset) {
+  getUserLeaderboardForTask(taskId, round, limit=10, offset=0) {
     const url =
       round === "overall"
-        ? `/users?limit=${limit || 10}&offset=${offset || 0}`
-        : `/rounds/${round}/users?limit=${limit || 10}&offset=${offset || 0}`;
+        ? `/users?limit=${limit}&offset=${offset}`
+        : `/rounds/${round}/users?limit=${limit}&offset=${offset}`;
     return this.fetch(`${this.domain}/tasks/${taskId}${url}`, {
       method: "GET",
     });
+  }
+
+  getUsersLeaderboard(limit=20, offset=0) {
+    return this.fetch(`${this.domain}/users/leaderboard?limit=${limit}&offset=${offset}`, {
+      method: "GET",
+    })
   }
 
   getUser(id, badges=false) {

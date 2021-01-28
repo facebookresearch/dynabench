@@ -471,3 +471,24 @@ def read_file_content(file_obj, max_limit):
         buf = file_obj.read(BUF_SIZE)
 
     return b"".join(data_blocks)
+
+
+def construct_user_board_response_json(query_result, total_count=0):
+    list_objs = []
+    # converting query result into json object
+    for result in query_result:
+        obj = {}
+        obj["uid"] = result[0]
+        obj["username"] = result[1]
+        obj["avatar_url"] = result[2] if result[2] is not None else ""
+        obj["count"] = int(result[3])
+        obj["MER"] = str(round(result[4] * 100, 2))
+        obj["total"] = str(result[3]) + "/" + str(result[5])
+        list_objs.append(obj)
+    if list_objs:
+        # total_count = query_result[0][len(query_result[0]) - 1]
+        resp_obj = {"count": total_count, "data": list_objs}
+        return json_encode(resp_obj)
+    else:
+        resp_obj = {"count": 0, "data": []}
+        return json_encode(resp_obj)
