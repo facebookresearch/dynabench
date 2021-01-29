@@ -16,9 +16,9 @@ class RoundUserExampleInfo(Base):
     id = db.Column(db.Integer, primary_key=True)
     uid = db.Column(db.Integer, db.ForeignKey("users.id"))
     r_realid = db.Column(db.Integer, db.ForeignKey("rounds.id"))
-    total_verified_not_correct_fooled = db.Column(db.Integer)
-    total_fooled = db.Column(db.Integer)
-    examples_submitted = db.Column(db.Integer)
+    total_verified_not_correct_fooled = db.Column(db.Integer, default=0)
+    total_fooled = db.Column(db.Integer, default=0)
+    examples_submitted = db.Column(db.Integer, default=0)
 
     def __repr__(self):
         return f"<RoundUserExampleInfo {self.id}>"
@@ -53,7 +53,6 @@ class RoundUserExampleInfoModel(BaseModel):
             )
         except db.orm.exc.NoResultFound:
             self.create(uid, r_realid)
-            self.dbs.commit()
             info = (
                 self.dbs.query(RoundUserExampleInfo)
                 .filter(
