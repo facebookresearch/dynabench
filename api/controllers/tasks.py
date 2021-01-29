@@ -9,6 +9,7 @@ import common.helpers as util
 from common.logging import logger
 from models.example import ExampleModel
 from models.round import RoundModel
+from models.round_user_example_info import RoundUserExampleInfoModel
 from models.score import ScoreModel
 from models.task import TaskModel
 from models.user import UserModel
@@ -47,10 +48,10 @@ def get_user_leaderboard(tid):
     :param tid:
     :return: Json Object
     """
-    e = ExampleModel()
+    e = RoundUserExampleInfoModel()
     limit, offset = util.get_limit_and_offset_from_request()
     try:
-        query_result, total_count = e.getUserLeaderByTidAndRid(
+        query_result, total_count = e.getUserLeaderByTid(
             tid=tid, n=limit, offset=offset
         )
         return construct_user_board_response_json(
@@ -69,7 +70,7 @@ def get_leaderboard_by_task_and_round(tid, rid):
     :param rid: round id
     :return: Json Object
     """
-    e = ExampleModel()
+    e = RoundUserExampleInfoModel()
     limit, offset = util.get_limit_and_offset_from_request()
     try:
         query_result, total_count = e.getUserLeaderByTidAndRid(

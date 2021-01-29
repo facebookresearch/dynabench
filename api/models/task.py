@@ -74,26 +74,6 @@ class TaskUserPermission(Base):
         return d
 
 
-class TaskUserExampleInfo(Base):
-    __tablename__ = "task_user_example_info"
-    __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_general_ci"}
-
-    id = db.Column(db.Integer, primary_key=True)
-    uid = db.Column(db.Integer, db.ForeignKey("users.id"))
-    tid = db.Column(db.Integer, db.ForeignKey("tasks.id"))
-    not_verified_correct = db.Column(db.Integer)
-    total = db.Column(db.Integer)
-
-    def __repr__(self):
-        return f"<TaskUserExampleInfo {self.id}>"
-
-    def to_dict(self, safe=True):
-        d = {}
-        for column in self.__table__.columns:
-            d[column.name] = getattr(self, column.name)
-        return d
-
-
 class TaskModel(BaseModel):
     def __init__(self):
         super().__init__(Task)

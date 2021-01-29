@@ -12,6 +12,7 @@ from models.badge import BadgeModel
 from models.context import ContextModel
 from models.example import ExampleModel
 from models.round import RoundModel
+from models.round_user_example_info import RoundUserExampleInfoModel
 from models.task import TaskModel
 from models.user import UserModel
 
@@ -151,6 +152,10 @@ def update_example(credentials, eid):
             um.incrementRetractedCount(example.uid)
             if example.model_wrong:
                 um.incrementVerifiedNotCorrectFooledCount(example.uid)
+                info = RoundUserExampleInfoModel()
+                info.incrementVerifiedNotCorrectFooledCount(
+                    example.uid, example.context.r_realid
+                )
         return util.json_encode({"success": "ok"})
     except Exception as e:
         logger.error(f"Error updating example {eid}: {e}")
@@ -203,8 +208,12 @@ def post_example(credentials):
         rm.incrementFooledCount(context.r_realid)
     if credentials["id"] != "turk":
         um = UserModel()
+        info = RoundUserExampleInfoModel()
+        info.incrementExamplesSubmittedCount(example.uid, context.r_realid)
         if example.model_wrong:
             um.incrementFooledCount(example.uid)
+            info.incrementFooledCount(example.uid, context.r_realid)
+
         bm = BadgeModel()
         user = um.get(credentials["id"])
         badge_names = bm.handleCreateInterface(user, em.get(example.id))
