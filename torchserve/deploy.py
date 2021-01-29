@@ -162,6 +162,9 @@ def setup_sagemaker_env(config):
     if config["task"] == "nli" and config["round_id"] == 4:
         print("NLI round 4, using custom Docker")
         env["registry_name"] = "torchserve2"
+    elif config["task"] == "vqa":
+        print("VQA task, using custom Docker")
+        env["registry_name"] = "torchserve_vqa"
     else:
         env["registry_name"] = "torchserve"
     env["prefix"] = "torchserve"
@@ -203,7 +206,8 @@ def load_config(config_path):
     config["mars_path"] = f"mars"
     config["model_dir"] = f"{config['task_path']}/r{round_id}/r{round_id}_{model_no}/"
     config["model_path"] = os.path.join(
-        config["model_dir"], f"pytorch_model{config['extension']}"
+        config["model_dir"],
+        config.get("checkpoint_name", f"pytorch_model{config['extension']}"),
     )
     config["round_path"] = f"{config['task_path']}/r{round_id}"
 

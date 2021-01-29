@@ -14,8 +14,9 @@ RUN apt-get update && \
     curl \
     vim \
     git \
+    wget \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
-
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.8 1
 
@@ -42,6 +43,12 @@ RUN pip install --no-cache-dir psutil
 
 RUN pip install transformers==3.4.0
 RUN pip install git+git://github.com/facebookresearch/mmf.git@079f71d8c217001fd0a88c2efd0cac51ad4b3aef
+
+# Download and unzip glove for mmf
+RUN mkdir -p /root/.cache/torch/mmf
+RUN wget http://nlp.stanford.edu/data/glove.6B.zip -P /root/.cache/torch/mmf/
+RUN unzip /root/.cache/torch/mmf/glove.6B.zip -d /root/.cache/torch/mmf/
+RUN rm /root/.cache/torch/mmf/glove.6B.zip
 
 RUN pip install torchserve torch-model-archiver
 
