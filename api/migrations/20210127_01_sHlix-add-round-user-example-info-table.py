@@ -8,10 +8,9 @@ from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 from yoyo import step
 
-from common.config import config  # noqa
-
 
 sys.path.append(".")
+from common.config import config  # noqa isort:skip
 
 
 __depends__ = {
