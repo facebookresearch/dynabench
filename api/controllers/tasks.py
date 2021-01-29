@@ -48,10 +48,10 @@ def get_user_leaderboard(tid):
     :param tid:
     :return: Json Object
     """
-    e = RoundUserExampleInfoModel()
+    info = RoundUserExampleInfoModel()
     limit, offset = util.get_limit_and_offset_from_request()
     try:
-        query_result, total_count = e.getUserLeaderByTid(
+        query_result, total_count = info.getUserLeaderByTid(
             tid=tid, n=limit, offset=offset
         )
         return construct_user_board_response_json(
@@ -70,10 +70,10 @@ def get_leaderboard_by_task_and_round(tid, rid):
     :param rid: round id
     :return: Json Object
     """
-    e = RoundUserExampleInfoModel()
+    info = RoundUserExampleInfoModel()
     limit, offset = util.get_limit_and_offset_from_request()
     try:
-        query_result, total_count = e.getUserLeaderByTidAndRid(
+        query_result, total_count = info.getUserLeaderByTidAndRid(
             tid=tid, rid=rid, n=limit, offset=offset
         )
         return construct_user_board_response_json(
