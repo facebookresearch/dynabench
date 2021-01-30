@@ -9,5 +9,6 @@
     "gateway_url": "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict",
     "sagemaker_role": "AmazonSageMaker-ExecutionRole-20200629T161149",
     "redeploy": true,
-    "instance_type": "ml.g4dn.xlarge"
+    "instance_type": "ml.g4dn.xlarge",
+    "checkpoint_name": "movie_mcan_final.pth"
 }
