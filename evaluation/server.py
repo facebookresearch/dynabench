@@ -6,6 +6,7 @@ import time
 
 import boto3
 
+from datasets import load_datasets
 from eval_config import eval_config
 from utils.computer import MetricsComputer
 from utils.evaluator import JobScheduler
@@ -16,6 +17,7 @@ if __name__ == "__main__":
     init_logger("evaluation")
     logger = logging.getLogger("evaluation")
     logger.info("Start evaluation server")
+    dataset_dict = load_datasets()
     sqs = boto3.resource(
         "sqs",
         aws_access_key_id=eval_config["aws_access_key_id"],
