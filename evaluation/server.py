@@ -1,6 +1,5 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
-import json
 import logging
 import time
 
@@ -11,6 +10,7 @@ from eval_config import eval_config
 from utils.computer import MetricsComputer
 from utils.evaluator import JobScheduler
 from utils.logging import init_logger
+from utils.requester import Requester
 
 
 if __name__ == "__main__":
@@ -27,15 +27,17 @@ if __name__ == "__main__":
     queue = sqs.get_queue_by_name(QueueName=eval_config["evaluation_sqs_queue"])
     scheduler = JobScheduler(eval_config)
     computer = MetricsComputer()
+    requester = Requester(scheduler, computer, dataset_dict)
     while True:
         # On each iteration, submit all requested jobs
-        for message in queue.receive_messages():
-            msg = json.loads(message.body)
+        # for message in queue.receive_messages():
+        # msg = json.loads(message.body)
+        if True:
+            msg = {"model_id": 7}
             logger.info(f"Evaluation server received SQS message {msg}")
-            scheduler.submit(msg["model_id"], msg["eval_id"])
+            requester.request(msg)
 
         # Evaluate one job
-        jobs = scheduler.pop_jobs_for_eval()
-        computer.compute_metrics(jobs)  # TODO: what to do if a job failed?
+        requester.compute(N=1)
 
         time.sleep(5)

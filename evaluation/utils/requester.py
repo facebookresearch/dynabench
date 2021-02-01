@@ -1,27 +1,78 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
-# import utils.datasets
+import logging
+import sys
+
+from datasets import get_dataset_by_task
+from models.model import DeploymentStatusEnum, ModelModel
+
+
+sys.path.append("../api")
+
+logger = logging.getLogger("requester")
 
 
 class Requester:
-    def __init__(self):
-        pass
+    def __init__(self, scheduler, computer, datasets):
+        self.scheduler = scheduler
+        self.computer = computer
+        self.datasets = datasets
 
-    def eval_model_on_dataset(self, model_id, eval_id):
+    def request(self, msg):
+        model_ids = msg.get("model_id", None)
+        eval_ids = msg.get("eval_id", None)
+        if not model_ids and eval_ids:
+            logger.exception(
+                f"Request failed. At least one of "
+                f"model_id and eval_id should be specified"
+            )
+        if model_ids and not isinstance(model_ids, tuple):
+            model_ids = (model_ids,)
+        if eval_ids and not isinstance(eval_ids, tuple):
+            eval_ids = (eval_ids,)
+
+        if model_ids and not eval_ids:
+            for model_id in model_ids:
+                logger.info(f"Request to evaluate model {model_id}")
+                self._eval_model(model_id)
+        elif eval_ids and not model_ids:
+            for eval_id in eval_ids:
+                logger.info(f"Request to evaluate dataset {eval_id}")
+                self._eval_dataset(eval_id)
+        else:
+            for model_id in model_ids:
+                for eval_id in eval_ids:
+                    logger.info(
+                        f"Request to evaluate model {model_id} on dataset {eval_id}"
+                    )
+                    self._eval_model_on_dataset(model_id, eval_id)
+
+    def _eval_model_on_dataset(self, model_id, eval_id):
         # evaluate a given model on given datasets
-        pass
+        self.scheduler.submit(model_id, self.datasets[eval_id])
 
-    def eval_model(self, model_id):
+    def _eval_model(self, model_id):
         # given a model_id, evaluate all datasets for the
         # model's primary task
-        eval_ids = []
+        m = ModelModel()
+        model = m.getUnpublishedModelByMid(model_id)
+        task_id = model.to_dict()["tid"]
+        eval_ids = get_dataset_by_task(task_id)
         for eval_id in eval_ids:
-            self.eval_model_on_dataset(model_id, eval_id)
+            self._eval_model_on_dataset(model_id, eval_id)
 
-    def eval_dataset(self, eval_id):
+    def _eval_dataset(self, eval_id):
         # given a dataset id, evaluate all models for the
         # dataset's task
-        model_ids = []
-        for model_id in model_ids:
-            self.eval_model_on_dataset(model_id, eval_id)
-        pass
+        # TODO: pseudo code; check code correctness
+        task = self.datasets[eval_id].task
+        m = ModelModel()
+        models = m.getByTid(task)
+        for model in models:
+            if model.to_dict["deployment_status"] == DeploymentStatusEnum.deployed:
+                model_id = model.id
+                self._eval_model_on_dataset(model_id, eval_id)
+
+    def compute(self, N=1):
+        jobs = self.scheduler.pop_jobs_for_eval(N=N)
+        self.computer.compute_metrics(jobs)

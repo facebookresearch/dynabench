@@ -43,10 +43,14 @@ class BaseDataset(ABC):
 
     def _get_output_s3_path(self, endpoint_name):
         # TODO: update bucket
-        return os.path.join("s3:", "bucket", endpoint_name, self.task)
+        return os.path.join(
+            f"s3://{eval_config['dataset_s3_bucket']}",
+            "predictions",
+            endpoint_name,
+            self.task,
+        )
 
     def _dataset_available_on_s3(self) -> bool:
-        # TODO: check if data does not exist then upload
         path = self._get_data_s3_path()
         response = self.s3_client.list_objects_v2(
             Bucket=eval_config["dataset_s3_bucket"], Prefix=path

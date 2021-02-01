@@ -1,27 +1,31 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
+import datetime
 import logging
+import pickle
 
 import boto3
-
-from utils.datasets import datasets
 
 
 logger = logging.getLogger("evaluator")
 
 
 class Job:
-    def __init__(self, model_id, eval_id, client, job_name=None):
+    def __init__(self, model_id, dataset, client, job_name=None):
         self.model_id = model_id
-        self.eval_id = eval_id
+        self.dataset = dataset
         self.client = client
         self.job_name = job_name
         self.status = None
-        self.endpoint_name = ""  # fetch from database
+        self.endpoint_name = (
+            "ts1611590776-zm-test-batchtransform"
+        )  # fetch from database
 
     def generate_job_name(self):
-        endpoint_name = ""
         # TODO: add datetime to job name , make it unique
-        return f"{endpoint_name}-{self.eval_id}"
+        return (
+            f"{self.endpoint_name}-{self.dataset.task}-{self.dataset.name}"
+            f"-{datetime.datetime.now().strftime('%I-%M-%p-%B-%d-%Y')}"
+        )[:63].rstrip("-")
 
     def update_status(self):
         try:
@@ -35,14 +39,13 @@ class Job:
     def submit(self):
         self.job_name = self.job_name or self.generate_job_name()
         try:
-            datasets[self.eval_id].run_eval(
-                self.client, self.endpoint_name, self.job_name
-            )
+            self.dataset.run_eval(self.client, self.endpoint_name, self.job_name)
             self.status = self.client.describe_transform_job(
                 TransformJobName=self.job_name
             )
         except Exception as ex:
             logger.exception(ex)
+        logger.info(f"Submitted {self.job_name} for batch transform.")
         return self.status
 
 
@@ -51,57 +54,65 @@ class JobScheduler:
     # from dump, or set to empty
     # TODO: how to resolve data racing if there are multiple
     # scheduler instances in the future?
-    _submitted = None
-    _completed = None
-    _failed = None
-    _status_dump = ""
 
     def __init__(self, config):
-        # TODO: load from a dump
-        if JobScheduler._submitted is None:
-            JobScheduler._submitted = []
-        if JobScheduler._completed is None:
-            JobScheduler._completed = []
-        if JobScheduler._failed is None:
-            JobScheduler._failed = []
+        self._submitted, self._completed, self._failed = self._load_status(
+            config["scheduler_status_dump"]
+        )
         self.client = boto3.client(
             "sagemaker",
             aws_access_key_id=config["aws_access_key_id"],
             aws_secret_access_key=config["aws_secret_access_key"],
             region_name=config["aws_region"],
-        )  # TODO: with a client setting, maybe queues shouldn't be class variables
+        )
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.dump()
+        self._dump()
 
-    def submit(self, model_id, eval_id):
+    def _load_status(self, status_dump):
+        try:
+            status = pickle.load(open(status_dump))
+            return status["submitted"], status["completed"], status["failed"]
+        except Exception as ex:
+            logger.exception(ex)
+            return [], [], []
+
+    def submit(self, model_id, dataset):
         # create batch transform job and
         # update the inprogress queue
-        job = Job(model_id, eval_id, self.client)
+        job = Job(model_id, dataset, self.client)
         if job.submit():
-            JobScheduler._submitted.append(job)
+            self._submitted.append(job)
 
     def _update(self):
         done_jobs = []
-        for i, job in enumerate(JobScheduler._submitted):
+        for i, job in enumerate(self._submitted):
             job_status = job.update_status()
             if job_status["TransformJobStatus"] != "InProgress":
                 done_jobs.append(i)
                 if job_status["TransformJobStatus"] == "Completed":
-                    JobScheduler._completed.append(job)
+                    self._completed.append(job)
                 elif job_status["TransformJobStatus"] == "Failed":
-                    JobScheduler._failed.append(job)
-        JobScheduler._submitted = [
-            job for i, job in enumerate(JobScheduler._submitted) if i not in done_jobs
+                    self._failed.append(job)
+        self._submitted = [
+            job for i, job in enumerate(self._submitted) if i not in done_jobs
         ]
 
     def pop_jobs_for_eval(self, N=1):
         self._update()
         jobs = []
-        for _ in range(N):
-            jobs.append(JobScheduler._completed.pop())
+        if len(self._completed) == 0:
+            logger.exception("No completed jobs yet.")
+        else:
+            for _ in range(min(len(self._completed), N)):
+                jobs.append(self._completed.pop())
         return jobs
 
-    def dump(self):
+    def _dump(self):
         # dump status to pre-specified path
-        pass
+        status = {
+            "submitted": self._submitted,
+            "completed": self._completed,
+            "failed": self._failed,
+        }
+        pickle.dump(status, self._status_dump)
