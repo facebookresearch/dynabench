@@ -91,10 +91,18 @@ class ExampleModel(BaseModel):
         # If task has_answer, handle here (specifically target_pred and
         # model_wrong)
         if c.round.task.has_answer:
-            if "model_is_correct" not in response or "text" not in response:
+            if (
+                c.round.task.shortname == "VQA"
+                and "answer" in response
+                and "prob" in response
+            ):
+                model_wrong = True
+                pred = str(response["answer"]) + "|" + str(float(response["prob"][0]))
+            elif "model_is_correct" in response and "text" in response:
+                pred = str(response["model_is_correct"]) + "|" + str(response["text"])
+                model_wrong = not response["model_is_correct"]
+            else:
                 return False
-            pred = str(response["model_is_correct"]) + "|" + str(response["text"])
-            model_wrong = not response["model_is_correct"]
             if "model_id" in response:
                 pred += "|" + str(response["model_id"])
         else:
