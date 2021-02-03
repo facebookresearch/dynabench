@@ -284,7 +284,6 @@ def upload_to_s3(credentials):
         overall_perf="",
         upload_datetime=db.sql.func.now(),
         upload_timestamp=ts,
-        s3_uri=f"s3://{bucket_name}/{s3_path}",
         deployment_status=DeploymentStatusEnum.uploaded,
     )
 
@@ -295,4 +294,8 @@ def upload_to_s3(credentials):
     logger.info(f"Send message to sqs - enqueue model {model_name} for deployment")
     sqs = session.resource("sqs")
     queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
-    queue.send_message(MessageBody=json.dumps({"model_id": model.id}))
+    queue.send_message(
+        MessageBody=json.dumps(
+            {"model_id": model.id, "s3_uri": f"s3://{bucket_name}/{s3_path}"}
+        )
+    )
