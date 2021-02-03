@@ -118,7 +118,10 @@ def apply_step(conn):
                     >= 1
                     or example.retracted
                 ):
-                    if example.uid in uid_and_r_realid_to_total_verified_nc_fooled:
+                    if (
+                        example.uid,
+                        cid_to_context[example.cid].r_realid,
+                    ) in uid_and_r_realid_to_total_verified_nc_fooled:
                         uid_and_r_realid_to_total_verified_nc_fooled[
                             (example.uid, cid_to_context[example.cid].r_realid)
                         ] += 1
