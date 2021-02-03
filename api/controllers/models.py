@@ -258,8 +258,8 @@ def upload_to_s3(credentials):
     unique_name = f"ts{ts}-{model_name}"
     s3_filename = f"{unique_name}.tar.gz"
     t = TaskModel()
-    taskname = "_".join(t.getWithRound(task_id)["shortname"].lower().split())
-    s3_path = f"torchserve/models/{taskname}/{s3_filename}"
+    task_code = t.getWithRound(task_id)["task_code"]
+    s3_path = f"torchserve/models/{task_code}/{s3_filename}"
 
     logger.info(f"Uploading {model_name} to S3 at {s3_path} for user {user_id}")
 
