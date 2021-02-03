@@ -23,19 +23,23 @@ steps = [
         "ALTER TABLE tasks DROP INDEX task_code",
     ),
     step(
-        "UPDATE tasks SET task_code='nli' WHERE id=1",
-        "UPDATE tasks SET task_code=NULL WHERE id=1",
+        "UPDATE tasks SET task_code='nli' WHERE shortname='NLI'",
+        "UPDATE tasks SET task_code=NULL WHERE shortname='NLI'",
     ),
     step(
-        "UPDATE tasks SET task_code='qa' WHERE id=2",
-        "UPDATE tasks SET task_code=NULL where id=2",
+        "UPDATE tasks SET task_code='qa' WHERE shortname='QA'",
+        "UPDATE tasks SET task_code=NULL where shortname='QA'",
     ),
     step(
-        "UPDATE tasks SET task_code='sentiment' WHERE id=3",
-        "UPDATE tasks SET task_code=NULL WHERE id=3",
+        "UPDATE tasks SET task_code='sentiment' WHERE shortname='Sentiment'",
+        "UPDATE tasks SET task_code=NULL WHERE shortname='Sentiment'",
     ),
     step(
-        "UPDATE tasks SET task_code='hs' WHERE id=5",
-        "UPDATE tasks SET task_code=NULL WHERE id=5",
+        "UPDATE tasks SET task_code='hs' WHERE shortname='Hate Speech'",
+        "UPDATE tasks SET task_code=NULL WHERE shortname='Hate Speech'",
+    ),
+    step(
+        "UPDATE tasks SET task_code='vqa' WHERE shortname='VQA'",
+        "UPDATE tasks SET task_code=NULL WHERE shortname='VQA'",
     ),
 ]
