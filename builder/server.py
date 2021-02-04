@@ -30,8 +30,9 @@ if __name__ == "__main__":
         for message in queue.receive_messages():
             msg = json.loads(message.body)
             logger.info(f"Build server received SQS message {msg}")
-            if set(msg.keys()) == {"model_id"}:
+            if set(msg.keys()) == {"model_id", "s3_uri"}:
                 model_id = msg["model_id"]
+                s3_uri = msg["s3_uri"]
 
                 logger.info(f"Start to deploy model {model_id}")
 
@@ -43,7 +44,6 @@ if __name__ == "__main__":
                 ):  # handles SQS duplicate message
                     name = model.name
                     msg["name"] = name
-                    s3_uri = model.s3_uri
                     deployed = False
                     m.update(
                         model_id, deployment_status=DeploymentStatusEnum.processing
@@ -74,7 +74,6 @@ if __name__ == "__main__":
                             m.update(
                                 model_id,
                                 deployment_status=DeploymentStatusEnum.deployed,
-                                endpoint_url=endpoint_url,
                             )
                             deployer.cleanup_post_deployment()
                         # send email
