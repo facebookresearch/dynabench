@@ -2,62 +2,59 @@
 import datetime
 import logging
 import pickle
+import sys
 
 import boto3
+
+
+sys.path.append("../api")  # noqa
+from models.model import ModelModel  # isort:skip
 
 
 logger = logging.getLogger("evaluator")
 
 
 class Job:
-    def __init__(self, model_id, dataset, client, job_name=None):
+    def __init__(self, model_id, dataset):
         self.model_id = model_id
+        m = ModelModel()
+        model = m.getUnpublishedModelByMid(model_id).to_dict()
+        self.endpoint_name = f"ts{model['upload_timestamp']}-{model['name']}"
         self.dataset = dataset
-        self.client = client
-        self.job_name = job_name
         self.status = None
-        self.endpoint_name = (
-            "ts1611590776-zm-test-batchtransform"
-        )  # fetch from database
+        self.job_name = self.generate_job_name(self.endpoint_name, dataset)
 
-    def generate_job_name(self):
+    def generate_job_name(self, endpoint_name, dataset):
         # TODO: add datetime to job name , make it unique
         return (
-            f"{self.endpoint_name}-{self.dataset.task}-{self.dataset.name}"
+            f"{endpoint_name}-{dataset.task}-{dataset.name}"
             f"-{datetime.datetime.now().strftime('%I-%M-%p-%B-%d-%Y')}"
         )[:63].rstrip("-")
 
-    def update_status(self):
+    def update_status(self, client):
         try:
-            self.status = self.client.describe_transform_job(
-                TransformJobName=self.job_name
-            )
+            self.status = client.describe_transform_job(TransformJobName=self.job_name)
         except Exception as ex:
             logger.exception(ex)
         return self.status
 
-    def submit(self):
-        self.job_name = self.job_name or self.generate_job_name()
+    def submit(self, client):
         try:
-            self.dataset.run_eval(self.client, self.endpoint_name, self.job_name)
-            self.status = self.client.describe_transform_job(
-                TransformJobName=self.job_name
-            )
+            self.dataset.run_eval(client, self.endpoint_name, self.job_name)
         except Exception as ex:
-            logger.exception(ex)
-        logger.info(f"Submitted {self.job_name} for batch transform.")
-        return self.status
+            logger.exception(f"Exception in submitting job {self.job_name}: {ex}")
+            return False
+        else:
+            self.status = client.describe_transform_job(TransformJobName=self.job_name)
+            logger.info(f"Submitted {self.job_name} for batch transform.")
+            return True
 
 
 class JobScheduler:
-    # on __init__, initialize these variables either by loading
-    # from dump, or set to empty
-    # TODO: how to resolve data racing if there are multiple
-    # scheduler instances in the future?
-
     def __init__(self, config):
+        self._status_dump = config["scheduler_status_dump"]
         self._submitted, self._completed, self._failed = self._load_status(
-            config["scheduler_status_dump"]
+            self._status_dump
         )
         self.client = boto3.client(
             "sagemaker",
@@ -80,14 +77,16 @@ class JobScheduler:
     def submit(self, model_id, dataset):
         # create batch transform job and
         # update the inprogress queue
-        job = Job(model_id, dataset, self.client)
-        if job.submit():
+        job = Job(model_id, dataset)
+        if job.submit(self.client):
             self._submitted.append(job)
+        else:
+            self._failed.append(job)
 
     def _update(self):
         done_jobs = []
         for i, job in enumerate(self._submitted):
-            job_status = job.update_status()
+            job_status = job.update_status(self.client)
             if job_status["TransformJobStatus"] != "InProgress":
                 done_jobs.append(i)
                 if job_status["TransformJobStatus"] == "Completed":

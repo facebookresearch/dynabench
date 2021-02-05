@@ -2,7 +2,7 @@
 
 
 class MetricsComputer:
-    def __init__(self):
+    def __init__(self, config):
         pass
 
     def parse_outfile(self, file_s3_path):

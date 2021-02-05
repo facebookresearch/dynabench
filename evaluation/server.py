@@ -26,14 +26,14 @@ if __name__ == "__main__":
     )
     queue = sqs.get_queue_by_name(QueueName=eval_config["evaluation_sqs_queue"])
     scheduler = JobScheduler(eval_config)
-    computer = MetricsComputer()
+    computer = MetricsComputer(eval_config)
     requester = Requester(scheduler, computer, dataset_dict)
     while True:
         # On each iteration, submit all requested jobs
         # for message in queue.receive_messages():
         # msg = json.loads(message.body)
         if True:
-            msg = {"model_id": 7}
+            msg = {"model_id": 8}
             logger.info(f"Evaluation server received SQS message {msg}")
             requester.request(msg)
 

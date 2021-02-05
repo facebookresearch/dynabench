@@ -4,10 +4,11 @@ import logging
 import sys
 
 from datasets import get_dataset_by_task
-from models.model import DeploymentStatusEnum, ModelModel
 
 
-sys.path.append("../api")
+sys.path.append("../api")  # noqa
+from models.model import DeploymentStatusEnum, ModelModel  # isort:skip
+
 
 logger = logging.getLogger("requester")
 
@@ -55,23 +56,22 @@ class Requester:
         # given a model_id, evaluate all datasets for the
         # model's primary task
         m = ModelModel()
-        model = m.getUnpublishedModelByMid(model_id)
-        task_id = model.to_dict()["tid"]
-        eval_ids = get_dataset_by_task(task_id)
-        for eval_id in eval_ids:
-            self._eval_model_on_dataset(model_id, eval_id)
+        task_id = m.getUnpublishedModelByMid(model_id).to_dict()["tid"]
+        eval_ids = get_dataset_by_task(task_id)  # TODO: move datasets id to tasks db
+        if eval_ids:
+            for eval_id in eval_ids:
+                self._eval_model_on_dataset(model_id, eval_id)
 
     def _eval_dataset(self, eval_id):
         # given a dataset id, evaluate all models for the
         # dataset's task
-        # TODO: pseudo code; check code correctness
-        task = self.datasets[eval_id].task
         m = ModelModel()
-        models = m.getByTid(task)
-        for model in models:
-            if model.to_dict["deployment_status"] == DeploymentStatusEnum.deployed:
-                model_id = model.id
-                self._eval_model_on_dataset(model_id, eval_id)
+        models = m.getByTaskCode(self.datasets[eval_id].task)
+        if models:
+            for model in models:
+                if model.to_dict["deployment_status"] == DeploymentStatusEnum.deployed:
+                    model_id = model.id
+                    self._eval_model_on_dataset(model_id, eval_id)
 
     def compute(self, N=1):
         jobs = self.scheduler.pop_jobs_for_eval(N=N)
