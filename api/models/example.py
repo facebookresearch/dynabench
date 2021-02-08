@@ -10,8 +10,6 @@ from sqlalchemy import case
 from common.logging import logger
 from models.context import Context
 from models.round import Round
-from models.task import TaskModel
-from models.user import User
 from models.validation import LabelEnum, ModeEnum, Validation
 
 from .base import Base, BaseModel
@@ -184,110 +182,6 @@ class ExampleModel(BaseModel):
         anon_uid.update(secret.encode("utf-8"))
         anon_uid.update(str(uid).encode("utf-8"))
         return anon_uid.hexdigest()
-
-    def getUserLeaderByTidAndRid(
-        self, tid, rid=None, n=5, offset=0, min_cnt=0, downstream=False
-    ):
-        # Get task settings that determine what counts as verified
-        task = TaskModel().get(tid)
-        num_matching_validations = 3
-        if task.settings_json:
-            metadata = json.loads(task.settings_json)
-            if "num_matching_validations" in metadata:
-                num_matching_validations = metadata["num_matching_validations"]
-        if rid is None:
-            examples = self.getByTid(tid)
-        else:
-            examples = self.getByTidAndRid(tid, rid)
-
-        # Form and return a list of lists for each user, where a sublist contains:
-        # 1. the user id
-        # 2. the username
-        # 3. the user avatar url
-        # 4. the user's number of fooling examples for a task (and optionally,
-        #    round) that are not retracted or validated as incorrect or flagged
-        # 5. the fraction of item 4. over item 6. (this is the vMER)
-        # 6. the user's total number of examples for that task
-        #    (and optionally, round)
-        validations = self.dbs.query(Validation)
-        users = self.dbs.query(User)
-        eid_to_example = {}
-        eid_to_validations = {}
-        uid_to_rest_of_result = {}
-        uid_to_user = {}
-        for user in users:
-            uid_to_user[user.id] = user
-        for example in examples:
-            if example.uid is not None:
-                eid_to_example[example.id] = example
-                eid_to_validations[example.id] = []
-        for validation in validations:
-            if validation.eid in eid_to_validations:
-                eid_to_validations[validation.eid].append(validation)
-        for key, value in eid_to_validations.items():
-            uid = eid_to_example[key].uid
-            if uid not in uid_to_rest_of_result:
-                uid_to_rest_of_result[uid] = [
-                    uid_to_user[uid].username,
-                    uid_to_user[uid].avatar_url,
-                    0,
-                    0,
-                    0,
-                ]
-            if (
-                eid_to_example[key].model_wrong
-                and not eid_to_example[key].retracted
-                and len(
-                    list(
-                        filter(
-                            lambda validation: validation.label == LabelEnum.incorrect,
-                            value,
-                        )
-                    )
-                )
-                < num_matching_validations
-                and len(
-                    list(
-                        filter(
-                            lambda validation: validation.label == LabelEnum.flagged,
-                            value,
-                        )
-                    )
-                )
-                < num_matching_validations
-                and len(
-                    list(
-                        filter(
-                            lambda validation: validation.label == LabelEnum.incorrect
-                            and validation.mode == ModeEnum.owner,
-                            value,
-                        )
-                    )
-                )
-                == 0
-                and len(
-                    list(
-                        filter(
-                            lambda validation: validation.label == LabelEnum.flagged
-                            and validation.mode == ModeEnum.owner,
-                            value,
-                        )
-                    )
-                )
-                == 0
-            ):
-                uid_to_rest_of_result[uid][2] += 1
-            uid_to_rest_of_result[uid][4] += 1
-        result_list = []
-        for key, value in uid_to_rest_of_result.items():
-            value[3] = value[2] / value[4]
-            if value[2] >= min_cnt:
-                result_list.append([key] + value)
-        result_list.sort(key=lambda result: -1 * result[3])
-
-        if not downstream:
-            return (result_list[n * offset : n * (offset + 1)], len(result_list))
-        return result_list
 
     def getByTid(self, tid):
         try:
