@@ -444,6 +444,7 @@ export default class ApiService {
         },
         function () {
           console.log("Could not refresh token (loggedIn)");
+          localStorage.removeItem("id_token");
           //window.location.href = '/login';
           return false;
         }
@@ -545,6 +546,7 @@ export default class ApiService {
         (res) => {
           console.log("Could not refresh token (fetch)");
           var error = new Error("Could not refresh token");
+          localStorage.removeItem("id_token");
           //window.location.href = '/login';
           throw error;
         }
