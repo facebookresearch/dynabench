@@ -10,7 +10,7 @@ from yoyo import step
 
 
 sys.path.append(".")
-from common.config import config  # isort:skip
+from common.config import config  # noqa isort:skip
 
 
 __depends__ = {"20201116_populate-total-verified-not-fooled-column"}
@@ -169,7 +169,7 @@ def apply_step(conn):
 
 def rollback_step(conn):
     cursor = conn.cursor()
-    cursor.execute("ALTER TABLE users ADD total_verified_not_fooled")
+    cursor.execute("ALTER TABLE users ADD total_verified_not_fooled int(11)")
     cursor.execute("ALTER TABLE users DROP total_verified_not_correct_fooled")
 
 

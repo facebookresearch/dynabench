@@ -52,9 +52,9 @@ def get_payload(token):
         payload = jwt.decode(
             token, app.config["jwtsecret"], algorithms=[app.config["jwtalgo"]]
         )
-    except jwt.ExpiredSignature:
+    except jwt.ExpiredSignatureError:
         bottle.abort(401, {"code": "token_expired", "description": "token is expired"})
-    except jwt.DecodeError as e:
+    except jwt.InvalidSignatureError as e:
         bottle.abort(401, {"code": "token_invalid", "description": e.message})
     return payload
 

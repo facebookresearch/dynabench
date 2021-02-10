@@ -48,8 +48,6 @@ class Model(Base):
 
     # deployment
     upload_timestamp = db.Column(db.BigInteger)
-    s3_uri = db.Column(db.Text)
-    endpoint_url = db.Column(db.Text)
     deployment_status = db.Column(
         db.Enum(DeploymentStatusEnum), default=DeploymentStatusEnum.unknown
     )

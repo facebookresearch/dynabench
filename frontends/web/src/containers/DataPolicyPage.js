@@ -11,7 +11,7 @@ const DataPolicyPage = () => (
   <Container className="mb-5 pb-5">
     <Col className="m-auto" lg={9}>
       <h1 className="my-4 pt-3 text-uppercase">Data Policy</h1>
-      <p>Effective Date: June 25, 2020</p>
+      <p>Effective Date: December 1, 2020</p>
       <br />
       <p>
         Dynabench is a collaborative research project from Facebook, Inc.

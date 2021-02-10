@@ -25,7 +25,7 @@ class ModelDeployer:
         s3_bucket, s3_path, self.s3_dir, self.unique_name = self.parse_s3_uri(s3_uri)
         self.tmp = tempfile.TemporaryDirectory(prefix=self.unique_name)
         self.tmp_dir = self.tmp.name
-        logger.info(f"model_name folder loaded temporarily at {self.tmp_dir}")
+        logger.info(f"{model_name} folder loaded temporarily at {self.tmp_dir}")
         self.archive_name = f"archive.{self.unique_name}"
 
         self.env = self.setup_sagemaker_env()
