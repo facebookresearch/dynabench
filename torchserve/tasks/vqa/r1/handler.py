@@ -122,7 +122,7 @@ class MMFMovieMcanVQAHandler(BaseHandler):
             max_ind = outputs["scores"].argmax()
             max_prob = outputs["scores"].max()
             predictions = {
-                "model_conf": max_prob,
+                "model_conf": max_prob.item(),
                 "answer": self.processors["answer_processor"].idx2word(max_ind),
             }
             logger.info("predictions at the end of inference %s", predictions)
