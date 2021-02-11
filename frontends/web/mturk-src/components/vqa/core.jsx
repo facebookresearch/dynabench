@@ -6,8 +6,7 @@
 
 import React from "react";
 
-import { CreateInterface } from '../CreateInterface.js';
-import { CreateInterfaceNoModel } from '../CreateInterfaceNoModel.js';
+import { CreateVQAMturkInterface } from "./CreateVQAMturkInterface.js";
 
 class VQATaskPreview extends React.Component {
     render() {
@@ -32,10 +31,7 @@ class VQATaskOnboarder extends React.Component {
 
 class VQATaskMain extends React.Component {
     render() {
-        if (this.props.mephistoWorkerId % 2 == 0) {
-            return <CreateInterface {...this.props} />;
-        }
-        else { return <CreateInterfaceNoModel {...this.props} />; }
+        return <CreateVQAMturkInterface {...this.props} />;
     }
 }
 

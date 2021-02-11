@@ -38,7 +38,7 @@ class AtomicImage extends React.Component {
                {!this.state.isImgLoaded &&
                   <div className="d-flex align-items-center justify-content-center" style={{ height: 200 }}>
                      <div className="spinner-border" role="status">
-                     <span className="sr-only">Loading...</span>
+                     {/* <span className="sr-only">Loading...</span> */}
                      </div>
                   </div>
                }
@@ -54,5 +54,4 @@ class AtomicImage extends React.Component {
    }
 }
 
-
-  export default AtomicImage;
+export default AtomicImage;
