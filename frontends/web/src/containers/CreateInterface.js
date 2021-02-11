@@ -64,7 +64,7 @@ function ContextInfo({ taskType, taskName, text, answer, updateAnswer }) {
       })}
     />
     ) : taskType === "VQA" ? (
-      <AtomicImage src={text} maxSize={500}/>
+      <AtomicImage src={text} maxWidth={700} maxHeight={600}/>
     ) :
     (
       <div className="mb-1 p-3 light-gray-bg">
