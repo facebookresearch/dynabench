@@ -1,0 +1,113 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+import React from "react";
+import { HateSpeechDropdown } from "./HateSpeechDropdown.js"
+import {
+    Col,
+    DropdownButton,
+    Dropdown,
+    Form,
+    InputGroup
+} from "react-bootstrap";
+
+
+class ExampleValidationActions extends React.Component {
+    render() {
+        return (
+            <>
+                <h6 className="text-uppercase dark-blue-color spaced-header">
+                    Actions:
+                </h6>
+                <InputGroup className="align-items-center">
+                    <Form.Check
+                        checked={this.props.correctSelected}
+                        type="radio"
+                        onChange={() => this.props.setCorrectSelected()}
+                    />
+                    <i className="fas fa-thumbs-up"></i>  &nbsp; {this.props.userMode === "owner" ? "Verified " : ""} Correct
+                </InputGroup>
+                <InputGroup className="align-items-center">
+                    <Form.Check
+                        checked={this.props.incorrectSelected}
+                        type="radio"
+                        onChange={() => this.props.setIncorrectSelected()}
+                    />
+                    <i className="fas fa-thumbs-down"></i>  &nbsp; {this.props.userMode === "owner" ? "Verified " : ""} Incorrect
+                </InputGroup>
+                <InputGroup className="ml-3">
+                {this.props.interfaceMode === "web" && this.props.incorrectSelected &&
+                    {
+                        'NLI': <DropdownButton className="p-1" title={"Your corrected label: " + this.props.validatorLabel}>
+                                {["entailed", "neutral", "contradictory"].filter((target, _) => target !== this.props.example.target)
+                                    .map((target, index) => <Dropdown.Item onClick={() => this.props.setValidatorLabel(target)} key={index} index={index}>{target}</Dropdown.Item>)}
+                                </DropdownButton>,
+                        'QA': 'Please select the correct answer in the context. If it is not in the context, then flag this example.',
+                        'Hate Speech': <div>You have proposed that the correct answer is <b>{['hateful', 'not-hateful'].filter((target, _) => target !== this.props.example.target)[0]}</b></div>,
+                        'Sentiment': <div>You have proposed that the correct answer is <b>{['positive', 'negative'].filter((target, _) => target !== this.props.example.target)[0]}</b></div>
+                    }[this.props.task.shortname]
+                }
+                </InputGroup>
+                {this.props.userMode === "user" && (
+                    <InputGroup className="align-items-center">
+                        <Form.Check
+                            checked={this.props.flaggedSelected}
+                            type="radio"
+                            onChange={() => this.props.setFlagSelected()}
+                        />
+                        <i className="fas fa-flag"></i> &nbsp; Flag
+                    </InputGroup>
+
+                )}
+                {this.props.flaggedSelected && (
+                    <InputGroup className="ml-3">
+                    <Col sm="12 p-1">
+                    <Form.Control
+                        type="text"
+                        placeholder="Reason for flagging"
+                        onChange={(e) => this.props.setFlagReason(e.target.value)}
+                    />
+                    </Col>
+                    </InputGroup>
+                )}
+                {this.props.interfaceMode === "web" && (this.props.incorrectSelected || this.props.correctSelected || this.props.flaggedSelected) && (
+                    <div>
+                        <h6 className="text-uppercase dark-blue-color spaced-header">
+                            Optionally, provide an explanation for this example:
+                        </h6>
+                        <div className="mt-3">
+                            {(this.props.incorrectSelected || this.props.correctSelected) &&
+                                <div>
+                                    <Form.Control
+                                    type="text"
+                                    placeholder={
+                                        "Explain why " + (this.props.task.shortname === "QA" ? (this.props.correctSelected ? "the given answer" : "your proposed answer") : (this.props.correctSelected ? "the given label" : "your proposed label")) + " is correct"}
+                                    onChange={(e) => this.props.setLabelExplanation(e.target.value)} />
+                                </div>
+                            }
+                            <div>
+                                <Form.Control
+                                type="text"
+                                placeholder="Explain what you think the creator did to try to trick the model"
+                                onChange={(e) => this.props.setCreatorAttemptExplanation(e.target.value)} />
+                            </div>
+                            {this.props.task.shortname === "Hate Speech" &&
+                                <HateSpeechDropdown
+                                    hateType={this.props.validatorHateType}
+                                    dataIndex={this.props.index}
+                                    onClick={(e) => this.props.setValidatorHateType(e.target.getAttribute("data"))}
+                                />
+                            }
+                        </div>
+                    </div>
+                )}
+            </>
+        )
+    }
+}
+
+
+export { ExampleValidationActions }

@@ -5,8 +5,8 @@
  */
 
 import React from 'react';
-import AtomicImage from "../../../src/containers/AtomicImage.js";
-import CheckVQAModelAnswer from "../../../src/containers/CheckVQAModelAnswer.js";
+import AtomicImage from "../../../../src/containers/AtomicImage.js";
+import CheckVQAModelAnswer from "../../../../src/containers/CheckVQAModelAnswer.js";
 import { VQAFeedbackCard } from "./VQAFeedbackCard.js";
 import {
     Alert,

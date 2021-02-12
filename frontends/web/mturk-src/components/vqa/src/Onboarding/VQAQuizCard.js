@@ -5,7 +5,7 @@
  */
 
 import React from "react";
-import AtomicImage from "../../../src/containers/AtomicImage.js";
+import AtomicImage from "../../../../../src/containers/AtomicImage.js";
 import {
     Card,
     Row,

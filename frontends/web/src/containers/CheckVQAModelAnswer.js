@@ -28,14 +28,14 @@ class CheckVQAModelAnswer extends React.Component {
     submitUserAnswer = () => {
         const formattedAnswer = this.state.correctAnswer.trim();
         if (formattedAnswer.length > 0) {
-            this.setState({disableSubmitButton: true})
+            this.setState({ disableSubmitButton: true })
             this.props.updateExample(formattedAnswer, this.MODEL_STATES.INCORRECT);
         }
     }
 
     handleCorrectButtonClick = (e) => {
         e.preventDefault();
-        this.setState({disableCorrectButton: true})
+        this.setState({ disableCorrectButton: true })
         this.props.updateExample(this.props.modelPredStr, this.MODEL_STATES.CORRECT);
     }
 
