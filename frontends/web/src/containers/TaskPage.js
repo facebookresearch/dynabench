@@ -576,6 +576,8 @@ class TaskPage extends React.Component {
   };
 
   render() {
+    console.log(this.state.displayRoundId);
+    console.log([1,2,3].includes(this.state.displayRoundId));
     return (
       <OverlayProvider initiallyHide={true} delayMs="1700">
       <Container fluid>
@@ -825,7 +827,13 @@ class TaskPage extends React.Component {
                   </Card>
                   </Annotation>
                 ) : null}
-                {this.state.userLeaderBoardData.length ? (
+                {/*Do not display the user leaderboard if there is no data or if it is for a pre-dynabench round.*/}
+                {this.state.userLeaderBoardData.length &&
+                  !(["1","2","3"].includes(this.state.displayRoundId) &&
+                  this.state.task.shortname === "NLI") &&
+                  !("1" === this.state.displayRoundId && this.state.task.shortname === "QA") &&
+                  !("1" === this.state.displayRoundId && this.state.task.shortname === "Sentiment")
+                ? (
                   <Annotation placement="left" tooltip="This shows how well our users did on this task">
                   <Card className="my-4">
                     <Card.Header className="p-3 light-gray-bg">
