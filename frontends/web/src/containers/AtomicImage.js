@@ -23,23 +23,26 @@ class AtomicImage extends React.Component {
       const { src, maxWidth, maxHeight } = this.props;
       if (src && src.length > 0) {
          return (
-            <>
+            <div
+               className="d-flex justify-content-center"
+               onClick={() => this.state.isImgLoaded && this.props.setMagnifiedImageSrc && this.props.setMagnifiedImageSrc(src)}>
                <img
                   onLoad={() => this.setState({ isImgLoaded: true })}
                   src={src}
+                  alt="atomicImage"
                   style={{
                      display: this.state.isImgLoaded ? "block" : "none",
                      alignSelf: "center",
                      maxHeight,
                      maxWidth
-                  }
-               } />
+                  }}
+               />
                {!this.state.isImgLoaded &&
                   <div className="d-flex align-items-center justify-content-center" style={{ height: 200 }}>
                      <div className="spinner-border" role="status"/>
                   </div>
                }
-            </>
+            </div>
          )
       } else {
          return (

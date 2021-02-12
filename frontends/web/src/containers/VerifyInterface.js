@@ -428,6 +428,7 @@ class VerifyInterface extends React.Component {
                           task={this.state.task}
                           userMode={this.state.owner_mode ? "owner" : "user"}
                           interfaceMode="web"
+                          isQuestion={false}
                           setCorrectSelected={() => this.resetValidatorSelections(() => this.setState({ correctSelected: true }))}
                           setIncorrectSelected={() => this.resetValidatorSelections(() => this.setState({ incorrectSelected: true }))}
                           setFlagSelected={() => this.resetValidatorSelections(() => this.setState({ flaggedSelected: true }))}

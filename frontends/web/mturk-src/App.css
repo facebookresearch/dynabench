@@ -34,20 +34,42 @@
   padding: 10px;
   margin-bottom: 4px;
 }
+
 .hypothesis  {
   padding: 10px;
   margin-bottom: 4px;
 }
+
 .retracted  {
   padding: 10px;
   margin-bottom: 4px;
   opacity: 0.7;
 }
+
 .correct {
   color: white;
   background-color: #28a745!important;
 }
+
 .incorrect {
   color: black;
   background-color: #dc3545!important;
+}
+
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+}
+
+.backdrop img {
+  display: block;
+  box-shadow: 3px 5px 7px rgba(0,0,0,0.5);
+  border: 3px solid white;
 }

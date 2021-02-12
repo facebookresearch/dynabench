@@ -6,6 +6,7 @@
 
 import React from 'react';
 import AtomicImage from "../../../../src/containers/AtomicImage.js";
+import { MagnifiedImage } from "../../../../src/containers/MagnifiedImage.js";
 import CheckVQAModelAnswer from "../../../../src/containers/CheckVQAModelAnswer.js";
 import { VQAFeedbackCard } from "./VQAFeedbackCard.js";
 import {
@@ -46,6 +47,7 @@ class CreateVQAMturkInterface extends React.Component {
            showErrorAlert: false,
            showInstructions: this.props.mode === "onboarding",
            hitCompleted: false,
+           magnifiedImageSrc: null,
        };
        this.storeExample = this.storeExample.bind(this);
        this.getNewContext = this.getNewContext.bind(this);
@@ -389,7 +391,14 @@ class CreateVQAMturkInterface extends React.Component {
                 )}
             </>
         )
-        const contextContent = this.state.context && <AtomicImage src={this.state.context.context} maxWidth={700} maxHeight={550}/>
+        const contextContent = this.state.context && (
+            <AtomicImage
+                src={this.state.context.context}
+                setMagnifiedImageSrc={src => this.setState({ magnifiedImageSrc: src })}
+                maxWidth={700}
+                maxHeight={550}
+            />
+        )
         const responseInfo = this.state.responseContent.map((response, idx) => {
             let classNames = "hypothesis rounded border";
             let feedbackContent = <></>;
@@ -530,6 +539,12 @@ class CreateVQAMturkInterface extends React.Component {
                         </Button>
                     </Row>
                 }
+                {this.state.magnifiedImageSrc && (
+                    <MagnifiedImage
+                        src={this.state.magnifiedImageSrc}
+                        setMagnifiedImageSrc={src => this.setState({ magnifiedImageSrc: src })}
+                    />
+                )}
            </Container>
        );
    }

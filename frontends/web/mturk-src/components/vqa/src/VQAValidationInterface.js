@@ -6,6 +6,7 @@
 
 import React from "react";
 import AtomicImage from "../../../../src/containers/AtomicImage.js";
+import { MagnifiedImage } from "../../../../src/containers/MagnifiedImage.js";
 import { ExampleValidationActions } from "../../../../src/containers/ExampleValidationActions.js";
 import {
     Container,
@@ -34,6 +35,7 @@ class VQAValidationInterface extends React.Component {
         this.state = {
             questionValidationState: this.VALIDATION_STATES.UNKNOWN,
             responseValidationState: this.VALIDATION_STATES.UNKNOWN,
+            magnifiedImageSrc: null,
             flagReason: null,
             taskId: props.taskConfig.task_id,
             showInstructions: true,
@@ -130,7 +132,11 @@ class VQAValidationInterface extends React.Component {
                         {this.state.example ? (
                             <>
                                 <Card.Body className="d-flex justify-content-center pt-2" style={{ height: "auto", overflowY: "scroll" }}>
-                                    <AtomicImage src={this.state.example.context.context} maxHeight={500} maxWidth={600}/>
+                                    <AtomicImage
+                                        src={this.state.example.context.context}
+                                        setMagnifiedImageSrc={src => this.setState({ magnifiedImageSrc: src })}
+                                        maxHeight={500}
+                                        maxWidth={600}/>
                                 </Card.Body>
                                 <Card className="hypothesis rounded border m-3 card">
                                     <Card.Body className="p-3">
@@ -146,6 +152,7 @@ class VQAValidationInterface extends React.Component {
                                                     correctSelected={this.state.questionValidationState === this.VALIDATION_STATES.CORRECT}
                                                     incorrectSelected={this.state.questionValidationState === this.VALIDATION_STATES.INCORRECT}
                                                     flaggedSelected={this.state.questionValidationState === this.VALIDATION_STATES.FLAGGED}
+                                                    isQuestion={true}
                                                     userMode={this.userMode}
                                                     interfaceMode={this.interfaceMode}
                                                     setCorrectSelected={() => this.setState({ questionValidationState: this.VALIDATION_STATES.CORRECT, flagReason: null })}
@@ -166,6 +173,7 @@ class VQAValidationInterface extends React.Component {
                                                             incorrectSelected={this.state.responseValidationState === this.VALIDATION_STATES.INCORRECT}
                                                             flaggedSelected={this.state.responseValidationState === this.VALIDATION_STATES.FLAGGED}
                                                             userMode={this.userMode}
+                                                            isQuestion={false}
                                                             interfaceMode={this.interfaceMode}
                                                             setCorrectSelected={() => this.setState({ responseValidationState: this.VALIDATION_STATES.CORRECT, flagReason: null })}
                                                             setIncorrectSelected={() => this.setState({ responseValidationState: this.VALIDATION_STATES.INCORRECT, flagReason: null })}
@@ -189,6 +197,12 @@ class VQAValidationInterface extends React.Component {
                                         </InputGroup>
                                     </Card.Footer>
                                 </Card>
+                                {this.state.magnifiedImageSrc && (
+                                    <MagnifiedImage
+                                        src={this.state.magnifiedImageSrc}
+                                        setMagnifiedImageSrc={src => this.setState({ magnifiedImageSrc: src })}
+                                    />
+                                )}
                             </>
                         ) : (
                             <Card.Body className="p-3">

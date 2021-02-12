@@ -17,6 +17,8 @@ import {
 
 class ExampleValidationActions extends React.Component {
     render() {
+        const postiveValidationWord = this.props.isQuestion ? "Valid" : "Correct";
+        const negativeValidationWord = this.props.isQuestion ? "Invalid" : "Incorrect";
         return (
             <>
                 <h6 className="text-uppercase dark-blue-color spaced-header">
@@ -28,7 +30,8 @@ class ExampleValidationActions extends React.Component {
                         type="radio"
                         onChange={() => this.props.setCorrectSelected()}
                     />
-                    <i className="fas fa-thumbs-up"></i>  &nbsp; {this.props.userMode === "owner" ? "Verified " : ""} Correct
+                    <i className="fas fa-thumbs-up"></i>  &nbsp; {this.props.userMode === "owner" ? "Verified " : ""}
+                    {postiveValidationWord}
                 </InputGroup>
                 <InputGroup className="align-items-center">
                     <Form.Check
@@ -36,7 +39,8 @@ class ExampleValidationActions extends React.Component {
                         type="radio"
                         onChange={() => this.props.setIncorrectSelected()}
                     />
-                    <i className="fas fa-thumbs-down"></i>  &nbsp; {this.props.userMode === "owner" ? "Verified " : ""} Incorrect
+                    <i className="fas fa-thumbs-down"></i>  &nbsp; {this.props.userMode === "owner" ? "Verified " : ""}
+                    {negativeValidationWord}
                 </InputGroup>
                 <InputGroup className="ml-3">
                 {this.props.interfaceMode === "web" && this.props.incorrectSelected &&
