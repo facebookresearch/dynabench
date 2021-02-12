@@ -10,31 +10,25 @@ import { VQAQuizExamples } from "./OnboardingInfo/VQAQuizExamples.js"
 
 class VQAQuiz extends React.Component {
 
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
         this.MODEL_STATES = { "UNKNOWN" : -1, "CORRECT": 1, "INCORRECT": 0 };
         this.examples = VQAQuizExamples;
         this.minCorrectValidations = 5;
-        this.attempt = 1;
-        this.state = {
-            modelState: this.examples[this.attempt].map(() => this.MODEL_STATES.UNKNOWN),
-            hints: this.examples[this.attempt].map(() => ""),
-            correctValidations: -1,
+        this.maxAllowedAttempts = 2;
+        this.state = this.props.cache || {
+            attempt: 1,
+            modelState: this.examples[1].map(() => this.MODEL_STATES.UNKNOWN),
+            hints: this.examples[1].map(() => ""),
+            currentAttemptChecked: false,
+            missingAnswers: false,
             showInstructions: true,
+            onboardingFailed: false,
         };
     }
 
     componentDidMount() {
         this.scrollToTop();
-    }
-
-    handleLastChanceButtonClick = () => {
-        this.attempt += 1;
-        this.setState({
-            modelState: this.examples[this.attempt].map(() => this.MODEL_STATES.UNKNOWN),
-            hints: this.examples[this.attempt].map(() => ""),
-            correctValidations: -1,
-        }, this.scrollToTop());
     }
 
     scrollToTop = () => window.scrollTo(0, 0);
@@ -48,32 +42,55 @@ class VQAQuiz extends React.Component {
         })
     }
 
-    checkAnswers = (e) => {
-        e.preventDefault();
+    checkAnswers = () => {
         let correctValidations = 0;
-        let updatedHints = this.examples[this.attempt].map((example, index) => {
+        let hints = this.examples[this.state.attempt].map((example, index) => {
             if (this.state.modelState[index] != example.isModelCorrect) {
-                if (this.state.modelState[index] === this.MODEL_STATES.UNKNOWN) {
-                    return "Please select an answer."
-                }
                 return example.hint;
             }
             correctValidations += 1;
             return "";
         })
-        if (this.attempt > 1 && correctValidations < this.minCorrectValidations) {
-            this.props.onSubmit({ success: false });
-        } else if (correctValidations >= this.minCorrectValidations) {
-            this.props.setBlockPrevPhase(false);
-            this.props.setPhaseCompleted();
-            this.props.nextPhase();
+        return { correctValidations, hints };
+    }
+
+    missingAnswers = () => this.state.modelState.filter(ans => ans === this.MODEL_STATES.UNKNOWN).length > 0;
+
+    handleCheckAnswersButtonClick = (e) => {
+        e.preventDefault();
+        if (this.missingAnswers()) {
+            this.setState({ missingAnswers: true, currentAttemptChecked: true, })
         } else {
-            this.props.setBlockPrevPhase(true);
+            const { correctValidations, hints } = this.checkAnswers();
+            this.setState({
+                hints,
+                correctValidations,
+                currentAttemptChecked: true,
+                missingAnswers: false,
+            }, () => {
+                if (correctValidations >= this.minCorrectValidations) {
+                    this.props.setPhaseCompleted();
+                    this.props.nextPhase();
+                } else if (this.state.attempt === this.maxAllowedAttempts) {
+                    this.setState({ onboardingFailed: true });
+                }
+            });
         }
+    }
+
+    handleTryAgainButtonClick = () => {
         this.setState({
-            hints: updatedHints,
-            correctValidations
-        })
+            attempt: this.state.attempt + 1,
+            modelState: this.examples[this.state.attempt + 1].map(() => this.MODEL_STATES.UNKNOWN),
+            hints: this.examples[this.state.attempt + 1].map(() => ""),
+            currentAttemptChecked: false,
+            missingAnswers: false,
+            correctValidations: -1,
+        }, this.scrollToTop);
+    }
+
+    componentWillUnmount() {
+        this.props.cacheQuizState(this.state);
     }
 
     render() {
@@ -83,7 +100,7 @@ class VQAQuiz extends React.Component {
         } else {
             phaseInstructionsButton = <button className="btn btn-info mb-3" onClick={() => {this.setState({ showInstructions: true })}}>Show Instructions</button>
         }
-        const phaseTitle = <h4>Quiz - Judge whether a question needs the image to answer, and judge the AI's answer</h4>
+        const phaseTitle = <h4>Quiz - Judge whether a question is valid, and judge the AI's answer</h4>
         const phaseInstructions = this.state.showInstructions
             ?
                 <div >
@@ -97,13 +114,13 @@ class VQAQuiz extends React.Component {
                     </p>
                     <p>
                         <strong style={{ color: "red" }}>WARNING:</strong>You have to correctly validate
-                        at least {this.minCorrectValidations} out of the {this.examples[this.attempt].length} examples to unlock the final phase.
+                        at least {this.minCorrectValidations} out of the {this.examples[this.state.attempt].length} examples to unlock the final phase.
                         You will have two tries to complete this activity. If you fail you will not be able to
                         complete the onboarding.
                     </p>
                 </div>
             : <></>
-        const content = this.examples[this.attempt].map((example, index) =>
+        const content = this.examples[this.state.attempt].map((example, index) =>
             <VQAQuizCard
                 imageUrl={example.imageUrl}
                 question={example.question}
@@ -111,39 +128,61 @@ class VQAQuiz extends React.Component {
                 isAnswer={example.isAnswer}
                 modelState={this.state.modelState[index]}
                 hint={this.state.hints[index]}
-                disableRadios={this.state.correctValidations >= 0}
+                disableRadios={this.state.currentAttemptChecked && !this.state.missingAnswers}
                 MODEL_STATES={this.MODEL_STATES}
                 setModelState={this.setModelState}
                 index={index}
                 key={index}
             />
         )
-        const completePhaseButton = <button
-            className="btn btn-success mb-3"
-            onClick={this.checkAnswers}>
-                Complete Phase
+        const checkAnswersButton = <button
+            className="btn btn-success mb-3 order-1"
+            onClick={this.handleCheckAnswersButtonClick}>
+                Check Answers
         </button>
-        const lastChanceButton = <button
-            className="btn btn-warning mb-3"
-            onClick={this.handleLastChanceButtonClick}>
-                Take last chance
+        const tryAgainButton = <button
+            className="btn btn-warning mb-3 ml-auto order-3"
+            onClick={this.handleTryAgainButtonClick}>
+                {this.state.attempt + 1 === this.maxAllowedAttempts ? "Take Last Chance" : "Try Again"}
         </button>
+        const quitOnboardingButton = <button
+            className="btn btn-danger mb-3 ml-auto order-3"
+            onClick={() => this.props.submitOnboarding({ success: false })}>
+                End Task
+        </button>
+        const resultsMessage = (
+            <small className="order-2 mt-2" style={{ color: "#e65959", paddingLeft: 7 }}>
+                {this.state.currentAttemptChecked ? (
+                    this.state.missingAnswers ? (
+                        "*Please select an answer for each example."
+                    ) : (
+                        `*You got ${this.state.correctValidations} correct answers out of ${this.examples[this.state.attempt].length}.
+                        The minimum required is ${this.minCorrectValidations}. ${this.state.onboardingFailed ? "Sorry, you failed the onboarding." : ""}`
+                    )
+                ) : ""
+            }
+            </small>
+        );
         return (
             <>
                 {phaseTitle}
                 {phaseInstructionsButton}
                 {phaseInstructions}
                 {content}
-                {this.state.correctValidations >= 0 ?
-                    <div className="d-flex justify-content-between" style={{ width: "100%" }}>
-                        <small style={{ color: "#e65959", paddingLeft: 7 }}>
-                            *You got {this.state.correctValidations} correct validations out of {this.examples[this.attempt].length}.
-                            The minimum required is {this.minCorrectValidations}.
-                        </small>
-                        {lastChanceButton}
-                    </div> : <>
-                        {completePhaseButton}
-                    </>}
+                <div className="d-flex justify-content-start" style={{ width: "100%" }}>
+                    {resultsMessage}
+                    {!this.props.phaseCompleted && (
+                        this.state.currentAttemptChecked && !this.state.missingAnswers ? (
+                            this.state.onboardingFailed ? (
+                                quitOnboardingButton
+                            ) : (
+                                tryAgainButton
+                            )
+                        ) : (
+                            checkAnswersButton
+                        )
+                    )}
+                </div>
             </>
         )
     }

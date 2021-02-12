@@ -26,7 +26,7 @@ class CreateVQAMturkInterface extends React.Component {
        this.api = props.api;
        this.MODEL_STATES = { "UNKNOWN": -1, "CORRECT": 0, "INCORRECT": 1 };
        this.minTriesToSwitchImg = 3;
-       this.minTriesToCompleteHIT = this.props.mode === "onboarding" ? 3 : 10;
+       this.minTriesToCompleteHIT = this.props.mode === "onboarding" ? 3 : 5;
        this.state = {
            taskId: props.taskConfig.task_id,
            task: {},
@@ -92,6 +92,7 @@ class CreateVQAMturkInterface extends React.Component {
             submitDisabled: false,
             refreshDisabled: false,
             showErrorAlert: false,
+            fooled: false,
         })
     }
 
@@ -207,7 +208,7 @@ class CreateVQAMturkInterface extends React.Component {
     }
 
     handleCheckAnswerButtonClick() {
-        if (this.state.question.length == 0) { return; }
+        if (this.state.question.trim().length === 0) { return; }
         this.setState({
            submitDisabled: true,
            refreshDisabled: true,
@@ -256,7 +257,7 @@ class CreateVQAMturkInterface extends React.Component {
             refreshDisabled: false,
             showErrorAlert: false,
         }, () => {
-            if  ((newModelState === this.MODEL_STATES.INCORRECT && this.props.mode === "main") || this.state.totalTriesSoFar >= this.minTriesToCompleteHIT) {
+            if ((newModelState === this.MODEL_STATES.INCORRECT && this.props.mode === "main") || this.state.totalTriesSoFar >= this.minTriesToCompleteHIT) {
                 this.setState({ taskCompleted: true });
             }
         })
@@ -309,11 +310,11 @@ class CreateVQAMturkInterface extends React.Component {
     render() {
         let taskTrackerMessage = "";
         if (this.state.fooled) {
-            taskTrackerMessage = "Congratulations! You fooled the model and got the bonus.";
+            taskTrackerMessage = `Congratulations! You fooled the model${this.props.mode === "onboarding" ? "." : "and got the bonus."}`;
         } else if (this.state.totalTriesSoFar >= this.minTriesToCompleteHIT) {
-            taskTrackerMessage += " Minimum required tries completed. You can continue to get the bonus.";
+            taskTrackerMessage = `Minimum required tries completed. ${this.props.mode === "main" ? "You can continue to get the bonus." : ""}`;
         } else {
-            taskTrackerMessage += ` Tries: ${this.state.totalTriesSoFar} / ${this.minTriesToCompleteHIT}.`
+            taskTrackerMessage = ` Tries: ${this.state.totalTriesSoFar} / ${this.minTriesToCompleteHIT}.`
         }
         const taskTracker = <small style={{ padding: 7 }}>{taskTrackerMessage}</small>;
         const topInstruction = <>
@@ -325,65 +326,69 @@ class CreateVQAMturkInterface extends React.Component {
         } else {
             taskInstructionsButton = <Button className="btn btn-info mb-3" onClick={() => {this.setState({ showInstructions: true })}}>Show Instructions</Button>
         }
-        const taskInstructions = this.state.showInstructions ? <>
-            {this.props.mode === "onboarding" && (
-                <p>
-                    This is your chance to play with the AI to get a feel for the task itself.
-                </p>
-            )}
-            <p>
-                In this task, you will be asked to find questions about an image that fool an AI model
-                into answering incorrectly. The AI is reasonably good at understanding English and interpreting images.
-            </p>
-            <p>
-                Given an <b>image</b> that you will use as context, you are expected to
-                do the following:
-            </p>
-            <ol className="mx-5">
-                <li>
-                    Write a <b>question</b> based on the image that you think the AI
-                    would get <b>wrong</b> but another person would get <b>right</b>.
-                </li>
-                <li>
-                    Verify AI's answer:
-                    <ul className="mx-3" style={{ listStyleType: "disc" }}>
-                        <li>
-                            If the AI's answer was correct, select the
-                            <b style={{ color: "green" }}> Correct</b> button.
-                        </li>
-                        <li>
-                            If the AI's answer was incorrect, that is, the AI was successfully fooled,
-                            select the  <b style={{ color: "red" }}>Incorrect</b> button
-                            and <b>provide the correct answer</b> for your question.
-                        </li>
-                    </ul>
-                </li>
-            </ol>
-            <p>
-                Sometimes AI might be tricky to fool. When you have spent {this.minTriesToSwitchImg} tries
-                without success you will be able to skip to the next image by clicking <b style={{ color: "blue" }}>Switch Image</b> button.
-            </p>
-            {this.props.mode === "main" ? (
-                <p>
-                    You will have <b>{this.minTriesToCompleteHIT} tries</b> to fool the AI. If you succeed earlier you complete a HIT.
-                </p>
-            ) : (
-                <p>
-                    You will have to complete at least <b>{this.minTriesToCompleteHIT} tries</b>. You can continue if you want to.
-                    Once you feel comfortable, move on.
-                </p>
-            )}
-            <p>
-                <strong style={{ color: "red" }}>WARNING:</strong> Every successful question will
-                be checked by other humans. If it is detected that you are spamming the AI or making
-                a bad use of the interface you might be flagged or even blocked.
-            </p>
-            <p>
-                The AI can be very smart as it utilizes the latest technologies to understand the
-                question and image. Be creative to fool the AI - it will be fun!!!
-            </p>
-        </> : <></>
-
+        const taskInstructions = this.state.showInstructions && (
+            <>
+                {this.props.mode === "onboarding" ? (
+                    <p>
+                        This is your chance to play with the AI to get a feel for the task itself.
+                        Write questions about an image and fool the AI. After {this.minTriesToCompleteHIT} tries
+                        you will be allowed to complete the onboarding and enter into the main task. You can continue if you want to.
+                        Have fun!
+                    </p>
+                ) : (
+                    <>
+                        <p>
+                            In this task, you will be asked to find questions about an image that fool an AI model
+                            into answering incorrectly. The AI is reasonably good at understanding English and interpreting images.
+                        </p>
+                        <p>
+                            Given an <b>image</b> that you will use as context, you are expected to
+                            do the following:
+                        </p>
+                        <ol className="mx-5">
+                            <li>
+                                Write a <b style={{ color: "red" }}>valid question</b> based on the image that you think the AI
+                                would get <b>wrong</b> but another person would get <b>right</b>.
+                            </li>
+                            <li>
+                                Verify AI's answer:
+                                <ul className="mx-3" style={{ listStyleType: "disc" }}>
+                                    <li>
+                                        If the AI's answer was correct, select the
+                                        <b style={{ color: "green" }}> Correct</b> button.
+                                    </li>
+                                    <li>
+                                        If the AI's answer was incorrect, that is, the AI was successfully fooled,
+                                        select the  <b style={{ color: "red" }}>Incorrect</b> button
+                                        and <b>provide the correct answer</b> for your question.
+                                    </li>
+                                </ul>
+                            </li>
+                        </ol>
+                        <p>
+                            Sometimes AI might be tricky to fool. When you have spent {this.minTriesToSwitchImg} tries
+                            without success you will be able to skip to the next image by clicking <b style={{ color: "blue" }}>Switch Image</b> button.
+                        </p>
+                        <p>
+                            You will have <b>{this.minTriesToCompleteHIT} tries</b> to fool the AI. If you succeed earlier you complete a HIT.
+                        </p>
+                        <p>
+                            You will have to complete at least <b>{this.minTriesToCompleteHIT} tries</b>. You can continue if you want to.
+                            Once you feel comfortable, move on.
+                        </p>
+                        <p>
+                            <strong style={{ color: "red" }}>WARNING:</strong> Every successful question will
+                            be checked by other humans. If it is detected that you are spamming the AI or making
+                            a bad use of the interface you might be flagged or even blocked.
+                        </p>
+                        <p>
+                            The AI can be very smart as it utilizes the latest technologies to understand the
+                            question and image. Be creative to fool the AI - it will be fun!!!
+                        </p>
+                    </>
+                )}
+            </>
+        )
         const contextContent = this.state.context && <AtomicImage src={this.state.context.context} maxWidth={700} maxHeight={550}/>
         const responseInfo = this.state.responseContent.map((response, idx) => {
             let classNames = "hypothesis rounded border";
@@ -426,8 +431,13 @@ class CreateVQAMturkInterface extends React.Component {
             )
         });
 
-
-       return (
+        const isSkipImageAllowed = this.props.mode === "onboarding" ? (
+            this.state.triesInContext >= this.minTriesToSwitchImg || this.state.fooled
+        ) : (
+            this.state.triesInContext >= this.minTriesToSwitchImg && !this.state.fooled && !this.state.hitCompleted
+        );
+        const isEnterQuestionAllowed = this.props.mode === "onboarding" || (!this.state.fooled && !this.state.hitCompleted);
+        return (
            <Container>
                 {topInstruction}
                 {taskInstructionsButton}
@@ -440,7 +450,7 @@ class CreateVQAMturkInterface extends React.Component {
                             </Card.Body>
                         </Card>
                     </CardGroup>
-                    {!this.state.submitDisabled && !this.state.hitCompleted &&
+                    {!this.state.submitDisabled && isEnterQuestionAllowed &&
                         <>
                             <InputGroup style={{ width: '100%'}}>
                                 <FormControl
@@ -464,7 +474,7 @@ class CreateVQAMturkInterface extends React.Component {
                         />
                     </Card>
                     <InputGroup className="mb-3" style={{ width: "100%" }}>
-                        {(!this.state.fooled || this.props.mode === "onboarding") && !this.state.hitCompleted && (
+                        {isEnterQuestionAllowed && (
                             <Button
                                 className="btn btn-primary"
                                 style={{marginRight: 2}}
@@ -473,7 +483,7 @@ class CreateVQAMturkInterface extends React.Component {
                                 <i className={this.state.submitDisabled ? "fa fa-cog fa-spin" : ""} />
                             </Button>
                         )}
-                        {(!this.state.fooled || this.props.mode === "onboarding") && this.state.triesInContext >= this.minTriesToSwitchImg && !this.state.hitCompleted && (
+                        {isSkipImageAllowed && (
                             <Button
                                 className="btn btn-warning"
                                 style={{marginRight: 2}}
@@ -516,7 +526,7 @@ class CreateVQAMturkInterface extends React.Component {
                             className="btn btn-success"
                             style={{ marginTop: 5 }}
                             onClick={this.submitHistory}>
-                                Submit Feedback
+                                Submit
                         </Button>
                     </Row>
                 }

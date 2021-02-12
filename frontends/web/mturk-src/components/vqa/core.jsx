@@ -11,6 +11,7 @@ import { VQAQuiz } from "./VQAQuiz.js";
 import { CreateVQAMturkInterface } from "./CreateVQAMturkInterface.js";
 import { Container, Row, Col, Button, InputGroup } from "react-bootstrap";
 import { SimulationExamples } from "./OnboardingInfo/VQASimulationExamples.js";
+import { VQAQuizExamples } from "./OnboardingInfo/VQAQuizExamples.js"
 
 class VQATaskPreview extends React.Component {
     render() {
@@ -89,62 +90,79 @@ class VQATaskOnboarder extends React.Component {
 
     constructor() {
         super();
-        this.examples = SimulationExamples;
+        this.simulationExamples = SimulationExamples;
         this.totalPhases = 4;
         this.state = {
-            phase: 0,
+            currPhase: 0,
             phasesCompleted: [true, false, false, false],
-            blockPrevPhase: false,
         };
     }
 
     getRandomContext = () => {
-        const randIdx = Math.floor(Math.random() * this.examples.length);
-        return this.examples[randIdx];
+        const randIdx = Math.floor(Math.random() * this.simulationExamples.length);
+        return this.simulationExamples[randIdx];
     }
 
     nextPhase = () => {
-        if (this.state.phase < this.totalPhases - 1) {
+        if (this.state.currPhase < this.totalPhases - 1) {
             this.setState(state => {
-                return { phase: state.phase + 1 };
+                return { currPhase: state.currPhase + 1 };
             });
         }
     }
 
     prevPhase = () => {
-        if (this.state.phase > 0) {
+        if (this.state.currPhase > 0) {
             this.setState(state => {
-                return { phase: state.phase - 1 };
+                return { currPhase: state.currPhase - 1 };
             });
         }
     }
 
     setPhaseCompleted = () => {
-        if (!this.state.phasesCompleted[this.state.phase]) {
-            let updatedPhasesStatus = [...this.state.phasesCompleted];
-            updatedPhasesStatus[this.state.phase] = true;
+        if (!this.state.phasesCompleted[this.state.currPhase]) {
+            let updatedPhasesStatus = this.state.phasesCompleted;
+            updatedPhasesStatus[this.state.currPhase] = true;
             this.setState({ phasesCompleted: updatedPhasesStatus });
         }
     }
 
-    setBlockPrevPhase = (isBlocked) => {
-        this.setState({ blockPrevPhase: isBlocked })
+    submitOnboarding = (status) => {
+        this.props.onSubmit(status)
     }
 
+    cacheQuizState = quizState => this.cache = quizState;
+
     render() {
-        const VQACurrentOnboardingPhase = VQAOnboarderPhases[this.state.phase];
+        const onboardingPhases = {
+            0: <VQAOnboardingInstructions/>,
+            1: <VQAExampleCards setPhaseCompleted={this.setPhaseCompleted}/>,
+            2: <VQAQuiz
+                    setPhaseCompleted={this.setPhaseCompleted}
+                    nextPhase={this.nextPhase}
+                    submitOnboarding={this.submitOnboarding}
+                    cacheQuizState={this.cacheQuizState}
+                    cache={this.cache}
+                    phaseCompleted={this.state.phasesCompleted[this.state.currPhase]}
+                />,
+            3: <CreateVQAMturkInterface
+                {...this.props}
+                getRandomContext={this.getRandomContext}
+                mode="onboarding"
+            />
+        }
         const phaseSelectionPanel = (
             <Row>
                 <InputGroup className="my-5">
-                    {this.state.phase > 0 && !this.state.blockPrevPhase &&
+                    {this.state.currPhase > 0 &&
                         <Col className="d-flex justify-content-start">
                             <Button className="btn btn-primary" onClick={this.prevPhase}>Previous Phase</Button>
                         </Col>
                     }
-                    {this.state.phasesCompleted[this.state.phase] &&
+                    {this.state.phasesCompleted[this.state.currPhase] &&
                         <Col className="d-flex justify-content-end">
                             <Button className="btn btn-success" onClick={this.nextPhase}>
-                                {this.state.phase === 0 ? "Start Onboarding" : "Next Phase"}
+                                {this.state.currPhase === 0 ? "Start Onboarding" : "Next Phase"}
                             </Button>
                         </Col>
                     }
@@ -152,14 +170,7 @@ class VQATaskOnboarder extends React.Component {
             </Row>
         )
         return <Container className="px-0 my-2">
-            <VQACurrentOnboardingPhase
-                {...this.props}
-                setPhaseCompleted={this.setPhaseCompleted}
-                nextPhase={this.nextPhase}
-                setBlockPrevPhase={this.setBlockPrevPhase}
-                getRandomContext={this.getRandomContext}
-                mode="onboarding"
-            />
+            {onboardingPhases[this.state.currPhase]}
             {phaseSelectionPanel}
         </Container>
     }

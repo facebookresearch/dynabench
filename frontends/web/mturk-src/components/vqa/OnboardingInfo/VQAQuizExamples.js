@@ -41,7 +41,7 @@ const VQAQuizExamples = {
             {
                 imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/val2014/COCO_val2014_000000061181.jpg",
                 question: "Is overpopulation a problem for the environment?",
-                isModelCorrect: true,
+                isModelCorrect: false,
                 isAnswer: false,
                 hint: "HINT: This question can be answered without analyzing the image."
             },

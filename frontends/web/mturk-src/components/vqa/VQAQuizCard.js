@@ -19,7 +19,6 @@ class VQAQuizCard extends React.Component {
     constructor(props) {
         super(props);
         this.MODEL_STATES = this.props.MODEL_STATES;
-        this.VALIDATION_TYPES = this.props.VALIDATION_TYPES
     }
 
     render() {
