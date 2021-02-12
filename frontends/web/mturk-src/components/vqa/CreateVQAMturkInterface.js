@@ -147,7 +147,7 @@ class CreateVQAMturkInterface extends React.Component {
             this.state.task.cur_round,
             'turk',
             this.state.context.id,
-            this.state.question,
+            this.state.question.trim(),
             null,
             modelResponse,
             metadata
