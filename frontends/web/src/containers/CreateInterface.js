@@ -986,21 +986,21 @@ class CreateInterface extends React.Component {
     } = this.props;
     if (!this.context.api.loggedIn()) {
       this.setState({ livemode: false });
-    }
-
-    const user = this.context.api.getCredentials();
-    this.context.api
-      .getUser(user.id, true)
-      .then((result) => {
-        if (result.settings_json) {
-          var settings_json = JSON.parse(result.settings_json);
-          if (settings_json['retain_input']) {
-            this.setState({ retainInput: settings_json['retain_input'] });
+    } else {
+      const user = this.context.api.getCredentials();
+      this.context.api
+        .getUser(user.id, true)
+        .then((result) => {
+          if (result.settings_json) {
+            var settings_json = JSON.parse(result.settings_json);
+            if (settings_json['retain_input']) {
+              this.setState({ retainInput: settings_json['retain_input'] });
+            }
           }
-        }
-      }, (error) => {
-        console.log(error);
-      });
+        }, (error) => {
+          console.log(error);
+        });
+    }
 
     this.setState({ taskId: params.taskId }, function () {
       this.context.api
