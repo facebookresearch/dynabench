@@ -576,8 +576,6 @@ class TaskPage extends React.Component {
   };
 
   render() {
-    console.log(this.state.displayRoundId);
-    console.log([1,2,3].includes(this.state.displayRoundId));
     return (
       <OverlayProvider initiallyHide={true} delayMs="1700">
       <Container fluid>
