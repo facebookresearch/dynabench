@@ -95,7 +95,7 @@ def main(cfg: DictConfig) -> None:
     # mturk_specific_qualifications
 
     def is_onboarding_successful(onboarding_data):
-        if "output" in onboarding_data and "success" in onboarding_data["output"]:
+        if "outputs" in onboarding_data and "success" in onboarding_data["outputs"]:
             return onboarding_data["outputs"]["success"]
         return False
 
