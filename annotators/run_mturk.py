@@ -36,6 +36,8 @@ import mephisto  # noqa isort:skip
 @dataclass
 class DynaBenchConfig:
     task_name: str = "no_task"
+    dyna_tags: List[str] = ()  # dyn_tags for choosing the context and examples.
+    experiment_flag: str = "no_flag"
     task_id: int = 0
     round_id: int = 0
 
@@ -94,14 +96,17 @@ def main(cfg: DictConfig) -> None:
 
     # mturk_specific_qualifications
 
-    # TODO: How to set onboarding ready?
     def onboarding_always_valid(onboarding_data):
-        return True
+        return onboarding_data["outputs"]["success"]
+
+    task_config = dict(cfg.dynabench)
+    # convert to serializable dictionary
+    task_config["dyna_tags"] = list(task_config["dyna_tags"])
 
     shared_state = SharedStaticTaskState(
         static_task_data=static_task_data,
         validate_onboarding=onboarding_always_valid,
-        task_config=dict(cfg.dynabench),
+        task_config=task_config,
     )
 
     # We need to implicitly add 'mturk_specific_qualifications' here like this.
