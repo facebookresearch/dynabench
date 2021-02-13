@@ -11,5 +11,4 @@ torch
 transformers
 werkzeug
 boto3
-cryptography
 yoyo-migrations
