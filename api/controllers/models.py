@@ -82,14 +82,10 @@ def do_upload(credentials):
     task_shortname = str(bottle.request.forms.get("taskShortName")).lower()
 
     try:
-        if task_shortname in ["qa", "hate speech", "sentiment"]:
-            raw_upload_data = json.loads(
-                upload.file.read().decode("utf-8")
-            )  # if QA or HS, use standard SQuAD JSON format
-            test_raw_data = raw_upload_data
-        else:
-            raw_upload_data = upload.file.read().decode("utf-8")
-            test_raw_data = raw_upload_data.lower().splitlines()
+        raw_upload_data = json.loads(
+            upload.file.read().decode("utf-8")
+        )  # use standard SQuAD JSON format
+        test_raw_data = raw_upload_data
 
     except Exception as ex:
         logger.exception(ex)
