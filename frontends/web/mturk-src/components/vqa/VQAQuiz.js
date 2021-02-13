@@ -62,7 +62,7 @@ class VQAQuiz extends React.Component {
             return "";
         })
         if (this.attempt > 1 && correctValidations < this.minCorrectValidations) {
-            this.props.onSubmit({ status: false });
+            this.props.onSubmit({ success: false });
         } else if (correctValidations >= this.minCorrectValidations) {
             this.props.setBlockPrevPhase(false);
             this.props.setPhaseCompleted();
