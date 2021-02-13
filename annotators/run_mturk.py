@@ -96,8 +96,10 @@ def main(cfg: DictConfig) -> None:
 
     # mturk_specific_qualifications
 
-    def onboarding_always_valid(onboarding_data):
-        return onboarding_data["outputs"]["success"]
+    def is_onboarding_successful(onboarding_data):
+        if "outputs" in onboarding_data and "success" in onboarding_data["outputs"]:
+            return onboarding_data["outputs"]["success"]
+        return False
 
     task_config = dict(cfg.dynabench)
     # convert to serializable dictionary
@@ -105,7 +107,7 @@ def main(cfg: DictConfig) -> None:
 
     shared_state = SharedStaticTaskState(
         static_task_data=static_task_data,
-        validate_onboarding=onboarding_always_valid,
+        validate_onboarding=is_onboarding_successful,
         task_config=task_config,
     )
 
