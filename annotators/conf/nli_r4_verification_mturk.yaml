@@ -1,0 +1,15 @@
+#@package _global_
+mephisto:
+  blueprint:
+    onboarding_qualification: nli-4-mturk-qualification-v-1
+  task:
+    task_name: nli-4-verification-mturk
+    task_title: Read, Reason, and Then Choose.
+    task_description: >
+      You will try to choose the correct category for a pair of passage and statement.
+    task_reward: 0.1
+    task_tags: "select,AI,understand,English,game,ai"
+dynabench:
+  task_name: nli-4-verification-mturk
+  task_id: 1
+  round_id: 4

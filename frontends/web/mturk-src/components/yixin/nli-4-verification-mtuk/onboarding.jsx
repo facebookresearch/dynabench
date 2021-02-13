@@ -140,7 +140,7 @@ class Phase2QuestionCard extends React.Component {
 }
 
 
-class NLIR4TaskOnboarder extends React.Component {
+class NLIR4VTaskOnboarder extends React.Component {
 
   constructor(props) {
     super(props);
@@ -283,7 +283,6 @@ class NLIR4TaskOnboarder extends React.Component {
     if (this.state.remaining_trial_count <= 0) {
         // Backend API. Do something here to log relevant information.
         const curDate = new Date()
-        // remember to also set phase_2_finished_time here.
         // this.props.onSubmit({ success: false });
         console.log("Fail the onboarding.")
         this.props.onSubmit({ success: false });
@@ -326,7 +325,8 @@ class NLIR4TaskOnboarder extends React.Component {
   }
 
   phase_1_to_2_button = () => {
-      this.setState({phase_2_started: true})
+      // this.setState({phase_2_started: true})
+      // this.setState({phase_2_started: true})
   }
 
   render() {
@@ -373,8 +373,8 @@ class NLIR4TaskOnboarder extends React.Component {
 
     let phase_1_panel = <div className="card">
       <div className="card-body">
-      <h3 className="card-title">Phase One - (5 Questions)</h3>
-      <h4 className="card-subtitle">The goal of this phase is to help you understand and differentiate the relation between a passage and a statement.</h4>
+      <h3 className="card-title">Onboarding Test - (5 Questions)</h3>
+      <h4 className="card-subtitle">The goal of this test is to help you understand and differentiate the relation between a passage and a statement.</h4>
       <hr />
       <div className="card-text">
       <strong>Instruction:</strong><br />
@@ -433,9 +433,9 @@ class NLIR4TaskOnboarder extends React.Component {
       </div>;
 
     let phase_1_to_2_panel = <div>
-        Congratulations! You have passed the Phase One of the Onboarding.<br />
-        Now, click the button below to continue to Phase Two.<br />
-        <Button className="btn btn-primary btn-success" onClick={this.phase_1_to_2_button}>Continue</Button>
+        Congratulations! You have passed the Onboarding.<br />
+        Now, click the button below to continue.<br />
+        <Button className="btn btn-primary btn-success" onClick={this.completeOnboarding}>Finish Onboarding Test</Button>
     </div>
 
     let finishing_panel = <div>
@@ -476,20 +476,20 @@ class NLIR4TaskOnboarder extends React.Component {
     }
 
     return <React.Fragment>
-      <h1>Onboarding Test - Write sentences and fool the AI!</h1>
-      <p>Welcome! This is your first time working on this task. We would like you to take a quick qualification test. The qualification test will have <strong>two phases</strong>.<br />
+      <h1>Onboarding Test - Read, Reason, and then Choose.</h1>
+      <p>Welcome! This is your first time working on this task. We would like you to take a quick qualification test. The qualification test will have <strong>five questions</strong>.<br />
         Please read the instructions and take the test carefully. <br />
         <span style={{color: "red"}}><b> Warning:</b></span>You have only <strong>one</strong> chance to take the test and failure to pass the test will <strong>disqualify</strong> you from working on these HITs.
       </p>
         {phase_1_panel}
         {phase_1_to_2_panel}
-        {phase_2_panel}
+        {/*{phase_2_panel}*/}
        <p>
-        {finishing_panel}
+        {/*{finishing_panel}*/}
        </p>
       </React.Fragment>;
   }
 }
 
 
-export { NLIR4TaskOnboarder }
+export { NLIR4VTaskOnboarder }

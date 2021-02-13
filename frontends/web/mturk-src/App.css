@@ -32,3 +32,9 @@
   color: black;
   background-color: #dc3545!important;
 }
+
+li {
+  list-style: disc outside none;
+  display: list-item;
+  margin-left: 1.5em;
+}

@@ -1,8 +1,7 @@
 import React from 'react';
 import {Button, Container,} from 'react-bootstrap';
-import {ExampleGoodCards} from "./GoodExampleCards.jsx";
 
-var seedrandom = require('seedrandom');
+import {ExampleGoodCards} from "./GoodExampleCards.jsx";
 
 
 class NLIWritingInterface extends React.Component {
@@ -10,18 +9,16 @@ class NLIWritingInterface extends React.Component {
     super(props);
     this.api = props.api;
     this.modelURLs = [
-        // "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=nli-r4-1", // roberta
-        // "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=nli-r4-2", // albert
-        "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=nli-r4-3", // xlnet
-        // "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=nli-r4-4", // bart
-        // "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=nli-r4-5", // electra
+        "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=nli-r4-1",
+        "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=nli-r4-2",
+        "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=nli-r4-3",
+        "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=nli-r4-4",
+        "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=nli-r4-5",
     ];
     // set the api to production mode
     // https://api.dynabench.org
 
     this.api.domain = "https://api.dynabench.org"
-
-    this.randomPrediction = true
 
     this.meta_save = {
       debug_flag: false,
@@ -32,35 +29,40 @@ class NLIWritingInterface extends React.Component {
       // here comes the new state,
 
       // the data from the requester.
-      reqData: {
-        dataId: "",
-        passage: "",
-        targetLabel: 2,  //0, 1, 2
-        context_response: {}, // the response from api service
-      },
+      // reqData: {
+      //   dataId: "",
+      //   passage: "",
+      //   targetLabel: 2,  //0, 1, 2
+      //   context_response: {}, // the response from api service
+      // },
 
       // the data of the responser/annotator.
-      resData: {
-        statement: "",
-        labelExplanation: "",
-        modelExplanation: "",
-      },
+      // resData: {
+      //   statement: "",
+      //   labelExplanation: "",
+      //   modelExplanation: "",
+      // },
+      // request data:
 
-      modelData: {
-        prob: [], //E, N, C
-        predLabel: null, //0, 1, 2
-        model_response: {},
-      },
+      passage: "",
+      statement: "",
+      targetLabel: 0,
 
-      last_sumbitted_example_id: null,
+      selectedLabel: -1,
+      firstlabel: -1,
+      additionalSelectedLabel: -1,
+      example: null,
+
+      isReading: false,
+      isConfirmed: false,
+      isSecondlyConfirmed: false,
+      isAdditionalConfirmed: false,
 
       showPreview: false,
       submittedOnce: false,
       submitDisabled: true,
       modelFooled: false,
       modelCalculating: false,
-
-      chanceToSwitch: 10,
 
       // here we can save some meta data.
       session_id: "", // passage, mturk, target label is a session.
@@ -77,6 +79,10 @@ class NLIWritingInterface extends React.Component {
       modelPredIdx: null,
       modelPredStr: '',
       hypothesis: "",
+
+      startDateTime: null,
+      endDateTime: null,
+      endSecondDateTime: null,
 
       content: [],
 
@@ -95,7 +101,6 @@ class NLIWritingInterface extends React.Component {
     // this.updateAnswer = this.updateAnswer.bind(this);
     console.log("Log from Writing Interface! State:", this.state);
     console.log("Log from Writing Interface! API:", this.props.api);
-    console.log("Log from Writing Interface! Props:", this.props);
   }
 
   explainExample = (id, uid, LabelExp, ModelExp) => {
@@ -133,7 +138,7 @@ class NLIWritingInterface extends React.Component {
     this.setState({submitDisabled: true, refreshDisabled: true, submittedOnce:false, modelFooled:false,
       number_of_tried_for_current_session: 0, session_start_date: new Date(), last_submit_date: new Date(),
       resData: {statement: "", labelExplanation: "", modelExplanation: ""}, modelData: {prob: [], predLabel: null, model_response: {}}}, function () {
-      this.api.getRandomContext(this.state.taskId, this.state.task.cur_round, this.props.taskConfig.dyna_tags)
+      this.api.getRandomContext(this.state.taskId, this.state.task.cur_round)
       .then(result => {
         const randomID = Math.floor(Math.random() * 100);
         const randomTarget = Math.floor(Math.random() * 3);
@@ -154,6 +159,27 @@ class NLIWritingInterface extends React.Component {
         console.log(error);
       });
     });
+  }
+
+  InitNewExample() {
+    this.api
+      .getRandomExample(this.state.taskId, this.state.task.cur_round, this.props.taskConfig.dyna_tags)
+      .then((result) => {
+        if (this.state.task.type !== 'extract') {
+          result.target = this.state.task.targets[parseInt(result.target_pred)];
+        }
+        this.setState({
+          example: result,
+          passage: result.context.context,
+          statement: result.text
+        });
+        console.log("After get example:", this.state)
+      }, (error) => {
+        console.log(error);
+        this.setState({
+          example: false
+        });
+      });
   }
 
   handleTaskSubmit() {
@@ -221,7 +247,6 @@ class NLIWritingInterface extends React.Component {
             'assignmentId': this.props.assignmentId,
             'fullresponse': this.state.task.type == 'extract' ? JSON.stringify(this.state.answer) : this.state.target
           };
-          const tag = this.props.taskConfig.dyna_tags.length >= 1 ? this.props.taskConfig.dyna_tags[0] : null
           this.api.storeExample(
             this.state.task.id,
             this.state.task.cur_round,
@@ -230,8 +255,7 @@ class NLIWritingInterface extends React.Component {
             this.state.hypothesis,
             this.state.task.type == 'extract' ? answer_text : this.state.target,
             result,
-            metadata,
-            tag
+            metadata
           ).then(result => {
             var key = this.state.content.length-1;
             this.state.tries += 1;
@@ -307,8 +331,9 @@ class NLIWritingInterface extends React.Component {
       result.targets = result.targets.split('|'); // split targets
       this.setState({task: result}, function() {
         // this.getNewContext();
-        this.InitNewContext();
-        // console.log(this.state);
+        // this.InitNewContext();
+        this.InitNewExample();
+        console.log("After mount:", this.state);
       });
     }, error => {
       console.log(error);
@@ -345,25 +370,6 @@ class NLIWritingInterface extends React.Component {
     // some thing to submit the HIT and clean it up.
   }
 
-  getRandomPredictions = () => {
-    // get a random number her
-    var rng = seedrandom(this.state.reqData.passage + this.state.resData.statement)
-    const v1 = rng()
-    const v2 = rng()
-    const v3 = rng()
-    const sum = v1 + v2 + v3
-
-    return {
-      logits: [v1, v2, v3],
-      prob: [v1 / sum, v2 / sum, v3 / sum],
-      s1: this.state.reqData.passage,
-      s2: this.state.resData.statement,
-      status: "finished",
-      model_name: "no-model",
-    }
-    // remember to give no-model in metadata to waive the signature requirement.
-  }
-
   submitStatementFake = () => {
     this.setState({modelCalculating: true, submittedOnce: true, submitDisabled: true}, function () {
 
@@ -375,7 +381,7 @@ class NLIWritingInterface extends React.Component {
       };
 
       const randomStrValueForModelURL = this.state.reqData.passage + this.props.providerWorkerId
-      const cur_modelURLIndex = this.mod(this.hashCode(randomStrValueForModelURL), this.modelURLs.length)
+      const cur_modelURLIndex = this.mod(this.hashCode(randomStrValueForModelURL), 5)
       const cur_modelURL = this.modelURLs[cur_modelURLIndex]
       console.log("Model URL from submitStatementFake:", cur_modelURL)
 
@@ -388,71 +394,8 @@ class NLIWritingInterface extends React.Component {
       // const modelProb = randomArray.map((a) => {
       //   return (a / sum)
       // });
-      if (this.randomPrediction) {
-        const results = this.getRandomPredictions()
-        const modelProb = results.prob
-            const modelPredLabel = modelProb.indexOf(Math.max(...modelProb));
-            // var modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
-            // var modelPredStr = this.state.task.targets[modelPredIdx];
-            // var modelFooled = result.prob.indexOf(Math.max(...result.prob)) !== this.state.target;
-            const newModelData = {
-              prob: modelProb,            //E, N, C
-              predLabel: modelPredLabel,  //0, 1, 2
-              model_response: results
-            }
 
-            const number_of_tried = this.state.number_of_tried_for_current_session + 1
-            this.setState({modelData: newModelData, submittedOnce: true, modelCalculating: false, submitDisabled: false,
-              number_of_tried_for_current_session: number_of_tried}, function () {
-              this.checkModelFeedback()
-              console.log("Check State after submit we get model response (State):", this.state)
-
-              const metadata = {
-                session_id: this.state.session_id,
-                model_url: "no-model",
-                annotator_id: this.props.providerWorkerId,
-                mephisto_id: this.props.mephistoWorkerId,
-                agentId: this.props.agentId,
-                assignmentId: this.props.assignmentId,
-                session_start_date: this.state.session_start_date,
-                last_submit_date: this.state.last_submit_date,
-                current_date: new Date(),
-                number_of_tried_for_current_session: this.state.number_of_tried_for_current_session,
-                model: "no-model",
-                ...this.meta_save
-              }
-
-              const tag = this.props.taskConfig.dyna_tags.length >= 1 ? this.props.taskConfig.dyna_tags[0] : null
-              this.api.storeExample(
-                this.state.task.id,
-                this.state.task.cur_round,
-                'turk',
-                this.state.reqData.dataId,
-                this.state.resData.statement,
-                this.state.reqData.targetLabel,
-                results,
-                metadata,
-                tag
-              ).then(result => {
-                this.setState({last_submit_date: new Date(), last_sumbitted_example_id: result['id']}, function () {
-                  this.explainExample(
-                      this.state.last_sumbitted_example_id,
-                      this.props.providerWorkerId,
-                      this.state.resData.labelExplanation,
-                      this.state.resData.modelExplanation,
-                  ).then(result => {
-                    console.log("One Example Updated:", result, "State:", this.state)
-                  }, error => {
-                    console.log(error);
-                  });
-                  console.log("One Example Stored:", result, "State:", this.state)
-                })
-              }, error => {
-                console.log(error);
-              });
-            })
-      } else {
-        this.api.getModelResponse(cur_modelURL, modelInputs)
+      this.api.getModelResponse(cur_modelURL, modelInputs)
           .then(results => {
             const modelProb = results.prob
             const modelPredLabel = modelProb.indexOf(Math.max(...modelProb));
@@ -485,7 +428,6 @@ class NLIWritingInterface extends React.Component {
                 ...this.meta_save
               }
 
-              const tag = this.props.taskConfig.dyna_tags.length >= 1 ? this.props.taskConfig.dyna_tags[0] : null
               this.api.storeExample(
                 this.state.task.id,
                 this.state.task.cur_round,
@@ -494,8 +436,7 @@ class NLIWritingInterface extends React.Component {
                 this.state.resData.statement,
                 this.state.reqData.targetLabel,
                 results,
-                metadata,
-                tag
+                metadata
               ).then(result => {
                 this.setState({last_submit_date: new Date(), last_sumbitted_example_id: result['id']}, function () {
                   this.explainExample(
@@ -515,8 +456,6 @@ class NLIWritingInterface extends React.Component {
               });
             })
           })
-      }
-
     })
   }
 
@@ -534,7 +473,139 @@ class NLIWritingInterface extends React.Component {
     }
   }
 
+  clickSelection(selection_id, e) {
+    // e.preventDefault();
+    // console.log(e.currentTarget);
+    // console.log(typeof e.currentTarget);
+    // data-eid
+    if (!this.state.isConfirmed || !this.state.isSecondlyConfirmed) {
+      const remap = {
+        0: 0,
+        1: 2,
+        2: 1,
+        3: 3,
+      }
+
+      // console.log(e.currentTarget.getAttribute['dataeid'])
+      // console.log(eid)
+      // console.log(selection_id)
+
+      // let updatedSelection = this.state.selections
+      // updatedSelection[eid] = remap[selection_id]
+      // updatedSelection[parseInt(e.currentTarget.getAttribute['data-eid'])] = parseInt(remap[parseInt(e.currentTarget.getAttribute['data-key'])]);
+      // console.log(updatedSelection)
+
+      this.setState({'selectedLabel': remap[selection_id]}, () => {
+        console.log("After Click Selection:", this.state)
+      })
+    }
+  }
+
+  clickAdSelection(selection_id, e) {
+    // e.preventDefault();
+    // console.log(e.currentTarget);
+    // console.log(typeof e.currentTarget);
+    // data-eid
+    if (!this.state.isAdditionalConfirmed) {
+      const remap = {
+        0: 0,
+        1: 1,
+        2: 2,
+      }
+
+      // console.log(e.currentTarget.getAttribute['dataeid'])
+      // console.log(eid)
+      // console.log(selection_id)
+
+      // let updatedSelection = this.state.selections
+      // updatedSelection[eid] = remap[selection_id]
+      // updatedSelection[parseInt(e.currentTarget.getAttribute['data-eid'])] = parseInt(remap[parseInt(e.currentTarget.getAttribute['data-key'])]);
+      // console.log(updatedSelection)
+      this.setState({additionalSelectedLabel: remap[selection_id]}, () => {
+        console.log("After Click Ad Selection:", this.state)
+      })
+    }
+  }
+
+  SubmitAnswer = () => {
+
+
+    let action = "incorrect"
+    if (this.state.selectedLabel === parseInt(this.state.example.target_pred)) {
+        action = "correct"
+    } else if (this.state.selectedLabel === 3) {
+        action = "flagged"
+    }
+
+    const save_metadata = {
+        firstselection: this.state.firstlabel,
+        selection: this.state.selectedLabel,
+        certainty: this.state.additionalSelectedLabel,
+        startDate: this.state.startDateTime,
+        endFirstDate: this.state.endDateTime,
+        endSecondDate: this.state.endSecondDateTime
+    }
+
+    console.log("Submit metadata:", save_metadata)
+
+    this.api
+        .validateExample(this.state.example.id, action, "user",
+            save_metadata, this.props.providerWorkerId)
+            .then(result => {
+            console.log("OnSubmit:", result)
+		    this.props.onSubmit({});
+	    }), (error) => {
+		    console.log(error);
+		    this.props.onSubmit({});
+	    }
+  }
+
+  ConfirmBtn = () => {
+    if (!this.state.isConfirmed) {
+      this.setState({isReading: false, isConfirmed: true, endDateTime: new Date(), firstlabel: this.state.selectedLabel},
+        () => {console.log("After First Confirm:", this.state)})
+    } else {
+      this.setState({isReading: false, isSecondlyConfirmed: true, endSecondDateTime: new Date()},
+        () => {console.log("After Second Confirm:", this.state)})
+    }
+  }
+
   render() {
+
+    let selection_list = [false, false, false, false];
+        // console.log(this.props);
+    if (this.state.selectedLabel !== -1) {
+
+        if (this.state.selectedLabel === 0) {
+            selection_list[0] = true
+        } else if (this.state.selectedLabel === 1) {
+            selection_list[2] = true
+        } else if (this.state.selectedLabel === 2) {
+            selection_list[1] = true
+        } else if (this.state.selectedLabel === 3) {
+            selection_list[3] = true
+        }
+    }
+
+    const selection_text = {
+        0: "Definitely Correct",
+        1: "Definitely Incorrect",
+        2: "Neither Definitely Correct nor Definitely Incorrect",
+        3: "Please select this if you think the statement is totally broken and can not be understood.",
+    }
+
+    const selection_items = selection_list.map((is_selected, key) => {
+        const curClassName = is_selected ? "list-group-item active" : "list-group-item";
+        return <li key={key}
+                   type="button" className={curClassName}
+                    onClick={(e) => this.clickSelection(key, e)}>{selection_text[key]}</li>
+    });
+
+
+    const startReadingPanel = (this.state.isReading || this.state.isConfirmed) ? <div></div> : <div>
+      Now click on the "Start" button to start reading and make your choice.<br />
+      <Button className="btn btn-info" onClick={() => {this.setState({isReading: true, startDateTime: new Date()})}}>Start</Button>
+    </div>
 
     const labelDescMapping = {
       0: 'definitely correct',
@@ -542,139 +613,97 @@ class NLIWritingInterface extends React.Component {
       2: 'definitely incorrect',
     }
 
-    const targetLabelDesc = `${labelDescMapping[this.state.reqData.targetLabel]}`
+    let writerFeedbackDiv = <></>;
+    if (this.state.isConfirmed) {
+      const targetLabelDesc = `${labelDescMapping[parseInt(this.state.example.target_pred)]}`
 
-    // model feedback panel
-    let modelFeedBack = <></>
-    if (this.state.submittedOnce) {
-      let modelResult = <ul>
-              <li>Definitely Correct: {(this.state.modelData.prob[0] * 100).toFixed(2)} %</li>
-              <li>Definitely Incorrect: {(this.state.modelData.prob[2] * 100).toFixed(2)} %</li>
-              <li>Neither: {(this.state.modelData.prob[1] * 100).toFixed(2)} %</li>
-          </ul>
-      if (this.state.modelCalculating) {
-        modelResult = <>
-          <div>AI is thinking...</div>
-          <div className="spinner-border text-primary" role="status">
-            <span className="sr-only">AI is thinking...</span>
-          </div>
-        </>
-      }
-
-      modelFeedBack = <>
-        <strong>The AI system thinks that the statement is:</strong>
-          <div style={{color: "blue"}}>
-            {modelResult}
-        </div>
-        </>
-    }
-    // end model feedback panel
-
-    // depend on the model feedback, we give different instruction
-    let feedBackDesc = <></>
-    if (!this.state.modelCalculating && this.state.submittedOnce && !this.state.modelFooled) {
-      feedBackDesc = <>
-        <div style={{ color: "red"}}>
-        <strong>Nice try! However, the AI got it correct. Try to modify your statement and fool the AI again.</strong>
-        </div>
-      </>
-    } else if (!this.state.modelCalculating && this.state.submittedOnce && this.state.modelFooled) {
-      feedBackDesc = <>
-        <div>
-        <strong>Great! You successfully fooled the AI.</strong> <br />
-        Now, please review your statement carefully to make sure that the statement belongs to the right category and your explanation is also correct (you can still edit your explanations but you cannot edit your statement now).
-        </div>
-      </>
+      writerFeedbackDiv = <div style={{backgroundColor: '#EFDFD7', color: '#B52D0B'}}>
+        <br />
+        Thank you for your answer.<br />
+        We would like you to know that another person thinks that the given statement is <strong>{targetLabelDesc}</strong>. <br />
+        The reason (by that person) is <strong>"{this.state.example.example_explanation}"</strong>. <br />
+        Notice that its opinion might not be correct and sometimes even make no sense. <br />
+        <em>But please read its opinion and if you do find that its opinion is more accurate. Please edit your answer.</em>
+        <br />
+        <br />
+      </div>
     }
 
-    let operationPanel = <>
-      <div>
-        Once you finished, you can click the <strong>Submit</strong> button to see what the AI thinks.<br />
-        <Button className="btn btn-primary btn-success" onClick={this.submitStatementFake} disabled={this.state.submitDisabled || this.isExampleSubmittable() === false}>Submit Statement</Button>
-      </div>
-      <div>
-        If you find it too hard to fool the AI, we can click the <strong>Switch Passage</strong> button to switch to another Passage.<br />
-        <Button className="btn btn-primary btn-success" onClick={this.switchContext} disabled={this.state.submitDisabled || this.state.chanceToSwitch <= 0}>Switch Passage</Button><br />
-        You have <strong>{this.state.chanceToSwitch}</strong> chances remaining to switch the passage.
-      </div>
-    </>
-    if (this.state.modelFooled) {
-      operationPanel = <>
-      <div style={{backgroundColor: '#EFDFD7', color: '#B52D0B'}}>
-        <strong>Watch out !!!!</strong> <br />
-        You are supposed to write a statement that is <strong>{targetLabelDesc}</strong>. <br />
-        Please be sure to verify that your statement <strong>"{this.state.resData.statement}"</strong> is indeed <strong>{targetLabelDesc}</strong> given the passage.<br />
-        Please <strong>Retract</strong> your statement if it is not.
-        <br />
-        <br />
-        We will pass that example on to other humans for verification. If they tend to disagree with you, you will be <strong>flagged</strong> or even <strong>blocked</strong>. <br />
-        <strong>Please do not submit the example before you are sure that the category is correct.</strong>
-        <br />
-        <br />
-      </div>
-
-      <div>
-        If you think that your statement belongs to the right category and all your input is good, you can click the <strong>Finish</strong> button to finish the HIT.<br />
-        <Button className="btn btn-primary btn-success" onClick={this.finishExample} disabled={this.isExampleSubmittable() === false}>Finish</Button>
-      </div>
-
-      <div>
-        If you find that your made a mistake and your statement belongs to the wrong category, please click the <strong>Retract</strong> button below to retract your last input.<br />
-        <Button className="btn btn-primary btn-success" onClick={this.retractExample}>Retract</Button><br />
-      </div>
-    </>
-    }
-
-    const tooShortNoticePanel = <div style={{color: "red"}}>At least 25 characters are required.</div>
-    const statementShort = (this.state.resData.statement.trim().length <= 25) ? tooShortNoticePanel : <></>
-    const LabelExpShort = (this.state.resData.labelExplanation.trim().length) <= 25 ? tooShortNoticePanel : <></>
-    const ModelExpShort = (this.state.resData.modelExplanation.trim().length) <= 25 ? tooShortNoticePanel : <></>
-
-    const collectionPanel = <>
-      <div className="card">
-      <div className="card-body">
-        {/*<h5 className="card-title">Main Task</h5>*/}
-      <div className="card-text">
-      <strong>Passage:</strong>
-        <div style={{color: "blue"}}>
-        {this.state.reqData.passage}
-        </div>
-
-      <br/>
-      Now, based on the <strong>passage</strong>, we would like you to
-      <div className="card">
-        <ul className="list-group list-group-flush">
-            <li className="list-group-item"><strong>Write a statement that is <span style={{backgroundColor: "lightblue"}}>{targetLabelDesc}</span>:</strong><br />
-                <input type="text" className="form-control" placeholder={`Write a statement that is ${targetLabelDesc}?`} onChange={this.handleStatementChange} disabled={this.state.modelFooled} value={this.state.resData.statement}/>
-                {statementShort}
-                (Please do not fool the models with typos or character replacements. The reasoning between the passage and the statement should be non-trivial.)
-            </li>
-            <li className="list-group-item"><strong>Explain why you think the statement is <span style={{backgroundColor: "lightblue"}}>{targetLabelDesc}</span>:</strong><br />
-                <input type="text" className="form-control" placeholder={`Explain why you think the statement is ${targetLabelDesc}:`} onChange={this.handleLabelExpChange} value={this.state.resData.labelExplanation}/>
-                {LabelExpShort}
-            </li>
-            <li className="list-group-item"><strong>Explain why you think the AI might get it wrong:</strong><br />
-                <input type="text" className="form-control" placeholder={`Explain why you think the AI might get it wrong:`} onChange={this.handleModelExpChange} value={this.state.resData.modelExplanation}/>
-                {ModelExpShort}
-            </li>
+    const collectionPanel = (this.state.isReading || this.state.isConfirmed) ? <div className="card">
+        <div className="card-body">
+        <h5 className="card-title">Question</h5>
+        <p className="card-text">
+        <strong>Passage:</strong> {this.state.passage}<br />
+        <strong>Statement:</strong> {this.state.statement}
+        </p>
+        <div className="card-text">
+        <em>Given the passage, the statement is (choose one of the answers listed below):</em>
+        <ul className="list-group">
+            {selection_items}
         </ul>
-      </div>
-        <br />
-        {modelFeedBack}
-        <br />
-        {feedBackDesc}
-        <br />
-        {operationPanel}
-      </div>
-      </div>
-      </div>
-    </>
+          {writerFeedbackDiv}
+        </div>
+
+        <div>
+        Now click on the "Confirm" button once you have <strong>finished</strong> and <strong>verified</strong> your answer.<br />
+        We would kindly ask you to read the text <strong>word by word carefully</strong> because some examples can be very tricky. <br />
+
+        <Button className="btn btn-info" disabled={this.state.isSecondlyConfirmed || (this.state.selectedLabel === -1)} onClick={this.ConfirmBtn}>Confirm</Button>
+        </div>
+        </div>
+      </div> : <></>
+
+
+    // additional collection panel.
+
+    let ad_selection_list = [false, false, false];
+        // console.log(this.props);
+    if (this.state.additionalSelectedLabel !== -1) {
+
+        if (this.state.additionalSelectedLabel === 0) {
+            ad_selection_list[0] = true
+        } else if (this.state.additionalSelectedLabel === 1) {
+            ad_selection_list[1] = true
+        } else if (this.state.additionalSelectedLabel === 2) {
+            ad_selection_list[2] = true
+        }
+    }
+
+    const ad_selection_text = {
+        0: "You are confident that your answer is right.",
+        1: "You are uncertain whether your answer is right but you are fairly confident that others will pick the same one as the best answer.",
+        2: "You are uncertain whether your answer is right and whether others will pick the same one but you have tried your best effort."
+    }
+
+    const ad_selection_items = ad_selection_list.map((is_selected, key) => {
+        const curClassName = is_selected ? "list-group-item active" : "list-group-item";
+        return <li key={key}
+                   type="button" className={curClassName}
+                    onClick={(e) => this.clickAdSelection(key, e)}>{ad_selection_text[key]}</li>
+    });
+
+    const additionalCollectionPanel = this.state.isSecondlyConfirmed ?
+        <div className="card">
+        <div className="card-body">
+        <h5 className="card-title">Additional Question</h5>
+        <div className="card-text">
+        <em>We would like you to tell us how confident you are regarding your answer:</em>
+        <ul className="list-group">
+            {ad_selection_items}
+        </ul>
+        </div>
+
+        <div>
+        Now click on the "Confirm" button once you finished.<br />
+        <Button className="btn btn-info" disabled={this.state.isAdditionalConfirmed || (this.state.additionalSelectedLabel === -1)} onClick={() => {this.setState({isAdditionalConfirmed: true}, () => {this.SubmitAnswer(); console.log("After Additional Confirm:", this.state)})}}>Confirm</Button>
+        </div>
+        </div></div> : <></>
 
     const topInstruction = <>
-        <h1>Write sentences and fool the AI!</h1>
+        <h1>Read, Reason, and Then Choose.</h1>
       </>
 
-    let taskPreviewButton = <></>
+    let taskPreviewButton = <></>;
     if (this.state.showPreview) {
       taskPreviewButton = <Button className="btn btn-info" onClick={() => {this.setState({showPreview: false})}}>Hide Task Preview</Button>
     } else {
@@ -682,43 +711,35 @@ class NLIWritingInterface extends React.Component {
     }
 
     const taskPreview = this.state.showPreview ? <>
-      <p>You will be trying to <strong>beat an AI at a game</strong>. The AI is trying to understand English.
-        </p>
-        Given a <strong>passage</strong>, the AI must decide whether a <strong>statement</strong> is:<br />
+        {/*<h1>Read, Reason, and Then Choose.</h1>*/}
+        <br />
+        <p></p>
+        Given a <strong>passage</strong>, a <strong>statement</strong> can be:<br />
         <ul>
           <li>Definitely correct; or</li>
           <li>Definitely incorrect; or</li>
           <li>Neither.</li>
         </ul>
 
-        <p>In the game, you see a passage and a category. We would like you to write a statement that belongs to that category and to no other.<br />
-        You should write your statements to trick the AI into picking the wrong category.<br />
-        After you write your statement, we would also like you to explain:
-          <ul>
-            <li>Why your statement is definitely correct, definitely incorrect, or neither?</li>
-            <li>Why you think the AI might get it wrong?</li>
-          </ul>
-        </p>
-        <p>The AI will tell you what it thinks for each statement you write. Your goal is to fool the AI to pick the wrong category.
-            For each passage, you will have multiple chances to write statements util you can fool the AI.</p>
+        <p>In the task, you see a passage and a statement. We would like you to pick the correct category after reading and fully understand the text.</p>
+
+        <p>We would kindly ask you to read the text word by word carefully because some examples can be very tricky. Additionally, after submitting your answer, we would also like you to tell us how hard it is to pick the answer.</p>
 
         <p>
-        <strong style={{color: "red"}}>Warning:</strong> Please do not spam the HITs, if other humans tend to disagree with your examples, you might be flagged or even blocked.
+        <strong style={{color: "red"}}>Warning:</strong> Please do not spam the HITs, if other humans tend to disagree with your answer, you might be flagged or even blocked.
         </p>
 
-        <p>
-            The AI utilizes the latest technologies to understand language and can be very smart. Use your creativity fool the AI - it will be fun!!!
-        </p>
-      </> : <></>
+        <hr />
+        </> : <></>
+
+    // let finishing_panel = <div>
+    //     Thank you for your input.
+    //     Congratulations! You have passed the Onboarding. Click the button below to continue.<br />
+    //     <Button className="btn btn-primary btn-success" onClick={this.completeOnboarding}>Finish Onboarding Test</Button>
+    // </div>
 
     const bottomInstruction = <>
       <br />
-      <p>
-        For every successful statement, we will give your statement to other humans for verification. <br />
-        If <strong>all</strong> of them agree <strong>(but the AI is fooled)</strong>, you will receive a <strong>bonus</strong>.<br />
-        If you can keep providing good examples, your estimated total income will be <strong>DOUBLED</strong>.
-        </p>
-
         <p>
         <strong style={{color: "red"}}>Warning:</strong> Please do not spam the HITs, if other humans tend to disagree with your inputs, you might be flagged and even blocked.
         </p>
@@ -733,7 +754,9 @@ class NLIWritingInterface extends React.Component {
         <hr />
         <ExampleGoodCards />
         <hr />
+        {startReadingPanel}
         {collectionPanel}
+        {additionalCollectionPanel}
         {bottomInstruction}
       </Container>
     );

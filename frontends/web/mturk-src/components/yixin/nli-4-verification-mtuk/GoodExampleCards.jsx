@@ -216,44 +216,31 @@ class ExampleGoodCards extends React.Component {
                 <div className="card-body">
                     <div className="card-text">
                         <p>
-                        <strong>Passage:</strong><br /> <span style={{color: "blue"}}>{this.state.curExample.passage}</span>
+                        <strong>Passage:</strong> <span style={{color: "blue"}}>{this.state.curExample.passage}</span>
                         </p>
                     </div>
                     <div className="card-text">
                         <p>
-                        Based on the passage, write a <strong>statement</strong> that
-                            is <span style={{backgroundColor: "lightblue"}}>{this.label_mappiing[this.state.curExample.targetLabel]}</span>?:<br /> <span style={{color: "red"}}><u>{this.state.curExample.hypothesis}</u></span>
-                        </p>
-                    </div>
-                    <div className="card-text">
-                        <p>
-                        <strong>Why your statement
-                        is <span style={{backgroundColor: "lightblue"}}>{this.label_mappiing[this.state.curExample.targetLabel]}</span>?:</strong><br /> <span style={{color: "red"}}><u>{this.state.curExample.labelExplanation}</u></span>
-                        </p>
-                    </div>
-                    <div className="card-text">
-                        <p>
-                        <strong>Why you think the AI might get it wrong?:</strong><br /> <span style={{color: "red"}}><u>{this.state.curExample.modelExplanation}</u></span>
+                        <strong>Statement:</strong> <span style={{color: "blue"}}>{this.state.curExample.hypothesis}</span>
                         </p>
                     </div>
 
                     <div className="card-text">
                         <p>
-                        <strong>The AI thinks that the statement is:</strong>
-                        <div style={{color: "blue"}}>
-                        <ul>
-                            <li>Definitely Correct: {(this.state.curExample.modelPrediction[0] * 100).toFixed(2)} %</li>
-                            <li>Definitely Incorrect: {(this.state.curExample.modelPrediction[2] * 100).toFixed(2)} %</li>
-                            <li>Neither: {(this.state.curExample.modelPrediction[1] * 100).toFixed(2)} %</li>
-                        </ul>
-                        </div>
+                        <strong>Given the passage, the statement is: </strong><span style={{backgroundColor: "coral"}}>{this.label_mappiing[this.state.curExample.targetLabel]}</span>
+                        </p>
+                    </div>
+                    <div className="card-text">
+                        <p>
+                        Why the statement
+                        is <span style={{backgroundColor: "coral"}}>{this.label_mappiing[this.state.curExample.targetLabel]}</span>?:<br /> <span style={{color: "green"}}><u>{this.state.curExample.labelExplanation}</u></span>
                         </p>
                     </div>
 
                 </div>
                 <div className="card-text text-muted">
                     The text in the <span style={{color: "blue"}}>blue</span> is what you will be provided in the HITs.<br />
-                    The text in the <span style={{color: "red"}}>red</span> <u>is what we would like you to write.</u><br />
+                    The text in the <span style={{backgroundColor: "coral"}}>red</span> <u>is what we would like you to choose.</u><br />
                     Please follow the instructions in the HITs and give the responses accordingly.
                 </div>
             </div>
@@ -261,7 +248,7 @@ class ExampleGoodCards extends React.Component {
 
         return <React.Fragment>
             <h3>Get Help</h3>
-            <div>The AI can be very clever. Get help by clicking the "<strong>Show Example</strong>" below to see good examples. We hope that the examples can help you understand the task and inspire you if you’re stumped.</div>
+            <div>Get help by clicking the "<strong>Show Example</strong>" below to see examples. We hope that the examples can help you understand the task and differentiate the categories you if you’re stumped.</div>
             {showExampleButton}&nbsp;&nbsp;{hideExampleButton}
             {curExamplePanel}
             </React.Fragment>
