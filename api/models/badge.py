@@ -268,8 +268,7 @@ class BadgeModel(BaseModel):
             else:
                 metadata = {}
 
-            if "async_badges_to_award" not in metadata:
-                metadata["async_badges_to_award"] = []
+            async_badges_to_award = []
 
             # Recompute all example streaks for a user.
             recomputed_example_streak_badge_names = []
@@ -296,7 +295,9 @@ class BadgeModel(BaseModel):
                             example_validations = []
 
                         if (
-                            self.lengthOfFilteredList(
+                            not example.model_wrong
+                            or example.retracted
+                            or self.lengthOfFilteredList(
                                 lambda validation: validation.label.name == "flagged",
                                 example_validations,
                             )
@@ -425,15 +426,15 @@ class BadgeModel(BaseModel):
             # (e.g., if a 20 example streak is undeserved, a 5 example streak might
             # be deserved instead)
             for badge_name in recomputed_example_streak_badge_names:
-                metadata["async_badges_to_award"].append(badge_name)
+                async_badges_to_award.append(badge_name)
             for badge_name in recomputed_day_streak_badge_names:
-                metadata["async_badges_to_award"].append(badge_name)
+                async_badges_to_award.append(badge_name)
 
             # Award badges that must be computed asynchronously.
             if user.total_verified_fooled > 0 and "FIRST_VALIDATED_FOOLING" not in [
                 badge.name for badge in badges_and_examples_by_uid[user.id]["badges"]
             ]:
-                metadata["async_badges_to_award"].append("FIRST_VALIDATED_FOOLING")
+                async_badges_to_award.append("FIRST_VALIDATED_FOOLING")
 
             if (
                 len(badges_and_examples_by_uid[user.id]["examples"]) > 1
@@ -448,14 +449,20 @@ class BadgeModel(BaseModel):
                     for badge in badges_and_examples_by_uid[user.id]["badges"]
                 ]
             ):
-                metadata["async_badges_to_award"].append("FIRST_STEPS")
+                async_badges_to_award.append("FIRST_STEPS")
 
             if user.id in weekly_winners and datetime.date.today().weekday() == 0:
-                metadata["async_badges_to_award"].append("WEEKLY_WINNER")
+                async_badges_to_award.append("WEEKLY_WINNER")
 
-            user.metadata_json = json.dumps(metadata)
-            for name in metadata["async_badges_to_award"]:
+            for name in async_badges_to_award:
                 badges_to_add.append(self._badgeobj(user.id, name))
+
+            if "async_badges_to_award" not in metadata:
+                metadata["async_badges_to_award"] = async_badges_to_award
+            else:
+                metadata["async_badges_to_award"] += async_badges_to_award
+            user.metadata_json = json.dumps(metadata)
+
         self.createNotificationsAndRemoveBadges(
             badges_to_remove, "BADGE_REMOVED_STREAK"
         )

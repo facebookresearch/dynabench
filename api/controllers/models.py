@@ -14,7 +14,6 @@ from common.config import config
 from common.logging import logger
 from models.badge import BadgeModel
 from models.model import DeploymentStatusEnum, ModelModel
-from models.notification import NotificationModel
 from models.round import RoundModel
 from models.score import ScoreModel
 from models.task import TaskModel
@@ -130,12 +129,6 @@ def do_upload(credentials):
             )
 
             user_dict = user.to_dict()
-
-            if user_dict["models_submitted"] == 0:
-                bm = BadgeModel()
-                nm = NotificationModel()
-                bm.addBadge({"uid": user_dict["id"], "name": "MODEL_BUILDER"})
-                nm.create(user_dict["id"], "NEW_BADGE_EARNED", "MODEL_BUILDER")
 
             um = UserModel()
             um.incrementModelSubmitCount(user_dict["id"])
