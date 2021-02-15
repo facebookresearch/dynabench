@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 
 import boto3
 
+from datasets.task_config import task_config
 from eval_config import eval_config
 
 
@@ -80,7 +81,12 @@ class BaseDataset(ABC):
                 "Accept": "application/json",
                 "AssembleWith": "Line",
             },
-            TransformResources={"InstanceType": "ml.m5.xlarge", "InstanceCount": 1},
+            TransformResources={
+                "InstanceType": task_config.get(self.task, task_config["default"])[
+                    "instance_type"
+                ],
+                "InstanceCount": 1,
+            },
         )
         return True
 
