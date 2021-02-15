@@ -32,9 +32,6 @@ class MnliBase(BaseDataset):
             if response:
                 logger.info(response)
 
-    def eval(self, model):
-        pass
-
 
 class MnliDevMismatched(MnliBase):
     def __init__(self):

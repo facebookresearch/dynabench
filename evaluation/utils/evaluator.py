@@ -21,8 +21,9 @@ class Job:
         model = m.getUnpublishedModelByMid(model_id).to_dict()
         self.endpoint_name = f"ts{model['upload_timestamp']}-{model['name']}"
         self.dataset = dataset
-        self.status = None
         self.job_name = self.generate_job_name(self.endpoint_name, dataset)
+
+        self.status = None  # will update once job is successfully submitted
 
     def generate_job_name(self, endpoint_name, dataset):
         # TODO: add datetime to job name , make it unique
