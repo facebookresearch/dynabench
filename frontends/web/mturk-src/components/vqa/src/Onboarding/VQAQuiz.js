@@ -6,7 +6,7 @@
 
 import React from "react";
 import { VQAQuizCard } from "./VQAQuizCard.js";
-import { VQAQuizExamples } from "./OnboardingInfo/VQAQuizExamples.js"
+import { VQAQuizExamples } from "./Examples/VQAQuizExamples.js"
 
 class VQAQuiz extends React.Component {
 

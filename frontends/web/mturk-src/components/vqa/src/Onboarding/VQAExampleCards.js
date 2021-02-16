@@ -6,8 +6,8 @@ import {
     InputGroup,
     Col
 } from 'react-bootstrap';
-import AtomicImage from "../../../src/containers/AtomicImage.js";
-import { VQAValidInvalidExamples } from "./OnboardingInfo/VQAValidInvalidExamples.js";
+import AtomicImage from "../../../../../src/containers/AtomicImage.js";
+import { VQAValidInvalidExamples } from "./Examples/VQAValidInvalidExamples.js";
 
 class VQAExampleCards extends React.Component {
 
@@ -53,7 +53,7 @@ class VQAExampleCards extends React.Component {
             <div>
                 <p>
                     In this section we show a bunch of examples of <b>valid</b> and <b>invalid</b> questions.
-                    A valid question is one that needs the image to determine the answer, and the image is sufficient
+                    A valid question is one that needs the image to determine the answer, and the image is enough
                     to determine the answer. An invalid question is one that does not need the image, or where the
                     question can not be answered from the image.
                     For each example below, we show an <b>image</b>, a <b>question</b> and a <b>description</b> of why
