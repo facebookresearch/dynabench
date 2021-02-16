@@ -1,15 +1,9 @@
 const VQAValidInvalidExamples = [
     {
         imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/test2015/COCO_test2015_000000125542.jpg",
-        question: "Do elephants live in the savannah?",
+        question: "What is the capital of USA?",
         isValid: false,
         explanation: "This question can be answered without looking at the image. Therefore, it is not a valid question."
-    },
-    {
-        imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/train2014/COCO_train2014_000000370583.jpg",
-        question: "How many people are visible?",
-        isValid: false,
-        explanation: "The question is hard to answer because what it is shown in the image is not enough to get a consistent result. Ask questions whose answers could be derived from the image."
     },
     {
         imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/train2014/COCO_train2014_000000520486.jpg",

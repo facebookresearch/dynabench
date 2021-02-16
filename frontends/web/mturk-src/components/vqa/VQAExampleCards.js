@@ -48,7 +48,7 @@ class VQAExampleCards extends React.Component {
         } else {
             phaseInstructionsButton = <Button className="btn btn-info mb-3" onClick={() => {this.setState({ showInstructions: true })}}>Show Instructions</Button>
         }
-        const phaseTitle = <h4>Examples - Valid and invalid questions</h4>
+        const phaseTitle = <h4>Examples</h4>
         const phaseInstructions = this.state.showInstructions ?
             <div>
                 <p>

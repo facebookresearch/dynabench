@@ -37,7 +37,7 @@ class VQAFeedbackCard extends React.Component {
                             <InputGroup>
                                 <FormControl
                                     style={{ width: '100%', margin: 2 }}
-                                    placeholder="Write your comments here..."
+                                    placeholder="Optionally write your comments here..."
                                     value={this.props.comments}
                                     onChange={(e) => this.props.handleCommentsChange(e)}
                                 />
