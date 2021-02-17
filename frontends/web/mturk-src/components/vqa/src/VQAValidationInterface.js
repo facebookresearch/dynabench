@@ -7,6 +7,7 @@
 import React from "react";
 import AtomicImage from "../../../../src/containers/AtomicImage.js";
 import { ExampleValidationActions } from "../../../../src/containers/ExampleValidationActions.js";
+import { KeyboardShortcuts } from "../../../../src/containers/KeyboardShortcuts.js"
 import {
     Container,
     Row,
@@ -36,7 +37,7 @@ class VQAValidationInterface extends React.Component {
             responseValidationState: this.VALIDATION_STATES.UNKNOWN,
             flagReason: null,
             taskId: props.taskConfig.task_id,
-            showInstructions: true,
+            showInstructions: false,
             totalValidationsSoFar: 0,
             task: {},
         }
@@ -52,6 +53,18 @@ class VQAValidationInterface extends React.Component {
         }, (error) => {
             console.log(error);
         });
+    }
+
+    setQuestionValidationState = (valState) => {
+        this.setState({
+            questionValidationState: valState,
+            responseValidationState: this.VALIDATION_STATES.UNKNOWN,
+            flagReason: null
+        })
+    }
+
+    setResponseValidationState = (valState) => {
+        this.setState({ responseValidationState: valState })
     }
 
     getNewExample = () => {
@@ -71,11 +84,11 @@ class VQAValidationInterface extends React.Component {
 
     submitValidation = () => {
         if ((this.state.questionValidationState === this.VALIDATION_STATES.UNKNOWN) ||
-            (this.state.questionValidationState === this.VALIDATION_STATES.CORRECT && this.state.responseValidationState.UNKNOWN)) {
+            (this.state.questionValidationState === this.VALIDATION_STATES.CORRECT && this.state.responseValidationState === this.VALIDATION_STATES.UNKNOWN)) {
                 return;
         }
         let action = null;
-        if (this.state.questionValidationState === this.VALIDATION_STATES.FLAGGED || this.state.responseValidationState === this.VALIDATION_STATES.FLAGGED) {
+        if (this.state.questionValidationState === this.VALIDATION_STATES.FLAGGED) {
             action = "flagged"
         } else if (this.state.questionValidationState === this.VALIDATION_STATES.INCORRECT || this.state.responseValidationState === this.VALIDATION_STATES.INCORRECT) {
             action = "incorrect"
@@ -101,14 +114,28 @@ class VQAValidationInterface extends React.Component {
 
     render() {
         const validationInstructions = this.state.showInstructions ? (
-            <p>
-                You will be shown an image and a question.
-                First, you have to determine if the question is <b className="dark-blue-color">valid</b>, this means
-                that <b style={{ color: "red" }}>the image is required to answer the question and the question can be answered based on the image</b>.
-                If it is, your task is to <b>determine whether the provided answer is correct</b>.
-                If you think the example should be reviewed, please click the <b>Flag</b> button and explain why
-                you flagged the example.
-            </p>
+            <>
+                <p>
+                    You will be shown an image and a question. The task consists of two rounds.
+                    First, you have to determine if the question is <b className="dark-blue-color">valid</b>, this means
+                    that the image is required to answer the question and that it can be answered based on the image.
+                    After validating the question, next you will determine whether the provided answer is correct.
+                    If you think the example should be reviewed, please click the <b>Flag</b> button and explain why
+                    you flagged the example (try to use this sparingly).
+                </p>
+                <p>You can also use the key shortcuts to operate:</p>
+                <ul className="mx-3" style={{ listStyleType: "disc" }}>
+                    <li><b>Arrow Up:</b> Valid Question.</li>
+                    <li><b>Arrow Down:</b> Invalid Question.</li>
+                    <li><b>f:</b> Flag Question.</li>
+                    <li><b>Arrow Right:</b> Correct Answer.</li>
+                    <li><b>Arrow Left:</b> Incorrect Answer.</li>
+                    <li><b>s:</b> Show Instructions.</li>
+                    <li><b>h:</b> Hide Instructions.</li>
+                    <li><b>Escape:</b> Clear Selections.</li>
+                    <li> <b>Enter:</b> Submit Validation.</li>
+                </ul>
+            </>
         ): (
             <></>
         )
@@ -129,15 +156,15 @@ class VQAValidationInterface extends React.Component {
                     <Card style={{ width: '100%'}}>
                         {this.state.example ? (
                             <>
-                                <Card.Body className="d-flex justify-content-center pt-2" style={{ height: "auto", overflowY: "scroll" }}>
-                                    <AtomicImage src={this.state.example.context.context} maxHeight={500} maxWidth={600}/>
+                                <Card.Body className="d-flex justify-content-center pt-2" style={{ height: "auto" }}>
+                                    <AtomicImage src={this.state.example.context.context} maxHeight={600} maxWidth={900}/>
                                 </Card.Body>
                                 <Card className="hypothesis rounded border m-3 card">
                                     <Card.Body className="p-3">
                                         <Row>
                                             <Col xs={12} md={7}>
                                                 <h6 className="text-uppercase dark-blue-color spaced-header">
-                                                    Determine if this question is valid:
+                                                    Determine if the image is required to answer the question and if it can be answered based on the image:
                                                 </h6>
                                                 <p>
                                                     {this.state.example.text}
@@ -148,6 +175,8 @@ class VQAValidationInterface extends React.Component {
                                                     flaggedSelected={this.state.questionValidationState === this.VALIDATION_STATES.FLAGGED}
                                                     userMode={this.userMode}
                                                     interfaceMode={this.interfaceMode}
+                                                    isQuestion={true}
+                                                    isFlaggingAllowed={true}
                                                     setCorrectSelected={() => this.setState({ questionValidationState: this.VALIDATION_STATES.CORRECT, flagReason: null })}
                                                     setIncorrectSelected={() => this.setState({ questionValidationState: this.VALIDATION_STATES.INCORRECT, flagReason: null })}
                                                     setFlagSelected={() => this.setState({ questionValidationState: this.VALIDATION_STATES.FLAGGED })}
@@ -156,7 +185,7 @@ class VQAValidationInterface extends React.Component {
                                                 {this.state.questionValidationState === this.VALIDATION_STATES.CORRECT && (
                                                     <div className="mt-3">
                                                         <h6 className="text-uppercase dark-blue-color spaced-header">
-                                                            Determine if the answer proposed by the AI is correct:
+                                                            Determine if the answer is correct:
                                                         </h6>
                                                         <p>
                                                             {this.state.example.target_pred}
@@ -167,6 +196,8 @@ class VQAValidationInterface extends React.Component {
                                                             flaggedSelected={this.state.responseValidationState === this.VALIDATION_STATES.FLAGGED}
                                                             userMode={this.userMode}
                                                             interfaceMode={this.interfaceMode}
+                                                            isQuestion={false}
+                                                            isFlaggingAllowed={false}
                                                             setCorrectSelected={() => this.setState({ responseValidationState: this.VALIDATION_STATES.CORRECT, flagReason: null })}
                                                             setIncorrectSelected={() => this.setState({ responseValidationState: this.VALIDATION_STATES.INCORRECT, flagReason: null })}
                                                             setFlagSelected={() => this.setState({ responseValidationState: this.VALIDATION_STATES.FLAGGED })}
@@ -201,6 +232,44 @@ class VQAValidationInterface extends React.Component {
                         )}
                     </Card>
                 </Row>
+                <KeyboardShortcuts
+                    allowedShortcutsInText={["enter", "escape"]}
+                    mapKeyToCallback={{
+                        "arrowup": {
+                            callback: (valState) => this.setQuestionValidationState(valState),
+                            params: this.VALIDATION_STATES.CORRECT
+                        },
+                        "arrowdown": {
+                            callback: (valState) => this.setQuestionValidationState(valState),
+                            params: this.VALIDATION_STATES.INCORRECT
+                        },
+                        "f": {
+                            callback: (valState) => this.setQuestionValidationState(valState),
+                            params: this.VALIDATION_STATES.FLAGGED
+                        },
+                        "escape": {
+                            callback: (valState) => this.setQuestionValidationState(valState),
+                            params: this.VALIDATION_STATES.UNKNOWN
+                        },
+                        "arrowright": {
+                            callback: (valState) => this.setResponseValidationState(valState),
+                            params: this.VALIDATION_STATES.CORRECT
+                        },
+                        "arrowleft": {
+                            callback: (valState) => this.setResponseValidationState(valState),
+                            params: this.VALIDATION_STATES.INCORRECT
+                        },
+                        "s": {
+                            callback: () => this.setState({ showInstructions: true })
+                        },
+                        "h": {
+                            callback: () => this.setState({ showInstructions: false })
+                        },
+                        "enter": {
+                            callback: () => this.submitValidation()
+                        }
+                    }}
+                />
             </Container>
         )
     }

@@ -8,6 +8,7 @@ import React from 'react';
 import AtomicImage from "../../../../src/containers/AtomicImage.js";
 import CheckVQAModelAnswer from "../../../../src/containers/CheckVQAModelAnswer.js";
 import { VQAFeedbackCard } from "./VQAFeedbackCard.js";
+import { KeyboardShortcuts } from "../../../../src/containers/KeyboardShortcuts.js"
 import {
     Alert,
     Container,
@@ -64,6 +65,7 @@ class CreateVQAMturkInterface extends React.Component {
        this.resetState = this.resetState.bind(this);
        this.updateStateGivenUserFeedback = this.updateStateGivenUserFeedback.bind(this);
        this.bottomAnchorRef = React.createRef();
+       this.inputRef = React.createRef();
     }
 
     componentDidMount() {
@@ -96,7 +98,25 @@ class CreateVQAMturkInterface extends React.Component {
         })
     }
 
-   getNewContext() {
+    focusTextInput = (isEnterQuestionAllowed) => {
+        if (isEnterQuestionAllowed && this.inputRef.current) {
+            this.inputRef.current.focus();
+        }
+    }
+
+    blurTextInput = () => {
+        if (this.inputRef.current) {
+            this.inputRef.current.blur();
+        }
+    }
+
+    skipImage = (isSkipImageAllowed) => {
+        if (isSkipImageAllowed) {
+            this.getNewContext();
+        }
+    }
+
+    getNewContext() {
         if (this.props.mode === "main") {
             this.setState({ submitDisabled: true, refreshDisabled: true }, () => {
                 this.api.getRandomContext(this.state.taskId, this.state.task.cur_round)
@@ -233,10 +253,12 @@ class CreateVQAMturkInterface extends React.Component {
     }
 
     handleSubmitHITClick() {
-        if (this.props.mode === "onboarding") {
-            this.props.onSubmit({ success: true });
-        } else {
-            this.setState({ hitCompleted: true });
+        if (this.state.taskCompleted) {
+            if (this.props.mode === "onboarding") {
+                this.props.onSubmit({ success: true });
+            } else {
+                this.setState({ hitCompleted: true });
+            }
         }
     }
 
@@ -365,6 +387,16 @@ class CreateVQAMturkInterface extends React.Component {
                                 </ul>
                             </li>
                         </ol>
+                        <p>You can also use the key shortcuts to operate:</p>
+                        <ul className="mx-3" style={{ listStyleType: "disc" }}>
+                            <li><b>i:</b> Focus text box.</li>
+                            <li><b>Enter:</b> Check answer.</li>
+                            <li><b>Escape:</b> Blur text box.</li>
+                            <li><b>s:</b> Show Instructions.</li>
+                            <li><b>h:</b> Hide Instructions.</li>
+                            <li><b>Arrow Up:</b> Correct.</li>
+                            <li> <b>Arrow Down:</b> Incorrect.</li>
+                        </ul>
                         <p>
                             Sometimes AI might be tricky to fool. When you have spent {this.minTriesToSwitchImg} tries
                             without success you will be able to skip to the next image by clicking <b style={{ color: "blue" }}>Switch Image</b> button.
@@ -389,7 +421,7 @@ class CreateVQAMturkInterface extends React.Component {
                 )}
             </>
         )
-        const contextContent = this.state.context && <AtomicImage src={this.state.context.context} maxWidth={700} maxHeight={550}/>
+        const contextContent = this.state.context && <AtomicImage src={this.state.context.context} maxHeight={600} maxWidth={900}/>
         const responseInfo = this.state.responseContent.map((response, idx) => {
             let classNames = "hypothesis rounded border";
             let feedbackContent = <></>;
@@ -455,10 +487,12 @@ class CreateVQAMturkInterface extends React.Component {
                             <InputGroup style={{ width: '100%'}}>
                                 <FormControl
                                     style={{ width: '100%', margin: 2 }}
+                                    type="text"
                                     placeholder="Enter question..."
                                     value={this.state.question}
                                     onChange={this.handleQuestionChange}
                                     onKeyPress={this.handleKeyPress}
+                                    ref={this.inputRef}
                                 />
                             </InputGroup>
                             <InputGroup>
@@ -521,7 +555,9 @@ class CreateVQAMturkInterface extends React.Component {
                     <Row>
                         <VQAFeedbackCard
                             comments={this.state.comments}
-                            handleCommentsChange={this.handleCommentsChange}/>
+                            handleCommentsChange={this.handleCommentsChange}
+                            submitHistory={this.submitHistory}
+                        />
                         <Button
                             className="btn btn-success"
                             style={{ marginTop: 5 }}
@@ -530,6 +566,31 @@ class CreateVQAMturkInterface extends React.Component {
                         </Button>
                     </Row>
                 }
+                <KeyboardShortcuts
+                    allowedShortcutsInText={["escape"]}
+                    mapKeyToCallback={{
+                        "i": {
+                            callback: (isEnterQuestionAllowed) => this.focusTextInput(isEnterQuestionAllowed),
+                            params: isEnterQuestionAllowed
+                        },
+                        "arrowright": {
+                            callback: (isSkipImageAllowed) => this.skipImage(isSkipImageAllowed),
+                            params: isSkipImageAllowed
+                        },
+                        "escape": {
+                            callback: () => this.blurTextInput()
+                        },
+                        "s": {
+                            callback: () => this.setState({ showInstructions: true })
+                        },
+                        "h": {
+                            callback: () => this.setState({ showInstructions: false })
+                        },
+                        "f": {
+                            callback: () => this.handleSubmitHITClick()
+                        },
+                    }}
+                />
            </Container>
        );
    }

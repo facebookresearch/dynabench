@@ -16,7 +16,23 @@ import {
 
 
 class ExampleValidationActions extends React.Component {
+
+    constructor() {
+        super();
+        this.inputRef = React.createRef();
+    }
+
+    componentDidUpdate(prevProps) {
+        if (prevProps.flaggedSelected !== this.props.flaggedSelected && this.props.flaggedSelected) {
+            if (this.inputRef.current) {
+                this.inputRef.current.focus();
+            }
+        }
+    }
+
     render() {
+        const positiveTerm = this.props.isQuestion ? "Valid" : "Correct";
+        const negativeTerm = this.props.isQuestion ? "Invalid" : "Incorrect";
         return (
             <>
                 <h6 className="text-uppercase dark-blue-color spaced-header">
@@ -28,7 +44,7 @@ class ExampleValidationActions extends React.Component {
                         type="radio"
                         onChange={() => this.props.setCorrectSelected()}
                     />
-                    <i className="fas fa-thumbs-up"></i>  &nbsp; {this.props.userMode === "owner" ? "Verified " : ""} Correct
+                    <i className="fas fa-thumbs-up"></i>  &nbsp; {this.props.userMode === "owner" ? "Verified " : ""} {positiveTerm}
                 </InputGroup>
                 <InputGroup className="align-items-center">
                     <Form.Check
@@ -36,7 +52,7 @@ class ExampleValidationActions extends React.Component {
                         type="radio"
                         onChange={() => this.props.setIncorrectSelected()}
                     />
-                    <i className="fas fa-thumbs-down"></i>  &nbsp; {this.props.userMode === "owner" ? "Verified " : ""} Incorrect
+                    <i className="fas fa-thumbs-down"></i>  &nbsp; {this.props.userMode === "owner" ? "Verified " : ""} {negativeTerm}
                 </InputGroup>
                 <InputGroup className="ml-3">
                 {this.props.interfaceMode === "web" && this.props.incorrectSelected &&
@@ -51,7 +67,7 @@ class ExampleValidationActions extends React.Component {
                     }[this.props.task.shortname]
                 }
                 </InputGroup>
-                {this.props.userMode === "user" && (
+                {this.props.userMode === "user" && this.props.isFlaggingAllowed && (
                     <InputGroup className="align-items-center">
                         <Form.Check
                             checked={this.props.flaggedSelected}
@@ -64,13 +80,14 @@ class ExampleValidationActions extends React.Component {
                 )}
                 {this.props.flaggedSelected && (
                     <InputGroup className="ml-3">
-                    <Col sm="12 p-1">
-                    <Form.Control
-                        type="text"
-                        placeholder="Reason for flagging"
-                        onChange={(e) => this.props.setFlagReason(e.target.value)}
-                    />
-                    </Col>
+                        <Col sm="12 p-1">
+                            <Form.Control
+                                ref={this.inputRef}
+                                type="text"
+                                placeholder="Reason for flagging"
+                                onChange={(e) => this.props.setFlagReason(e.target.value)}
+                            />
+                        </Col>
                     </InputGroup>
                 )}
                 {this.props.interfaceMode === "web" && (this.props.incorrectSelected || this.props.correctSelected || this.props.flaggedSelected) && (

@@ -66,7 +66,7 @@ class VQAExampleCards extends React.Component {
             </div>
         :   <></>
 
-        const exampleSelector = <InputGroup>
+        const exampleSelector = <InputGroup className="mb-3">
             <Button
                 className="btn btn-sm btn-success"
                 onClick={this.getPrevExample}
@@ -87,76 +87,74 @@ class VQAExampleCards extends React.Component {
                 {phaseTitle}
                 {phaseInstructionsButton}
                 {phaseInstructions}
-                    <Card className="d-flex justify-content-center overflow-hidden" style={{ height: "auto" }}>
-                        <Card.Header className="mb-2">
-                            <h5 className="text-uppercase dark-blue-color spaced-header">
-                                {this.examples[this.state.currIdx].isValid ? "Valid Question" : "Invalid Question"}
-                            </h5>
-                        </Card.Header>
-                        <AtomicImage src={this.examples[this.state.currIdx]['imageUrl']} maxWidth={600} maxHeight={400}/>
-                        <Card.Body className="overflow-auto pt-2" style={{ height: "auto" }}>
-                            <Card
-                                className="hypothesis rounded border m-3 card"
-                                style={{ minHeight: 120 }}>
-                                <Card.Body className="p-3">
-                                    <Row>
-                                        <Col>
-                                            <h6 className="text-uppercase dark-blue-color spaced-header">
-                                                Question:
-                                            </h6>
-                                            <p>
-                                                <small>{this.examples[this.state.currIdx]['question']}</small>
-                                            </p>
-                                            <h6 className="text-uppercase dark-blue-color spaced-header">
-                                                Why is this a {this.examples[this.state.currIdx].isValid ? (
-                                                    "valid"
-                                                    ) : (
-                                                        "invalid"
-                                                        )} question?
-                                            </h6>
-                                            <p>
-                                                <small>{this.examples[this.state.currIdx]['explanation']}</small>
-                                            </p>
-                                            {this.examples[this.state.currIdx].isValid && (
-                                                <>
-                                                    <h6 className="text-uppercase dark-blue-color spaced-header">
-                                                        AI Answer:
-                                                    </h6>
-                                                    <p>
-                                                        <small>{this.examples[this.state.currIdx]['modelAns']}</small>
-                                                    </p>
-                                                </>
-                                            )}
-                                            {this.examples[this.state.currIdx].isValid && (
-                                                <>
-                                                    <h6 className="text-uppercase dark-blue-color spaced-header">
-                                                        Determine if AI is correct or not:
-                                                    </h6>
-                                                    <p>
-                                                        <small>{this.examples[this.state.currIdx]['userFeedback'][0]}</small>
-                                                    </p>
-                                                    {this.examples[this.state.currIdx]['userFeedback'][0] === "Incorrect" && (
-                                                        <>
-                                                            <h6 className="text-uppercase dark-blue-color spaced-header">
-                                                                Provide the correct answer:
-                                                            </h6>
-                                                            <p>
-                                                                <small>{this.examples[this.state.currIdx]['userFeedback'][1]}</small>
-                                                            </p>
-                                                        </>
-                                                    )}
-                                                </>
-                                            )}
-                                        </Col>
-                                    </Row>
-                                </Card.Body>
-                            </Card>
-                        </Card.Body>
-                        <Card.Footer>
-                            {exampleSelector}
-                        </Card.Footer>
-                    </Card>
-                    {exampleTracker}
+                {exampleSelector}
+                <Card className="d-flex justify-content-center overflow-hidden" style={{ height: "auto" }}>
+                    <Card.Header className="mb-2">
+                        <h5 className="text-uppercase dark-blue-color spaced-header">
+                            {this.examples[this.state.currIdx].isValid ? "Valid Question" : "Invalid Question"}
+                        </h5>
+                    </Card.Header>
+                    <AtomicImage src={this.examples[this.state.currIdx]['imageUrl']} maxHeight={400} maxWidth={600}/>
+                    <Card.Body className="overflow-auto pt-2" style={{ height: "auto" }}>
+                        <Card
+                            className="hypothesis rounded border m-3 card"
+                            style={{ minHeight: 120 }}>
+                            <Card.Body className="p-3">
+                                <Row>
+                                    <Col>
+                                        <h6 className="text-uppercase dark-blue-color spaced-header">
+                                            Question:
+                                        </h6>
+                                        <p>
+                                            <small>{this.examples[this.state.currIdx]['question']}</small>
+                                        </p>
+                                        <h6 className="text-uppercase dark-blue-color spaced-header">
+                                            Why is this a {this.examples[this.state.currIdx].isValid ? (
+                                                "valid"
+                                                ) : (
+                                                    "invalid"
+                                                )} question?
+                                        </h6>
+                                        <p>
+                                            <small>{this.examples[this.state.currIdx]['explanation']}</small>
+                                        </p>
+                                        {this.examples[this.state.currIdx].isValid && (
+                                            <>
+                                                <h6 className="text-uppercase dark-blue-color spaced-header">
+                                                    AI Answer:
+                                                </h6>
+                                                <p>
+                                                    <small>{this.examples[this.state.currIdx]['modelAns']}</small>
+                                                </p>
+                                            </>
+                                        )}
+                                        {this.examples[this.state.currIdx].isValid && (
+                                            <>
+                                                <h6 className="text-uppercase dark-blue-color spaced-header">
+                                                    Determine if AI is correct or not:
+                                                </h6>
+                                                <p>
+                                                    <small>{this.examples[this.state.currIdx]['userFeedback'][0]}</small>
+                                                </p>
+                                                {this.examples[this.state.currIdx]['userFeedback'][0] === "Incorrect" && (
+                                                    <>
+                                                        <h6 className="text-uppercase dark-blue-color spaced-header">
+                                                            Provide the correct answer:
+                                                        </h6>
+                                                        <p>
+                                                            <small>{this.examples[this.state.currIdx]['userFeedback'][1]}</small>
+                                                        </p>
+                                                    </>
+                                                )}
+                                            </>
+                                        )}
+                                    </Col>
+                                </Row>
+                            </Card.Body>
+                        </Card>
+                    </Card.Body>
+                </Card>
+                {exampleTracker}
             </>
         )
     }

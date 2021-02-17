@@ -19,6 +19,12 @@ class VQAFeedbackCard extends React.Component {
         this.bottomAnchorFeedbackRef = React.createRef();
     }
 
+    handleKeyPress = (e) => {
+        if (e.key.toLowerCase() === "enter") {
+           this.props.submitHistory();
+        }
+    }
+
     componentDidMount() {
         if (this.bottomAnchorFeedbackRef.current) {
             this.bottomAnchorFeedbackRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -37,9 +43,12 @@ class VQAFeedbackCard extends React.Component {
                             <InputGroup>
                                 <FormControl
                                     style={{ width: '100%', margin: 2 }}
-                                    placeholder="Optionally write your comments here..."
+                                    autoFocus
+                                    type="text"
+                                    placeholder="Optionally write your comments and press enter to submit..."
                                     value={this.props.comments}
                                     onChange={(e) => this.props.handleCommentsChange(e)}
+                                    onKeyPress={this.handleKeyPress}
                                 />
                             </InputGroup>
                         </Col>

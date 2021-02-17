@@ -72,10 +72,8 @@ class VQAPreview extends React.Component {
                     <div className="mx-5 my-3">
                         <h1>Validate Examples</h1>
                         <p>
-                            In this task, you will be asked to validate the examples received by an AI model.
-                            The AI is reasonably good at understanding English and interpreting images.
-                            It is able to answer questions based on an image. Your task is to validate
-                            both the questions received by the AI and the responses given to these questions.
+                            In this task, you will be asked to validate the examples consisting of an
+                            image, a question and an answer. You will have to do the following:
                         </p>
                         <ol className="mx-5">
                             <li>
@@ -96,7 +94,7 @@ class VQAPreview extends React.Component {
                         </ol>
                         <p>
                             If you think the example should be reviewed, please click the <b>Flag</b> button
-                            and explain why you flagged the example.
+                            and explain why you flagged the example (try to use this sparingly).
                         </p>
                         <h3>Completion</h3>
                         <p>
