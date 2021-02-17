@@ -23,7 +23,7 @@ class VQAQuizCard extends React.Component {
 
     render() {
         return (
-            <Card className="d-flex justify-content-center overflow-hidden pt-2" style={{ marginBottom: 5 }}>
+            <Card className="d-flex justify-content-center overflow-hidden pt-4 mb-5">
                 <AtomicImage src={this.props.imageUrl} maxHeight={400} maxWidth={600}/>
                 <Card.Body className="overflow-auto pt-2" style={{ height: "auto" }}>
                     <Card
