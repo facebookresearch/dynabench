@@ -150,7 +150,7 @@ class VQAQuiz extends React.Component {
                 End Task
         </button>
         const finishOnboardingButton = <button
-            className="btn btn-danger mb-3 ml-auto order-3"
+            className="btn btn-success mb-3 ml-auto order-3"
             onClick={() => this.props.submitOnboarding({ success: true })}>
                 Finish Onboarding
         </button>
