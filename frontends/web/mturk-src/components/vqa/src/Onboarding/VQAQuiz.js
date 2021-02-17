@@ -143,7 +143,7 @@ class VQAQuiz extends React.Component {
         const tryAgainButton = <button
             className="btn btn-warning mb-3 ml-auto order-3"
             onClick={this.handleTryAgainButtonClick}>
-                {this.state.attempt + 1 === this.maxAllowedAttempts ? "Take Last Chance" : "Try Again"}
+                Try Again
         </button>
         const quitOnboardingButton = <button
             className="btn btn-danger mb-3 ml-auto order-3"

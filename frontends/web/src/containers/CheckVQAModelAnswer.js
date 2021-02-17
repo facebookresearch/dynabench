@@ -6,6 +6,7 @@
 
 import React from "react";
 import ExplainFeedback from "./ExplainFeedback";
+import { KeyboardShortcuts } from "./KeyboardShortcuts.js";
 import { Row, Col, InputGroup } from "react-bootstrap";
 
 class CheckVQAModelAnswer extends React.Component {
@@ -20,7 +21,7 @@ class CheckVQAModelAnswer extends React.Component {
     }
 
     handleKeyPress = (e) => {
-        if (e.key === "Enter") {
+        if (e.key.toLowerCase() === "enter") {
            this.submitUserAnswer();
         }
     }
@@ -33,14 +34,12 @@ class CheckVQAModelAnswer extends React.Component {
         }
     }
 
-    handleCorrectButtonClick = (e) => {
-        e.preventDefault();
+    handleCorrectButtonClick = () => {
         this.setState({ disableCorrectButton: true })
         this.props.updateExample(this.props.modelPredStr, this.MODEL_STATES.CORRECT);
     }
 
-    handleIncorrectButtonClick = (e) => {
-        e.preventDefault();
+    handleIncorrectButtonClick = () => {
         this.props.setModelState(this.MODEL_STATES.INCORRECT);
     }
 
@@ -73,7 +72,7 @@ class CheckVQAModelAnswer extends React.Component {
                         type="button"
                         className={`btn btn-sm ${this.props.modelState === this.MODEL_STATES.INCORRECT ? " btn-danger" : " btn-outline-danger"}`}
                         onClick={this.handleIncorrectButtonClick}>
-                        Incorrect
+                            Incorrect
                     </button>
                 </InputGroup>
                 { this.props.modelState === this.MODEL_STATES.INCORRECT &&
@@ -82,7 +81,7 @@ class CheckVQAModelAnswer extends React.Component {
                             <Row>
                                 <Col className="mt-2 pr-1">
                                     <ExplainFeedback feedbackSaved={this.props.feedbackSaved} type="answer"/>
-                                    <input type="text" style={{width: 100+'%'}}  placeholder={"Provide the correct answer"}
+                                    <input type="text" autoFocus style={{width: 100+'%'}}  placeholder={"Provide the correct answer"}
                                         onChange={(e) => {this.setState({correctAnswer: e.target.value})}} onKeyPress={this.handleKeyPress}/>
                                 </Col>
                                 <Col className="align-self-end justify-content-start pl-0" md="auto">
@@ -91,13 +90,24 @@ class CheckVQAModelAnswer extends React.Component {
                                         className="btn btn-sm btn-primary"
                                         onClick={this.submitUserAnswer}
                                         disabled={this.state.disableSubmitButton}>
-                                        Submit
+                                            Submit
                                     </button>
                                 </Col>
                             </Row>
                         </div>
                     )
                 }
+                <KeyboardShortcuts
+                    allowedShortcutsInText={["arrowup"]}
+                    mapKeyToCallback={{
+                        "arrowup": {
+                            callback: () => this.handleCorrectButtonClick(),
+                        },
+                        "arrowdown": {
+                            callback: () => this.handleIncorrectButtonClick(),
+                        },
+                    }}
+                />
             </div>
         )
     }

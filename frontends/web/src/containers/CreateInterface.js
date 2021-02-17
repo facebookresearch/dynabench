@@ -30,6 +30,7 @@ import CheckVQAModelAnswer from "./CheckVQAModelAnswer"
 import { TokenAnnotator } from "react-text-annotate";
 import { PieRechart } from "../components/Rechart";
 import { formatWordImportances } from "../utils/color";
+import { KeyboardShortcuts } from "./KeyboardShortcuts.js"
 import BootstrapSwitchButton from 'bootstrap-switch-button-react'
 import {
   OverlayProvider,
@@ -64,7 +65,7 @@ function ContextInfo({ taskType, taskName, text, answer, updateAnswer }) {
       })}
     />
     ) : taskType === "VQA" ? (
-      <AtomicImage src={text} maxWidth={700} maxHeight={600}/>
+      <AtomicImage src={text} maxHeight={600} maxWidth={900}/>
     ) :
     (
       <div className="mb-1 p-3 light-gray-bg">

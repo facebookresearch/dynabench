@@ -13,10 +13,9 @@ class VQAOnboardingInstructions extends React.Component {
             <h4 className="my-3" style={{ textAlign: "center" }}>Qualification Phase</h4>
             {this.props.onboardingMode === "validation" ? (
                 <p>
-                    You will be working with an AI that is reasonably good at understanding
-                    English and interpreting images. The AI is able to answer questions based
-                    on an image. Your task is to validate both the questions received by the
-                    AI and the responses given to these questions.
+                    You will be shown a bunch of examples consisting of an image, a question and an answer.
+                    Your task is to validate that image is required and sufficient to answer the question.
+                    Once the question is validated, determine if the answer is correct.
                 </p>
             ) : (
                 <p>
@@ -33,10 +32,10 @@ class VQAOnboardingInstructions extends React.Component {
             </p>
             <ol className="mx-5">
                 <li>
-                    Viewing some examples of valid and invalid questions and AI's answers.
+                    Viewing some examples of valid and invalid questions and {this.props.onboardingMode === "creation" ? "AI's" : ""} answers.
                 </li>
                 <li>
-                    Judging whether a question is valid and judging the AI's answers.
+                    Judging whether a question is valid and judging the {this.props.onboardingMode === "creation" ? "AI's" : "proposed"} answers.
                 </li>
                 {this.props.onboardingMode === "creation" && (
                     <li>
