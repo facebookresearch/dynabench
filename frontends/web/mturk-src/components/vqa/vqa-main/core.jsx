@@ -6,6 +6,7 @@
 
 import React from "react";
 import { VQAOnboarder } from "../src/Onboarding/VQAOnboarder.js"
+import {  VQAPreview } from "../src/VQAPreview.js"
 import { CreateVQAMturkInterface } from "../src/CreateVQAMturkInterface.js"
 
 class VQATaskPreview extends React.Component {
