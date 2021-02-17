@@ -30,6 +30,7 @@ import CheckVQAModelAnswer from "./CheckVQAModelAnswer"
 import { TokenAnnotator } from "react-text-annotate";
 import { PieRechart } from "../components/Rechart";
 import { formatWordImportances } from "../utils/color";
+import { KeyboardShortcuts } from "./KeyboardShortcuts.js"
 import BootstrapSwitchButton from 'bootstrap-switch-button-react'
 import {
   OverlayProvider,
@@ -64,7 +65,7 @@ function ContextInfo({ taskType, taskName, text, answer, updateAnswer }) {
       })}
     />
     ) : taskType === "VQA" ? (
-      <AtomicImage src={text} maxSize={500}/>
+      <AtomicImage src={text} maxHeight={600} maxWidth={900}/>
     ) :
     (
       <div className="mb-1 p-3 light-gray-bg">
@@ -986,21 +987,21 @@ class CreateInterface extends React.Component {
     } = this.props;
     if (!this.context.api.loggedIn()) {
       this.setState({ livemode: false });
-    }
-
-    const user = this.context.api.getCredentials();
-    this.context.api
-      .getUser(user.id, true)
-      .then((result) => {
-        if (result.settings_json) {
-          var settings_json = JSON.parse(result.settings_json);
-          if (settings_json['retain_input']) {
-            this.setState({ retainInput: settings_json['retain_input'] });
+    } else {
+      const user = this.context.api.getCredentials();
+      this.context.api
+        .getUser(user.id, true)
+        .then((result) => {
+          if (result.settings_json) {
+            var settings_json = JSON.parse(result.settings_json);
+            if (settings_json['retain_input']) {
+              this.setState({ retainInput: settings_json['retain_input'] });
+            }
           }
-        }
-      }, (error) => {
-        console.log(error);
-      });
+        }, (error) => {
+          console.log(error);
+        });
+    }
 
     this.setState({ taskId: params.taskId }, function () {
       this.context.api

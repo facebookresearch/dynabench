@@ -61,9 +61,6 @@ class SubmitInterface extends React.Component {
   handleValidation = (values) => {
     const errors = {};
     let allowedTaskExtension = ".json";
-    if (this.state.task.shortname === "NLI") {
-      allowedTaskExtension = ".txt";
-    }
     const allowedExtensions = new RegExp(this.escapeRegExp(allowedTaskExtension)+"$", "i");
     if (!values.roundType) {
       errors.roundType = "Required";
@@ -117,14 +114,15 @@ class SubmitInterface extends React.Component {
               <Card.Body>
               {this.state.task.shortname === "NLI" ? (
                 <p>
-                  Concatenate with each example's prediction per line, labeled as in <a href="https://github.com/facebookresearch/anli">ANLI</a>'s predicted_label
-                  default output format (e=Entailment, c=Contradiction, n=Neutral). If you submit for multiple rounds in one go (i.e., overall),
-                  concatenate in order (so first the answers, one per line, for round 1; then for round 2; then for round 3; in order).
+                  The Dynabench NLI test sets can be found <a href="https://github.com/facebookresearch/anli">here</a>.
+                  Upload predicted answers as a <em>.json</em> file in the format <code>{'{'}"uid_1": "answer_1", "uid_2": "answer_2", ...{'}'}</code> (i.e. standard SQuAD prediction format) where an answer is either "e", "n", or "c".
+                  If you submit for multiple rounds in one go (i.e., overall), simply concatenate the answers from each round into your prediction file.
                 </p>
               ) : null}
 
               {this.state.task.shortname === "QA" ? (
                 <p>
+                  The Dynabench QA test sets can be found <a href="https://adversarialqa.github.io/">here</a>.
                   Upload predicted answers as a <em>.json</em> file in the format <code>{'{'}"id_1": "answer_1", "id_2": "answer_2", ...{'}'}</code> (i.e. standard SQuAD prediction format).
                   If you submit for multiple rounds in one go (i.e., overall), simply concatenate the answers from each round into your prediction file.
                 </p>

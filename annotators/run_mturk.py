@@ -94,13 +94,14 @@ def main(cfg: DictConfig) -> None:
 
     # mturk_specific_qualifications
 
-    # TODO: How to set onboarding ready?
-    def onboarding_always_valid(onboarding_data):
-        return True
+    def is_onboarding_successful(onboarding_data):
+        if "outputs" in onboarding_data and "success" in onboarding_data["outputs"]:
+            return onboarding_data["outputs"]["success"]
+        return False
 
     shared_state = SharedStaticTaskState(
         static_task_data=static_task_data,
-        validate_onboarding=onboarding_always_valid,
+        validate_onboarding=is_onboarding_successful,
         task_config=dict(cfg.dynabench),
     )
 

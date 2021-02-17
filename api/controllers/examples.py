@@ -147,15 +147,16 @@ def update_example(credentials, eid):
 
         logger.info(f"Updating example {example.id} with {data}")
         em.update(example.id, data)
-        if "retracted" in data and data["retracted"] is True:
-            um = UserModel()
-            um.incrementRetractedCount(example.uid)
-            if example.model_wrong:
-                um.incrementVerifiedNotCorrectFooledCount(example.uid)
-                info = RoundUserExampleInfoModel()
-                info.incrementVerifiedNotCorrectFooledCount(
-                    example.uid, example.context.r_realid
-                )
+        if credentials["id"] != "turk":
+            if "retracted" in data and data["retracted"] is True:
+                um = UserModel()
+                um.incrementRetractedCount(example.uid)
+                if example.model_wrong:
+                    um.incrementVerifiedNotCorrectFooledCount(example.uid)
+                    info = RoundUserExampleInfoModel()
+                    info.incrementVerifiedNotCorrectFooledCount(
+                        example.uid, example.context.r_realid
+                    )
         return util.json_encode({"success": "ok"})
     except Exception as e:
         logger.error(f"Error updating example {eid}: {e}")

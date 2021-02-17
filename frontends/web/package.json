@@ -21,6 +21,7 @@
     "react-c3js": "^0.1.20",
     "react-dom": "^16.13.1",
     "react-ga": "^3.1.2",
+    "react-magnifier": "^3.0.4",
     "react-markdown": "^5.0.2",
     "react-moment": "^0.9.7",
     "react-player": "^2.6.2",
@@ -38,6 +39,7 @@
     "@babel/preset-env": "^7.10.4",
     "@babel/preset-react": "^7.10.4",
     "babel-preset-react": "^6.24.1",
+    "dotenv": "^8.2.0",
     "webpack-cli": "^3.3.12"
   },
   "scripts": {

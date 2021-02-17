@@ -117,8 +117,11 @@ def validate_example(credentials, eid):
         ):
 
             um.incrementVerifiedNotCorrectFooledCount(example.uid)
-            info = RoundUserExampleInfoModel()
-            info.incrementVerifiedNotCorrectFooledCount(example.uid, context.r_realid)
+            if credentials["id"] != "turk":
+                info = RoundUserExampleInfoModel()
+                info.incrementVerifiedNotCorrectFooledCount(
+                    example.uid, context.r_realid
+                )
             user = um.get(example.uid)
             if user:
                 if user.metadata_json:

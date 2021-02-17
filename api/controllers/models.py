@@ -14,7 +14,6 @@ from common.config import config
 from common.logging import logger
 from models.badge import BadgeModel
 from models.model import DeploymentStatusEnum, ModelModel
-from models.notification import NotificationModel
 from models.round import RoundModel
 from models.score import ScoreModel
 from models.task import TaskModel
@@ -82,14 +81,10 @@ def do_upload(credentials):
     task_shortname = str(bottle.request.forms.get("taskShortName")).lower()
 
     try:
-        if task_shortname in ["qa", "hate speech", "sentiment"]:
-            raw_upload_data = json.loads(
-                upload.file.read().decode("utf-8")
-            )  # if QA or HS, use standard SQuAD JSON format
-            test_raw_data = raw_upload_data
-        else:
-            raw_upload_data = upload.file.read().decode("utf-8")
-            test_raw_data = raw_upload_data.lower().splitlines()
+        raw_upload_data = json.loads(
+            upload.file.read().decode("utf-8")
+        )  # use standard SQuAD JSON format
+        test_raw_data = raw_upload_data
 
     except Exception as ex:
         logger.exception(ex)
@@ -134,12 +129,6 @@ def do_upload(credentials):
             )
 
             user_dict = user.to_dict()
-
-            if user_dict["models_submitted"] == 0:
-                bm = BadgeModel()
-                nm = NotificationModel()
-                bm.addBadge({"uid": user_dict["id"], "name": "MODEL_BUILDER"})
-                nm.create(user_dict["id"], "NEW_BADGE_EARNED", "MODEL_BUILDER")
 
             um = UserModel()
             um.incrementModelSubmitCount(user_dict["id"])

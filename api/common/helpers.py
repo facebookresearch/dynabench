@@ -52,14 +52,8 @@ def check_data_path_exists(path):
 
 # TODO need to change it in future - to read the test data from db of
 # config files
-def read_nli_round_labels(root_path):
-    """
-    Load the files from NLI directory and label them automatically
-    :param root_path: We assume anli_v0.1 test set present in api folder
-    :return: Dict object
-    """
-
-    full_path = os.path.join(root_path, "data", "anli_v1.0")
+def read_round_labels(root_path, task_dir_name, field_converter):
+    full_path = os.path.join(root_path, "data", task_dir_name)
 
     if not check_data_path_exists(full_path):
         return {}
@@ -69,15 +63,32 @@ def read_nli_round_labels(root_path):
         for name in os.listdir(full_path)
         if os.path.isdir(os.path.join(full_path, name))
     ]
-    nli_labels = {}
+    labels = {}
     for r_file_path in r_file_paths:
         r_num = r_file_path[len(r_file_path) - 1 : len(r_file_path)]
         r_file_path = full_path + "/" + r_file_path
-        nli_labels[int(r_num)] = [
-            json.loads(l)["label"].lower()
-            for l in open(f"{r_file_path}/test.jsonl").read().splitlines()
+        loaded_data = [
+            json.loads(l) for l in open(f"{r_file_path}/test.jsonl").read().splitlines()
         ]
-    return nli_labels
+        labels[int(r_num)] = [field_converter(example) for example in loaded_data]
+    return labels
+
+
+def read_nli_round_labels(root_path):
+    """
+    Load the files from NLI directory and label them automatically
+    :param root_path: We assume anli_v0.1 test set present in api folder
+    :return: Dict object
+    """
+
+    def nli_field_converter(example):
+        return {
+            "id": example["uid"],
+            "answer": example["label"],
+            "tags": example["tags"] if "tags" in example else "",
+        }
+
+    return read_round_labels(root_path, "anli_v1.0", nli_field_converter)
 
 
 def read_hate_speech_round_labels(root_path):
@@ -87,32 +98,14 @@ def read_hate_speech_round_labels(root_path):
     :return: Dict object
     """
 
-    full_path = os.path.join(root_path, "data", "hate_speech_v0.1")
+    def hs_field_converter(example):
+        return {
+            "id": example["id"],
+            "answer": example["answer"],
+            "tags": example["tags"] if "tags" in example else "",
+        }
 
-    if not check_data_path_exists(full_path):
-        return {}
-
-    r_file_paths = [
-        name
-        for name in os.listdir(full_path)
-        if os.path.isdir(os.path.join(full_path, name))
-    ]
-    hs_labels = {}
-    for r_file_path in r_file_paths:
-        r_num = r_file_path[len(r_file_path) - 1 : len(r_file_path)]
-        r_file_path = full_path + "/" + r_file_path
-        loaded_data = [
-            json.loads(l) for l in open(f"{r_file_path}/test.jsonl").read().splitlines()
-        ]
-        hs_labels[int(r_num)] = [
-            {
-                "id": example["id"],
-                "answer": example["answer"],
-                "tags": example["tags"] if "tags" in example else "",
-            }
-            for example in loaded_data
-        ]
-    return hs_labels
+    return read_round_labels(root_path, "hate_speech_v0.1", hs_field_converter)
 
 
 def read_sentiment_round_labels(root_path):
@@ -124,32 +117,14 @@ def read_sentiment_round_labels(root_path):
     :return: Dict object
     """
 
-    full_path = os.path.join(root_path, "data", "sentiment_v1.1")
+    def sentiment_field_converter(example):
+        return {
+            "id": example["text_id"],
+            "answer": example["gold_label"],
+            "tags": example["tags"] if "tags" in example else "",
+        }
 
-    if not check_data_path_exists(full_path):
-        return {}
-
-    r_file_paths = [
-        name
-        for name in os.listdir(full_path)
-        if os.path.isdir(os.path.join(full_path, name))
-    ]
-    sent_labels = {}
-    for r_file_path in r_file_paths:
-        r_num = r_file_path[len(r_file_path) - 1 : len(r_file_path)]
-        r_file_path = full_path + "/" + r_file_path
-        loaded_data = [
-            json.loads(l) for l in open(f"{r_file_path}/test.jsonl").read().splitlines()
-        ]
-        sent_labels[int(r_num)] = [
-            {
-                "id": example["text_id"],
-                "answer": example["gold_label"],
-                "tags": example["tags"] if "tags" in example else "",
-            }
-            for example in loaded_data
-        ]
-    return sent_labels
+    return read_round_labels(root_path, "sentiment_v1.1", sentiment_field_converter)
 
 
 def read_qa_round_labels(root_path):
@@ -159,32 +134,14 @@ def read_qa_round_labels(root_path):
     :return: Dict object
     """
 
-    full_path = os.path.join(root_path, "data", "aqa_v1.0")
+    def qa_field_converter(example):
+        return {
+            "id": example["id"],
+            "answer": example["answers"][0]["text"],
+            "tags": example["tags"] if "tags" in example else "",
+        }
 
-    if not check_data_path_exists(full_path):
-        return {}
-
-    r_file_paths = [
-        name
-        for name in os.listdir(full_path)
-        if os.path.isdir(os.path.join(full_path, name))
-    ]
-    qa_labels = {}
-    for r_file_path in r_file_paths:
-        r_num = r_file_path[len(r_file_path) - 1 : len(r_file_path)]
-        r_file_path = full_path + "/" + r_file_path
-        loaded_data = [
-            json.loads(l) for l in open(f"{r_file_path}/test.jsonl").read().splitlines()
-        ]
-        qa_labels[int(r_num)] = [
-            {
-                "id": example["id"],
-                "answer": example["answers"][0]["text"],
-                "tags": example["tags"] if "tags" in example else "",
-            }
-            for example in loaded_data
-        ]
-    return qa_labels
+    return read_round_labels(root_path, "aqa_v1.0", qa_field_converter)
 
 
 def get_accuracy(prediction, target):
@@ -224,45 +181,38 @@ def validate_prediction(r_objects, prediction, task_shortname="nli"):
     app = bottle.default_app()
     target_tags = None
 
-    # TODO: Make this consistent across tasks
     if task_shortname == "nli":
-        # for NLI, we use the ordered list of labels and accuracy
-        target_labels = app.config["nli_labels"]
+        target_examples = app.config["nli_labels"]
         eval_fn = get_accuracy
     elif task_shortname == "hate speech":
-        # for HS, we use {id: label} and accuracy
         target_examples = app.config["hate_speech_labels"]
         eval_fn = get_accuracy
     elif task_shortname == "sentiment":
         target_examples = app.config["sentiment_labels"]
         eval_fn = get_accuracy
     elif task_shortname == "qa":
-        # for QA, we use {id: answer} and F1
         target_examples = app.config["qa_labels"]
         eval_fn = get_f1
     else:
         raise AssertionError("Unrecognized task")
 
-    if task_shortname in ["qa", "hate speech", "sentiment"]:
-
-        target_ids = {
-            r_id: [x["id"] for x in target_examples[r_id]] for r_id in target_examples
-        }
-        target_labels = {
-            r_id: [x["answer"] for x in target_examples[r_id]]
-            for r_id in target_examples
-        }
-        target_tags = {
-            r_id: [x["tags"] for x in target_examples[r_id]] for r_id in target_examples
-        }
-        # For QA, we are using SQuAD JSON format, so align the predictions with
-        # the target labels
-        aligned_prediction = []
-        for r_id in sorted(target_examples):
-            for id in target_ids[r_id]:
-                if id in prediction:
-                    aligned_prediction.append(prediction[id])
-        prediction = aligned_prediction
+    target_ids = {
+        r_id: [x["id"] for x in target_examples[r_id]] for r_id in target_examples
+    }
+    target_labels = {
+        r_id: [x["answer"] for x in target_examples[r_id]] for r_id in target_examples
+    }
+    target_tags = {
+        r_id: [x["tags"] for x in target_examples[r_id]] for r_id in target_examples
+    }
+    # we are using SQuAD JSON format, so align the predictions with
+    # the target labels
+    aligned_prediction = []
+    for r_id in sorted(target_examples):
+        for id in target_ids[r_id]:
+            if id in prediction:
+                aligned_prediction.append(prediction[id])
+    prediction = aligned_prediction
 
     # validate prediction and target labels length
     if len(r_objects) > 1 and len(prediction) != len(sum(target_labels.values(), [])):

@@ -21,7 +21,8 @@ class Notification(Base):
     type = db.Column(db.String(length=255))
     """
     NEW_BADGE_EARNED
-    ...
+    BADGE_REMOVED_STREAK
+    BADGE_REMOVED_MODEL
     """
 
     message = db.Column(db.Text)

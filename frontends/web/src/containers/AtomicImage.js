@@ -5,54 +5,35 @@
  */
 
 import React from "react";
+import Magnifier from "react-magnifier";
 
 class AtomicImage extends React.Component {
-
-   constructor(props) {
-      super(props);
-      this.state = { isImgLoaded: false };
-   }
-
-   componentDidUpdate(prevProps) {
-      if (prevProps.src !== this.props.src) {
-         this.setState({ isImgLoaded: false });
-      }
-   }
-
    render() {
-      const { src, maxSize } = this.props;
-      if (src && src.length > 0) {
-         return (
-            <>
-               <img
-                  onLoad={() => this.setState({ isImgLoaded: true })}
-                  src={src}
+      console.log(this.props.src)
+      if (this.props.src && this.props.src.length > 0) {
+         return <>
+            <div style={{alignSelf: "center"}}>
+               <Magnifier
+                  mgWidth={250}
+                  mgHeight={250}
+                  width={"auto"}
+                  height={"auto"}
+                  src={this.props.src}
+                  mgShape={"square"}
                   style={{
-                     marginTop: "20px",
-                     display: this.state.isImgLoaded ? "block" : "none",
-                     alignSelf: "center",
-                     maxHeight: maxSize,
-                     maxWidth: maxSize
-                  }
-               } />
-               {!this.state.isImgLoaded &&
-                  <div className="d-flex align-items-center justify-content-center" style={{ height: 200 }}>
-                     <div className="spinner-border" role="status">
-                     <span className="sr-only">Loading...</span>
-                     </div>
-                  </div>
-               }
-            </>
-         )
+                     display: "block"
+                  }}
+               />
+            </div>
+         </>
       } else {
          return (
             <div className="mb-1 p-3 light-gray-bg">
-               There are no available images
+               Loading...
             </div>
          )
       }
    }
 }
 
-
-  export default AtomicImage;
+export default AtomicImage;

@@ -10,6 +10,25 @@
   margin: 5px;
 }
 
+.response-warning {
+  background-color: #fffcf4;
+  border: 1px solid #fbe5c8;
+}
+
+.light-green-bg {
+  background-color: #e9ffe8;
+}
+
+.dark-blue-color {
+  color: #005798
+}
+
+.spaced-header {
+  letter-spacing: 1px;
+  font-size: 0.75em;
+  font-weight: bold;
+}
+
 .context {
   background-color: rgba(108, 117, 125, 0.1);
   padding: 10px;

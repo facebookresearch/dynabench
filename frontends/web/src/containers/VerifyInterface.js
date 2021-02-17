@@ -24,8 +24,8 @@ import {
   Annotation
 } from "./Overlay"
 import {
-  HateSpeechDropdown
-} from "./HateSpeechDropdown.js"
+  ExampleValidationActions
+} from "./ExampleValidationActions.js"
 
 function ContextInfo({ needAnswer, text, answer, updateAnswer }) {
   return needAnswer ? (
@@ -417,94 +417,27 @@ class VerifyInterface extends React.Component {
                             }
                           </div>
                         }
-                        <h6 className="text-uppercase dark-blue-color spaced-header">
-                        Actions:
-                        </h6>
-                        <p>
-                          <InputGroup className="align-items-center">
-                            <Form.Check
-                              checked={this.state.correctSelected}
-                              type="radio"
-                              onChange={() => this.resetValidatorSelections(() => this.setState({ correctSelected: true }))}
-                            />
-                            <i className="fas fa-thumbs-up"></i>  &nbsp; {this.state.owner_mode ? "Verified " : ""} Correct
-                          </InputGroup>
-                          <InputGroup className="align-items-center">
-                            <Form.Check
-                              checked={this.state.incorrectSelected}
-                              type="radio"
-                              onChange={() => this.resetValidatorSelections(() => this.setState({ incorrectSelected: true }))}
-                            />
-                            <i className="fas fa-thumbs-down"></i>  &nbsp; {this.state.owner_mode ? "Verified " : ""} Incorrect
-                          </InputGroup>
-                          <InputGroup className="ml-3">
-                            {this.state.incorrectSelected ?
-                                {
-                                  'NLI': <DropdownButton className="p-1" title={"Your corrected label: " + this.state.validatorLabel}>
-                                           {["entailed", "neutral", "contradictory"].filter((target, _) => target !== this.state.example.target)
-                                             .map((target, index) => <Dropdown.Item onClick={() => this.setState({ validatorLabel: target })} key={index} index={index}>{target}</Dropdown.Item>)}
-                                         </DropdownButton>,
-                                  'QA': 'Please select the correct answer in the context. If it is not in the context, then flag this example.',
-                                  'Hate Speech': <div>You have proposed that the correct answer is <b>{['hateful', 'not-hateful'].filter((target, _) => target !== this.state.example.target)[0]}</b></div>,
-                                  'Sentiment': <div>You have proposed that the correct answer is <b>{['positive', 'negative'].filter((target, _) => target !== this.state.example.target)[0]}</b></div>
-                                }[this.state.task.shortname]
-                              : ""}
-                          </InputGroup>
-                            {this.state.owner_mode ?
-                                ""
-                              : <InputGroup className="align-items-center">
-                                  <Form.Check
-                                    checked={this.state.flaggedSelected}
-                                    type="radio"
-                                    onChange={() => this.resetValidatorSelections(() => this.setState({ flaggedSelected: true }))}
-                                  />
-                                  <i className="fas fa-flag"></i> &nbsp; Flag
-                                </InputGroup>}
-                              <InputGroup className="ml-3">
-                              {this.state.flaggedSelected ?
-                                  <Col sm="12 p-1">
-                                    <Form.Control
-                                      type="text"
-                                      placeholder="Reason for flagging"
-                                      onChange={(e) => this.setState({ flagReason: e.target.value })}
-                                    />
-                                  </Col>
-                                : ""}
-                              </InputGroup>
-                        </p>
-                        {this.state.incorrectSelected || this.state.correctSelected || this.state.flaggedSelected ?
-                          <div>
-                          <h6 className="text-uppercase dark-blue-color spaced-header">
-                          Optionally, provide an explanation for this example:
-                          </h6>
-                            <p>
-                              <div className="mt-3">
-                                {(this.state.incorrectSelected || this.state.correctSelected) ?
-                                    <div>
-                                      <Form.Control
-                                        type="text"
-                                        placeholder={
-                                          "Explain why " + (this.state.task.shortname === "QA" ? (this.state.correctSelected ? "the given answer" : "your proposed answer") : (this.state.correctSelected ? "the given label" : "your proposed label")) + " is correct"}
-                                        onChange={(e) => this.setState({ labelExplanation: e.target.value })} />
-                                    </div>
-                                  : ""}
-                                <div>
-                                  <Form.Control
-                                    type="text"
-                                    placeholder="Explain what you think the creator did to try to trick the model"
-                                    onChange={(e) => this.setState({ creatorAttemptExplanation: e.target.value })} />
-                                </div>
-                                {this.state.task.shortname === "Hate Speech" ?
-                                    <HateSpeechDropdown
-                                      hateType={this.state.validatorHateType}
-                                      dataIndex={this.props.index}
-                                      onClick={(e) => this.setState({ validatorHateType: e.target.getAttribute("data") })}
-                                    />
-                                  : ""}
-                              </div>
-                            </p>
-                          </div>
-                          : ""}
+                        <ExampleValidationActions
+                          correctSelected={this.state.correctSelected}
+                          incorrectSelected={this.state.incorrectSelected}
+                          flaggedSelected={this.state.flaggedSelected}
+                          validatorLabel={this.state.validatorLabel}
+                          validatorHateType={this.state.validatorHateType}
+                          creatorAttemptExplanation={this.state.creatorAttemptExplanation}
+                          example={this.state.example}
+                          task={this.state.task}
+                          userMode={this.state.owner_mode ? "owner" : "user"}
+                          interfaceMode="web"
+                          isFlaggingAllowed={true}
+                          isQuestion={false}
+                          setCorrectSelected={() => this.resetValidatorSelections(() => this.setState({ correctSelected: true }))}
+                          setIncorrectSelected={() => this.resetValidatorSelections(() => this.setState({ incorrectSelected: true }))}
+                          setFlagSelected={() => this.resetValidatorSelections(() => this.setState({ flaggedSelected: true }))}
+                          setFlagReason={flagReason => this.setState({ flagReason })}
+                          setValidatorLabel={(validatorLabel) => this.setState({ validatorLabel })}
+                          setValidatorHateType={validatorHateType => this.setState({ validatorHateType })}
+                          setCreatorAttemptExplanation={creatorAttemptExplanation => this.setState({ creatorAttemptExplanation })}
+                        />
                       </Col>
                     </Row>
                   </Card.Body>
