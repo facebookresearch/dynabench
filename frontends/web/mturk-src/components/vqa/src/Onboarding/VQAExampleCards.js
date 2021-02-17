@@ -89,7 +89,7 @@ class VQAExampleCards extends React.Component {
                 {phaseInstructions}
                 {exampleSelector}
                 <Card className="d-flex justify-content-center overflow-hidden" style={{ height: "auto" }}>
-                    <Card.Header className="mb-2">
+                    <Card.Header className="mb-4">
                         <h5 className="text-uppercase dark-blue-color spaced-header">
                             {this.examples[this.state.currIdx].isValid ? "Valid Question" : "Invalid Question"}
                         </h5>

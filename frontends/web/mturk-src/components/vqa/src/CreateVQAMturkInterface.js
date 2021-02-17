@@ -27,7 +27,7 @@ class CreateVQAMturkInterface extends React.Component {
        this.api = props.api;
        this.MODEL_STATES = { "UNKNOWN": -1, "CORRECT": 0, "INCORRECT": 1 };
        this.minTriesToSwitchImg = 3;
-       this.minTriesToCompleteHIT = this.props.mode === "onboarding" ? 3 : 5;
+       this.minTriesToCompleteHIT = this.props.mode === "onboarding" ? 3 : 10;
        this.state = {
            taskId: props.taskConfig.task_id,
            task: {},
@@ -474,10 +474,10 @@ class CreateVQAMturkInterface extends React.Component {
                 {topInstruction}
                 {taskInstructionsButton}
                 {taskInstructions}
-                <Row style={{ overflowY: "scroll" }}>
+                <Row>
                     <CardGroup style={{ width: '100%'}}>
                         <Card border='dark'>
-                            <Card.Body className="d-flex justify-content-center pt-2" style={{ height: "auto", overflowY: "scroll" }}>
+                            <Card.Body className="d-flex justify-content-center pt-3" style={{ height: "auto" }}>
                                 {contextContent}
                             </Card.Body>
                         </Card>
