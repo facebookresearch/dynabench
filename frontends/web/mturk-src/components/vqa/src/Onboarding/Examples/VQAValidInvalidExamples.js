@@ -21,7 +21,7 @@ const VQAValidInvalidExamples = [
         imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/train2014/COCO_train2014_000000333848.jpg",
         question: "What breed is the dog?",
         isValid: false,
-        explanation: "This question is not ambiguous but it is likely that not a lot of people know the answer. Try to avoid very specific questions that require some specialized knowledge on the topic."
+        explanation: "This question is not ambiguous but it is likely that not a lot of people know the answer. Try to avoid very specific questions that require some specialized knowledge on the topic. Relying on external knowledge is fine, but remember: another person should be able to answer the question."
     },
     {
         imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/test2015/COCO_test2015_000000576597.jpg",
