@@ -164,7 +164,7 @@ class VQAValidationInterface extends React.Component {
                                         <Row>
                                             <Col xs={12} md={7}>
                                                 <h6 className="text-uppercase dark-blue-color spaced-header">
-                                                    Determine if the image is required to answer the question and if it can be answered based on the image:
+                                                    Is the question below valid? (valid: image is required to answer the question)
                                                 </h6>
                                                 <p>
                                                     {this.state.example.text}
