@@ -8,25 +8,17 @@ import React from "react";
 import { VQAOnboardingInstructions } from "./VQAOnboardingInstructions.js";
 import { VQAExampleCards } from "./VQAExampleCards.js";
 import { VQAQuiz } from "./VQAQuiz.js";
-import { SimulationExamples } from "./Examples/VQASimulationExamples.js";
-import { CreateVQAMturkInterface } from "../CreateVQAMturkInterface.js";
 import { Container, Row, Col, Button, InputGroup } from "react-bootstrap";
 
 class VQAOnboarder extends React.Component {
 
     constructor(props) {
         super(props);
-        this.simulationExamples = SimulationExamples;
-        this.totalPhases = this.props.onboardingMode === "validation" ? 3 : 4;
+        this.totalPhases = 3;
         this.state = {
             currPhase: 0,
-            phasesCompleted: [true, false, false, false],
+            phasesCompleted: [true, false, false],
         };
-    }
-
-    getRandomContext = () => {
-        const randIdx = Math.floor(Math.random() * this.simulationExamples.length);
-        return this.simulationExamples[randIdx];
     }
 
     nextPhase = () => {
@@ -34,8 +26,6 @@ class VQAOnboarder extends React.Component {
             this.setState(state => {
                 return { currPhase: state.currPhase + 1 };
             });
-        } else if (this.state.currPhase === this.totalPhases - 1) {
-            this.submitOnboarding({ success: true });
         }
     }
 
@@ -75,11 +65,6 @@ class VQAOnboarder extends React.Component {
                     cache={this.cache}
                     phaseCompleted={this.state.phasesCompleted[this.state.currPhase]}
                 />,
-            3: <CreateVQAMturkInterface
-                {...this.props}
-                getRandomContext={this.getRandomContext}
-                mode="onboarding"
-            />
         }
         const phaseSelectionPanel = (
             <Row>
@@ -89,7 +74,7 @@ class VQAOnboarder extends React.Component {
                             <Button className="btn btn-primary" onClick={this.prevPhase}>Previous Phase</Button>
                         </Col>
                     }
-                    {this.state.phasesCompleted[this.state.currPhase] &&
+                    {this.state.phasesCompleted[this.state.currPhase] && this.state.currPhase < this.totalPhases - 1 &&
                         <Col className="d-flex justify-content-end">
                             <Button className="btn btn-success" onClick={this.nextPhase}>
                                 {this.state.currPhase === 0 ? "Start Onboarding" : "Next Phase"}

@@ -70,7 +70,6 @@ class VQAQuiz extends React.Component {
             }, () => {
                 if (correctValidations >= this.minCorrectValidations) {
                     this.props.setPhaseCompleted();
-                    this.props.nextPhase();
                 } else if (this.state.attempt === this.maxAllowedAttempts) {
                     this.setState({ onboardingFailed: true });
                 }
@@ -150,6 +149,11 @@ class VQAQuiz extends React.Component {
             onClick={() => this.props.submitOnboarding({ success: false })}>
                 End Task
         </button>
+        const finishOnboardingButton = <button
+            className="btn btn-danger mb-3 ml-auto order-3"
+            onClick={() => this.props.submitOnboarding({ success: true })}>
+                Finish Onboarding
+        </button>
         const resultsMessage = (
             <small className="order-2 mt-2" style={{ color: "#e65959", paddingLeft: 7 }}>
                 {this.state.currentAttemptChecked ? (
@@ -171,7 +175,7 @@ class VQAQuiz extends React.Component {
                 {content}
                 <div className="d-flex justify-content-start" style={{ width: "100%" }}>
                     {resultsMessage}
-                    {!this.props.phaseCompleted && (
+                    {!this.props.phaseCompleted ? (
                         this.state.currentAttemptChecked && !this.state.missingAnswers ? (
                             this.state.onboardingFailed ? (
                                 quitOnboardingButton
@@ -181,6 +185,8 @@ class VQAQuiz extends React.Component {
                         ) : (
                             checkAnswersButton
                         )
+                    ) : (
+                        finishOnboardingButton
                     )}
                 </div>
             </>
