@@ -6,6 +6,8 @@ import sys
 
 import boto3
 
+from utils.helpers import ceil_dt, floor_dt
+
 
 sys.path.append("../api")  # noqa
 from models.model import ModelModel  # isort:skip
@@ -24,6 +26,7 @@ class Job:
         self.job_name = self.generate_job_name(self.endpoint_name, dataset)
 
         self.status = None  # will update once job is successfully submitted
+        self.aws_metrics = {}  # will update once job is completed
 
     def generate_job_name(self, endpoint_name, dataset):
         # TODO: add datetime to job name , make it unique
@@ -63,16 +66,24 @@ class JobScheduler:
             aws_secret_access_key=config["aws_secret_access_key"],
             region_name=config["aws_region"],
         )
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self._dump()
+        self.cloudwatch = boto3.client(
+            "cloudwatch",
+            aws_access_key_id=config["aws_access_key_id"],
+            aws_secret_access_key=config["aws_secret_access_key"],
+            region_name=config["aws_region"],
+        )
 
     def _load_status(self, status_dump):
         try:
-            status = pickle.load(open(status_dump))
+            status = pickle.load(open(status_dump, "rb"))
             return status["submitted"], status["completed"], status["failed"]
+        except FileNotFoundError:
+            logger.info("No existing scheduler status found. Re-initializing...")
+            return [], [], []
         except Exception as ex:
-            logger.exception(ex)
+            logger.exception(
+                f"Exception in loading scheduler status {ex}. Re-initializing"
+            )
             return [], [], []
 
     def submit(self, model_id, dataset):
@@ -84,35 +95,68 @@ class JobScheduler:
         else:
             self._failed.append(job)
 
-    def _update(self):
-        done_jobs = []
-        for i, job in enumerate(self._submitted):
+    def update_status(self):
+        done_job_names = set()
+        completed_job_names = set()
+        for job in self._submitted:
             job_status = job.update_status(self.client)
             if job_status["TransformJobStatus"] != "InProgress":
-                done_jobs.append(i)
+                done_job_names.add(job.job_name)
                 if job_status["TransformJobStatus"] == "Completed":
                     self._completed.append(job)
+                    completed_job_names.add(job.job_name)
                 elif job_status["TransformJobStatus"] == "Failed":
                     self._failed.append(job)
         self._submitted = [
-            job for i, job in enumerate(self._submitted) if i not in done_jobs
+            job for job in self._submitted if job.job_name not in done_job_names
         ]
 
-    def pop_jobs_for_eval(self, N=1):
-        self._update()
-        jobs = []
-        if len(self._completed) == 0:
-            logger.exception("No completed jobs yet.")
+        self.dump()
+
+        # fetch AWS metrics for completed jobs
+        metrics = self.cloudwatch.list_metrics(Namespace="/aws/sagemaker/TransformJobs")
+        for m in metrics["Metrics"]:
+            job_name = m["Dimensions"][0]["Value"].split("/")[0]
+            if job_name in completed_job_names:
+                r = self.cloudwatch.get_metric_statistics(
+                    Namespace=m["Namespace"],
+                    MetricName=m["MetricName"],
+                    Dimensions=m["Dimensions"],
+                    StartTime=floor_dt(job.status["TransformStartTime"]),
+                    EndTime=ceil_dt(job.status["TransformEndTime"]),
+                    Period=300,
+                    Statistics=["Average", "Maximum", "Minimum"],
+                )
+                if r["Datapoints"]:
+                    job.aws_metrics[m["MetricName"]] = r["Datapoints"][0]
+
+    def pop_jobs(self, status, N=1):
+        if status == "Completed":
+            queue = self._completed
+        elif status == "Failed":
+            queue = self._failed
         else:
-            for _ in range(min(len(self._completed), N)):
-                jobs.append(self._completed.pop())
+            raise NotImplementedError(f"Job status {status} not supported to pop")
+        jobs = []
+        if len(queue) == 0:
+            logger.exception(f"No {status.lower()} jobs to pop yet.")
+        else:
+            for _ in range(min(len(queue), N)):
+                jobs.append(queue.pop(0))
         return jobs
 
-    def _dump(self):
+    # def __exit__(self, exc_type, exc_value, traceback):
+    def dump(self):
         # dump status to pre-specified path
         status = {
             "submitted": self._submitted,
             "completed": self._completed,
             "failed": self._failed,
         }
-        pickle.dump(status, self._status_dump)
+        logger.info(
+            f"Running jobs: {[job.job_name for job in status['submitted']]}\n"
+            + f"completed jobs: {[job.job_name for job in status['completed']]}\n"
+            + f"failed jobs: {[job.job_name for job in status['failed']]}"
+        )
+        pickle.dump(status, open(self._status_dump, "wb"))
+        print(f"Scheduler dumped status to {self._status_dump}")

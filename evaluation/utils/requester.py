@@ -74,5 +74,5 @@ class Requester:
                     self._eval_model_on_dataset(model_id, eval_id)
 
     def compute(self, N=1):
-        jobs = self.scheduler.pop_jobs_for_eval(N=N)
+        jobs = self.scheduler.pop_jobs(status="Completed", N=N)
         self.computer.compute_metrics(jobs)

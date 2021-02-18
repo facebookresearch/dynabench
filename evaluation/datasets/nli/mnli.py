@@ -2,6 +2,7 @@
 
 import json
 import os
+import sys
 import tempfile
 
 from datasets.common import BaseDataset, logger
@@ -35,17 +36,13 @@ class MnliBase(BaseDataset):
 
 class MnliDevMismatched(MnliBase):
     def __init__(self):
-        local_path = (
-            "/Users/mazhiyi/Documents/Projects/"
-            + "DYNABENCH/anli/data/build/mnli/mm_dev.jsonl"
-        )
+        rootpath = os.path.dirname(sys.path[0])
+        local_path = os.path.join(rootpath, "data", "nli/mnli/mm_dev.jsonl")
         super().__init__(task="nli", name="mnli-dev-mismatched", local_path=local_path)
 
 
 class MnliDevMatched(MnliBase):
     def __init__(self):
-        local_path = (
-            "/Users/mazhiyi/Documents/Projects/"
-            + "DYNABENCH/anli/data/build/mnli/m_dev.jsonl"
-        )
+        rootpath = os.path.dirname(sys.path[0])
+        local_path = os.path.join(rootpath, "data", "nli/mnli/m_dev.jsonl")
         super().__init__(task="nli", name="mnli-dev-matched", local_path=local_path)

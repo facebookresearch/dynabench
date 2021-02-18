@@ -8,10 +8,9 @@ import tempfile
 
 import boto3
 
-from models.score import ScoreModel
 
-
-sys.path.append("../api")
+sys.path.append("../api")  # noqa
+from models.score import ScoreModel  # isort:skip
 
 logger = logging.getLogger("computer")
 

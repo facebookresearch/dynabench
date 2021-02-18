@@ -19,13 +19,14 @@ class BaseDataset(ABC):
         self.name = name
         self.filename = self.name + ext
         self.s3_url = self._get_data_s3_url()
-        self.s3_client = s3_client or boto3.client(
+
+        s3_client = s3_client or boto3.client(
             "s3",
             aws_access_key_id=eval_config["aws_access_key_id"],
             aws_secret_access_key=eval_config["aws_secret_access_key"],
             region_name=eval_config["aws_region"],
         )
-        if not self._dataset_available_on_s3():
+        if not self._dataset_available_on_s3(s3_client):
             logger.info(
                 f"Dataset {self.name} does not exist on S3. "
                 f"Pushing to {self.s3_url} now..."
@@ -50,9 +51,9 @@ class BaseDataset(ABC):
             self.task,
         )
 
-    def _dataset_available_on_s3(self) -> bool:
+    def _dataset_available_on_s3(self, s3_client) -> bool:
         path = self._get_data_s3_path()
-        response = self.s3_client.list_objects_v2(
+        response = s3_client.list_objects_v2(
             Bucket=eval_config["dataset_s3_bucket"], Prefix=path
         )
         for obj in response.get("Contents", []):
