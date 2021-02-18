@@ -119,7 +119,7 @@ class VQAValidationInterface extends React.Component {
                     You will be shown an image and a question. The task consists of two rounds.
                     First, you have to determine if the question is <b className="dark-blue-color">valid</b>, this means
                     that the image is required to answer the question and that it can be answered based on the image.
-                    After validating the question, next you will determine whether the provided answer is correct.
+                    After validating the question, next you will determine whether the provided answer is <b className="dark-blue-color">correct</b>.
                     If you think the example should be reviewed, please click the <b>Flag</b> button and explain why
                     you flagged the example (try to use this sparingly).
                 </p>
