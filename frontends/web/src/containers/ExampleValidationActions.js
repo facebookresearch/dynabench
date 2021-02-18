@@ -41,6 +41,7 @@ class ExampleValidationActions extends React.Component {
                 <div className="d-flex flex-row" onClick={() => this.props.setCorrectSelected()}>
                     <Form.Check
                         checked={this.props.correctSelected}
+                        onChange={() => this.props.setCorrectSelected()}
                         type="radio"
                     />
                     <i className="fas fa-thumbs-up"></i>  &nbsp; {this.props.userMode === "owner" ? "Verified " : ""} {positiveTerm}
@@ -48,6 +49,7 @@ class ExampleValidationActions extends React.Component {
                 <div className="d-flex flex-row" onClick={() => this.props.setIncorrectSelected()}>
                     <Form.Check
                         checked={this.props.incorrectSelected}
+                        onChange={() => this.props.setIncorrectSelected()}
                         type="radio"
                     />
                     <i className="fas fa-thumbs-down"></i>  &nbsp; {this.props.userMode === "owner" ? "Verified " : ""} {negativeTerm}

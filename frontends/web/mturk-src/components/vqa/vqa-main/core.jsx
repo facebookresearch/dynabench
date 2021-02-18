@@ -28,7 +28,6 @@ class VQATaskMain extends React.Component {
     render() {
         return <CreateVQAMturkInterface
             {...this.props}
-            mode="main"
         />
     }
 }

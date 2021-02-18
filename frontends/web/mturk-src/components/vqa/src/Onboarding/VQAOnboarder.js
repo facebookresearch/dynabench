@@ -56,12 +56,15 @@ class VQAOnboarder extends React.Component {
             0: <VQAOnboardingInstructions
                     onboardingMode={this.props.onboardingMode}
                 />,
-            1: <VQAExampleCards setPhaseCompleted={this.setPhaseCompleted}/>,
+            1: <VQAExampleCards
+                setPhaseCompleted={this.setPhaseCompleted}
+                onboardingMode={this.props.onboardingMode}/>,
             2: <VQAQuiz
                     setPhaseCompleted={this.setPhaseCompleted}
                     nextPhase={this.nextPhase}
                     submitOnboarding={this.submitOnboarding}
                     cacheQuizState={this.cacheQuizState}
+                    onboardingMode={this.props.onboardingMode}
                     cache={this.cache}
                     phaseCompleted={this.state.phasesCompleted[this.state.currPhase]}
                 />,

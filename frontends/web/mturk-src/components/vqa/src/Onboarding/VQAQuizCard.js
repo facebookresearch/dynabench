@@ -40,7 +40,7 @@ class VQAQuizCard extends React.Component {
                                         </p>
                                         {this.props.isAnswer && <>
                                             <h6 className="text-uppercase dark-blue-color spaced-header">
-                                                AI's answer:
+                                                {this.props.onboardingMode === "creation" ? "AI's " : ""} answer:
                                             </h6>
                                             <p>
                                                 {this.props.answer}
