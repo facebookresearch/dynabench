@@ -7,7 +7,7 @@ from datetime import datetime
 import boto3
 from dateutil.tz import tzlocal
 
-from utils.helpers import ceil_dt, floor_dt
+from utils.helpers import ceil_dt, floor_dt, process_aws_metrics
 
 
 sys.path.append("../api")  # noqa
@@ -159,7 +159,7 @@ class JobScheduler:
                                         job.aws_metrics[m["MetricName"]] = {}
                                     job.aws_metrics[m["MetricName"]][
                                         host.split("/")[1]
-                                    ] = r["Datapoints"][0]
+                                    ] = process_aws_metrics(r["Datapoints"])
         # dump the updated status
         self.dump()
 
