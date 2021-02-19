@@ -15,6 +15,11 @@
   border: 1px solid #fbe5c8;
 }
 
+.response-danger {
+  background-color: #ffeff2;
+  border: 1px solid #ffe5e7;
+}
+
 .light-green-bg {
   background-color: #e9ffe8;
 }

@@ -80,7 +80,7 @@ class CheckVQAModelAnswer extends React.Component {
                             <Row>
                                 <Col className="mt-2 pr-1">
                                     <ExplainFeedback feedbackSaved={this.props.feedbackSaved} type="answer"/>
-                                    <input type="text" autoFocus style={{width: 100+'%'}}  placeholder={"Provide the correct answer"}
+                                    <input type="text" autoFocus style={{width: 100+'%'}}  placeholder={"Provide the correct answer. Please make sure the correct answer follows our requirements in the instructions."}
                                         onChange={(e) => {this.setState({correctAnswer: e.target.value})}} onKeyPress={this.handleKeyPress}/>
                                 </Col>
                                 <Col className="align-self-end justify-content-start pl-0" md="auto">
