@@ -38,10 +38,9 @@ class MetricsComputer:
         parts = output_s3_uri.replace("s3://", "").split("/")
         s3_bucket = parts[0]
         s3_path = "/".join(parts[1:])
-        tmp_dir = tempfile.TemporaryDirectory()
-        tmp_file = os.path.join(tmp_dir.name, "predictions")
-        self.s3_client.download_file(s3_bucket, s3_path, tmp_file)
-        with open(tmp_file) as f:
+        tmp_pred_file = tempfile.mkstemp(prefix="predictions")
+        self.s3_client.download_file(s3_bucket, s3_path, tmp_pred_file)
+        with open(tmp_pred_file) as f:
             tmp = ""
             predictions = []
             line = f.readline().strip()
@@ -59,6 +58,7 @@ class MetricsComputer:
                 elif line:
                     tmp += line.replace("\n", "")
                 line = f.readline().strip()
+        os.remove(tmp_pred_file)
         return predictions
 
     def update_database(self, job):
