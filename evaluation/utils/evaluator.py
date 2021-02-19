@@ -32,7 +32,7 @@ class Job:
     def generate_job_name(self, endpoint_name, dataset):
         # TODO: add datetime to job name , make it unique
         return (
-            f"conc-{endpoint_name}-{dataset.task}-{dataset.name}"
+            f"test-{endpoint_name}-{dataset.task}-{dataset.name}"
             f"-{datetime.now().strftime('%I-%M-%p-%B-%d-%Y')}"
         )[:63].rstrip("-")
 
@@ -84,6 +84,7 @@ class JobScheduler:
     def _load_status(self, status_dump):
         try:
             status = pickle.load(open(status_dump, "rb"))
+            logger.info(f"Load existing status from {status_dump}")
             return status["submitted"], status["completed"], status["failed"]
         except FileNotFoundError:
             logger.info("No existing scheduler status found. Re-initializing...")
@@ -172,9 +173,9 @@ class JobScheduler:
         jobs = []
         if len(queue) == 0:
             logger.exception(f"No {status.lower()} jobs to pop yet.")
-        # else:
-        # for _ in range(min(len(queue), N)):
-        # jobs.append(queue.pop(0))
+        else:
+            for _ in range(min(len(queue), N)):
+                jobs.append(queue.pop(0))
         return jobs
 
     # def __exit__(self, exc_type, exc_value, traceback):

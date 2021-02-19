@@ -34,7 +34,7 @@ class MetricsComputer:
         """
         Parse batch transform output by balancing brackets
         """
-        output_s3_uri = job.dataset.get_output_s3_path(job.endpoint_name)
+        output_s3_uri = job.dataset.get_output_s3_url(job.endpoint_name)
         parts = output_s3_uri.replace("s3://", "").split("/")
         s3_bucket = parts[0]
         s3_path = "/".join(parts[1:])
@@ -54,7 +54,7 @@ class MetricsComputer:
                         lb -= 1
                 if lb == 0 and tmp:
                     tmp += line
-                    predictions.append(tmp)
+                    predictions.append(json.loads(tmp))
                     tmp = ""
                 elif line:
                     tmp += line.replace("\n", "")
@@ -65,7 +65,7 @@ class MetricsComputer:
         try:
             predictions = self.parse_outfile(job)
             score_obj = job.dataset.eval(predictions)
-            perf_metrics = self._compute_perf_metrics(job)
+            perf_metrics = self._get_perf_metrics(job)
             # TODO: add model eval status and update
             s = ScoreModel()
             s.bulk_create(
@@ -77,10 +77,11 @@ class MetricsComputer:
         except Exception as ex:
             logger.exception(f"Exception in computing metrics {ex}")
 
-    def _compute_perf_metrics(self, job):
+    def _get_perf_metrics(self, job):
         "Compute job performance metrics: CpuUtilization, MemoryUtilization"
-        return {}
+        return job.aws_metrics
 
     def compute_metrics(self, jobs: list):
-        for job in jobs:
-            self.update_database(job)
+        if jobs:
+            for job in jobs:
+                self.update_database(job)

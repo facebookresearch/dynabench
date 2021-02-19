@@ -6,7 +6,6 @@ import sys
 import tempfile
 
 from datasets.common import BaseDataset, logger
-from eval_config import eval_config
 
 
 class MnliBase(BaseDataset):
@@ -14,7 +13,7 @@ class MnliBase(BaseDataset):
         super().__init__(task=task, name=name)
         self.local_path = local_path
 
-    def load(self):
+    def load(self, s3_client):
         with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
             for line in open(self.local_path).readlines():
                 jl = json.loads(line)
@@ -26,12 +25,19 @@ class MnliBase(BaseDataset):
                 }
                 tmp.write(json.dumps(tmp_jl) + "\n")
             tmp.close()
-            response = self.s3_client.upload_file(
-                tmp.name, eval_config["dataset_s3_bucket"], self._get_data_s3_path()
+            response = s3_client.upload_file(
+                tmp.name, self.s3_bucket, self._get_data_s3_path()
             )
             os.remove(tmp.name)
             if response:
                 logger.info(response)
+
+    def field_converter(self, example):
+        return {
+            "id": example["uid"],
+            "answer": example["label"],
+            "tags": example.get("tags", ""),
+        }
 
 
 class MnliDevMismatched(MnliBase):

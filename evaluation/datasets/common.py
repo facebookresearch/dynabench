@@ -1,7 +1,9 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+import json
 import logging
 import os
+import tempfile
 from abc import ABC, abstractmethod
 
 import boto3
@@ -14,24 +16,25 @@ logger = logging.getLogger("datasets")
 
 
 class BaseDataset(ABC):
-    def __init__(self, task, name, ext=".jsonl", s3_client=None):
+    def __init__(self, task, name, config=eval_config, ext=".jsonl"):
         self.task = task
         self.name = name
         self.filename = self.name + ext
+        self.s3_bucket = config["dataset_s3_bucket"]
         self.s3_url = self._get_data_s3_url()
 
-        s3_client = s3_client or boto3.client(
+        s3_client = boto3.client(
             "s3",
-            aws_access_key_id=eval_config["aws_access_key_id"],
-            aws_secret_access_key=eval_config["aws_secret_access_key"],
-            region_name=eval_config["aws_region"],
+            aws_access_key_id=config["aws_access_key_id"],
+            aws_secret_access_key=config["aws_secret_access_key"],
+            region_name=config["aws_region"],
         )
         if not self._dataset_available_on_s3(s3_client):
             logger.info(
                 f"Dataset {self.name} does not exist on S3. "
                 f"Pushing to {self.s3_url} now..."
             )
-            self.load()
+            self.load(s3_client)
             logger.info(f"Loaded {self.name} on S3 at {self.s3_url}")
         else:
             logger.info(f"Dataset {self.name} exists on S3 at {self.s3_url}")
@@ -41,28 +44,23 @@ class BaseDataset(ABC):
 
     def _get_data_s3_url(self):
         s3_path = self._get_data_s3_path()
-        return os.path.join(f"s3://{eval_config['dataset_s3_bucket']}", s3_path)
+        return os.path.join(f"s3://{self.s3_bucket}", s3_path)
 
-    def _get_output_s3_path_prefix(self, endpoint_name):
+    def _get_output_s3_url_prefix(self, endpoint_name):
         return os.path.join(
-            f"s3://{eval_config['dataset_s3_bucket']}",
-            "predictions",
-            endpoint_name,
-            self.task,
+            f"s3://{self.s3_bucket}", "predictions", endpoint_name, self.task
         )
 
     def _dataset_available_on_s3(self, s3_client) -> bool:
         path = self._get_data_s3_path()
-        response = s3_client.list_objects_v2(
-            Bucket=eval_config["dataset_s3_bucket"], Prefix=path
-        )
+        response = s3_client.list_objects_v2(Bucket=self.s3_bucket, Prefix=path)
         for obj in response.get("Contents", []):
             if obj["Key"] == path:
                 return True
         return False
 
-    def get_output_s3_path(self, endpoint_name):
-        prefix = self._get_output_s3_path_prefix(endpoint_name)
+    def get_output_s3_url(self, endpoint_name):
+        prefix = self._get_output_s3_url_prefix(endpoint_name)
         return os.path.join(prefix, self.filename + ".out")
 
     def run_eval(self, sagemaker_client, endpoint_name, job_name) -> bool:
@@ -81,7 +79,7 @@ class BaseDataset(ABC):
             },
             TransformOutput={
                 # change to config
-                "S3OutputPath": self._get_output_s3_path_prefix(endpoint_name),
+                "S3OutputPath": self._get_output_s3_url_prefix(endpoint_name),
                 "Accept": "application/json",
                 "AssembleWith": "Line",
             },
@@ -94,107 +92,95 @@ class BaseDataset(ABC):
         )
         return True
 
-    def eval(self, predictions: list) -> dict:
+    def read_labels(self, s3_client):
+        tf = tempfile.mkstemp(prefix=self.name)[1]
+        s3_client.download_file(self.s3_bucket, self._get_data_s3_path(), tf)
+        data = [json.loads(l) for l in open(tf).readlines()]
+        labels = [self.field_converter(example) for example in data]
+        os.remove(tf)
+        return labels
+
+    def eval(self, predictions: list, s3_client=None) -> dict:
         """
         Adapted from common.helpers.validate_prediction, compute accuracy / f1, etc.
         """
         eval_fn = task_config.get(self.task, task_config["default"])["eval_fn"]
-        # TODO: following section, get labels from s3_url:
-        # zoe to consider, here or implemented by task, or by dataset?
-        target_examples = self.s3_url
 
-        target_ids = {
-            r_id: [x["id"] for x in target_examples[r_id]] for r_id in target_examples
-        }
-        target_labels = {
-            r_id: [x["answer"] for x in target_examples[r_id]]
-            for r_id in target_examples
-        }
-        target_tags = {
-            r_id: [x["tags"] for x in target_examples[r_id]] for r_id in target_examples
-        }
-        # we are using SQuAD JSON format, so align the predictions with
-        # the target labels
-        # TODO: fix this after model I/O is confirmed
-        aligned_prediction = []
-        for r_id in sorted(target_examples):
-            for id in target_ids[r_id]:
-                if id in predictions:
-                    aligned_prediction.append(predictions[id])
-        predictions = aligned_prediction
+        # load target examples
+        s3_client = s3_client or boto3.client(
+            "s3",
+            aws_access_key_id=eval_config["aws_access_key_id"],
+            aws_secret_access_key=eval_config["aws_secret_access_key"],
+            region_name=eval_config["aws_region"],
+        )
+        target_examples = self.read_labels(s3_client)
+        # validate alignment of prediction and target labels
+        target_ids = [x["id"] for x in target_examples]
+        target_labels = {t["id"]: t["answer"] for t in target_examples}
+        target_labels = [target_labels[id] for id in target_ids]
+        target_tags = {t["id"]: t["tags"] for t in target_examples}
+        target_tags = [target_tags[id] for id in target_ids]
 
-        # validate prediction and target labels length
-        # if len(r_objects) > 1 and len(predictions) !=
-        # len(sum(target_labels.values(), [])):
-        #     raise AssertionError("Prediction and target file length mismatch")
-        # elif len(r_objects) == 1 and len(target_labels[r_objects[0].rid]) != len(
-        #     predictions
-        # ):
-        #     raise AssertionError("Prediction and target file length mismatch")
+        predictions = {p["id"]: p["label"] for p in predictions}
+        try:
+            predictions = [predictions[id] for id in target_ids]
+            assert len(predictions) == len(target_labels)
+        except AssertionError:
+            logger.exception("Prediction and target file length mismatch")
+        except KeyError as ex:
+            logger.exception(f"Prediction and target file example mismatch: {ex}")
+        except Exception as ex:
+            logger.exception(f"Unknown exception {ex}")
+        else:
+            score_obj = {}
+            score_obj["desc"] = None
+            score_obj["longdesc"] = None
+            score_obj["metadata_json"] = {}
 
-        # overall_accuracy = 0
-        # score_obj_list = []
-        # rounds_accuracy_list = []
+            # Get performance
+            perf = eval_fn(predictions, target_labels)
+            score_obj["pretty_perf"] = str(round(perf * 100, 2)) + " %"
+            score_obj["perf"] = round(perf * 100, 2)
 
-        # for r_obj in sorted(r_objects, key=lambda x: x.rid):
-        score_obj = {}
-        # round_accuracy = {} # TODO: no need of this since we don't send response?
-        # score_obj["round_id"] = r_obj.id # TODO: what to do with rid for e.g. mnli?
-        score_obj["desc"] = None
-        score_obj["longdesc"] = None
-        score_obj["metadata_json"] = {}
-
-        # # Slice and extract round specific prediction
-        # end_index = end_index + len(target_labels[r_obj.rid])
-        # score_obj["start_index"] = start_index
-        # score_obj["end_index"] = end_index
-        # r_prediction = predictions[start_index:end_index]
-        # start_index = end_index
-
-        # Get round performance
-        r_accuracy = eval_fn(predictions, target_labels)
-        score_obj["pretty_perf"] = str(round(r_accuracy * 100, 2)) + " %"
-        score_obj["perf"] = round(r_accuracy * 100, 2)
-        # round_accuracy["accuracy"] = round(r_accuracy * 100, 2)
-
-        # Get performance breakdown for this round across tags
-        if target_tags:
-            examples_by_tag = {}
-            for r_pred, r_target_label, r_target_tags in zip(
-                predictions, target_labels, target_tags
-            ):
-                for tag in r_target_tags:
-                    examples_by_tag.setdefault(tag, []).append((r_pred, r_target_label))
-            perf_by_tag = {
-                k: eval_fn(*list(zip(*examples)))
-                for k, examples in examples_by_tag.items()
-            }
-            score_obj["metadata_json"]["perf_by_tag"] = [
-                {
-                    "tag": tag,
-                    "pretty_perf": str(round(perf * 100, 2)) + " %",
-                    "perf": round(perf * 100, 2),
+            # Get performance breakdown for this round across tags
+            if target_tags:
+                examples_by_tag = {}
+                for pred, target_label, target_tags in zip(
+                    predictions, target_labels, target_tags
+                ):
+                    for tag in target_tags:
+                        examples_by_tag.setdefault(tag, []).append((pred, target_label))
+                perf_by_tag = {
+                    k: eval_fn(*list(zip(*examples)))
+                    for k, examples in examples_by_tag.items()
                 }
-                for tag, perf in perf_by_tag.items()
-            ]
+                score_obj["metadata_json"]["perf_by_tag"] = [
+                    {
+                        "tag": tag,
+                        "pretty_perf": str(round(perf * 100, 2)) + " %",
+                        "perf": round(perf * 100, 2),
+                    }
+                    for tag, perf in perf_by_tag.items()
+                ]
 
-            # Sum rounds accuracy and generate score object list
-            # overall_accuracy = overall_accuracy + round(r_accuracy * 100, 2)
-            # round_accuracy["round_id"] = r_obj.rid
-            # rounds_accuracy_list.append(round_accuracy)
-            # score_obj_list.append(score_obj)
-
-        # if len(rounds_accuracy_list) > 0:
-        # overall_accuracy /= len(rounds_accuracy_list)
-        # FIXME: should move overall calculation
-        # FIXME: to database level in current setup, not here
-
-        # return rounds_accuracy_list, score_obj_list, round(overall_accuracy, 2)
-        return score_obj
+            return score_obj
 
     @abstractmethod
-    def load(self) -> bool:
+    def load(self, s3_client) -> bool:
         """
         this function loads the dataset to s3 and return True if succcessful
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def field_converter(self, example):
+        """
+        convert the example to a format expected by eval.
+        A converted example should look like
+        {
+            "id": <a unique identifier>,
+            "answer": <e.g. a label>,
+            "tag": <can be empty>
+        }
         """
         raise NotImplementedError
