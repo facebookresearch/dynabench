@@ -1,5 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+import json
 import logging
 import time
 
@@ -28,16 +29,17 @@ if __name__ == "__main__":
     scheduler = JobScheduler(eval_config)
     computer = MetricsComputer(eval_config)
     requester = Requester(scheduler, computer, dataset_dict)
+    # msg = {"model_id": 9}
     while True:
         # On each iteration, submit all requested jobs
-        # for message in queue.receive_messages():
-        # msg = json.loads(message.body)
-        if True:
-            msg = {"model_id": 8}
+        for message in queue.receive_messages():
+            msg = json.loads(message.body)
             logger.info(f"Evaluation server received SQS message {msg}")
             requester.request(msg)
+            message.delete()
 
         # Evaluate one job
+        scheduler.update_status()
         requester.compute(N=1)
 
         time.sleep(5)

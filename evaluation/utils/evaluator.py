@@ -66,12 +66,19 @@ class JobScheduler:
             aws_secret_access_key=config["aws_secret_access_key"],
             region_name=config["aws_region"],
         )
+        self.cloudwatchlog = boto3.client(
+            "logs",
+            aws_access_key_id=config["aws_access_key_id"],
+            aws_secret_access_key=config["aws_secret_access_key"],
+            region_name=config["aws_region"],
+        )
         self.cloudwatch = boto3.client(
             "cloudwatch",
             aws_access_key_id=config["aws_access_key_id"],
             aws_secret_access_key=config["aws_secret_access_key"],
             region_name=config["aws_region"],
         )
+        self.cloudwatch_namespace = "/aws/sagemaker/TransformJobs"
 
     def _load_status(self, status_dump):
         try:
@@ -97,38 +104,59 @@ class JobScheduler:
 
     def update_status(self):
         done_job_names = set()
-        completed_job_names = set()
         for job in self._submitted:
             job_status = job.update_status(self.client)
             if job_status["TransformJobStatus"] != "InProgress":
                 done_job_names.add(job.job_name)
                 if job_status["TransformJobStatus"] == "Completed":
                     self._completed.append(job)
-                    completed_job_names.add(job.job_name)
                 elif job_status["TransformJobStatus"] == "Failed":
                     self._failed.append(job)
         self._submitted = [
             job for job in self._submitted if job.job_name not in done_job_names
         ]
 
-        self.dump()
-
         # fetch AWS metrics for completed jobs
-        metrics = self.cloudwatch.list_metrics(Namespace="/aws/sagemaker/TransformJobs")
-        for m in metrics["Metrics"]:
-            job_name = m["Dimensions"][0]["Value"].split("/")[0]
-            if job_name in completed_job_names:
-                r = self.cloudwatch.get_metric_statistics(
-                    Namespace=m["Namespace"],
-                    MetricName=m["MetricName"],
-                    Dimensions=m["Dimensions"],
-                    StartTime=floor_dt(job.status["TransformStartTime"]),
-                    EndTime=ceil_dt(job.status["TransformEndTime"]),
-                    Period=300,
-                    Statistics=["Average", "Maximum", "Minimum"],
-                )
-                if r["Datapoints"]:
-                    job.aws_metrics[m["MetricName"]] = r["Datapoints"][0]
+        for job in self._completed:
+            if not job.aws_metrics:
+                logStreams = self.cloudwatchlog.describe_log_streams(
+                    logGroupName=self.cloudwatch_namespace,
+                    logStreamNamePrefix=f"{job.job_name}/",
+                )["logStreams"]
+                if logStreams:
+                    hosts = set()
+                    for logStream in logStreams:
+                        if logStream["logStreamName"].count("/") == 1:
+                            hosts.add(
+                                "-".join(logStream["logStreamName"].split("-")[:-1])
+                            )  # each host is a machine instance
+                    for host in hosts:
+                        metrics = self.cloudwatch.list_metrics(
+                            Namespace=self.cloudwatch_namespace,
+                            Dimensions=[{"Name": "Host", "Value": host}],
+                        )
+                        if metrics["Metrics"]:
+                            for m in metrics["Metrics"]:
+                                r = self.cloudwatch.get_metric_statistics(
+                                    Namespace=m["Namespace"],
+                                    MetricName=m["MetricName"],
+                                    Dimensions=m["Dimensions"],
+                                    StartTime=floor_dt(
+                                        job.status["TransformStartTime"]
+                                    ),
+                                    EndTime=ceil_dt(job.status["TransformEndTime"]),
+                                    Period=300,
+                                    Statistics=["Average", "Maximum", "Minimum"],
+                                )
+                                if r["Datapoints"]:
+                                    if m["MetricName"] not in job.aws_metrics:
+                                        job.aws_metrics[m["MetricName"]] = {}
+                                    job.aws_metrics[m["MetricName"]][
+                                        host.split("/")[1]
+                                    ] = r["Datapoints"][0]
+
+        # dump the updated status
+        self.dump()
 
     def pop_jobs(self, status, N=1):
         if status == "Completed":
