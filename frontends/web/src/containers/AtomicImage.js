@@ -9,7 +9,6 @@ import Magnifier from "react-magnifier";
 
 class AtomicImage extends React.Component {
    render() {
-      console.log(this.props.src)
       if (this.props.src && this.props.src.length > 0) {
          return <>
             <div style={{alignSelf: "center"}}>

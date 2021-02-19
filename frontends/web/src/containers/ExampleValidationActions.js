@@ -36,24 +36,24 @@ class ExampleValidationActions extends React.Component {
         return (
             <>
                 <h6 className="text-uppercase dark-blue-color spaced-header">
-                    Actions:
+                    {this.props.header || "Actions"}
                 </h6>
-                <InputGroup className="align-items-center">
+                <div className="d-flex flex-row" onClick={() => this.props.setCorrectSelected()}>
                     <Form.Check
                         checked={this.props.correctSelected}
-                        type="radio"
                         onChange={() => this.props.setCorrectSelected()}
+                        type="radio"
                     />
                     <i className="fas fa-thumbs-up"></i>  &nbsp; {this.props.userMode === "owner" ? "Verified " : ""} {positiveTerm}
-                </InputGroup>
-                <InputGroup className="align-items-center">
+                </div>
+                <div className="d-flex flex-row" onClick={() => this.props.setIncorrectSelected()}>
                     <Form.Check
                         checked={this.props.incorrectSelected}
-                        type="radio"
                         onChange={() => this.props.setIncorrectSelected()}
+                        type="radio"
                     />
                     <i className="fas fa-thumbs-down"></i>  &nbsp; {this.props.userMode === "owner" ? "Verified " : ""} {negativeTerm}
-                </InputGroup>
+                </div>
                 <InputGroup className="ml-3">
                 {this.props.interfaceMode === "web" && this.props.incorrectSelected &&
                     {
@@ -68,14 +68,14 @@ class ExampleValidationActions extends React.Component {
                 }
                 </InputGroup>
                 {this.props.userMode === "user" && this.props.isFlaggingAllowed && (
-                    <InputGroup className="align-items-center">
+                    <div className="d-flex flex-row" onClick={() => this.props.setFlagSelected()}>
                         <Form.Check
                             checked={this.props.flaggedSelected}
                             type="radio"
                             onChange={() => this.props.setFlagSelected()}
                         />
                         <i className="fas fa-flag"></i> &nbsp; Flag
-                    </InputGroup>
+                    </div>
 
                 )}
                 {this.props.flaggedSelected && (
@@ -107,9 +107,9 @@ class ExampleValidationActions extends React.Component {
                             }
                             <div>
                                 <Form.Control
-                                type="text"
-                                placeholder="Explain what you think the creator did to try to trick the model"
-                                onChange={(e) => this.props.setCreatorAttemptExplanation(e.target.value)} />
+                                    type="text"
+                                    placeholder="Explain what you think the creator did to try to trick the model"
+                                    onChange={(e) => this.props.setCreatorAttemptExplanation(e.target.value)} />
                             </div>
                             {this.props.task.shortname === "Hate Speech" &&
                                 <HateSpeechDropdown

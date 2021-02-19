@@ -23,7 +23,7 @@ class VQAValidationInterface extends React.Component {
         super(props);
         this.api = props.api;
         this.vqaTaskId = 12;
-        this.batchAmount = 5;
+        this.batchAmount = 10;
         this.userMode = "user";
         this.interfaceMode = "mturk";
         this.VALIDATION_STATES = {
@@ -38,6 +38,7 @@ class VQAValidationInterface extends React.Component {
             flagReason: null,
             taskId: props.taskConfig.task_id,
             showInstructions: false,
+            examplesOverError: false,
             totalValidationsSoFar: 0,
             task: {},
         }
@@ -78,7 +79,7 @@ class VQAValidationInterface extends React.Component {
             });
         }, (error) => {
             console.log(error);
-            this.setState({ example: null });
+            this.setState({ examplesOverError: true });
         });
     }
 
@@ -119,7 +120,7 @@ class VQAValidationInterface extends React.Component {
                     You will be shown an image and a question. The task consists of two rounds.
                     First, you have to determine if the question is <b className="dark-blue-color">valid</b>, this means
                     that the image is required to answer the question and that it can be answered based on the image.
-                    After validating the question, next you will determine whether the provided answer is correct.
+                    After validating the question, next you will determine whether the provided answer is <b className="dark-blue-color">correct</b>.
                     If you think the example should be reviewed, please click the <b>Flag</b> button and explain why
                     you flagged the example (try to use this sparingly).
                 </p>
@@ -154,73 +155,83 @@ class VQAValidationInterface extends React.Component {
                 {validationInstructions}
                 <Row>
                     <Card style={{ width: '100%'}}>
-                        {this.state.example ? (
-                            <>
-                                <Card.Body className="d-flex justify-content-center pt-2" style={{ height: "auto" }}>
-                                    <AtomicImage src={this.state.example.context.context} maxHeight={600} maxWidth={900}/>
-                                </Card.Body>
-                                <Card className="hypothesis rounded border m-3 card">
-                                    <Card.Body className="p-3">
-                                        <Row>
-                                            <Col xs={12} md={7}>
-                                                <h6 className="text-uppercase dark-blue-color spaced-header">
-                                                    Determine if the image is required to answer the question and if it can be answered based on the image:
-                                                </h6>
-                                                <p>
-                                                    {this.state.example.text}
-                                                </p>
-                                                <ExampleValidationActions
-                                                    correctSelected={this.state.questionValidationState === this.VALIDATION_STATES.CORRECT}
-                                                    incorrectSelected={this.state.questionValidationState === this.VALIDATION_STATES.INCORRECT}
-                                                    flaggedSelected={this.state.questionValidationState === this.VALIDATION_STATES.FLAGGED}
-                                                    userMode={this.userMode}
-                                                    interfaceMode={this.interfaceMode}
-                                                    isQuestion={true}
-                                                    isFlaggingAllowed={true}
-                                                    setCorrectSelected={() => this.setState({ questionValidationState: this.VALIDATION_STATES.CORRECT, flagReason: null })}
-                                                    setIncorrectSelected={() => this.setState({ questionValidationState: this.VALIDATION_STATES.INCORRECT, flagReason: null })}
-                                                    setFlagSelected={() => this.setState({ questionValidationState: this.VALIDATION_STATES.FLAGGED })}
-                                                    setFlagReason={flagReason => this.setState({ flagReason })}
-                                                />
-                                                {this.state.questionValidationState === this.VALIDATION_STATES.CORRECT && (
-                                                    <div className="mt-3">
-                                                        <h6 className="text-uppercase dark-blue-color spaced-header">
-                                                            Determine if the answer is correct:
-                                                        </h6>
-                                                        <p>
-                                                            {this.state.example.target_pred}
-                                                        </p>
-                                                        <ExampleValidationActions
-                                                            correctSelected={this.state.responseValidationState === this.VALIDATION_STATES.CORRECT}
-                                                            incorrectSelected={this.state.responseValidationState === this.VALIDATION_STATES.INCORRECT}
-                                                            flaggedSelected={this.state.responseValidationState === this.VALIDATION_STATES.FLAGGED}
-                                                            userMode={this.userMode}
-                                                            interfaceMode={this.interfaceMode}
-                                                            isQuestion={false}
-                                                            isFlaggingAllowed={false}
-                                                            setCorrectSelected={() => this.setState({ responseValidationState: this.VALIDATION_STATES.CORRECT, flagReason: null })}
-                                                            setIncorrectSelected={() => this.setState({ responseValidationState: this.VALIDATION_STATES.INCORRECT, flagReason: null })}
-                                                            setFlagSelected={() => this.setState({ responseValidationState: this.VALIDATION_STATES.FLAGGED })}
-                                                            setFlagReason={flagReason => this.setState({ flagReason })}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </Col>
-                                        </Row>
+                        {!this.state.examplesOverError ? (
+                            this.state.example ? (
+                                <>
+                                    <Card.Body className="d-flex justify-content-center pt-2" style={{ height: "auto" }}>
+                                        <AtomicImage src={this.state.example.context.context} maxHeight={600} maxWidth={900}/>
                                     </Card.Body>
-                                    <Card.Footer>
-                                        <InputGroup className="align-items-center">
-                                            <button
-                                                type="button"
-                                                className="btn btn-primary btn-sm"
-                                                onClick={this.submitValidation}>
-                                                Submit
-                                            </button>
-                                            {taskTracker}
-                                        </InputGroup>
-                                    </Card.Footer>
-                                </Card>
-                            </>
+                                    <Card className="hypothesis rounded border m-3 card">
+                                        <Card.Body className="p-3">
+                                            <Row>
+                                                <Col xs={12} md={7}>
+                                                    <h6 className="text-uppercase dark-blue-color spaced-header">
+                                                        Is the question below valid? (Please see instructions on the top to see what we mean by "valid". Warning: if you do not follow the instructions, you will be banned.)
+                                                    </h6>
+                                                    <p>
+                                                        {this.state.example.text}
+                                                    </p>
+                                                    <ExampleValidationActions
+                                                        correctSelected={this.state.questionValidationState === this.VALIDATION_STATES.CORRECT}
+                                                        incorrectSelected={this.state.questionValidationState === this.VALIDATION_STATES.INCORRECT}
+                                                        flaggedSelected={this.state.questionValidationState === this.VALIDATION_STATES.FLAGGED}
+                                                        userMode={this.userMode}
+                                                        interfaceMode={this.interfaceMode}
+                                                        isQuestion={true}
+                                                        isFlaggingAllowed={true}
+                                                        setCorrectSelected={() => this.setState({ questionValidationState: this.VALIDATION_STATES.CORRECT, flagReason: null })}
+                                                        setIncorrectSelected={() => this.setState({ questionValidationState: this.VALIDATION_STATES.INCORRECT, flagReason: null })}
+                                                        setFlagSelected={() => this.setState({ questionValidationState: this.VALIDATION_STATES.FLAGGED })}
+                                                        setFlagReason={flagReason => this.setState({ flagReason })}
+                                                    />
+                                                    {this.state.questionValidationState === this.VALIDATION_STATES.CORRECT && (
+                                                        <div className="mt-3">
+                                                            <h6 className="text-uppercase dark-blue-color spaced-header">
+                                                                Determine if the answer is correct:
+                                                            </h6>
+                                                            <p>
+                                                                {this.state.example.model_preds.split("|")[0]}
+                                                            </p>
+                                                            <ExampleValidationActions
+                                                                correctSelected={this.state.responseValidationState === this.VALIDATION_STATES.CORRECT}
+                                                                incorrectSelected={this.state.responseValidationState === this.VALIDATION_STATES.INCORRECT}
+                                                                flaggedSelected={this.state.responseValidationState === this.VALIDATION_STATES.FLAGGED}
+                                                                userMode={this.userMode}
+                                                                interfaceMode={this.interfaceMode}
+                                                                isQuestion={false}
+                                                                isFlaggingAllowed={false}
+                                                                setCorrectSelected={() => this.setState({ responseValidationState: this.VALIDATION_STATES.CORRECT, flagReason: null })}
+                                                                setIncorrectSelected={() => this.setState({ responseValidationState: this.VALIDATION_STATES.INCORRECT, flagReason: null })}
+                                                                setFlagSelected={() => this.setState({ responseValidationState: this.VALIDATION_STATES.FLAGGED })}
+                                                                setFlagReason={flagReason => this.setState({ flagReason })}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </Col>
+                                            </Row>
+                                        </Card.Body>
+                                        <Card.Footer>
+                                            <InputGroup className="align-items-center">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-primary btn-sm"
+                                                    onClick={this.submitValidation}>
+                                                    Submit
+                                                </button>
+                                                {taskTracker}
+                                            </InputGroup>
+                                        </Card.Footer>
+                                    </Card>
+                                </>
+                            ) : (
+                                <Card.Body className="p-3">
+                                    <Row>
+                                        <Col xs={12} md={7}>
+                                            <p>Loading Examples...</p>
+                                        </Col>
+                                    </Row>
+                                </Card.Body>
+                            )
                         ) : (
                             <Card.Body className="p-3">
                                 <Row>

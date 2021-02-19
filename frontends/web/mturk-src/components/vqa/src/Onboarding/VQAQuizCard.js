@@ -6,12 +6,11 @@
 
 import React from "react";
 import AtomicImage from "../../../../../src/containers/AtomicImage.js";
+import { ExampleValidationActions } from "../../../../../src/containers/ExampleValidationActions.js";
 import {
     Card,
     Row,
     Col,
-    Form,
-    InputGroup,
 } from 'react-bootstrap';
 
 class VQAQuizCard extends React.Component {
@@ -41,50 +40,25 @@ class VQAQuizCard extends React.Component {
                                         </p>
                                         {this.props.isAnswer && <>
                                             <h6 className="text-uppercase dark-blue-color spaced-header">
-                                                AI's answer:
+                                                {this.props.onboardingMode === "creation" ? "AI's " : ""} answer:
                                             </h6>
                                             <p>
                                                 {this.props.answer}
                                             </p>
                                         </>}
                                     </div>
-                                    <h6 className="text-uppercase dark-blue-color spaced-header">
-                                        {this.props.isAnswer ? (
-                                            "Determine"
-                                        ) : (
-                                            "Do you need to look at the image to answer this question?"
-                                        )}:
-                                    </h6>
-                                    <div>
-                                        <InputGroup className="align-items-center">
-                                            <Form.Check
-                                                checked={this.props.modelState === this.MODEL_STATES.CORRECT}
-                                                disabled={this.props.disableRadios}
-                                                type="radio"
-                                                onChange={() => {this.props.setModelState(this.props.index, this.MODEL_STATES.CORRECT)}}
-                                            />
-                                            <i className="fas fa-thumbs-up"></i>
-                                            {this.props.isAnswer ? (
-                                            "Correct"
-                                            ) : (
-                                                "Depends on the image"
-                                            )}
-                                        </InputGroup>
-                                        <InputGroup className="align-items-center">
-                                        <Form.Check
-                                            checked={this.props.modelState === this.MODEL_STATES.INCORRECT}
-                                            disabled={this.props.disableRadios}
-                                            type="radio"
-                                            onChange={() => {this.props.setModelState(this.props.index, this.MODEL_STATES.INCORRECT)}}
-                                            />
-                                            <i className="fas fa-thumbs-down"></i>
-                                            {this.props.isAnswer ? (
-                                            "Incorrect"
-                                            ) : (
-                                                "Independent of the image"
-                                            )}
-                                        </InputGroup>
-                                    </div>
+                                    <ExampleValidationActions
+                                        correctSelected={this.props.modelState === this.MODEL_STATES.CORRECT}
+                                        incorrectSelected={this.props.modelState === this.MODEL_STATES.INCORRECT}
+                                        userMode="user"
+                                        interfaceMode="mturk"
+                                        isQuestion={!this.props.isAnswer}
+                                        disabled={this.props.disableRadios}
+                                        header={this.props.isAnswer ? "Determine" : "Is the question above valid? (valid: image is required to answer the question)"}
+                                        isFlaggingAllowed={false}
+                                        setCorrectSelected={() => {this.props.setModelState(this.props.index, this.MODEL_STATES.CORRECT)}}
+                                        setIncorrectSelected={() => {this.props.setModelState(this.props.index, this.MODEL_STATES.INCORRECT)}}
+                                    />
                                 </Col>
                             </Row>
                         </Card.Body>

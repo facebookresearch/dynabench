@@ -7,13 +7,13 @@ import {
     Col
 } from 'react-bootstrap';
 import AtomicImage from "../../../../../src/containers/AtomicImage.js";
-import { VQAValidInvalidExamples } from "./Examples/VQAValidInvalidExamples.js";
+import getVQAValidInvalidExamples from "./Examples/VQAValidInvalidExamples.js";
 
 class VQAExampleCards extends React.Component {
 
-    constructor() {
-        super();
-        this.examples = VQAValidInvalidExamples;
+    constructor(props) {
+        super(props);
+        this.examples = getVQAValidInvalidExamples(this.props.onboardingMode);
         this.state = {
             currIdx: 0,
             showInstructions: true,
@@ -58,7 +58,7 @@ class VQAExampleCards extends React.Component {
                     question can not be answered from the image.
                     For each example below, we show an <b>image</b>, a <b>question</b> and a <b>description</b> of why
                     the question is valid or invalid. Additionally, for the valid questions we include
-                    the answer the AI produced, and whether the answer was correct or not.
+                    the answer{this.props.onboardingMode === "creation" ? " the AI produced" : ""}, and whether the answer was correct or not.
                 </p>
                 <p>
                     Please go through each example carefully.
@@ -121,7 +121,7 @@ class VQAExampleCards extends React.Component {
                                         {this.examples[this.state.currIdx].isValid && (
                                             <>
                                                 <h6 className="text-uppercase dark-blue-color spaced-header">
-                                                    AI Answer:
+                                                    {this.props.onboardingMode === "creation" ? "AI " : ""} Answer:
                                                 </h6>
                                                 <p>
                                                     <small>{this.examples[this.state.currIdx]['modelAns']}</small>
@@ -131,12 +131,12 @@ class VQAExampleCards extends React.Component {
                                         {this.examples[this.state.currIdx].isValid && (
                                             <>
                                                 <h6 className="text-uppercase dark-blue-color spaced-header">
-                                                    Determine if AI is correct or not:
+                                                    Determine if {this.props.onboardingMode === "creation" ? "AI" : "the answer"} is correct or not:
                                                 </h6>
                                                 <p>
                                                     <small>{this.examples[this.state.currIdx]['userFeedback'][0]}</small>
                                                 </p>
-                                                {this.examples[this.state.currIdx]['userFeedback'][0] === "Incorrect" && (
+                                                {this.examples[this.state.currIdx]['userFeedback'][0] === "Incorrect" && this.props.onboardingMode === "creation" && (
                                                     <>
                                                         <h6 className="text-uppercase dark-blue-color spaced-header">
                                                             Provide the correct answer:
