@@ -16,3 +16,5 @@ dynabench:
   task_id: 12
   round_id: 1
   context_tags: "val2014,test2015"
+  # tag_to_store_with_examples is required
+  extra_logging: "tag_to_store_with_examples:sasha_test"
