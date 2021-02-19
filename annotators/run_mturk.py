@@ -38,6 +38,7 @@ class DynaBenchConfig:
     task_name: str = "no_task"
     task_id: int = 0
     round_id: int = 0
+    context_tags: str = ""
 
 
 @dataclass

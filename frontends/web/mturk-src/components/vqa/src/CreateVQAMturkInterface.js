@@ -96,9 +96,13 @@ class CreateVQAMturkInterface extends React.Component {
         })
     }
 
+    getTagList() {
+        return this.props.taskConfig.context_tags.split(",")
+    }
+
     resetStateToContext(newContext) {
         const history = this.getHistoryWithCurrentExamples()
-        const unitContent = [{ cls: 'context', text: newContext.context, id: newContext.id }]
+        const unitContent = [{ cls: 'context', text: newContext.context, id: newContext.id, tag: newContext.tag }]
         this.setState({
             history: [...history, unitContent],
             context: newContext,
@@ -133,7 +137,11 @@ class CreateVQAMturkInterface extends React.Component {
 
     getNewContext() {
         this.setState({ submitDisabled: true, refreshDisabled: true }, () => {
-            this.api.getRandomContext(this.props.taskConfig.task_id, this.state.task.cur_round)
+            this.api.getRandomContext(
+                this.props.taskConfig.task_id,
+                this.state.task.cur_round,
+                this.getTagList(),
+            )
             .then(result => {
                 this.resetStateToContext(result);
             }, error => {
@@ -182,6 +190,7 @@ class CreateVQAMturkInterface extends React.Component {
             'model': 'MovieMCAN',
             'agentId': this.props.agentId,
             'assignmentId': this.props.assignmentId,
+            'tag': this.state.context.tag,
         };
         modelResponse.prob = [modelResponse.prob, 1 - modelResponse.prob];
         this.api.storeExample(
@@ -226,6 +235,7 @@ class CreateVQAMturkInterface extends React.Component {
                     modelPredStr: modelResponse.answer,
                     modelResponse: modelResponse,
                     uiSettings_loadingResponse: false,
+                    tag: this.state.context.tag,
                 })
                 this.setState({
                     responseContent: updatedContent,
