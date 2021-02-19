@@ -1,10 +1,11 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
-import datetime
 import logging
 import pickle
 import sys
+from datetime import datetime
 
 import boto3
+from dateutil.tz import tzlocal
 
 from utils.helpers import ceil_dt, floor_dt
 
@@ -31,8 +32,8 @@ class Job:
     def generate_job_name(self, endpoint_name, dataset):
         # TODO: add datetime to job name , make it unique
         return (
-            f"{endpoint_name}-{dataset.task}-{dataset.name}"
-            f"-{datetime.datetime.now().strftime('%I-%M-%p-%B-%d-%Y')}"
+            f"conc-{endpoint_name}-{dataset.task}-{dataset.name}"
+            f"-{datetime.now().strftime('%I-%M-%p-%B-%d-%Y')}"
         )[:63].rstrip("-")
 
     def update_status(self, client):
@@ -103,19 +104,23 @@ class JobScheduler:
             self._failed.append(job)
 
     def update_status(self):
+        logger.info("Updating status")
         done_job_names = set()
         for job in self._submitted:
             job_status = job.update_status(self.client)
             if job_status["TransformJobStatus"] != "InProgress":
-                done_job_names.add(job.job_name)
-                if job_status["TransformJobStatus"] == "Completed":
+                if job_status["TransformJobStatus"] == "Completed" and ceil_dt(
+                    job.status["TransformEndTime"]
+                ) < datetime.now(tzlocal()):
                     self._completed.append(job)
+                    done_job_names.add(job.job_name)
                 elif job_status["TransformJobStatus"] == "Failed":
                     self._failed.append(job)
+                    done_job_names.add(job.job_name)
         self._submitted = [
             job for job in self._submitted if job.job_name not in done_job_names
         ]
-
+        logger.info("Fetch metrics")
         # fetch AWS metrics for completed jobs
         for job in self._completed:
             if not job.aws_metrics:
@@ -154,7 +159,6 @@ class JobScheduler:
                                     job.aws_metrics[m["MetricName"]][
                                         host.split("/")[1]
                                     ] = r["Datapoints"][0]
-
         # dump the updated status
         self.dump()
 
@@ -168,9 +172,9 @@ class JobScheduler:
         jobs = []
         if len(queue) == 0:
             logger.exception(f"No {status.lower()} jobs to pop yet.")
-        else:
-            for _ in range(min(len(queue), N)):
-                jobs.append(queue.pop(0))
+        # else:
+        # for _ in range(min(len(queue), N)):
+        # jobs.append(queue.pop(0))
         return jobs
 
     # def __exit__(self, exc_type, exc_value, traceback):
