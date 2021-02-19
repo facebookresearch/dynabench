@@ -25,7 +25,6 @@ class CreateVQAMturkInterface extends React.Component {
     constructor(props) {
        super(props);
        this.api = props.api;
-       this.MODEL_STATES = { "UNKNOWN": -1, "CORRECT": 0, "INCORRECT": 1 };
        this.minTriesToSwitchImg = 3;
        this.minTriesToCompleteHIT = 10;
        this.state = {
@@ -41,7 +40,7 @@ class CreateVQAMturkInterface extends React.Component {
            triesInContext: 0,
            submitDisabled: true,
            refreshDisabled: true,
-           fooled: false,
+           fooled: "unknown",
            taskCompleted: false,
            fetchPredictionError: false,
            showErrorAlert: false,
@@ -58,7 +57,6 @@ class CreateVQAMturkInterface extends React.Component {
        this.handleCheckAnswerButtonClick = this.handleCheckAnswerButtonClick.bind(this);
        this.handleSubmitHITClick = this.handleSubmitHITClick.bind(this);
        this.handleKeyPress = this.handleKeyPress.bind(this);
-       this.handleSubmitCorrectAnswer = this.handleSubmitCorrectAnswer.bind(this);
        this.handleCommentsChange = this.handleCommentsChange.bind(this);
        this.submitHistory = this.submitHistory.bind(this);
        this.setModelState = this.setModelState.bind(this);
@@ -82,7 +80,7 @@ class CreateVQAMturkInterface extends React.Component {
 
     resetState(newContext) {
         const unitContent = Object.keys(this.state.context).length > 0
-            ? [{ cls: 'context', text: this.state.context.context }, ...this.state.responseContent]
+            ? [...this.state.responseContent, { cls: 'context', text: this.state.context.context }]
             : [];
         this.setState({
             history: [...this.state.history, unitContent],
@@ -94,7 +92,7 @@ class CreateVQAMturkInterface extends React.Component {
             submitDisabled: false,
             refreshDisabled: false,
             showErrorAlert: false,
-            fooled: false,
+            fooled: "unknown",
         })
     }
 
@@ -226,7 +224,7 @@ class CreateVQAMturkInterface extends React.Component {
            responseContent: [
                ...this.state.responseContent, {
                     cls: "hypothesis",
-                    modelState: this.MODEL_STATES.UNKNOWN,
+                    fooled: "unknown",
                     feedbackSaved: null,
                     retracted: false,
                     flagged: false,
@@ -249,11 +247,11 @@ class CreateVQAMturkInterface extends React.Component {
         }
     }
 
-    updateStateGivenUserFeedback(idx, correctAnswer, newModelState) {
+    updateStateGivenUserFeedback(idx, correctAnswer, fooled) {
         let updatedContent = this.state.responseContent;
         updatedContent[idx] = {
             ...updatedContent[idx],
-            modelState: newModelState,
+            fooled: fooled,
             correctAnswer: correctAnswer,
             feedbackSaved: true
         }
@@ -261,26 +259,26 @@ class CreateVQAMturkInterface extends React.Component {
             responseContent: updatedContent,
             totalTriesSoFar: this.state.totalTriesSoFar + 1,
             triesInContext: this.state.triesInContext + 1,
-            fooled: newModelState === this.MODEL_STATES.INCORRECT,
+            fooled: fooled,
             submitDisabled: false,
             refreshDisabled: false,
             showErrorAlert: false,
         }, () => {
-            if (newModelState === this.MODEL_STATES.INCORRECT || this.state.totalTriesSoFar >= this.minTriesToCompleteHIT) {
+            if (fooled === "yes" || this.state.totalTriesSoFar >= this.minTriesToCompleteHIT) {
                 this.setState({ taskCompleted: true });
             }
         })
     }
 
-    handleSubmitCorrectAnswer(correctAnswer, newModelState) {
+    handleSubmitCorrectAnswer(correctAnswer, fooled) {
         let idx = this.state.responseContent.length - 1;
         let updatedContent = this.state.responseContent;
         updatedContent[idx].feedbackSaved = false;
         const exampleId = this.state.mapKeyToExampleId[idx];
         this.setState({ responseContent: updatedContent }, () => {
-            this.api.updateExample(exampleId, correctAnswer, newModelState, this.props.providerWorkerId)
+            this.api.updateExample(exampleId, correctAnswer, fooled === "yes", this.props.providerWorkerId)
             .then((result) => {
-                this.updateStateGivenUserFeedback(idx, correctAnswer, newModelState);
+                this.updateStateGivenUserFeedback(idx, correctAnswer, fooled);
             }, (error) => {
                 this.setState({ showErrorAlert: true });
                 console.log(error);
@@ -295,12 +293,12 @@ class CreateVQAMturkInterface extends React.Component {
         });
     }
 
-    setModelState(newState) {
+    setModelState(fooled) {
         let idx = this.state.responseContent.length - 1;
         let updatedContent = this.state.responseContent;
-        updatedContent[idx].modelState = newState;
+        updatedContent[idx].fooled = fooled;
         this.setState({ responseContent: updatedContent }, () => {
-            if (newState === this.MODEL_STATES.INCORRECT) {
+            if (fooled === "yes") {
                 this.smoothlyAnimateToBottom();
             }
         });
@@ -314,7 +312,7 @@ class CreateVQAMturkInterface extends React.Component {
 
     render() {
         let taskTrackerMessage = "";
-        if (this.state.fooled) {
+        if (this.state.fooled === "yes") {
             taskTrackerMessage = "Congratulations! You fooled the model and got the bonus.";
         } else if (this.state.totalTriesSoFar >= this.minTriesToCompleteHIT) {
             taskTrackerMessage = "Minimum required tries completed. You can continue to get the bonus.";
@@ -397,13 +395,13 @@ class CreateVQAMturkInterface extends React.Component {
         const responseInfo = this.state.responseContent.map((response, idx) => {
             let classNames = "hypothesis rounded border";
             let feedbackContent = <></>;
-            if (response.modelState === this.MODEL_STATES.CORRECT) {
+            if (response.fooled === "no") {
                 classNames += " response-warning";
                 feedbackContent =
                     <span>
                         <strong>Try again!</strong> AI answered <strong>{response.modelPredStr}</strong>
                     </span>
-            } else if (response.modelState === this.MODEL_STATES.INCORRECT && response.feedbackSaved) {
+            } else if (response.fooled === "yes" && response.feedbackSaved) {
                 classNames += " light-green-bg";
                 feedbackContent = (
                     <span>
@@ -416,12 +414,11 @@ class CreateVQAMturkInterface extends React.Component {
                 feedbackContent = (
                     <CheckVQAModelAnswer
                         modelPredStr={response.modelPredStr}
-                        modelState={response.modelState}
+                        fooled={response.fooled}
                         loadingResponse={response.loadingResponse}
                         feedbackSaved={response.feedbackSaved}
-                        setModelState={this.setModelState}
                         updateExample={this.handleSubmitCorrectAnswer}
-                        MODEL_STATES={this.MODEL_STATES}
+                        setModelState={this.setModelState}
                     />
                  )
             }
@@ -435,8 +432,9 @@ class CreateVQAMturkInterface extends React.Component {
             )
         });
 
-        const isSkipImageAllowed =  this.state.triesInContext >= this.minTriesToSwitchImg && !this.state.fooled && !this.state.hitCompleted;
-        const isEnterQuestionAllowed = !this.state.fooled && !this.state.hitCompleted;
+        const fooled = this.state.fooled === "yes"
+        const isSkipImageAllowed =  this.state.triesInContext >= this.minTriesToSwitchImg && !fooled && !this.state.hitCompleted;
+        const isEnterQuestionAllowed = !fooled && !this.state.hitCompleted;
         return (
            <Container>
                 {topInstruction}
