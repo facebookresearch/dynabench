@@ -99,15 +99,16 @@ class VQAQuiz extends React.Component {
         } else {
             phaseInstructionsButton = <button className="btn btn-info mb-3" onClick={() => {this.setState({ showInstructions: true })}}>Show Instructions</button>
         }
-        const phaseTitle = <h4>Quiz - Judge whether a question is valid, and judge the AI's answer</h4>
+        const phaseTitle = <h4>Quiz - Judge whether a question is valid, and judge{this.props.onboardingMode === "creation" ? " the AI's" : " the corresponding"} answer</h4>
         const phaseInstructions = this.state.showInstructions
             ?
                 <div >
                     <p>
                         Now that you have seen examples, let's test your understanding!
-                        The first part of this test consists of <b>validating the AI's answers</b>.
-                        For every image, question and corresponding AI answer below, tell us if the AI answer was correct or not.
-                        The second part consists of <b>validating the questions</b> that the AI receives.
+                        The first part of this test consists of <b>validating {this.props.onboardingMode === "creation" ? "the AI's" : ""} answers</b>.
+                        For every image, question and corresponding{this.props.onboardingMode === "creation" ? " AI" : ""} answer below,
+                        tell us if the{this.props.onboardingMode === "creation" ? " AI" : ""} answer was correct or not.
+                        The second part consists of <b>validating questions</b>{this.props.onboardingMode === "creation" ? " that the AI receives" : ""}.
                         For every question tell us if it is valid or not.
 
                     </p>

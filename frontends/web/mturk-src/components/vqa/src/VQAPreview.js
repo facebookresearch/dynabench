@@ -55,8 +55,8 @@ class VQAPreview extends React.Component {
                         </p>
                         <h3>Reward</h3>
                         <p>
-                            On completing the task you will receive $0.3. If you fooled the model
-                            and other people agree with your answer you will receive a bonus of $x.
+                            On completing the task you will receive $0.12. If you fooled the model
+                            and other people agree with your answer you will receive a bonus of $0.35.
                         </p>
                         <h3><strong style={{ color: "red" }}>WARNING:</strong></h3>
                         <p>
@@ -98,11 +98,11 @@ class VQAPreview extends React.Component {
                         </p>
                         <h3>Completion</h3>
                         <p>
-                            The HIT is completed when you validate 5 examples.
+                            The HIT is completed when you validate 10 examples.
                         </p>
                         <h3>Reward</h3>
                         <p>
-                            On completing the task you will receive $0.3.
+                            On completing the task you will receive $0.23.
                         </p>
                     </div>
                 )}
