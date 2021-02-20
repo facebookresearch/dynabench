@@ -17,7 +17,6 @@ class CheckVQAModelAnswer extends React.Component {
             disableCorrectButton: false,
             disableSubmitButton: false
         };
-        this.MODEL_STATES = this.props.MODEL_STATES;
     }
 
     handleKeyPress = (e) => {
@@ -30,21 +29,21 @@ class CheckVQAModelAnswer extends React.Component {
         const formattedAnswer = this.state.correctAnswer.trim();
         if (formattedAnswer.length > 0) {
             this.setState({ disableSubmitButton: true })
-            this.props.updateExample(formattedAnswer, this.MODEL_STATES.INCORRECT);
+            this.props.updateExample(formattedAnswer, "yes");
         }
     }
 
     handleCorrectButtonClick = () => {
         this.setState({ disableCorrectButton: true })
-        this.props.updateExample(this.props.modelPredStr, this.MODEL_STATES.CORRECT);
+        this.props.updateExample(this.props.modelPredStr, "no");
     }
 
     handleIncorrectButtonClick = () => {
-        this.props.setModelState(this.MODEL_STATES.INCORRECT);
+        this.props.setModelState("yes");
     }
 
     render() {
-        if (this.props.modelState === this.MODEL_STATES.CORRECT) {
+        if (this.props.fooled === "no") {
             return null;
         } else if (this.props.loadingResponse) {
             return (
@@ -62,7 +61,7 @@ class CheckVQAModelAnswer extends React.Component {
                 <InputGroup className="d-flex justify-content-start" style={{marginTop: 10}}>
                     <button
                         type="button"
-                        className={`btn btn-sm ${this.props.modelState === this.MODEL_STATES.CORRECT ? " btn-success" : " btn-outline-success"}`}
+                        className={`btn btn-sm ${this.props.fooled === "no" ? " btn-success" : " btn-outline-success"}`}
                         style={{marginRight: 5}}
                         onClick={this.handleCorrectButtonClick}
                         disabled={this.state.disableCorrectButton || this.props.feedbackSaved}>
@@ -70,12 +69,12 @@ class CheckVQAModelAnswer extends React.Component {
                     </button>
                     <button
                         type="button"
-                        className={`btn btn-sm ${this.props.modelState === this.MODEL_STATES.INCORRECT ? " btn-danger" : " btn-outline-danger"}`}
+                        className={`btn btn-sm ${this.props.fooled === "yes" ? " btn-danger" : " btn-outline-danger"}`}
                         onClick={this.handleIncorrectButtonClick}>
                             Incorrect
                     </button>
                 </InputGroup>
-                { this.props.modelState === this.MODEL_STATES.INCORRECT &&
+                { this.props.fooled === "yes" &&
                     (
                         <div className="mt-1">
                             <Row>
