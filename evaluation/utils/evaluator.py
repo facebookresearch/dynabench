@@ -7,7 +7,7 @@ from datetime import datetime
 import boto3
 from dateutil.tz import tzlocal
 
-from utils.helpers import ceil_dt, floor_dt, process_aws_metrics
+from utils.helpers import process_aws_metrics, round_end_dt, round_start_dt
 
 
 sys.path.append("../api")  # noqa
@@ -110,7 +110,7 @@ class JobScheduler:
         for job in self._submitted:
             job_status = job.update_status(self.client)
             if job_status["TransformJobStatus"] != "InProgress":
-                if job_status["TransformJobStatus"] == "Completed" and ceil_dt(
+                if job_status["TransformJobStatus"] == "Completed" and round_end_dt(
                     job.status["TransformEndTime"]
                 ) < datetime.now(tzlocal()):
                     self._completed.append(job)
@@ -147,11 +147,13 @@ class JobScheduler:
                                     Namespace=m["Namespace"],
                                     MetricName=m["MetricName"],
                                     Dimensions=m["Dimensions"],
-                                    StartTime=floor_dt(
+                                    StartTime=round_start_dt(
                                         job.status["TransformStartTime"]
                                     ),
-                                    EndTime=ceil_dt(job.status["TransformEndTime"]),
-                                    Period=300,
+                                    EndTime=round_end_dt(
+                                        job.status["TransformEndTime"]
+                                    ),
+                                    Period=60,
                                     Statistics=["Average", "Maximum", "Minimum"],
                                 )
                                 if r["Datapoints"]:
@@ -176,6 +178,9 @@ class JobScheduler:
         else:
             for _ in range(min(len(queue), N)):
                 jobs.append(queue.pop(0))
+            logger.info(
+                f"Popped {[job.job_name for job in jobs]} from {status.lower()} jobs."
+            )
         return jobs
 
     # def __exit__(self, exc_type, exc_value, traceback):

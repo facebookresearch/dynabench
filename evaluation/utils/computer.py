@@ -38,7 +38,7 @@ class MetricsComputer:
         parts = output_s3_uri.replace("s3://", "").split("/")
         s3_bucket = parts[0]
         s3_path = "/".join(parts[1:])
-        tmp_pred_file = tempfile.mkstemp(prefix="predictions")
+        tmp_pred_file = tempfile.mkstemp(prefix="predictions")[1]
         self.s3_client.download_file(s3_bucket, s3_path, tmp_pred_file)
         with open(tmp_pred_file) as f:
             tmp = ""
@@ -62,6 +62,7 @@ class MetricsComputer:
         return predictions
 
     def update_database(self, job):
+        logger.info(f"Evaluating {job.job_name}")
         try:
             predictions = self.parse_outfile(job)
             score_obj = job.dataset.eval(predictions)

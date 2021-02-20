@@ -5,13 +5,15 @@ from datetime import datetime, timedelta
 from transformers.data.metrics.squad_metrics import compute_f1
 
 
-def ceil_dt(dt, delta=timedelta(seconds=300), offset=60):
+def round_end_dt(dt, delta=60, offset=1):
+    delta = timedelta(seconds=delta)
     dt_naive = dt.replace(tzinfo=None)
     ceil = dt_naive + (datetime.min - dt_naive) % delta
     return ceil.replace(tzinfo=dt.tzinfo) + timedelta(seconds=offset)
 
 
-def floor_dt(dt, delta=timedelta(seconds=300), offset=0):
+def round_start_dt(dt, delta=60, offset=1):
+    delta = timedelta(seconds=delta)
     dt_naive = dt.replace(tzinfo=None)
     floor = dt_naive - (dt_naive - datetime.min) % delta
     return floor.replace(tzinfo=dt.tzinfo) - timedelta(seconds=offset)
