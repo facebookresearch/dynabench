@@ -89,7 +89,7 @@ class VQAPreview extends React.Component {
                                 </ul>
                             </li>
                             <li>
-                                If it is, determine whether the provided answer is correct.
+                                If it is, determine whether the provided answer is <b className="dark-blue-color">correct</b>.
                             </li>
                         </ol>
                         <p>
