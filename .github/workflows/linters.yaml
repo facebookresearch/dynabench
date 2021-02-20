@@ -59,3 +59,14 @@ jobs:
         conda activate dynabench
         black --version
         black --check .
+    - name: Run linter
+      uses: creyD/prettier_action@v3.1
+      with:
+        dry: True
+        prettier_version: v2.2.1
+        prettier_options: --write **/*.{js,jsx}
+    - name: Run linter
+      uses: actions-hub/stylelint@master
+      env:
+        PATTERN: "**/*.css"
+        INDENT_SPACES: 4
