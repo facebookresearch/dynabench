@@ -6,11 +6,11 @@
 
 import React from 'react';
 import AtomicImage from "../../../../src/containers/AtomicImage.js";
+import ErrorAlert from "../../../../src/containers/ErrorAlert.js"
 import CheckVQAModelAnswer from "../../../../src/containers/CheckVQAModelAnswer.js";
 import { VQAFeedbackCard } from "./VQAFeedbackCard.js";
 import { KeyboardShortcuts } from "../../../../src/containers/KeyboardShortcuts.js"
 import {
-    Alert,
     Container,
     Row,
     Card,
@@ -461,7 +461,7 @@ class CreateVQAMturkInterface extends React.Component {
                 </p>
             </>
         )
-        const contextContent = this.state.context && <AtomicImage src={this.state.context.context} maxHeight={600} maxWidth={900}/>
+        const contextContent = this.state.context.context && <AtomicImage src={this.state.context.context} maxHeight={500} maxWidth={800}/>
         const responseInfo = this.state.responseContent.map((response, idx) => {
             let classNames = "hypothesis rounded border";
             let feedbackContent = <></>;
@@ -585,10 +585,7 @@ class CreateVQAMturkInterface extends React.Component {
                         </span>
                     )}
                     {this.state.showErrorAlert && (
-                        <Alert variant={"danger"} className="px-2 mx-0" style={{ width: '100%'}}>
-                            There is a problem with the platform.
-                            Please contact <Alert.Link href="mailto:dynabench@fb.com">dynabench@fb.com</Alert.Link>.
-                        </Alert>
+                        <ErrorAlert/>
                     )}
                 </Row>
                 <KeyboardShortcuts
