@@ -6,7 +6,7 @@
 import os
 import subprocess
 from dataclasses import dataclass, field
-from typing import Any, List
+from typing import Any, List, Optional
 
 import hydra
 from mephisto.abstractions.blueprints.abstract.static_task.static_blueprint import (
@@ -38,6 +38,13 @@ class DynaBenchConfig:
     task_name: str = "no_task"
     task_id: int = 0
     round_id: int = 0
+    context_tags: Optional[str] = None
+    # ; separating dictionary keys;
+    # comma separating list items;
+    # ie., "key:value0,value1,value2;key2:value4"
+    # this is a workaround due to
+    # https://github.com/facebookresearch/Mephisto/issues/399
+    extra_logging: Optional[str] = None
 
 
 @dataclass

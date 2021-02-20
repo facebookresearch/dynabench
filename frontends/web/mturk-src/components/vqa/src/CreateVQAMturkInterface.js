@@ -96,9 +96,50 @@ class CreateVQAMturkInterface extends React.Component {
         })
     }
 
+    getTagList() {
+        if (this.props.taskConfig.context_tags) {
+            return this.props.taskConfig.context_tags.split(",")
+        } else {
+            return []
+        }
+    }
+
+    getLoggingTags(context) {
+        let input_context_tags = this.getTagList()
+        const extra_input_logging = this.props.taskConfig.extra_logging
+        if (extra_input_logging === null || extra_input_logging.length === 0) {
+            return {input_context_tags: input_context_tags}
+        }
+
+        let extra_logging_list = extra_input_logging.split(";")
+        const extra_logging = {}
+        extra_logging_list.forEach(entry => {
+            if (entry === null || entry.length === 0) {
+                return
+            }
+            let key_values = entry.split(":")
+            if (key_values.length < 2) {
+                return
+            }
+            let values = key_values[1].split(",")
+            values = values.filter(value => value.length > 0)
+            extra_logging[key_values[0]] = values
+        })
+        return {
+            current_context_tag: context.tag,
+            input_context_tags: input_context_tags,
+            input_extra_info: extra_logging
+        }
+    }
+
     resetStateToContext(newContext) {
         const history = this.getHistoryWithCurrentExamples()
-        const unitContent = [{ cls: 'context', text: newContext.context, id: newContext.id }]
+        const unitContent = [{
+            cls: 'context',
+            text: newContext.context,
+            id: newContext.id,
+            extra: this.getLoggingTags(newContext)
+        }]
         this.setState({
             history: [...history, unitContent],
             context: newContext,
@@ -133,7 +174,11 @@ class CreateVQAMturkInterface extends React.Component {
 
     getNewContext() {
         this.setState({ submitDisabled: true, refreshDisabled: true }, () => {
-            this.api.getRandomContext(this.props.taskConfig.task_id, this.state.task.cur_round)
+            this.api.getRandomContext(
+                this.props.taskConfig.task_id,
+                this.state.task.cur_round,
+                this.getTagList(),
+            )
             .then(result => {
                 this.resetStateToContext(result);
             }, error => {
@@ -184,6 +229,9 @@ class CreateVQAMturkInterface extends React.Component {
             'assignmentId': this.props.assignmentId,
         };
         modelResponse.prob = [modelResponse.prob, 1 - modelResponse.prob];
+        let extra = this.getLoggingTags(this.state.context)
+        let input_info = extra.input_extra_info
+        let tagToStoreWithExamples = input_info ? input_info.tag_to_store_with_examples : null
         this.api.storeExample(
             this.state.task.id,
             this.state.task.cur_round,
@@ -192,12 +240,14 @@ class CreateVQAMturkInterface extends React.Component {
             this.state.question.trim(),
             null,
             modelResponse,
-            metadata
+            metadata,
+            tagToStoreWithExamples,
         )
         .then(newExample => {
             let updatedContent = this.updateLastResponse({
                 id: newExample.id,
-                cid: this.state.context.id
+                cid: this.state.context.id,
+                extra: extra
             })
             this.setState({
                 question: "",
@@ -226,6 +276,7 @@ class CreateVQAMturkInterface extends React.Component {
                     modelPredStr: modelResponse.answer,
                     modelResponse: modelResponse,
                     uiSettings_loadingResponse: false,
+                    extra: this.getLoggingTags(this.state.context)
                 })
                 this.setState({
                     responseContent: updatedContent,
