@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       max-parallel: 3
       matrix:
-        lint: ['flake8', 'black', 'isort']
+        lint: ['flake8', 'black', 'isort', 'prettier', 'stylelint', 'eslint']
     runs-on: ubuntu-latest
 
     steps:
@@ -27,6 +27,11 @@ jobs:
         auto-update-conda: true
         use-only-tar-bz2: true
 
+    - name: Use Node
+      uses: actions/setup-node@v1
+      with:
+        node-version: 14
+
     - name: Install Dependencies
       shell: bash -l {0}
       run: |
@@ -35,6 +40,8 @@ jobs:
         pip install --progress-bar off flake8==3.7.9
         pip install --progress-bar off isort[pyproject]==4.3.21
         pip install --progress-bar off black==19.3b0
+        npm install --prefix frontends/web/
+
     - name: Run linter
       shell: bash -l {0}
       if: matrix.lint == 'flake8'
@@ -45,6 +52,7 @@ jobs:
         flake8 . --count --select=E9,F63,F72,F82 --show-source --statistics
         # exit-zero treats all errors as warnings
         flake8 . --count --exit-zero --max-complexity=18 --max-line-length=88 --statistics
+
     - name: Run linter
       shell: bash -l {0}
       if: matrix.lint == 'isort'
@@ -52,6 +60,7 @@ jobs:
         conda activate dynabench
         isort --version
         isort -c -sp .
+
     - name: Run linter
       shell: bash -l {0}
       if: matrix.lint == 'black'
@@ -59,3 +68,18 @@ jobs:
         conda activate dynabench
         black --version
         black --check .
+
+    - name: Run linter
+      if: matrix.lint == 'stylelint'
+      run: |
+        npm run --prefix frontends/web/ stylelint **/*.css
+
+    - name: Run linter
+      if: matrix.lint == 'prettier'
+      run: |
+        npm run --prefix frontends/web/ prettier
+
+    - name: Run linter
+      if: matrix.lint == 'eslint'
+      run: |
+        npm run --prefix frontends/web/ eslint
