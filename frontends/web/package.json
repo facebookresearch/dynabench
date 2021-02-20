@@ -40,7 +40,20 @@
     "@babel/preset-react": "^7.10.4",
     "babel-preset-react": "^6.24.1",
     "dotenv": "^8.2.0",
+    "eslint": "^7.21.0",
+    "prettier": "^2.2.1",
+    "stylelint": "^13.11.0",
+    "stylelint-config-prettier": "^8.0.1",
+    "stylelint-config-standard": "^20.0.0",
     "webpack-cli": "^3.3.12"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ],
+    "ecmaFeatures": {
+      "jsx": true
+    }
   },
   "scripts": {
     "webpack": "webpack",
@@ -48,10 +61,10 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "mturk": "npm run webpack -- --mode development"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
+    "mturk": "npm run webpack -- --mode development",
+    "stylelint": "stylelint **/*.css",
+    "prettier": "prettier **/*.{js,jsx} --check",
+    "eslint": "eslint **/*.{js,jsx} --ignore-path .gitignore"
   },
   "browserslist": {
     "production": [
