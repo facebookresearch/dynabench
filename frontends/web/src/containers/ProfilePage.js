@@ -30,8 +30,8 @@ import Badge from "./Badge";
 import {
   METooltip,
   RejectionTooltip,
-  RetractionTooltip
-} from "./UserStatTooltips.js"
+  RetractionTooltip,
+} from "./UserStatTooltips.js";
 
 const StatsSubPage = (props) => {
   return (
@@ -41,86 +41,85 @@ const StatsSubPage = (props) => {
       </h1>
       <Col className="m-auto" lg={8}>
         <Card className="profile-card">
-          <Card.Body style={{padding: 20}}>
+          <Card.Body style={{ padding: 20 }}>
             <Table className="mb-0">
               <tbody>
                 <tr>
-                  <td>
-                    Total examples:
-                  </td>
+                  <td>Total examples:</td>
                   <td className="text-right">
                     {props.user.examples_submitted}
                   </td>
                 </tr>
                 <tr>
-                 <td>
-                   Model error rate (verified/unverified):
-                 </td>
-                 <OverlayTrigger
-                   placement="right"
-                   delay={{ show: 250, hide: 400 }}
-                   overlay={METooltip}
-                 >
-                   <td className="text-right" style={{cursor:'pointer'}}>
-                     {props.user.examples_submitted && (100 *
-                       (props.user.total_fooled - props.user.total_verified_not_correct_fooled) /
-                       props.user.examples_submitted
-                     ).toFixed(2)}% (
-                     {props.user.total_fooled - props.user.total_verified_not_correct_fooled}/{props.user.examples_submitted}) / {" "}
-                     {props.user.examples_submitted && (100 *
-                       props.user.total_fooled /
-                       props.user.examples_submitted
-                     ).toFixed(2)}% (
-                     {props.user.total_fooled}/{props.user.examples_submitted})
-                   </td>
-                 </OverlayTrigger>
+                  <td>Model error rate (verified/unverified):</td>
+                  <OverlayTrigger
+                    placement="right"
+                    delay={{ show: 250, hide: 400 }}
+                    overlay={METooltip}
+                  >
+                    <td className="text-right" style={{ cursor: "pointer" }}>
+                      {props.user.examples_submitted &&
+                        (
+                          (100 *
+                            (props.user.total_fooled -
+                              props.user.total_verified_not_correct_fooled)) /
+                          props.user.examples_submitted
+                        ).toFixed(2)}
+                      % (
+                      {props.user.total_fooled -
+                        props.user.total_verified_not_correct_fooled}
+                      /{props.user.examples_submitted}) /{" "}
+                      {props.user.examples_submitted &&
+                        (
+                          (100 * props.user.total_fooled) /
+                          props.user.examples_submitted
+                        ).toFixed(2)}
+                      % ({props.user.total_fooled}/
+                      {props.user.examples_submitted})
+                    </td>
+                  </OverlayTrigger>
                 </tr>
                 <tr>
-                  <td>
-                    Rejection rate:
-                  </td>
+                  <td>Rejection rate:</td>
                   <OverlayTrigger
                     placement="right"
                     delay={{ show: 250, hide: 400 }}
                     overlay={RejectionTooltip}
                   >
-                    <td className="text-right" style={{cursor:'pointer'}}>
-                      {props.user.examples_submitted && (100 *
-                        props.user.total_verified_not_correct_fooled /
-                        props.user.examples_submitted
-                      ).toFixed(2)}% (
+                    <td className="text-right" style={{ cursor: "pointer" }}>
                       {props.user.examples_submitted &&
-                        props.user.total_verified_not_correct_fooled
-                      }/{props.user.examples_submitted})
+                        (
+                          (100 * props.user.total_verified_not_correct_fooled) /
+                          props.user.examples_submitted
+                        ).toFixed(2)}
+                      % (
+                      {props.user.examples_submitted &&
+                        props.user.total_verified_not_correct_fooled}
+                      /{props.user.examples_submitted})
                     </td>
                   </OverlayTrigger>
                 </tr>
                 <tr>
-                  <td>
-                    Retraction rate:
-                  </td>
+                  <td>Retraction rate:</td>
                   <OverlayTrigger
                     placement="right"
                     delay={{ show: 250, hide: 400 }}
                     overlay={RetractionTooltip}
                   >
-                    <td className="text-right" style={{cursor:'pointer'}}>
-                    {props.user.examples_submitted && (100 *
-                      props.user.total_retracted/
-                      props.user.examples_submitted
-                    ).toFixed(2)}% (
-                    {props.user.total_retracted}/
-                    {props.user.examples_submitted})
+                    <td className="text-right" style={{ cursor: "pointer" }}>
+                      {props.user.examples_submitted &&
+                        (
+                          (100 * props.user.total_retracted) /
+                          props.user.examples_submitted
+                        ).toFixed(2)}
+                      % ({props.user.total_retracted}/
+                      {props.user.examples_submitted})
                     </td>
                   </OverlayTrigger>
                 </tr>
                 <tr>
-                  <td>
-                    Total validations:
-                  </td>
-                  <td className="text-right">
-                    {props.user.examples_verified}
-                  </td>
+                  <td>Total validations:</td>
+                  <td className="text-right">{props.user.examples_verified}</td>
                 </tr>
               </tbody>
             </Table>
@@ -161,44 +160,55 @@ const NotificationsSubPage = (props) => {
                   </tr>
                 ) : null}
                 {props.notifications.map((notification) => {
-                  var message = notification.type + ': ' + notification.message;
-                  var created= <Moment utc fromNow>{notification.created}</Moment>;
+                  var message = notification.type + ": " + notification.message;
+                  var created = (
+                    <Moment utc fromNow>
+                      {notification.created}
+                    </Moment>
+                  );
                   if (notification.type === "NEW_BADGE_EARNED") {
                     message = (
-                      <span>You've earned a new badge: <Badge format="text" name={notification.message} /></span>
+                      <span>
+                        You've earned a new badge:{" "}
+                        <Badge format="text" name={notification.message} />
+                      </span>
                     );
                   } else if (notification.type === "BADGE_REMOVED_STREAK") {
                     message = (
                       <span>
-                        At least one of your examples was validated as incorrect or flagged, which resulted in the removal of the badge:
-                        {" "}"<Badge format="text" name={notification.message}/>"
-                        . Win it back by generating more examples!
+                        At least one of your examples was validated as incorrect
+                        or flagged, which resulted in the removal of the badge:{" "}
+                        "<Badge format="text" name={notification.message} />" .
+                        Win it back by generating more examples!
                       </span>
                     );
                   } else if (notification.type === "BADGE_REMOVED_MODEL") {
                     message = (
                       <span>
-                        At least one of your models was unpublished, which resulted in the removal of the badge:
-                        {" "}"<Badge format="text" name={notification.message}/>"
-                        . Win it back by publishing more models!
+                        At least one of your models was unpublished, which
+                        resulted in the removal of the badge: "
+                        <Badge format="text" name={notification.message} />" .
+                        Win it back by publishing more models!
                       </span>
                     );
                   }
 
                   if (!notification.seen) {
-                    message = <strong><u>{message}</u></strong>;
-                    created = <strong><u>{created}</u></strong>;
+                    message = (
+                      <strong>
+                        <u>{message}</u>
+                      </strong>
+                    );
+                    created = (
+                      <strong>
+                        <u>{created}</u>
+                      </strong>
+                    );
                   }
                   return (
-                    <tr
-                      key={notification.id}
-                    >
-                      <td>
-                        {created}
-                      </td>
-                      <td>
-                        {message}
-                      </td>
+                    <tr key={notification.id}>
+                      <td>{created}</td>
+                      <td>{message}</td>
                     </tr>
                   );
                 })}
@@ -227,13 +237,10 @@ const NotificationsSubPage = (props) => {
   );
 };
 
-
 const ModelSubPage = (props) => {
   return (
     <Container className="mb-5 pb-5">
-      <h1 className="my-4 pt-3 text-uppercase text-center">
-        Your Models
-      </h1>
+      <h1 className="my-4 pt-3 text-uppercase text-center">Your Models</h1>
       <Col className="m-auto" lg={8}>
         <Card className="profile-card">
           <Card.Body>
@@ -267,41 +274,26 @@ const ModelSubPage = (props) => {
                     <tr
                       className="cursor-pointer"
                       key={model.id}
-                      onClick={() =>
-                        props.history.push(`/models/${model.id}`)
-                      }
+                      onClick={() => props.history.push(`/models/${model.id}`)}
                     >
-                      <td className="blue-color">
-                        {model.name || "Unknown"}
-                      </td>
+                      <td className="blue-color">{model.name || "Unknown"}</td>
                       <td>
                         <TasksContext.Consumer>
                           {({ tasks }) => {
                             const task =
-                              model &&
-                              tasks.filter((e) => e.id === model.tid);
-                            return (
-                              task && task.length && task[0].shortname
-                            );
+                              model && tasks.filter((e) => e.id === model.tid);
+                            return task && task.length && task[0].shortname;
                           }}
                         </TasksContext.Consumer>
                       </td>
-                      <td className="text-right">
-                        {model.overall_perf}
-                      </td>
+                      <td className="text-right">{model.overall_perf}</td>
                       <td className="text-center" width="200px">
                         {model.is_published === true ? (
-                          <BBadge
-                            variant="success"
-                            className="publishStatus"
-                          >
+                          <BBadge variant="success" className="publishStatus">
                             Published
                           </BBadge>
                         ) : (
-                          <BBadge
-                            variant="danger"
-                            className="publishStatus"
-                          >
+                          <BBadge variant="danger" className="publishStatus">
                             Unpublished
                           </BBadge>
                         )}
@@ -354,7 +346,10 @@ class ProfilePage extends React.Component {
   }
 
   refreshData() {
-    if (this.props.location.hash === "" || this.props.location.hash === "#profile") {
+    if (
+      this.props.location.hash === "" ||
+      this.props.location.hash === "#profile"
+    ) {
       this.fetchUser();
     } else if (this.props.location.hash === "#notifications") {
       this.fetchNotifications(0);
@@ -379,21 +374,24 @@ class ProfilePage extends React.Component {
 
   fetchUser = () => {
     const user = this.context.api.getCredentials();
-    this.context.api
-      .getUser(user.id, true)
-      .then((result) => {
+    this.context.api.getUser(user.id, true).then(
+      (result) => {
         this.setState({ user: result, loader: false });
-      }, (error) => {
+      },
+      (error) => {
         console.log(error);
-      });
+      }
+    );
   };
 
   paginateUserModels = (state) => {
-    var is_next = (state === "next")
-    var newUserModelsPage = is_next ? this.state.userModelsPage + 1 : this.state.userModelsPage - 1
+    var is_next = state === "next";
+    var newUserModelsPage = is_next
+      ? this.state.userModelsPage + 1
+      : this.state.userModelsPage - 1;
     this.setState(
       {
-        userModelsPage: newUserModelsPage
+        userModelsPage: newUserModelsPage,
       },
       () => {
         this.fetchModels(this.state.userModelsPage);
@@ -402,11 +400,13 @@ class ProfilePage extends React.Component {
   };
 
   paginateNotifications = (state) => {
-    var is_next = (state === "next")
-    var newNotificationsPage = is_next ? this.state.notificationsPage + 1 : this.state.notificationsPage - 1
+    var is_next = state === "next";
+    var newNotificationsPage = is_next
+      ? this.state.notificationsPage + 1
+      : this.state.notificationsPage - 1;
     this.setState(
       {
-        notificationsPage: newNotificationsPage
+        notificationsPage: newNotificationsPage,
       },
       () => {
         this.fetchNotifications(this.state.notificationsPage);
@@ -416,37 +416,42 @@ class ProfilePage extends React.Component {
 
   fetchNotifications = (page) => {
     const user = this.context.api.getCredentials();
-    this.context.api
-      .getNotifications(user.id, this.state.pageLimit, page)
-      .then((result) => {
+    this.context.api.getNotifications(user.id, this.state.pageLimit, page).then(
+      (result) => {
         const isEndOfPage =
           (page + 1) * this.state.pageLimit >= (result.count || 0);
-        this.setState({
-          isEndOfNotificationsPage: isEndOfPage,
-          notifications: result.data || [],
-        }, function() {
-          this.context.api.setNotificationsSeen();
-          this.context.user.unseen_notifications = 0;
-        });
-      }, (error) => {
+        this.setState(
+          {
+            isEndOfNotificationsPage: isEndOfPage,
+            notifications: result.data || [],
+          },
+          function () {
+            this.context.api.setNotificationsSeen();
+            this.context.user.unseen_notifications = 0;
+          }
+        );
+      },
+      (error) => {
         console.log(error);
-      });
+      }
+    );
   };
 
   fetchModels = (page) => {
     const user = this.context.api.getCredentials();
-    this.context.api
-      .getUserModels(user.id, this.state.pageLimit, page)
-      .then((result) => {
+    this.context.api.getUserModels(user.id, this.state.pageLimit, page).then(
+      (result) => {
         const isEndOfPage =
           (page + 1) * this.state.pageLimit >= (result.count || 0);
         this.setState({
           isEndOfUserModelsPage: isEndOfPage,
           userModels: result.data || [],
         });
-      }, (error) => {
+      },
+      (error) => {
         console.log(error);
-      });
+      }
+    );
   };
 
   componentDidUpdate(prevProps) {
@@ -457,16 +462,20 @@ class ProfilePage extends React.Component {
 
   handleSubmit = (values, { setFieldError, setSubmitting }) => {
     const user = this.context.api.getCredentials();
-    this.context.api
-      .updateUser(user.id, values)
-      .then((result) => {
+    this.context.api.updateUser(user.id, values).then(
+      (result) => {
         this.setState({ user: result });
         setSubmitting(false);
-      }, (error) => {
+      },
+      (error) => {
         console.log(error);
-        setFieldError("accept", "Profile could not be updated (" + error.error + ")");
+        setFieldError(
+          "accept",
+          "Profile could not be updated (" + error.error + ")"
+        );
         setSubmitting(false);
-      });
+      }
+    );
   };
 
   handleAvatarChange = (e, props) => {
@@ -484,9 +493,8 @@ class ProfilePage extends React.Component {
       loader: true,
       user: { ...this.state.user, avatar_url: "" },
     });
-    this.context.api
-      .updateProfilePic(user.id, files[0])
-      .then((result) => {
+    this.context.api.updateProfilePic(user.id, files[0]).then(
+      (result) => {
         props.updateState({
           user: {
             ...props.api.getCredentials(),
@@ -498,10 +506,12 @@ class ProfilePage extends React.Component {
           invalidFileUpload: false,
           loader: false,
         });
-      }, (error) => {
+      },
+      (error) => {
         console.log(error);
         this.setState({ invalidFileUpload: true, loader: false });
-      });
+      }
+    );
   };
 
   render() {
@@ -524,7 +534,9 @@ class ProfilePage extends React.Component {
                 <Nav.Link
                   href="#notifications"
                   className={`gray-color p-4 px-lg-6 ${
-                    this.props.location.hash === "#notifications" ? "active" : ""
+                    this.props.location.hash === "#notifications"
+                      ? "active"
+                      : ""
                   }`}
                 >
                   Notifications
@@ -665,7 +677,9 @@ class ProfilePage extends React.Component {
                                     <Col sm="8">
                                       <Form.Control
                                         type="text"
-                                        defaultValue={this.state.user.affiliation}
+                                        defaultValue={
+                                          this.state.user.affiliation
+                                        }
                                         onChange={handleChange}
                                       />
                                     </Col>
@@ -709,26 +723,27 @@ class ProfilePage extends React.Component {
                 </Col>
               </Container>
             ) : null}
-            {this.props.location.hash === "#models" ?
+            {this.props.location.hash === "#models" ? (
               <ModelSubPage
                 userModels={this.state.userModels}
                 userModelsPage={this.state.userModelsPage}
                 isEndOfUserModelsPage={this.state.isEndOfUserModelsPage}
                 paginate={this.paginateUserModels}
                 {...this.props}
-              /> : null}
-            {this.props.location.hash === "#notifications" ?
+              />
+            ) : null}
+            {this.props.location.hash === "#notifications" ? (
               <NotificationsSubPage
                 notifications={this.state.notifications}
                 notificationsPage={this.state.notificationsPage}
                 isEndOfNotificationsPage={this.state.isEndOfNotificationsPage}
                 paginate={this.paginateNotifications}
                 {...this.props}
-                />
-             : null}
-            {this.props.location.hash === "#stats" ?
+              />
+            ) : null}
+            {this.props.location.hash === "#stats" ? (
               <StatsSubPage user={this.state.user} />
-             : null}
+            ) : null}
           </Col>
         </Row>
       </Container>
