@@ -8,8 +8,10 @@ import React from 'react';
 import AtomicImage from "../../../../src/containers/AtomicImage.js";
 import ErrorAlert from "../../../../src/containers/ErrorAlert.js"
 import CheckVQAModelAnswer from "../../../../src/containers/CheckVQAModelAnswer.js";
+import { ValidQuestionCharacteristics } from "./QuestionsCharacteristics.js"
 import { VQAFeedbackCard } from "./VQAFeedbackCard.js";
 import { KeyboardShortcuts } from "../../../../src/containers/KeyboardShortcuts.js"
+import WarningMessage from "./WarningMessage.js"
 import {
     Container,
     Row,
@@ -406,13 +408,13 @@ class CreateVQAMturkInterface extends React.Component {
                     into answering incorrectly. The AI is reasonably good at understanding English and interpreting images.
                 </p>
                 <p>
-                    Given an <b>image</b> that you will use as context, you are expected to
-                    do the following:
+                    Given an <b>image</b>, you are expected to do the following:
                 </p>
                 <ol className="mx-5">
                     <li>
-                        Write a <b style={{ color: "red" }}>valid question</b> based on the image that you think the AI
-                        would get <b>wrong</b> but another person would get <b>right</b>.
+                        Write a <b style={{ color: "red" }}>valid question</b> based on the image.
+                        A valid question has the following characteristics:
+                        <ValidQuestionCharacteristics/>
                     </li>
                     <li>
                         Verify AI's answer:
@@ -425,6 +427,37 @@ class CreateVQAMturkInterface extends React.Component {
                                 If the AI's answer was incorrect, that is, the AI was successfully fooled,
                                 select the  <b style={{ color: "red" }}>Incorrect</b> button
                                 and <b>provide the correct answer</b> for your question.
+                                When writing the answer you should consider these aspects:
+                                <ul className="mx-3" style={{ listStyleType: "disc" }}>
+                                    <li>
+                                        <b>Your answer should be a brief phrase (not a complete sentence).</b><br/>
+                                        For example, instead of "It is a kitchen", just enter "kitchen"
+                                    </li>
+                                    <li>
+                                        <b>For numerical answers, please use digits.</b><br/>
+                                        For example, instead of "Ten", just enter: "10"
+                                    </li>
+                                    <li>
+                                        <b>For yes/no questions, please just say yes/no.</b><br/>
+                                        For example, instead of "You bet it is!", just enter: "yes"
+                                    </li>
+                                    <li>
+                                        <b> For multi-category type questions, where the answer comes from a list of items: </b>
+                                        <ul>
+                                            <li>
+                                                <b>If there are 2 items in the answer, please connect the items with "and".</b><br/>
+                                                For example, question: "What are the two vegetables in the bowl?" Answer: "carrots and broccoli".
+                                            </li>
+                                            <li>
+                                                <b>If the answer has more than 2 items, separate the items with comma, but connect the last item with "and".</b><br/>
+                                                For example, question: "What are the three seasons shown in this image?" Answer: "spring, summer and winter".
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        <b>Respond matter-of-factly and avoid using conversational language or inserting your opinion</b>
+                                    </li>
+                                </ul>
                             </li>
                         </ul>
                     </li>
@@ -440,24 +473,14 @@ class CreateVQAMturkInterface extends React.Component {
                     <li> <b>Arrow Down:</b> Incorrect.</li>
                 </ul>
                 <p>
-                    Sometimes AI might be tricky to fool. When you have spent {this.minTriesToSwitchImg} tries
-                    without success you will be able to skip to the next image by clicking <b style={{ color: "blue" }}>Switch Image</b> button.
+                    You will have to complete at least <b>{this.minTriesToCompleteHIT} tries</b> to submit a HIT unless you can come up with a question that fools the AI before then.
+                    We highly encourage that you try your best to come up with creative but <b>valid</b> questions to fool the AI. You are also allowed to skip to the next image
+                    after {this.minTriesToSwitchImg} tries on the same image. You can do so by clicking <b style={{ color: "blue" }}>Switch Image</b> button.
                 </p>
                 <p>
-                    You will have <b>{this.minTriesToCompleteHIT} tries</b> to fool the AI. If you succeed earlier you complete a HIT.
-                </p>
-                <p>
-                    You will have to complete at least <b>{this.minTriesToCompleteHIT} tries</b>. You can continue if you want to.
-                    Once you feel comfortable, move on.
-                </p>
-                <p>
-                    <strong style={{ color: "red" }}>WARNING:</strong> Every successful question will
-                    be checked by other humans. If it is detected that you are spamming the AI or making
-                    a bad use of the interface you might be flagged or even blocked.
-                </p>
-                <p>
-                    The AI can be very smart as it utilizes the latest technologies to understand the
-                    question and image. Be creative to fool the AI - it will be fun!!!
+                    <strong style={{ color: "red" }}>WARNING:</strong> Every question will
+                    be checked by other humans. If it is detected that you are spamming the AI or consistently creating invalid questions or making
+                    a bad use of the interface you will be banned.
                 </p>
             </>
         )
@@ -510,6 +533,7 @@ class CreateVQAMturkInterface extends React.Component {
                 {topInstruction}
                 {taskInstructionsButton}
                 {taskInstructions}
+                <WarningMessage/>
                 <Row>
                     <CardGroup style={{ width: '100%'}}>
                         <Card border='dark'>
@@ -524,7 +548,7 @@ class CreateVQAMturkInterface extends React.Component {
                                 <FormControl
                                     style={{ width: '100%', margin: 2 }}
                                     type="text"
-                                    placeholder="Enter question..."
+                                    placeholder="Enter a valid question... see instructions to see what `valid` means."
                                     value={this.state.question}
                                     onChange={this.handleQuestionChange}
                                     onKeyPress={this.handleKeyPress}
@@ -532,7 +556,7 @@ class CreateVQAMturkInterface extends React.Component {
                                 />
                             </InputGroup>
                             <InputGroup>
-                                <small className="form-text text-muted">Please ask your question. Remember, the goal is to find a question that the model gets wrong but that another person would get right. Load time may be slow; please be patient.</small>
+                                <small className="form-text text-muted">Please ask a valid question. Remember, the goal is to find a valid question that the model gets wrong but that another person would get right. Load time may be slow; please be patient.</small>
                             </InputGroup>
                         </>
                     }

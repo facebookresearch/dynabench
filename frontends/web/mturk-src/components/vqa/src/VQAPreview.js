@@ -5,6 +5,7 @@
  */
 
 import React from "react";
+import { ValidQuestionCharacteristics } from "./QuestionsCharacteristics.js"
 
 class VQAPreview extends React.Component {
     render() {
@@ -79,14 +80,7 @@ class VQAPreview extends React.Component {
                             <li>
                                 Determine if the question is <b className="dark-blue-color">valid</b>.
                                 A question is considered to be valid if:
-                                <ul className="mx-3" style={{ listStyleType: "disc" }}>
-                                    <li>
-                                        The image is required to answer the question.
-                                    </li>
-                                    <li>
-                                        The question can be answered based on the image.
-                                    </li>
-                                </ul>
+                                <ValidQuestionCharacteristics/>
                             </li>
                             <li>
                                 If it is, determine whether the provided answer is <b className="dark-blue-color">correct</b>.

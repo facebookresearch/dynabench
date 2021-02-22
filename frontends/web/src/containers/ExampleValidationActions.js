@@ -38,19 +38,21 @@ class ExampleValidationActions extends React.Component {
                 <h6 className="text-uppercase dark-blue-color spaced-header">
                     {this.props.header || "Actions"}
                 </h6>
-                <div className="d-flex flex-row" onClick={() => this.props.setCorrectSelected()}>
+                <div className="d-flex flex-row" onClick={() => {!this.props.disabled && this.props.setCorrectSelected()}}>
                     <Form.Check
                         checked={this.props.correctSelected}
                         onChange={() => this.props.setCorrectSelected()}
                         type="radio"
+                        disabled={this.props.disabled}
                     />
                     <i className="fas fa-thumbs-up"></i>  &nbsp; {this.props.userMode === "owner" ? "Verified " : ""} {positiveTerm}
                 </div>
-                <div className="d-flex flex-row" onClick={() => this.props.setIncorrectSelected()}>
+                <div className="d-flex flex-row" onClick={() => {!this.props.disabled && this.props.setIncorrectSelected()}}>
                     <Form.Check
                         checked={this.props.incorrectSelected}
                         onChange={() => this.props.setIncorrectSelected()}
                         type="radio"
+                        disabled={this.props.disabled}
                     />
                     <i className="fas fa-thumbs-down"></i>  &nbsp; {this.props.userMode === "owner" ? "Verified " : ""} {negativeTerm}
                 </div>
@@ -68,7 +70,7 @@ class ExampleValidationActions extends React.Component {
                 }
                 </InputGroup>
                 {this.props.userMode === "user" && this.props.isFlaggingAllowed && (
-                    <div className="d-flex flex-row" onClick={() => this.props.setFlagSelected()}>
+                    <div className="d-flex flex-row" onClick={() => {this.props.setFlagSelected()}}>
                         <Form.Check
                             checked={this.props.flaggedSelected}
                             type="radio"

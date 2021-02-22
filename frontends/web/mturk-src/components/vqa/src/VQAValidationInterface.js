@@ -6,8 +6,10 @@
 
 import React from "react";
 import AtomicImage from "../../../../src/containers/AtomicImage.js";
+import WarningMessage from "./WarningMessage.js"
 import { ExampleValidationActions } from "../../../../src/containers/ExampleValidationActions.js";
 import { KeyboardShortcuts } from "../../../../src/containers/KeyboardShortcuts.js"
+import { ValidQuestionCharacteristics } from "./QuestionsCharacteristics.js"
 import {
     Container,
     Row,
@@ -39,6 +41,7 @@ class VQAValidationInterface extends React.Component {
             taskId: props.taskConfig.task_id,
             showInstructions: false,
             examplesOverError: false,
+            submitDisabled: false,
             totalValidationsSoFar: 0,
             task: {},
         }
@@ -73,6 +76,8 @@ class VQAValidationInterface extends React.Component {
         .then((result) => {
             this.setState({
                 example: result,
+                examplesOverError: false,
+                submitDisabled: false,
                 questionValidationState: this.VALIDATION_STATES.UNKNOWN,
                 responseValidationState: this.VALIDATION_STATES.UNKNOWN,
                 flagReason: null,
@@ -84,6 +89,7 @@ class VQAValidationInterface extends React.Component {
     }
 
     submitValidation = () => {
+        if (this.state.submitDisabled) { return; }
         if ((this.state.questionValidationState === this.VALIDATION_STATES.UNKNOWN) ||
             (this.state.questionValidationState === this.VALIDATION_STATES.CORRECT && this.state.responseValidationState === this.VALIDATION_STATES.UNKNOWN)) {
                 return;
@@ -99,18 +105,22 @@ class VQAValidationInterface extends React.Component {
         const metadata = {
             annotator_id: this.props.providerWorkerId,
         }
-        this.api.validateExample(this.state.example.id, action, this.userMode, metadata, this.props.providerWorkerId)
-        .then(result => {
-            this.setState({ totalValidationsSoFar: this.state.totalValidationsSoFar + 1 }, () => {
-                if (this.state.totalValidationsSoFar === this.batchAmount) {
-                    this.props.onSubmit(this.state);
-                } else {
-                    this.getNewExample();
-                }
-            })
-	    }), (error) => {
-            console.log(error);
-	    }
+        this.setState({ submitDisabled: true }, () => {
+            this.api.validateExample(this.state.example.id, action, this.userMode, metadata, this.props.providerWorkerId)
+            .then(result => {
+                this.setState({
+                    totalValidationsSoFar: this.state.totalValidationsSoFar + 1,
+                }, () => {
+                    if (this.state.totalValidationsSoFar === this.batchAmount) {
+                        this.props.onSubmit(this.state);
+                    } else {
+                        this.getNewExample();
+                    }
+                })
+            }), (error) => {
+                console.log(error);
+            }
+        })
     }
 
     render() {
@@ -118,8 +128,11 @@ class VQAValidationInterface extends React.Component {
             <>
                 <p>
                     You will be shown an image and a question. The task consists of two rounds.
-                    First, you have to determine if the question is <b className="dark-blue-color">valid</b>, this means
-                    that the image is required to answer the question and that it can be answered based on the image.
+                    First, you have to determine if the question is <b className="dark-blue-color">valid</b>.
+                </p>
+                <p>A question is considered <b>valid</b> if:</p>
+                <ValidQuestionCharacteristics/>
+                <p>
                     After validating the question, next you will determine whether the provided answer is <b className="dark-blue-color">correct</b>.
                     If you think the example should be reviewed, please click the <b>Flag</b> button and explain why
                     you flagged the example (try to use this sparingly).
@@ -152,6 +165,7 @@ class VQAValidationInterface extends React.Component {
             <Container>
                 <h4>Validate Examples</h4>
                 {taskInstructionsButton}
+                <WarningMessage/>
                 {validationInstructions}
                 <Row>
                     <Card style={{ width: '100%'}}>
@@ -215,6 +229,7 @@ class VQAValidationInterface extends React.Component {
                                                 <button
                                                     type="button"
                                                     className="btn btn-primary btn-sm"
+                                                    disabled={this.state.submitDisabled}
                                                     onClick={this.submitValidation}>
                                                     Submit
                                                 </button>

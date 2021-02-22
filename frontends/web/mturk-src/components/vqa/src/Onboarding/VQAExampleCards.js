@@ -6,7 +6,9 @@ import {
     InputGroup,
     Col
 } from 'react-bootstrap';
+import WarningMessage from "../WarningMessage.js"
 import AtomicImage from "../../../../../src/containers/AtomicImage.js";
+import { InvalidQuestionCharacteristics } from "../QuestionsCharacteristics.js";
 import getVQAValidInvalidExamples from "./Examples/VQAValidInvalidExamples.js";
 
 class VQAExampleCards extends React.Component {
@@ -52,20 +54,19 @@ class VQAExampleCards extends React.Component {
         const phaseInstructions = this.state.showInstructions ?
             <div>
                 <p>
-                    In this section we show a bunch of examples of <b>valid</b> and <b>invalid</b> questions.
-                    A valid question is one that needs the image to determine the answer, and the image is enough
-                    to determine the answer. An invalid question is one that does not need the image, or where the
-                    question can not be answered from the image.
+                    In this section please carefully go through each example of <b>valid</b> and <b>invalid</b> questions.
+                </p>
+                <InvalidQuestionCharacteristics/>
+                <p>
                     For each example below, we show an <b>image</b>, a <b>question</b> and a <b>description</b> of why
                     the question is valid or invalid. Additionally, for the valid questions we include
                     the answer{this.props.onboardingMode === "creation" ? " the AI produced" : ""}, and whether the answer was correct or not.
                 </p>
                 <p>
-                    Please go through each example carefully.
+                    <b>Please go through each example carefully.</b>
                 </p>
             </div>
         :   <></>
-
         const exampleSelector = <InputGroup className="mb-3">
             <Button
                 className="btn btn-sm btn-success"
@@ -87,12 +88,17 @@ class VQAExampleCards extends React.Component {
                 {phaseTitle}
                 {phaseInstructionsButton}
                 {phaseInstructions}
+                <WarningMessage/>
                 {exampleSelector}
                 <Card className="d-flex justify-content-center overflow-hidden" style={{ height: "auto" }}>
                     <Card.Header className="mb-4">
-                        <h5 className="text-uppercase dark-blue-color spaced-header">
-                            {this.examples[this.state.currIdx].isValid ? "Valid Question" : "Invalid Question"}
-                        </h5>
+                        {this.examples[this.state.currIdx].isValid ? (
+                            <h5 className="text-uppercase dark-blue-color spaced-header">
+                                {this.examples[this.state.currIdx].isValid ? "Valid Question" : "Invalid Question"}
+                            </h5>
+                        ) : (
+                            <p><b style={{ color: "red" }}>INVALID QUESTION {this.props.onboardingMode === "creation" ? " - DON'T ASK THIS TYPE OF QUESTION" :  ""}</b> </p>
+                        )}
                     </Card.Header>
                     <AtomicImage src={this.examples[this.state.currIdx]['imageUrl']} maxHeight={400} maxWidth={600}/>
                     <Card.Body className="overflow-auto pt-2" style={{ height: "auto" }}>
@@ -109,10 +115,10 @@ class VQAExampleCards extends React.Component {
                                             <small>{this.examples[this.state.currIdx]['question']}</small>
                                         </p>
                                         <h6 className="text-uppercase dark-blue-color spaced-header">
-                                            Why is this a {this.examples[this.state.currIdx].isValid ? (
-                                                "valid"
+                                            Why is this {this.examples[this.state.currIdx].isValid ? (
+                                                "a valid"
                                                 ) : (
-                                                    "invalid"
+                                                    "an invalid"
                                                 )} question?
                                         </h6>
                                         <p>
