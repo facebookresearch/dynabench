@@ -728,6 +728,7 @@ class CreateInterface extends React.Component {
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
     this.chatContainerRef = React.createRef();
     this.bottomAnchorRef = React.createRef();
+    this.inputRef = React.createRef();
   }
 
   getNewContext() {
@@ -796,6 +797,17 @@ class CreateInterface extends React.Component {
     return model;
   };
 
+  manageTextInput = (action) => {
+    if (this.inputRef.current) {
+      if (action === "focus") {
+        this.inputRef.current.focus();
+      }
+      else if (action === "blur") {
+        this.inputRef.current.blur();
+      }
+    }
+  }
+
   instantlyScrollToBottom() {
     setTimeout(() => {
       if (this.chatContainerRef.current)
@@ -832,7 +844,7 @@ class CreateInterface extends React.Component {
         });
         return;
       }
-
+      this.manageTextInput("blur");
       var answer_text = null;
       if (this.state.task.type === "extract") {
         answer_text = "";
@@ -1206,6 +1218,7 @@ class CreateInterface extends React.Component {
                     value={this.state.hypothesis}
                     onChange={this.handleResponseChange}
                     required={true}
+                    ref={this.inputRef}
                   />
               </InputGroup>
               </Annotation>
@@ -1311,6 +1324,24 @@ class CreateInterface extends React.Component {
             </div>
           </Card>
         </Col>
+        {this.state.task.type === "VQA" &&
+          <KeyboardShortcuts
+            allowedShortcutsInText={["escape"]}
+            mapKeyToCallback={{
+                "i": {
+                  callback: (action) => this.manageTextInput(action),
+                  params: "focus"
+                },
+                "escape": {
+                  callback: (action) => this.manageTextInput(action),
+                  params: "blur"
+                },
+                "d": {
+                  callback: () => { if (!this.state.refreshDisabled) { this.getNewContext(); } },
+                },
+            }}
+          />
+        }
       </Container>
       </OverlayProvider>
     );
