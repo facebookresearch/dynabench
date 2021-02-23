@@ -12,7 +12,7 @@ import {
     Row,
     Col,
 } from 'react-bootstrap';
-import WarningMessage from "../WarningMessage.js";
+import { WarningMessage } from "../WarningMessage.js";
 
 class VQAQuizCard extends React.Component {
 

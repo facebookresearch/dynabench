@@ -4,7 +4,7 @@ import {
     InputGroup,
     Carousel
 } from "react-bootstrap";
-import WarningMessage from "../WarningMessage.js";
+import { WarningMessage } from "../WarningMessage.js";
 import ExampleCard from "./ExampleCard.js";
 import { InvalidQuestionCharacteristics } from "../QuestionsCharacteristics.js";
 import getVQAValidInvalidExamples from "./Examples/VQAValidInvalidExamples.js";
