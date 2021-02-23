@@ -719,6 +719,7 @@ class CreateInterface extends React.Component {
       submitDisabled: true,
       refreshDisabled: true,
       mapKeyToExampleId: {},
+      showInfoModal: true,
     };
     this.getNewContext = this.getNewContext.bind(this);
     this.handleGoalMessageTargetChange = this.handleGoalMessageTargetChange.bind(this);
@@ -1110,9 +1111,9 @@ class CreateInterface extends React.Component {
     function renderSwitchContextTooltip(props) {
       return renderTooltip(props, "Don't like this context? Try another one.");
     }
-
+    console.log(this.state.annotationsHidden)
     return (
-      <OverlayProvider initiallyHide={true}>
+      <OverlayProvider initiallyHide={false} onHideCallback={() => this.setState({annotationsHidden: true})}>
         <BadgeOverlay
           badgeTypes={this.state.showBadges}
           show={!!this.state.showBadges}
@@ -1123,12 +1124,19 @@ class CreateInterface extends React.Component {
         <Col className="m-auto" lg={12}>
           <div style={{float: "right"}}>
             <ButtonGroup>
+            <OverlayContext.Consumer>
+              {
+                ({hidden, setHidden})=> (
+                  () => {if (!this.state.showInfoModal){setHidden(!hidden)}}
+                )
+              }
+            </OverlayContext.Consumer>
               <Annotation placement="left" tooltip="Click to show help overlay">
                 <OverlayContext.Consumer>
                   {
                     ({hidden, setHidden})=> (
                         <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
-                          onClick={() => { setHidden(!hidden) }}
+                          onClick={() => setHidden(!hidden)}
                         ><i className="fas fa-question"></i></button>
                     )
                   }
@@ -1146,7 +1154,7 @@ class CreateInterface extends React.Component {
               </Annotation>
             </ButtonGroup>
             <Modal
-              show={this.state.showInfoModal}
+              show={this.state.annotationsHidden && this.state.showInfoModal}
               onHide={() => this.setState({showInfoModal: false})}
               >
                 <Modal.Header closeButton>

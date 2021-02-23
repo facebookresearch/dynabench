@@ -8,7 +8,7 @@ import Badge from "./Badge"
 
 const OverlayContext = React.createContext(false);
 
-function OverlayProvider({ children, initiallyHide=false, delayMs = 1400 }) {
+function OverlayProvider({ children, initiallyHide=false, delayMs = 1400, onHideCallback = () => null}) {
 
   const [hidden, setHidden] = React.useState(true)
 
@@ -19,7 +19,7 @@ function OverlayProvider({ children, initiallyHide=false, delayMs = 1400 }) {
   return (<div>
     <Modal
       show={!hidden}
-      onHide={() => setHidden(true)}
+      onHide={() => {setHidden(true); onHideCallback()}}
       dialogAs={() => null}
       ></Modal>
     <OverlayContext.Provider value={{hidden, setHidden}}>

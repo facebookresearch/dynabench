@@ -577,7 +577,7 @@ class TaskPage extends React.Component {
 
   render() {
     return (
-      <OverlayProvider initiallyHide={true} delayMs="1700">
+      <OverlayProvider initiallyHide={false} delayMs="1700">
       <Container fluid>
         <Row>
           <Col lg={2} className="p-0 border">
