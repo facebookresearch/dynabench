@@ -291,13 +291,12 @@ class ResponseInfo extends React.Component {
     this.setModelState = this.setModelState.bind(this);
     this.updateHateSpeechTargetMetadata = this.updateHateSpeechTargetMetadata.bind(this);
     this.updateExample = this.updateExample.bind(this);
-    this.MODEL_STATES = { "UNKNOWN": -1, "CORRECT": 0, "INCORRECT": 1 };
     this.state = {
       loader: true,
       inspectError: false,
       livemode: this.props.livemode,
-      modelState: (this.props.obj.fooled === true ? this.MODEL_STATES.INCORRECT :
-        (this.props.obj.fooled === false ? this.MODEL_STATES.CORRECT : this.MODEL_STATES.UNKNOWN)
+      fooled: (this.props.obj.fooled === true ? "yes" :
+        (this.props.obj.fooled === false ? "no" : "unknown")
       ),
     };
   }
@@ -329,19 +328,19 @@ class ResponseInfo extends React.Component {
         console.log(error);
       });
   }
-  updateExample(target, newModelState) {
+  updateExample(correctAnswer, fooled) {
     if (!this.props.livemode) {
-      this.setState({ feedbackSaved: true, modelState: newModelState });
+      this.setState({ feedbackSaved: true, fooled: fooled });
     } else {
       const exampleId = this.props.mapKeyToExampleId[this.props.index];
       this.setState({ feedbackSaved: false }, () => {
           this.context.api
-          .updateExample(exampleId, target, newModelState)
+          .updateExample(exampleId, correctAnswer, fooled === "yes")
           .then((result) => {
-            if (newModelState === this.MODEL_STATES.INCORRECT) {
+            if (fooled === "yes") {
               this.props.getNewContext();
-            } else if (newModelState === this.MODEL_STATES.CORRECT) {
-              this.setState({ feedbackSaved: true, modelState: newModelState });
+            } else if (fooled === "no") {
+              this.setState({ feedbackSaved: true, fooled: fooled });
             }
           }, (error) => {
               console.log(error);
@@ -369,11 +368,11 @@ class ResponseInfo extends React.Component {
         });
     }
   }
-  setModelState(newModelState) {
-    if (newModelState === this.MODEL_STATES.INCORRECT && !this.props.livemode) {
+  setModelState(fooled) {
+    if (fooled === "yes" && !this.props.livemode) {
       this.props.getNewContext();
     } else {
-      this.setState({ modelState: newModelState });
+      this.setState({ fooled: fooled });
     }
   }
   retractExample(e) {
@@ -471,13 +470,13 @@ class ResponseInfo extends React.Component {
     }
 
     let submissionResults = null;
-    if (this.state.modelState === this.MODEL_STATES.CORRECT) {
+    if (this.state.fooled === "no") {
       submissionResults = (
         <span>
           <strong>Try again!</strong> The model correctly predicted <strong>{this.props.obj.modelPredStr}</strong>
         </span>
       );
-    } else if (this.state.modelState === this.MODEL_STATES.INCORRECT && selectedAnswer) {
+    } else if (this.state.fooled === "yes" && selectedAnswer) {
       submissionResults = (
         <span>
           <strong>You fooled the model!</strong> It predicted <strong>{this.props.obj.modelPredStr}</strong>{" "}
@@ -524,9 +523,9 @@ class ResponseInfo extends React.Component {
         predicted <strong>{this.props.obj.modelPredStr}</strong>.
       </span>;
     } else {
-      if (this.state.modelState === this.MODEL_STATES.INCORRECT) {
+      if (this.state.fooled === "yes") {
         classNames += " light-green-bg"
-      } else if (this.state.modelState === this.MODEL_STATES.CORRECT) {
+      } else if (this.state.fooled === "no") {
         classNames += " response-warning"
       } else {
         classNames += " bg-light"
@@ -537,12 +536,11 @@ class ResponseInfo extends React.Component {
             updateExample={this.updateExample}
             feedbackSaved={this.state.feedbackSaved}
             modelPredStr={this.props.obj.modelPredStr}
-            modelState={this.state.modelState}
+            fooled={this.state.fooled}
             setModelState={this.setModelState}
-            MODEL_STATES={this.MODEL_STATES}
           />
         ) : this.props.livemode ? (
-              this.state.modelState === this.MODEL_STATES.CORRECT ? (
+              this.state.fooled === "no" ? (
                 <div className="mt-3">
                   <span>
                     Optionally, provide an explanation for your example:
@@ -730,6 +728,7 @@ class CreateInterface extends React.Component {
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
     this.chatContainerRef = React.createRef();
     this.bottomAnchorRef = React.createRef();
+    this.inputRef = React.createRef();
   }
 
   getNewContext() {
@@ -798,6 +797,17 @@ class CreateInterface extends React.Component {
     return model;
   };
 
+  manageTextInput = (action) => {
+    if (this.inputRef.current) {
+      if (action === "focus") {
+        this.inputRef.current.focus();
+      }
+      else if (action === "blur") {
+        this.inputRef.current.blur();
+      }
+    }
+  }
+
   instantlyScrollToBottom() {
     setTimeout(() => {
       if (this.chatContainerRef.current)
@@ -834,7 +844,7 @@ class CreateInterface extends React.Component {
         });
         return;
       }
-
+      this.manageTextInput("blur");
       var answer_text = null;
       if (this.state.task.type === "extract") {
         answer_text = "";
@@ -1208,6 +1218,7 @@ class CreateInterface extends React.Component {
                     value={this.state.hypothesis}
                     onChange={this.handleResponseChange}
                     required={true}
+                    ref={this.inputRef}
                   />
               </InputGroup>
               </Annotation>
@@ -1313,6 +1324,24 @@ class CreateInterface extends React.Component {
             </div>
           </Card>
         </Col>
+        {this.state.task.type === "VQA" &&
+          <KeyboardShortcuts
+            allowedShortcutsInText={["escape"]}
+            mapKeyToCallback={{
+                "i": {
+                  callback: (action) => this.manageTextInput(action),
+                  params: "focus"
+                },
+                "escape": {
+                  callback: (action) => this.manageTextInput(action),
+                  params: "blur"
+                },
+                "d": {
+                  callback: () => { if (!this.state.refreshDisabled) { this.getNewContext(); } },
+                },
+            }}
+          />
+        }
       </Container>
       </OverlayProvider>
     );
