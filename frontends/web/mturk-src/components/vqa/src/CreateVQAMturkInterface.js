@@ -467,10 +467,10 @@ class CreateVQAMturkInterface extends React.Component {
                     <li><b>i:</b> Focus text box.</li>
                     <li><b>Enter:</b> Check answer.</li>
                     <li><b>Escape:</b> Blur text box.</li>
-                    <li><b>s:</b> Show Instructions.</li>
-                    <li><b>h:</b> Hide Instructions.</li>
-                    <li><b>Arrow Up:</b> Correct.</li>
-                    <li> <b>Arrow Down:</b> Incorrect.</li>
+                    <li><b>j:</b> Toggle Show/Hide Instructions.</li>
+                    <li><b>w:</b> Correct.</li>
+                    <li> <b>s</b> Incorrect.</li>
+                    <li> <b>d</b> Skip Image.</li>
                 </ul>
                 <p>
                     You will have to complete at least <b>{this.minTriesToCompleteHIT} tries</b> to submit a HIT unless you can come up with a question that fools the AI before then.
@@ -619,18 +619,15 @@ class CreateVQAMturkInterface extends React.Component {
                             callback: (isEnterQuestionAllowed) => this.focusTextInput(isEnterQuestionAllowed),
                             params: isEnterQuestionAllowed
                         },
-                        "arrowright": {
+                        "d": {
                             callback: (isSkipImageAllowed) => this.skipImage(isSkipImageAllowed),
                             params: isSkipImageAllowed
                         },
                         "escape": {
                             callback: () => this.blurTextInput()
                         },
-                        "s": {
-                            callback: () => this.setState({ showInstructions: true })
-                        },
-                        "h": {
-                            callback: () => this.setState({ showInstructions: false })
+                        "j": {
+                            callback: () => this.setState((state, _) => ({ showInstructions: !state.showInstructions }))
                         },
                         "f": {
                             callback: () => this.submitHIT()

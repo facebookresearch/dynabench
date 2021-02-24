@@ -97,12 +97,11 @@ class CheckVQAModelAnswer extends React.Component {
                     )
                 }
                 <KeyboardShortcuts
-                    allowedShortcutsInText={["arrowup"]}
                     mapKeyToCallback={{
-                        "arrowup": {
+                        "w": {
                             callback: () => this.handleCorrectButtonClick(),
                         },
-                        "arrowdown": {
+                        "s": {
                             callback: () => this.handleIncorrectButtonClick(),
                         },
                     }}
