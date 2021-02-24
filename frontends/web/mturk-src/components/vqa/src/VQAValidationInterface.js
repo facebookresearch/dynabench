@@ -6,7 +6,7 @@
 
 import React from "react";
 import AtomicImage from "../../../../src/containers/AtomicImage.js";
-import WarningMessage from "./WarningMessage.js"
+import { WarningMessage } from "./WarningMessage.js"
 import { ExampleValidationActions } from "../../../../src/containers/ExampleValidationActions.js";
 import { KeyboardShortcuts } from "../../../../src/containers/KeyboardShortcuts.js"
 import { ValidQuestionCharacteristics } from "./QuestionsCharacteristics.js"
