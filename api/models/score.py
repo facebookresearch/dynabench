@@ -33,6 +33,10 @@ class Score(Base):
     eval_id_end = db.Column(db.Integer, default=-1)
     metadata_json = db.Column(db.Text)
 
+    CPUUtilization = db.Column(db.Float)
+    MemoryUtilization = db.Column(db.Float)
+    Duration = db.Column(db.Float)
+
     def __repr__(self):
         return f"<Score {self.id}>"
 
