@@ -503,8 +503,8 @@ class CreateVQAMturkInterface extends React.Component {
                     <li><b>Escape:</b> Blur text box.</li>
                     <li><b>j:</b> Toggle Show/Hide Instructions.</li>
                     <li><b>w:</b> Correct.</li>
-                    <li> <b>s</b> Incorrect.</li>
-                    <li> <b>d</b> Skip Image.</li>
+                    <li><b>s:</b> Incorrect.</li>
+                    <li><b>d:</b> Skip Image.</li>
                 </ul>
                 <p>
                     You will have to complete at least <b>{this.minTriesToCompleteHIT} tries</b> to submit a HIT unless you fool the AI before then.
