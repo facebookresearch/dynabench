@@ -35,9 +35,13 @@ class ValidQuestionCharacteristics extends React.Component {
         return (
             <>
                 <ul className="mx-3" style={{ listStyleType: "disc" }}>
-                    <li>The question is based on the scene depicted in the image.</li>
+                    <li>The question requires the image to answer.</li>
+                        <ul>
+                            <li>Invalid: What is the capital of the USA?</li>
+                            <li>Valid: Which country does the flag in the image represent?</li>
+                        </ul>
                     <li>Another person is likely to provide the same answer to the question.</li>
-                    <li>The question makes sense for the image. An answer <b>can</b> be provided.</li>
+                    <li>The question is based on the scene depicted in the image. An answer <b>can</b> be provided.</li>
                 </ul>
             </>
         )

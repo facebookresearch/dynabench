@@ -1,7 +1,7 @@
 #@package _global_
 mephisto:
   blueprint:
-    onboarding_qualification: vqa-val-r1-qualification
+    onboarding_qualification: vqa-val-1-qualification
   task:
     task_name: vqa-val-r1
     task_title: Validation - Visual Question Answering
