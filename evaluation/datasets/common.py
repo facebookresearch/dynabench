@@ -23,18 +23,18 @@ class BaseDataset(ABC):
         self.s3_bucket = config["dataset_s3_bucket"]
         self.s3_url = self._get_data_s3_url()
 
-        s3_client = boto3.client(
+        self.s3_client = boto3.client(
             "s3",
             aws_access_key_id=config["aws_access_key_id"],
             aws_secret_access_key=config["aws_secret_access_key"],
             region_name=config["aws_region"],
         )
-        if not self._dataset_available_on_s3(s3_client):
+        if not self._dataset_available_on_s3():
             logger.info(
                 f"Dataset {self.name} does not exist on S3. "
                 f"Pushing to {self.s3_url} now..."
             )
-            self.load(s3_client)
+            self.load()
             logger.info(f"Loaded {self.name} on S3 at {self.s3_url}")
         else:
             logger.info(f"Dataset {self.name} exists on S3 at {self.s3_url}")
@@ -51,9 +51,9 @@ class BaseDataset(ABC):
             f"s3://{self.s3_bucket}", "predictions", endpoint_name, self.task
         )
 
-    def _dataset_available_on_s3(self, s3_client) -> bool:
+    def _dataset_available_on_s3(self) -> bool:
         path = self._get_data_s3_path()
-        response = s3_client.list_objects_v2(Bucket=self.s3_bucket, Prefix=path)
+        response = self.s3_client.list_objects_v2(Bucket=self.s3_bucket, Prefix=path)
         for obj in response.get("Contents", []):
             if obj["Key"] == path:
                 return True
@@ -63,7 +63,7 @@ class BaseDataset(ABC):
         prefix = self._get_output_s3_url_prefix(endpoint_name)
         return os.path.join(prefix, self.filename + ".out")
 
-    def run_eval(self, sagemaker_client, endpoint_name, job_name) -> bool:
+    def run_batch_transform(self, sagemaker_client, endpoint_name, job_name) -> bool:
         # submit an evaluation job
         sagemaker_client.create_transform_job(
             ModelName=endpoint_name,
@@ -92,28 +92,22 @@ class BaseDataset(ABC):
         )
         return True
 
-    def read_labels(self, s3_client):
+    def read_labels(self):
         tf = tempfile.mkstemp(prefix=self.name)[1]
-        s3_client.download_file(self.s3_bucket, self._get_data_s3_path(), tf)
+        self.s3_client.download_file(self.s3_bucket, self._get_data_s3_path(), tf)
         data = [json.loads(l) for l in open(tf).readlines()]
         labels = [self.field_converter(example) for example in data]
         os.remove(tf)
         return labels
 
-    def eval(self, predictions: list, s3_client=None) -> dict:
+    def eval(self, predictions: list) -> dict:
         """
         Adapted from common.helpers.validate_prediction, compute accuracy / f1, etc.
         """
         eval_fn = task_config.get(self.task, task_config["default"])["eval_fn"]
 
         # load target examples
-        s3_client = s3_client or boto3.client(
-            "s3",
-            aws_access_key_id=eval_config["aws_access_key_id"],
-            aws_secret_access_key=eval_config["aws_secret_access_key"],
-            region_name=eval_config["aws_region"],
-        )
-        target_examples = self.read_labels(s3_client)
+        target_examples = self.read_labels()
         # validate alignment of prediction and target labels
         target_ids = [x["id"] for x in target_examples]
         target_labels = {t["id"]: t["answer"] for t in target_examples}
@@ -166,7 +160,7 @@ class BaseDataset(ABC):
             return score_obj
 
     @abstractmethod
-    def load(self, s3_client) -> bool:
+    def load(self) -> bool:
         """
         this function loads the dataset to s3 and return True if succcessful
         """

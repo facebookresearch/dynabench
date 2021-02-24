@@ -5,6 +5,14 @@ from datetime import datetime, timedelta
 from transformers.data.metrics.squad_metrics import compute_f1
 
 
+def generate_job_name(endpoint_name, dataset_name):
+    # TODO: add datetime to job name , make it unique
+    return (
+        f"test-{endpoint_name}-{dataset_name}"
+        f"-{datetime.now().strftime('%I-%M-%p-%B-%d-%Y')}"
+    )[:63].rstrip("-")
+
+
 def round_end_dt(dt, delta=60, offset=1):
     delta = timedelta(seconds=delta)
     dt_naive = dt.replace(tzinfo=None)

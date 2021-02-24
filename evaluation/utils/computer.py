@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import pickle
 import sys
 import tempfile
 
@@ -16,13 +17,11 @@ logger = logging.getLogger("computer")
 
 
 class MetricsComputer:
-    def __init__(self, config):
-        # self.client = boto3.client(
-        #     "cloudwatch",
-        #     aws_access_key_id=config["aws_access_key_id"],
-        #     aws_secret_access_key=config["aws_secret_access_key"],
-        #     region_name=config["aws_region"]
-        # )
+    def __init__(self, config, datasets):
+        self._status_dump = config["computer_status_dump"]
+        self._computing, self._failed = self._load_status()
+        self.datasets = datasets
+
         self.s3_client = boto3.client(
             "s3",
             aws_access_key_id=config["aws_access_key_id"],
@@ -30,11 +29,27 @@ class MetricsComputer:
             region_name=config["aws_region"],
         )
 
+    def _load_status(self):
+        try:
+            status = pickle.load(open(self._status_dump, "rb"))
+            logger.info(f"Load existing status from {self._status_dump}.")
+            return status["computing"], status["failed"]
+        except FileNotFoundError:
+            logger.info("No existing computer status found. Re-initializing...")
+            return [], []
+        except Exception as ex:
+            logger.exception(
+                f"Exception in loading computer status: {ex}. Re-initializing..."
+            )
+            return [], []
+
     def parse_outfile(self, job):
         """
         Parse batch transform output by balancing brackets
         """
-        output_s3_uri = job.dataset.get_output_s3_url(job.endpoint_name)
+        output_s3_uri = self.datasets[job.dataset_name].get_output_s3_url(
+            job.endpoint_name
+        )
         parts = output_s3_uri.replace("s3://", "").split("/")
         s3_bucket = parts[0]
         s3_path = "/".join(parts[1:])
@@ -65,7 +80,7 @@ class MetricsComputer:
         logger.info(f"Evaluating {job.job_name}")
         try:
             predictions = self.parse_outfile(job)
-            score_obj = job.dataset.eval(predictions)
+            score_obj = self.datasets[job.dataset_name].eval(predictions)
             perf_metrics = self._get_perf_metrics(job)
             # TODO: add model eval status and update
             s = ScoreModel()
@@ -75,14 +90,33 @@ class MetricsComputer:
                 raw_upload_data=json.dumps(predictions),
                 perf_metrics=perf_metrics,  # FIXME: placeholder
             )  # TODO: add columns for performance metrics
+            return True
         except Exception as ex:
             logger.exception(f"Exception in computing metrics {ex}")
+            return False
 
     def _get_perf_metrics(self, job):
         "Compute job performance metrics: CpuUtilization, MemoryUtilization"
         return job.aws_metrics
 
     def compute_metrics(self, jobs: list):
-        if jobs:
-            for job in jobs:
-                self.update_database(job)
+        self._computing.extend(jobs)
+        self._dump()
+        while self._computing:
+            job = self._computing[0]
+            if self.update_database(job):
+                self._computing.pop(0)
+            else:
+                self._failed.append(self._computing.pop(0))
+            self._dump()
+
+    def _dump(self):
+        # dump status to pre-specified path
+        status = {"computing": self._computing, "failed": self._failed}
+        logger.info(
+            f"Computer status: \n"
+            + f"Evaluating jobs: {[job.job_name for job in status['computing']]}\n"
+            + f"failed jobs: {[job.job_name for job in status['failed']]}"
+        )
+        pickle.dump(status, open(self._status_dump, "wb"))
+        print(f"Computer dumped status to {self._status_dump}")

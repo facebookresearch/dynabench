@@ -4,5 +4,7 @@ eval_config = {
     "aws_region": "",
     "sagemaker_role": "",
     "dataset_s3_bucket": "",
-    "evaluation_sqs_queue": ""
+    "evaluation_sqs_queue": "",
+    "scheduler_status_dump": "",
+    "computer_status_dump": ""
 }

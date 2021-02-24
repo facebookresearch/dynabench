@@ -4,6 +4,8 @@ import logging
 import sys
 
 from datasets import get_dataset_by_task
+from utils.computer import MetricsComputer
+from utils.evaluator import JobScheduler
 
 
 sys.path.append("../api")  # noqa
@@ -14,65 +16,70 @@ logger = logging.getLogger("requester")
 
 
 class Requester:
-    def __init__(self, scheduler, computer, datasets):
-        self.scheduler = scheduler
-        self.computer = computer
-        self.datasets = datasets
+    def __init__(self, config, datasets):
+        self.scheduler = JobScheduler(config, datasets)
+        self.computer = MetricsComputer(config, datasets)
 
     def request(self, msg):
         model_ids = msg.get("model_id", None)
-        eval_ids = msg.get("eval_id", None)
-        if not model_ids and eval_ids:
+        dataset_names = msg.get("dataset_name", None)
+        if not model_ids and dataset_names:
             logger.exception(
                 f"Request failed. At least one of "
-                f"model_id and eval_id should be specified"
+                f"model_id and dataset_name should be specified"
             )
-        if model_ids and not isinstance(model_ids, tuple):
-            model_ids = (model_ids,)
-        if eval_ids and not isinstance(eval_ids, tuple):
-            eval_ids = (eval_ids,)
+        if model_ids and not isinstance(model_ids, list):
+            model_ids = [model_ids]
+        if dataset_names and not isinstance(dataset_names, list):
+            dataset_names = [dataset_names]
 
-        if model_ids and not eval_ids:
+        if model_ids and not dataset_names:
             for model_id in model_ids:
                 logger.info(f"Request to evaluate model {model_id}")
                 self._eval_model(model_id)
-        elif eval_ids and not model_ids:
-            for eval_id in eval_ids:
-                logger.info(f"Request to evaluate dataset {eval_id}")
-                self._eval_dataset(eval_id)
+        elif dataset_names and not model_ids:
+            for dataset_name in dataset_names:
+                logger.info(f"Request to evaluate dataset {dataset_name}")
+                self._eval_dataset(dataset_name)
         else:
             for model_id in model_ids:
-                for eval_id in eval_ids:
+                for dataset_name in dataset_names:
                     logger.info(
-                        f"Request to evaluate model {model_id} on dataset {eval_id}"
+                        f"Request to evaluate model "
+                        f"{model_id} on dataset {dataset_name}"
                     )
-                    self._eval_model_on_dataset(model_id, eval_id)
+                    self._eval_model_on_dataset(model_id, dataset_name)
 
-    def _eval_model_on_dataset(self, model_id, eval_id):
+    def _eval_model_on_dataset(self, model_id, dataset_name):
         # evaluate a given model on given datasets
-        self.scheduler.submit(model_id, self.datasets[eval_id])
+        self.scheduler.submit(model_id, dataset_name)
 
     def _eval_model(self, model_id):
         # given a model_id, evaluate all datasets for the
         # model's primary task
         m = ModelModel()
         task_id = m.getUnpublishedModelByMid(model_id).to_dict()["tid"]
-        eval_ids = get_dataset_by_task(task_id)  # TODO: move datasets id to tasks db
-        if eval_ids:
-            for eval_id in eval_ids:
-                self._eval_model_on_dataset(model_id, eval_id)
+        dataset_names = get_dataset_by_task(
+            task_id
+        )  # TODO: move datasets id to tasks db
+        if dataset_names:
+            for dataset_name in dataset_names:
+                self._eval_model_on_dataset(model_id, dataset_name)
 
-    def _eval_dataset(self, eval_id):
+    def _eval_dataset(self, dataset_name):
         # given a dataset id, evaluate all models for the
         # dataset's task
         m = ModelModel()
-        models = m.getByTaskCode(self.datasets[eval_id].task)
+        models = m.getByTaskCode(
+            self.datasets[dataset_name].task
+        )  # TODO: query db to get this
         if models:
             for model in models:
                 if model.to_dict["deployment_status"] == DeploymentStatusEnum.deployed:
                     model_id = model.id
-                    self._eval_model_on_dataset(model_id, eval_id)
+                    self._eval_model_on_dataset(model_id, dataset_name)
 
     def compute(self, N=1):
+        self.scheduler.update_status()
         jobs = self.scheduler.pop_jobs(status="Completed", N=N)
         self.computer.compute_metrics(jobs)

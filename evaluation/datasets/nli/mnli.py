@@ -13,7 +13,7 @@ class MnliBase(BaseDataset):
         super().__init__(task=task, name=name)
         self.local_path = local_path
 
-    def load(self, s3_client):
+    def load(self):
         with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
             for line in open(self.local_path).readlines():
                 jl = json.loads(line)
@@ -25,7 +25,7 @@ class MnliBase(BaseDataset):
                 }
                 tmp.write(json.dumps(tmp_jl) + "\n")
             tmp.close()
-            response = s3_client.upload_file(
+            response = self.s3_client.upload_file(
                 tmp.name, self.s3_bucket, self._get_data_s3_path()
             )
             os.remove(tmp.name)
