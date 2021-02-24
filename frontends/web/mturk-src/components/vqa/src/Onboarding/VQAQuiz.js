@@ -8,7 +8,7 @@ import React from "react";
 import { VQAQuizCard } from "./VQAQuizCard.js";
 import { VQAQuizExamples } from "./Examples/VQAQuizExamples.js"
 import { InvalidQuestionCharacteristics } from "../QuestionsCharacteristics.js"
-import { WarningMessage } from "../WarningMessage.js";
+import { WarningMessage } from "../../../../../src/containers/WarningMessage.js";
 
 class VQAQuiz extends React.Component {
 

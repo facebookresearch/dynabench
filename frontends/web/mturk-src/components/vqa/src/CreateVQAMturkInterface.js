@@ -11,7 +11,7 @@ import CheckVQAModelAnswer from "../../../../src/containers/CheckVQAModelAnswer.
 import { ValidQuestionCharacteristics } from "./QuestionsCharacteristics.js"
 import { VQAFeedbackCard } from "./VQAFeedbackCard.js";
 import { KeyboardShortcuts } from "../../../../src/containers/KeyboardShortcuts.js"
-import { WarningMessage, WarningMessageLight } from "./WarningMessage.js"
+import { WarningMessage, WarningMessageLight } from "../../../../src/containers/WarningMessage.js"
 import {
     Container,
     Row,

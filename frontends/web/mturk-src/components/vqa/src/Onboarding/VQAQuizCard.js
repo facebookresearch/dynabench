@@ -6,16 +6,10 @@
 
 import React from "react";
 import AtomicImage from "../../../../../src/containers/AtomicImage.js";
-import { ExampleValidationActions } from "../../../../../src/containers/ExampleValidationActions.js";
-import {
-    Card,
-    Row,
-    Col,
-} from 'react-bootstrap';
-import { WarningMessage } from "../WarningMessage.js";
+import { ExampleValidationActions } from "../../../../../src/containers/ExampleInfo.js";
+import { Card, Row, Col } from "react-bootstrap";
 
 class VQAQuizCard extends React.Component {
-
     constructor(props) {
         super(props);
         this.MODEL_STATES = this.props.MODEL_STATES;
@@ -24,11 +18,19 @@ class VQAQuizCard extends React.Component {
     render() {
         return (
             <Card className="d-flex justify-content-center hypothesis mb-5">
-                <AtomicImage src={this.props.imageUrl} maxHeight={400} maxWidth={600}/>
-                <Card.Body className="overflow-auto pt-2" style={{ height: "auto" }}>
+                <AtomicImage
+                    src={this.props.imageUrl}
+                    maxHeight={400}
+                    maxWidth={600}
+                />
+                <Card.Body
+                    className="overflow-auto pt-2"
+                    style={{ height: "auto" }}
+                >
                     <Card
                         className="hypothesis rounded border m-3 card"
-                        style={{ minHeight: 120 }}>
+                        style={{ minHeight: 120 }}
+                    >
                         <Card.Body className="p-3">
                             <Row>
                                 <Col xs={12} md={7}>
@@ -36,29 +38,52 @@ class VQAQuizCard extends React.Component {
                                         <h6 className="text-uppercase dark-blue-color spaced-header">
                                             Question:
                                         </h6>
-                                        <p>
-                                            {this.props.question}
-                                        </p>
-                                        {this.props.isAnswer && <>
-                                            <h6 className="text-uppercase dark-blue-color spaced-header">
-                                                {this.props.onboardingMode === "creation" ? "AI's " : ""} answer:
-                                            </h6>
-                                            <p>
-                                                {this.props.answer}
-                                            </p>
-                                        </>}
+                                        <p>{this.props.question}</p>
+                                        {this.props.isAnswer && (
+                                            <>
+                                                <h6 className="text-uppercase dark-blue-color spaced-header">
+                                                    {this.props
+                                                        .onboardingMode ===
+                                                    "creation"
+                                                        ? "AI's "
+                                                        : ""}{" "}
+                                                    answer:
+                                                </h6>
+                                                <p>{this.props.answer}</p>
+                                            </>
+                                        )}
                                     </div>
+                                    <h6 className="text-uppercase dark-blue-color spaced-header">
+                                        {this.props.isAnswer
+                                            ? "Determine"
+                                            : "Is the question above valid? (refer to the instructions to see the concept of valid and invalid questions)."}
+                                    </h6>
                                     <ExampleValidationActions
-                                        correctSelected={this.props.modelState === this.MODEL_STATES.CORRECT}
-                                        incorrectSelected={this.props.modelState === this.MODEL_STATES.INCORRECT}
-                                        userMode="user"
-                                        interfaceMode="mturk"
-                                        isQuestion={!this.props.isAnswer}
+                                        correct={
+                                            this.props.modelState ===
+                                            this.MODEL_STATES.CORRECT
+                                        }
+                                        incorrect={
+                                            this.props.modelState ===
+                                            this.MODEL_STATES.INCORRECT
+                                        }
+                                        isOwner={false}
+                                        validatingQuestion={!this.props.isAnswer}
                                         disabled={this.props.disableRadios}
-                                        header={this.props.isAnswer ? "Determine" : "Is the question above valid? (refer to the instructions to see the concept of valid and invalid questions)."}
                                         isFlaggingAllowed={false}
-                                        setCorrectSelected={() => {this.props.setModelState(this.props.index, this.MODEL_STATES.CORRECT)}}
-                                        setIncorrectSelected={() => {this.props.setModelState(this.props.index, this.MODEL_STATES.INCORRECT)}}
+                                        setCorrect={() => {
+                                            this.props.setModelState(
+                                                this.props.index,
+                                                this.MODEL_STATES.CORRECT
+                                            );
+                                        }}
+                                        setIncorrect={() => {
+                                            this.props.setModelState(
+                                                this.props.index,
+                                                this.MODEL_STATES.INCORRECT
+                                            );
+                                        }}
+                                        taskType="VQA"
                                     />
                                 </Col>
                             </Row>
@@ -71,7 +96,7 @@ class VQAQuizCard extends React.Component {
                     </Card>
                 </Card.Body>
             </Card>
-        )
+        );
     }
 }
 
