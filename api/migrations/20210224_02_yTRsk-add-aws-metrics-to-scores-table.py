@@ -16,14 +16,12 @@ steps = [
     step(
         """
         ALTER TABLE scores
-        ADD COLUMN CPUUtilization FLOAT COMMENT 'Unit: percent',
-        ADD COLUMN MemoryUtilization FLOAT COMMENT 'Unit: percent',
-        ADD COLUMN Duration FLOAT COMMENT 'Unit: second'
+        ADD COLUMN memory_utilization FLOAT COMMENT 'Unit: GiB',
+        ADD COLUMN examples_per_second FLOAT
         """,
         """
-        ALTER TABLE scores DROP COLUMN CPUUtilization,
-        DROP COLUMN MemoryUtilization,
-        DROP COLUMN Duration
+        ALTER TABLE scores DROP COLUMN memory_utilization,
+        DROP COLUMN examples_per_second
         """,
     )
 ]

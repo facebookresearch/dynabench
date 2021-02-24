@@ -33,9 +33,8 @@ class Score(Base):
     eval_id_end = db.Column(db.Integer, default=-1)
     metadata_json = db.Column(db.Text)
 
-    CPUUtilization = db.Column(db.Float)
-    MemoryUtilization = db.Column(db.Float)
-    Duration = db.Column(db.Float)
+    memory_utilization = db.Column(db.Float)
+    examples_per_second = db.Column(db.Float)
 
     def __repr__(self):
         return f"<Score {self.id}>"
@@ -67,9 +66,11 @@ class ScoreModel(BaseModel):
                     pretty_perf=score_obj["pretty_perf"],
                     perf=score_obj["perf"],
                     raw_upload_data=raw_upload_data,
-                    eval_id_start=score_obj["start_index"],
-                    eval_id_end=score_obj["end_index"],
+                    eval_id_start=score_obj.get("start_index", -1),
+                    eval_id_end=score_obj.get("end_index", -1),
                     metadata_json=json.dumps(score_obj["metadata_json"]),
+                    memory_utilization=score_obj.get("memory_utilization", None),
+                    examples_per_second=score_obj.get("examples_per_second", None),
                 )
                 for score_obj in score_objs
             ]
