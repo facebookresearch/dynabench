@@ -51,6 +51,7 @@ class CreateVQAMturkInterface extends React.Component {
            fetchPredictionError: false,
            showErrorAlert: false,
            showInstructions: false,
+           hitSubmited: false,
        };
        this.storeExample = this.storeExample.bind(this);
        this.getNewContext = this.getNewContext.bind(this);
@@ -390,13 +391,14 @@ class CreateVQAMturkInterface extends React.Component {
         let exampleID = this.lastFooledExampleID(this.state.responseContent)
         history = [
             ...history,
-            { cls: "comment", text: this.state.comments, cid: this.state.context.id, eid: exampleID },
+            { cls: "comment", text: this.state.comments.trim(), cid: this.state.context.id, eid: exampleID },
             { cls: "log", responseContent: this.getResponseContentForDB(this.state.responseContent) }
         ];
         this.props.onSubmit(history);
         this.setState({
             history: [],
-            responseContent: []
+            responseContent: [],
+            hitSubmited: true
         })
     }
 
@@ -498,9 +500,9 @@ class CreateVQAMturkInterface extends React.Component {
                 </ol>
                 <p>You can also use the key shortcuts to operate:</p>
                 <ul className="mx-3" style={{ listStyleType: "disc" }}>
-                    <li><b>i:</b> Focus text box.</li>
+                    <li><b>i:</b> Focus question text box.</li>
+                    <li><b>Escape:</b> Blur question text box.</li>
                     <li><b>Enter:</b> Check answer.</li>
-                    <li><b>Escape:</b> Blur text box.</li>
                     <li><b>j:</b> Toggle Show/Hide Instructions.</li>
                     <li><b>w:</b> Correct.</li>
                     <li><b>s:</b> Incorrect.</li>
@@ -559,9 +561,9 @@ class CreateVQAMturkInterface extends React.Component {
         });
 
         const fooled = this.state.fooled === "yes"
-        const isSkipImageAllowed = (this.state.triesInContext >= this.minTriesToSwitchImg || this.state.totalTriesSoFar >= this.minTriesToCompleteHIT) && !fooled;
-        const isEnterQuestionAllowed = !fooled;
-        const shouldShowSubmitHIT = this.state.totalTriesSoFar >= this.minTriesToCompleteHIT || fooled;
+        const isSkipImageAllowed = (this.state.triesInContext >= this.minTriesToSwitchImg || this.state.totalTriesSoFar >= this.minTriesToCompleteHIT) && !fooled && !this.state.hitSubmited;
+        const isEnterQuestionAllowed = !fooled && !this.state.hitSubmited;
+        const shouldShowSubmitHIT = (this.state.totalTriesSoFar >= this.minTriesToCompleteHIT || fooled) && !this.state.hitSubmited;
         return (
            <Container>
                 {topInstruction}

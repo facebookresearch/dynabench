@@ -68,6 +68,7 @@ class CheckVQAModelAnswer extends React.Component {
                         type="button"
                         className={`btn btn-sm ${this.props.fooled === "no" ? " btn-success" : " btn-outline-success"}`}
                         style={{marginRight: 5}}
+                        disabled={this.state.disableSubmit}
                         onClick={this.handleCorrectButtonClick}>
                             Correct
                     </button>

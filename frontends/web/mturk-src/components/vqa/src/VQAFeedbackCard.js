@@ -20,7 +20,7 @@ class VQAFeedbackCard extends React.Component {
     }
 
     handleKeyPress = (e) => {
-        if (e.key.toLowerCase() === "enter") {
+        if (e.key.toLowerCase() === "enter" && this.props.comments.trim().length > 0) {
            this.props.submitHistory();
         }
     }
