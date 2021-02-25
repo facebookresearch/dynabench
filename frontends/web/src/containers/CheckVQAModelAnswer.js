@@ -14,8 +14,7 @@ class CheckVQAModelAnswer extends React.Component {
         super(props);
         this.state = {
             correctAnswer: "",
-            disableCorrectButton: false,
-            disableSubmitButton: false
+            disableSubmit: false,
         };
     }
 
@@ -26,16 +25,22 @@ class CheckVQAModelAnswer extends React.Component {
     }
 
     submitUserAnswer = () => {
-        const formattedAnswer = this.state.correctAnswer.trim();
-        if (formattedAnswer.length > 0) {
-            this.setState({ disableSubmitButton: true })
-            this.props.updateExample(formattedAnswer, "yes");
+        if (!this.state.disableSubmit) {
+            const formattedAnswer = this.state.correctAnswer.trim();
+            if (formattedAnswer.length > 0) {
+                this.setState({ disableSubmit: true }, () => {
+                    this.props.updateExample(formattedAnswer, "yes");
+                });
+            }
         }
     }
 
     handleCorrectButtonClick = () => {
-        this.setState({ disableCorrectButton: true })
-        this.props.updateExample(this.props.modelPredStr, "no");
+        if (!this.state.disableSubmit) {
+            this.setState({ disableSubmit: true }, () => {
+                this.props.updateExample(this.props.modelPredStr, "no");
+            });
+        }
     }
 
     handleIncorrectButtonClick = () => {
@@ -63,14 +68,14 @@ class CheckVQAModelAnswer extends React.Component {
                         type="button"
                         className={`btn btn-sm ${this.props.fooled === "no" ? " btn-success" : " btn-outline-success"}`}
                         style={{marginRight: 5}}
-                        onClick={this.handleCorrectButtonClick}
-                        disabled={this.state.disableCorrectButton || this.props.feedbackSaved}>
+                        onClick={this.handleCorrectButtonClick}>
                             Correct
                     </button>
                     <button
                         type="button"
                         className={`btn btn-sm ${this.props.fooled === "yes" ? " btn-danger" : " btn-outline-danger"}`}
-                        onClick={this.handleIncorrectButtonClick}>
+                        onClick={this.handleIncorrectButtonClick}
+                        disabled={this.state.disableSubmit}>
                             Incorrect
                     </button>
                 </InputGroup>
@@ -88,7 +93,7 @@ class CheckVQAModelAnswer extends React.Component {
                                         type="button"
                                         className="btn btn-sm btn-primary"
                                         onClick={this.submitUserAnswer}
-                                        disabled={this.state.disableSubmitButton}>
+                                        disabled={this.state.disableSubmit}>
                                             Submit
                                     </button>
                                 </Col>
