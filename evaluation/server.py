@@ -12,6 +12,9 @@ from utils.logging import init_logger
 from utils.requester import Requester
 
 
+sleep_interval = 5
+scheduler_update_interval = 300
+
 if __name__ == "__main__":
     init_logger("evaluation")
     logger = logging.getLogger("evaluation")
@@ -25,7 +28,8 @@ if __name__ == "__main__":
     queue = sqs.get_queue_by_name(QueueName=eval_config["evaluation_sqs_queue"])
     dataset_dict = load_datasets()
     requester = Requester(eval_config, dataset_dict)
-    # msg = {"model_id": 10}
+    timer = 0
+    # msg = {"model_id": 11}
     while True:
         # On each iteration, submit all requested jobs
         for message in queue.receive_messages():
@@ -37,6 +41,10 @@ if __name__ == "__main__":
             # msg = None
 
         # Evaluate one job
-        requester.compute(N=1)
-
-        time.sleep(5)
+        if timer >= scheduler_update_interval:
+            requester.update_status()
+            timer = 0
+        if requester.pending_jobs_to_compute():
+            requester.compute()
+        time.sleep(sleep_interval)
+        timer += sleep_interval

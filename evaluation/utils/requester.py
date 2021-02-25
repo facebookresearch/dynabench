@@ -80,6 +80,14 @@ class Requester:
                     self._eval_model_on_dataset(model_id, dataset_name)
 
     def compute(self, N=1):
-        self.scheduler.update_status()
         jobs = self.scheduler.pop_jobs(status="Completed", N=N)
         self.computer.compute_metrics(jobs)
+
+    def update_status(self):
+        self.scheduler.update_status()
+
+    def pending_jobs_to_compute(self):
+        return (
+            self.scheduler.pending_completed_jobs()
+            or self.computer.pending_computing_jobs()
+        )

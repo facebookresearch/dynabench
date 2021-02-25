@@ -100,8 +100,9 @@ class MetricsComputer:
         return job.aws_metrics
 
     def compute_metrics(self, jobs: list):
-        self._computing.extend(jobs)
-        self._dump()
+        if jobs:
+            self._computing.extend(jobs)
+            self._dump()
         while self._computing:
             job = self._computing[0]
             if self.update_database(job):
@@ -109,6 +110,9 @@ class MetricsComputer:
             else:
                 self._failed.append(self._computing.pop(0))
             self._dump()
+
+    def pending_computing_jobs(self):
+        return len(self._computing) > 0
 
     def _dump(self):
         # dump status to pre-specified path

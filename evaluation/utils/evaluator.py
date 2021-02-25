@@ -197,8 +197,12 @@ class JobScheduler:
             jobs, self._failed = _pop_jobs(self._failed, N, status)
         else:
             raise NotImplementedError(f"Job status {status} not supported to pop")
-        self._dump()
+        if jobs:
+            self._dump()
         return jobs
+
+    def pending_completed_jobs(self):
+        return len(self._completed) > 0
 
     # def __exit__(self, exc_type, exc_value, traceback):
     def _dump(self):
