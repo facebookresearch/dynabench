@@ -855,12 +855,15 @@ class CreateInterface extends React.Component {
           this.setState({ target: answer_text });
         }
       }
-
+      let contextKey = "context";
+      let hypothesisKey = "hypothesis";
+      if (this.state.task.type === "VQA") {
+        contextKey = "image_url";
+        hypothesisKey = "question";
+      }
       let modelInputs = {
-        image_url: this.state.context.context,
-        question: this.state.hypothesis,
-        context: this.state.context.context,
-        hypothesis: this.state.hypothesis,
+        [contextKey]: this.state.context.context,
+        [hypothesisKey]: this.state.hypothesis,
         answer: answer_text,
         insight: false,
       };
