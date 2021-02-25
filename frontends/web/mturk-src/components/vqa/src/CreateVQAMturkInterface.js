@@ -663,7 +663,7 @@ class CreateVQAMturkInterface extends React.Component {
                             callback: () => this.setState((state, _) => ({ showInstructions: !state.showInstructions }))
                         },
                         "f": {
-                            callback: () => this.submitHIT()
+                            callback: () => { if (shouldShowSubmitHIT) { this.submitHIT() }}
                         },
                     }}
                 />
