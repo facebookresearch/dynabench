@@ -43,18 +43,15 @@ class CreateVQAMturkInterface extends React.Component {
            history: [],
            question: "",
            comments: "",
-           totalTriesSoFar: 0,
-           triesInContext: 0,
+           totalExamplesSoFar: new Set(),
+           examplesInContext: new Set(),
            submitDisabled: true,
            refreshDisabled: true,
-           fooled: "unknown",
            fetchPredictionError: false,
            showErrorAlert: false,
            showInstructions: false,
        };
-       this.storeExample = this.storeExample.bind(this);
        this.getNewContext = this.getNewContext.bind(this);
-       this.getModelResponseAndStoreExample = this.getModelResponseAndStoreExample.bind(this);
        this.handleKeyPress = this.handleKeyPress.bind(this);
        this.handleQuestionChange = this.handleQuestionChange.bind(this);
        this.handleSubmitCorrectAnswer = this.handleSubmitCorrectAnswer.bind(this);
@@ -146,11 +143,10 @@ class CreateVQAMturkInterface extends React.Component {
                 responseContent: [],
                 question: "",
                 fetchPredictionError: false,
-                triesInContext: 0,
+                examplesInContext: new Set(),
                 submitDisabled: false,
                 refreshDisabled: false,
                 showErrorAlert: false,
-                fooled: "unknown",
             }
         })
     }
@@ -232,7 +228,7 @@ class CreateVQAMturkInterface extends React.Component {
         return null
     }
 
-    storeExample(modelResponse) {
+    storeExample(modelResponse, cid, question) {
         const metadata = {
             'annotator_id': this.props.providerWorkerId,
             'mephisto_id': this.props.mephistoWorkerId,
@@ -247,8 +243,8 @@ class CreateVQAMturkInterface extends React.Component {
             this.state.task.id,
             this.state.task.cur_round,
             'turk',
-            this.state.context.id,
-            this.state.question.trim(),
+            cid,
+            question,
             null,
             modelResponse,
             metadata,
@@ -256,9 +252,11 @@ class CreateVQAMturkInterface extends React.Component {
         )
         .then(newExample => {
             this.setState(function(prevState, props) {
+                if (prevState.responseContent.length === 0) {
+                    return {}
+                }
                 let updatedContent = this.updateLastResponse({
                     id: newExample.id,
-                    cid: prevState.context.id,
                 }, prevState)
                 return {
                     question: "",
@@ -273,19 +271,31 @@ class CreateVQAMturkInterface extends React.Component {
     }
 
     getModelResponseAndStoreExample() {
+        // since this function is called at the end of an add on responseContent
+        // it is guaranteed that the operations is performed on the last updated content.
+        const idx = this.state.responseContent.length - 1
+        if (idx < 0) {
+            return;
+        }
+        const question = this.state.responseContent[idx].text
+        const image_url = this.state.responseContent[idx].image_url
+        const cid = this.state.responseContent[idx].cid
         const modelInputs = {
-            image_url: this.state.context.context,
-            question: this.state.question,
+            image_url: image_url,
+            question: question,
             insight: false,
         };
         this.api.getModelResponse(this.state.task.round.url, modelInputs)
         .then(modelResponse => {
             if (modelResponse.errorMessage) {
+                console.log(modelResponse.errorMessage)
                 this.removeLastResponseFromContent();
             } else {
                 this.setState(function (prevState, props) {
+                    if (prevState.responseContent.length === 0) {
+                        return {}
+                    }
                     let updatedContent = this.updateLastResponse({
-                        text: prevState.question,
                         modelPredStr: modelResponse.answer,
                         modelResponse: modelResponse,
                         uiSettings_loadingResponse: false,
@@ -297,7 +307,7 @@ class CreateVQAMturkInterface extends React.Component {
                         showErrorAlert: false,
                     }
                 }, () => {
-                    this.storeExample(modelResponse);
+                    this.storeExample(modelResponse, cid, question);
                 });
             }
         }, error => {
@@ -313,8 +323,12 @@ class CreateVQAMturkInterface extends React.Component {
            refreshDisabled: true,
            responseContent: [
                ...prevState.responseContent, {
+                    id: "unknown",
                     cls: "hypothesis",
                     fooled: "unknown",
+                    cid: prevState.context.id,
+                    text: prevState.question.trim(),
+                    image_url: prevState.context.context,
                     uiSettings_feedbackSaved: null,
                     uiSettings_retracted: false,
                     uiSettings_flagged: false,
@@ -331,8 +345,14 @@ class CreateVQAMturkInterface extends React.Component {
        this.setState({ question: e.target.value });
     }
 
-    updateStateGivenUserFeedback(idx, correctAnswer, fooled) {
+    updateStateGivenUserFeedback(eid, correctAnswer, fooled) {
         this.setState(function(prevState, props) {
+            let responseContentDict = this.getResponseContentFromEid(prevState, eid)
+            if (responseContentDict === -1) {
+                return {};
+            }
+
+            let idx = responseContentDict["idx"]
             let updatedContent = prevState.responseContent;
             updatedContent[idx] = {
                 ...updatedContent[idx],
@@ -340,11 +360,16 @@ class CreateVQAMturkInterface extends React.Component {
                 correctAnswer: correctAnswer,
                 uiSettings_feedbackSaved: true
             }
+
+            let newTotalExamples = prevState.totalExamplesSoFar;
+            newTotalExamples.add(eid)
+
+            let examplesInContext = prevState.examplesInContext;
+            examplesInContext.add(eid)
             return {
                 responseContent: updatedContent,
-                totalTriesSoFar: prevState.totalTriesSoFar + 1,
-                triesInContext: prevState.triesInContext + 1,
-                fooled: fooled,
+                totalExamplesSoFar: newTotalExamples,
+                examplesInContext: examplesInContext,
                 submitDisabled: false,
                 refreshDisabled: false,
                 showErrorAlert: false,
@@ -352,22 +377,43 @@ class CreateVQAMturkInterface extends React.Component {
         })
     }
 
-    handleSubmitCorrectAnswer(correctAnswer, fooled) {
+    getResponseContentFromEid(state, eid) {
+        for (let idx = 0; idx < state.responseContent.length; idx++) {
+            let responseContent = state.responseContent[idx]
+            if (responseContent.id === eid) {
+                return {
+                    idx: idx,
+                    content: responseContent,
+                }
+            }
+        }
+        return -1;
+    }
+
+    handleSubmitCorrectAnswer(eid, correctAnswer, fooled) {
+        if (eid === "unknown") {
+            return
+        }
         this.setState(function(prevState, props) {
-            let idx = prevState.responseContent.length - 1;
+            let responseContentDict = this.getResponseContentFromEid(prevState, eid)
+            if (responseContentDict === -1) {
+                return {};
+            }
+            let idx = responseContentDict["idx"]
+            let responseContent = responseContentDict["content"]
             let updatedContent = prevState.responseContent;
-            updatedContent[idx]["uiSettings_feedbackSaved"] = false;
+            responseContent["uiSettings_feedbackSaved"] = false;
+            updatedContent[idx] = responseContent
             return { responseContent: updatedContent }
         }, () => {
-            let idx = this.state.responseContent.length - 1;
             this.api.updateExample(
-                this.state.responseContent[idx].id,
+                eid,
                 correctAnswer,
                 fooled === "yes",
                 this.props.providerWorkerId
             )
             .then((result) => {
-                this.updateStateGivenUserFeedback(idx, correctAnswer, fooled);
+                this.updateStateGivenUserFeedback(eid, correctAnswer, fooled);
             }, (error) => {
                 this.setState({ showErrorAlert: true });
                 console.log(error);
@@ -386,7 +432,7 @@ class CreateVQAMturkInterface extends React.Component {
 
     submitHIT() {
         let history = this.getHistoryWithCurrentExamples(this.state)
-        // this is a best effort guess that the comment is likely going to be able the most recent example
+        // this is a best effort guess that the comment is likely going to be about the most recent example
         let exampleID = this.lastFooledExampleID(this.state.responseContent)
         history = [
             ...history,
@@ -395,8 +441,14 @@ class CreateVQAMturkInterface extends React.Component {
         ];
         this.props.onSubmit(history);
         this.setState({
+            context: {},
             history: [],
-            responseContent: []
+            responseContent: [],
+            totalExamplesSoFar: new Set(),
+            examplesInContext: new Set(),
+            question: "",
+            comments: "",
+            showErrorAlert: false,
         })
     }
 
@@ -405,6 +457,9 @@ class CreateVQAMturkInterface extends React.Component {
             this.smoothlyAnimateToBottom();
         }
         this.setState(function(prevState, props) {
+            if (prevState.responseContent.length === 0) {
+                return {}
+            }
             let updatedContent = this.updateLastResponse({fooled: fooled}, prevState)
             return { responseContent: updatedContent }
         })
@@ -418,12 +473,23 @@ class CreateVQAMturkInterface extends React.Component {
 
     render() {
         let taskTrackerMessage = "";
-        if (this.state.fooled === "yes") {
-            taskTrackerMessage = "Congratulations! You fooled the model and got the bonus.";
-        } else if (this.state.totalTriesSoFar >= this.minTriesToCompleteHIT) {
+        let fooled = "unknown";
+        let correctAnswer = ""
+        let idx = this.state.responseContent.length - 1
+        if (idx >= 0) {
+            let responseContent = this.state.responseContent[idx]
+            fooled = responseContent.fooled
+            if (responseContent.correctAnswer) {
+                correctAnswer = responseContent.correctAnswer
+            }
+        }
+
+        if (fooled === "yes") {
+            taskTrackerMessage = "Congratulations! You fooled the model and please click 'Submit HIT' to get the bonus.";
+        } else if (this.state.totalExamplesSoFar.size >= this.minTriesToCompleteHIT) {
             taskTrackerMessage = "Minimum required tries completed. You can submit HIT or you can keep trying to fool the model to recieve a bonus.";
         } else {
-            taskTrackerMessage = `Tries (to unlock submit HIT button): ${this.state.totalTriesSoFar} / ${this.minTriesToCompleteHIT}.`
+            taskTrackerMessage = `Tries (to unlock submit HIT button): ${this.state.totalExamplesSoFar.size} / ${this.minTriesToCompleteHIT}.`
         }
         const taskTracker = <small style={{ padding: 9 }}>{taskTrackerMessage}</small>;
         const topInstruction = <>
@@ -540,6 +606,7 @@ class CreateVQAMturkInterface extends React.Component {
                 classNames += " bg-light";
                 feedbackContent = (
                     <CheckVQAModelAnswer
+                        eid={response.id}
                         modelPredStr={response.modelPredStr}
                         fooled={response.fooled}
                         loadingResponse={response.uiSettings_loadingResponse}
@@ -559,10 +626,9 @@ class CreateVQAMturkInterface extends React.Component {
             )
         });
 
-        const fooled = this.state.fooled === "yes"
-        const isSkipImageAllowed = (this.state.triesInContext >= this.minTriesToSwitchImg || this.state.totalTriesSoFar >= this.minTriesToCompleteHIT) && !fooled;
-        const isEnterQuestionAllowed = !fooled;
-        const shouldShowSubmitHIT = this.state.totalTriesSoFar >= this.minTriesToCompleteHIT || fooled;
+        const isSkipImageAllowed = (this.state.examplesInContext.size >= this.minTriesToSwitchImg || this.state.totalExamplesSoFar.size >= this.minTriesToCompleteHIT) && (fooled === "no");
+        const isEnterQuestionAllowed = !(fooled === "yes");
+        const shouldShowSubmitHIT = this.state.totalExamplesSoFar.size >= this.minTriesToCompleteHIT || (fooled === "yes" && correctAnswer.length > 0);
         return (
            <Container>
                 {topInstruction}

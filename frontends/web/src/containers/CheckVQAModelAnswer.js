@@ -15,7 +15,7 @@ class CheckVQAModelAnswer extends React.Component {
         this.state = {
             correctAnswer: "",
             disableCorrectButton: false,
-            disableSubmitButton: false
+            disableSubmitButton: false,
         };
     }
 
@@ -29,13 +29,13 @@ class CheckVQAModelAnswer extends React.Component {
         const formattedAnswer = this.state.correctAnswer.trim();
         if (formattedAnswer.length > 0) {
             this.setState({ disableSubmitButton: true })
-            this.props.updateExample(formattedAnswer, "yes");
+            this.props.updateExample(this.props.eid, formattedAnswer, "yes");
         }
     }
 
     handleCorrectButtonClick = () => {
         this.setState({ disableCorrectButton: true })
-        this.props.updateExample(this.props.modelPredStr, "no");
+        this.props.updateExample(this.props.eid, this.props.modelPredStr, "no");
     }
 
     handleIncorrectButtonClick = () => {
@@ -45,7 +45,7 @@ class CheckVQAModelAnswer extends React.Component {
     render() {
         if (this.props.fooled === "no") {
             return null;
-        } else if (this.props.loadingResponse) {
+        } else if (this.props.loadingResponse || this.props.eid === "unknown") {
             return (
                 <div className="d-flex align-items-center justify-content-center" style={{ width: "100%", height: 120 }}>
                     <div className="spinner-border" role="status"/>
@@ -99,10 +99,18 @@ class CheckVQAModelAnswer extends React.Component {
                 <KeyboardShortcuts
                     mapKeyToCallback={{
                         "w": {
-                            callback: () => this.handleCorrectButtonClick(),
+                            callback: () => {
+                                if (this.props.eid !== "unknown") {
+                                    this.handleCorrectButtonClick()
+                                }
+                            }
                         },
                         "s": {
-                            callback: () => this.handleIncorrectButtonClick(),
+                            callback: () => {
+                                if (this.props.eid !== "unknown") {
+                                    this.handleIncorrectButtonClick()
+                                }
+                            }
                         },
                     }}
                 />
