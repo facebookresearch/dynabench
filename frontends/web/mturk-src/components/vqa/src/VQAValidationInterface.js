@@ -139,15 +139,14 @@ class VQAValidationInterface extends React.Component {
                 </p>
                 <p>You can also use the key shortcuts to operate:</p>
                 <ul className="mx-3" style={{ listStyleType: "disc" }}>
-                    <li><b>Arrow Up:</b> Valid Question.</li>
-                    <li><b>Arrow Down:</b> Invalid Question.</li>
+                    <li><b>w:</b> Valid Question.</li>
+                    <li><b>s:</b> Invalid Question.</li>
                     <li><b>f:</b> Flag Question.</li>
-                    <li><b>Arrow Right:</b> Correct Answer.</li>
-                    <li><b>Arrow Left:</b> Incorrect Answer.</li>
-                    <li><b>s:</b> Show Instructions.</li>
-                    <li><b>h:</b> Hide Instructions.</li>
+                    <li><b>a:</b> Incorrect Answer.</li>
+                    <li><b>d:</b> Correct Answer.</li>
+                    <li><b>j:</b> Toggle Show/Hide Instructions.</li>
                     <li><b>Escape:</b> Clear Selections.</li>
-                    <li> <b>Enter:</b> Submit Validation.</li>
+                    <li><b>Enter:</b> Submit Validation.</li>
                 </ul>
             </>
         ): (
@@ -261,11 +260,11 @@ class VQAValidationInterface extends React.Component {
                 <KeyboardShortcuts
                     allowedShortcutsInText={["enter", "escape"]}
                     mapKeyToCallback={{
-                        "arrowup": {
+                        "w": {
                             callback: (valState) => this.setQuestionValidationState(valState),
                             params: this.VALIDATION_STATES.CORRECT
                         },
-                        "arrowdown": {
+                        "s": {
                             callback: (valState) => this.setQuestionValidationState(valState),
                             params: this.VALIDATION_STATES.INCORRECT
                         },
@@ -277,19 +276,16 @@ class VQAValidationInterface extends React.Component {
                             callback: (valState) => this.setQuestionValidationState(valState),
                             params: this.VALIDATION_STATES.UNKNOWN
                         },
-                        "arrowright": {
+                        "d": {
                             callback: (valState) => this.setResponseValidationState(valState),
                             params: this.VALIDATION_STATES.CORRECT
                         },
-                        "arrowleft": {
+                        "a": {
                             callback: (valState) => this.setResponseValidationState(valState),
                             params: this.VALIDATION_STATES.INCORRECT
                         },
-                        "s": {
-                            callback: () => this.setState({ showInstructions: true })
-                        },
-                        "h": {
-                            callback: () => this.setState({ showInstructions: false })
+                        "j": {
+                            callback: () => this.setState((state, props) => {return { showInstructions: !state.showInstructions }})
                         },
                         "enter": {
                             callback: () => this.submitValidation()
