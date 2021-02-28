@@ -505,6 +505,7 @@ class CreateVQAMturkInterface extends React.Component {
                     <li><b>w:</b> Correct.</li>
                     <li><b>s:</b> Incorrect.</li>
                     <li><b>d:</b> Skip Image.</li>
+                    <li><b>f:</b> Submit HIT.</li>
                 </ul>
                 <p>
                     You will have to complete at least <b>{this.minTriesToCompleteHIT} tries</b> to submit a HIT unless you fool the AI before then.
