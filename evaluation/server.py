@@ -28,22 +28,20 @@ if __name__ == "__main__":
     queue = sqs.get_queue_by_name(QueueName=eval_config["evaluation_sqs_queue"])
     dataset_dict = load_datasets()
     requester = Requester(eval_config, dataset_dict)
-    timer = 0
-    msg = {"model_id": 11}
+    timer = scheduler_update_interval
     while True:
         # On each iteration, submit all requested jobs
         for message in queue.receive_messages():
-            # if msg:
             msg = json.loads(message.body)
             logger.info(f"Evaluation server received SQS message {msg}")
-            # requester.request(msg)
-            # message.delete()
-            msg = None
+            requester.request(msg)
+            message.delete()
 
-        # Evaluate one job
+        # Update job status on scheduler interval
         if timer >= scheduler_update_interval:
             requester.update_status()
             timer = 0
-        requester.compute()
+        # Evaluate one job
+        requester.compute(N=1)
         time.sleep(sleep_interval)
         timer += sleep_interval

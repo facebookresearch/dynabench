@@ -158,14 +158,14 @@ class JobScheduler:
                                         job.status["TransformEndTime"]
                                     ),
                                     Period=60,
-                                    Statistics=["Average", "Maximum", "Minimum"],
+                                    Statistics=["Average"],
                                 )
                                 if r["Datapoints"]:
                                     if m["MetricName"] not in job.aws_metrics:
-                                        job.aws_metrics[m["MetricName"]] = {}
-                                    job.aws_metrics[m["MetricName"]][
-                                        host.split("/")[1]
-                                    ] = process_aws_metrics(r["Datapoints"])
+                                        job.aws_metrics[m["MetricName"]] = []
+                                    job.aws_metrics[m["MetricName"]].append(
+                                        process_aws_metrics(r["Datapoints"])
+                                    )
         # dump the updated status
         self._dump()
 
@@ -211,7 +211,6 @@ class JobScheduler:
         else:
             raise NotImplementedError(f"Scheduler does not maintain {status} queue")
 
-    # def __exit__(self, exc_type, exc_value, traceback):
     def _dump(self):
         # dump status to pre-specified path
         status = {

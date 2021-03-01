@@ -3,7 +3,7 @@
 import logging
 import sys
 
-from datasets import get_dataset_by_task
+from models.dataset import DatasetModel
 from utils.computer import MetricsComputer
 from utils.evaluator import JobScheduler
 
@@ -23,6 +23,10 @@ class Requester:
     def request(self, msg):
         model_ids = msg.get("model_id", None)
         dataset_names = msg.get("dataset_name", None)
+        if model_ids == "*":
+            model_ids = None
+        if dataset_names == "*":
+            dataset_names = None
         if not model_ids and dataset_names:
             logger.exception(
                 f"Request failed. At least one of "
@@ -49,6 +53,7 @@ class Requester:
                         f"{model_id} on dataset {dataset_name}"
                     )
                     self._eval_model_on_dataset(model_id, dataset_name)
+        self.scheduler._dump()
 
     def _eval_model_on_dataset(self, model_id, dataset_name):
         # evaluate a given model on given datasets
@@ -59,9 +64,12 @@ class Requester:
         # model's primary task
         m = ModelModel()
         task_id = m.getUnpublishedModelByMid(model_id).to_dict()["tid"]
-        dataset_names = get_dataset_by_task(
-            task_id
-        )  # TODO: move datasets id to tasks db
+        d = DatasetModel()
+        datasets = d.getByTid(task_id)
+        dataset_names = [dataset.name for dataset in datasets]
+        import pdb
+
+        pdb.set_trace()
         if dataset_names:
             for dataset_name in dataset_names:
                 self._eval_model_on_dataset(model_id, dataset_name)
@@ -70,9 +78,7 @@ class Requester:
         # given a dataset id, evaluate all models for the
         # dataset's task
         m = ModelModel()
-        models = m.getByTaskCode(
-            self.datasets[dataset_name].task
-        )  # TODO: query db to get this
+        models = m.getByTaskCode(self.datasets[dataset_name].task)
         if models:
             for model in models:
                 if model.to_dict["deployment_status"] == DeploymentStatusEnum.deployed:

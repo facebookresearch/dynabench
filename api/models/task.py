@@ -110,3 +110,9 @@ class TaskModel(BaseModel):
             return t
         except db.orm.exc.NoResultFound:
             return False
+
+    def getByTaskCode(self, task_code):
+        try:
+            return self.dbs.query(Task).filter(Task.task_code == task_code).one()
+        except db.orm.exc.NoResultFound:
+            return False

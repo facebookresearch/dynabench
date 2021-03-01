@@ -11,11 +11,3 @@ def load_datasets():
     }
 
     return datasets
-
-
-def get_dataset_by_task(task):
-    # TODO: this is a demo of the idea, how to fetch all datasets from that task
-    # I think there is a better idea to deal with this once load_datasets is called,
-    # but write it here to remind that requester needs something like this
-    if task == "nli" or task == 5:
-        return ["mnli-dev-mismatched", "mnli-dev-matched"]

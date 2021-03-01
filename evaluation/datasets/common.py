@@ -3,23 +3,30 @@
 import json
 import logging
 import os
+import sys
 import tempfile
 from abc import ABC, abstractmethod
 
 import boto3
 
-from datasets.task_config import task_config
 from eval_config import eval_config
+from metrics import get_eval_metrics, tasks_config
 
+
+sys.path.append("../api")  # noqa
+from models.dataset import DatasetModel  # isort:skip
+from models.task import TaskModel  # isort:skip
 
 logger = logging.getLogger("datasets")
 
 
 class BaseDataset(ABC):
-    def __init__(self, task, name, config=eval_config, ext=".jsonl"):
+    def __init__(self, task, name, round_id=0, config=eval_config, ext=".jsonl"):
         self.task = task
         self.name = name
+        self.round_id = round_id
         self.filename = self.name + ext
+        self.n_examples = None
         self.s3_bucket = config["dataset_s3_bucket"]
         self.s3_url = self._get_data_s3_url()
 
@@ -38,6 +45,8 @@ class BaseDataset(ABC):
             logger.info(f"Loaded {self.name} on S3 at {self.s3_url}")
         else:
             logger.info(f"Dataset {self.name} exists on S3 at {self.s3_url}")
+
+        self._register_dataset_in_db()
 
     def _get_data_s3_path(self):
         return os.path.join("datasets", self.task, self.filename)
@@ -59,12 +68,20 @@ class BaseDataset(ABC):
                 return True
         return False
 
+    def _register_dataset_in_db(self) -> bool:
+        d = DatasetModel()
+        if not d.getByName(self.name):
+            t = TaskModel()
+            task_id = t.getByTaskCode(self.task).id
+            d.create(name=self.name, task_id=task_id, rid=self.round_id)
+
     def get_output_s3_url(self, endpoint_name):
         prefix = self._get_output_s3_url_prefix(endpoint_name)
         return os.path.join(prefix, self.filename + ".out")
 
     def run_batch_transform(self, sagemaker_client, endpoint_name, job_name) -> bool:
         # submit an evaluation job
+        task_config = tasks_config.get(self.task, tasks_config["default"])
         sagemaker_client.create_transform_job(
             ModelName=endpoint_name,
             TransformJobName=job_name,
@@ -84,10 +101,8 @@ class BaseDataset(ABC):
                 "AssembleWith": "Line",
             },
             TransformResources={
-                "InstanceType": task_config.get(self.task, task_config["default"])[
-                    "instance_type"
-                ],
-                "InstanceCount": 1,
+                "InstanceType": task_config["instance_config"]["instance_type"],
+                "InstanceCount": task_config["instance_count"],
             },
         )
         return True
@@ -98,14 +113,19 @@ class BaseDataset(ABC):
         data = [json.loads(l) for l in open(tf).readlines()]
         labels = [self.field_converter(example) for example in data]
         os.remove(tf)
+        if not self.n_examples:
+            self.n_examples = len(labels)
         return labels
+
+    def get_n_examples(self):
+        if not self.n_examples:
+            self.read_labels()
+        return self.n_examples
 
     def eval(self, predictions: list) -> dict:
         """
         Adapted from common.helpers.validate_prediction, compute accuracy / f1, etc.
         """
-        eval_fn = task_config.get(self.task, task_config["default"])["eval_fn"]
-
         # load target examples
         target_examples = self.read_labels()
         # validate alignment of prediction and target labels
@@ -127,14 +147,13 @@ class BaseDataset(ABC):
             logger.exception(f"Unknown exception {ex}")
         else:
             score_obj = {}
-            score_obj["desc"] = None
-            score_obj["longdesc"] = None
-            score_obj["metadata_json"] = {}
+            score_obj["round_id"] = self.round_id
 
             # Get performance
-            perf = eval_fn(predictions, target_labels)
-            score_obj["pretty_perf"] = str(round(perf * 100, 2)) + " %"
+            perf, perf_dict = get_eval_metrics(self.task, predictions, target_labels)
             score_obj["perf"] = round(perf * 100, 2)
+            score_obj["pretty_perf"] = str(round(perf * 100, 2)) + " %"
+            score_obj["metadata_json"] = perf_dict
 
             # Get performance breakdown for this round across tags
             if target_tags:
@@ -145,7 +164,7 @@ class BaseDataset(ABC):
                     for tag in target_tags:
                         examples_by_tag.setdefault(tag, []).append((pred, target_label))
                 perf_by_tag = {
-                    k: eval_fn(*list(zip(*examples)))
+                    k: get_eval_metrics(self.task, *list(zip(*examples)))
                     for k, examples in examples_by_tag.items()
                 }
                 score_obj["metadata_json"]["perf_by_tag"] = [
@@ -156,6 +175,7 @@ class BaseDataset(ABC):
                     }
                     for tag, perf in perf_by_tag.items()
                 ]
+            score_obj["metadata_json"] = json.dumps(score_obj["metadata_json"])
 
             return score_obj
 

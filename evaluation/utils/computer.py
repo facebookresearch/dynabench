@@ -9,9 +9,13 @@ import tempfile
 
 import boto3
 
+from metrics import get_job_metrics
+from models.round import RoundModel
+
 
 sys.path.append("../api")  # noqa
 from models.score import ScoreModel  # isort:skip
+from models.dataset import DatasetModel  # isort:skip
 
 logger = logging.getLogger("computer")
 
@@ -80,24 +84,36 @@ class MetricsComputer:
         logger.info(f"Evaluating {job.job_name}")
         try:
             predictions = self.parse_outfile(job)
-            score_obj = self.datasets[job.dataset_name].eval(predictions)
-            perf_metrics = self._get_perf_metrics(job)
-            # TODO: add model eval status and update
+            eval_metrics_dict = self.datasets[job.dataset_name].eval(predictions)
+            job_metrics_dict = get_job_metrics(job, self.datasets[job.dataset_name])
+
+            score_obj = {**eval_metrics_dict, **job_metrics_dict}
+            score_obj["model_id"] = job.model_id
+            # TODO: decide whether to add a new column for output file S3 path
+            score_obj["raw_upload_data"] = self.datasets[
+                job.dataset_name
+            ].get_output_s3_url(job.endpoint_name)
+
+            dm = DatasetModel()
+            d_entry = dm.getByName(job.dataset_name)
+            score_obj["did"] = d_entry.id
+
+            rm = RoundModel()
+            # FIXME: note the rid in scores table is r_realid, pending issue #302
+            if self.datasets[job.dataset_name].round_id != 0:
+                score_obj["round_id"] = rm.getByTidAndRid(d_entry.tid, d_entry.rid).id
+            else:
+                score_obj["round_id"] = 0
             s = ScoreModel()
-            s.bulk_create(
-                model_id=job.model_id,
-                score_objs=[score_obj],
-                raw_upload_data=json.dumps(predictions),
-                perf_metrics=perf_metrics,  # FIXME: placeholder
-            )  # TODO: add columns for performance metrics
+            s.create(**score_obj)
             return True
         except Exception as ex:
             logger.exception(f"Exception in computing metrics {ex}")
             return False
 
-    def _get_perf_metrics(self, job):
+    def _get_job_metrics(self, job):
         "Compute job performance metrics: CpuUtilization, MemoryUtilization"
-        return job.aws_metrics
+        return get_job_metrics(job)
 
     def update_status(self, jobs: list):
         if jobs:
