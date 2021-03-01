@@ -99,20 +99,31 @@ class MetricsComputer:
         "Compute job performance metrics: CpuUtilization, MemoryUtilization"
         return job.aws_metrics
 
-    def compute_metrics(self, jobs: list):
+    def update_status(self, jobs: list):
         if jobs:
             self._computing.extend(jobs)
             self._dump()
-        while self._computing:
+
+    def compute(self, N=1):
+        if N == -1:
+            N = len(self._computing)
+        i = 0
+        while self._computing and i < N:
             job = self._computing[0]
             if self.update_database(job):
                 self._computing.pop(0)
             else:
                 self._failed.append(self._computing.pop(0))
+            i += 1
             self._dump()
 
-    def pending_computing_jobs(self):
-        return len(self._computing) > 0
+    def get_jobs(self, status="Failed"):
+        if status == "Failed":
+            return self._failed
+        elif status == "Computing":
+            return self._computing
+        else:
+            raise NotImplementedError(f"Scheduler does not maintain {status} queue")
 
     def _dump(self):
         # dump status to pre-specified path

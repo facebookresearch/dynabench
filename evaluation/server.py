@@ -29,22 +29,21 @@ if __name__ == "__main__":
     dataset_dict = load_datasets()
     requester = Requester(eval_config, dataset_dict)
     timer = 0
-    # msg = {"model_id": 11}
+    msg = {"model_id": 11}
     while True:
         # On each iteration, submit all requested jobs
         for message in queue.receive_messages():
             # if msg:
             msg = json.loads(message.body)
             logger.info(f"Evaluation server received SQS message {msg}")
-            requester.request(msg)
-            message.delete()
-            # msg = None
+            # requester.request(msg)
+            # message.delete()
+            msg = None
 
         # Evaluate one job
         if timer >= scheduler_update_interval:
             requester.update_status()
             timer = 0
-        if requester.pending_jobs_to_compute():
-            requester.compute()
+        requester.compute()
         time.sleep(sleep_interval)
         timer += sleep_interval

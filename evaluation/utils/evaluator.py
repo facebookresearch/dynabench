@@ -88,7 +88,7 @@ class JobScheduler:
                 logger.exception(f"Exception in submitting job {job.job_name}: {ex}")
                 return False
             else:
-                self.status = self.sagemaker.describe_transform_job(
+                job.status = self.sagemaker.describe_transform_job(
                     TransformJobName=job.job_name
                 )
                 logger.info(f"Submitted {job.job_name} for batch transform.")
@@ -201,8 +201,15 @@ class JobScheduler:
             self._dump()
         return jobs
 
-    def pending_completed_jobs(self):
-        return len(self._completed) > 0
+    def get_jobs(self, status="Failed"):
+        if status == "Failed":
+            return self._failed
+        elif status == "Completed":
+            return self._completed
+        elif status == "Submitted":
+            return self._submitted
+        else:
+            raise NotImplementedError(f"Scheduler does not maintain {status} queue")
 
     # def __exit__(self, exc_type, exc_value, traceback):
     def _dump(self):
