@@ -26,7 +26,7 @@ class BaseDataset(ABC):
         self.name = name
         self.round_id = round_id
         self.filename = self.name + ext
-        self.n_examples = None
+        self._n_examples = None  # will be get through API
         self.s3_bucket = config["dataset_s3_bucket"]
         self.s3_url = self._get_data_s3_url()
 
@@ -113,14 +113,14 @@ class BaseDataset(ABC):
         data = [json.loads(l) for l in open(tf).readlines()]
         labels = [self.field_converter(example) for example in data]
         os.remove(tf)
-        if not self.n_examples:
-            self.n_examples = len(labels)
+        if not self._n_examples:
+            self._n_examples = len(labels)
         return labels
 
     def get_n_examples(self):
-        if not self.n_examples:
+        if not self._n_examples:
             self.read_labels()
-        return self.n_examples
+        return self._n_examples
 
     def eval(self, predictions: list) -> dict:
         """

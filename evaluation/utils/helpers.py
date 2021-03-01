@@ -1,14 +1,13 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+import time
 from datetime import datetime, timedelta
 
 
 def generate_job_name(endpoint_name, dataset_name):
-    # TODO: add datetime to job name , make it unique
-    return (
-        f"test-{endpoint_name}-{dataset_name}"
-        f"-{datetime.now().strftime('%I-%M-%p-%B-%d-%Y')}"
-    )[:63].rstrip("-")
+    # :63 is AWS requirement; timestamp has fewer digits than uuid and should be
+    # sufficient for dedup purpose
+    return f"{endpoint_name}-{dataset_name}-{int(time.time())}"[:63]
 
 
 def round_end_dt(dt, delta=60, offset=1):
