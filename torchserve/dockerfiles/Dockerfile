@@ -50,5 +50,6 @@ ENV TEMP=/home/model-server/tmp
 ADD anli-private /home/model-server/anli-old
 ADD anli-public /home/model-server/anli
 
+ENV PYTHONIOENCODING=UTF-8
 ENTRYPOINT ["/usr/local/bin/dockerd-entrypoint.sh"]
 CMD ["serve"]
