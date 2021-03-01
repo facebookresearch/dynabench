@@ -84,7 +84,7 @@ class VQAValidationInterface extends React.Component {
         this.api.getRandomExample(
             this.vqaTaskId,
             this.state.task.selected_round,
-            [],
+            this.getTagList(this.props),
             this.props.providerWorkerId,
         )
         .then((result) => {
@@ -102,6 +102,14 @@ class VQAValidationInterface extends React.Component {
             console.log(error);
             this.setState({ examplesOverError: true });
         });
+    }
+
+    getTagList(props) {
+        if (props.taskConfig && props.taskConfig.fetching_tags) {
+            return props.taskConfig.fetching_tags.split(",")
+        } else {
+            return []
+        }
     }
 
     submitValidation = () => {
@@ -132,6 +140,7 @@ class VQAValidationInterface extends React.Component {
             flagReason: this.state.flagReason,
             questionValidationState: this.state.questionValidationState,
             responseValidationState: this.state.responseValidationState,
+            example_tags: this.getTagList(this.props)
         }
         this.setState({ submitDisabled: true }, () => {
             this.api.validateExample(this.state.example.id, action, this.userMode, metadata, this.props.providerWorkerId)

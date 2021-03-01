@@ -38,7 +38,8 @@ class DynaBenchConfig:
     task_name: str = "no_task"
     task_id: int = 0
     round_id: int = 0
-    context_tags: Optional[str] = None
+    block_mobile: Optional[bool] = True
+    fetching_tags: Optional[str] = None
     # ; separating dictionary keys;
     # comma separating list items;
     # ie., "key:value0,value1,value2;key2:value4"
