@@ -193,7 +193,7 @@ class HomePage extends React.Component {
         ))
       );
     return (
-      <OverlayProvider initiallyHide={true}>
+      <OverlayProvider hidden={true}>
         <BadgeOverlay
           badgeTypes={this.state.showBadges}
           show={!!this.state.showBadges}

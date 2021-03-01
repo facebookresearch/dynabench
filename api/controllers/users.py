@@ -1,5 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+import json
 import os
 import uuid
 from datetime import datetime, timedelta
@@ -311,6 +312,15 @@ def update_user_profile(credentials, id):
         if existing and user.id != existing.id:
             logger.error("Username already exists (%s)" % data["username"])
             bottle.abort(409, "Username already exists")
+
+    # If settings are only partially specified in data, don't erase
+    # the existing settings that are present from before
+    if "settings_json" in data:
+        if user.settings_json:
+            settings = json.loads(user.settings_json)
+            for new_setting, new_value in json.loads(data["settings_json"]).items():
+                settings[new_setting] = new_value
+            data["settings_json"] = json.dumps(settings)
 
     update_dict = {}
     updatable_fields = ["username", "affiliation", "realname", "settings_json"]

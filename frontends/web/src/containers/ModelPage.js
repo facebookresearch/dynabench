@@ -105,7 +105,7 @@ class ModelPage extends React.Component {
     const { scores } = this.state.model;
     let orderedScores = (scores || []).sort((a, b) => a.round_id - b.round_id);
     return (
-      <OverlayProvider initiallyHide={true}>
+      <OverlayProvider hidden={true}>
         <BadgeOverlay
           badgeTypes={this.state.showBadges}
           show={!!this.state.showBadges}

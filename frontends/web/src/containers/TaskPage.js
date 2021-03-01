@@ -386,11 +386,13 @@ class TaskPage extends React.Component {
       pageLimit: 5,
       validateNonFooling: false,
       numMatchingValidations: 3,
+      taskVisited: true,
     };
 
     this.exportAllTaskData = this.exportAllTaskData.bind(this);
     this.getSavedTaskSettings = this.getSavedTaskSettings.bind(this);
     this.exportCurrentRoundData = this.exportCurrentRoundData.bind(this);
+    this.updateTasksVisited = this.updateTasksVisited.bind(this);
   }
 
   componentDidMount() {
@@ -443,6 +445,7 @@ class TaskPage extends React.Component {
 
   refreshData() {
     if (!this.props.location.hash || this.props.location.hash === '') this.props.location.hash = '#overall';
+    this.getUserTaskInfo(this.state.taskId);
     this.setState(
       {
         modelLeaderBoardPage: 0,
@@ -575,9 +578,42 @@ class TaskPage extends React.Component {
     );
   };
 
+  getUserTaskInfo(taskId) {
+    if (this.context.api.loggedIn()) {
+      const user = this.context.api.getCredentials();
+      this.context.api
+        .getUser(user.id, true)
+        .then((result) => {
+          if (result.settings_json) {
+            var settings_json = JSON.parse(result.settings_json);
+            if (settings_json.hasOwnProperty('visited_task' + taskId)) {
+              this.setState({ taskVisited: settings_json['visited_task' + taskId] });
+            } else {
+              this.setState({ taskVisited: false });
+            }
+          } else {
+            this.setState({ taskVisited: false });
+          }
+        }, (error) => {
+          console.log(error);
+        });
+    }
+  }
+
+  updateTasksVisited() {
+    if (this.context.api.loggedIn() && !this.state.taskVisited) {
+      var settings_json;
+      settings_json = {};
+      settings_json['visited_task' + this.state.taskId] = true;
+      this.context.user.settings_json = JSON.stringify(settings_json);
+      this.context.api.updateUser(this.context.user.id, this.context.user);
+    }
+    this.setState({ taskVisited: true });
+  }
+
   render() {
     return (
-      <OverlayProvider initiallyHide={false} delayMs="1700">
+      <OverlayProvider hidden={this.state.taskVisited} onHideCallback={this.updateTasksVisited}>
       <Container fluid>
         <Row>
           <Col lg={2} className="p-0 border">
@@ -592,15 +628,9 @@ class TaskPage extends React.Component {
             <div style={{float: "right", marginTop: 30}}>
             <ButtonGroup>
               <Annotation placement="left" tooltip="Click to show help overlay">
-                <OverlayContext.Consumer>
-                  {
-                    ({hidden, setHidden})=> (
-                        <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
-                          onClick={() => { setHidden(!hidden) }}
-                        ><i className="fas fa-question"></i></button>
-                    )
-                  }
-                </OverlayContext.Consumer>
+                <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
+                  onClick={() => { this.setState({taskVisited: !this.state.taskVisited})}}
+                ><i className="fas fa-question"></i></button>
               </Annotation>
               {this.context.api.isTaskOwner(this.context.user, this.state.task.id) || this.context.user.admin
                 ? <Annotation placement="top" tooltip="Click to adjust your owner task settings">

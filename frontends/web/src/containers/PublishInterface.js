@@ -122,7 +122,7 @@ class PublishInterface extends React.Component {
 (Enter ethical and fairness considerations here)`;
 
     return (
-      <OverlayProvider initiallyHide={true}>
+      <OverlayProvider hidden={true}>
         <BadgeOverlay
           badgeTypes={this.state.showBadges}
           show={!!this.state.showBadges}

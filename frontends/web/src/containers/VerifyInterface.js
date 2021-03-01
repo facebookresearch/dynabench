@@ -268,7 +268,7 @@ class VerifyInterface extends React.Component {
 
   render() {
     return (
-      <OverlayProvider initiallyHide={true}>
+      <OverlayProvider hidden={true}>
         <BadgeOverlay
           badgeTypes={this.state.showBadges}
           show={!!this.state.showBadges}

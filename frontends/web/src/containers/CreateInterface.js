@@ -719,7 +719,8 @@ class CreateInterface extends React.Component {
       submitDisabled: true,
       refreshDisabled: true,
       mapKeyToExampleId: {},
-      showInfoModal: true,
+      createTaskVisited: true,
+      dontShowAnnotations: true,
     };
     this.getNewContext = this.getNewContext.bind(this);
     this.handleGoalMessageTargetChange = this.handleGoalMessageTargetChange.bind(this);
@@ -729,6 +730,7 @@ class CreateInterface extends React.Component {
     this.updateAnswer = this.updateAnswer.bind(this);
     this.updateRetainInput = this.updateRetainInput.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
+    this.updateCreateTasksVisited = this.updateCreateTasksVisited.bind(this);
     this.chatContainerRef = React.createRef();
     this.bottomAnchorRef = React.createRef();
   }
@@ -982,13 +984,8 @@ class CreateInterface extends React.Component {
     this.setState({ livemode: checked });
   }
 
-  componentDidMount() {
-    const {
-      match: { params },
-    } = this.props;
-    if (!this.context.api.loggedIn()) {
-      this.setState({ livemode: false });
-    } else {
+  getUserTaskInfo(taskId) {
+    if (this.context.api.loggedIn()) {
       const user = this.context.api.getCredentials();
       this.context.api
         .getUser(user.id, true)
@@ -998,10 +995,38 @@ class CreateInterface extends React.Component {
             if (settings_json['retain_input']) {
               this.setState({ retainInput: settings_json['retain_input'] });
             }
+            if (settings_json['visited_create_task' + taskId]) {
+              this.setState({ createTaskVisited: settings_json['visited_create_task' + taskId] });
+            } else {
+              this.setState({ createTaskVisited: false });
+            }
+          } else {
+            this.setState({ createTaskVisited: false });
           }
         }, (error) => {
           console.log(error);
         });
+    }
+  }
+
+  updateCreateTasksVisited() {
+    if (this.context.api.loggedIn() && !this.state.createTaskVisited) {
+      var settings_json = {};
+      settings_json['visited_create_task' + this.state.taskId] = true;
+      this.context.user.settings_json = JSON.stringify(settings_json);
+      this.context.api.updateUser(this.context.user.id, this.context.user);
+      this.setState({ createTaskVisited: true, showInfoModal: true });
+    }
+  }
+
+  componentDidMount() {
+    const {
+      match: { params },
+    } = this.props;
+    if (!this.context.api.loggedIn()) {
+      this.setState({ livemode: false });
+    } else {
+      this.getUserTaskInfo(params.taskId);
     }
 
     this.setState({ taskId: params.taskId }, function () {
@@ -1111,9 +1136,9 @@ class CreateInterface extends React.Component {
     function renderSwitchContextTooltip(props) {
       return renderTooltip(props, "Don't like this context? Try another one.");
     }
-    console.log(this.state.annotationsHidden)
+
     return (
-      <OverlayProvider initiallyHide={false} onHideCallback={() => this.setState({annotationsHidden: true})}>
+      <OverlayProvider hidden={this.state.createTaskVisited && this.state.dontShowAnnotations} onHideCallback={() => {this.updateCreateTasksVisited(); this.setState({ dontShowAnnotations: true })}}>
         <BadgeOverlay
           badgeTypes={this.state.showBadges}
           show={!!this.state.showBadges}
@@ -1124,23 +1149,10 @@ class CreateInterface extends React.Component {
         <Col className="m-auto" lg={12}>
           <div style={{float: "right"}}>
             <ButtonGroup>
-            <OverlayContext.Consumer>
-              {
-                ({hidden, setHidden})=> (
-                  () => {if (!this.state.showInfoModal){setHidden(!hidden)}}
-                )
-              }
-            </OverlayContext.Consumer>
               <Annotation placement="left" tooltip="Click to show help overlay">
-                <OverlayContext.Consumer>
-                  {
-                    ({hidden, setHidden})=> (
-                        <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
-                          onClick={() => setHidden(!hidden)}
-                        ><i className="fas fa-question"></i></button>
-                    )
-                  }
-                </OverlayContext.Consumer>
+                <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
+                  onClick={() => { this.setState({dontShowAnnotations: !this.state.dontShowAnnotations})}}
+                ><i className="fas fa-question"></i></button>
               </Annotation>
               <Annotation placement="bottom" tooltip="Click to learn more details about this task challenge">
                 <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
@@ -1154,8 +1166,8 @@ class CreateInterface extends React.Component {
               </Annotation>
             </ButtonGroup>
             <Modal
-              show={this.state.annotationsHidden && this.state.showInfoModal}
-              onHide={() => this.setState({showInfoModal: false})}
+              show={this.state.showInfoModal}
+              onHide={() => {this.setState({showInfoModal: false})}}
               >
                 <Modal.Header closeButton>
                   <Modal.Title>Instructions</Modal.Title>
