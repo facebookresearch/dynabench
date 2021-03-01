@@ -83,7 +83,9 @@ class VQAValidationInterface extends React.Component {
     getNewExample = () => {
         this.api.getRandomExample(
             this.vqaTaskId,
-            this.state.task.selected_round
+            this.state.task.selected_round,
+            [],
+            this.props.providerWorkerId,
         )
         .then((result) => {
             this.setState({
