@@ -21,6 +21,7 @@ class Score(Base):
     model = db.orm.relationship("Model", foreign_keys="Score.mid")
     rid = db.Column(db.Integer, db.ForeignKey("rounds.id"), nullable=False)
     round = db.orm.relationship("Round", foreign_keys="Score.rid")
+    did = db.Column(db.Integer, db.ForeignKey("datasets.id"))
 
     desc = db.Column(db.String(length=255))
     longdesc = db.Column(db.Text)
