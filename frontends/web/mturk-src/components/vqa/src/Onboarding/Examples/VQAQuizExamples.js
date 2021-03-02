@@ -1,11 +1,11 @@
 const VQAQuizExamples = {
     1:  [
             {
-                imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/test2015/COCO_test2015_000000202153.jpg",
-                question: "What is the name of the street?",
-                modelAns: "broadway",
-                isModelCorrect: false,
-                hint: "HINT: Look at the green sign in the upper right corner of the image.",
+                question: "Which woman looks older?",
+                imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/train2014/COCO_train2014_000000171966.jpg",
+                modelAns: "right",
+                isModelCorrect: true,
+                hint: "HINT: Look at their hair and facial features. Another person is likely going to agree.",
                 isAnswer: true
             },
             {
@@ -32,18 +32,25 @@ const VQAQuizExamples = {
                 isAnswer: false
             },
             {
-                question: "What is the mood of the girl?",
-                imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/train2014/COCO_train2014_000000446014.jpg",
-                isModelCorrect: true,
-                hint: "HINT: The question is asking about the girl that appears in the image.",
+                imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/val2014/COCO_val2014_000000565797.jpg",
+                question: "What is the brand of this car?",
+                isModelCorrect: false,
+                hint: "HINT: It is not possible to answer the question given that the image does not show enough information.",
                 isAnswer: false
             },
             {
-                imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/val2014/COCO_val2014_000000061181.jpg",
-                question: "Is overpopulation a problem for the environment?",
-                isModelCorrect: false,
+                question: "How is the weather?",
+                imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/train2014/COCO_train2014_000000482780.jpg",
+                isModelCorrect: true,
                 isAnswer: false,
-                hint: "HINT: This question can be answered without analyzing the image."
+                hint: "HINT: To answer this question you need to look at the image and another person is likely going to say 'cloudy'."
+            },
+            {
+                imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/val2014/COCO_val2014_000000079841.jpg",
+                question: "What direction are they going?",
+                isModelCorrect: true,
+                isAnswer: false,
+                hint: "HINT: An answer to this question can be provided and it is likely going to be agreed by another person."
             },
         ],
     2:
@@ -84,14 +91,21 @@ const VQAQuizExamples = {
                 imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/test2015/COCO_test2015_000000258900.jpg",
                 isModelCorrect: true,
                 isAnswer: false,
-                hint: "HINT: It asks about an specific action. You must look at the image to get some context."
+                hint: "HINT: It asks about an specific action. You must look at the image to get some context. The answer is likely unique and can be agreed by another person."
             },
             {
-                question: "How is the weather?",
-                imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/train2014/COCO_train2014_000000482780.jpg",
-                isModelCorrect: true,
+                imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/train2014/COCO_train2014_000000329753.jpg",
+                question: "What are the people waiting for?",
+                isModelCorrect: false,
                 isAnswer: false,
-                hint: "HINT: To answer this question you need to know what specific situation the question is making reference."
+                hint: "HINT: The image does not provide enough information to give a consistent answer to this question. If there is a bus stop on the image, then the question would be valid."
+            },
+            {
+                imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/train2014/COCO_train2014_000000333848.jpg",
+                question: "What breed is the dog?",
+                isAnswer: false,
+                isModelCorrect: false,
+                hint: "HINT: This question is not ambiguous but it is likely that not a lot of people know the answer. Try to avoid very specific questions that require some specialized knowledge on the topic. Relying on external knowledge is fine, but remember: another person should be able to answer the question."
             },
         ]
     }

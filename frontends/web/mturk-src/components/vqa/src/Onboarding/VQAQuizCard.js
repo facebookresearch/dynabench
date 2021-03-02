@@ -12,6 +12,7 @@ import {
     Row,
     Col,
 } from 'react-bootstrap';
+import { WarningMessage } from "../WarningMessage.js";
 
 class VQAQuizCard extends React.Component {
 
@@ -22,7 +23,7 @@ class VQAQuizCard extends React.Component {
 
     render() {
         return (
-            <Card className="d-flex justify-content-center overflow-hidden pt-4 mb-5">
+            <Card className="d-flex justify-content-center hypothesis mb-5">
                 <AtomicImage src={this.props.imageUrl} maxHeight={400} maxWidth={600}/>
                 <Card.Body className="overflow-auto pt-2" style={{ height: "auto" }}>
                     <Card
@@ -54,7 +55,7 @@ class VQAQuizCard extends React.Component {
                                         interfaceMode="mturk"
                                         isQuestion={!this.props.isAnswer}
                                         disabled={this.props.disableRadios}
-                                        header={this.props.isAnswer ? "Determine" : "Is the question above valid? (valid: image is required to answer the question)"}
+                                        header={this.props.isAnswer ? "Determine" : "Is the question above valid? (refer to the instructions to see the concept of valid and invalid questions)."}
                                         isFlaggingAllowed={false}
                                         setCorrectSelected={() => {this.props.setModelState(this.props.index, this.MODEL_STATES.CORRECT)}}
                                         setIncorrectSelected={() => {this.props.setModelState(this.props.index, this.MODEL_STATES.INCORRECT)}}

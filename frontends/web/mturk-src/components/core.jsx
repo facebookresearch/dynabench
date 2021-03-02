@@ -25,7 +25,7 @@ const TaskComponents = {
   'nli-4-mturk': [NLIR4TaskPreview, NLIR4TaskOnboarder, NLIR4TaskMain],
   'sa-zen': [SentimentTaskPreview, SentimentTaskOnboarder, SentimentTaskMain],
   'vqa-1': [VQATaskPreview, VQATaskOnboarder, VQATaskMain],
-  'vqa-val-r1': [VQAValPreview, VQAValOnboarding, VQAValMain],
+  'vqa-val-1': [VQAValPreview, VQAValOnboarding, VQAValMain],
   // TODO: New tasks are added here
 };
 

@@ -14,7 +14,7 @@ class KeyboardShortcuts extends React.Component {
         if (e.repeat) { return; }
         if (mapKeyToCallback[loweredKey] === undefined) { return; }
         if (e.target.type && e.target.type.toLowerCase() === "text") {
-            if (!allowedShortcutsInText.includes(loweredKey)) {
+            if (!allowedShortcutsInText || !allowedShortcutsInText.includes(loweredKey)) {
                 return;
             }
         } else {

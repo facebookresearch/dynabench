@@ -4,8 +4,8 @@
     "round_id": 1,
     "task_title": "Fool the model - Visual Question Answering",
     "task_description": "Your job is to find examples that fool AI models",
-    "reward_in_dollars": 0.3,
+    "reward_in_dollars": 0.12,
     "tags": "vqa,testing",
     "onboarding_qualification_name": "vqa-1-qualification",
-    "qualifications": ["100_hits_approved", "english_only"]
+    "qualifications": ["1000_hits_approved", "us_only", "98_percent_approved"]
 }

@@ -1,18 +1,20 @@
 #@package _global_
 mephisto:
   blueprint:
-    onboarding_qualification: vqa-val-r1-qualification
-  architect:
-    port: 4000
+    onboarding_qualification: vqa-val-1-qualification
   task:
-    task_name: vqa-val-r1
+    task_name: vqa-val-1
     task_title: Validation - Visual Question Answering
     task_description: >
       Your job is to validate existing
       examples
-    task_reward: 0.3
+    task_reward: 0.36
     task_tags: "vqa,validation"
+    assignment_duration_in_seconds: 3600
 dynabench:
-  task_name: vqa-val-r1
+  task_name: vqa-val-1
   task_id: 13
   round_id: 1
+  block_mobile: True
+  fetching_tags: "sasha_test"
+  extra_logging: ""

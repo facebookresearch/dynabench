@@ -15,6 +15,11 @@
   border: 1px solid #fbe5c8;
 }
 
+.response-danger {
+  background-color: #ffeff2;
+  border: 1px solid #ffe5e7;
+}
+
 .light-green-bg {
   background-color: #e9ffe8;
 }
@@ -50,4 +55,28 @@
 .incorrect {
   color: black;
   background-color: #dc3545!important;
+}
+
+.carousel-control-prev-icon {
+    width: 50px;
+    height: 50px;
+}
+
+.carousel-control-next-icon {
+    width: 50px;
+    height: 50px;
+}
+
+.carousel-control-next {
+  display: inline-block;
+  float: right;
+  margin-top: 320px;
+  filter: invert(100%);
+}
+
+.carousel-control-prev {
+  display: inline-block;
+  float: left;
+  margin-top: 320px;
+  filter: invert(100%);
 }

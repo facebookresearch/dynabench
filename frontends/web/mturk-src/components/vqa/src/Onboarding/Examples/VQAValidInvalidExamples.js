@@ -18,22 +18,36 @@ const getVQAValidInvalidExamples = (mode) => [
         explanation: "This question is ambiguous. There is no clear and precise answer for this. Remember that your examples will be validated by other humans and they need to agree with your answers."
     },
     {
-        imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/train2014/COCO_train2014_000000333848.jpg",
-        question: "What breed is the dog?",
+        imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/test2015/COCO_test2015_000000202153.jpg",
+        question: "What is the name of the street sign shown in this image?",
+        modelAns: "Victoria St.",
+        userFeedback: ["Correct", null],
+        isValid: true,
+        explanation: "The question is valid because it is specific and another person is likely going to agree with the answer.",
+    },
+    {
+        imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/val2014/COCO_val2014_000000081922.jpg",
+        question: "How many cars are in the image?",
         isValid: false,
-        explanation: "This question is not ambiguous but it is likely that not a lot of people know the answer. Try to avoid very specific questions that require some specialized knowledge on the topic. Relying on external knowledge is fine, but remember: another person should be able to answer the question."
+        explanation: "The image is not clear enough to give an answer to which most people will agree with."
+    },
+    {
+        imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/train2014/COCO_train2014_000000131909.jpg",
+        question: "What is the profession of the man?",
+        isValid: false,
+        explanation: "The question is not valid because it does not specify which man it is talking about. 'What is the profession of the man to the right?' is also invalid because there is nothing in the image that suggests what type of profession the man has."
     },
     {
         imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/test2015/COCO_test2015_000000576597.jpg",
         question: "What country is the flag from?",
         modelAns: "usa",
-        userFeedback: ["Incorrect", "England"],
+        userFeedback: ["Incorrect", "United Kingdom"],
         isValid: true,
         explanation: `This example requires two basic steps, the first one is the identification of a flag in the image and the second is the process to determine what country corresponds to that flag. In this case the ${mode === "creation" ? "AI" : "answer"} was incorrect, so you are expected to enter the correct answer.`
     },
     {
         imageUrl: "https://dl.fbaipublicfiles.com/dynabench/coco/train2014/COCO_train2014_000000088527.jpg",
-        question: "What type of tie is he wearing?",
+        question: "What is the pattern on the tie he is wearing?",
         modelAns: "striped",
         userFeedback: ["Correct", null],
         isValid: true,

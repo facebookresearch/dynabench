@@ -7,6 +7,8 @@
 import React from "react";
 import { VQAQuizCard } from "./VQAQuizCard.js";
 import { VQAQuizExamples } from "./Examples/VQAQuizExamples.js"
+import { InvalidQuestionCharacteristics } from "../QuestionsCharacteristics.js"
+import { WarningMessage } from "../WarningMessage.js";
 
 class VQAQuiz extends React.Component {
 
@@ -14,7 +16,7 @@ class VQAQuiz extends React.Component {
         super(props);
         this.MODEL_STATES = { "UNKNOWN" : -1, "CORRECT": 1, "INCORRECT": 0 };
         this.examples = VQAQuizExamples;
-        this.minCorrectValidations = 5;
+        this.minCorrectValidations = 6;
         this.maxAllowedAttempts = 2;
         this.state = this.props.cache || {
             attempt: 1,
@@ -109,14 +111,13 @@ class VQAQuiz extends React.Component {
                         For every image, question and corresponding{this.props.onboardingMode === "creation" ? " AI" : ""} answer below,
                         tell us if the{this.props.onboardingMode === "creation" ? " AI" : ""} answer was correct or not.
                         The second part consists of <b>validating questions</b>{this.props.onboardingMode === "creation" ? " that the AI receives" : ""}.
-                        For every question tell us if it is valid or not.
-
+                        For every question tell us if it is valid or not. Remember:
                     </p>
+                    <InvalidQuestionCharacteristics/>
                     <p>
                         <strong style={{ color: "red" }}>WARNING:</strong>You have to correctly validate
-                        at least {this.minCorrectValidations} out of the {this.examples[this.state.attempt].length} examples to unlock the final phase.
-                        You will have two tries to complete this activity. If you fail you will not be able to
-                        complete the onboarding.
+                        at least {this.minCorrectValidations} out of the {this.examples[this.state.attempt].length} examples to unlock the main task.
+                        If you fail you will not be able to complete the onboarding.
                     </p>
                 </div>
             : <></>
@@ -173,6 +174,7 @@ class VQAQuiz extends React.Component {
                 {phaseTitle}
                 {phaseInstructionsButton}
                 {phaseInstructions}
+                <WarningMessage/>
                 {content}
                 <div className="d-flex justify-content-start" style={{ width: "100%" }}>
                     {resultsMessage}

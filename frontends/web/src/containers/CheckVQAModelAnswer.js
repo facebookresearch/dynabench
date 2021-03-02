@@ -15,9 +15,8 @@ class CheckVQAModelAnswer extends React.Component {
         this.state = {
             correctAnswer: "",
             disableCorrectButton: false,
-            disableSubmitButton: false
+            disableSubmitButton: false,
         };
-        this.MODEL_STATES = this.props.MODEL_STATES;
     }
 
     handleKeyPress = (e) => {
@@ -30,23 +29,23 @@ class CheckVQAModelAnswer extends React.Component {
         const formattedAnswer = this.state.correctAnswer.trim();
         if (formattedAnswer.length > 0) {
             this.setState({ disableSubmitButton: true })
-            this.props.updateExample(formattedAnswer, this.MODEL_STATES.INCORRECT);
+            this.props.updateExample(this.props.eid, formattedAnswer, "yes");
         }
     }
 
     handleCorrectButtonClick = () => {
         this.setState({ disableCorrectButton: true })
-        this.props.updateExample(this.props.modelPredStr, this.MODEL_STATES.CORRECT);
+        this.props.updateExample(this.props.eid, this.props.modelPredStr, "no");
     }
 
     handleIncorrectButtonClick = () => {
-        this.props.setModelState(this.MODEL_STATES.INCORRECT);
+        this.props.setModelState("yes");
     }
 
     render() {
-        if (this.props.modelState === this.MODEL_STATES.CORRECT) {
+        if (this.props.fooled === "no") {
             return null;
-        } else if (this.props.loadingResponse) {
+        } else if (this.props.loadingResponse || this.props.eid === "unknown") {
             return (
                 <div className="d-flex align-items-center justify-content-center" style={{ width: "100%", height: 120 }}>
                     <div className="spinner-border" role="status"/>
@@ -62,7 +61,7 @@ class CheckVQAModelAnswer extends React.Component {
                 <InputGroup className="d-flex justify-content-start" style={{marginTop: 10}}>
                     <button
                         type="button"
-                        className={`btn btn-sm ${this.props.modelState === this.MODEL_STATES.CORRECT ? " btn-success" : " btn-outline-success"}`}
+                        className={`btn btn-sm ${this.props.fooled === "no" ? " btn-success" : " btn-outline-success"}`}
                         style={{marginRight: 5}}
                         onClick={this.handleCorrectButtonClick}
                         disabled={this.state.disableCorrectButton || this.props.feedbackSaved}>
@@ -70,18 +69,18 @@ class CheckVQAModelAnswer extends React.Component {
                     </button>
                     <button
                         type="button"
-                        className={`btn btn-sm ${this.props.modelState === this.MODEL_STATES.INCORRECT ? " btn-danger" : " btn-outline-danger"}`}
+                        className={`btn btn-sm ${this.props.fooled === "yes" ? " btn-danger" : " btn-outline-danger"}`}
                         onClick={this.handleIncorrectButtonClick}>
                             Incorrect
                     </button>
                 </InputGroup>
-                { this.props.modelState === this.MODEL_STATES.INCORRECT &&
+                { this.props.fooled === "yes" &&
                     (
                         <div className="mt-1">
                             <Row>
                                 <Col className="mt-2 pr-1">
                                     <ExplainFeedback feedbackSaved={this.props.feedbackSaved} type="answer"/>
-                                    <input type="text" autoFocus style={{width: 100+'%'}}  placeholder={"Provide the correct answer"}
+                                    <input type="text" autoFocus style={{width: 100+'%'}}  placeholder={"Provide the correct answer. Please make sure the correct answer follows our requirements in the instructions."}
                                         onChange={(e) => {this.setState({correctAnswer: e.target.value})}} onKeyPress={this.handleKeyPress}/>
                                 </Col>
                                 <Col className="align-self-end justify-content-start pl-0" md="auto">
@@ -98,13 +97,20 @@ class CheckVQAModelAnswer extends React.Component {
                     )
                 }
                 <KeyboardShortcuts
-                    allowedShortcutsInText={["arrowup"]}
                     mapKeyToCallback={{
-                        "arrowup": {
-                            callback: () => this.handleCorrectButtonClick(),
+                        "w": {
+                            callback: () => {
+                                if (this.props.eid !== "unknown") {
+                                    this.handleCorrectButtonClick()
+                                }
+                            }
                         },
-                        "arrowdown": {
-                            callback: () => this.handleIncorrectButtonClick(),
+                        "s": {
+                            callback: () => {
+                                if (this.props.eid !== "unknown") {
+                                    this.handleIncorrectButtonClick()
+                                }
+                            }
                         },
                     }}
                 />

@@ -27,12 +27,14 @@ def main():
     imageUrl = "https://dl.fbaipublicfiles.com/dynabench/coco/{}/{}"
 
     datasets = {
-        "image_info_test2015": ["image_info_test2015"],
-        "annotations_trainval2014": [
-            # Could be any of the jsons in the zip.
-            "person_keypoints_train2014",
-            "person_keypoints_val2014",
-        ],
+        # Already run
+        # "image_info_test2015": ["image_info_test2015"],
+        # "annotations_trainval2014": [
+        #     # Could be any of the jsons in the zip.
+        #     "person_keypoints_train2014",
+        #     "person_keypoints_val2014",
+        # ],
+        "annotations_trainval2017": ["person_keypoints_val2017"]
     }
 
     rid = 1

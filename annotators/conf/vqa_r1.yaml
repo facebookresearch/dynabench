@@ -2,17 +2,20 @@
 mephisto:
   blueprint:
     onboarding_qualification: vqa-1-qualification
-  architect:
-    port: 4000
   task:
     task_name: vqa-1
     task_title: Fool the model - Visual Question Answering
     task_description: >
       Your job is to find examples that fool
       AI models
-    task_reward: 0.3
+    task_reward: 0.13
+    assignment_duration_in_seconds: 3600
     task_tags: "vqa,testing"
 dynabench:
   task_name: vqa-1
   task_id: 12
   round_id: 1
+  block_mobile: True
+  fetching_tags: "val2017"
+  # tag_to_store_with_examples is required
+  extra_logging: "tag_to_store_with_examples:sasha_test"
