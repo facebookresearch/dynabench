@@ -113,7 +113,11 @@ class VQAValidationInterface extends React.Component {
     }
 
     submitValidation = () => {
-        if (this.state.submitDisabled) { return; }
+        if (this.state.examplesOverError && this.state.totalValidationsSoFar.size > 0) {
+            this.props.onSubmit(this.state.history);
+            return;
+        }
+
         const questionState = this.state.questionValidationState;
         const responseState = this.state.responseValidationState;
 
@@ -137,11 +141,13 @@ class VQAValidationInterface extends React.Component {
             mephisto_id: this.props.mephistoWorkerId,
             agentId: this.props.agentId,
             assignmentId: this.props.assignmentId,
+
             flagReason: this.state.flagReason,
             questionValidationState: this.state.questionValidationState,
             responseValidationState: this.state.responseValidationState,
             example_tags: this.getTagList(this.props)
         }
+
         this.setState({ submitDisabled: true }, () => {
             this.api.validateExample(this.state.example.id, action, this.userMode, metadata, this.props.providerWorkerId)
             .then(result => {
@@ -156,7 +162,7 @@ class VQAValidationInterface extends React.Component {
                         questionValidationState: prevState.questionValidationState,
                         responseValidationState: prevState.responseValidationState,
                         flagReason: prevState.flagReason,
-                        totalValidationsSoFar: newTotalValidationsSoFar,
+                        totalNumValidationsSoFar: newTotalValidationsSoFar.size,
                     }];
 
                     return {
@@ -165,10 +171,7 @@ class VQAValidationInterface extends React.Component {
                     }
                 }, () => {
                     if (this.state.totalValidationsSoFar.size === this.batchAmount) {
-                        this.props.onSubmit({
-                            id: this.state.example.id,
-                            history: this.state.history
-                        });
+                        this.props.onSubmit(this.state.history);
                     } else {
                         this.getNewExample();
                     }
@@ -228,6 +231,9 @@ class VQAValidationInterface extends React.Component {
         let disableSubmit = this.state.submitDisabled
         if (this.state.questionValidationState === "flagged" && (this.state.flagReason === null || this.state.flagReason.length === 0)) {
             disableSubmit = true
+        }
+        if (this.state.examplesOverError) {
+            disableSubmit = (this.state.totalValidationsSoFar.size === 0)
         }
         return (
             <Container>
@@ -314,15 +320,30 @@ class VQAValidationInterface extends React.Component {
                                         </Col>
                                     </Row>
                                 </Card.Body>
+
                             )
                         ) : (
-                            <Card.Body className="p-3">
-                                <Row>
-                                    <Col xs={12} md={7}>
-                                        <p>No more examples to be verified.</p>
-                                    </Col>
-                                </Row>
-                            </Card.Body>
+                            <Card>
+                                <Card.Body className="p-3">
+                                    <Row>
+                                        <Col xs={12} md={7}>
+                                            <p>No more examples to be verified.</p>
+                                        </Col>
+                                    </Row>
+                                </Card.Body>
+                                <Card.Footer>
+                                    <InputGroup className="align-items-center">
+                                        <button
+                                            type="button"
+                                            className="btn btn-primary btn-sm"
+                                            disabled={disableSubmit}
+                                            onClick={this.submitValidation}>
+                                            Submit
+                                        </button>
+                                        {taskTracker}
+                                    </InputGroup>
+                                </Card.Footer>
+                            </Card>
                         )}
                     </Card>
                     {this.state.showErrorAlert && (
