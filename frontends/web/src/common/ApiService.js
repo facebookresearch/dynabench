@@ -247,8 +247,9 @@ export default class ApiService {
     });
   }
 
-  getRandomExample(tid, rid, tags=[]) {
-    return this.fetch(`${this.domain}/examples/${tid}/${rid}?tags=${encodeURIComponent(tags.join('|'))}`, {
+  getRandomExample(tid, rid, tags=[], annotator_id=null) {
+    let annotator_query = annotator_id ? `&annotator_id=${annotator_id}` : ""
+    return this.fetch(`${this.domain}/examples/${tid}/${rid}?tags=${encodeURIComponent(tags.join('|'))}${annotator_query}`, {
       method: "GET",
     });
   }
