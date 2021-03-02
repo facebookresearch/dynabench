@@ -175,6 +175,12 @@ class ExampleModel(BaseModel):
                 % (h.hexdigest(), signature, "".join([str(x) for x in fields_to_sign]))
             )
             return False
+        else:
+            logger.info(
+                "Signature matched (received %s, expected %s [%s])"
+                % (h.hexdigest(), signature, "".join([str(x) for x in fields_to_sign]))
+            )
+
         return True
 
     def get_anon_uid(self, secret, uid):
