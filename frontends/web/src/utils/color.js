@@ -9,9 +9,10 @@ export const formatWordImportances = ({ words, importances }, target) => {
   if (
     (words && !words.length) ||
     (words && words.length !== importances.length)
-  )
+  ) {
     return "<td></td>";
-  let tags = ["<td>"];
+  }
+  const tags = ["<td>"];
   words.forEach((word, i) => {
     const formatedWord = formatSpecialTokens(word);
     const color = getColor(importances[i], target);
@@ -25,16 +26,17 @@ export const formatWordImportances = ({ words, importances }, target) => {
 };
 
 const formatSpecialTokens = (word) => {
-  if (word[0] === "<" && word[word.length - 1] === ">")
+  if (word[0] === "<" && word[word.length - 1] === ">") {
     return `#${word.slice(1, -1)}`;
+  }
   return word;
 };
 
 const getColor = (attr, target) => {
   attr = Math.max(-1, Math.min(1, attr));
-  let hue = 0,
-    sat = 75,
-    lig = 0;
+  let hue = 0;
+  const sat = 75;
+  let lig = 0;
   if (target === "negative" || target === "hateful") {
     hue = attr > 0 ? 0 : 120;
     lig = 100 - parseInt((attr > 0 ? 40 : -50) * attr);

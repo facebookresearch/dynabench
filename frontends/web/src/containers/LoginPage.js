@@ -16,7 +16,7 @@ import qs from "qs";
 class LoginPage extends React.Component {
   construct() {}
   render() {
-    var query = qs.parse(this.props.location.search, {
+    const query = qs.parse(this.props.location.search, {
       ignoreQueryPrefix: true,
     });
     return (
@@ -45,10 +45,9 @@ class LoginPage extends React.Component {
                       return errors;
                     }}
                     onSubmit={(values, { setFieldError, setSubmitting }) => {
-                      props.api
-                        .login(values.email, values.password)
-                        .then((result) => {
-                          //console.log(result);
+                      props.api.login(values.email, values.password).then(
+                        (result) => {
+                          // console.log(result);
                           props.updateState({
                             user: {
                               ...props.api.getCredentials(),
@@ -56,12 +55,14 @@ class LoginPage extends React.Component {
                             },
                           });
                           this.props.history.push(values.src);
-                        }, (error) => {
+                        },
+                        (error) => {
                           console.log(error);
                           this.setState({ error });
                           setSubmitting(false);
                           setFieldError("general", "Authentication failed");
-                        });
+                        }
+                      );
                     }}
                   >
                     {({
@@ -107,7 +108,6 @@ class LoginPage extends React.Component {
                           <Button
                             type="submit"
                             variant="primary"
-                            type="submit"
                             className="fade-in third submit-btn button-ellipse text-uppercase my-4"
                             disabled={isSubmitting}
                           >
