@@ -4,8 +4,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import React from 'react';
+import React from "react";
 
-const TasksContext = React.createContext({tasks: []});
+const TasksContext = React.createContext({ tasks: [] });
 
 export default TasksContext;

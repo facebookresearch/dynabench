@@ -14,7 +14,7 @@ import {
   Button,
   Card,
   CardGroup,
-  Modal
+  Modal,
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import UserContext from "./UserContext";
@@ -22,10 +22,7 @@ import TasksContext from "./TasksContext";
 import "./HomePage.css";
 import Moment from "react-moment";
 import ReactPlayer from "react-player";
-import {
-  OverlayProvider,
-  BadgeOverlay,
-} from "./Overlay"
+import { OverlayProvider, BadgeOverlay } from "./Overlay";
 
 class HomePageTable extends React.Component {
   render() {
@@ -47,13 +44,14 @@ class TaskTable extends React.Component {
     tasks: [],
   };
   componentDidMount() {
-    this.context.api
-      .getTasks()
-      .then((result) => {
+    this.context.api.getTasks().then(
+      (result) => {
         this.setState({ tasks: result.tasks });
-      }, (error) => {
+      },
+      (error) => {
         console.log(error);
-      });
+      }
+    );
   }
   render() {
     const headItems = (
@@ -82,13 +80,14 @@ class UserTable extends React.Component {
     users: [],
   };
   componentDidMount() {
-    this.context.api
-      .getUsers()
-      .then((result) => {
+    this.context.api.getUsers().then(
+      (result) => {
         this.setState({ users: result });
-      }, (error) => {
+      },
+      (error) => {
         console.log(error);
-      });
+      }
+    );
   }
   render() {
     const headItems = (
@@ -118,21 +117,22 @@ class HomePage extends React.Component {
     this.state = {
       showjumbo: true,
       tasks: [],
-      showVideo: false
+      showVideo: false,
     };
     this.hideJumbo = this.hideJumbo.bind(this);
   }
   componentDidMount() {
     if (this.context.api.loggedIn()) {
-      this.context.api
-        .getAsyncBadges()
-        .then((result) => {
+      this.context.api.getAsyncBadges().then(
+        (result) => {
           if (!!result.badges) {
-            this.setState({showBadges: result.badges})
+            this.setState({ showBadges: result.badges });
           }
-        }, (error) => {
+        },
+        (error) => {
           console.log(error);
-        });
+        }
+      );
     }
   }
   hideJumbo() {
@@ -197,9 +197,8 @@ class HomePage extends React.Component {
         <BadgeOverlay
           badgeTypes={this.state.showBadges}
           show={!!this.state.showBadges}
-          onHide={() => this.setState({showBadges: ""})}
-        >
-        </BadgeOverlay>
+          onHide={() => this.setState({ showBadges: "" })}
+        ></BadgeOverlay>
         <>
           <Jumbotron
             className={
@@ -214,13 +213,13 @@ class HomePage extends React.Component {
                   <p>
                     Dynabench is a research platform for dynamic data collection
                     and benchmarking. Static benchmarks have well-known issues:
-                    they saturate quickly, are susceptible to overfitting, contain
-                    exploitable annotator artifacts and have unclear or imperfect
-                    evaluation metrics.<br></br>
-                    <br></br> This platform in essence is a scientific experiment:
-                    can we make faster progress if we collect data dynamically,
-                    with humans and models in the loop, rather than in the
-                    old-fashioned static way?
+                    they saturate quickly, are susceptible to overfitting,
+                    contain exploitable annotator artifacts and have unclear or
+                    imperfect evaluation metrics.<br></br>
+                    <br></br> This platform in essence is a scientific
+                    experiment: can we make faster progress if we collect data
+                    dynamically, with humans and models in the loop, rather than
+                    in the old-fashioned static way?
                   </p>
                   <Modal
                     show={this.state.showVideo}

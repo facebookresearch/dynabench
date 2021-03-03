@@ -13,6 +13,7 @@ div.browse-wrap {
     border: 1px dashed #ddd;
     border-radius: 5px;
 }
+
 input.upload {
     opacity: 0;
     cursor: move;

@@ -5,18 +5,23 @@
  */
 
 import React from "react";
-import {Row, Container, Button, InputGroup } from 'react-bootstrap';
+import { Row, Container, Button, InputGroup } from "react-bootstrap";
 
-import { VerifyInterface } from './VerifyInterfaceQA.js';
+import { VerifyInterface } from "./VerifyInterfaceQA.js";
 class DivyanshVerifyQATaskPreview extends React.Component {
   constructor(props) {
     super(props);
   }
   render() {
-    return <>
+    return (
+      <>
         <h1>Generate Questions for Reading Comprehension</h1>
-        <p>In this task, you will be asked to verify whether a phrase correctly answers a Question.</p>
-      </>;
+        <p>
+          In this task, you will be asked to verify whether a phrase correctly
+          answers a Question.
+        </p>
+      </>
+    );
   }
 }
 
@@ -28,11 +33,19 @@ class DivyanshVerifyQATaskOnboarder extends React.Component {
 
 class TaskInstructions extends React.Component {
   render() {
-    return <>
+    return (
+      <>
         <br />
-	<small>Below, you are shown a question, and a passage of text. A candidate answer to the question is highlighted in the passage. Please mark whether it is the correct answer or not. If the selected answer is incorrect and the correct answer is not in the context, then flag this example.</small>
-	<br />
-	</>;
+        <small>
+          Below, you are shown a question, and a passage of text. A candidate
+          answer to the question is highlighted in the passage. Please mark
+          whether it is the correct answer or not. If the selected answer is
+          incorrect and the correct answer is not in the context, then flag this
+          example.
+        </small>
+        <br />
+      </>
+    );
   }
 }
 
@@ -40,7 +53,7 @@ class DivyanshVerifyQATaskMain extends React.Component {
   constructor(props) {
     super(props);
     this.api = props.api;
-    this.state = {showInstructions:true};
+    this.state = { showInstructions: true };
     this.showInstructions = this.showInstructions.bind(this);
   }
   showInstructions() {
@@ -48,17 +61,32 @@ class DivyanshVerifyQATaskMain extends React.Component {
   }
   render() {
     console.log(this.props);
-    return <>
+    return (
+      <>
         <Container>
-        <Row>
-        <h2>Does the highlighted span correctly answer the question?</h2> &nbsp; &nbsp; <Button className="btn" onClick={this.showInstructions}>{this.state.showInstructions ? "Hide" : "Show" } instructions </Button>
-        </Row>
-	{this.state.showInstructions && <Row> <TaskInstructions /> </Row>}
-	<br />
+          <Row>
+            <h2>Does the highlighted span correctly answer the question?</h2>{" "}
+            &nbsp; &nbsp;{" "}
+            <Button className="btn" onClick={this.showInstructions}>
+              {this.state.showInstructions ? "Hide" : "Show"} instructions{" "}
+            </Button>
+          </Row>
+          {this.state.showInstructions && (
+            <Row>
+              {" "}
+              <TaskInstructions />{" "}
+            </Row>
+          )}
+          <br />
         </Container>
         <VerifyInterface api={this.api} {...this.props} />
-	</>;
+      </>
+    );
   }
 }
 
-export { DivyanshVerifyQATaskPreview, DivyanshVerifyQATaskOnboarder, DivyanshVerifyQATaskMain };
+export {
+  DivyanshVerifyQATaskPreview,
+  DivyanshVerifyQATaskOnboarder,
+  DivyanshVerifyQATaskMain,
+};

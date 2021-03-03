@@ -4,11 +4,11 @@
  * LICENSE file in the root directory of this source tree.
  */
 
- .modelCard h2 {
-   color: #cccccc;
-   display: inline-block;
-   font-size: 16px;
-   font-weight: 600;
-   margin: 0px;
-   padding: 0px;
- }
+.modelCard h2 {
+    color: #ccc;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    padding: 0;
+}
