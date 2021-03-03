@@ -4,9 +4,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-var path = require("path");
-var webpack = require("webpack");
-var dotenv = require('dotenv').config({ path: __dirname + '/.env' });
+const path = require("path");
+const webpack = require("webpack");
+const dotenv = require("dotenv").config({ path: __dirname + "/.env" });
 
 module.exports = {
   entry: "./mturk-src/index.js",
@@ -16,12 +16,9 @@ module.exports = {
     library: "mephisto-task",
     libraryTarget: "umd",
   },
-  devtool: 'source-map',
+  devtool: "source-map",
   resolve: {
-    modules: [
-      path.resolve('./'),
-      path.resolve('./node_modules')
-    ]
+    modules: [path.resolve("./"), path.resolve("./node_modules")],
   },
   target: "web",
   node: {
@@ -34,9 +31,15 @@ module.exports = {
         test: /\.(js|jsx)$/,
         loader: "babel-loader",
         exclude: /node_modules/,
-        options: { presets: ["@babel/env", "@babel/react", {
-                          'plugins': ['@babel/plugin-proposal-class-properties']
-        }] },
+        options: {
+          presets: [
+            "@babel/env",
+            "@babel/react",
+            {
+              plugins: ["@babel/plugin-proposal-class-properties"],
+            },
+          ],
+        },
       },
       {
         test: /\.css$/,
@@ -54,7 +57,7 @@ module.exports = {
   },
   plugins: [
     new webpack.DefinePlugin({
-      "process.env": JSON.stringify(dotenv.parsed)
+      "process.env": JSON.stringify(dotenv.parsed),
     }),
-  ]
+  ],
 };

@@ -40,14 +40,19 @@ class ResetPassword extends React.Component {
         password: values.password,
         token: params.token,
       })
-      .then((result) => {
-        this.props.history.push("/login?msg=" +
-          encodeURIComponent("Password reset successful. Please login."));
-      }, (error) => {
-        this.setState({ error });
-        setSubmitting(false);
-        setFieldError("general", "Reset failed (token invalid?)");
-      });
+      .then(
+        (result) => {
+          this.props.history.push(
+            "/login?msg=" +
+              encodeURIComponent("Password reset successful. Please login.")
+          );
+        },
+        (error) => {
+          this.setState({ error });
+          setSubmitting(false);
+          setFieldError("general", "Reset failed (token invalid?)");
+        }
+      );
   };
 
   render() {

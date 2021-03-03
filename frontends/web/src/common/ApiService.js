@@ -4,7 +4,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 import decode from "jwt-decode";
-import * as download from 'downloadjs';
+import * as download from "downloadjs";
 
 function delay(t, v) {
   return new Promise(function (resolve) {
@@ -27,11 +27,11 @@ export default class ApiService {
     this.getCredentials = this.getCredentials.bind(this);
     this.setMturkMode = this.setMturkMode.bind(this);
     this.updating_already = false;
-    this.mode = 'normal';
+    this.mode = "normal";
   }
 
   setMturkMode() {
-    this.mode = 'mturk';
+    this.mode = "mturk";
   }
 
   login(email, password) {
@@ -72,11 +72,11 @@ export default class ApiService {
     });
   }
 
-  updateExample(id, target, fooled, uid=null) {
-    var obj = {};
+  updateExample(id, target, fooled, uid = null) {
+    const obj = {};
     obj.target_pred = target;
     obj.model_wrong = fooled;
-    if (this.mode === 'mturk') {
+    if (this.mode === "mturk") {
       obj.uid = uid;
     }
     return this.fetch(`${this.domain}/examples/${id}`, {
@@ -95,7 +95,7 @@ export default class ApiService {
   updateTaskSettings(taskId, settings) {
     return this.fetch(`${this.domain}/tasks/${taskId}/settings`, {
       method: "PUT",
-      body: JSON.stringify({settings: settings}),
+      body: JSON.stringify({ settings: settings }),
     });
   }
 
@@ -127,7 +127,7 @@ export default class ApiService {
   getAPIToken() {
     return this.fetch(`${this.domain}/authenticate/generate_api_token`, {
       method: "GET",
-    })
+    });
   }
 
   getTasks() {
@@ -166,7 +166,15 @@ export default class ApiService {
     });
   }
 
-  publishModel({ modelId, name, description, params, languages, license, model_card }) {
+  publishModel({
+    modelId,
+    name,
+    description,
+    params,
+    languages,
+    license,
+    model_card,
+  }) {
     return this.fetch(`${this.domain}/models/${modelId}/publish`, {
       method: "PUT",
       body: JSON.stringify({
@@ -175,7 +183,7 @@ export default class ApiService {
         params,
         languages,
         license,
-        model_card
+        model_card,
       }),
     });
   }
@@ -219,10 +227,10 @@ export default class ApiService {
     });
   }
 
-  getUser(id, badges=false) {
-    var url = `${this.domain}/users/${id}`;
+  getUser(id, badges = false) {
+    let url = `${this.domain}/users/${id}`;
     if (badges) {
-      url += '/badges';
+      url += "/badges";
     }
     return this.fetch(url, {
       method: "GET",
@@ -241,23 +249,48 @@ export default class ApiService {
     });
   }
 
-  getRandomContext(tid, rid, tags=[]) {
-    return this.fetch(`${this.domain}/contexts/${tid}/${rid}?tags=${encodeURIComponent(tags.join('|'))}`, {
-      method: "GET",
-    });
+  getRandomContext(tid, rid, tags = []) {
+    return this.fetch(
+      `${this.domain}/contexts/${tid}/${rid}?tags=${encodeURIComponent(
+        tags.join("|")
+      )}`,
+      {
+        method: "GET",
+      }
+    );
   }
 
-  getRandomExample(tid, rid, tags=[], annotator_id=null) {
-    let annotator_query = annotator_id ? `&annotator_id=${annotator_id}` : ""
-    return this.fetch(`${this.domain}/examples/${tid}/${rid}?tags=${encodeURIComponent(tags.join('|'))}${annotator_query}`, {
-      method: "GET",
-    });
+  getRandomExample(tid, rid, tags = [], annotator_id = null) {
+    let annotator_query = annotator_id ? `&annotator_id=${annotator_id}` : "";
+    return this.fetch(
+      `${this.domain}/examples/${tid}/${rid}?tags=${encodeURIComponent(
+        tags.join("|")
+      )}${annotator_query}`,
+      {
+        method: "GET",
+      }
+    );
   }
 
-  getRandomFilteredExample(tid, rid, minNumFlags, maxNumFlags, minNumDisagreements, maxNumDisagreements, tags=[]) {
-    return this.fetch(`${this.domain}/examples/${tid}/${rid}/filtered/${minNumFlags}/${maxNumFlags}/${minNumDisagreements}/${maxNumDisagreements}?tags=${encodeURIComponent(tags.join('|'))}`, {
-      method: "GET",
-    });
+  getRandomFilteredExample(
+    tid,
+    rid,
+    minNumFlags,
+    maxNumFlags,
+    minNumDisagreements,
+    maxNumDisagreements,
+    tags = []
+  ) {
+    return this.fetch(
+      `${
+        this.domain
+      }/examples/${tid}/${rid}/filtered/${minNumFlags}/${maxNumFlags}/${minNumDisagreements}/${maxNumDisagreements}?tags=${encodeURIComponent(
+        tags.join("|")
+      )}`,
+      {
+        method: "GET",
+      }
+    );
   }
 
   getModel(modelId) {
@@ -267,18 +300,13 @@ export default class ApiService {
   }
 
   setNotificationsSeen(userId) {
-    return this.fetch(
-      `${this.domain}/notifications/seen`,
-      {
-        method: "PUT",
-      }
-    );
+    return this.fetch(`${this.domain}/notifications/seen`, {
+      method: "PUT",
+    });
   }
   getNotifications(userId, limit, offset) {
     return this.fetch(
-      `${this.domain}/notifications?limit=${limit || 10}&offset=${
-        offset || 0
-      }`,
+      `${this.domain}/notifications?limit=${limit || 10}&offset=${offset || 0}`,
       {
         method: "GET",
       }
@@ -296,7 +324,10 @@ export default class ApiService {
     );
   }
 
-  getModelResponse(modelUrl, { context, hypothesis, answer, image_url, question, insight }) {
+  getModelResponse(
+    modelUrl,
+    { context, hypothesis, answer, image_url, question, insight }
+  ) {
     return this.doFetch(
       modelUrl,
       {
@@ -315,11 +346,11 @@ export default class ApiService {
   }
 
   exportData(tid, rid = null) {
-    var export_link = `${this.domain}/tasks/${tid}`;
+    let export_link = `${this.domain}/tasks/${tid}`;
     if (rid !== null) {
       export_link += `/rounds/${rid}`;
     }
-    export_link += '/export';
+    export_link += "/export";
     return this.fetch(export_link, {
       method: "GET",
     }).then((res) => {
@@ -341,7 +372,7 @@ export default class ApiService {
   }
 
   setExampleMetadata(id, metadata_json) {
-    var obj = {};
+    const obj = {};
     obj.metadata_json = JSON.stringify(metadata_json);
     return this.fetch(`${this.domain}/examples/${id}`, {
       method: "PUT",
@@ -350,13 +381,13 @@ export default class ApiService {
   }
 
   explainExample(id, type, explanation, uid = null) {
-    var obj = {};
-    if (type === 'example') {
+    const obj = {};
+    if (type === "example") {
       obj.example_explanation = explanation;
-    } else if (type === 'model') {
+    } else if (type === "model") {
       obj.model_explanation = explanation;
     }
-    if (this.mode === 'mturk') {
+    if (this.mode === "mturk") {
       obj.uid = uid;
     }
     return this.fetch(`${this.domain}/examples/${id}`, {
@@ -366,8 +397,8 @@ export default class ApiService {
   }
 
   retractExample(id, uid = null) {
-    let obj = {retracted: true};
-    if (this.mode === 'mturk') {
+    const obj = { retracted: true };
+    if (this.mode === "mturk") {
       obj.uid = uid;
     }
     return this.fetch(`${this.domain}/examples/${id}`, {
@@ -377,12 +408,17 @@ export default class ApiService {
   }
 
   isTaskOwner(user, tid) {
-    return user.task_permissions?.filter((task_permission) => tid === task_permission.tid && "owner" === task_permission.type).length > 0;
+    return (
+      user.task_permissions?.filter(
+        (task_permission) =>
+          tid === task_permission.tid && "owner" === task_permission.type
+      ).length > 0
+    );
   }
 
   validateExample(id, label, mode, metadata = {}, uid = null) {
-    let obj = {label: label, mode: mode, metadata: metadata};
-    if (this.mode === 'mturk') {
+    const obj = { label: label, mode: mode, metadata: metadata };
+    if (this.mode === "mturk") {
       obj.uid = uid;
     }
     return this.fetch(`${this.domain}/validations/${id}`, {
@@ -392,8 +428,8 @@ export default class ApiService {
   }
 
   flagExample(id, uid = null) {
-    let obj = {flagged: true};
-    if (this.mode === 'mturk') {
+    const obj = { flagged: true };
+    if (this.mode === "mturk") {
       obj.uid = uid;
     }
     return this.fetch(`${this.domain}/examples/${id}`, {
@@ -413,7 +449,17 @@ export default class ApiService {
     );
   }
 
-  storeExample(tid, rid, uid, cid, hypothesis, target, response, metadata, tag=null) {
+  storeExample(
+    tid,
+    rid,
+    uid,
+    cid,
+    hypothesis,
+    target,
+    response,
+    metadata,
+    tag = null
+  ) {
     return this.fetch(`${this.domain}/examples`, {
       method: "POST",
       body: JSON.stringify({
@@ -433,22 +479,22 @@ export default class ApiService {
   loggedIn() {
     const token = this.getToken();
     if (!token) {
-      //console.log("We do not have a token");
+      // console.log("We do not have a token");
       return false;
     } else if (!!token && !this.isTokenExpired(token)) {
-      //console.log("We have a valid token");
+      // console.log("We have a valid token");
       return true;
     } else {
-      //console.log("We have a token that is not longer valid - refreshing");
+      // console.log("We have a token that is not longer valid - refreshing");
       return this.refreshTokenWrapper(
         function () {
-          //console.log("Token refreshed");
+          // console.log("Token refreshed");
           return true;
         },
         function () {
           console.log("Could not refresh token (loggedIn)");
           localStorage.removeItem("id_token");
-          //window.location.href = '/login';
+          // window.location.href = '/login';
           return false;
         }
       );
@@ -480,7 +526,7 @@ export default class ApiService {
   }
 
   getCredentials() {
-    //console.log(this.getToken());
+    // console.log(this.getToken());
     return this.getToken() ? decode(this.getToken()) : {};
   }
 
@@ -516,12 +562,15 @@ export default class ApiService {
   }
 
   doFetch(url, options, includeCredentials = false) {
-    const token = (this.mode !== 'mturk') ? this.getToken() : null;
+    const token = this.mode !== "mturk" ? this.getToken() : null;
     const headers = {
-      "Accept": "application/json",
+      Accept: "application/json",
       "Content-Type": "application/json",
-      "Authorization": token ? "Bearer " + token :
-        (this.mode === "mturk" ? "turk" : "None"),
+      Authorization: token
+        ? "Bearer " + token
+        : this.mode === "mturk"
+        ? "turk"
+        : "None",
     };
     options = {
       headers,
@@ -530,12 +579,11 @@ export default class ApiService {
     if (includeCredentials) {
       options.credentials = "include";
     }
-    return fetch(url, options)
-      .then(this.errorHandler);
+    return fetch(url, options).then(this.errorHandler);
   }
 
   fetch(url, options) {
-    const token = (this.mode !== 'mturk') ? this.getToken() : null;
+    const token = this.mode !== "mturk" ? this.getToken() : null;
     if (
       !!token &&
       this.isTokenExpired(token) &&
@@ -543,14 +591,14 @@ export default class ApiService {
     ) {
       return this.refreshTokenWrapper(
         (res) => {
-          //console.log("Our token was refreshed (fetch callback)");
+          // console.log("Our token was refreshed (fetch callback)");
           return this.doFetch(url, options, {}, true);
         },
         (res) => {
           console.log("Could not refresh token (fetch)");
-          var error = new Error("Could not refresh token");
+          const error = new Error("Could not refresh token");
           localStorage.removeItem("id_token");
-          //window.location.href = '/login';
+          // window.location.href = '/login';
           throw error;
         }
       );
@@ -567,8 +615,7 @@ export default class ApiService {
           return Promise.reject(responseInJson);
         });
       }
-    }
-    catch (error) {
+    } catch (error) {
       console.log(error);
     }
   }

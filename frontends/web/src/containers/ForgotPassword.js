@@ -37,17 +37,18 @@ class ForgotPassword extends React.Component {
                       return errors;
                     }}
                     onSubmit={(values, { setFieldValue, setSubmitting }) => {
-                      props.api
-                        .forgotPassword(values.email)
-                        .then((result) => {
+                      props.api.forgotPassword(values.email).then(
+                        (result) => {
                           setFieldValue("isSubmitted", "true");
                           setSubmitting(false);
-                        }, (error) => {
+                        },
+                        (error) => {
                           console.log(error);
                           this.setState({ error });
                           setFieldValue("isSubmitted", "true");
                           setSubmitting(false);
-                        });
+                        }
+                      );
                     }}
                   >
                     {({

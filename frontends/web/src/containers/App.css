@@ -5,86 +5,86 @@
  */
 
 #content {
-  min-height: 88vh;
+    min-height: 88vh;
 }
 
 .sidebar-wrapper {
-  padding: 0px;
-  z-index: 2;
+    padding: 0;
+    z-index: 2;
 }
 
 .width-auto {
-  width: auto !important;
+    width: auto !important;
 }
 
 .inline-block {
-  display: inline-block;
+    display: inline-block;
 }
 
 .blue-bg {
-  background-color: #1283d8;
+    background-color: #1283d8;
 }
 
 .white-bg {
-  background-color: #fff;
+    background-color: #fff;
 }
 
 .light-gray-bg {
-  background-color: #f0f2f5;
+    background-color: #f0f2f5;
 }
 
 .light-green-bg {
-  background-color: #e9ffe8;
+    background-color: #e9ffe8;
 }
 
 .light-red-bg {
-  background-color: #df4759;
+    background-color: #df4759;
 }
 
 .light-red-transparent-bg {
-  background-color: rgba(223, 71, 89, 0.15);
+    background-color: rgba(223, 71, 89, 0.15);
 }
 
 .light-yellow-transparent-bg {
-  background-color: rgba(251, 229, 200, 0.65);
+    background-color: rgba(251, 229, 200, 0.65);
 }
 
 .blue-color {
-  color: #1283d8;
+    color: #1283d8;
 }
 
 .dark-blue-color {
-  color: #005798
+    color: #005798;
 }
 
 .white-color {
-  color: #fff;
+    color: #fff;
 }
 
 .no-chevron a::after {
-  display: none;
+    display: none;
 }
 
 .gray-color {
-  color: #6e6e6e;
+    color: #6e6e6e;
 }
 
 .cursor-pointer {
-  cursor: pointer;
+    cursor: pointer;
 }
 
 .button-ellipse {
-  border-radius: 40px;
-  font-family: OpenSansSemiBold;
+    border-radius: 40px;
+    font-family: OpenSansSemiBold;
 }
 
 .navbar-dark .navbar-nav .nav-link {
-  color: #fff;
-  font-family: OpenSansSemiBold;
+    color: #fff;
+    font-family: OpenSansSemiBold;
 }
 
 .navbar-dark .dropdown-menu {
-  padding: 0;
+    padding: 0;
 }
 
 .navbar-dark .dropdown-item:focus,
@@ -92,153 +92,162 @@
 .sidebar-wrapper .nav-link:focus,
 .sidebar-wrapper .nav-link:hover,
 .sidebar-wrapper .nav-link.active {
-  background-color: rgba(18, 131, 216, 0.1);
-  color: #1283d8;
+    background-color: rgba(18, 131, 216, 0.1);
+    color: #1283d8;
 }
 
 .table {
-  color: #6e6e6e;
-  font-size: 12px;
+    color: #6e6e6e;
+    font-size: 12px;
 }
 
 .table td,
 .table thead th {
-  border-top: 0px;
-  padding: 5px 10px;
+    border-top: 0;
+    padding: 5px 10px;
 }
 
 .table thead th {
-  border-bottom-width: 1px;
+    border-bottom-width: 1px;
 }
 
 .hypothesis {
-  margin-bottom: 4px;
+    margin-bottom: 4px;
 }
 
 .flagged {
-  margin-bottom: 4px;
-  opacity: 0.7;
-  padding: 10px;
+    margin-bottom: 4px;
+    opacity: 0.7;
+    padding: 10px;
 }
 
 .retracted {
-  margin-bottom: 4px;
-  opacity: 0.7;
-  padding: 10px;
+    margin-bottom: 4px;
+    opacity: 0.7;
+    padding: 10px;
 }
 
 .correct {
-  background-color: #28a745 !important;
-  color: white;
+    background-color: #28a745 !important;
+    color: white;
 }
 
 .incorrect {
-  background-color: #dc3545 !important;
-  color: black;
+    background-color: #dc3545 !important;
+    color: black;
 }
 
 .c3-tooltip-container {
-  width: 200px;
+    width: 200px;
 }
 
 .footer {
-  background-color: #000;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 16px 32px 24px;
+    background-color: #000;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 16px 32px 24px;
 }
 
 .footer-nav-link + .footer-nav-link {
-  margin-left: 25px;
+    margin-left: 25px;
 }
 
 @media (min-width: 992px) {
-  .navbar .nav-item + .nav-item {
-    margin-left: 32px;
-  }
+    .navbar .nav-item + .nav-item {
+        margin-left: 32px;
+    }
 
-  .signup-nav-link {
-    border: 1px solid #fff;
-    border-radius: 20px;
-  }
+    .signup-nav-link {
+        border: 1px solid #fff;
+        border-radius: 20px;
+    }
 }
 
-div.recharts-wrapper
-  .recharts-layer.recharts-cartesian-axis.recharts-yAxis.yAxis
-  g.recharts-layer.recharts-cartesian-axis-tick:first-child {
-  display: none;
+div.recharts-wrapper .recharts-layer.recharts-cartesian-axis.recharts-yAxis.yAxis g.recharts-layer.recharts-cartesian-axis-tick:first-child {
+    display: none;
 }
 
 table.inspectModel {
-  width: 100%;
-  border: 1px solid #ddd;
-  margin-top: 20px;
-}
-
-table.inspectModel thead td {
-  background: #efefef;
+    width: 100%;
+    border: 1px solid #ddd;
+    margin-top: 20px;
 }
 
 table.inspectModel td {
-  padding: 5px;
+    padding: 5px;
+}
+
+table.inspectModel thead td {
+    background: #efefef;
 }
 
 .spaced-header {
-  letter-spacing: 1px;
-  font-size: 0.75em;
-  font-weight: bold;
+    letter-spacing: 1px;
+    font-size: 0.75em;
+    font-weight: bold;
 }
 
 .thick-border {
-  border-width: 2px;
+    border-width: 2px;
 }
 
 .response-warning {
-  background-color: #fffcf4;
-  border: 1px solid #fbe5c8;
+    background-color: #fffcf4;
+    border: 1px solid #fbe5c8;
 }
 
 .response-danger {
-  background-color: #ffeff2;
-  border: 1px solid #ffe5e7;
+    background-color: #ffeff2;
+    border: 1px solid #ffe5e7;
 }
 
 .card-footer .btn-light {
-  background-color: #f8f9fa85;
-  border-color: rgba(0,0,0,.125);
-  color: inherit;
+    background-color: #f8f9fa85;
+    border-color: rgba(0, 0, 0, 0.125);
+    color: inherit;
 }
 
 .modal-open {
-  overflow-y: scroll !important;
-  padding: 0 !important;
+    overflow-y: scroll !important;
+    padding: 0 !important;
 }
 
 .btn-help-info {
-  font-size: 10px !important;
+    font-size: 10px !important;
 }
 
 .badge-overlay {
-  font-size: 30px;
-  text-align: center;
-  color: white;
-  font-weight: bold;
-  flex: 1;
+    font-size: 30px;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    flex: 1;
 }
 
 .modal-backdrop.badge-backdrop.show {
-  opacity: 0.9;
+    opacity: 0.9;
 }
 
 .awarded-badge {
-  animation: pop 0.3s linear 1;
-  animation-delay: 0.4s;
-  opacity: 0;
-  animation-fill-mode: forwards;
+    animation: pop 0.3s linear 1;
+    animation-delay: 0.4s;
+    opacity: 0;
+    animation-fill-mode: forwards;
 }
 
-@keyframes pop{
-  0% { transform: scale(0); opacity: 0;}
-  50%  {transform: scale(1.2); opacity: 1;}
-  100%  {transform: scale(1); opacity: 1;}
+@keyframes pop {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }

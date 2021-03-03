@@ -5,31 +5,26 @@
  */
 
 import React from "react";
-import { VQAOnboarder } from "../src/Onboarding/VQAOnboarder.js"
-import {  VQAPreview } from "../src/VQAPreview.js"
-import { CreateVQAMturkInterface } from "../src/CreateVQAMturkInterface.js"
+import { VQAOnboarder } from "../src/Onboarding/VQAOnboarder.js";
+import { VQAPreview } from "../src/VQAPreview.js";
+import { CreateVQAMturkInterface } from "../src/CreateVQAMturkInterface.js";
 
 class VQATaskPreview extends React.Component {
-    render() {
-        return <VQAPreview previewMode="creation"/>
-    }
+  render() {
+    return <VQAPreview previewMode="creation" />;
+  }
 }
 
 class VQATaskOnboarder extends React.Component {
-    render() {
-        return <VQAOnboarder
-            {...this.props}
-            onboardingMode="creation"
-        />
-    }
+  render() {
+    return <VQAOnboarder {...this.props} onboardingMode="creation" />;
+  }
 }
 
 class VQATaskMain extends React.Component {
-    render() {
-        return <CreateVQAMturkInterface
-            {...this.props}
-        />
-    }
+  render() {
+    return <CreateVQAMturkInterface {...this.props} />;
+  }
 }
 
 export { VQATaskPreview, VQATaskOnboarder, VQATaskMain };

@@ -29,7 +29,7 @@ import CreateInterface from "./CreateInterface.js";
 import VerifyInterface from "./VerifyInterface.js";
 import SubmitInterface from "./SubmitInterface.js";
 import PublishInterface from "./PublishInterface.js";
-import GenerateAPITokenPage from "./GenerateAPITokenPage.js"
+import GenerateAPITokenPage from "./GenerateAPITokenPage.js";
 import { Avatar } from "../components/Avatar/Avatar";
 import ReactGA from "react-ga";
 
@@ -40,21 +40,24 @@ class RouterMonitor extends React.Component {
   }
   render() {
     if (process.env.REACT_APP_GA_ID) {
-      ReactGA.set({page: this.props.location.pathname})
-      ReactGA.pageview(this.props.location.pathname)
+      ReactGA.set({ page: this.props.location.pathname });
+      ReactGA.pageview(this.props.location.pathname);
     }
 
     if (process.env.REACT_APP_BETA_LOGIN_REQUIRED) {
-      if (!this.api.loggedIn() && (
+      if (
+        !this.api.loggedIn() &&
         this.props.location.pathname !== "/login" &&
         this.props.location.pathname !== "/register" &&
         this.props.location.pathname !== "/termsofuse" &&
         this.props.location.pathname !== "/datapolicy" &&
         this.props.location.pathname !== "/forgot-password" &&
-        (!this.props.location.pathname.startsWith("/reset-password/") || this.props.location.pathname.length <= "/reset-password/".length)
-      )) {
-        this.props.history.push("/login?msg=" +
-          encodeURIComponent("You need to be logged in to access this beta.")
+        (!this.props.location.pathname.startsWith("/reset-password/") ||
+          this.props.location.pathname.length <= "/reset-password/".length)
+      ) {
+        this.props.history.push(
+          "/login?msg=" +
+            encodeURIComponent("You need to be logged in to access this beta.")
         );
       }
     }
@@ -79,36 +82,39 @@ class App extends React.Component {
   updateState(value) {
     this.setState(value);
   }
-  refreshData(){
+  refreshData() {
     if (this.api.loggedIn()) {
       const userCredentials = this.api.getCredentials();
       this.setState({ user: userCredentials }, () => {
-        this.api
-          .getUser(userCredentials.id)
-          .then((result) => {
+        this.api.getUser(userCredentials.id).then(
+          (result) => {
             this.setState({ user: result });
-          }, (error) => {
+          },
+          (error) => {
             console.log(error);
-          });
+          }
+        );
       });
     }
-    this.api
-      .getTasks()
-      .then((result) => {
+    this.api.getTasks().then(
+      (result) => {
         this.setState({ tasks: result });
-      }, (error) => {
+      },
+      (error) => {
         console.log(error);
-      });
+      }
+    );
   }
   componentDidMount() {
-    this.refreshData()
+    this.refreshData();
   }
   render() {
-    //href={`/tasks/${task.id}#overall`}
+    // href={`/tasks/${task.id}#overall`}
     const NavItems = this.state.tasks.map((task, index) => (
       <NavDropdown.Item
         key={task.id}
-        as={Link} to={`/tasks/${task.id}#overall`}
+        as={Link}
+        to={`/tasks/${task.id}#overall`}
         className="py-3"
       >
         {task.name}
@@ -129,7 +135,9 @@ class App extends React.Component {
         >
           <BrowserRouter>
             <ScrollToTop />
-            <Route render={(props) => <RouterMonitor {...props} api={this.api}/>} />
+            <Route
+              render={(props) => <RouterMonitor {...props} api={this.api} />}
+            />
             <Navbar
               expand="lg"
               variant="dark"
@@ -179,7 +187,11 @@ class App extends React.Component {
                         </NavDropdown.Item>
                         <NavDropdown.Divider />
                         <NavDropdown.Item as={Link} to="/account#notifications">
-                          Notifications {(this.state.user && this.state.user.unseen_notifications) ? '(' + this.state.user?.unseen_notifications + ')' : ''}
+                          Notifications{" "}
+                          {this.state.user &&
+                          this.state.user.unseen_notifications
+                            ? "(" + this.state.user?.unseen_notifications + ")"
+                            : ""}
                         </NavDropdown.Item>
                         <NavDropdown.Item as={Link} to="/account#stats">
                           Stats &amp; Badges
@@ -246,7 +258,10 @@ class App extends React.Component {
                 />
                 <Route path="/tasks/:taskId" component={TaskPage} />
                 <Route path="/login" component={LoginPage} />
-                <Route path="/generate_api_token" component={GenerateAPITokenPage} />
+                <Route
+                  path="/generate_api_token"
+                  component={GenerateAPITokenPage}
+                />
                 <Route path="/forgot-password" component={ForgotPassword} />
                 <Route
                   path="/reset-password/:token"

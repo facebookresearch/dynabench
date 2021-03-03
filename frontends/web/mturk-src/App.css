@@ -4,57 +4,63 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-.card table, .card table tr td, .card table tr th {
-  font-size: 12px;
-  padding: 5px;
-  margin: 5px;
+.card table,
+.card table tr td,
+.card table tr th {
+    font-size: 12px;
+    padding: 5px;
+    margin: 5px;
 }
 
 .response-warning {
-  background-color: #fffcf4;
-  border: 1px solid #fbe5c8;
+    background-color: #fffcf4;
+    border: 1px solid #fbe5c8;
 }
 
 .response-danger {
-  background-color: #ffeff2;
-  border: 1px solid #ffe5e7;
+    background-color: #ffeff2;
+    border: 1px solid #ffe5e7;
 }
 
 .light-green-bg {
-  background-color: #e9ffe8;
+    background-color: #e9ffe8;
 }
 
 .dark-blue-color {
-  color: #005798
+    color: #005798;
 }
 
 .spaced-header {
-  letter-spacing: 1px;
-  font-size: 0.75em;
-  font-weight: bold;
+    letter-spacing: 1px;
+    font-size: 0.75em;
+    font-weight: bold;
 }
 
 .context {
-  background-color: rgba(108, 117, 125, 0.1);
-  padding: 10px;
-  margin-bottom: 4px;
+    background-color: rgba(108, 117, 125, 0.1);
+    padding: 10px;
+    margin-bottom: 4px;
 }
-.hypothesis  {
-  padding: 10px;
-  margin-bottom: 4px;
+
+.hypothesis {
+    padding: 10px;
+    margin-bottom: 4px;
 }
-.retracted  {
-  padding: 10px;
-  margin-bottom: 4px;
-  opacity: 0.7;
+
+.retracted {
+    padding: 10px;
+    margin-bottom: 4px;
+    opacity: 0.7;
 }
+
 .correct {
-  color: white;
-  background-color: #28a745!important;
+    color: white;
+    background-color: #28a745 !important;
 }
+
 .incorrect {
-  color: black;
-  background-color: #dc3545!important;
+    color: black;
+    background-color: #dc3545 !important;
 }
 
 .carousel-control-prev-icon {
@@ -68,15 +74,15 @@
 }
 
 .carousel-control-next {
-  display: inline-block;
-  float: right;
-  margin-top: 320px;
-  filter: invert(100%);
+    display: inline-block;
+    float: right;
+    margin-top: 320px;
+    filter: invert(100%);
 }
 
 .carousel-control-prev {
-  display: inline-block;
-  float: left;
-  margin-top: 320px;
-  filter: invert(100%);
+    display: inline-block;
+    float: left;
+    margin-top: 320px;
+    filter: invert(100%);
 }

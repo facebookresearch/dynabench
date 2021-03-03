@@ -40,35 +40,42 @@ class SubmitInterface extends React.Component {
     }
 
     this.setState({ taskId: params.taskId }, function () {
-      this.context.api
-        .getTask(this.state.taskId)
-        .then((result) => {
+      this.context.api.getTask(this.state.taskId).then(
+        (result) => {
           result.targets = result.targets.split("|"); // split targets
           this.setState({ task: result });
-        }, (error) => {
+        },
+        (error) => {
           console.log(error);
           if (error.status_code === 404 || error.status_code === 405) {
             this.props.history.push("/");
           }
-        });
+        }
+      );
     });
   }
 
   escapeRegExp = (string) => {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }
+    return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  };
 
   handleValidation = (values) => {
     const errors = {};
-    let allowedTaskExtension = ".json";
-    const allowedExtensions = new RegExp(this.escapeRegExp(allowedTaskExtension)+"$", "i");
+    const allowedTaskExtension = ".json";
+    const allowedExtensions = new RegExp(
+      this.escapeRegExp(allowedTaskExtension) + "$",
+      "i"
+    );
     if (!values.roundType) {
       errors.roundType = "Required";
     }
     if (!values.file) {
       errors.file = "Required";
     } else if (!allowedExtensions.exec(values.file.name)) {
-      errors.file = "Invalid file type - Please upload in "+allowedTaskExtension+" format";
+      errors.file =
+        "Invalid file type - Please upload in " +
+        allowedTaskExtension +
+        " format";
     }
     return errors;
   };
@@ -80,25 +87,31 @@ class SubmitInterface extends React.Component {
       roundType: values.roundType,
       file: values.file,
     };
-    this.context.api
-      .submitModel(reqObj)
-      .then((result) => {
+    this.context.api.submitModel(reqObj).then(
+      (result) => {
         this.props.history.push({
           pathname: `/tasks/${this.state.taskId}/models/${result.model_id}/publish`,
           state: { detail: result },
         });
-      }, (error) => {
+      },
+      (error) => {
         setSubmitting(false);
         setFieldValue("failed", "Failed To Submit. Plese try again");
         console.log(error);
-      });
+      }
+    );
   };
 
   render() {
-    const roundNavs = []
-    const num_closed_rounds = ((this.state.task.round && this.state.task.cur_round) || 1) - 1;
-    for (let i=1; i<=num_closed_rounds; i++) {
-      roundNavs.push(<option key={i} value={i}>Round {i}</option>);
+    const roundNavs = [];
+    const num_closed_rounds =
+      ((this.state.task.round && this.state.task.cur_round) || 1) - 1;
+    for (let i = 1; i <= num_closed_rounds; i++) {
+      roundNavs.push(
+        <option key={i} value={i}>
+          Round {i}
+        </option>
+      );
     }
 
     return (
@@ -112,37 +125,73 @@ class SubmitInterface extends React.Component {
           <CardGroup style={{ marginTop: 20, width: "100%" }}>
             <Card>
               <Card.Body>
-              {this.state.task.shortname === "NLI" ? (
-                <p>
-                  The Dynabench NLI test sets can be found <a href="https://github.com/facebookresearch/anli">here</a>.
-                  Upload predicted answers as a <em>.json</em> file in the format <code>{'{'}"uid_1": "answer_1", "uid_2": "answer_2", ...{'}'}</code> (i.e. standard SQuAD prediction format) where an answer is either "e", "n", or "c".
-                  If you submit for multiple rounds in one go (i.e., overall), simply concatenate the answers from each round into your prediction file.
-                </p>
-              ) : null}
+                {this.state.task.shortname === "NLI" ? (
+                  <p>
+                    The Dynabench NLI test sets can be found{" "}
+                    <a href="https://github.com/facebookresearch/anli">here</a>.
+                    Upload predicted answers as a <em>.json</em> file in the
+                    format{" "}
+                    <code>
+                      {"{"}"uid_1": "answer_1", "uid_2": "answer_2", ...{"}"}
+                    </code>{" "}
+                    (i.e. standard SQuAD prediction format) where an answer is
+                    either "e", "n", or "c". If you submit for multiple rounds
+                    in one go (i.e., overall), simply concatenate the answers
+                    from each round into your prediction file.
+                  </p>
+                ) : null}
 
-              {this.state.task.shortname === "QA" ? (
-                <p>
-                  The Dynabench QA test sets can be found <a href="https://adversarialqa.github.io/">here</a>.
-                  Upload predicted answers as a <em>.json</em> file in the format <code>{'{'}"id_1": "answer_1", "id_2": "answer_2", ...{'}'}</code> (i.e. standard SQuAD prediction format).
-                  If you submit for multiple rounds in one go (i.e., overall), simply concatenate the answers from each round into your prediction file.
-                </p>
-              ) : null}
+                {this.state.task.shortname === "QA" ? (
+                  <p>
+                    The Dynabench QA test sets can be found{" "}
+                    <a href="https://adversarialqa.github.io/">here</a>. Upload
+                    predicted answers as a <em>.json</em> file in the format{" "}
+                    <code>
+                      {"{"}"id_1": "answer_1", "id_2": "answer_2", ...{"}"}
+                    </code>{" "}
+                    (i.e. standard SQuAD prediction format). If you submit for
+                    multiple rounds in one go (i.e., overall), simply
+                    concatenate the answers from each round into your prediction
+                    file.
+                  </p>
+                ) : null}
 
-              {this.state.task.shortname === "Hate Speech" ? (
-                <p>
-                  The Dynabench hate speech test sets can be found <a href="https://github.com/bvidgen/Dynamically-Generated-Hate-Speech-Dataset"> here</a>.
-                  Upload predicted answers as a <em>.json</em> file in the format <code>{'{'}"id_1": "answer_1", "id_2": "answer_2", ...{'}'}</code> (i.e. standard SQuAD prediction format) where an answer is either "hate" or "nothate".
-                  If you submit for multiple rounds in one go (i.e., overall), simply concatenate the answers from each round into your prediction file.
-                </p>
-              ) : null}
+                {this.state.task.shortname === "Hate Speech" ? (
+                  <p>
+                    The Dynabench hate speech test sets can be found{" "}
+                    <a href="https://github.com/bvidgen/Dynamically-Generated-Hate-Speech-Dataset">
+                      {" "}
+                      here
+                    </a>
+                    . Upload predicted answers as a <em>.json</em> file in the
+                    format{" "}
+                    <code>
+                      {"{"}"id_1": "answer_1", "id_2": "answer_2", ...{"}"}
+                    </code>{" "}
+                    (i.e. standard SQuAD prediction format) where an answer is
+                    either "hate" or "nothate". If you submit for multiple
+                    rounds in one go (i.e., overall), simply concatenate the
+                    answers from each round into your prediction file.
+                  </p>
+                ) : null}
 
-              {this.state.task.shortname === "Sentiment" ? (
-                <p>
-                  The DynaSent test sets can be found <a href="https://github.com/cgpotts/dynasent"> here</a>.
-                  Upload predicted answers as a <em>.json</em> file in the format <code>{'{'}"text_id_1": "answer_1", "text_id_2": "answer_2", ...{'}'}</code> (i.e. standard SQuAD prediction format) where an answer is "positive", "negative", or "neutral".
-                  If you submit for multiple rounds in one go (i.e., overall), simply concatenate the answers from each round into your prediction file.
-                </p>
-              ) : null}
+                {this.state.task.shortname === "Sentiment" ? (
+                  <p>
+                    The DynaSent test sets can be found{" "}
+                    <a href="https://github.com/cgpotts/dynasent"> here</a>.
+                    Upload predicted answers as a <em>.json</em> file in the
+                    format{" "}
+                    <code>
+                      {"{"}"text_id_1": "answer_1", "text_id_2": "answer_2", ...
+                      {"}"}
+                    </code>{" "}
+                    (i.e. standard SQuAD prediction format) where an answer is
+                    "positive", "negative", or "neutral". If you submit for
+                    multiple rounds in one go (i.e., overall), simply
+                    concatenate the answers from each round into your prediction
+                    file.
+                  </p>
+                ) : null}
 
                 <Formik
                   initialValues={{

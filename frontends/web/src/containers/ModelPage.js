@@ -20,10 +20,7 @@ import { Link } from "react-router-dom";
 import TasksContext from "./TasksContext";
 import UserContext from "./UserContext";
 import "./ModelPage.css";
-import {
-  OverlayProvider,
-  BadgeOverlay,
-} from "./Overlay"
+import { OverlayProvider, BadgeOverlay } from "./Overlay";
 
 class ModelPage extends React.Component {
   static contextType = UserContext;
@@ -49,16 +46,17 @@ class ModelPage extends React.Component {
   }
 
   fetchModel = () => {
-    this.context.api
-      .getModel(this.state.modelId)
-      .then((result) => {
+    this.context.api.getModel(this.state.modelId).then(
+      (result) => {
         this.setState({ model: result });
-      }, (error) => {
+      },
+      (error) => {
         console.log(error);
         if (error.status_code === 404 || error.status_code === 405) {
           this.props.history.push("/");
         }
-      });
+      }
+    );
   };
 
   handleEdit = () => {
@@ -77,16 +75,17 @@ class ModelPage extends React.Component {
       });
       return;
     }
-    return this.context.api
-      .toggleModelStatus(this.state.modelId)
-      .then((result) => {
+    return this.context.api.toggleModelStatus(this.state.modelId).then(
+      (result) => {
         if (!!result.badges) {
-          this.setState({showBadges: result.badges})
+          this.setState({ showBadges: result.badges });
         }
         this.fetchModel();
-      }, (error) => {
+      },
+      (error) => {
         console.log(error);
-      });
+      }
+    );
   };
 
   handleBack = () => {
@@ -103,17 +102,20 @@ class ModelPage extends React.Component {
       parseInt(this.state.model.user.id) === parseInt(this.state.ctxUserId);
     const { model } = this.state;
     const { scores } = this.state.model;
-    let orderedScores = (scores || []).sort((a, b) => a.round_id - b.round_id);
+    const orderedScores = (scores || []).sort(
+      (a, b) => a.round_id - b.round_id
+    );
     return (
       <OverlayProvider initiallyHide={true}>
         <BadgeOverlay
           badgeTypes={this.state.showBadges}
           show={!!this.state.showBadges}
-          onHide={() => this.setState({showBadges: ""})}
-        >
-        </BadgeOverlay>
+          onHide={() => this.setState({ showBadges: "" })}
+        ></BadgeOverlay>
         <Container className="mb-5 pb-5">
-          <h1 className="my-4 pt-3 text-uppercase text-center">Model Overview</h1>
+          <h1 className="my-4 pt-3 text-uppercase text-center">
+            Model Overview
+          </h1>
           <Col className="m-auto" lg={8}>
             <Card className="profile-card">
               <Card.Body>
@@ -167,7 +169,8 @@ class ModelPage extends React.Component {
                               {model.name || "Unknown"}
                             </span>
                             <span className="float-right">
-                              uploaded <Moment fromNow>{model.upload_datetime}</Moment>
+                              uploaded{" "}
+                              <Moment fromNow>{model.upload_datetime}</Moment>
                             </span>
                             {isModelOwner && model.is_published === "True" ? (
                               <Badge variant="success" className="ml-2">
@@ -188,15 +191,17 @@ class ModelPage extends React.Component {
                         </td>
                       </tr>
                       <tr>
-                        <td style={{paddingLeft: 50}}>
-                          Overall
-                        </td>
+                        <td style={{ paddingLeft: 50 }}>Overall</td>
                         <td>{model.overall_perf}%</td>
                       </tr>
                       {orderedScores.map((data) => {
                         return (
                           <tr key={data.round_id}>
-                            <td style={{paddingLeft: 50, whiteSpace: 'nowrap'}}>Round {data.round_id}</td>
+                            <td
+                              style={{ paddingLeft: 50, whiteSpace: "nowrap" }}
+                            >
+                              Round {data.round_id}
+                            </td>
                             <td>{Number(data.accuracy).toFixed(2)}%</td>
                           </tr>
                         );
@@ -207,9 +212,7 @@ class ModelPage extends React.Component {
                         </td>
                       </tr>
                       <tr>
-                        <td>
-                          Owner
-                        </td>
+                        <td>Owner</td>
                         <td>
                           <Link to={`/users/${model.user.id}`}>
                             {model.user && model.user.username}
@@ -217,15 +220,14 @@ class ModelPage extends React.Component {
                         </td>
                       </tr>
                       <tr>
-                        <td>
-                          Task
-                        </td>
+                        <td>Task</td>
                         <td>
                           <Link to={`/tasks/${model.tid}#overall`}>
                             <TasksContext.Consumer>
                               {({ tasks }) => {
                                 const task =
-                                  model && tasks.filter((e) => e.id === model.tid);
+                                  model &&
+                                  tasks.filter((e) => e.id === model.tid);
                                 return task && task.length && task[0].shortname;
                               }}
                             </TasksContext.Consumer>
@@ -233,33 +235,23 @@ class ModelPage extends React.Component {
                         </td>
                       </tr>
                       <tr>
-                        <td>
-                          Summary
-                        </td>
+                        <td>Summary</td>
                         <td>{model.longdesc}</td>
                       </tr>
                       <tr>
-                        <td style={{whiteSpace: 'nowrap'}}>
-                          # Parameters
-                        </td>
+                        <td style={{ whiteSpace: "nowrap" }}># Parameters</td>
                         <td>{model.params}</td>
                       </tr>
                       <tr>
-                        <td>
-                          Language(s)
-                        </td>
+                        <td>Language(s)</td>
                         <td>{model.languages}</td>
                       </tr>
                       <tr>
-                        <td>
-                          License(s)
-                        </td>
+                        <td>License(s)</td>
                         <td>{model.license}</td>
                       </tr>
                       <tr>
-                        <td style={{ verticalAlign: 'middle'}}>
-                          Model Card
-                        </td>
+                        <td style={{ verticalAlign: "middle" }}>Model Card</td>
                         <td className="modelCard">
                           <Markdown>{model.model_card}</Markdown>
                         </td>
