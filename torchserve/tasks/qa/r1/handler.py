@@ -4,6 +4,7 @@ import logging
 import os
 
 import torch
+from captum.attr import LayerIntegratedGradients
 from torch.utils.data import DataLoader, SequentialSampler
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
 from transformers.data.metrics.squad_metrics import compute_exact, compute_f1
@@ -13,7 +14,6 @@ from transformers.data.processors.squad import (
 )
 from ts.torch_handler.base_handler import BaseHandler
 
-from captum.attr import LayerIntegratedGradients
 from qa_utils import compute_predictions_logits, convert_to_squad_example
 from settings import my_secret
 from shared import (
