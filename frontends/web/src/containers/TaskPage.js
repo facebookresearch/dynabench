@@ -22,7 +22,7 @@ import {
   Dropdown,
   Modal,
   Form,
-  InputGroup
+  InputGroup,
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { Formik } from "formik";
@@ -31,11 +31,8 @@ import { LineRechart } from "../components/Rechart";
 import { Avatar } from "../components/Avatar/Avatar";
 import Moment from "react-moment";
 import DragAndDrop from "../components/DragAndDrop/DragAndDrop";
-import {
-  OverlayProvider,
-  Annotation,
-  OverlayContext
-} from "./Overlay";
+import { OverlayProvider, Annotation, OverlayContext } from "./Overlay";
+import OverallModelLeaderBoard from "../components/TaskLeaderboard/OverallModelLeaderBoard";
 
 const chartSizes = {
   xs: { fontSize: 10 },
@@ -134,7 +131,7 @@ const TaskTrend = ({ data }) => {
 const RoundActionButtons = (props) => {
   // TODO: Display "Download data" button
   return null;
-}
+};
 
 const TaskActionButtons = (props) => {
   function renderTooltip(props, text) {
@@ -149,7 +146,10 @@ const TaskActionButtons = (props) => {
     return renderTooltip(props, "Create new examples where the model fails");
   }
   function renderVerifyTooltip(props) {
-     return renderTooltip(props, "Verify examples where the model may have failed");
+    return renderTooltip(
+      props,
+      "Verify examples where the model may have failed"
+    );
   }
   function renderSubmitTooltip(props) {
     return renderTooltip(props, "Submit model predictions on this task");
@@ -158,7 +158,10 @@ const TaskActionButtons = (props) => {
   return (
     <Nav className="my-4">
       <Nav.Item className="task-action-btn">
-        <Annotation placement="bottom" tooltip="Click here to get creative and start writing examples that fool the model">
+        <Annotation
+          placement="bottom"
+          tooltip="Click here to get creative and start writing examples that fool the model"
+        >
           <OverlayTrigger
             placement="bottom"
             delay={{ show: 250, hide: 400 }}
@@ -171,34 +174,43 @@ const TaskActionButtons = (props) => {
             >
               Create Examples
             </Button>
-        </OverlayTrigger>
-      </Annotation>
-    </Nav.Item>
-    <Nav.Item className="task-action-btn">
-      <Annotation placement="top" tooltip="Click here to see examples created by others, and validate their correctness">
-        <OverlayTrigger
-          placement="bottom"
-          delay={{ show: 250, hide: 400 }}
-          overlay={renderVerifyTooltip}
-        >
-          <Button
-            as={Link}
-            className="border-0 blue-color font-weight-bold light-gray-bg"
-            to={"/tasks/" + props.taskId + "/validate"}
-          >
-            Validate Examples
-          </Button>
-        </OverlayTrigger>
-      </Annotation>
-    </Nav.Item>
-    {props.task.shortname === "NLI" || props.task.shortname === "QA" || props.task.shortname === "Hate Speech" || props.task.shortname === "Sentiment" ? (
+          </OverlayTrigger>
+        </Annotation>
+      </Nav.Item>
       <Nav.Item className="task-action-btn">
-        <Annotation placement="right" tooltip="Click here to submit your model predictions for previous rounds.">
+        <Annotation
+          placement="top"
+          tooltip="Click here to see examples created by others, and validate their correctness"
+        >
           <OverlayTrigger
             placement="bottom"
             delay={{ show: 250, hide: 400 }}
-            overlay={renderSubmitTooltip}
+            overlay={renderVerifyTooltip}
           >
+            <Button
+              as={Link}
+              className="border-0 blue-color font-weight-bold light-gray-bg"
+              to={"/tasks/" + props.taskId + "/validate"}
+            >
+              Validate Examples
+            </Button>
+          </OverlayTrigger>
+        </Annotation>
+      </Nav.Item>
+      {props.task.shortname === "NLI" ||
+      props.task.shortname === "QA" ||
+      props.task.shortname === "Hate Speech" ||
+      props.task.shortname === "Sentiment" ? (
+        <Nav.Item className="task-action-btn">
+          <Annotation
+            placement="right"
+            tooltip="Click here to submit your model predictions for previous rounds."
+          >
+            <OverlayTrigger
+              placement="bottom"
+              delay={{ show: 250, hide: 400 }}
+              overlay={renderSubmitTooltip}
+            >
               <Button
                 as={Link}
                 className="border-0 blue-color font-weight-bold light-gray-bg"
@@ -206,11 +218,11 @@ const TaskActionButtons = (props) => {
               >
                 Submit Predictions
               </Button>
-          </OverlayTrigger>
-        </Annotation>
-      </Nav.Item>
-    ) : null}
-  </Nav>
+            </OverlayTrigger>
+          </Annotation>
+        </Nav.Item>
+      ) : null}
+    </Nav>
   );
 };
 
@@ -226,16 +238,15 @@ const OverallTaskStats = (props) => {
         <tr>
           <td>Fooled/Collected (Model Error rate)</td>
           <td>
-            {props.task.round?.total_fooled}/
-            {props.task.round?.total_collected} (
+            {props.task.round?.total_fooled}/{props.task.round?.total_collected}{" "}
+            (
             {props.task.round?.total_collected > 0
-              ? (100 *
-                  props.task.round?.total_fooled /
+              ? (
+                  (100 * props.task.round?.total_fooled) /
                   props.task.round?.total_collected
                 ).toFixed(2)
               : "0.00"}
-            %
-            )
+            % )
           </td>
         </tr>
         <tr>
@@ -246,56 +257,6 @@ const OverallTaskStats = (props) => {
             </Moment>
           </td>
         </tr>
-      </tbody>
-    </Table>
-  );
-};
-
-const OverallModelLeaderBoard = (props) => {
-  return (
-    <Table hover className="mb-0">
-      <thead>
-        <tr>
-          <th>Model</th>
-          {props.tags.map((tag) => {
-            return (<th className="text-right" key={`th-${tag}`}>{tag}</th>)
-          })}
-          {props.taskShortName === "QA" ? (
-            <th className="text-right pr-4">Overall F1</th>
-          ) : (
-            <th className="text-right pr-4">Mean Accuracy</th>
-          )}
-        </tr>
-      </thead>
-      <tbody>
-        {props.data.map((data) => {
-          return (
-            <tr key={data.model_id}>
-              <td>
-                <Link to={`/models/${data.model_id}`} className="btn-link">
-                  {data.model_name}
-                </Link>{" "}
-                <Link
-                  to={`/users/${data.owner_id}#profile`}
-                  className="btn-link"
-                >
-                  ({data.owner})
-                </Link>
-              </td>
-              {props.tags.map((tag) => {
-                let tag_result = '-';
-                if (data.metadata_json && data.metadata_json.perf_by_tag) {
-                  let selected_tag = data.metadata_json.perf_by_tag.filter(t => t.tag === tag);
-                  if (selected_tag.length > 0) tag_result = parseFloat(selected_tag[0].perf).toFixed(2)+'%';
-                };
-                return (
-                  <td className="text-right" key={`${tag}-${data.model_id}`}>{tag_result}</td>
-                )
-              })}
-              <td className="text-right pr-4">{parseFloat(data.accuracy).toFixed(2)}%</td>
-            </tr>
-          );
-        })}
       </tbody>
     </Table>
   );
@@ -347,24 +308,36 @@ class RoundDescription extends React.Component {
   }
   getRoundInfo() {
     if (this.props.round_id) {
-    this.props.api.getTaskRound(this.props.task_id, this.props.round_id)
-      .then((result) => {
-        this.setState({ round: result });
-      }, (error) => {
-        console.log(error);
-        if ((error.status_code === 404 || error.status_code === 405) && this.props.history) {
-          this.props.history.push("/");
+      this.props.api.getTaskRound(this.props.task_id, this.props.round_id).then(
+        (result) => {
+          this.setState({ round: result });
+        },
+        (error) => {
+          console.log(error);
+          if (
+            (error.status_code === 404 || error.status_code === 405) &&
+            this.props.history
+          ) {
+            this.props.history.push("/");
+          }
         }
-      });
+      );
     }
   }
   componentDidUpdate(prevProps) {
-    if (prevProps.task_id !== this.props.task_id || prevProps.round_id !== this.props.round_id) {
+    if (
+      prevProps.task_id !== this.props.task_id ||
+      prevProps.round_id !== this.props.round_id
+    ) {
       this.getRoundInfo();
     }
   }
   render() {
-    return <div dangerouslySetInnerHTML={{__html: this.state.round?.longdesc}}></div>;
+    return (
+      <div
+        dangerouslySetInnerHTML={{ __html: this.state.round?.longdesc }}
+      ></div>
+    );
   }
 }
 
@@ -394,37 +367,57 @@ class TaskPage extends React.Component {
   }
 
   componentDidMount() {
-    this.setState({taskId: this.props.match.params.taskId}, function() {
-      this.context.api
-        .getTask(this.state.taskId)
-        .then((result) => {
-          this.setState({task: result, displayRoundId: result.cur_round, round: result.round}, function() {
-            this.refreshData(); this.getSavedTaskSettings();
-          });
-        }, (error) => {
+    this.setState({ taskId: this.props.match.params.taskId }, function () {
+      this.context.api.getTask(this.state.taskId).then(
+        (result) => {
+          this.setState(
+            {
+              task: result,
+              displayRoundId: result.cur_round,
+              round: result.round,
+            },
+            function () {
+              this.refreshData();
+              this.getSavedTaskSettings();
+            }
+          );
+        },
+        (error) => {
           console.log(error);
           if (error.status_code === 404 || error.status_code === 405) {
             this.props.history.push("/");
           }
-        });
+        }
+      );
     });
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.location.hash !== this.props.location.hash || this.props.match.params.taskId !== this.state.taskId) {
-      this.setState({taskId: this.props.match.params.taskId}, function() {
-        this.context.api
-          .getTask(this.state.taskId)
-          .then((result) => {
-            this.setState({task: result, displayRoundId: result.cur_round, round: result.round}, function() {
-              this.refreshData();
-            });
-          }, (error) => {
+    if (
+      prevProps.location.hash !== this.props.location.hash ||
+      this.props.match.params.taskId !== this.state.taskId
+    ) {
+      this.setState({ taskId: this.props.match.params.taskId }, function () {
+        this.context.api.getTask(this.state.taskId).then(
+          (result) => {
+            this.setState(
+              {
+                task: result,
+                displayRoundId: result.cur_round,
+                round: result.round,
+              },
+              function () {
+                this.refreshData();
+              }
+            );
+          },
+          (error) => {
             console.log(error);
             if (error.status_code === 404 || error.status_code === 405) {
               this.props.history.push("/");
             }
-          });
+          }
+        );
       });
     }
   }
@@ -432,24 +425,32 @@ class TaskPage extends React.Component {
   getSavedTaskSettings() {
     if (this.state.task.settings_json) {
       const settings_json = JSON.parse(this.state.task.settings_json);
-      if (settings_json.hasOwnProperty('validate_non_fooling')) {
-        this.setState({ validateNonFooling: settings_json['validate_non_fooling'] });
+      if (settings_json.hasOwnProperty("validate_non_fooling")) {
+        this.setState({
+          validateNonFooling: settings_json["validate_non_fooling"],
+        });
       }
-      if (settings_json.hasOwnProperty('num_matching_validations')) {
-        this.setState({ numMatchingValidations: settings_json['num_matching_validations'] });
+      if (settings_json.hasOwnProperty("num_matching_validations")) {
+        this.setState({
+          numMatchingValidations: settings_json["num_matching_validations"],
+        });
       }
     }
   }
 
   refreshData() {
-    if (!this.props.location.hash || this.props.location.hash === '') this.props.location.hash = '#overall';
+    if (!this.props.location.hash || this.props.location.hash === "")
+      this.props.location.hash = "#overall";
     this.setState(
       {
         modelLeaderBoardPage: 0,
         isEndOfModelLeaderPage: true,
         userLeaderBoardPage: 0,
         isEndOfUserLeaderPage: true,
-        displayRoundId: this.props.location.hash !== '#overall' ? this.props.location.hash.slice(1) : this.state.task.cur_round,
+        displayRoundId:
+          this.props.location.hash !== "#overall"
+            ? this.props.location.hash.slice(1)
+            : this.state.task.cur_round,
       },
       () => {
         this.fetchOverallModelLeaderboard(this.state.modelLeaderBoardPage);
@@ -464,19 +465,23 @@ class TaskPage extends React.Component {
   }
 
   exportCurrentRoundData() {
-    return this.context.api.exportData(this.state.task.id, this.state.task.cur_round);
+    return this.context.api.exportData(
+      this.state.task.id,
+      this.state.task.cur_round
+    );
   }
 
   fetchTrend() {
-    this.context.api
-      .getTrends(this.state.taskId)
-      .then((result) => {
+    this.context.api.getTrends(this.state.taskId).then(
+      (result) => {
         this.setState({
           trendScore: result,
         });
-      }, (error) => {
+      },
+      (error) => {
         console.log(error);
-      });
+      }
+    );
   }
 
   fetchOverallModelLeaderboard(page) {
@@ -487,16 +492,19 @@ class TaskPage extends React.Component {
         this.state.pageLimit,
         page
       )
-      .then((result) => {
-        const isEndOfPage = (page + 1) * this.state.pageLimit >= result.count;
-        this.setState({
-          isEndOfModelLeaderPage: isEndOfPage,
-          modelLeaderBoardData: result.data,
-          modelLeaderBoardTags: result.leaderboard_tags,
-        });
-      }, (error) => {
-        console.log(error);
-      });
+      .then(
+        (result) => {
+          const isEndOfPage = (page + 1) * this.state.pageLimit >= result.count;
+          this.setState({
+            isEndOfModelLeaderPage: isEndOfPage,
+            modelLeaderBoardData: result.data,
+            modelLeaderBoardTags: result.leaderboard_tags,
+          });
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
   }
 
   fetchOverallUserLeaderboard(page) {
@@ -507,31 +515,40 @@ class TaskPage extends React.Component {
         this.state.pageLimit,
         page
       )
-      .then((result) => {
-        const isEndOfPage = (page + 1) * this.state.pageLimit >= result.count;
-        this.setState({
-          isEndOfUserLeaderPage: isEndOfPage,
-          userLeaderBoardData: result.data,
-        });
-      }, (error) => {
-        console.log(error);
-      });
+      .then(
+        (result) => {
+          const isEndOfPage = (page + 1) * this.state.pageLimit >= result.count;
+          this.setState({
+            isEndOfUserLeaderPage: isEndOfPage,
+            userLeaderBoardData: result.data,
+          });
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
   }
 
   escapeRegExp = (string) => {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }
+    return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  };
 
   handleValidation = (values) => {
     const errors = {};
     let allowedTaskExtension = ".jsonl";
-    const allowedExtensions = new RegExp(this.escapeRegExp(allowedTaskExtension)+"$", "i");
+    const allowedExtensions = new RegExp(
+      this.escapeRegExp(allowedTaskExtension) + "$",
+      "i"
+    );
 
     if (!values.file) {
       errors.file = "Required";
       values.result = "";
     } else if (!allowedExtensions.exec(values.file.name)) {
-      errors.file = "Invalid file type - Please upload in "+allowedTaskExtension+" format";
+      errors.file =
+        "Invalid file type - Please upload in " +
+        allowedTaskExtension +
+        " format";
       values.result = "";
     }
     return errors;
@@ -542,17 +559,18 @@ class TaskPage extends React.Component {
       taskId: this.state.taskId,
       file: values.file,
     };
-    this.context.api
-      .submitContexts(reqObj)
-      .then((result) => {
+    this.context.api.submitContexts(reqObj).then(
+      (result) => {
         setSubmitting(false);
         setFieldValue("file", null, false);
         setFieldValue("result", "Submitted!", false);
-      }, (error) => {
+      },
+      (error) => {
         setSubmitting(false);
         setFieldValue("result", "Failed To Submit. Plese try again");
         console.log(error);
-      });
+      }
+    );
   };
 
   paginate = (component, state) => {
@@ -578,117 +596,179 @@ class TaskPage extends React.Component {
   render() {
     return (
       <OverlayProvider initiallyHide={true} delayMs="1700">
-      <Container fluid>
-        <Row>
-          <Col lg={2} className="p-0 border">
-            <Annotation placement="bottom-start" tooltip="Dynabench tasks happen over multiple rounds. You can look at previous rounds here.">
-              <TaskNav {...this.props} taskDetail={this.state.task} />
-            </Annotation>
-          </Col>
-          <Col lg={10} className="px-4 px-lg-5">
-            <h2 className="task-page-header text-reset ml-0">
-              {this.state.task.name}
-            </h2>
-            <div style={{float: "right", marginTop: 30}}>
-            <ButtonGroup>
-              <Annotation placement="left" tooltip="Click to show help overlay">
-                <OverlayContext.Consumer>
-                  {
-                    ({hidden, setHidden})=> (
-                        <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
-                          onClick={() => { setHidden(!hidden) }}
-                        ><i className="fas fa-question"></i></button>
-                    )
-                  }
-                </OverlayContext.Consumer>
-              </Annotation>
-              {this.context.api.isTaskOwner(this.context.user, this.state.task.id) || this.context.user.admin
-                ? <Annotation placement="top" tooltip="Click to adjust your owner task settings">
-                    <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
-                      onClick={() => { this.setState({showTaskOwnerSettingsModal: true}) }}
-                    ><i className="fa fa-cog"></i></button>
-                  </Annotation>
-                : ""}
-            </ButtonGroup>
-            <Modal
-              show={this.state.showTaskOwnerSettingsModal}
-              onHide={() => this.setState({ showTaskOwnerSettingsModal: false })}
+        <Container fluid>
+          <Row>
+            <Col lg={2} className="p-0 border">
+              <Annotation
+                placement="bottom-start"
+                tooltip="Dynabench tasks happen over multiple rounds. You can look at previous rounds here."
               >
-                <Modal.Header closeButton>
-                  <Modal.Title>Task Owner Console</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                  <Modal.Title style={{fontSize: 20}}>Settings</Modal.Title>
-                  <hr/>
-                  Validate non-model-fooling examples? &nbsp;
-                  <span className="float-right">
-                    <Form.Check
-                      checked={this.state.validateNonFooling}
-                      onChange={() => {
-                          this.setState(
-                            { validateNonFooling: !this.state.validateNonFooling },
-                            () => this.context.api.updateTaskSettings(this.state.task.id, { validate_non_fooling: this.state.validateNonFooling, num_matching_validations: this.state.numMatchingValidations })
-                          );
-                        }
-                      }
-                    />
-                  </span>
-                  <hr/>
-                  Number of correct, incorrect, <br/> or flagged marks when an example
-                  <span className="float-right">
-                    {this.state.numMatchingValidations}
+                <TaskNav {...this.props} taskDetail={this.state.task} />
+              </Annotation>
+            </Col>
+            <Col lg={10} className="px-4 px-lg-5">
+              <h2 className="task-page-header text-reset ml-0">
+                {this.state.task.name}
+              </h2>
+              <div style={{ float: "right", marginTop: 30 }}>
+                <ButtonGroup>
+                  <Annotation
+                    placement="left"
+                    tooltip="Click to show help overlay"
+                  >
+                    <OverlayContext.Consumer>
+                      {({ hidden, setHidden }) => (
+                        <button
+                          type="button"
+                          className="btn btn-outline-primary btn-sm btn-help-info"
+                          onClick={() => {
+                            setHidden(!hidden);
+                          }}
+                        >
+                          <i className="fas fa-question"></i>
+                        </button>
+                      )}
+                    </OverlayContext.Consumer>
+                  </Annotation>
+                  {this.context.api.isTaskOwner(
+                    this.context.user,
+                    this.state.task.id
+                  ) || this.context.user.admin ? (
+                    <Annotation
+                      placement="top"
+                      tooltip="Click to adjust your owner task settings"
+                    >
+                      <button
+                        type="button"
+                        className="btn btn-outline-primary btn-sm btn-help-info"
+                        onClick={() => {
+                          this.setState({ showTaskOwnerSettingsModal: true });
+                        }}
+                      >
+                        <i className="fa fa-cog"></i>
+                      </button>
+                    </Annotation>
+                  ) : (
+                    ""
+                  )}
+                </ButtonGroup>
+                <Modal
+                  show={this.state.showTaskOwnerSettingsModal}
+                  onHide={() =>
+                    this.setState({ showTaskOwnerSettingsModal: false })
+                  }
+                >
+                  <Modal.Header closeButton>
+                    <Modal.Title>Task Owner Console</Modal.Title>
+                  </Modal.Header>
+                  <Modal.Body>
+                    <Modal.Title style={{ fontSize: 20 }}>Settings</Modal.Title>
+                    <hr />
+                    Validate non-model-fooling examples? &nbsp;
                     <span className="float-right">
-                      <Form.Control
-                        className="p-1"
-                        type="range"
-                        min="1"
-                        max="10"
-                        step="1"
-                        defaultValue={this.state.numMatchingValidations}
-                        onChange={(e) => {
-                            this.setState(
-                              { numMatchingValidations: parseInt(e.target.value) },
-                              () => this.context.api.updateTaskSettings(this.state.task.id, { validate_non_fooling: this.state.validateNonFooling, num_matching_validations: this.state.numMatchingValidations })
-                            );
-                          }
-                        }
+                      <Form.Check
+                        checked={this.state.validateNonFooling}
+                        onChange={() => {
+                          this.setState(
+                            {
+                              validateNonFooling: !this.state
+                                .validateNonFooling,
+                            },
+                            () =>
+                              this.context.api.updateTaskSettings(
+                                this.state.task.id,
+                                {
+                                  validate_non_fooling: this.state
+                                    .validateNonFooling,
+                                  num_matching_validations: this.state
+                                    .numMatchingValidations,
+                                }
+                              )
+                          );
+                        }}
                       />
                     </span>
-                  </span>
-                  <br/> is no longer shown to validators?
-                  <hr/>
-                  <Modal.Title style={{fontSize: 20}}>Actions</Modal.Title>
-                  <hr/>
-                  <span className="float-right">
-                    <DropdownButton className="border-0 blue-color font-weight-bold p-1" id="dropdown-basic-button" title="Export Data">
-                      <Dropdown.Item onClick={this.exportCurrentRoundData}>Export current round</Dropdown.Item>
-                      <Dropdown.Item onClick={this.exportAllTaskData}>Export all</Dropdown.Item>
-                    </DropdownButton>
-                  </span>
-                  Click here to export data from the <br/>
-                  current round or all rounds
-                  <hr/>
-                  Add new contexts to the current round by uploading them here, as a jsonl where each datum has three fields: <br/> <br/>
-                  <b>text</b>: a string representation of the context <br/>
-                  <b>tag</b>: a string that associates this context with a set of other contexts <br/>
-                  <b>metadata</b>: a dictionary in json format representing any other data that is useful to you <br/> <br/>
-                  <Formik
-                    initialValues={{
-                      file: null,
-                      result: "",
-                    }}
-                    validate={this.handleValidation}
-                    onSubmit={this.handleSubmit}
-                  >
-                    {({
-                      values,
-                      errors,
-                      handleChange,
-                      setFieldValue,
-                      handleSubmit,
-                      isSubmitting,
-                      setValues,
-                    }) => (
+                    <hr />
+                    Number of correct, incorrect, <br /> or flagged marks when
+                    an example
+                    <span className="float-right">
+                      {this.state.numMatchingValidations}
+                      <span className="float-right">
+                        <Form.Control
+                          className="p-1"
+                          type="range"
+                          min="1"
+                          max="10"
+                          step="1"
+                          defaultValue={this.state.numMatchingValidations}
+                          onChange={(e) => {
+                            this.setState(
+                              {
+                                numMatchingValidations: parseInt(
+                                  e.target.value
+                                ),
+                              },
+                              () =>
+                                this.context.api.updateTaskSettings(
+                                  this.state.task.id,
+                                  {
+                                    validate_non_fooling: this.state
+                                      .validateNonFooling,
+                                    num_matching_validations: this.state
+                                      .numMatchingValidations,
+                                  }
+                                )
+                            );
+                          }}
+                        />
+                      </span>
+                    </span>
+                    <br /> is no longer shown to validators?
+                    <hr />
+                    <Modal.Title style={{ fontSize: 20 }}>Actions</Modal.Title>
+                    <hr />
+                    <span className="float-right">
+                      <DropdownButton
+                        className="border-0 blue-color font-weight-bold p-1"
+                        id="dropdown-basic-button"
+                        title="Export Data"
+                      >
+                        <Dropdown.Item onClick={this.exportCurrentRoundData}>
+                          Export current round
+                        </Dropdown.Item>
+                        <Dropdown.Item onClick={this.exportAllTaskData}>
+                          Export all
+                        </Dropdown.Item>
+                      </DropdownButton>
+                    </span>
+                    Click here to export data from the <br />
+                    current round or all rounds
+                    <hr />
+                    Add new contexts to the current round by uploading them
+                    here, as a jsonl where each datum has three fields: <br />{" "}
+                    <br />
+                    <b>text</b>: a string representation of the context <br />
+                    <b>tag</b>: a string that associates this context with a set
+                    of other contexts <br />
+                    <b>metadata</b>: a dictionary in json format representing
+                    any other data that is useful to you <br /> <br />
+                    <Formik
+                      initialValues={{
+                        file: null,
+                        result: "",
+                      }}
+                      validate={this.handleValidation}
+                      onSubmit={this.handleSubmit}
+                    >
+                      {({
+                        values,
+                        errors,
+                        handleChange,
+                        setFieldValue,
+                        handleSubmit,
+                        isSubmitting,
+                        setValues,
+                      }) => (
                         <form
                           onSubmit={handleSubmit}
                           encType="multipart/form-data"
@@ -739,148 +819,178 @@ class TaskPage extends React.Component {
                                 {values.result}
                               </small>
                               <InputGroup>
-                              <Button
-                                type="submit"
-                                variant="primary"
-                                className="fadeIn third submitBtn button-ellipse"
-                                disabled={isSubmitting}
-                              >
-                                Upload Contexts
-                              </Button>
+                                <Button
+                                  type="submit"
+                                  variant="primary"
+                                  className="fadeIn third submitBtn button-ellipse"
+                                  disabled={isSubmitting}
+                                >
+                                  Upload Contexts
+                                </Button>
                               </InputGroup>
                             </Form.Group>
                           </Container>
                         </form>
-                    )}
-                  </Formik>
-                </Modal.Body>
-            </Modal>
-            </div>
-            <p>{this.state.task.desc}</p>
-            {this.props.location.hash === "#overall" ? (
-              <>
-                <Annotation placement="right" tooltip="This shows the statistics of the currently active round.">
-                  <OverallTaskStats task={this.state.task}/>
-                </Annotation>
-                <hr />
-                <TaskActionButtons
-                  api={this.context.api}
-                  taskId={this.state.taskId}
-                  user={this.context.user}
-                  task={this.state.task}
-                />
-              </>
-            ) :
-              <>
-                <hr />
-                <RoundActionButtons
-                  taskId={this.state.taskId}
-                />
-              </>}
-
-            <Row>
-              <Col xs={12} md={12}>
-                <RoundDescription
-                  api={this.context.api}
-                  task_id={this.state.taskId}
-                  cur_round={this.state.task.cur_round}
-                  round_id={this.state.displayRoundId} />
-              </Col>
-            </Row>
-            <Row>
-              <Col xs={12} md={this.props.location.hash === "#overall" ? 6 : 12}>
-                {this.state.modelLeaderBoardData.length ? (
-                  <Annotation placement="left" tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round">
-                  <Card className="my-4">
-                    <Card.Header className="p-3 light-gray-bg">
-                      <h2 className="text-uppercase m-0 text-reset">
-                        {this.props.location.hash === "#overall" ? "Overall Model Leaderboard" : (
-                          "Round " + this.state.displayRoundId + " Model Leaderboard"
-                          )}
-                      </h2>
-                    </Card.Header>
-                    <Card.Body className="p-0 leaderboard-container">
-                      <OverallModelLeaderBoard
-                        data={this.state.modelLeaderBoardData}
-                        tags={this.state.modelLeaderBoardTags}
-                        taskShortName={this.state.task.shortname}
-                      />
-                    </Card.Body>
-                    <Card.Footer className="text-center">
-                      <Pagination className="mb-0 float-right" size="sm">
-                        <Pagination.Item
-                          disabled={!this.state.modelLeaderBoardPage}
-                          onClick={() => this.paginate("model", "previous")}
-                        >
-                          Previous
-                        </Pagination.Item>
-                        <Pagination.Item
-                          disabled={this.state.isEndOfModelLeaderPage}
-                          onClick={() => this.paginate("model", "next")}
-                        >
-                          Next
-                        </Pagination.Item>
-                      </Pagination>
-                    </Card.Footer>
-                  </Card>
-                  </Annotation>
-                ) : null}
-                {/*Do not display the user leaderboard if there is no data or if it is for a pre-dynabench round.*/}
-                {this.state.userLeaderBoardData.length &&
-                  !(["1","2","3"].includes(this.state.displayRoundId) &&
-                  this.state.task.shortname === "NLI") &&
-                  !("1" === this.state.displayRoundId && this.state.task.shortname === "QA") &&
-                  !("1" === this.state.displayRoundId && this.state.task.shortname === "Sentiment")
-                ? (
-                  <Annotation placement="left" tooltip="This shows how well our users did on this task">
-                  <Card className="my-4">
-                    <Card.Header className="p-3 light-gray-bg">
-                      <h2 className="text-uppercase m-0 text-reset">
-                        {this.props.location.hash === "#overall" ? "Overall User Leaderboard" : (
-                          "Round " + this.state.displayRoundId + " User Leaderboard"
-                          )}
-                      </h2>
-                    </Card.Header>
-                    <Card.Body className="p-0 leaderboard-container">
-                      <OverallUserLeaderBoard
-                        data={this.state.userLeaderBoardData}
-                      />
-                    </Card.Body>
-                    <Card.Footer className="text-center">
-                      <Pagination className="mb-0 float-right" size="sm">
-                        <Pagination.Item
-                          disabled={!this.state.userLeaderBoardPage}
-                          onClick={() => this.paginate("user", "previous")}
-                        >
-                          Previous
-                        </Pagination.Item>
-                        <Pagination.Item
-                          disabled={this.state.isEndOfUserLeaderPage}
-                          onClick={() => this.paginate("user", "next")}
-                        >
-                          Next
-                        </Pagination.Item>
-                      </Pagination>
-                    </Card.Footer>
-                  </Card>
-                  </Annotation>
-                ) : null}
-              </Col>
-
+                      )}
+                    </Formik>
+                  </Modal.Body>
+                </Modal>
+              </div>
+              <p>{this.state.task.desc}</p>
               {this.props.location.hash === "#overall" ? (
-                <Col xs={12} md={6}>
-                  {this.props.location.hash === "#overall" &&
-                  this.state.trendScore.length ? (
-                    <Annotation placement="top-end" tooltip="As tasks progress over time, we can follow their trend, which is shown here">
-                      <TaskTrend data={this.state.trendScore} />
+                <>
+                  <Annotation
+                    placement="right"
+                    tooltip="This shows the statistics of the currently active round."
+                  >
+                    <OverallTaskStats task={this.state.task} />
+                  </Annotation>
+                  <hr />
+                  <TaskActionButtons
+                    api={this.context.api}
+                    taskId={this.state.taskId}
+                    user={this.context.user}
+                    task={this.state.task}
+                  />
+                </>
+              ) : (
+                <>
+                  <hr />
+                  <RoundActionButtons taskId={this.state.taskId} />
+                </>
+              )}
+
+              <Row>
+                <Col xs={12} md={12}>
+                  <RoundDescription
+                    api={this.context.api}
+                    task_id={this.state.taskId}
+                    cur_round={this.state.task.cur_round}
+                    round_id={this.state.displayRoundId}
+                  />
+                </Col>
+              </Row>
+              <Row>
+                <Col xs={12} md={12}>
+                  {this.state.modelLeaderBoardData.length ? (
+                    <Annotation
+                      placement="left"
+                      tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
+                    >
+                      <Card className="my-4">
+                        <Card.Header className="p-3 light-gray-bg">
+                          <h2 className="text-uppercase m-0 text-reset">
+                            {this.props.location.hash === "#overall"
+                              ? "Overall Model Leaderboard"
+                              : "Round " +
+                                this.state.displayRoundId +
+                                " Model Leaderboard"}
+                          </h2>
+                        </Card.Header>
+                        <Card.Body className="p-0 leaderboard-container">
+                          <OverallModelLeaderBoard
+                            data={this.state.modelLeaderBoardData}
+                            tags={this.state.modelLeaderBoardTags}
+                            taskShortName={this.state.task.shortname}
+                          />
+                        </Card.Body>
+                        <Card.Footer className="text-center">
+                          <Pagination className="mb-0 float-right" size="sm">
+                            <Pagination.Item
+                              disabled={!this.state.modelLeaderBoardPage}
+                              onClick={() => this.paginate("model", "previous")}
+                            >
+                              Previous
+                            </Pagination.Item>
+                            <Pagination.Item
+                              disabled={this.state.isEndOfModelLeaderPage}
+                              onClick={() => this.paginate("model", "next")}
+                            >
+                              Next
+                            </Pagination.Item>
+                          </Pagination>
+                        </Card.Footer>
+                      </Card>
                     </Annotation>
                   ) : null}
                 </Col>
-              ) : null}
-            </Row>
-          </Col>
-        </Row>
-      </Container>
+              </Row>
+              <Row>
+                <Col
+                  xs={12}
+                  md={this.props.location.hash === "#overall" ? 6 : 12}
+                >
+                  {/*Do not display the user leaderboard if there is no data or if it is for a pre-dynabench round.*/}
+                  {this.state.userLeaderBoardData.length &&
+                  !(
+                    ["1", "2", "3"].includes(this.state.displayRoundId) &&
+                    this.state.task.shortname === "NLI"
+                  ) &&
+                  !(
+                    "1" === this.state.displayRoundId &&
+                    this.state.task.shortname === "QA"
+                  ) &&
+                  !(
+                    "1" === this.state.displayRoundId &&
+                    this.state.task.shortname === "Sentiment"
+                  ) ? (
+                    <Annotation
+                      placement="left"
+                      tooltip="This shows how well our users did on this task"
+                    >
+                      <Card className="my-4">
+                        <Card.Header className="p-3 light-gray-bg">
+                          <h2 className="text-uppercase m-0 text-reset">
+                            {this.props.location.hash === "#overall"
+                              ? "Overall User Leaderboard"
+                              : "Round " +
+                                this.state.displayRoundId +
+                                " User Leaderboard"}
+                          </h2>
+                        </Card.Header>
+                        <Card.Body className="p-0 leaderboard-container">
+                          <OverallUserLeaderBoard
+                            data={this.state.userLeaderBoardData}
+                          />
+                        </Card.Body>
+                        <Card.Footer className="text-center">
+                          <Pagination className="mb-0 float-right" size="sm">
+                            <Pagination.Item
+                              disabled={!this.state.userLeaderBoardPage}
+                              onClick={() => this.paginate("user", "previous")}
+                            >
+                              Previous
+                            </Pagination.Item>
+                            <Pagination.Item
+                              disabled={this.state.isEndOfUserLeaderPage}
+                              onClick={() => this.paginate("user", "next")}
+                            >
+                              Next
+                            </Pagination.Item>
+                          </Pagination>
+                        </Card.Footer>
+                      </Card>
+                    </Annotation>
+                  ) : null}
+                </Col>
+
+                {this.props.location.hash === "#overall" ? (
+                  <Col xs={12} md={6}>
+                    {this.props.location.hash === "#overall" &&
+                    this.state.trendScore.length ? (
+                      <Annotation
+                        placement="top-end"
+                        tooltip="As tasks progress over time, we can follow their trend, which is shown here"
+                      >
+                        <TaskTrend data={this.state.trendScore} />
+                      </Annotation>
+                    ) : null}
+                  </Col>
+                ) : null}
+              </Row>
+            </Col>
+          </Row>
+        </Container>
       </OverlayProvider>
     );
   }
