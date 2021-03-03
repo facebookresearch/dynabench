@@ -36,17 +36,21 @@ class BaseDataset(ABC):
             aws_secret_access_key=config["aws_secret_access_key"],
             region_name=config["aws_region"],
         )
-        if not self._dataset_available_on_s3():
+
+        # Load dataset to S3 and register in db if not yet
+        loaded = self._dataset_available_on_s3()
+        if not loaded:
             logger.info(
                 f"Dataset {self.name} does not exist on S3. "
                 f"Pushing to {self.s3_url} now..."
             )
-            self.load()
+            loaded = self.load()
             logger.info(f"Loaded {self.name} on S3 at {self.s3_url}")
         else:
             logger.info(f"Dataset {self.name} exists on S3 at {self.s3_url}")
 
-        self._register_dataset_in_db()
+        if loaded:
+            self._register_dataset_in_db()
 
     def _get_data_s3_path(self):
         return os.path.join("datasets", self.task, self.filename)

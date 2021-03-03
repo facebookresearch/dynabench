@@ -14,23 +14,29 @@ class MnliBase(BaseDataset):
         self.local_path = local_path
 
     def load(self):
-        with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
-            for line in open(self.local_path).readlines():
-                jl = json.loads(line)
-                tmp_jl = {
-                    "uid": jl["uid"],
-                    "context": jl["premise"],
-                    "hypothesis": jl["hypothesis"],
-                    "label": jl["label"].lower(),
-                }
-                tmp.write(json.dumps(tmp_jl) + "\n")
-            tmp.close()
-            response = self.s3_client.upload_file(
-                tmp.name, self.s3_bucket, self._get_data_s3_path()
-            )
-            os.remove(tmp.name)
-            if response:
-                logger.info(response)
+        try:
+            with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
+                for line in open(self.local_path).readlines():
+                    jl = json.loads(line)
+                    tmp_jl = {
+                        "uid": jl["uid"],
+                        "context": jl["premise"],
+                        "hypothesis": jl["hypothesis"],
+                        "label": jl["label"].lower(),
+                    }
+                    tmp.write(json.dumps(tmp_jl) + "\n")
+                tmp.close()
+                response = self.s3_client.upload_file(
+                    tmp.name, self.s3_bucket, self._get_data_s3_path()
+                )
+                os.remove(tmp.name)
+                if response:
+                    logger.info(response)
+        except Exception as ex:
+            logger.exception(f"Failed to load {self.name} to S3 due to {ex}.")
+            return False
+        else:
+            return True
 
     def field_converter(self, example):
         return {
