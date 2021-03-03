@@ -32,7 +32,7 @@ import { Avatar } from "../components/Avatar/Avatar";
 import Moment from "react-moment";
 import DragAndDrop from "../components/DragAndDrop/DragAndDrop";
 import { OverlayProvider, Annotation, OverlayContext } from "./Overlay";
-import OverallModelLeaderBoard from "../components/TaskLeaderboard/OverallModelLeaderBoard";
+import TaskLeaderboardCard from "../components/TaskLeaderboard/TaskLeaderboardCard";
 
 const chartSizes = {
   xs: { fontSize: 10 },
@@ -453,7 +453,6 @@ class TaskPage extends React.Component {
             : this.state.task.cur_round,
       },
       () => {
-        this.fetchOverallModelLeaderboard(this.state.modelLeaderBoardPage);
         this.fetchOverallUserLeaderboard(this.state.userLeaderBoardPage);
         if (this.props.location.hash === "#overall") this.fetchTrend();
       }
@@ -482,29 +481,6 @@ class TaskPage extends React.Component {
         console.log(error);
       }
     );
-  }
-
-  fetchOverallModelLeaderboard(page) {
-    this.context.api
-      .getOverallModelLeaderboard(
-        this.state.taskId,
-        this.props.location.hash.replace("#", ""),
-        this.state.pageLimit,
-        page
-      )
-      .then(
-        (result) => {
-          const isEndOfPage = (page + 1) * this.state.pageLimit >= result.count;
-          this.setState({
-            isEndOfModelLeaderPage: isEndOfPage,
-            modelLeaderBoardData: result.data,
-            modelLeaderBoardTags: result.leaderboard_tags,
-          });
-        },
-        (error) => {
-          console.log(error);
-        }
-      );
   }
 
   fetchOverallUserLeaderboard(page) {
@@ -584,11 +560,7 @@ class TaskPage extends React.Component {
             : --this.state[componentPageState],
       },
       () => {
-        if (component === "model") {
-          this.fetchOverallModelLeaderboard(this.state[componentPageState]);
-        } else {
-          this.fetchOverallUserLeaderboard(this.state[componentPageState]);
-        }
+        this.fetchOverallUserLeaderboard(this.state[componentPageState]);
       }
     );
   };
@@ -872,47 +844,21 @@ class TaskPage extends React.Component {
               </Row>
               <Row>
                 <Col xs={12} md={12}>
-                  {this.state.modelLeaderBoardData.length ? (
-                    <Annotation
-                      placement="left"
-                      tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
-                    >
-                      <Card className="my-4">
-                        <Card.Header className="p-3 light-gray-bg">
-                          <h2 className="text-uppercase m-0 text-reset">
-                            {this.props.location.hash === "#overall"
-                              ? "Overall Model Leaderboard"
-                              : "Round " +
-                                this.state.displayRoundId +
-                                " Model Leaderboard"}
-                          </h2>
-                        </Card.Header>
-                        <Card.Body className="p-0 leaderboard-container">
-                          <OverallModelLeaderBoard
-                            data={this.state.modelLeaderBoardData}
-                            tags={this.state.modelLeaderBoardTags}
-                            taskShortName={this.state.task.shortname}
-                          />
-                        </Card.Body>
-                        <Card.Footer className="text-center">
-                          <Pagination className="mb-0 float-right" size="sm">
-                            <Pagination.Item
-                              disabled={!this.state.modelLeaderBoardPage}
-                              onClick={() => this.paginate("model", "previous")}
-                            >
-                              Previous
-                            </Pagination.Item>
-                            <Pagination.Item
-                              disabled={this.state.isEndOfModelLeaderPage}
-                              onClick={() => this.paginate("model", "next")}
-                            >
-                              Next
-                            </Pagination.Item>
-                          </Pagination>
-                        </Card.Footer>
-                      </Card>
-                    </Annotation>
-                  ) : null}
+                  {/* {this.state.modelLeaderBoardData.length ? ( */}
+                  <Annotation
+                    placement="left"
+                    tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
+                  >
+                    <TaskLeaderboardCard
+                      {...this.props}
+                      modelLeaderBoardData={this.state.modelLeaderBoardData}
+                      modelLeaderBoardTags={this.state.modelLeaderBoardTags}
+                      task={this.state.task}
+                      taskId={this.state.taskId}
+                      displayRoundId={this.state.displayRoundId}
+                    />
+                  </Annotation>
+                  {/* ) : null} */}
                 </Col>
               </Row>
               <Row>
