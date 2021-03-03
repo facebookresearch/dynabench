@@ -27,6 +27,10 @@
     min-height: 120px;
 }
 
+.profile-card td {
+    padding: 24px;
+}
+
 .task-card .table td:last-child {
     font-weight: 700;
     text-align: right;
@@ -70,10 +74,6 @@
 
 .profile-card table {
     font-size: 14px;
-}
-
-.profile-card td {
-    padding: 24px;
 }
 
 .profile-card tr + tr {

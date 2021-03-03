@@ -170,12 +170,6 @@ class DivyanshQATaskOnboarder extends React.Component {
               />{" "}
             </Row>
           )}
-          {this.state.onboardingStep == 10 && (
-            <Row>
-              {" "}
-              <CreateInterfaceOnboardingStep10 />{" "}
-            </Row>
-          )}
           {this.state.showOnboardingSubmit && (
             <Row>
               {" "}
