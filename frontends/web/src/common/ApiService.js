@@ -476,6 +476,9 @@ export default class ApiService {
   }
 
   logout() {
+    this.fetch(`${this.domain}/authenticate/logout`, {
+      method: "POST",
+    });
     localStorage.removeItem("id_token");
   }
 

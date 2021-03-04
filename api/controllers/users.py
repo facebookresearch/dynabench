@@ -13,6 +13,7 @@ from common.logging import logger
 from models.badge import BadgeModel
 from models.model import ModelModel
 from models.notification import NotificationModel
+from models.refresh_token import RefreshTokenModel
 from models.user import UserModel
 
 
@@ -128,7 +129,8 @@ def create_user():
         user = u.getByEmail(data["email"])
         user_dict = user.to_dict()
         refresh_token = _auth.set_refresh_token()
-        u.update(user.id, {"refresh_token": refresh_token})
+        rtm = RefreshTokenModel()
+        rtm.create(user.id, refresh_token)
         bm.addBadge({"uid": user_dict["id"], "name": "WELCOME_NOOB"})
         nm.create(user_dict["id"], "NEW_BADGE_EARNED", "WELCOME_NOOB")
 

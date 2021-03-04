@@ -20,7 +20,6 @@ class User(Base):
     realname = db.Column(db.String(length=255))
     affiliation = db.Column(db.String(length=255))
 
-    refresh_token = db.Column(db.String(length=255))
     forgot_password_token = db.Column(db.String(length=255))
     forgot_password_token_expiry_date = db.Column(db.DateTime)
 
@@ -60,7 +59,6 @@ class User(Base):
         for column in self.__table__.columns:
             if safe and column.name in [
                 "password",
-                "refresh_token",
                 "forgot_password_token",
                 "forgot_password_token_expiry_date",
                 "api_token",
@@ -106,14 +104,6 @@ class UserModel(BaseModel):
         if user.check_password(password):
             return user
         else:
-            return False
-
-    def getByRefreshToken(self, refresh_token):
-        try:
-            return (
-                self.dbs.query(User).filter(User.refresh_token == refresh_token).one()
-            )
-        except db.orm.exc.NoResultFound:
             return False
 
     def getByForgotPasswordToken(self, forgot_password_token):
