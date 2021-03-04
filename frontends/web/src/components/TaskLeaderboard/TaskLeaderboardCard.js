@@ -9,22 +9,31 @@ function rand(min, max) {
 }
 
 
-function mockDynaboardDataForModels(data) {
-  // console.log(data);
-
-  
-
+function mockDynaboardDataForModels(data, count) {
   for (let model of data) {
+    // Mock DynaScore
     model.dynascore = rand(0, 100);
+    // Mock Metric Lables
     model.metric_labels = ["Memory",
     "CPU",
     "XYZ"];
-    
+    // Mock Overall display_scores
     model.display_scores = [...Array(model.metric_labels.length)].map((x, i) => "" + Math.round(rand(0, 1000)) + " units");
+    // Mock dataset display_scores
 
-    console.log(model);
-    
+    let datasets = [];
+
+    for (let i = 0; i < count; i++) {
+      let dataset = {};
+      dataset.id = i+1;
+      dataset.name = "Round " + (i+1);
+      dataset.display_scores = [...Array(model.metric_labels.length)].map((x, i) => "" + Math.round(rand(0, 1000)) + " units");
+
+      datasets.push(dataset)
     }
+
+    model.datasets = datasets;
+  }
   
   return data;
 }
@@ -50,7 +59,7 @@ const TaskLeaderboardCard = (props) => {
       .then(
         (result) => {
           // const isEndOfPage = (page + 1) * this.state.pageLimit >= result.count;
-          setData(mockDynaboardDataForModels(result.data));
+          setData(mockDynaboardDataForModels(result.data, result.count));
           setTags(result.leaderboard_tags)
           
         },
