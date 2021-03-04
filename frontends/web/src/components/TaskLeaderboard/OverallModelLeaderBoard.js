@@ -20,6 +20,17 @@ const OverallModelLeaderBoard = (props) => {
           ) : (
             <th className="text-right pr-4">Mean Accuracy</th>
           )}
+          {props &&
+            props.data &&
+            props.data.length > 0 &&
+            props?.data[0].metric_labels.map((tag) => {
+              return (
+                <th className="text-right pr-4" key={`th-${tag}`}>
+                  {tag}
+                </th>
+              );
+            })}
+          <th className="text-right pr-4">Dynascore</th>
         </tr>
       </thead>
       <tbody>
@@ -37,6 +48,9 @@ const OverallModelLeaderBoard = (props) => {
                   ({data.owner})
                 </Link>
               </td>
+              <td className="text-right  pr-4">
+                {parseFloat(data.accuracy).toFixed(2)}%
+              </td>
               {props.tags.map((tag) => {
                 let tag_result = "-";
                 if (data.metadata_json && data.metadata_json.perf_by_tag) {
@@ -48,13 +62,27 @@ const OverallModelLeaderBoard = (props) => {
                       parseFloat(selected_tag[0].perf).toFixed(2) + "%";
                 }
                 return (
-                  <td className="text-right" key={`${tag}-${data.model_id}`}>
+                  <td
+                    className="text-right  pr-4"
+                    key={`${tag}-${data.model_id}`}
+                  >
                     {tag_result}
                   </td>
                 );
               })}
-              <td className="text-right pr-4">
-                {parseFloat(data.accuracy).toFixed(2)}%
+              {data &&
+                data.display_scores.map((score) => {
+                  return (
+                    <td
+                      className="text-right pr-4"
+                      key={`score-${data.model_name}-overall`}
+                    >
+                      {score}
+                    </td>
+                  );
+                })}
+              <td className="text-right  pr-4">
+                <b>{parseFloat(data.dynascore).toFixed(0)}</b>
               </td>
             </tr>
           );

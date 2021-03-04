@@ -4,8 +4,30 @@ import { Card, Pagination } from "react-bootstrap";
 import UserContext from "../../containers/UserContext";
 import OverallModelLeaderBoard from "./OverallModelLeaderBoard"
 
+function rand(min, max) {
+  return min + Math.random() * (max - min);
+}
 
 
+function mockDynaboardDataForModels(data) {
+  // console.log(data);
+
+  
+
+  for (let model of data) {
+    model.dynascore = rand(0, 100);
+    model.metric_labels = ["Memory",
+    "CPU",
+    "XYZ"];
+    
+    model.display_scores = [...Array(model.metric_labels.length)].map((x, i) => "" + Math.round(rand(0, 1000)) + " units");
+
+    console.log(model);
+    
+    }
+  
+  return data;
+}
 
 const TaskLeaderboardCard = (props) => {
 
@@ -28,7 +50,7 @@ const TaskLeaderboardCard = (props) => {
       .then(
         (result) => {
           // const isEndOfPage = (page + 1) * this.state.pageLimit >= result.count;
-          setData(result.data);
+          setData(mockDynaboardDataForModels(result.data));
           setTags(result.leaderboard_tags)
           
         },
@@ -74,7 +96,7 @@ const TaskLeaderboardCard = (props) => {
       <Card.Footer className="text-center">
         <Pagination className="mb-0 float-right" size="sm">
           <Pagination.Item
-            // disabled={!this.state.modelLeaderBoardPage}
+            disabled={isLoading || (page === 0)}
             onClick={() => paginate("model", "previous")}
           >
             Previous
