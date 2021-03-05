@@ -99,12 +99,10 @@ if __name__ == "__main__":
                         )
                         nm = NotificationModel()
                         nm.create(user.id, "MODEL_DEPLOYMENT_STATUS", template.upper())
-                
+
                     if deployed:
                         eval_queue.send_message(
-                            MessageBody=json.dumps(
-                                {"model_id": model_id}
-                            )
+                            MessageBody=json.dumps({"model_id": model_id})
                         )
             message.delete()
         time.sleep(5)
