@@ -167,7 +167,7 @@ class BaseDataset(ABC):
                 ):
                     for tag in target_tags:
                         examples_by_tag.setdefault(tag, []).append((pred, target_label))
-                perf_by_tag = {
+                perf_by_tag_tuple_dict = {
                     k: get_eval_metrics(self.task, *list(zip(*examples)))
                     for k, examples in examples_by_tag.items()
                 }
@@ -176,9 +176,11 @@ class BaseDataset(ABC):
                         "tag": tag,
                         "pretty_perf": str(round(perf * 100, 2)) + " %",
                         "perf": round(perf * 100, 2),
+                        "perf_dict": perf_dict,
                     }
-                    for tag, perf in perf_by_tag.items()
+                    for tag, (perf, perf_dict) in perf_by_tag_tuple_dict.items()
                 ]
+
             score_obj["metadata_json"] = json.dumps(score_obj["metadata_json"])
 
             return score_obj

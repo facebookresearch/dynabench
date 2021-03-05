@@ -86,11 +86,9 @@ class MetricsComputer:
             predictions = self.parse_outfile(job)
             eval_metrics_dict = self.datasets[job.dataset_name].eval(predictions)
             job_metrics_dict = get_job_metrics(job, self.datasets[job.dataset_name])
-
             score_obj = {**eval_metrics_dict, **job_metrics_dict}
             score_obj["model_id"] = job.model_id
-            # TODO: decide whether to add a new column for output file S3 path
-            score_obj["raw_upload_data"] = self.datasets[
+            score_obj["raw_output_s3_uri"] = self.datasets[
                 job.dataset_name
             ].get_output_s3_url(job.endpoint_name)
 
