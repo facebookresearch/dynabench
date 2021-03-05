@@ -9,6 +9,7 @@ from utils.evaluator import JobScheduler
 
 
 sys.path.append("../api")  # noqa
+from models.task import TaskModel  # isort:skip
 from models.model import DeploymentStatusEnum, ModelModel  # isort:skip
 
 
@@ -19,6 +20,7 @@ class Requester:
     def __init__(self, config, datasets):
         self.scheduler = JobScheduler(config, datasets)
         self.computer = MetricsComputer(config, datasets)
+        self.datasets = datasets
 
     def request(self, msg):
         model_ids = msg.get("model_id", None)
@@ -27,11 +29,12 @@ class Requester:
             model_ids = None
         if dataset_names == "*":
             dataset_names = None
-        if not model_ids and dataset_names:
+        if not model_ids and not dataset_names:
             logger.exception(
                 f"Request failed. At least one of "
                 f"model_id and dataset_name should be specified"
             )
+            return False
         if model_ids and not isinstance(model_ids, list):
             model_ids = [model_ids]
         if dataset_names and not isinstance(dataset_names, list):
@@ -54,36 +57,52 @@ class Requester:
                     )
                     self._eval_model_on_dataset(model_id, dataset_name)
         self.scheduler._dump()
+        return True
 
     def _eval_model_on_dataset(self, model_id, dataset_name):
         # evaluate a given model on given datasets
-        self.scheduler.submit(model_id, dataset_name)
+        try:
+            self.scheduler.submit(model_id, dataset_name)
+        except Exception as ex:
+            logger.exception(
+                f"Evaluation request for model {model_id} "
+                f"on dataset {dataset_name} failed due to {ex}"
+            )
 
     def _eval_model(self, model_id):
         # given a model_id, evaluate all datasets for the
         # model's primary task
-        m = ModelModel()
-        task_id = m.getUnpublishedModelByMid(model_id).to_dict()["tid"]
-        d = DatasetModel()
-        datasets = d.getByTid(task_id)
-        dataset_names = [dataset.name for dataset in datasets]
-        import pdb
-
-        pdb.set_trace()
-        if dataset_names:
-            for dataset_name in dataset_names:
-                self._eval_model_on_dataset(model_id, dataset_name)
+        try:
+            m = ModelModel()
+            task_id = m.getUnpublishedModelByMid(model_id).tid
+            d = DatasetModel()
+            datasets = d.getByTid(task_id)
+            dataset_names = [dataset.name for dataset in datasets]
+            if dataset_names:
+                for dataset_name in dataset_names:
+                    self._eval_model_on_dataset(model_id, dataset_name)
+        except Exception as ex:
+            logger.exception(
+                f"Evaluation request for model {model_id} failed due to {ex}"
+            )
 
     def _eval_dataset(self, dataset_name):
         # given a dataset id, evaluate all models for the
         # dataset's task
-        m = ModelModel()
-        models = m.getByTaskCode(self.datasets[dataset_name].task)
-        if models:
-            for model in models:
-                if model.to_dict["deployment_status"] == DeploymentStatusEnum.deployed:
-                    model_id = model.id
-                    self._eval_model_on_dataset(model_id, dataset_name)
+        try:
+            t = TaskModel()
+            tid = t.getByTaskCode(self.datasets[dataset_name].task).id
+            m = ModelModel()
+            models = m.getByTid(tid)
+            if models:
+                for model in models:
+                    if model.deployment_status == DeploymentStatusEnum.deployed:
+                        model_id = model.id
+                        self._eval_model_on_dataset(model_id, dataset_name)
+        except Exception as ex:
+            logger.exception(
+                f"Evaluation request for dataset {dataset_name} failed due to {ex}"
+            )
 
     def update_status(self):
         self.scheduler.update_status()
