@@ -629,7 +629,7 @@ class TaskPage extends React.Component {
             <ButtonGroup>
               <Annotation placement="left" tooltip="Click to show help overlay">
                 <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
-                  onClick={() => { this.setState({taskVisited: !this.state.taskVisited})}}
+                  onClick={() => { this.setState((prevState) => ({taskVisited: !prevState.taskVisited}))}}
                 ><i className="fas fa-question"></i></button>
               </Annotation>
               {this.context.api.isTaskOwner(this.context.user, this.state.task.id) || this.context.user.admin

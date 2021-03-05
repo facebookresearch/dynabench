@@ -1151,7 +1151,7 @@ class CreateInterface extends React.Component {
             <ButtonGroup>
               <Annotation placement="left" tooltip="Click to show help overlay">
                 <button type="button" className="btn btn-outline-primary btn-sm btn-help-info"
-                  onClick={() => { this.setState({dontShowAnnotations: !this.state.dontShowAnnotations})}}
+                  onClick={() => { this.setState((prevState) => ({dontShowAnnotations: !prevState.dontShowAnnotations}))}}
                 ><i className="fas fa-question"></i></button>
               </Annotation>
               <Annotation placement="bottom" tooltip="Click to learn more details about this task challenge">
