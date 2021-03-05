@@ -12,6 +12,8 @@ from utils.logging import init_logger
 from utils.requester import Requester
 
 
+# TODO: [BE] strong typing on all interfce methods
+
 sleep_interval = 5
 scheduler_update_interval = 300
 
