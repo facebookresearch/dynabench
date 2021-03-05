@@ -19,6 +19,7 @@ steps = [
         CREATE TABLE refresh_tokens (
             id INT NOT NULL AUTO_INCREMENT,
             token VARCHAR(255) NOT NULL,
+            generated_datetime DateTime,
             uid INT NOT NULL,
             PRIMARY KEY (id),
             UNIQUE KEY (token),
