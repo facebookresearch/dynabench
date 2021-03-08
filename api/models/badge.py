@@ -520,7 +520,7 @@ class BadgeModel(BaseModel):
             rm = RoundModel()
             scores = sm.getByMid(model.id)
             for score in scores:
-                round = rm.get(score.rid)
+                round = rm.get(score.r_realid)
                 if model.id == sm.getOverallModelPerfByTask(round.tid)[0][0][0]:
                     badges_to_add.append(
                         self._badgeobj(user.id, "SOTA", json.dumps({"mid": model.id}))
