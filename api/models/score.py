@@ -30,6 +30,7 @@ class Score(Base):
     perf = db.Column(db.Float(), default=0.0)
 
     raw_upload_data = db.Column(db.Text)
+    raw_output_s3_uri = db.Column(db.Text)
     eval_id_start = db.Column(db.Integer, default=-1)
     eval_id_end = db.Column(db.Integer, default=-1)
     metadata_json = db.Column(db.Text)
