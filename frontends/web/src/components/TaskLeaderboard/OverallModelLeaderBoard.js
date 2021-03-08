@@ -1,16 +1,12 @@
-import { Button } from "react-bootstrap";
+import { Button, Form } from "react-bootstrap";
 import React from "react";
 import { useState } from "react";
 import { Table } from "react-bootstrap";
 import { Link } from "react-router-dom";
 
-const ChevronExpandButton = ({ expanded, onExpanded }) => {
+const ChevronExpandButton = ({ expanded }) => {
   return (
-    <a
-      type="button"
-      class="position-absolute start-100"
-      onClick={() => onExpanded(!expanded)}
-    >
+    <a type="button" class="position-absolute start-100">
       {expanded ? (
         <i class="fas fa-chevron-down"></i>
       ) : (
@@ -20,51 +16,49 @@ const ChevronExpandButton = ({ expanded, onExpanded }) => {
   );
 };
 
-const OverallModelLeaderboardRow = ({ data, tags }) => {
+const OverallModelLeaderboardRow = ({ model, tags }) => {
   const [expanded, setExpanded] = useState(false);
 
-  const dynascore = parseFloat(data.dynascore).toFixed(0);
+  const dynascore = parseFloat(model.dynascore).toFixed(0);
 
-  const totalRows = expanded ? data.datasets.length + 1 : 1;
+  const totalRows = expanded ? model.datasets.length + 1 : 1;
 
   return (
     <>
-      <tr key={data.model_id}>
+      <tr key={model.model_id} onClick={() => setExpanded(!expanded)}>
         <td>
-          <Link to={`/models/${data.model_id}`} className="btn-link">
-            {data.model_name}
+          <Link to={`/models/${model.model_id}`} className="btn-link">
+            {model.model_name}
           </Link>{" "}
-          <Link to={`/users/${data.owner_id}#profile`} className="btn-link">
-            ({data.owner})
+          <Link to={`/users/${model.owner_id}#profile`} className="btn-link">
+            ({model.owner})
           </Link>
           <div style={{ float: "right" }}>
-            <ChevronExpandButton expanded={expanded} onExpanded={setExpanded} />
+            <ChevronExpandButton expanded={expanded} />
           </div>
         </td>
-        <td className="text-right  pr-4">
-          {parseFloat(data.accuracy).toFixed(2)}%
-        </td>
-        {tags.map((tag) => {
+
+        {/* {tags.map((tag) => {
           let tag_result = "-";
-          if (data.metadata_json && data.metadata_json.perf_by_tag) {
-            let selected_tag = data.metadata_json.perf_by_tag.filter(
+          if (model.metadata_json && model.metadata_json.perf_by_tag) {
+            let selected_tag = model.metadata_json.perf_by_tag.filter(
               (t) => t.tag === tag
             );
             if (selected_tag.length > 0)
               tag_result = parseFloat(selected_tag[0].perf).toFixed(2) + "%";
           }
           return (
-            <td className="text-right  pr-4" key={`${tag}-${data.model_id}`}>
+            <td className="text-right  pr-4" key={`${tag}-${model.model_id}`}>
               {tag_result}
             </td>
           );
-        })}
-        {data &&
-          data.display_scores.map((score) => {
+        })} */}
+        {model &&
+          model.display_scores.map((score) => {
             return (
               <td
                 className="text-right pr-4"
-                key={`score-${data.model_name}-overall`}
+                key={`score-${model.model_name}-overall`}
               >
                 {expanded ? <b>{score}</b> : score}
               </td>
@@ -77,19 +71,18 @@ const OverallModelLeaderboardRow = ({ data, tags }) => {
         </td>
       </tr>
       {expanded &&
-        data.datasets &&
-        data.datasets.map((dataset) => {
+        model.datasets &&
+        model.datasets.map((dataset) => {
           return (
             <tr key={`score-${dataset.name}`}>
               {/* Title */}
               <td className="text-right pr-4">{dataset.name}</td>
-              <td />
               {dataset.display_scores &&
                 dataset.display_scores.map((score) => {
                   return (
                     <td
                       className="text-right pr-4"
-                      key={`score-${data.model_name}-overall`}
+                      key={`score-${model.model_name}-overall`}
                     >
                       {score}
                     </td>
@@ -102,40 +95,78 @@ const OverallModelLeaderboardRow = ({ data, tags }) => {
   );
 };
 
-const OverallModelLeaderBoard = (props) => {
+const MetricWeightTableHeader = ({
+  weight,
+  setWeightForId,
+  enableWeights,
+  total,
+}) => {
+  const calculatedWeight =
+    total === 0 ? 0 : Math.round((weight.weight / total) * 100);
+
+  return (
+    <th className="text-right pr-4 " key={`th-${weight.id}`}>
+      {weight.label}
+
+      {!enableWeights && <sup>&nbsp;{calculatedWeight}%</sup>}
+
+      {enableWeights && (
+        <Form className="d-flex">
+          <Form.Control
+            type="range"
+            className="flex-grow-1 "
+            size="sm"
+            xs={7}
+            min={0}
+            max={100}
+            value={weight.weight}
+            onChange={(event) => {
+              setWeightForId(weight.id, event.target.valueAsNumber);
+            }}
+          />
+
+          <span class="fw-lighter flex-grow-0">
+            &nbsp;&nbsp;{calculatedWeight}%
+          </span>
+        </Form>
+      )}
+    </th>
+  );
+};
+
+const OverallModelLeaderBoard = ({
+  models,
+  tags,
+  enableWeights,
+  weights,
+  setWeightForId,
+  taskShortName,
+}) => {
+  const total = weights?.reduce((sum, weight) => sum + weight.weight, 0);
+
   return (
     <Table hover className="mb-0">
       <thead>
         <tr>
-          <th>Model</th>
-          {props.tags.map((tag) => {
+          {!enableWeights && <th class="align-baseline">Model</th>}
+          {enableWeights && <th class="align-bottom">Relative Weights</th>}
+
+          {weights.map((weight) => {
             return (
-              <th className="text-right" key={`th-${tag}`}>
-                {tag}
-              </th>
+              <MetricWeightTableHeader
+                weight={weight}
+                setWeightForId={setWeightForId}
+                enableWeights={enableWeights}
+                total={total}
+              />
             );
           })}
-          {props.taskShortName === "QA" ? (
-            <th className="text-right pr-4">Overall F1</th>
-          ) : (
-            <th className="text-right pr-4">Mean Accuracy</th>
-          )}
-          {props &&
-            props.data &&
-            props.data.length > 0 &&
-            props?.data[0].metric_labels.map((tag) => {
-              return (
-                <th className="text-right pr-4" key={`th-${tag}`}>
-                  {tag}
-                </th>
-              );
-            })}
-          <th className="text-right pr-4">Dynascore</th>
+          <th className="text-right pr-4 align-baseline">Dynascore</th>
         </tr>
       </thead>
       <tbody>
-        {props.data.map((data) => (
-          <OverallModelLeaderboardRow data={data} tags={props.tags} />
+        {models.map((model) => (
+          <OverallModelLeaderboardRow model={model} tags={tags} />
         ))}
       </tbody>
     </Table>
