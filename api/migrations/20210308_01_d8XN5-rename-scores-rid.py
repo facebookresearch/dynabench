@@ -27,9 +27,7 @@ steps = [
     ),
     step(
         "ALTER TABLE scores RENAME COLUMN rid TO r_realid",
-        """
-        ALTER TABLE scores RENAME COLUMN r_realid TO rid
-        """,
+        "ALTER TABLE scores RENAME COLUMN r_realid TO rid",
     ),
     step(
         """
