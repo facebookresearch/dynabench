@@ -19,8 +19,8 @@ class Score(Base):
     id = db.Column(db.Integer, primary_key=True)
     mid = db.Column(db.Integer, db.ForeignKey("models.id"), nullable=False)
     model = db.orm.relationship("Model", foreign_keys="Score.mid")
-    rid = db.Column(db.Integer, db.ForeignKey("rounds.id"), nullable=False)
-    round = db.orm.relationship("Round", foreign_keys="Score.rid")
+    r_realid = db.Column(db.Integer, db.ForeignKey("rounds.id"), nullable=False)
+    round = db.orm.relationship("Round", foreign_keys="Score.r_realid")
     did = db.Column(db.Integer, db.ForeignKey("datasets.id"))
 
     desc = db.Column(db.String(length=255))
@@ -51,8 +51,8 @@ class ScoreModel(BaseModel):
     def __init__(self):
         super().__init__(Score)
 
-    def create(self, round_id, model_id, **kwargs):
-        m = Score(rid=round_id, mid=model_id, **kwargs)
+    def create(self, r_realid, model_id, **kwargs):
+        m = Score(r_realid=r_realid, mid=model_id, **kwargs)
         self.dbs.add(m)
         return self.dbs.commit()
 
@@ -60,7 +60,7 @@ class ScoreModel(BaseModel):
         self.dbs.add_all(
             [
                 Score(
-                    rid=score_obj["round_id"],
+                    r_realid=score_obj["r_realid"],
                     mid=model_id,
                     desc=score_obj["desc"],
                     longdesc=score_obj["longdesc"],
@@ -77,45 +77,6 @@ class ScoreModel(BaseModel):
             ]
         )
         return self.dbs.commit()
-
-    def getOverallPerfByTask(self, tid, n=5):
-        try:
-            return (
-                self.dbs.query(Score.id, db.sql.func.avg(Score.perf).label("avg_perf"))
-                .filter(Score.tid == tid)
-                .group_by(Score.rid)
-                .order_by(db.sql.func.avg(Score.perf).desc())
-                .limit(n)
-            )
-        # TODO: Join model
-        except db.orm.exc.NoResultFound:
-            return False
-
-    def getByTaskAndRound(self, tid, rid):
-        try:
-            return (
-                self.dbs.query(Score)
-                .join(Model)
-                .filter(Score.tid == tid)
-                .filter(Score.rid == rid)
-                .order_by(Score.perf.desc())
-                .all()
-            )
-        except db.orm.exc.NoResultFound:
-            return False
-
-    def getByTaskAndModelIds(self, tid, mids):
-        """ For getting e.g. scores of the top N models """
-        assert isinstance(mids, list)
-        try:
-            return (
-                self.dbs.query(Score)
-                .filter(Score.tid == tid)
-                .filter(Score.id.in_(mids))
-                .all()
-            )
-        except db.orm.exc.NoResultFound:
-            return False
 
     def getOverallModelPerfByTask(self, tid, n=5, offset=0):
         # Main query to fetch the model details
@@ -150,7 +111,7 @@ class ScoreModel(BaseModel):
             )
             .join(Score, Score.mid == Model.id, isouter=True)
             .join(User, User.id == Model.uid, isouter=True)
-            .join(Round, Round.id == Score.rid, isouter=True)
+            .join(Round, Round.id == Score.r_realid, isouter=True)
             .filter(Model.tid == tid)
             .filter(Round.rid == rid)
             .filter(Model.is_published == True)  # noqa
@@ -180,14 +141,14 @@ class ScoreModel(BaseModel):
                 Score.perf.label("avg_perg"),
                 Round.rid,
             )
-            .join(Score, Round.id == Score.rid)
+            .join(Score, Round.id == Score.r_realid)
             .filter(Score.mid == sub_query.c.m_id)
         )
 
     def getByMid(self, mid):
         return (
             self.dbs.query(Score.perf, Round.rid)
-            .join(Round, Round.id == Score.rid, isouter=True)
+            .join(Round, Round.id == Score.r_realid, isouter=True)
             .filter(Score.mid == mid)
             .all()
         )
