@@ -77,11 +77,11 @@ const OverallModelLeaderboardRow = ({ model, metrics }) => {
               {/* Title */}
               <td className="text-right pr-4">{dataset.name}</td>
               {dataset.display_scores &&
-                dataset.display_scores.map((score) => {
+                dataset.display_scores.map((score, i) => {
                   return (
                     <td
                       className="text-right pr-4"
-                      key={`score-${model.model_name}-overall`}
+                      key={`score-${model.model_name}-${dataset.id}-${i}-overall`}
                     >
                       {score}
                     </td>
