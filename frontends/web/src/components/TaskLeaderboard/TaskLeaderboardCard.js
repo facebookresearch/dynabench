@@ -45,17 +45,30 @@ function mockDynaboardDataForModels(data, count) {
   return data;
 }
 
+const SortDirection = {
+  ASC: "asc",
+  DESC: "desc",
+  getOppositeDirection(direction) {
+    return direction === this.ASC ? this.DESC : this.ASC;
+  },
+};
+
 const TaskLeaderboardCard = (props) => {
   const [data, setData] = useState([]);
   const [tags, setTags] = useState([]);
-  const [enableWeights, setEnableWeights] = useState(true);
-  const [weights, setWeights] = useState([
+  const [enableWeights, setEnableWeights] = useState(false);
+  const [metrics, setMetrics] = useState([
     { id: "acc", label: "Acc", weight: 20 },
     { id: "compute", label: "Compute", weight: 20 },
     { id: "memory", label: "Memory", weight: 20 },
     { id: "fairness", label: "Fairness", weight: 20 },
     { id: "robustness", label: "Robustness", weight: 20 },
   ]);
+
+  const [sort, setSort] = useState({
+    field: "acc",
+    direction: SortDirection.ASC,
+  });
 
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(0);
@@ -64,7 +77,7 @@ const TaskLeaderboardCard = (props) => {
   const taskId = props.taskId;
 
   const setWeightForId = (weightID, newWeight) => {
-    setWeights((state) => {
+    setMetrics((state) => {
       const list = state.map((item, j) => {
         if (item.id === weightID) {
           return { ...item, weight: newWeight };
@@ -74,6 +87,20 @@ const TaskLeaderboardCard = (props) => {
       });
 
       return list;
+    });
+  };
+
+  const toggleSort = (field) => {
+    const currentDirection = sort.direction;
+
+    const newDirection =
+      field !== sort.field
+        ? SortDirection.DESC
+        : SortDirection.getOppositeDirection(currentDirection);
+
+    setSort({
+      field: field,
+      direction: newDirection,
     });
   };
 
@@ -106,7 +133,7 @@ const TaskLeaderboardCard = (props) => {
     fetchOverallModelLeaderboard(context.api, page);
     setIsLoading(false);
     return () => {};
-  }, [page]);
+  }, [page, sort]);
 
   return (
     <Card className="my-4">
@@ -120,8 +147,8 @@ const TaskLeaderboardCard = (props) => {
           className="btn bg-transparent border-0 float-right"
           onClick={() => setEnableWeights(!enableWeights)}
         >
-          <span class="text-black-50">
-            <i class="fas fa-sliders-h"></i>
+          <span className="text-black-50">
+            <i className="fas fa-sliders-h"></i>
           </span>
         </Button>
       </Card.Header>
@@ -130,9 +157,11 @@ const TaskLeaderboardCard = (props) => {
           models={data}
           tags={tags}
           enableWeights={enableWeights}
-          weights={weights}
+          metrics={metrics}
           setWeightForId={setWeightForId}
           taskShortName={props.task.shortname}
+          sort={sort}
+          toggleSort={toggleSort}
         />
       </Card.Body>
       <Card.Footer className="text-center">

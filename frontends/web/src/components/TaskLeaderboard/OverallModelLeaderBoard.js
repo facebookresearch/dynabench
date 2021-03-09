@@ -6,17 +6,17 @@ import { Link } from "react-router-dom";
 
 const ChevronExpandButton = ({ expanded }) => {
   return (
-    <a type="button" class="position-absolute start-100">
+    <a type="button" className="position-absolute start-100">
       {expanded ? (
-        <i class="fas fa-chevron-down"></i>
+        <i className="fas fa-chevron-down"></i>
       ) : (
-        <i class="fas fa-chevron-right"></i>
+        <i className="fas fa-chevron-right"></i>
       )}
     </a>
   );
 };
 
-const OverallModelLeaderboardRow = ({ model, tags }) => {
+const OverallModelLeaderboardRow = ({ model, metrics }) => {
   const [expanded, setExpanded] = useState(false);
 
   const dynascore = parseFloat(model.dynascore).toFixed(0);
@@ -54,11 +54,11 @@ const OverallModelLeaderboardRow = ({ model, tags }) => {
           );
         })} */}
         {model &&
-          model.display_scores.map((score) => {
+          model.display_scores.map((score, i) => {
             return (
               <td
                 className="text-right pr-4"
-                key={`score-${model.model_name}-overall`}
+                key={`score-${model.model_name}-${metrics[i].id}-overall`}
               >
                 {expanded ? <b>{score}</b> : score}
               </td>
@@ -67,7 +67,6 @@ const OverallModelLeaderboardRow = ({ model, tags }) => {
 
         <td className="text-right  pr-4" rowSpan={totalRows}>
           {expanded ? <h1>{dynascore}</h1> : dynascore}
-          <b>{}</b>
         </td>
       </tr>
       {expanded &&
@@ -100,16 +99,25 @@ const MetricWeightTableHeader = ({
   setWeightForId,
   enableWeights,
   total,
+  sort,
+  toggleSort,
 }) => {
   const calculatedWeight =
     total === 0 ? 0 : Math.round((weight.weight / total) * 100);
 
   return (
     <th className="text-right pr-4 " key={`th-${weight.id}`}>
-      {weight.label}
+      <div onClick={() => toggleSort(weight.id)}>
+        {sort.field === weight.id && sort.direction === "asc" && (
+          <i className="fas fa-sort-up">&nbsp;</i>
+        )}
+        {sort.field === weight.id && sort.direction === "desc" && (
+          <i className="fas fa-sort-down">&nbsp;</i>
+        )}
 
-      {!enableWeights && <sup>&nbsp;{calculatedWeight}%</sup>}
-
+        {weight.label}
+        {!enableWeights && <sup>&nbsp;{calculatedWeight}%</sup>}
+      </div>
       {enableWeights && (
         <Form className="d-flex">
           <Form.Control
@@ -120,12 +128,13 @@ const MetricWeightTableHeader = ({
             min={0}
             max={100}
             value={weight.weight}
-            onChange={(event) => {
+            onInput={(event) => {
+              console.log(weight.id, event.target.valueAsNumber);
               setWeightForId(weight.id, event.target.valueAsNumber);
             }}
           />
 
-          <span class="fw-lighter flex-grow-0">
+          <span className="fw-lighter flex-grow-0">
             &nbsp;&nbsp;{calculatedWeight}%
           </span>
         </Form>
@@ -138,26 +147,31 @@ const OverallModelLeaderBoard = ({
   models,
   tags,
   enableWeights,
-  weights,
+  metrics,
   setWeightForId,
   taskShortName,
+  sort,
+  toggleSort,
 }) => {
-  const total = weights?.reduce((sum, weight) => sum + weight.weight, 0);
+  const total = metrics?.reduce((sum, metric) => sum + metric.weight, 0);
 
   return (
     <Table hover className="mb-0">
       <thead>
         <tr>
-          {!enableWeights && <th class="align-baseline">Model</th>}
-          {enableWeights && <th class="align-bottom">Relative Weights</th>}
+          {!enableWeights && <th className="align-baseline">Model</th>}
+          {enableWeights && <th className="align-bottom">Relative Weights</th>}
 
-          {weights.map((weight) => {
+          {metrics.map((metric) => {
             return (
               <MetricWeightTableHeader
-                weight={weight}
+                weight={metric}
                 setWeightForId={setWeightForId}
                 enableWeights={enableWeights}
                 total={total}
+                sort={sort}
+                toggleSort={toggleSort}
+                key={`th-metric-${metric.id}`}
               />
             );
           })}
@@ -166,7 +180,11 @@ const OverallModelLeaderBoard = ({
       </thead>
       <tbody>
         {models.map((model) => (
-          <OverallModelLeaderboardRow model={model} tags={tags} />
+          <OverallModelLeaderboardRow
+            model={model}
+            metrics={metrics}
+            key={`model-${model.model_id}`}
+          />
         ))}
       </tbody>
     </Table>
