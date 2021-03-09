@@ -65,7 +65,7 @@ const OverallModelLeaderboardRow = ({ model, metrics }) => {
             );
           })}
 
-        <td className="text-right  pr-4" rowSpan={totalRows}>
+        <td className="text-right  align-middle pr-4 " rowSpan={totalRows}>
           {expanded ? <h1>{dynascore}</h1> : dynascore}
         </td>
       </tr>
