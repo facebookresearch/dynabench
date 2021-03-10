@@ -1,0 +1,131 @@
+[
+  {
+    "model_id": 1,
+    "model_name": "BERT",
+    "username": "Tristan",
+    "datasets": [
+      {
+        "id": 1,
+        "name": "Round 1",
+        "scores": [
+          69,
+          36,
+          45
+        ]
+      },
+      {
+        "id": 2,
+        "name": "Round 2",
+        "scores": [
+          65,
+          36,
+          45
+        ]
+      },
+      {
+        "id": 3,
+        "name": "Round 3",
+        "scores": [
+          62,
+          36,
+          45
+        ]
+      },
+      {
+        "id": 4,
+        "name": "Third Party",
+        "scores": [
+          55,
+          36,
+          45
+        ]
+      }
+    ]
+  },
+  {
+    "model_id": 2,
+    "model_name": "RoBERTa",
+    "username": "Somya",
+    "datasets": [
+      {
+        "id": 1,
+        "name": "Round 1",
+        "scores": [
+          78,
+          49,
+          90
+        ]
+      },
+      {
+        "id": 2,
+        "name": "Round 2",
+        "scores": [
+          76,
+          49,
+          90
+        ]
+      },
+      {
+        "id": 3,
+        "name": "Round 3",
+        "scores": [
+          62,
+          49,
+          90
+        ]
+      },
+      {
+        "id": 4,
+        "name": "Third Party",
+        "scores": [
+          55,
+          49,
+          90
+        ]
+      }
+    ]
+  },
+  {
+    "model_id": 3,
+    "model_name": "XLNet",
+    "username": "Zoe",
+    "datasets": [
+      {
+        "id": 1,
+        "name": "Round 1",
+        "scores": [
+          93,
+          67,
+          64
+        ]
+      },
+      {
+        "id": 2,
+        "name": "Round 2",
+        "scores": [
+          89,
+          67,
+          64
+        ]
+      },
+      {
+        "id": 3,
+        "name": "Round 3",
+        "scores": [
+          76,
+          67,
+          64
+        ]
+      },
+      {
+        "id": 4,
+        "name": "Third Party",
+        "scores": [
+          56,
+          67,
+          64
+        ]
+      }
+    ]
+  }
+]

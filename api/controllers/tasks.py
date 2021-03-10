@@ -1,6 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
+from urllib.parse import parse_qs
 
 import bottle
 
@@ -27,6 +28,15 @@ def tasks():
 def get_task(tid):
     t = TaskModel()
     task = t.getWithRound(tid)
+
+    # TODO: this is dynaboard starter code; make it real
+    task["ordered_datasets"] = [
+        {"id": 1, "name": "Round 1"},
+        {"id": 2, "name": "Round 2"},
+        {"id": 3, "name": "Round 3"},
+        {"id": 4, "name": "Third Party"},
+    ]
+    task["ordered_metrics"] = ["Accuracy", "Compute", "Memory"]
     if not task:
         bottle.abort(404, "Not found")
     return util.json_encode(task)
@@ -232,6 +242,84 @@ def construct_user_board_response_json(query_result, total_count=0):
     else:
         resp_obj = {"count": 0, "data": []}
         return util.json_encode(resp_obj)
+
+
+@bottle.get("/tasks/<tid:int>/models/dynaboard")
+def get_dynaboard_starter_code(tid):
+    # TODO: this is dynaboard starter code. Make it real!
+    sort_by = "dynascore"
+    sort_direction = "asc"
+    limit = 10
+    offset = 0
+    ordered_metric_weights = [1.0 / 3, 1.0 / 3, 1.0 / 3]
+    ordered_metric_units = ["%", "flops", "GB"]
+    ordered_dataset_weights = [1.0 / 4, 1.0 / 4, 1.0 / 4, 1.0 / 4]
+    query_dict = parse_qs(bottle.request.query_string)
+    if "sort_by" in query_dict:
+        sort_by = query_dict["sort_by"][0]
+    if "sort_direction" in query_dict:
+        sort_direction = query_dict["sort_direction"][0]
+
+    if sort_direction == "asc":
+        reverse_sort = True
+    elif sort_direction == "desc":
+        reverse_sort = False
+    else:
+        pass  # TODO
+
+    if "ordered_metric_weights" in query_dict:
+        ordered_metric_weights = [
+            float(item) for item in query_dict["ordered_metric_weights"][0].split("|")
+        ]
+    if "ordered_dataset_weights" in query_dict:
+        ordered_dataset_weights = [
+            float(item) for item in query_dict["ordered_dataset_weights"][0].split("|")
+        ]
+    if "offset" in query_dict:
+        offset = int(query_dict["offset"])
+    if "limit" in query_dict:
+        limit = int(query_dict["limit"])
+    ordered_metrics = ["Accuracy", "Compute", "Memory"]
+    test_data = json.loads(open("controllers/dynaboard_api_test_data.json").read())
+    for model in test_data:
+        dynascore = 0
+        overall = [0, 0, 0]
+        for dataset_index in range(len(model["datasets"])):
+            model["datasets"][dataset_index]["display_scores"] = []
+            for metric_index in range(len(model["datasets"][dataset_index]["scores"])):
+                dynascore += (
+                    model["datasets"][dataset_index]["scores"][metric_index]
+                    * ordered_dataset_weights[dataset_index]
+                    * ordered_metric_weights[metric_index]
+                )
+                model["datasets"][dataset_index]["display_scores"].append(
+                    str(
+                        round(
+                            model["datasets"][dataset_index]["scores"][metric_index], 2
+                        )
+                    )
+                    + ordered_metric_units[metric_index]
+                )
+                overall[metric_index] += (
+                    model["datasets"][dataset_index]["scores"][metric_index]
+                    * ordered_dataset_weights[dataset_index]
+                )
+        model["dynascore"] = dynascore
+        model["overall"] = [
+            str(item[0]) + str(item[1]) for item in zip(overall, ordered_metric_units)
+        ]
+
+    if sort_by == "dynascore":
+        test_data.sort(reverse=reverse_sort, key=lambda model: model["dynascore"])
+    elif sort_by in ordered_metrics:
+        test_data.sort(
+            reverse=reverse_sort,
+            key=lambda model: model["overall"][ordered_metrics.index(sort_by)],
+        )
+    elif sort_by == "name":
+        test_data.sort(reverse=reverse_sort, key=lambda model: model["name"])
+
+    return util.json_encode(test_data[offset : offset + limit])
 
 
 @bottle.get("/tasks/<tid:int>/models")
