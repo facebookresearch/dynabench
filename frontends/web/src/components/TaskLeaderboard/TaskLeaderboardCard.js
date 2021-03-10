@@ -20,7 +20,6 @@ const TaskLeaderboardCard = (props) => {
   const task = props.task;
 
   const [data, setData] = useState([]);
-  const [tags, setTags] = useState([]);
   const [enableWeights, setEnableWeights] = useState(false);
   const [metrics, setMetrics] = useState(
     task?.ordered_metrics?.map((m) => {
@@ -60,8 +59,6 @@ const TaskLeaderboardCard = (props) => {
   };
 
   const setDatasetWeight = (datasetID, newWeight) => {
-    // const temp = { ...datasetWeights };
-    // temp[datasetID] = newWeight;
     setDatasetWeights((state) => {
       const list = state.map((item, j) => {
         if (item.id === datasetID) {
@@ -89,18 +86,32 @@ const TaskLeaderboardCard = (props) => {
   };
 
   const fetchOverallModelLeaderboard = (api, page) => {
+    const metricSum = metrics.reduce((acc, entry) => acc + entry.weight, 0);
+    const orderedMetricWeights = metrics.map((entry) =>
+      metricSum === 0 ? 0.0 : entry.weight / metricSum
+    );
+    const dataSetSum = datasetWeights.reduce(
+      (acc, entry) => acc + entry.weight,
+      0
+    );
+    const orderedDatasetWeights = datasetWeights.map((entry) =>
+      dataSetSum === 0 ? 0.0 : entry.weight / dataSetSum
+    );
+
     api
-      .getOverallModelLeaderboard(
+      .getDynaboardScores(
         taskId,
-        props.location.hash.replace("#", ""),
         10,
-        page
+        page,
+        sort.field,
+        sort.direction,
+        orderedMetricWeights,
+        orderedDatasetWeights
       )
       .then(
         (result) => {
           // const isEndOfPage = (page + 1) * this.state.pageLimit >= result.count;
           setData(result);
-          setTags(result.leaderboard_tags);
         },
         (error) => {
           console.log(error);
@@ -118,7 +129,7 @@ const TaskLeaderboardCard = (props) => {
     fetchOverallModelLeaderboard(context.api, page);
     setIsLoading(false);
     return () => {};
-  }, [page, sort]);
+  }, [page, sort, metrics, datasetWeights]);
 
   return (
     <Card className="my-4">
@@ -141,7 +152,6 @@ const TaskLeaderboardCard = (props) => {
         <OverallModelLeaderBoard
           models={data}
           task={task}
-          tags={tags}
           enableWeights={enableWeights}
           metrics={metrics}
           setMetricWeight={setMetricWeight}

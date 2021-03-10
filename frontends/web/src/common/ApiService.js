@@ -207,6 +207,37 @@ export default class ApiService {
     });
   }
 
+  getDynaboardScores(
+    taskId,
+    limit,
+    offset,
+    sort,
+    sortDirection,
+    metricWeights,
+    datasetWeights
+  ) {
+    const pageQuery = `limit=${limit || 10}&offset=${offset || 0}`;
+    const sortQuery =
+      sort && sortDirection
+        ? `&sort_by=${sort}&sort_direction=${sortDirection}`
+        : "";
+
+    const metricWeightsQuery = metricWeights
+      ? `&ordered_metric_weights=${encodeURIComponent(metricWeights.join("|"))}`
+      : "";
+
+    const datasetWeightsQuery = datasetWeights
+      ? `&ordered_dataset_weights=${encodeURIComponent(
+          datasetWeights.join("|")
+        )}`
+      : "";
+
+    const url = `/models/dynaboard?${pageQuery}${sortQuery}${metricWeightsQuery}${datasetWeightsQuery}`;
+    return this.fetch(`${this.domain}/tasks/${taskId}${url}`, {
+      method: "GET",
+    });
+  }
+
   getOverallModelLeaderboard(taskId, round, limit, offset) {
     const url =
       round === "overall"
