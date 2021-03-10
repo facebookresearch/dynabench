@@ -9,6 +9,7 @@ default_config = {
     "instance_count": 1,
     "eval_metrics": ["accuracy"],
     "perf_metric": "accuracy",
+    "input_keys": ["uid", "context", "hypothesis"],
 }
 
 tasks_config = {

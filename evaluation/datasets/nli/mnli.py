@@ -5,13 +5,15 @@ import os
 import sys
 import tempfile
 
-from datasets.common import BaseDataset, logger
+from datasets.common import logger
+
+from .base import NliBase
 
 
-class MnliBase(BaseDataset):
+class MnliBase(NliBase):
     def __init__(self, task, name, local_path):
-        super().__init__(task=task, name=name)
         self.local_path = local_path
+        super().__init__(task=task, name=name)
 
     def load(self):
         try:
@@ -38,7 +40,7 @@ class MnliBase(BaseDataset):
         else:
             return True
 
-    def field_converter(self, example):
+    def label_field_converter(self, example):
         return {
             "id": example["uid"],
             "answer": example["label"],
