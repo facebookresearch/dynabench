@@ -79,6 +79,7 @@ class BaseDataset(ABC):
         d = DatasetModel()
         if not d.getByName(self.name):  # avoid id increment for unsuccessful creation
             if d.create(name=self.name, task_id=task_id, rid=self.round_id):
+                logger.info(f"Registerd {self.name} in datasets db.")
                 send_eval_request(
                     model_id="*",
                     dataset_name=self.name,
@@ -166,8 +167,8 @@ class BaseDataset(ABC):
 
             # Get performance
             perf, perf_dict = get_eval_metrics(self.task, predictions, target_labels)
-            score_obj["perf"] = round(perf * 100, 2)
-            score_obj["pretty_perf"] = str(score_obj["perf"]) + " %"
+            score_obj["perf"] = perf
+            score_obj["pretty_perf"] = str(perf) + " %"
             score_obj["metadata_json"] = perf_dict
 
             # Get performance breakdown for this round across tags
