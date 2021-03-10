@@ -98,9 +98,6 @@ class ModelModel(BaseModel):
     def getByTid(self, tid):
         return self.dbs.query(Model).filter(Model.tid == tid).all()
 
-    def getByTaskCode(self, task_code):
-        return self.dbs.query(Model).filter(Model.task_code == task_code).all()
-
     def getUserModelsByUid(self, uid, is_current_user=False, n=5, offset=0):
         query_res = self.dbs.query(Model).filter(Model.uid == uid)
         if not is_current_user:

@@ -11,6 +11,7 @@ import boto3
 
 from eval_config import eval_config
 from metrics import get_eval_metrics, tasks_config
+from utils.helpers import send_eval_request
 
 
 sys.path.append("../api")  # noqa
@@ -50,7 +51,7 @@ class BaseDataset(ABC):
             logger.info(f"Dataset {self.name} exists on S3 at {self.s3_url}")
 
         if loaded:
-            self._register_dataset_in_db()
+            self._register_dataset_in_db_and_eval(eval_config)
 
     def _get_data_s3_path(self):
         return os.path.join("datasets", self.task, self.filename)
@@ -72,12 +73,14 @@ class BaseDataset(ABC):
                 return True
         return False
 
-    def _register_dataset_in_db(self) -> bool:
+    def _register_dataset_in_db_and_eval(self, eval_config) -> bool:
+        t = TaskModel()
+        task_id = t.getByTaskCode(self.task).id
         d = DatasetModel()
-        if not d.getByName(self.name):
-            t = TaskModel()
-            task_id = t.getByTaskCode(self.task).id
-            d.create(name=self.name, task_id=task_id, rid=self.round_id)
+        if d.create(name=self.name, task_id=task_id, rid=self.round_id):
+            send_eval_request(
+                model_id="*", dataset_name=self.name, config=eval_config, logger=logger
+            )
 
     def get_output_s3_url(self, endpoint_name):
         prefix = self._get_output_s3_url_prefix(endpoint_name)
