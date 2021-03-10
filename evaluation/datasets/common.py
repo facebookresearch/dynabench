@@ -22,7 +22,7 @@ logger = logging.getLogger("datasets")
 
 
 class BaseDataset(ABC):
-    def __init__(self, task, name, round_id=0, config=eval_config, ext=".jsonl"):
+    def __init__(self, task, name, round_id, config=eval_config, ext=".jsonl"):
         self.task = task
         self.name = name
         self.round_id = round_id

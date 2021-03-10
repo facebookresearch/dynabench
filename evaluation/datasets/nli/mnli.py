@@ -13,7 +13,7 @@ from .base import NliBase
 class MnliBase(NliBase):
     def __init__(self, task, name, local_path):
         self.local_path = local_path
-        super().__init__(task=task, name=name)
+        super().__init__(task=task, name=name, round_id=0)
 
     def load(self):
         try:
