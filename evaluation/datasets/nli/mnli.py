@@ -44,7 +44,7 @@ class MnliBase(NliBase):
         return {
             "id": example["uid"],
             "answer": example["label"],
-            "tags": example.get("tags", ""),
+            "tags": example.get("tags", []),
         }
 
 
