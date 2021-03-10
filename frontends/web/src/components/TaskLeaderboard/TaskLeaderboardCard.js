@@ -58,12 +58,15 @@ const TaskLeaderboardCard = (props) => {
   const [tags, setTags] = useState([]);
   const [enableWeights, setEnableWeights] = useState(false);
   const [metrics, setMetrics] = useState([
-    { id: "acc", label: "Acc", weight: 20 },
-    { id: "compute", label: "Compute", weight: 20 },
-    { id: "memory", label: "Memory", weight: 20 },
-    { id: "fairness", label: "Fairness", weight: 20 },
-    { id: "robustness", label: "Robustness", weight: 20 },
+    { id: "acc", label: "Acc", weight: 2 },
+    { id: "compute", label: "Compute", weight: 2 },
+    { id: "memory", label: "Memory", weight: 2 },
+    { id: "fairness", label: "Fairness", weight: 2 },
+    { id: "robustness", label: "Robustness", weight: 2 },
   ]);
+
+  // Dataset Weights Array of a set of dataset id and corresponding weight.
+  const [datasetWeights, setDatasetWeights] = useState({});
 
   const [sort, setSort] = useState({
     field: "acc",
@@ -76,18 +79,23 @@ const TaskLeaderboardCard = (props) => {
 
   const taskId = props.taskId;
 
-  const setWeightForId = (weightID, newWeight) => {
+  const setMetricWeight = (metricID, newWeight) => {
     setMetrics((state) => {
       const list = state.map((item, j) => {
-        if (item.id === weightID) {
+        if (item.id === metricID) {
           return { ...item, weight: newWeight };
         } else {
           return item;
         }
       });
-
       return list;
     });
+  };
+
+  const setDatasetWeight = (datasetID, newWeight) => {
+    const temp = { ...datasetWeights };
+    temp[datasetID] = newWeight;
+    setDatasetWeights(temp);
   };
 
   const toggleSort = (field) => {
@@ -128,6 +136,13 @@ const TaskLeaderboardCard = (props) => {
 
   const context = useContext(UserContext);
 
+  // Mock up data weights
+  useEffect(() => {
+    setDatasetWeights({ 1: 2, 2: 4 });
+    return () => {};
+  }, []);
+
+  // Call api on sort, page and weights changed.
   useEffect(() => {
     setIsLoading(true);
     fetchOverallModelLeaderboard(context.api, page);
@@ -158,7 +173,9 @@ const TaskLeaderboardCard = (props) => {
           tags={tags}
           enableWeights={enableWeights}
           metrics={metrics}
-          setWeightForId={setWeightForId}
+          setMetricWeight={setMetricWeight}
+          datasetWeights={datasetWeights}
+          setDatasetWeight={setDatasetWeight}
           taskShortName={props.task.shortname}
           sort={sort}
           toggleSort={toggleSort}

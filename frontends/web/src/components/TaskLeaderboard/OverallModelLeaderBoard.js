@@ -16,7 +16,44 @@ const ChevronExpandButton = ({ expanded }) => {
   );
 };
 
-const OverallModelLeaderboardRow = ({ model, metrics }) => {
+const WeightSlider = ({ weight, onWeightChange }) => {
+  return (
+    <Form className="d-flex ml-2">
+      <Form.Control
+        type="range"
+        className="flex-grow-1"
+        size="sm"
+        min={0}
+        max={5}
+        value={weight}
+        onInput={(event) => {
+          // console.log(weight.id, event.target.valueAsNumber);
+          //
+          onWeightChange(event.target.valueAsNumber);
+        }}
+      />
+
+      <span className="fw-lighter flex-grow-0">&nbsp;&nbsp;{weight}/5</span>
+    </Form>
+  );
+};
+
+/**
+ * A Row representing a Models score in the leaderbord.
+ * This component also manages the expansion state of the row.
+ *
+ * @param {*} model The model data
+ * @param {*} metrics Metrcis metadata use for lables and weights.
+ *
+ */
+const OverallModelLeaderboardRow = ({
+  model,
+  metrics,
+  enableWeights,
+  datasetWeights,
+  setDatasetWeight,
+  totalWeight,
+}) => {
   const [expanded, setExpanded] = useState(false);
 
   const dynascore = parseFloat(model.dynascore).toFixed(0);
@@ -72,10 +109,28 @@ const OverallModelLeaderboardRow = ({ model, metrics }) => {
       {expanded &&
         model.datasets &&
         model.datasets.map((dataset) => {
+          const weight = datasetWeights[dataset.id];
+          const calculatedWeight =
+            totalWeight === 0 ? 0 : Math.round((weight / totalWeight) * 100);
           return (
             <tr key={`score-${dataset.name}`}>
               {/* Title */}
-              <td className="text-right pr-4">{dataset.name}</td>
+              <td className="text-right pr-4  text-nowrap">
+                <div className="d-flex justify-content-end">
+                  <span>
+                    {dataset.name}
+                    {!enableWeights && <sup>{calculatedWeight}%</sup>}
+                  </span>
+                  {enableWeights && (
+                    <WeightSlider
+                      weight={weight}
+                      onWeightChange={(newWeight) => {
+                        setDatasetWeight(dataset.id, newWeight);
+                      }}
+                    />
+                  )}
+                </div>
+              </td>
               {dataset.display_scores &&
                 dataset.display_scores.map((score, i) => {
                   return (
@@ -95,49 +150,34 @@ const OverallModelLeaderboardRow = ({ model, metrics }) => {
 };
 
 const MetricWeightTableHeader = ({
-  weight,
-  setWeightForId,
+  metric,
+  setMetricWeight,
   enableWeights,
   total,
   sort,
   toggleSort,
 }) => {
   const calculatedWeight =
-    total === 0 ? 0 : Math.round((weight.weight / total) * 100);
+    total === 0 ? 0 : Math.round((metric.weight / total) * 100);
 
   return (
-    <th className="text-right pr-4 " key={`th-${weight.id}`}>
-      <div onClick={() => toggleSort(weight.id)}>
-        {sort.field === weight.id && sort.direction === "asc" && (
+    <th className="text-right pr-4 " key={`th-${metric.id}`}>
+      <div onClick={() => toggleSort(metric.id)}>
+        {sort.field === metric.id && sort.direction === "asc" && (
           <i className="fas fa-sort-up">&nbsp;</i>
         )}
-        {sort.field === weight.id && sort.direction === "desc" && (
+        {sort.field === metric.id && sort.direction === "desc" && (
           <i className="fas fa-sort-down">&nbsp;</i>
         )}
 
-        {weight.label}
+        {metric.label}
         {!enableWeights && <sup>&nbsp;{calculatedWeight}%</sup>}
       </div>
       {enableWeights && (
-        <Form className="d-flex">
-          <Form.Control
-            type="range"
-            className="flex-grow-1 "
-            size="sm"
-            xs={7}
-            min={0}
-            max={100}
-            value={weight.weight}
-            onInput={(event) => {
-              console.log(weight.id, event.target.valueAsNumber);
-              setWeightForId(weight.id, event.target.valueAsNumber);
-            }}
-          />
-
-          <span className="fw-lighter flex-grow-0">
-            &nbsp;&nbsp;{calculatedWeight}%
-          </span>
-        </Form>
+        <WeightSlider
+          weight={metric.weight}
+          onWeightChange={(newWeight) => setMetricWeight(metric.id, newWeight)}
+        />
       )}
     </th>
   );
@@ -148,25 +188,32 @@ const OverallModelLeaderBoard = ({
   tags,
   enableWeights,
   metrics,
-  setWeightForId,
+  setMetricWeight,
+  datasetWeights,
+  setDatasetWeight,
   taskShortName,
   sort,
   toggleSort,
 }) => {
   const total = metrics?.reduce((sum, metric) => sum + metric.weight, 0);
 
+  const totalDatasetsWeight = Object.values(datasetWeights).reduce(
+    (acc, val) => acc + val,
+    0
+  );
+
   return (
     <Table hover className="mb-0">
       <thead>
         <tr>
           {!enableWeights && <th className="align-baseline">Model</th>}
-          {enableWeights && <th className="align-bottom">Relative Weights</th>}
+          {enableWeights && <th className="align-bottom">Adjust Weights</th>}
 
           {metrics.map((metric) => {
             return (
               <MetricWeightTableHeader
-                weight={metric}
-                setWeightForId={setWeightForId}
+                metric={metric}
+                setMetricWeight={setMetricWeight}
                 enableWeights={enableWeights}
                 total={total}
                 sort={sort}
@@ -184,6 +231,10 @@ const OverallModelLeaderBoard = ({
             model={model}
             metrics={metrics}
             key={`model-${model.model_id}`}
+            enableWeights={enableWeights}
+            datasetWeights={datasetWeights}
+            setDatasetWeight={setDatasetWeight}
+            totalWeight={totalDatasetsWeight}
           />
         ))}
       </tbody>
