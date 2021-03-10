@@ -8,43 +8,6 @@ function rand(min, max) {
   return min + Math.random() * (max - min);
 }
 
-function mockDynaboardDataForModels(data, count) {
-  for (let model of data) {
-    // Mock DynaScore
-    model.dynascore = rand(0, 100);
-    // Mock Metric Lables
-    model.metric_labels = [
-      "Acc",
-      "Compute",
-      "Memory",
-      "Fairness",
-      "Robustness",
-    ];
-    // Mock Overall display_scores
-    model.display_scores = [...Array(model.metric_labels.length)].map(
-      (x, i) => "" + Math.round(rand(0, 1000)) + " units"
-    );
-    // Mock dataset display_scores
-
-    let datasets = [];
-
-    for (let i = 0; i < count; i++) {
-      let dataset = {};
-      dataset.id = i + 1;
-      dataset.name = "Round " + (i + 1);
-      dataset.display_scores = [...Array(model.metric_labels.length)].map(
-        (x, i) => "" + Math.round(rand(0, 1000)) + " units"
-      );
-
-      datasets.push(dataset);
-    }
-
-    model.datasets = datasets;
-  }
-
-  return data;
-}
-
 const SortDirection = {
   ASC: "asc",
   DESC: "desc",
@@ -54,19 +17,23 @@ const SortDirection = {
 };
 
 const TaskLeaderboardCard = (props) => {
+  const task = props.task;
+
   const [data, setData] = useState([]);
   const [tags, setTags] = useState([]);
   const [enableWeights, setEnableWeights] = useState(false);
-  const [metrics, setMetrics] = useState([
-    { id: "acc", label: "Acc", weight: 2 },
-    { id: "compute", label: "Compute", weight: 2 },
-    { id: "memory", label: "Memory", weight: 2 },
-    { id: "fairness", label: "Fairness", weight: 2 },
-    { id: "robustness", label: "Robustness", weight: 2 },
-  ]);
+  const [metrics, setMetrics] = useState(
+    task?.ordered_metrics?.map((m) => {
+      return { id: m, label: m, weight: 1 };
+    })
+  );
 
   // Dataset Weights Array of a set of dataset id and corresponding weight.
-  const [datasetWeights, setDatasetWeights] = useState({});
+  const [datasetWeights, setDatasetWeights] = useState(
+    task?.ordered_datasets?.map((ds) => {
+      return { id: ds.id, weight: 1 };
+    })
+  );
 
   const [sort, setSort] = useState({
     field: "acc",
@@ -93,9 +60,18 @@ const TaskLeaderboardCard = (props) => {
   };
 
   const setDatasetWeight = (datasetID, newWeight) => {
-    const temp = { ...datasetWeights };
-    temp[datasetID] = newWeight;
-    setDatasetWeights(temp);
+    // const temp = { ...datasetWeights };
+    // temp[datasetID] = newWeight;
+    setDatasetWeights((state) => {
+      const list = state.map((item, j) => {
+        if (item.id === datasetID) {
+          return { ...item, weight: newWeight };
+        } else {
+          return item;
+        }
+      });
+      return list;
+    });
   };
 
   const toggleSort = (field) => {
@@ -123,7 +99,7 @@ const TaskLeaderboardCard = (props) => {
       .then(
         (result) => {
           // const isEndOfPage = (page + 1) * this.state.pageLimit >= result.count;
-          setData(mockDynaboardDataForModels(result.data, result.count));
+          setData(result);
           setTags(result.leaderboard_tags);
         },
         (error) => {
@@ -135,12 +111,6 @@ const TaskLeaderboardCard = (props) => {
   const paginate = (component, state) => {};
 
   const context = useContext(UserContext);
-
-  // Mock up data weights
-  useEffect(() => {
-    setDatasetWeights({ 1: 2, 2: 4 });
-    return () => {};
-  }, []);
 
   // Call api on sort, page and weights changed.
   useEffect(() => {
@@ -170,6 +140,7 @@ const TaskLeaderboardCard = (props) => {
       <Card.Body className="p-0 leaderboard-container">
         <OverallModelLeaderBoard
           models={data}
+          task={task}
           tags={tags}
           enableWeights={enableWeights}
           metrics={metrics}

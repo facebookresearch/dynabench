@@ -845,19 +845,21 @@ class TaskPage extends React.Component {
               <Row>
                 <Col xs={12} md={12}>
                   {/* {this.state.modelLeaderBoardData.length ? ( */}
-                  <Annotation
-                    placement="left"
-                    tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
-                  >
-                    <TaskLeaderboardCard
-                      {...this.props}
-                      modelLeaderBoardData={this.state.modelLeaderBoardData}
-                      modelLeaderBoardTags={this.state.modelLeaderBoardTags}
-                      task={this.state.task}
-                      taskId={this.state.taskId}
-                      displayRoundId={this.state.displayRoundId}
-                    />
-                  </Annotation>
+                  {this.state.task && this.state.task.ordered_datasets && (
+                    <Annotation
+                      placement="left"
+                      tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
+                    >
+                      <TaskLeaderboardCard
+                        {...this.props}
+                        modelLeaderBoardData={this.state.modelLeaderBoardData}
+                        modelLeaderBoardTags={this.state.modelLeaderBoardTags}
+                        task={this.state.task}
+                        taskId={this.state.taskId}
+                        displayRoundId={this.state.displayRoundId}
+                      />
+                    </Annotation>
+                  )}
                   {/* ) : null} */}
                 </Col>
               </Row>

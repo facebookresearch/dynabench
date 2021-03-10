@@ -4,7 +4,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 import decode from "jwt-decode";
-import * as download from 'downloadjs';
+import * as download from "downloadjs";
 
 function delay(t, v) {
   return new Promise(function (resolve) {
@@ -27,11 +27,11 @@ export default class ApiService {
     this.getCredentials = this.getCredentials.bind(this);
     this.setMturkMode = this.setMturkMode.bind(this);
     this.updating_already = false;
-    this.mode = 'normal';
+    this.mode = "normal";
   }
 
   setMturkMode() {
-    this.mode = 'mturk';
+    this.mode = "mturk";
   }
 
   login(email, password) {
@@ -72,11 +72,11 @@ export default class ApiService {
     });
   }
 
-  updateExample(id, target, fooled, uid=null) {
+  updateExample(id, target, fooled, uid = null) {
     var obj = {};
     obj.target_pred = target;
     obj.model_wrong = fooled;
-    if (this.mode === 'mturk') {
+    if (this.mode === "mturk") {
       obj.uid = uid;
     }
     return this.fetch(`${this.domain}/examples/${id}`, {
@@ -95,7 +95,7 @@ export default class ApiService {
   updateTaskSettings(taskId, settings) {
     return this.fetch(`${this.domain}/tasks/${taskId}/settings`, {
       method: "PUT",
-      body: JSON.stringify({settings: settings}),
+      body: JSON.stringify({ settings: settings }),
     });
   }
 
@@ -127,7 +127,7 @@ export default class ApiService {
   getAPIToken() {
     return this.fetch(`${this.domain}/authenticate/generate_api_token`, {
       method: "GET",
-    })
+    });
   }
 
   getTasks() {
@@ -166,7 +166,15 @@ export default class ApiService {
     });
   }
 
-  publishModel({ modelId, name, description, params, languages, license, model_card }) {
+  publishModel({
+    modelId,
+    name,
+    description,
+    params,
+    languages,
+    license,
+    model_card,
+  }) {
     return this.fetch(`${this.domain}/models/${modelId}/publish`, {
       method: "PUT",
       body: JSON.stringify({
@@ -175,7 +183,7 @@ export default class ApiService {
         params,
         languages,
         license,
-        model_card
+        model_card,
       }),
     });
   }
@@ -202,7 +210,7 @@ export default class ApiService {
   getOverallModelLeaderboard(taskId, round, limit, offset) {
     const url =
       round === "overall"
-        ? `/models?limit=${limit || 10}&offset=${offset || 0}`
+        ? `/models/dynaboard?limit=${limit || 10}&offset=${offset || 0}`
         : `/rounds/${round}/models?limit=${limit || 10}&offset=${offset || 0}`;
     return this.fetch(`${this.domain}/tasks/${taskId}${url}`, {
       method: "GET",
@@ -219,10 +227,10 @@ export default class ApiService {
     });
   }
 
-  getUser(id, badges=false) {
+  getUser(id, badges = false) {
     var url = `${this.domain}/users/${id}`;
     if (badges) {
-      url += '/badges';
+      url += "/badges";
     }
     return this.fetch(url, {
       method: "GET",
@@ -241,22 +249,47 @@ export default class ApiService {
     });
   }
 
-  getRandomContext(tid, rid, tags=[]) {
-    return this.fetch(`${this.domain}/contexts/${tid}/${rid}?tags=${encodeURIComponent(tags.join('|'))}`, {
-      method: "GET",
-    });
+  getRandomContext(tid, rid, tags = []) {
+    return this.fetch(
+      `${this.domain}/contexts/${tid}/${rid}?tags=${encodeURIComponent(
+        tags.join("|")
+      )}`,
+      {
+        method: "GET",
+      }
+    );
   }
 
-  getRandomExample(tid, rid, tags=[]) {
-    return this.fetch(`${this.domain}/examples/${tid}/${rid}?tags=${encodeURIComponent(tags.join('|'))}`, {
-      method: "GET",
-    });
+  getRandomExample(tid, rid, tags = []) {
+    return this.fetch(
+      `${this.domain}/examples/${tid}/${rid}?tags=${encodeURIComponent(
+        tags.join("|")
+      )}`,
+      {
+        method: "GET",
+      }
+    );
   }
 
-  getRandomFilteredExample(tid, rid, minNumFlags, maxNumFlags, minNumDisagreements, maxNumDisagreements, tags=[]) {
-    return this.fetch(`${this.domain}/examples/${tid}/${rid}/filtered/${minNumFlags}/${maxNumFlags}/${minNumDisagreements}/${maxNumDisagreements}?tags=${encodeURIComponent(tags.join('|'))}`, {
-      method: "GET",
-    });
+  getRandomFilteredExample(
+    tid,
+    rid,
+    minNumFlags,
+    maxNumFlags,
+    minNumDisagreements,
+    maxNumDisagreements,
+    tags = []
+  ) {
+    return this.fetch(
+      `${
+        this.domain
+      }/examples/${tid}/${rid}/filtered/${minNumFlags}/${maxNumFlags}/${minNumDisagreements}/${maxNumDisagreements}?tags=${encodeURIComponent(
+        tags.join("|")
+      )}`,
+      {
+        method: "GET",
+      }
+    );
   }
 
   getModel(modelId) {
@@ -266,18 +299,13 @@ export default class ApiService {
   }
 
   setNotificationsSeen(userId) {
-    return this.fetch(
-      `${this.domain}/notifications/seen`,
-      {
-        method: "PUT",
-      }
-    );
+    return this.fetch(`${this.domain}/notifications/seen`, {
+      method: "PUT",
+    });
   }
   getNotifications(userId, limit, offset) {
     return this.fetch(
-      `${this.domain}/notifications?limit=${limit || 10}&offset=${
-        offset || 0
-      }`,
+      `${this.domain}/notifications?limit=${limit || 10}&offset=${offset || 0}`,
       {
         method: "GET",
       }
@@ -295,7 +323,10 @@ export default class ApiService {
     );
   }
 
-  getModelResponse(modelUrl, { context, hypothesis, answer, image_url, question, insight }) {
+  getModelResponse(
+    modelUrl,
+    { context, hypothesis, answer, image_url, question, insight }
+  ) {
     return this.doFetch(
       modelUrl,
       {
@@ -318,7 +349,7 @@ export default class ApiService {
     if (rid !== null) {
       export_link += `/rounds/${rid}`;
     }
-    export_link += '/export';
+    export_link += "/export";
     return this.fetch(export_link, {
       method: "GET",
     }).then((res) => {
@@ -350,12 +381,12 @@ export default class ApiService {
 
   explainExample(id, type, explanation, uid = null) {
     var obj = {};
-    if (type === 'example') {
+    if (type === "example") {
       obj.example_explanation = explanation;
-    } else if (type === 'model') {
+    } else if (type === "model") {
       obj.model_explanation = explanation;
     }
-    if (this.mode === 'mturk') {
+    if (this.mode === "mturk") {
       obj.uid = uid;
     }
     return this.fetch(`${this.domain}/examples/${id}`, {
@@ -365,8 +396,8 @@ export default class ApiService {
   }
 
   retractExample(id, uid = null) {
-    let obj = {retracted: true};
-    if (this.mode === 'mturk') {
+    let obj = { retracted: true };
+    if (this.mode === "mturk") {
       obj.uid = uid;
     }
     return this.fetch(`${this.domain}/examples/${id}`, {
@@ -376,12 +407,17 @@ export default class ApiService {
   }
 
   isTaskOwner(user, tid) {
-    return user.task_permissions?.filter((task_permission) => tid === task_permission.tid && "owner" === task_permission.type).length > 0;
+    return (
+      user.task_permissions?.filter(
+        (task_permission) =>
+          tid === task_permission.tid && "owner" === task_permission.type
+      ).length > 0
+    );
   }
 
   validateExample(id, label, mode, metadata = {}, uid = null) {
-    let obj = {label: label, mode: mode, metadata: metadata};
-    if (this.mode === 'mturk') {
+    let obj = { label: label, mode: mode, metadata: metadata };
+    if (this.mode === "mturk") {
       obj.uid = uid;
     }
     return this.fetch(`${this.domain}/validations/${id}`, {
@@ -391,8 +427,8 @@ export default class ApiService {
   }
 
   flagExample(id, uid = null) {
-    let obj = {flagged: true};
-    if (this.mode === 'mturk') {
+    let obj = { flagged: true };
+    if (this.mode === "mturk") {
       obj.uid = uid;
     }
     return this.fetch(`${this.domain}/examples/${id}`, {
@@ -412,7 +448,17 @@ export default class ApiService {
     );
   }
 
-  storeExample(tid, rid, uid, cid, hypothesis, target, response, metadata, tag=null) {
+  storeExample(
+    tid,
+    rid,
+    uid,
+    cid,
+    hypothesis,
+    target,
+    response,
+    metadata,
+    tag = null
+  ) {
     return this.fetch(`${this.domain}/examples`, {
       method: "POST",
       body: JSON.stringify({
@@ -515,12 +561,15 @@ export default class ApiService {
   }
 
   doFetch(url, options, includeCredentials = false) {
-    const token = (this.mode !== 'mturk') ? this.getToken() : null;
+    const token = this.mode !== "mturk" ? this.getToken() : null;
     const headers = {
-      "Accept": "application/json",
+      Accept: "application/json",
       "Content-Type": "application/json",
-      "Authorization": token ? "Bearer " + token :
-        (this.mode === "mturk" ? "turk" : "None"),
+      Authorization: token
+        ? "Bearer " + token
+        : this.mode === "mturk"
+        ? "turk"
+        : "None",
     };
     options = {
       headers,
@@ -529,12 +578,11 @@ export default class ApiService {
     if (includeCredentials) {
       options.credentials = "include";
     }
-    return fetch(url, options)
-      .then(this.errorHandler);
+    return fetch(url, options).then(this.errorHandler);
   }
 
   fetch(url, options) {
-    const token = (this.mode !== 'mturk') ? this.getToken() : null;
+    const token = this.mode !== "mturk" ? this.getToken() : null;
     if (
       !!token &&
       this.isTokenExpired(token) &&
@@ -566,8 +614,7 @@ export default class ApiService {
           return Promise.reject(responseInJson);
         });
       }
-    }
-    catch (error) {
+    } catch (error) {
       console.log(error);
     }
   }

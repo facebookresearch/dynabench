@@ -48,6 +48,7 @@ const WeightSlider = ({ weight, onWeightChange }) => {
  */
 const OverallModelLeaderboardRow = ({
   model,
+  ordered_datasets,
   metrics,
   enableWeights,
   datasetWeights,
@@ -60,6 +61,11 @@ const OverallModelLeaderboardRow = ({
 
   const totalRows = expanded ? model.datasets.length + 1 : 1;
 
+  const weightsLookup = datasetWeights.reduce((acc, entry) => {
+    acc[entry.id] = entry.weight;
+    return acc;
+  }, {});
+
   return (
     <>
       <tr key={model.model_id} onClick={() => setExpanded(!expanded)}>
@@ -68,30 +74,15 @@ const OverallModelLeaderboardRow = ({
             {model.model_name}
           </Link>{" "}
           <Link to={`/users/${model.owner_id}#profile`} className="btn-link">
-            ({model.owner})
+            ({model.username})
           </Link>
           <div style={{ float: "right" }}>
             <ChevronExpandButton expanded={expanded} />
           </div>
         </td>
 
-        {/* {tags.map((tag) => {
-          let tag_result = "-";
-          if (model.metadata_json && model.metadata_json.perf_by_tag) {
-            let selected_tag = model.metadata_json.perf_by_tag.filter(
-              (t) => t.tag === tag
-            );
-            if (selected_tag.length > 0)
-              tag_result = parseFloat(selected_tag[0].perf).toFixed(2) + "%";
-          }
-          return (
-            <td className="text-right  pr-4" key={`${tag}-${model.model_id}`}>
-              {tag_result}
-            </td>
-          );
-        })} */}
         {model &&
-          model.display_scores.map((score, i) => {
+          model.overall.map((score, i) => {
             return (
               <td
                 className="text-right pr-4"
@@ -109,7 +100,7 @@ const OverallModelLeaderboardRow = ({
       {expanded &&
         model.datasets &&
         model.datasets.map((dataset) => {
-          const weight = datasetWeights[dataset.id];
+          const weight = weightsLookup[dataset.id];
           const calculatedWeight =
             totalWeight === 0 ? 0 : Math.round((weight / totalWeight) * 100);
           return (
@@ -185,6 +176,7 @@ const MetricWeightTableHeader = ({
 
 const OverallModelLeaderBoard = ({
   models,
+  task,
   tags,
   enableWeights,
   metrics,
@@ -197,8 +189,8 @@ const OverallModelLeaderBoard = ({
 }) => {
   const total = metrics?.reduce((sum, metric) => sum + metric.weight, 0);
 
-  const totalDatasetsWeight = Object.values(datasetWeights).reduce(
-    (acc, val) => acc + val,
+  const totalDatasetsWeight = datasetWeights?.reduce(
+    (acc, dataset_weight) => acc + dataset_weight.weight,
     0
   );
 
@@ -229,6 +221,7 @@ const OverallModelLeaderBoard = ({
         {models.map((model) => (
           <OverallModelLeaderboardRow
             model={model}
+            ordered_datasets={task.ordered_datasets}
             metrics={metrics}
             key={`model-${model.model_id}`}
             enableWeights={enableWeights}
