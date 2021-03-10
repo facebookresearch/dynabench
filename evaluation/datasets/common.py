@@ -111,6 +111,7 @@ class BaseDataset(ABC):
                 "InstanceType": task_config["instance_config"]["instance_type"],
                 "InstanceCount": task_config["instance_count"],
             },
+            DataProcessing={"InputFilter": f"${task_config['input_keys']}"},
         )
         return True
 
@@ -118,7 +119,7 @@ class BaseDataset(ABC):
         tf = tempfile.mkstemp(prefix=self.name)[1]
         self.s3_client.download_file(self.s3_bucket, self._get_data_s3_path(), tf)
         data = [json.loads(l) for l in open(tf).readlines()]
-        labels = [self.field_converter(example) for example in data]
+        labels = [self.label_field_converter(example) for example in data]
         os.remove(tf)
         if not self._n_examples:
             self._n_examples = len(labels)
@@ -142,7 +143,10 @@ class BaseDataset(ABC):
         target_tags = {t["id"]: t["tags"] for t in target_examples}
         target_tags = [target_tags[id] for id in target_ids]
 
-        predictions = {p["id"]: p["label"] for p in predictions}
+        predictions = [
+            self.pred_field_converter(prediction) for prediction in predictions
+        ]
+        predictions = {p["id"]: p["pred"] for p in predictions}
         try:
             predictions = [predictions[id] for id in target_ids]
             assert len(predictions) == len(target_labels)
@@ -159,7 +163,7 @@ class BaseDataset(ABC):
             # Get performance
             perf, perf_dict = get_eval_metrics(self.task, predictions, target_labels)
             score_obj["perf"] = round(perf * 100, 2)
-            score_obj["pretty_perf"] = str(round(perf * 100, 2)) + " %"
+            score_obj["pretty_perf"] = str(score_obj["perf"]) + " %"
             score_obj["metadata_json"] = perf_dict
 
             # Get performance breakdown for this round across tags
@@ -191,19 +195,39 @@ class BaseDataset(ABC):
     @abstractmethod
     def load(self) -> bool:
         """
-        this function loads the dataset to s3 and return True if succcessful
+        This function loads the full dataset, including both input keys and labels keys,
+        to s3 and return True if succcessful. Implemented on dataset level.
+        The input keys must be consistent with the task config at metrics.task_config,
+        the label keys will be consistent with those in self.label_field_converter,
+        i.e. you can think of this function as a input_field_converter + send to S3
         """
         raise NotImplementedError
 
     @abstractmethod
-    def field_converter(self, example):
+    def label_field_converter(self, example):
         """
-        convert the example to a format expected by eval.
-        A converted example should look like
+        Convert the example to a format expected by self.eval,
+        the input is whatever that has been sent to S3, hence this function
+        should normally be implemented on dataset level,
+        and the output should have the following keys,
         {
             "id": <a unique identifier>,
-            "answer": <e.g. a label>,
-            "tag": <can be empty>
+            "answer": <the correct answer that will be used to calculate metrics>,
+            "tags": <can be empty>
+        }
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def pred_field_converter(self, example):
+        """
+        Convert the prediction to a format expected by self.eval,
+        the input follows the format of required handler output defined in Dynalab,
+        hence this function should normally be implemented on task level,
+        and the output should have the following keys
+        {
+            "id": <a unique identifier>,
+            "pred": <the prediction that will be used to calculate metrics>,
         }
         """
         raise NotImplementedError
