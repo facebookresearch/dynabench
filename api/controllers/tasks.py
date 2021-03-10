@@ -259,6 +259,7 @@ def get_dynaboard_starter_code(tid):
         sort_by = query_dict["sort_by"][0]
     if "sort_direction" in query_dict:
         sort_direction = query_dict["sort_direction"][0]
+    print(sort_direction)
 
     if sort_direction == "asc":
         reverse_sort = True
@@ -276,9 +277,9 @@ def get_dynaboard_starter_code(tid):
             float(item) for item in query_dict["ordered_dataset_weights"][0].split("|")
         ]
     if "offset" in query_dict:
-        offset = int(query_dict["offset"])
+        offset = int(query_dict["offset"][0])
     if "limit" in query_dict:
-        limit = int(query_dict["limit"])
+        limit = int(query_dict["limit"][0])
     ordered_metrics = ["Accuracy", "Compute", "Memory"]
     test_data = json.loads(open("controllers/dynaboard_api_test_data.json").read())
     for model in test_data:
@@ -316,8 +317,8 @@ def get_dynaboard_starter_code(tid):
             reverse=reverse_sort,
             key=lambda model: model["overall"][ordered_metrics.index(sort_by)],
         )
-    elif sort_by == "name":
-        test_data.sort(reverse=reverse_sort, key=lambda model: model["name"])
+    elif sort_by == "model_name":
+        test_data.sort(reverse=reverse_sort, key=lambda model: model["model_name"])
 
     return util.json_encode(test_data[offset : offset + limit])
 
