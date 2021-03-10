@@ -114,13 +114,13 @@ class JobScheduler:
         for job in self._submitted:
             _update_job_status(job)
             if job.status["TransformJobStatus"] != "InProgress":
-                if job.status["TransformJobStatus"] == "Completed" and round_end_dt(
-                    job.status["TransformEndTime"]
-                ) < datetime.now(tzlocal()):
-                    self._completed.append(job)
-                    done_job_names.add(job.job_name)
-                elif job.status["TransformJobStatus"] == "Failed":
+                if job.status["TransformJobStatus"] != "Completed":
                     self._failed.append(job)
+                    done_job_names.add(job.job_name)
+                elif round_end_dt(job.status["TransformEndTime"]) < datetime.now(
+                    tzlocal()
+                ):
+                    self._completed.append(job)
                     done_job_names.add(job.job_name)
         self._submitted = [
             job for job in self._submitted if job.job_name not in done_job_names
