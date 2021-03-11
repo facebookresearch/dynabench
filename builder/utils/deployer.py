@@ -176,7 +176,7 @@ class ModelDeployer:
 
         # build docker
         docker_build_args = f"--build-arg tarball_name={shlex.quote(self.unique_name)} --build-arg requirements={shlex.quote(str(self.config['requirements']))} --build-arg setup={shlex.quote(str(self.config['setup']))}"
-        docker_build_command = f"docker build -t {shlex.quote(self.unique_name)} -f Dockerfile {docker_build_args} ."
+        docker_build_command = f"docker build --network host -t {shlex.quote(self.unique_name)} -f Dockerfile {docker_build_args} ."
         with subprocess.Popen(
             shlex.split(docker_build_command),
             bufsize=1,
