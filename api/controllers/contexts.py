@@ -18,10 +18,7 @@ from models.user import UserModel
 @bottle.get("/contexts/<tid:int>/<rid:int>/min")
 def getContext(tid, rid):
     query_dict = parse_qs(bottle.request.query_string)
-    tags = None
-    if "tags" in query_dict and len(query_dict["tags"]) > 0:
-        tags = query_dict["tags"][0].split("|")
-
+    tags = _getTags(query_dict)
     return _getContext(tid, rid, tags=tags)
 
 
@@ -29,11 +26,22 @@ def getContext(tid, rid):
 @_auth.requires_auth_or_turk
 def getUniformContext(credentials, tid, rid):
     query_dict = parse_qs(bottle.request.query_string)
+    tags = _getTags(query_dict)
+    return _getContext(tid, rid, "uniform", tags=tags)
+
+
+@bottle.get("/contexts/<tid:int>/<rid:int>/least_fooled")
+def getRandomMinLeastFooledContext(tid, rid):
+    query_dict = parse_qs(bottle.request.query_string)
+    tags = _getTags(query_dict)
+    return _getContext(tid, rid, "least_fooled", tags=tags)
+
+
+def _getTags(query_dict):
     tags = None
     if "tags" in query_dict and len(query_dict["tags"]) > 0:
         tags = query_dict["tags"][0].split("|")
-
-    return _getContext(tid, rid, "uniform", tags)
+    return tags
 
 
 def _getContext(tid, rid, method="min", tags=None):
@@ -44,6 +52,8 @@ def _getContext(tid, rid, method="min", tags=None):
         context = c.getRandom(round.id, n=1, tags=tags)
     elif method == "min":
         context = c.getRandomMin(round.id, n=1, tags=tags)
+    elif method == "least_fooled":
+        context = c.getRandomLeastFooled(round.id, n=1, tags=tags)
     if not context:
         bottle.abort(500, f"No contexts available ({round.id})")
     context = context[0].to_dict()

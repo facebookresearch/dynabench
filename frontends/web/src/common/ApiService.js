@@ -241,8 +241,8 @@ export default class ApiService {
     });
   }
 
-  getRandomContext(tid, rid, tags=[]) {
-    return this.fetch(`${this.domain}/contexts/${tid}/${rid}?tags=${encodeURIComponent(tags.join('|'))}`, {
+  getRandomContext(tid, rid, tags=[], method="min") {
+    return this.fetch(`${this.domain}/contexts/${tid}/${rid}/${method}?tags=${encodeURIComponent(tags.join('|'))}`, {
       method: "GET",
     });
   }
