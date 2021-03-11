@@ -175,6 +175,7 @@ class CreateVQAMturkInterface extends React.Component {
                 this.props.taskConfig.task_id,
                 this.state.task.cur_round,
                 this.getTagList(this.props),
+                "least_fooled"
             )
             .then(result => {
                 this.resetStateToContext(result);
