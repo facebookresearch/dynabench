@@ -79,7 +79,7 @@ class BaseDataset(ABC):
         d = DatasetModel()
         if not d.getByName(self.name):  # avoid id increment for unsuccessful creation
             if d.create(name=self.name, task_id=task_id, rid=self.round_id):
-                logger.info(f"Registerd {self.name} in datasets db.")
+                logger.info(f"Registered {self.name} in datasets db.")
                 send_eval_request(
                     model_id="*",
                     dataset_name=self.name,

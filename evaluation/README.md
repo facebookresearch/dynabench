@@ -1,52 +1,61 @@
 # Evaluation server developer guide
-
+## Terminology
+A dataset: a single evaluation set that contains input examples and their corresponding labels.
+A task: a collection of evaluation sets. Tasks are identified by a task code on evaluation cloud. Currently we have four published tasks: nli, hs, sentiment and qa.
 ## Tasks
-To add new tasks, you need to add / update the task config at
+Assume you've added a new task in Dynabench database, whose task code is `my-task` and task id is `n`. To start model upload and evaluation for your task, first create a new file in `dynalab` repo (https://github.com/fairinternal/dynalab) at
 ```
-metrics.task_config
+dynalab/tasks/my-task.py
 ```
-See the existing configs there for how to add / update configs.
+We now define the expected input and output for all models that belong to this task, i.e. task I/O. Since both input and output will be json serialized, defining the I/O is essentially defining the keys of the json object. To define the input format, simply add a test input example, such as
+```
+data = {
+    "uid": "xxx",
+    "context": "this is a test example",
+    "hypothesis": "which specifies the input keys",
+}
+```
+Note your input should always contain an `id` or equivalent field to uniquely identify an example.
 
-At the moment, you need to define the task I/O in both Dynalab and Dynabench. The input for prediction is defined in
-
+The output format is defined by a `verify_response` method that will be used to validate model response, i.e. a single json object. The model output should encompass both the keys for batch evaluation (i.e. an example identifier passed from input, and a definite prediction) and talking to the endpoint (e.g. some additional insights of the inference such as probability list). To do this, declare a `TaskIO` class that inherits `BaseTaskIO`. Your class has to be called `TaskIO` so don't rename it.
 ```
-dynalab.tasks.<your_task> # by providing test example
+from dynalab.tasks.common import BaseTaskIO
+class TaskIO(BaseTaskIO):
+    def __init__(self):
+        BaseTaskIO.__init__(self, data)
+    def verify_response(self, response):
+        # define your method here, the following code is just a demo
+        assert "id" in response and response["id"] == self.data["uid"]
+        assert "pred" in response and isinstance(response["pred"], dict)
+        assert "prob" in response, "prob must be in response"
 ```
-and
+Now that we've defined the task I/O, let's go back to dynabench and sync these requirements. In dynabench, you need to add / update the task config at
 ```
-metrics.task_config[<your_task>].input_keys # by providing the list of input keys
+evaluation/metrics/task_config.py
 ```
-i.e. the keys in the two places should be exactly the same.
-
-The handler output is defined by
+See the existing configs there for how to add / update configs. Specifically, the `input_keys` field is the list of keys in the test example provided in dynalab, e.g. in our examples you should set
 ```
-dynalab.task.TaskIO.verify_response
+{
+    "input_keys": ["uid", "context", "hypothesis]
+}
 ```
-which is a function to verify model output, including both the keys used for batch evaluation (i.e. used in `dataset.pred_field_converter`) and `CreateInterface`.
 
 ## Datasets
-A dataset is identified by a unique string (dataset name) that consists of lower case letters, numbers and dash (-) only. Registered new datasets will be uploaded to our S3 bucket and written into prod database, which will then trigger evaluations on all models belong to the dataset's task. For standard datasets, you only need to take care of the sending to S3 and field conversions, and all the rest are shared pipelines. It's also possible to implement non-standard dataset, but you will need to implement the evaluation functions to make it compatible with upstream uploaded models and downstream APIs.
+A dataset is identified by a unique string (dataset name) that consists of lower case letters, numbers and dash (-) only. Registered new datasets will be uploaded to our S3 bucket and written into prod database, which will then trigger evaluations on all models belong to the dataset's task. For standard datasets, you only need to take care of the sending to S3 and field conversions, and all the rest are shared pipelines. It's also possible to implement non-standard datasets, but you will need to implement the evaluation functions to make it compatible with upstream uploaded models and downstream APIs.
 
-Standard dataset files are normally `.jsonl` files where each line is an example expressed in json format. To register a new standard dataset,
+Standard dataset files are normally `.jsonl` files where each line is an input example in json format. To register a new standard dataset,
 
-1. All datasets should inherit the
+1. All datasets should inherit the base class
    ```
    datasets.common.BaseDataset
    ```
-   and requires defining the dataset name, task code, and round id. If your dataset does not belong to any rounds, set it to 0.
-2. You need to implement all the abstract methods for your dataset, currently these include `load`, `label_field_converter` and `pred_field_converter`.
+   which requires defining the dataset name, task code, and round id. If your dataset does not belong to any rounds, set it to 0.
+2. You must implement all the abstract methods for your dataset, and currently these include `load`, `label_field_converter` and `pred_field_converter`.
 
     2.1 `def load(self) -> bool`
 
-    This is the function to send the dataset to pre-defined S3 path and should be implemented for each dataset. The dataset file must include both input and correct output. There are two steps involved for this function: input field conversion and send to S3.
-
-    Input field conversion must be consistent with those expected in
-    ```
-    metrics.task_config[<your_task>].input_keys
-    ```
-    and bear in mind that only these keys will be sent to model for inference.
-
-    The S3 path information can be obtained by
+    This is the function to send the dataset to pre-defined S3 path and should be implemented for each dataset. The examples in the input file must include all keys specified in your dynalab test example, plus the labels for computing metrics. Therefore, this function will normally contain two steps: input field conversion and send to S3.
+    The S3 path information can be obtained from pre-defined base attributes and methods:
     ```
     {
         s3_bucket: self.s3_bucket,
@@ -63,7 +72,7 @@ Standard dataset files are normally `.jsonl` files where each line is an example
          "tags":
      }
     ```
-    where `id` is the example identifier to join the example and model prediction. `answer` is the correct label and forms the element in the the expected `targets` in your task metric function (see `Metrics` section for more information). `tags` are a list of strings that assign some additional information to each example for extra analysis, and the metrics will be computed for each tag and stored in `perf_by_tag`.
+    where `id` is the unique example identifier, `answer` is the correct label and forms the element in the the expected `targets` in your task metric function (see `Metrics` section for more information). `tags` are a list of strings that assign some additional information to each example for extra analysis, and the metrics will be computed for each tag and stored in `perf_by_tag`. You can assign an empty list `[]` here if there are no tags.
 
     2.3 `def pred_field_converter(self, example)`
 
@@ -74,19 +83,19 @@ Standard dataset files are normally `.jsonl` files where each line is an example
          "pred":
      }
      ```
-    where `id` is the example identifier same as that in `label_field_converter`. `pred` is the final prediction from the model that will be used to compute metrics.
+    where `id` is the example identifier, and `pred` is the final prediction from the model that will be used to compute metrics.
 3. Once the class is implemented, you need to register your dataset in
    ```
    datasets.__init__.load_datasets
    ```
    The key is your unique dataset name, same as your `dataset.name` attribute, and the value is the pointer to your dataset class with instantiation.
 
-When evaluation server starts, it will call `load_datasets` function and scan all registered datasets. On dataset instantiation, a dataset will be sent to S3 using the `load` function if not already present there. Then if the dataset is present on S3, it will add this dataset into `datasets` table if not already present, and upon successful creation of db entry it will send a request to evaluate all existing models belonging to that task. Note that evaluation request is triggered by new entries in db (which will only happen if a dataset exists on S3), and merely uploading datasets to S3 (e.g. updating the dataset content) will not trigger new evaluations.
+When the evaluation server starts, it will call `load_datasets` function and scan all registered datasets. On dataset instantiation, a dataset will be sent to S3 using the `load` function if not already present there. Then if the dataset is present on S3, it will add this dataset into `datasets` table if not already present, and upon successful creation of db entry it will send a request to evaluate all existing models belonging to that task. Note that evaluation request is triggered by new entries in db (which will only happen if a dataset exists on S3), and merely uploading datasets to S3 (e.g. updating the dataset content) will not trigger new evaluations.
 
 
 ## Metrics
 The evaluation metrics, such as accuracy, f1, etc. are implemented in the metrics module. To add a new metric, you need to
-1. Implement the compuation function in `metrics.metrics`, the function header should always be
+1. Implement the computation function in `metrics.metrics`, the function header should always be
    ```
    get_<metric_name>(predictions:list, targets:list)
    ```
