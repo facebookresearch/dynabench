@@ -73,7 +73,7 @@ const OverallModelLeaderboardRow = ({
           <Link to={`/models/${model.model_id}`} className="btn-link">
             {model.model_name}
           </Link>{" "}
-          <Link to={`/users/${model.owner_id}#profile`} className="btn-link">
+          <Link to={`/users/${model.uid}#profile`} className="btn-link">
             ({model.username})
           </Link>
           <div style={{ float: "right" }}>
@@ -82,19 +82,37 @@ const OverallModelLeaderboardRow = ({
         </td>
 
         {model &&
-          model.overall.map((score, i) => {
+          model.averaged_display_scores.map((score, i) => {
             return (
               <td
-                className="text-right pr-4"
+                className="text-right t-2"
                 key={`score-${model.model_name}-${metrics[i].id}-overall`}
               >
                 {expanded ? <b>{score}</b> : score}
+                {/* Variance */}
+                <sup>
+                  &nbsp;
+                  <div style={{ display: "inline" }}>
+                    <span className="position-absolute mt-2">+</span>
+                    <span>&minus;</span>
+                  </div>
+                  {model.averaged_display_variances[i]}
+                </sup>
               </td>
             );
           })}
 
         <td className="text-right  align-middle pr-4 " rowSpan={totalRows}>
           {expanded ? <h1>{dynascore}</h1> : dynascore}
+          {/* Variance */}
+          <sup>
+            &nbsp;
+            <div style={{ display: "inline" }}>
+              <span className="position-absolute mt-2">+</span>
+              <span>&minus;</span>
+            </div>
+            {parseFloat(model.dynavariance).toFixed(2)}
+          </sup>
         </td>
       </tr>
       {expanded &&
@@ -130,6 +148,15 @@ const OverallModelLeaderboardRow = ({
                       key={`score-${model.model_name}-${dataset.id}-${i}-overall`}
                     >
                       {score}
+                      {/* Variance */}
+                      <sup>
+                        &nbsp;
+                        <div style={{ display: "inline" }}>
+                          <span className="position-absolute mt-2">+</span>
+                          <span>&minus;</span>
+                        </div>
+                        {dataset.display_variances[i]}
+                      </sup>
                     </td>
                   );
                 })}

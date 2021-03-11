@@ -111,7 +111,7 @@ const TaskLeaderboardCard = (props) => {
       .then(
         (result) => {
           // const isEndOfPage = (page + 1) * this.state.pageLimit >= result.count;
-          setData(result);
+          setData(result.data);
         },
         (error) => {
           console.log(error);
