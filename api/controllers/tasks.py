@@ -284,12 +284,20 @@ def get_dynaboard_starter_code(tid):
     test_data = json.loads(open("controllers/dynaboard_api_test_data.json").read())
     for model in test_data:
         dynascore = 0
+        dynascore_variance = 0
         overall = [0, 0, 0]
+        overall_variances = [0, 0, 0]
         for dataset_index in range(len(model["datasets"])):
             model["datasets"][dataset_index]["display_scores"] = []
+            model["datasets"][dataset_index]["display_variances"] = []
             for metric_index in range(len(model["datasets"][dataset_index]["scores"])):
                 dynascore += (
                     model["datasets"][dataset_index]["scores"][metric_index]
+                    * ordered_dataset_weights[dataset_index]
+                    * ordered_metric_weights[metric_index]
+                )
+                dynascore_variance += (
+                    model["datasets"][dataset_index]["variances"][metric_index]
                     * ordered_dataset_weights[dataset_index]
                     * ordered_metric_weights[metric_index]
                 )
@@ -301,13 +309,31 @@ def get_dynaboard_starter_code(tid):
                     )
                     + ordered_metric_units[metric_index]
                 )
+                model["datasets"][dataset_index]["display_variances"].append(
+                    str(
+                        round(
+                            model["datasets"][dataset_index]["variances"][metric_index],
+                            2,
+                        )
+                    )
+                    + ordered_metric_units[metric_index]
+                )
                 overall[metric_index] += (
                     model["datasets"][dataset_index]["scores"][metric_index]
                     * ordered_dataset_weights[dataset_index]
                 )
+                overall_variances[metric_index] += (
+                    model["datasets"][dataset_index]["variances"][metric_index]
+                    * ordered_dataset_weights[dataset_index]
+                )
         model["dynascore"] = dynascore
-        model["overall"] = [
+        model["averaged_display_scores"] = [
             str(item[0]) + str(item[1]) for item in zip(overall, ordered_metric_units)
+        ]
+        model["dynavariance"] = dynascore_variance
+        model["averaged_display_variances"] = [
+            str(item[0]) + str(item[1])
+            for item in zip(overall_variances, ordered_metric_units)
         ]
 
     if sort_by == "dynascore":
@@ -315,12 +341,16 @@ def get_dynaboard_starter_code(tid):
     elif sort_by in ordered_metrics:
         test_data.sort(
             reverse=reverse_sort,
-            key=lambda model: model["overall"][ordered_metrics.index(sort_by)],
+            key=lambda model: model["averaged_display_scores"][
+                ordered_metrics.index(sort_by)
+            ],
         )
     elif sort_by == "model_name":
         test_data.sort(reverse=reverse_sort, key=lambda model: model["model_name"])
 
-    return util.json_encode(test_data[offset : offset + limit])
+    return util.json_encode(
+        {"count": len(test_data), "data": test_data[offset : offset + limit]}
+    )
 
 
 @bottle.get("/tasks/<tid:int>/models")
