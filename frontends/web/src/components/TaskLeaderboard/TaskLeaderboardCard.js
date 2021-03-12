@@ -23,7 +23,7 @@ const TaskLeaderboardCard = (props) => {
   const [enableWeights, setEnableWeights] = useState(false);
   const [metrics, setMetrics] = useState(
     task?.ordered_metrics?.map((m) => {
-      return { id: m, label: m, weight: 1 };
+      return { id: m.name, label: m.name, weight: 1, unit: m.unit };
     })
   );
 

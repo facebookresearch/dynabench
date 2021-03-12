@@ -38,27 +38,31 @@ const WeightSlider = ({ weight, onWeightChange }) => {
   );
 };
 
-const VariancePopover = ({ target, variance, children }) => (
-  <OverlayTrigger
-    placement="right"
-    delay={{ show: 250, hide: 400 }}
-    overlay={
-      <Popover>
-        <Popover.Content>
-          <div style={{ display: "inline" }}>
-            <span className="position-absolute  mt-1">&minus;</span>
-            <span>+</span>
-          </div>
-          {variance}
-        </Popover.Content>
-      </Popover>
-    }
-    target={target.current}
-  >
-    {children}
-  </OverlayTrigger>
-);
-
+const VariancePopover = ({ target, variance, children }) => {
+  if (null === variance || undefined === variance) {
+    return children;
+  }
+  return (
+    <OverlayTrigger
+      placement="right"
+      delay={{ show: 250, hide: 400 }}
+      overlay={
+        <Popover>
+          <Popover.Content>
+            <div style={{ display: "inline" }}>
+              <span className="position-absolute  mt-1">&minus;</span>
+              <span>+</span>
+            </div>
+            {variance}
+          </Popover.Content>
+        </Popover>
+      }
+      target={target.current}
+    >
+      {children}
+    </OverlayTrigger>
+  );
+};
 /**
  * A Row representing a Models score in the leaderbord.
  * This component also manages the expansion state of the row.
@@ -105,16 +109,17 @@ const OverallModelLeaderboardRow = ({
         </td>
 
         {model &&
-          model.averaged_display_scores.map((score, i) => {
+          model.averaged_scores?.map((score, i) => {
+            const variance =
+              model.averaged_variances.length > i
+                ? model.averaged_variances[i]
+                : null;
             return (
               <td
                 className="text-right t-2"
                 key={`score-${model.model_name}-${metrics[i].id}-overall`}
               >
-                <VariancePopover
-                  target={target}
-                  variance={model.averaged_display_variances[i]}
-                >
+                <VariancePopover target={target} variance={variance}>
                   <span>{expanded ? <b>{score}</b> : score}</span>
                 </VariancePopover>
               </td>
@@ -152,16 +157,16 @@ const OverallModelLeaderboardRow = ({
                   )}
                 </div>
               </td>
-              {dataset.display_scores &&
-                dataset.display_scores.map((score, i) => {
+              {dataset.scores &&
+                dataset.scores.map((score, i) => {
                   return (
                     <td
-                      className="text-right pr-4"
+                      className="text-right "
                       key={`score-${model.model_name}-${dataset.id}-${i}-overall`}
                     >
                       <VariancePopover
                         target={target}
-                        variance={dataset.display_variances[i]}
+                        variance={dataset.variances[i]}
                       >
                         <span>{score}</span>
                       </VariancePopover>
@@ -202,14 +207,15 @@ const MetricWeightTableHeader = ({
     total === 0 ? 0 : Math.round((metric.weight / total) * 100);
 
   return (
-    <th className="text-right pr-4 " key={`th-${metric.id}`}>
+    <th className="text-right align-baseline" key={`th-${metric.id}`}>
       <SortContainer
         sortKey={metric.id}
         toggleSort={toggleSort}
         currentSort={sort}
       >
         {metric.label}
-        {!enableWeights && <sup>&nbsp;{calculatedWeight}%</sup>}
+        <br />
+        <span class="font-weight-light small">{metric.unit}</span>
       </SortContainer>
       {enableWeights && (
         <WeightSlider
@@ -241,7 +247,7 @@ const OverallModelLeaderBoard = ({
   );
 
   return (
-    <Table hover className="mb-0">
+    <Table hover className="mb-0" bordered>
       <thead>
         <tr>
           {!enableWeights && (
@@ -270,7 +276,7 @@ const OverallModelLeaderBoard = ({
               />
             );
           })}
-          <th className="text-right pr-4 align-baseline">
+          <th className="text-right pr-4 align-baseline ">
             <SortContainer
               sortKey={"dynascore"}
               toggleSort={toggleSort}
