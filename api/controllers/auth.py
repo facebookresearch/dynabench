@@ -7,6 +7,7 @@ import bottle
 import common.auth as _auth
 import common.helpers as util
 from common.logging import logger
+from models.refresh_token import RefreshTokenModel
 from models.user import UserModel
 
 
@@ -29,7 +30,8 @@ def authenticate():
     # we logged in successfully, also update the refresh token
     token = _auth.get_token({"id": user.id, "username": user.username})
     refresh_token = _auth.set_refresh_token()
-    u.update(user.id, {"refresh_token": refresh_token})
+    rtm = RefreshTokenModel()
+    rtm.create(user.id, refresh_token)
 
     logger.info("Authentication successful for %s" % (user.username))
     return util.json_encode({"user": user.to_dict(), "token": token})
@@ -40,16 +42,44 @@ def refresh_auth():
     payload = _auth.get_expired_token_payload()
     refresh_token = _auth.get_refresh_token()
     logger.info(f"Received refresh token request with token {refresh_token} {payload}")
-    u = UserModel()
-    user = u.getByRefreshToken(refresh_token)
+    rtm = RefreshTokenModel()
+    rt = rtm.getByToken(refresh_token)
+    if rt:
+        uid = rt.uid
+    else:
+        logger.info("Old refresh token not found")
+        bottle.abort(403, "Access denied")
+    um = UserModel()
+    user = um.get(uid)
     if not user or user.id != payload["id"]:
         logger.info("User not found")
         bottle.abort(403, "Access denied")
     token = _auth.get_token(payload)
     # also issue new refresh token
+    rtm.deleteByToken(refresh_token)
     refresh_token = _auth.set_refresh_token()
-    u.update(user.id, {"refresh_token": refresh_token})
+    rtm.create(user.id, refresh_token)
     return util.json_encode({"token": token})
+
+
+@bottle.post("/authenticate/logout")
+@_auth.requires_auth
+def remove_refresh_token(credentials):
+    refresh_token = _auth.get_refresh_token()
+    rtm = RefreshTokenModel()
+    rt = rtm.getByToken(refresh_token)
+    if rt:
+        uid = rt.uid
+    else:
+        logger.info("Old refresh token not found")
+        bottle.abort(403, "Access denied")
+    um = UserModel()
+    user = um.get(uid)
+    if not user or user.id != credentials["id"]:
+        logger.info("This is not your token")
+        bottle.abort(403, "Access denied")
+    rtm.deleteByToken(refresh_token)
+    return {"status": "success"}
 
 
 @bottle.get("/authenticate/refresh_from_api")
