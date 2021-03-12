@@ -313,12 +313,12 @@ class ResponseInfo extends React.Component {
     const idx = e.target.getAttribute("data-index");
     this.setState({explainSaved: false, hate_type: hate_type});
     this.context.api
-      .getExampleMetadata(this.props.mapKeyToExampleId[idx])
+      .getExampleMetadata(this.props.exampleId)
       .then((result) => {
         var metadata = JSON.parse(result);
         metadata['hate_type'] = hate_type;
         this.context.api
-          .setExampleMetadata(this.props.mapKeyToExampleId[idx], metadata)
+          .setExampleMetadata(this.props.exampleId, metadata)
           .then((result) => {
             this.setState({explainSaved: true});
           }, (error) => {
@@ -328,11 +328,10 @@ class ResponseInfo extends React.Component {
         console.log(error);
       });
   }
-  updateExample(correctAnswer, fooled) {
+  updateExample(exampleId, correctAnswer, fooled) {
     if (!this.props.livemode) {
       this.setState({ feedbackSaved: true, fooled: fooled });
-    } else {
-      const exampleId = this.props.mapKeyToExampleId[this.props.index];
+    } else if (exampleId) {
       this.setState({ feedbackSaved: false }, () => {
           this.context.api
           .updateExample(exampleId, correctAnswer, fooled === "yes")
@@ -357,7 +356,7 @@ class ResponseInfo extends React.Component {
     if (explanation !== "" || this.state.hasPreviousExplanation) {
       this.setState({explainSaved: false, hasPreviousExplanation: true})
       this.context.api
-        .explainExample(this.props.mapKeyToExampleId[idx], type, explanation)
+        .explainExample(this.props.exampleId, type, explanation)
         .then((result) => {
           this.setState({explainSaved: true})
           if (explanation === "") {
@@ -379,7 +378,7 @@ class ResponseInfo extends React.Component {
     e.preventDefault();
     var idx = e.target.getAttribute("data-index");
     this.context.api
-      .retractExample(this.props.mapKeyToExampleId[idx])
+      .retractExample(this.props.exampleId)
       .then((result) => {
         const newContent = this.props.content.slice();
         newContent[idx].cls = "retracted";
@@ -393,7 +392,7 @@ class ResponseInfo extends React.Component {
     e.preventDefault();
     var idx = e.target.getAttribute("data-index");
     this.context.api
-      .flagExample(this.props.mapKeyToExampleId[idx])
+      .flagExample(this.props.exampleId)
       .then((result) => {
         const newContent = this.props.content.slice();
         newContent[idx].cls = "flagged";
@@ -462,28 +461,6 @@ class ResponseInfo extends React.Component {
 
 
   render() {
-    let selectedAnswer = null;
-    if (this.props.taskType === "extract") {
-      selectedAnswer = this.props.answer && this.props.answer.length ? this.props.answer[this.props.answer.length - 1].tokens.join("") : "";
-    } else if (this.props.taskType === "clf") {
-      selectedAnswer = this.props.targets[this.props.curTarget];
-    }
-
-    let submissionResults = null;
-    if (this.state.fooled === "no") {
-      submissionResults = (
-        <span>
-          <strong>Try again!</strong> The model correctly predicted <strong>{this.props.obj.modelPredStr}</strong>
-        </span>
-      );
-    } else if (this.state.fooled === "yes" && selectedAnswer) {
-      submissionResults = (
-        <span>
-          <strong>You fooled the model!</strong> It predicted <strong>{this.props.obj.modelPredStr}</strong>{" "}
-          but a person would say <strong>{selectedAnswer}</strong>
-        </span>
-      )
-    }
     let sandboxContent = null;
     if (!this.state.livemode) {
       sandboxContent = (
@@ -509,6 +486,8 @@ class ResponseInfo extends React.Component {
     }
     var classNames = this.props.obj.cls + " rounded border m-3";
     var userFeedback = null;
+    var selectedAnswer = null;
+    var submissionResults = null;
     if (this.props.obj.retracted) {
       classNames += " response-warning";
       userFeedback = <span>
@@ -523,16 +502,35 @@ class ResponseInfo extends React.Component {
         predicted <strong>{this.props.obj.modelPredStr}</strong>.
       </span>;
     } else {
-      if (this.state.fooled === "yes") {
-        classNames += " light-green-bg"
-      } else if (this.state.fooled === "no") {
-        classNames += " response-warning"
+      if (this.props.taskType === "extract") {
+        selectedAnswer = this.props.answer && this.props.answer.length ? this.props.answer[this.props.answer.length - 1].tokens.join("") : "";
+      } else if (this.props.taskType === "clf") {
+        selectedAnswer = this.props.targets[this.props.curTarget];
+      }
+      if (this.state.fooled === "no") {
+        classNames += " response-warning";
+        submissionResults = (
+          <span>
+            <strong>Try again!</strong> The model correctly predicted <strong>{this.props.obj.modelPredStr}</strong>
+          </span>
+        );
+      } else if (this.state.fooled === "yes") {
+        classNames += " light-green-bg";
+        if (selectedAnswer && selectedAnswer.length > 0) {
+          submissionResults = (
+            <span>
+              <strong>You fooled the model!</strong> It predicted <strong>{this.props.obj.modelPredStr}</strong>{" "}
+              but a person would say <strong>{selectedAnswer}</strong>
+            </span>
+          )
+        }
       } else {
         classNames += " bg-light"
       }
       userFeedback = <>
         {this.props.taskType === "VQA" ? (
           <CheckVQAModelAnswer
+            eid={this.props.exampleId}
             updateExample={this.updateExample}
             feedbackSaved={this.state.feedbackSaved}
             modelPredStr={this.props.obj.modelPredStr}
@@ -1069,6 +1067,7 @@ class CreateInterface extends React.Component {
           randomModel={this.state.randomModel}
           key={index}
           index={index}
+          exampleId={this.state.mapKeyToExampleId[index]}
           targets={this.state.task.targets}
           curTarget={this.state.target}
           taskType={this.state.task.type}
@@ -1076,7 +1075,6 @@ class CreateInterface extends React.Component {
           answer={this.state.answer}
           livemode={this.state.livemode}
           obj={item}
-          mapKeyToExampleId={this.state.mapKeyToExampleId}
           content={this.state.content}
           getNewContext={this.getNewContext}
         />
