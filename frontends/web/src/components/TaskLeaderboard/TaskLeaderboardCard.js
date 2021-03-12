@@ -35,8 +35,8 @@ const TaskLeaderboardCard = (props) => {
   );
 
   const [sort, setSort] = useState({
-    field: "acc",
-    direction: SortDirection.ASC,
+    field: "dynascore",
+    direction: SortDirection.DESC,
   });
 
   const [isLoading, setIsLoading] = useState(false);

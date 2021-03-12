@@ -167,6 +167,21 @@ const OverallModelLeaderboardRow = ({
   );
 };
 
+const SortContainer = ({ sortKey, toggleSort, currentSort, children }) => {
+  return (
+    <div onClick={() => toggleSort(sortKey)}>
+      {currentSort.field === sortKey && currentSort.direction === "asc" && (
+        <i className="fas fa-sort-up">&nbsp;</i>
+      )}
+      {currentSort.field === sortKey && currentSort.direction === "desc" && (
+        <i className="fas fa-sort-down">&nbsp;</i>
+      )}
+
+      {children}
+    </div>
+  );
+};
+
 const MetricWeightTableHeader = ({
   metric,
   setMetricWeight,
@@ -180,17 +195,14 @@ const MetricWeightTableHeader = ({
 
   return (
     <th className="text-right pr-4 " key={`th-${metric.id}`}>
-      <div onClick={() => toggleSort(metric.id)}>
-        {sort.field === metric.id && sort.direction === "asc" && (
-          <i className="fas fa-sort-up">&nbsp;</i>
-        )}
-        {sort.field === metric.id && sort.direction === "desc" && (
-          <i className="fas fa-sort-down">&nbsp;</i>
-        )}
-
+      <SortContainer
+        sortKey={metric.id}
+        toggleSort={toggleSort}
+        currentSort={sort}
+      >
         {metric.label}
         {!enableWeights && <sup>&nbsp;{calculatedWeight}%</sup>}
-      </div>
+      </SortContainer>
       {enableWeights && (
         <WeightSlider
           weight={metric.weight}
@@ -210,7 +222,6 @@ const OverallModelLeaderBoard = ({
   setMetricWeight,
   datasetWeights,
   setDatasetWeight,
-  taskShortName,
   sort,
   toggleSort,
 }) => {
@@ -225,7 +236,17 @@ const OverallModelLeaderBoard = ({
     <Table hover className="mb-0">
       <thead>
         <tr>
-          {!enableWeights && <th className="align-baseline">Model</th>}
+          {!enableWeights && (
+            <th className="align-baseline">
+              <SortContainer
+                sortKey={"model"}
+                toggleSort={toggleSort}
+                currentSort={sort}
+              >
+                Model
+              </SortContainer>
+            </th>
+          )}
           {enableWeights && <th className="align-bottom">Adjust Weights</th>}
 
           {metrics.map((metric) => {
@@ -241,7 +262,15 @@ const OverallModelLeaderBoard = ({
               />
             );
           })}
-          <th className="text-right pr-4 align-baseline">Dynascore</th>
+          <th className="text-right pr-4 align-baseline">
+            <SortContainer
+              sortKey={"dynascore"}
+              toggleSort={toggleSort}
+              currentSort={sort}
+            >
+              Dynascore
+            </SortContainer>
+          </th>
         </tr>
       </thead>
       <tbody>
