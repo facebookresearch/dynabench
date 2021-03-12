@@ -27,7 +27,7 @@ class BaseDataset(ABC):
         self.name = name
         self.round_id = round_id
         self.filename = self.name + ext
-        self._n_examples = None  # will be get through API
+        self._n_examples = {}  # will be get through API
         self.s3_bucket = config["dataset_s3_bucket"]
         self.s3_url = self._get_data_s3_url()
 
@@ -39,7 +39,7 @@ class BaseDataset(ABC):
         )
 
         # Load dataset to S3 and register in db if not yet
-        loaded = self._dataset_available_on_s3()
+        loaded = self.dataset_available_on_s3()
         if not loaded:
             logger.info(
                 f"Dataset {self.name} does not exist on S3. "
@@ -53,11 +53,18 @@ class BaseDataset(ABC):
         if loaded:
             self._register_dataset_in_db_and_eval(eval_config)
 
-    def _get_data_s3_path(self):
-        return os.path.join("datasets", self.task, self.filename)
+    def _get_data_s3_path(self, perturb_prefix=None):
+        filename = self._get_perturbed_filename(perturb_prefix)
+        return os.path.join("datasets", self.task, filename)
 
-    def _get_data_s3_url(self):
-        s3_path = self._get_data_s3_path()
+    def _get_perturbed_filename(self, perturb_prefix=None):
+        filename = (
+            f"{perturb_prefix}-{self.filename}" if perturb_prefix else self.filename
+        )
+        return filename
+
+    def _get_data_s3_url(self, perturb_prefix=None):
+        s3_path = self._get_data_s3_path(perturb_prefix)
         return os.path.join(f"s3://{self.s3_bucket}", s3_path)
 
     def _get_output_s3_url_prefix(self, endpoint_name):
@@ -65,8 +72,8 @@ class BaseDataset(ABC):
             f"s3://{self.s3_bucket}", "predictions", endpoint_name, self.task
         )
 
-    def _dataset_available_on_s3(self) -> bool:
-        path = self._get_data_s3_path()
+    def dataset_available_on_s3(self, perturb_prefix=None) -> bool:
+        path = self._get_data_s3_path(perturb_prefix)
         response = self.s3_client.list_objects_v2(Bucket=self.s3_bucket, Prefix=path)
         for obj in response.get("Contents", []):
             if obj["Key"] == path:
@@ -87,11 +94,14 @@ class BaseDataset(ABC):
                     logger=logger,
                 )
 
-    def get_output_s3_url(self, endpoint_name):
+    def get_output_s3_url(self, endpoint_name, perturb_prefix=None):
         prefix = self._get_output_s3_url_prefix(endpoint_name)
-        return os.path.join(prefix, self.filename + ".out")
+        filename = self._get_perturbed_filename(perturb_prefix)
+        return os.path.join(prefix, filename + ".out")
 
-    def run_batch_transform(self, sagemaker_client, endpoint_name, job_name) -> bool:
+    def run_batch_transform(
+        self, sagemaker_client, endpoint_name, job_name, perturb_prefix=None
+    ) -> bool:
         # submit an evaluation job
         task_config = tasks_config.get(self.task, tasks_config["default"])
         sagemaker_client.create_transform_job(
@@ -101,7 +111,10 @@ class BaseDataset(ABC):
             BatchStrategy="SingleRecord",
             TransformInput={
                 "DataSource": {
-                    "S3DataSource": {"S3DataType": "S3Prefix", "S3Uri": self.s3_url}
+                    "S3DataSource": {
+                        "S3DataType": "S3Prefix",
+                        "S3Uri": self._get_data_s3_url(perturb_prefix),
+                    }
                 },
                 "ContentType": "application/json",
                 "SplitType": "Line",
@@ -120,27 +133,29 @@ class BaseDataset(ABC):
         )
         return True
 
-    def read_labels(self):
+    def read_labels(self, perturb_prefix=None):
         tf = tempfile.mkstemp(prefix=self.name)[1]
-        self.s3_client.download_file(self.s3_bucket, self._get_data_s3_path(), tf)
+        self.s3_client.download_file(
+            self.s3_bucket, self._get_data_s3_path(perturb_prefix), tf
+        )
         data = [json.loads(l) for l in open(tf).readlines()]
         labels = [self.label_field_converter(example) for example in data]
         os.remove(tf)
-        if not self._n_examples:
-            self._n_examples = len(labels)
+        if not self._n_examples.get(perturb_prefix, None):
+            self._n_examples[perturb_prefix] = len(labels)
         return labels
 
-    def get_n_examples(self):
-        if not self._n_examples:
-            self.read_labels()
-        return self._n_examples
+    def get_n_examples(self, perturb_prefix=None):
+        if not self._n_examples.get(perturb_prefix, None):
+            self.read_labels(perturb_prefix)
+        return self._n_examples[perturb_prefix]
 
-    def eval(self, predictions: list) -> dict:
+    def eval(self, predictions: list, perturb_prefix=None) -> dict:
         """
         Adapted from common.helpers.validate_prediction, compute accuracy / f1, etc.
         """
         # load target examples
-        target_examples = self.read_labels()
+        target_examples = self.read_labels(perturb_prefix)
         # validate alignment of prediction and target labels
         target_ids = [x["id"] for x in target_examples]
         target_labels = {t["id"]: t["answer"] for t in target_examples}

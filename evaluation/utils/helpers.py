@@ -35,10 +35,11 @@ def send_eval_request(model_id, dataset_name, config, logger=None):
         return True
 
 
-def generate_job_name(endpoint_name, dataset_name):
+def generate_job_name(endpoint_name, dataset_name, perturb_prefix=None):
     # :63 is AWS requirement; timestamp has fewer digits than uuid and should be
     # sufficient for dedup purpose
-    return f"{endpoint_name}-{dataset_name}-{int(time.time())}"[:63]
+    perturb_prefix = f"{perturb_prefix}-" if perturb_prefix else ""
+    return f"{endpoint_name}-{perturb_prefix}{dataset_name}-{int(time.time())}"[:63]
 
 
 def round_end_dt(dt, delta=60, offset=1):
@@ -60,3 +61,15 @@ def process_aws_metrics(datapoints):
     Datapoints are a list of dictionaries with exactly the same keys
     """
     return sum([data["Average"] for data in datapoints]) / len(datapoints)
+
+
+def get_perturb_prefix(dataset_name, datasets):
+    if dataset_name in datasets:
+        return dataset_name, None
+
+    perturb_prefix = dataset_name.split("-")[0]
+    dataset_name = dataset_name[len(perturb_prefix) + 1 :]
+    if dataset_name in datasets:
+        return dataset_name, perturb_prefix
+    else:
+        raise RuntimeError(f"Dataset {dataset_name} not found.")

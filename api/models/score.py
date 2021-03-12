@@ -38,6 +38,9 @@ class Score(Base):
     memory_utilization = db.Column(db.Float)
     examples_per_second = db.Column(db.Float)
 
+    fairness = db.Column(db.Float)
+    robustness = db.Column(db.Float)
+
     def __repr__(self):
         return f"<Score {self.id}>"
 
@@ -56,6 +59,11 @@ class ScoreModel(BaseModel):
         m = Score(rid=round_id, mid=model_id, **kwargs)
         self.dbs.add(m)
         return self.dbs.commit()
+
+    def update(self, id, **kwargs):
+        u = self.dbs.query(Score).filter(Score.id == id)
+        u.update(kwargs)
+        self.dbs.commit()
 
     def bulk_create(self, model_id, score_objs=[], raw_upload_data=""):
         self.dbs.add_all(
@@ -99,6 +107,19 @@ class ScoreModel(BaseModel):
                 .join(Model)
                 .filter(Score.tid == tid)
                 .filter(Score.rid == rid)
+                .order_by(Score.perf.desc())
+                .all()
+            )
+        except db.orm.exc.NoResultFound:
+            return False
+
+    def getByModelIdAndDataset(self, mid, did):
+        try:
+            return (
+                self.dbs.query(Score)
+                .join(Model)
+                .filter(Score.mid == mid)
+                .filter(Score.did == did)
                 .order_by(Score.perf.desc())
                 .all()
             )
