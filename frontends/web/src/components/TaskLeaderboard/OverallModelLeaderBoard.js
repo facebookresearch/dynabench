@@ -1,6 +1,6 @@
-import { Button, Form } from "react-bootstrap";
+import { Form, OverlayTrigger, Popover } from "react-bootstrap";
 import React from "react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Table } from "react-bootstrap";
 import { Link } from "react-router-dom";
 
@@ -38,6 +38,27 @@ const WeightSlider = ({ weight, onWeightChange }) => {
   );
 };
 
+const VariancePopover = ({ target, variance, children }) => (
+  <OverlayTrigger
+    placement="right"
+    delay={{ show: 250, hide: 400 }}
+    overlay={
+      <Popover>
+        <Popover.Content>
+          <div style={{ display: "inline" }}>
+            <span className="position-absolute  mt-1">&minus;</span>
+            <span>+</span>
+          </div>
+          {variance}
+        </Popover.Content>
+      </Popover>
+    }
+    target={target.current}
+  >
+    {children}
+  </OverlayTrigger>
+);
+
 /**
  * A Row representing a Models score in the leaderbord.
  * This component also manages the expansion state of the row.
@@ -66,6 +87,8 @@ const OverallModelLeaderboardRow = ({
     return acc;
   }, {});
 
+  const target = useRef(null);
+
   return (
     <>
       <tr key={model.model_id} onClick={() => setExpanded(!expanded)}>
@@ -88,31 +111,20 @@ const OverallModelLeaderboardRow = ({
                 className="text-right t-2"
                 key={`score-${model.model_name}-${metrics[i].id}-overall`}
               >
-                {expanded ? <b>{score}</b> : score}
-                {/* Variance */}
-                <sup>
-                  &nbsp;
-                  <div style={{ display: "inline" }}>
-                    <span className="position-absolute mt-2">+</span>
-                    <span>&minus;</span>
-                  </div>
-                  {model.averaged_display_variances[i]}
-                </sup>
+                <VariancePopover
+                  target={target}
+                  variance={model.averaged_display_variances[i]}
+                >
+                  <span>{expanded ? <b>{score}</b> : score}</span>
+                </VariancePopover>
               </td>
             );
           })}
 
         <td className="text-right  align-middle pr-4 " rowSpan={totalRows}>
-          {expanded ? <h1>{dynascore}</h1> : dynascore}
-          {/* Variance */}
-          <sup>
-            &nbsp;
-            <div style={{ display: "inline" }}>
-              <span className="position-absolute mt-2">+</span>
-              <span>&minus;</span>
-            </div>
-            {parseFloat(model.dynavariance).toFixed(2)}
-          </sup>
+          <VariancePopover target={target} variance={model.dynavariance}>
+            <span>{expanded ? <h1>{dynascore}</h1> : dynascore}</span>
+          </VariancePopover>
         </td>
       </tr>
       {expanded &&
@@ -147,16 +159,12 @@ const OverallModelLeaderboardRow = ({
                       className="text-right pr-4"
                       key={`score-${model.model_name}-${dataset.id}-${i}-overall`}
                     >
-                      {score}
-                      {/* Variance */}
-                      <sup>
-                        &nbsp;
-                        <div style={{ display: "inline" }}>
-                          <span className="position-absolute mt-2">+</span>
-                          <span>&minus;</span>
-                        </div>
-                        {dataset.display_variances[i]}
-                      </sup>
+                      <VariancePopover
+                        target={target}
+                        variance={dataset.display_variances[i]}
+                      >
+                        <span>{score}</span>
+                      </VariancePopover>
                     </td>
                   );
                 })}
