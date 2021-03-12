@@ -353,7 +353,8 @@ class VQAValidationInterface extends React.Component {
                               this.state.questionValidationState === FLAGGED
                             }
                             userMode={this.userMode}
-                            interfaceMode={this.interfaceMode}
+                            task={this.state.task}
+                            isExplainingAllowed={false}
                             isQuestion={true}
                             isFlaggingAllowed={true}
                             setCorrectSelected={() =>
@@ -396,7 +397,8 @@ class VQAValidationInterface extends React.Component {
                                 }
                                 flaggedSelected={false}
                                 userMode={this.userMode}
-                                interfaceMode={this.interfaceMode}
+                                task={this.state.task}
+                                isExplainingAllowed={false}
                                 isQuestion={false}
                                 isFlaggingAllowed={false}
                                 setCorrectSelected={() =>
