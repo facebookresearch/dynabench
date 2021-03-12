@@ -213,9 +213,9 @@ export default class ApiService {
 
   getDynaboardExample() {
     const taskId = 1
-    const metric_weights = [0.33, 0.33, 0.33]
+    const metric_weights = [0.5, 0.17, 0.33]
     const dataset_weights = [0.25, 0.25, 0.25, 0.25]
-    return this.fetch(`${this.domain}/tasks/${taskId}/models/dynaboard?sort_by=Memory&sort_direction=asc&offset=0&limit=2&ordered_metric_weights=${encodeURIComponent(metric_weights.join('|'))}&ordered_dataset_weights${encodeURIComponent(dataset_weights.join('|'))}`, {
+    return this.fetch(`${this.domain}/tasks/${taskId}/models/dynaboard?sort_by=dynascore&sort_direction=asc&offset=0&limit=2&ordered_metric_weights=${encodeURIComponent(metric_weights.join('|'))}&ordered_dataset_weights${encodeURIComponent(dataset_weights.join('|'))}`, {
       method: "GET",
     });
   }
