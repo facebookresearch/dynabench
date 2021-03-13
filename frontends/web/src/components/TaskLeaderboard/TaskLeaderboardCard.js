@@ -23,14 +23,14 @@ const TaskLeaderboardCard = (props) => {
   const [enableWeights, setEnableWeights] = useState(false);
   const [metrics, setMetrics] = useState(
     task?.ordered_metrics?.map((m) => {
-      return { id: m.name, label: m.name, weight: 1, unit: m.unit };
+      return { id: m.name, label: m.name, weight: 5, unit: m.unit };
     })
   );
 
   // Dataset Weights Array of a set of dataset id and corresponding weight.
   const [datasetWeights, setDatasetWeights] = useState(
     task?.ordered_datasets?.map((ds) => {
-      return { id: ds.id, weight: 1 };
+      return { id: ds.id, weight: 5 };
     })
   );
 

@@ -3,6 +3,7 @@ import React from "react";
 import { useState, useRef } from "react";
 import { Table } from "react-bootstrap";
 import { Link } from "react-router-dom";
+import WeightIndicator from "./WeightIndicator";
 
 const ChevronExpandButton = ({ expanded }) => {
   return (
@@ -18,33 +19,39 @@ const ChevronExpandButton = ({ expanded }) => {
 
 const WeightSlider = ({ weight, onWeightChange }) => {
   return (
-    <Form className="d-flex ml-2">
+    <Form className="d-flex ml-2 float-right" style={{ width: "50%" }}>
       <Form.Control
         type="range"
         className="flex-grow-1"
         size="sm"
+        style={{ width: "50%" }}
         min={0}
         max={5}
         value={weight}
         onInput={(event) => {
-          // console.log(weight.id, event.target.valueAsNumber);
-          //
           onWeightChange(event.target.valueAsNumber);
         }}
       />
-
-      <span className="fw-lighter flex-grow-0">&nbsp;&nbsp;{weight}/5</span>
     </Form>
   );
 };
 
-const VariancePopover = ({ target, variance, children }) => {
+/**
+ * Popver to show vairance for a score component (target)
+ *
+ * @param {Object} params React params destructured.
+ * @param {string} variance the variance value to display in the popover
+ * @param {React.ReactNode} children the Score Node that triggers the popover
+ */
+const VariancePopover = ({ variance, children, placement = "right" }) => {
+  const target = useRef(null);
   if (null === variance || undefined === variance) {
     return children;
   }
+
   return (
     <OverlayTrigger
-      placement="right"
+      placement={placement}
       delay={{ show: 250, hide: 400 }}
       overlay={
         <Popover>
@@ -63,6 +70,40 @@ const VariancePopover = ({ target, variance, children }) => {
     </OverlayTrigger>
   );
 };
+
+/**
+ * Popver to show Weight
+ *
+ * @param {Object} params React params destructured.
+ * @param {string} weight the weight value to display in the popover
+ * @param {React.ReactNode} children the Node that triggers the popover
+ */
+const WeightPopover = ({ label, weight, children }) => {
+  const target = useRef(null);
+
+  // if (null === weight || undefined === weight) {
+  //   return children;
+  // }
+
+  // const target = useRef();
+  return (
+    <OverlayTrigger
+      placement="right"
+      delay={{ show: 250, hide: 400 }}
+      overlay={
+        <Popover>
+          <Popover.Content>
+            {label} weight: {weight}
+          </Popover.Content>
+        </Popover>
+      }
+      target={target.current}
+    >
+      {children}
+    </OverlayTrigger>
+  );
+};
+
 /**
  * A Row representing a Models score in the leaderbord.
  * This component also manages the expansion state of the row.
@@ -90,9 +131,6 @@ const OverallModelLeaderboardRow = ({
     acc[entry.id] = entry.weight;
     return acc;
   }, {});
-
-  const target = useRef(null);
-
   return (
     <>
       <tr key={model.model_id} onClick={() => setExpanded(!expanded)}>
@@ -119,7 +157,7 @@ const OverallModelLeaderboardRow = ({
                 className="text-right t-2"
                 key={`score-${model.model_name}-${metrics[i].id}-overall`}
               >
-                <VariancePopover target={target} variance={variance}>
+                <VariancePopover variance={variance}>
                   <span>{expanded ? <b>{score}</b> : score}</span>
                 </VariancePopover>
               </td>
@@ -127,7 +165,7 @@ const OverallModelLeaderboardRow = ({
           })}
 
         <td className="text-right  align-middle pr-4 " rowSpan={totalRows}>
-          <VariancePopover target={target} variance={model.dynavariance}>
+          <VariancePopover variance={model.dynavariance} placement="top">
             <span>{expanded ? <h1>{dynascore}</h1> : dynascore}</span>
           </VariancePopover>
         </td>
@@ -142,11 +180,13 @@ const OverallModelLeaderboardRow = ({
             <tr key={`score-${dataset.name}`}>
               {/* Title */}
               <td className="text-right pr-4  text-nowrap">
-                <div className="d-flex justify-content-end">
-                  <span>
-                    {dataset.name}
-                    {!enableWeights && <sup>{calculatedWeight}%</sup>}
-                  </span>
+                <div className="d-flex justify-content-end align-items-center">
+                  <WeightPopover label={dataset.name} weight={weight}>
+                    <span className="d-flex align-items-center">
+                      {dataset.name}&nbsp;
+                      <WeightIndicator weight={weight} />
+                    </span>
+                  </WeightPopover>
                   {enableWeights && (
                     <WeightSlider
                       weight={weight}
@@ -164,10 +204,7 @@ const OverallModelLeaderboardRow = ({
                       className="text-right "
                       key={`score-${model.model_name}-${dataset.id}-${i}-overall`}
                     >
-                      <VariancePopover
-                        target={target}
-                        variance={dataset.variances[i]}
-                      >
+                      <VariancePopover variance={dataset.variances[i]}>
                         <span>{score}</span>
                       </VariancePopover>
                     </td>
@@ -180,9 +217,15 @@ const OverallModelLeaderboardRow = ({
   );
 };
 
-const SortContainer = ({ sortKey, toggleSort, currentSort, children }) => {
+const SortContainer = ({
+  sortKey,
+  toggleSort,
+  currentSort,
+  className,
+  children,
+}) => {
   return (
-    <div onClick={() => toggleSort(sortKey)}>
+    <div onClick={() => toggleSort(sortKey)} className={className}>
       {currentSort.field === sortKey && currentSort.direction === "asc" && (
         <i className="fas fa-sort-up">&nbsp;</i>
       )}
@@ -197,6 +240,7 @@ const SortContainer = ({ sortKey, toggleSort, currentSort, children }) => {
 
 const MetricWeightTableHeader = ({
   metric,
+  colWidth,
   setMetricWeight,
   enableWeights,
   total,
@@ -207,16 +251,30 @@ const MetricWeightTableHeader = ({
     total === 0 ? 0 : Math.round((metric.weight / total) * 100);
 
   return (
-    <th className="text-right align-baseline" key={`th-${metric.id}`}>
+    <th
+      className="text-right align-baseline "
+      key={`th-${metric.id}`}
+      style={{ width: `${colWidth}%` }}
+    >
       <SortContainer
         sortKey={metric.id}
         toggleSort={toggleSort}
         currentSort={sort}
+        className="d-flex justify-content-end align-items-center"
       >
-        {metric.label}
-        <br />
-        <span class="font-weight-light small">{metric.unit}</span>
+        <WeightPopover label={metric.label} weight={metric.weight}>
+          <span>
+            {metric.label}&nbsp;
+            <WeightIndicator weight={metric.weight} />
+          </span>
+        </WeightPopover>
       </SortContainer>
+
+      {!enableWeights && (
+        <>
+          <span class="font-weight-light small">{metric.unit}</span>
+        </>
+      )}
       {enableWeights && (
         <WeightSlider
           weight={metric.weight}
@@ -246,12 +304,14 @@ const OverallModelLeaderBoard = ({
     0
   );
 
+  const metricColumnWidht = 60 / (metrics.length === 0 ? 1 : metrics.length);
+
   return (
-    <Table hover className="mb-0" bordered>
+    <Table hover className="mb-0">
       <thead>
         <tr>
           {!enableWeights && (
-            <th className="align-baseline">
+            <th className="align-baseline" style={{ width: "25%" }}>
               <SortContainer
                 sortKey={"model"}
                 toggleSort={toggleSort}
@@ -267,6 +327,7 @@ const OverallModelLeaderBoard = ({
             return (
               <MetricWeightTableHeader
                 metric={metric}
+                colWidth={metricColumnWidht}
                 setMetricWeight={setMetricWeight}
                 enableWeights={enableWeights}
                 total={total}
@@ -276,7 +337,10 @@ const OverallModelLeaderBoard = ({
               />
             );
           })}
-          <th className="text-right pr-4 align-baseline ">
+          <th
+            className="text-right pr-4 align-baseline "
+            style={{ width: "15%" }}
+          >
             <SortContainer
               sortKey={"dynascore"}
               toggleSort={toggleSort}
