@@ -143,8 +143,8 @@ class VQAValidationInterface extends React.Component {
             assignmentId: this.props.assignmentId,
 
             flagReason: this.state.flagReason,
-            questionValidationState: this.state.questionValidationState,
-            responseValidationState: this.state.responseValidationState,
+            questionValidationState: questionState,
+            responseValidationState: responseState,
             example_tags: this.getTagList(this.props)
         }
 
@@ -188,12 +188,14 @@ class VQAValidationInterface extends React.Component {
             <>
                 <p>
                     You will be shown an image and a question. The task consists of two rounds.
-                    First, you have to determine if the question is <b className="dark-blue-color">valid</b>.
+                    First, you have to determine if the question is <b className="dark-blue-color">valid</b>. Most of the questions should be valid, as they are produced by hardworking turkers like you!
+                    Some of the questions require digging into the image a bit more to assess its validity. As a reminder, you can use the magnifying glass by hovering your mouse over the image to zoom in!
+                    If we detect that you are labeling really quickly and not investigating the images in great detail, we will ban you.
                 </p>
                 <p>A question is considered <b>valid</b> if:</p>
                 <ValidQuestionCharacteristics/>
                 <p>
-                    After validating the question, next you will determine whether the provided answer is <b className="dark-blue-color">correct</b>.
+                    If you deem the question as valid, next you will determine whether the provided answer is <b className="dark-blue-color">correct</b>.
                     If you think the example should be reviewed, please click the <b>Flag</b> button and explain why
                     you flagged the example (try to use this sparingly). Please flag if you sense that the person asking the question
                     has a bad intent.
