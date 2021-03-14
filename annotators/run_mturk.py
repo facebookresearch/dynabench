@@ -103,9 +103,14 @@ def main(cfg: DictConfig) -> None:
     # mturk_specific_qualifications
 
     def is_onboarding_successful(onboarding_data):
-        if "outputs" in onboarding_data and "success" in onboarding_data["outputs"]:
-            return onboarding_data["outputs"]["success"]
-        return False
+        if "outputs" not in onboarding_data:
+            return False
+        if onboarding_data["outputs"] is None:
+            return False
+        if "success" not in onboarding_data["outputs"]:
+            return False
+
+        return onboarding_data["outputs"]["success"]
 
     shared_state = SharedStaticTaskState(
         static_task_data=static_task_data,

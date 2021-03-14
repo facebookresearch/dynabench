@@ -11,6 +11,12 @@ MTURK_QUALIFICATIONS = {
         "IntegerValues": [100],
         "ActionsGuarded": "DiscoverPreviewAndAccept",
     },
+    "800_hits_approved": {
+        "QualificationTypeId": MTURK_NUMHITSAPPROVED_REQUIREMENT,
+        "Comparator": "GreaterThanOrEqualTo",
+        "IntegerValues": [800],
+        "ActionsGuarded": "DiscoverPreviewAndAccept",
+    },
     "1000_hits_approved": {
         "QualificationTypeId": MTURK_NUMHITSAPPROVED_REQUIREMENT,
         "Comparator": "GreaterThanOrEqualTo",
