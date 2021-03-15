@@ -41,7 +41,8 @@ const TaskLeaderboardCard = (props) => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(0);
-  const [pageLimit, setPageLimit] = useState(5);
+  const [pageLimit, setPageLimit] = useState(10);
+  const [total, setTotal] = useState(0);
 
   const taskId = props.taskId;
 
@@ -101,8 +102,8 @@ const TaskLeaderboardCard = (props) => {
     api
       .getDynaboardScores(
         taskId,
-        10,
-        page,
+        pageLimit,
+        page * pageLimit,
         sort.field,
         sort.direction,
         orderedMetricWeights,
@@ -110,16 +111,14 @@ const TaskLeaderboardCard = (props) => {
       )
       .then(
         (result) => {
-          // const isEndOfPage = (page + 1) * this.state.pageLimit >= result.count;
           setData(result.data);
+          setTotal(result.count);
         },
         (error) => {
           console.log(error);
         }
       );
   };
-
-  const paginate = (component, state) => {};
 
   const context = useContext(UserContext);
 
@@ -130,6 +129,8 @@ const TaskLeaderboardCard = (props) => {
     setIsLoading(false);
     return () => {};
   }, [page, sort, metrics, datasetWeights]);
+
+  const isEndOfPage = (page + 1) * pageLimit >= total;
 
   return (
     <Card className="my-4">
@@ -166,13 +167,17 @@ const TaskLeaderboardCard = (props) => {
         <Pagination className="mb-0 float-right" size="sm">
           <Pagination.Item
             disabled={isLoading || page === 0}
-            onClick={() => paginate("model", "previous")}
+            onClick={() => {
+              setPage(page - 1);
+            }}
           >
             Previous
           </Pagination.Item>
           <Pagination.Item
-            // disabled={this.state.isEndOfModelLeaderPage}
-            onClick={() => paginate("model", "next")}
+            disabled={isLoading || isEndOfPage}
+            onClick={() => {
+              setPage(page + 1);
+            }}
           >
             Next
           </Pagination.Item>
