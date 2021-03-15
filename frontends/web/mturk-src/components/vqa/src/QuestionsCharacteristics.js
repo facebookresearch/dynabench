@@ -50,6 +50,9 @@ class ValidQuestionCharacteristics extends React.Component {
                             <li>Invalid: What is the woman doing? (when there is no women or if there are multiple women each doing something different.)</li>
                             <li>Valid: What is the woman to the left of the man doing? (when there is only one woman that satisfies the criteria and it is clear another person will agree with your answer to the question.)</li>
                         </ul>
+                    <li>
+                        <b>Remember that most questions are tricky! Please use the image magnifier by hovering your mouse over the image to investigate.</b>
+                    </li>
                 </ul>
             </>
         )
