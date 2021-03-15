@@ -10,10 +10,11 @@ mephisto:
       examples
     task_reward: 0.36
     task_tags: "vqa,validation"
+    maximum_units_per_worker: 150
     assignment_duration_in_seconds: 3600
 dynabench:
   task_name: vqa-val-1
-  task_id: 13
+  task_id: 14 # 13 id dev id.
   round_id: 1
   block_mobile: True
   fetching_tags: "sasha_test"
