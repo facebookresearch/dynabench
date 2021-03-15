@@ -33,6 +33,7 @@ import Moment from "react-moment";
 import DragAndDrop from "../components/DragAndDrop/DragAndDrop";
 import { OverlayProvider, Annotation, OverlayContext } from "./Overlay";
 import TaskLeaderboardCard from "../components/TaskLeaderboard/TaskLeaderboardCard";
+import OldTaskLeaderboardCard from "../components/TaskLeaderboard/OldTaskLeaderboardCard";
 
 const chartSizes = {
   xs: { fontSize: 10 },
@@ -842,32 +843,45 @@ class TaskPage extends React.Component {
                   />
                 </Col>
               </Row>
+              {process.env.REACT_APP_ENABLE_DYNABOARD === "true" &&
+                this.state.task &&
+                this.state.task.ordered_datasets && (
+                  <Row>
+                    <Col xs={12} md={12}>
+                      <Annotation
+                        placement="left"
+                        tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
+                      >
+                        <TaskLeaderboardCard
+                          {...this.props}
+                          modelLeaderBoardData={this.state.modelLeaderBoardData}
+                          modelLeaderBoardTags={this.state.modelLeaderBoardTags}
+                          task={this.state.task}
+                          taskId={this.state.taskId}
+                          displayRoundId={this.state.displayRoundId}
+                        />
+                      </Annotation>
+                    </Col>
+                  </Row>
+                )}
               <Row>
-                <Col xs={12} md={12}>
-                  {/* {this.state.modelLeaderBoardData.length ? ( */}
-                  {this.state.task && this.state.task.ordered_datasets && (
+                <Col
+                  xs={12}
+                  md={this.props.location.hash === "#overall" ? 6 : 12}
+                >
+                  {process.env.REACT_APP_ENABLE_DYNABOARD !== "true" && (
                     <Annotation
                       placement="left"
                       tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
                     >
-                      <TaskLeaderboardCard
+                      <OldTaskLeaderboardCard
                         {...this.props}
-                        modelLeaderBoardData={this.state.modelLeaderBoardData}
-                        modelLeaderBoardTags={this.state.modelLeaderBoardTags}
                         task={this.state.task}
                         taskId={this.state.taskId}
                         displayRoundId={this.state.displayRoundId}
                       />
                     </Annotation>
                   )}
-                  {/* ) : null} */}
-                </Col>
-              </Row>
-              <Row>
-                <Col
-                  xs={12}
-                  md={this.props.location.hash === "#overall" ? 6 : 12}
-                >
                   {/*Do not display the user leaderboard if there is no data or if it is for a pre-dynabench round.*/}
                   {this.state.userLeaderBoardData.length &&
                   !(

@@ -29,7 +29,7 @@ const TaskLeaderboardCard = (props) => {
 
   // Dataset Weights Array of a set of dataset id and corresponding weight.
   const [datasetWeights, setDatasetWeights] = useState(
-    task?.ordered_datasets?.map((ds) => {
+    task.ordered_datasets?.map((ds) => {
       return { id: ds.id, weight: 5 };
     })
   );
@@ -86,15 +86,15 @@ const TaskLeaderboardCard = (props) => {
   };
 
   const fetchOverallModelLeaderboard = (api, page) => {
-    const metricSum = metrics.reduce((acc, entry) => acc + entry.weight, 0);
-    const orderedMetricWeights = metrics.map((entry) =>
+    const metricSum = metrics?.reduce((acc, entry) => acc + entry.weight, 0);
+    const orderedMetricWeights = metrics?.map((entry) =>
       metricSum === 0 ? 0.0 : entry.weight / metricSum
     );
-    const dataSetSum = datasetWeights.reduce(
+    const dataSetSum = datasetWeights?.reduce(
       (acc, entry) => acc + entry.weight,
       0
     );
-    const orderedDatasetWeights = datasetWeights.map((entry) =>
+    const orderedDatasetWeights = datasetWeights?.map((entry) =>
       dataSetSum === 0 ? 0.0 : entry.weight / dataSetSum
     );
 

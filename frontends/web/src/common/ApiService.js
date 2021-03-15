@@ -241,7 +241,7 @@ export default class ApiService {
   getOverallModelLeaderboard(taskId, round, limit, offset) {
     const url =
       round === "overall"
-        ? `/models/dynaboard?limit=${limit || 10}&offset=${offset || 0}`
+        ? `/models?limit=${limit || 10}&offset=${offset || 0}`
         : `/rounds/${round}/models?limit=${limit || 10}&offset=${offset || 0}`;
     return this.fetch(`${this.domain}/tasks/${taskId}${url}`, {
       method: "GET",

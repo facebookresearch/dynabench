@@ -304,7 +304,8 @@ const OverallModelLeaderBoard = ({
     0
   );
 
-  const metricColumnWidht = 60 / (metrics.length === 0 ? 1 : metrics.length);
+  const metricColumnWidht =
+    60 / ((metrics?.length ?? 0) === 0 ? 1 : metrics.length);
 
   return (
     <Table hover className="mb-0">
@@ -323,7 +324,7 @@ const OverallModelLeaderBoard = ({
           )}
           {enableWeights && <th className="align-bottom">Adjust Weights</th>}
 
-          {metrics.map((metric) => {
+          {metrics?.map((metric) => {
             return (
               <MetricWeightTableHeader
                 metric={metric}
@@ -352,10 +353,10 @@ const OverallModelLeaderBoard = ({
         </tr>
       </thead>
       <tbody>
-        {models.map((model) => (
+        {models?.map((model) => (
           <OverallModelLeaderboardRow
             model={model}
-            ordered_datasets={task.ordered_datasets}
+            ordered_datasets={task.datasets}
             metrics={metrics}
             key={`model-${model.model_id}`}
             enableWeights={enableWeights}
