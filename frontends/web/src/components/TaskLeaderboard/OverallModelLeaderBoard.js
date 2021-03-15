@@ -5,6 +5,10 @@ import { Table } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import WeightIndicator from "./WeightIndicator";
 
+/**
+ * Render an expanded / collapsed state chevron.
+ * @param {bool} props.expanded
+ */
 const ChevronExpandButton = ({ expanded }) => {
   return (
     <a type="button" className="position-absolute start-100">
@@ -17,6 +21,12 @@ const ChevronExpandButton = ({ expanded }) => {
   );
 };
 
+/**
+ * Weight Slider UI
+ *
+ * @param {number} weight current weight
+ * @param {(number => void)} onWeightChange weight change handler
+ */
 const WeightSlider = ({ weight, onWeightChange }) => {
   return (
     <Form className="d-flex ml-2 float-right" style={{ width: "50%" }}>
@@ -39,9 +49,10 @@ const WeightSlider = ({ weight, onWeightChange }) => {
 /**
  * Popver to show vairance for a score component (target)
  *
- * @param {Object} params React params destructured.
- * @param {string} variance the variance value to display in the popover
- * @param {React.ReactNode} children the Score Node that triggers the popover
+ * @param {Object} props React params destructured.
+ * @param {string} props.variance the variance value to display in the popover
+ * @param {React.ReactNode} props.children the Score Node that triggers the popover
+ * @param {string} props.placement placement of the popover
  */
 const VariancePopover = ({ variance, children, placement = "right" }) => {
   const target = useRef(null);
@@ -105,7 +116,35 @@ const WeightPopover = ({ label, weight, children }) => {
 };
 
 /**
- * A Row representing a Models score in the leaderbord.
+ * Container to show and toggle current sort by.
+ *
+ * @param {String} props.sortKey the sortBy key for this instance
+ * @param {(String)=>void} props.toggleSort function to change the sortBy field.
+ * @param {currentSort} props.currentSort the current sortBy field.
+ */
+const SortContainer = ({
+  sortKey,
+  toggleSort,
+  currentSort,
+  className,
+  children,
+}) => {
+  return (
+    <div onClick={() => toggleSort(sortKey)} className={className}>
+      {currentSort.field === sortKey && currentSort.direction === "asc" && (
+        <i className="fas fa-sort-up">&nbsp;</i>
+      )}
+      {currentSort.field === sortKey && currentSort.direction === "desc" && (
+        <i className="fas fa-sort-down">&nbsp;</i>
+      )}
+
+      {children}
+    </div>
+  );
+};
+
+/**
+ * Render a table row for a Model's scores.
  * This component also manages the expansion state of the row.
  *
  * @param {*} model The model data
@@ -217,39 +256,21 @@ const OverallModelLeaderboardRow = ({
   );
 };
 
-const SortContainer = ({
-  sortKey,
-  toggleSort,
-  currentSort,
-  className,
-  children,
-}) => {
-  return (
-    <div onClick={() => toggleSort(sortKey)} className={className}>
-      {currentSort.field === sortKey && currentSort.direction === "asc" && (
-        <i className="fas fa-sort-up">&nbsp;</i>
-      )}
-      {currentSort.field === sortKey && currentSort.direction === "desc" && (
-        <i className="fas fa-sort-down">&nbsp;</i>
-      )}
-
-      {children}
-    </div>
-  );
-};
-
+/**
+ * Header component for a metric. Includes sort, title, weight and unit for each metric.
+ *
+ * @param {Object} props.metric the metric for this instance.
+ * @param {number} props.colWidth the proportial width for this column.
+ *
+ */
 const MetricWeightTableHeader = ({
   metric,
   colWidth,
   setMetricWeight,
   enableWeights,
-  total,
   sort,
   toggleSort,
 }) => {
-  const calculatedWeight =
-    total === 0 ? 0 : Math.round((metric.weight / total) * 100);
-
   return (
     <th
       className="text-right align-baseline "
@@ -285,10 +306,15 @@ const MetricWeightTableHeader = ({
   );
 };
 
+/**
+ * The Overall Model Leaderboard component
+ *
+ * @param {Array} props.models the models to show
+ * @param {Object} props.task the task for the leaderboard.
+ */
 const OverallModelLeaderBoard = ({
   models,
   task,
-  tags,
   enableWeights,
   metrics,
   setMetricWeight,

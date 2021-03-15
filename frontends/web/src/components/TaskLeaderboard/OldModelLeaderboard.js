@@ -2,6 +2,11 @@ import React from "react";
 import { Table } from "react-bootstrap";
 import { Link } from "react-router-dom";
 
+/**
+ * @deprecated Remove once dynaboard in launched. @see OverallModelLeaderBoard
+ *
+ * @param {*} props
+ */
 const OldModelLeaderboard = (props) => {
   return (
     <Table hover className="mb-0">

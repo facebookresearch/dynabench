@@ -4,6 +4,11 @@ import { Card, Pagination } from "react-bootstrap";
 import UserContext from "../../containers/UserContext";
 import OldModelLeaderboard from "./OldModelLeaderboard";
 
+/**
+ * @deprecated Remove once dynaboard in launched. @see TaskLeaderboardCard
+ *
+ * @param {*} props
+ */
 const OldTaskLeaderboardCard = (props) => {
   const [data, setData] = useState([]);
   const [tags, setTags] = useState([]);

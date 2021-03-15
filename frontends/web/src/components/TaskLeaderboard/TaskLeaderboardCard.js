@@ -4,10 +4,6 @@ import { Card, Pagination, Button } from "react-bootstrap";
 import UserContext from "../../containers/UserContext";
 import OverallModelLeaderBoard from "./OverallModelLeaderBoard";
 
-function rand(min, max) {
-  return min + Math.random() * (max - min);
-}
-
 const SortDirection = {
   ASC: "asc",
   DESC: "desc",
@@ -16,11 +12,20 @@ const SortDirection = {
   },
 };
 
+/**
+ * Represents the leaderboard for a task. i.e. Dynaboard
+ *
+ * @param {Object} props React props destructures.
+ * @param {Object} params.task The task
+ * @param {number} params.taskId The taskID
+ * @param {string} props.location navigation location
+ */
 const TaskLeaderboardCard = (props) => {
   const task = props.task;
 
   const [data, setData] = useState([]);
   const [enableWeights, setEnableWeights] = useState(false);
+  // Map task metrics to include weights for UI
   const [metrics, setMetrics] = useState(
     task?.ordered_metrics?.map((m) => {
       return { id: m.name, label: m.name, weight: 5, unit: m.unit };
@@ -30,7 +35,7 @@ const TaskLeaderboardCard = (props) => {
   // Dataset Weights Array of a set of dataset id and corresponding weight.
   const [datasetWeights, setDatasetWeights] = useState(
     task.ordered_datasets?.map((ds) => {
-      return { id: ds.id, weight: 5 };
+      return { id: ds.id, weight: 5 }; // Default wieght to max i.e. 5.
     })
   );
 
@@ -46,6 +51,12 @@ const TaskLeaderboardCard = (props) => {
 
   const taskId = props.taskId;
 
+  /**
+   * Update weight state for the appropraite metric
+   *
+   *  @param {number} metricID Metric ID
+   *  @param {number} newWeight New weight for metric.
+   */
   const setMetricWeight = (metricID, newWeight) => {
     setMetrics((state) => {
       const list = state.map((item, j) => {
@@ -59,6 +70,12 @@ const TaskLeaderboardCard = (props) => {
     });
   };
 
+  /**
+   * Update weight state for the appropraite dataset
+   *
+   *  @param {number} datasetID Dataset ID
+   *  @param {number} newWeight New weight for dataset.
+   */
   const setDatasetWeight = (datasetID, newWeight) => {
     setDatasetWeights((state) => {
       const list = state.map((item, j) => {
@@ -72,6 +89,11 @@ const TaskLeaderboardCard = (props) => {
     });
   };
 
+  /**
+   * Update or toggle the sort field.
+   *
+   * @param {string} field
+   */
   const toggleSort = (field) => {
     const currentDirection = sort.direction;
 
@@ -86,6 +108,12 @@ const TaskLeaderboardCard = (props) => {
     });
   };
 
+  /**
+   * Invoke APIService to fetch leaderboard data
+   *
+   * @param {*} api instance of @see APIService
+   * @param {number} page
+   */
   const fetchOverallModelLeaderboard = (api, page) => {
     const metricSum = metrics?.reduce((acc, entry) => acc + entry.weight, 0);
     const orderedMetricWeights = metrics?.map((entry) =>
