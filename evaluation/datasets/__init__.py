@@ -1,6 +1,9 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
-from datasets.nli import mnli
+from datasets.hs import ahs
+from datasets.nli import anli, mnli, snli
+from datasets.qa import aqa
+from datasets.sentiment import dynasent
 
 
 def load_datasets():
@@ -8,6 +11,20 @@ def load_datasets():
     datasets = {
         "mnli-dev-mismatched": mnli.MnliDevMismatched(),
         "mnli-dev-matched": mnli.MnliDevMatched(),
+        "snli-dev": snli.SnliDev(),
+        "snli-test": snli.SnliTest(),
+        "anli-r1-dev": anli.AnliRound1Dev(),
+        "anli-r1-test": anli.AnliRound1Test(),
+        "anli-r2-dev": anli.AnliRound2Dev(),
+        "anli-r2-test": anli.AnliRound2Test(),
+        "anli-r3-dev": anli.AnliRound3Dev(),
+        "anli-r3-test": anli.AnliRound3Test(),
+        "dynasent-r1-test": dynasent.DynasentRound1Test(),
+        "dynasent-r2-test": dynasent.DynasentRound2Test(),
+        "aqa-r1-test": aqa.AqaRound1Test(),
+        "ahs-r1-test": ahs.AhsRound1Test(),
+        "ahs-r2-test": ahs.AhsRound2Test(),
+        "ahs-r3-test": ahs.AhsRound3Test(),
     }
 
     return datasets
