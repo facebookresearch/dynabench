@@ -5,7 +5,7 @@ import json
 
 import numpy as np
 import sqlalchemy as db
-from sqlalchemy import case
+from sqlalchemy import JSON, case
 
 from common.logging import logger
 from models.context import Context
@@ -175,6 +175,12 @@ class ExampleModel(BaseModel):
                 % (h.hexdigest(), signature, "".join([str(x) for x in fields_to_sign]))
             )
             return False
+        else:
+            logger.info(
+                "Signature matched (received %s, expected %s [%s])"
+                % (h.hexdigest(), signature, "".join([str(x) for x in fields_to_sign]))
+            )
+
         return True
 
     def get_anon_uid(self, secret, uid):
@@ -238,6 +244,7 @@ class ExampleModel(BaseModel):
         validate_non_fooling,
         num_matching_validations,
         n=1,
+        mode="owner",
         my_uid=None,
         tags=None,
     ):
@@ -278,19 +285,27 @@ class ExampleModel(BaseModel):
                 )
             )
         )
-        if my_uid is not None:
+        if my_uid is not None and mode == "owner":
             cnt_uid = db.sql.func.sum(
                 case([(Validation.uid == my_uid, 1)], else_=0)
             ).label("cnt_uid")
             result_partially_validated = result_partially_validated.group_by(
                 Validation.eid
             ).having(cnt_uid == 0)
+
         result_not_validated = result.filter(
             db.not_(db.exists().where(Validation.eid == Example.id))
         )
         result = result_partially_validated.union(result_not_validated)
-        if my_uid is not None:
+
+        if my_uid is not None and mode == "owner":
             result = result.filter(Example.uid != my_uid)
+
+        if my_uid is not None and mode == "user":
+            result = result.filter(
+                db.cast(Example.metadata_json, JSON)["annotator_id"] != my_uid
+            )
+
         result = (
             result.order_by(
                 db.not_(Example.model_wrong),

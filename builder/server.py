@@ -26,6 +26,7 @@ if __name__ == "__main__":
         region_name=deploy_config["aws_region"],
     )
     queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
+    eval_queue = sqs.get_queue_by_name(QueueName=config["evaluation_sqs_queue"])
     while True:
         for message in queue.receive_messages():
             msg = json.loads(message.body)
@@ -98,5 +99,10 @@ if __name__ == "__main__":
                         )
                         nm = NotificationModel()
                         nm.create(user.id, "MODEL_DEPLOYMENT_STATUS", template.upper())
+
+                    if deployed:
+                        eval_queue.send_message(
+                            MessageBody=json.dumps({"model_id": model_id})
+                        )
             message.delete()
         time.sleep(5)

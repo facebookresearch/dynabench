@@ -280,9 +280,11 @@ export default class ApiService {
     });
   }
 
-  getRandomContext(tid, rid, tags = []) {
+  getRandomContext(tid, rid, tags = [], method = "min") {
     return this.fetch(
-      `${this.domain}/contexts/${tid}/${rid}?tags=${encodeURIComponent(
+      `${
+        this.domain
+      }/contexts/${tid}/${rid}/${method}?tags=${encodeURIComponent(
         tags.join("|")
       )}`,
       {
@@ -291,11 +293,12 @@ export default class ApiService {
     );
   }
 
-  getRandomExample(tid, rid, tags = []) {
+  getRandomExample(tid, rid, tags = [], annotator_id = null) {
+    let annotator_query = annotator_id ? `&annotator_id=${annotator_id}` : "";
     return this.fetch(
       `${this.domain}/examples/${tid}/${rid}?tags=${encodeURIComponent(
         tags.join("|")
-      )}`,
+      )}${annotator_query}`,
       {
         method: "GET",
       }
@@ -552,6 +555,9 @@ export default class ApiService {
   }
 
   logout() {
+    this.fetch(`${this.domain}/authenticate/logout`, {
+      method: "POST",
+    });
     localStorage.removeItem("id_token");
   }
 

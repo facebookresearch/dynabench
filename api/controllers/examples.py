@@ -80,19 +80,23 @@ def get_random_example(credentials, tid, rid):
     rm = RoundModel()
     round = rm.getByTidAndRid(tid, rid)
     em = ExampleModel()
-    if credentials["id"] != "turk":
-        example = em.getRandom(
-            round.id,
-            validate_non_fooling,
-            num_matching_validations,
-            n=1,
-            my_uid=credentials["id"],
-            tags=tags,
-        )
-    else:
-        example = em.getRandom(
-            round.id, validate_non_fooling, num_matching_validations, n=1, tags=tags
-        )
+
+    annotator_id = None
+    if "annotator_id" in query_dict and len(query_dict["annotator_id"]) > 0:
+        annotator_id = query_dict["annotator_id"][0]
+
+    uid = credentials["id"] if credentials["id"] != "turk" else annotator_id
+    mode = "owner" if credentials["id"] != "turk" else "user"
+    example = em.getRandom(
+        round.id,
+        validate_non_fooling,
+        num_matching_validations,
+        mode=mode,
+        n=1,
+        my_uid=uid,
+        tags=tags,
+    )
+
     if not example:
         bottle.abort(500, f"No examples available ({round.id})")
     example = example[0].to_dict()
@@ -129,6 +133,7 @@ def update_example(credentials, eid):
     try:
         em = ExampleModel()
         example = em.get(eid)
+
         if not example:
             bottle.abort(404, "Not found")
         if credentials["id"] != "turk" and example.uid != credentials["id"]:
@@ -207,6 +212,7 @@ def post_example(credentials):
     rm.updateLastActivity(context.r_realid)
     if example.model_wrong:
         rm.incrementFooledCount(context.r_realid)
+
     if credentials["id"] != "turk":
         um = UserModel()
         info = RoundUserExampleInfoModel()

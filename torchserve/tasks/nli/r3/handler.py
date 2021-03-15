@@ -6,10 +6,10 @@ import uuid
 
 import torch
 import torch.nn.functional as F
+from captum.attr import LayerIntegratedGradients
 from ts.torch_handler.base_handler import BaseHandler
 
 from allennlp.data.iterators import BasicIterator
-from captum.attr import LayerIntegratedGradients
 from data_utils.exvocab import ExVocabulary
 from data_utils.readers.roberta_nli_reader import RoBertaNLIReader
 from roberta_model.nli_training import RoBertaSeqClassification

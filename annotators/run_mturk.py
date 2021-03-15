@@ -38,7 +38,8 @@ class DynaBenchConfig:
     task_name: str = "no_task"
     task_id: int = 0
     round_id: int = 0
-    context_tags: Optional[str] = None
+    block_mobile: Optional[bool] = True
+    fetching_tags: Optional[str] = None
     # ; separating dictionary keys;
     # comma separating list items;
     # ie., "key:value0,value1,value2;key2:value4"
@@ -102,9 +103,14 @@ def main(cfg: DictConfig) -> None:
     # mturk_specific_qualifications
 
     def is_onboarding_successful(onboarding_data):
-        if "outputs" in onboarding_data and "success" in onboarding_data["outputs"]:
-            return onboarding_data["outputs"]["success"]
-        return False
+        if "outputs" not in onboarding_data:
+            return False
+        if onboarding_data["outputs"] is None:
+            return False
+        if "success" not in onboarding_data["outputs"]:
+            return False
+
+        return onboarding_data["outputs"]["success"]
 
     shared_state = SharedStaticTaskState(
         static_task_data=static_task_data,

@@ -41,7 +41,18 @@ class ValidQuestionCharacteristics extends React.Component {
                             <li>Valid: Which country does the flag in the image represent?</li>
                         </ul>
                     <li>Another person is likely to provide the same answer to the question.</li>
+                        <ul>
+                            <li>Invalid: What is the breed of this dog? (when the dog is barely visible or if few people would know the breed.)</li>
+                            <li>Valid: What are people waiting for? (when there is a train/bus station sign next to them.)</li>
+                        </ul>
                     <li>The question is based on the scene depicted in the image. An answer <b>can</b> be provided.</li>
+                        <ul>
+                            <li>Invalid: What is the woman doing? (when there is no women or if there are multiple women each doing something different.)</li>
+                            <li>Valid: What is the woman to the left of the man doing? (when there is only one woman that satisfies the criteria and it is clear another person will agree with your answer to the question.)</li>
+                        </ul>
+                    <li>
+                        <b>Remember that most questions are tricky! Please use the image magnifier by hovering your mouse over the image to investigate.</b>
+                    </li>
                 </ul>
             </>
         )

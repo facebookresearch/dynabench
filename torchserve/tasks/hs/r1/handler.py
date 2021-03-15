@@ -6,6 +6,7 @@ import os
 
 import torch
 import torch.nn.functional as F
+from captum.attr import LayerIntegratedGradients
 from transformers import (
     AutoConfig,
     AutoModelForSequenceClassification,
@@ -13,7 +14,6 @@ from transformers import (
 )
 from ts.torch_handler.base_handler import BaseHandler
 
-from captum.attr import LayerIntegratedGradients
 from settings import my_secret
 from shared import (
     captum_sequence_forward,

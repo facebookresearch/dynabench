@@ -3,16 +3,19 @@ mephisto:
   blueprint:
     onboarding_qualification: vqa-val-1-qualification
   task:
-    task_name: vqa-val-r1
+    task_name: vqa-val-1
     task_title: Validation - Visual Question Answering
     task_description: >
       Your job is to validate existing
       examples
-    task_reward: 0.3
+    task_reward: 0.36
     task_tags: "vqa,validation"
+    maximum_units_per_worker: 150
     assignment_duration_in_seconds: 3600
 dynabench:
-  task_name: vqa-val-r1
-  task_id: 13
+  task_name: vqa-val-1
+  task_id: 14 # 13 id dev id.
   round_id: 1
-  context_tags: "val2014,test2015"
+  block_mobile: True
+  fetching_tags: "sasha_test"
+  extra_logging: ""

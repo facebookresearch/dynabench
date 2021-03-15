@@ -6,10 +6,10 @@
 
 import React from "react";
 import { ValidQuestionCharacteristics } from "./QuestionsCharacteristics.js"
-import { WarningMessageLight } from "./WarningMessage.js"
 
 class VQAPreview extends React.Component {
     render() {
+        const explain_onboarding = "If this is your first time doing this task, you will be asked to go through a qualification stage before you are allowed to enter the main task.";
         return (
             <div style={{ width: "100%", height: "100%", backgroundColor: "white" }}>
                 {this.props.previewMode === "creation" ? (
@@ -17,8 +17,7 @@ class VQAPreview extends React.Component {
                         <h1>Ask Questions About Images That Fool An AI</h1>
                         <p>
                             In this task, you will be asked to find questions about an image that fool an AI model
-                            into answering incorrectly. The AI is reasonably good at understanding English and interpreting images.
-                            You will be asked to go through a qualification stage before you are allowed to enter the main task.
+                            into answering incorrectly. The AI is reasonably good at understanding English and interpreting images. {explain_onboarding}
                         </p>
                         <p>
                             Given an <b>image</b> that you will use as context, you are expected to
@@ -69,7 +68,7 @@ class VQAPreview extends React.Component {
                         <h1>Validate Examples</h1>
                         <p>
                             In this task, you will be asked to validate the examples consisting of an
-                            image, a question and an answer. You will have to do the following:
+                            image, a question and an answer. You will be asked to do the following:
                         </p>
                         <ol className="mx-5">
                             <li>
@@ -78,12 +77,15 @@ class VQAPreview extends React.Component {
                                 <ValidQuestionCharacteristics/>
                             </li>
                             <li>
-                                If it is, determine whether the provided answer is <b className="dark-blue-color">correct</b>.
+                                If the question is valid, determine whether the provided answer is <b className="dark-blue-color">correct</b>.
                             </li>
                         </ol>
                         <p>
                             If you think the example should be reviewed, please click the <b>Flag</b> button
                             and explain why you flagged the example (try to use this sparingly).
+                        </p>
+                        <p>
+                            {explain_onboarding}
                         </p>
                         <h3>Completion</h3>
                         <p>
@@ -91,7 +93,7 @@ class VQAPreview extends React.Component {
                         </p>
                         <h3>Reward</h3>
                         <p>
-                            On completing the task you will receive $0.23.
+                            On completing the task you will receive $0.35.
                         </p>
                     </div>
                 )}

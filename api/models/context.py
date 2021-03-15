@@ -73,6 +73,28 @@ class ContextModel(BaseModel):
             .all()
         )
 
+    def getRandomLeastFooled(self, rid, n=1, tags=None):
+        from models.example import Example
+
+        result = self.dbs.query(Context).filter(Context.r_realid == rid)
+        if tags:
+            result = result.filter(Context.tag.in_(tags))  # noqa
+
+        example_sub_query = (
+            self.dbs.query(Example.cid, db.sql.func.count("*").label("num_fooled"))
+            .filter(Example.model_wrong == 1)
+            .group_by(Example.cid)
+            .order_by(db.sql.func.count("*"), db.sql.func.rand())
+            .subquery()
+        )
+        return (
+            result.join(
+                example_sub_query, Context.id == example_sub_query.c.cid, isouter=True
+            )
+            .limit(n)
+            .all()
+        )
+
     def incrementCountDate(self, cid):
         c = self.get(cid)
         if c:

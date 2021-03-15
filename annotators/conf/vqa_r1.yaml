@@ -8,13 +8,15 @@ mephisto:
     task_description: >
       Your job is to find examples that fool
       AI models
-    task_reward: 0.12
+    task_reward: 0.13
     assignment_duration_in_seconds: 3600
+    maximum_units_per_worker: 150
     task_tags: "vqa,testing"
 dynabench:
   task_name: vqa-1
   task_id: 12
   round_id: 1
-  context_tags: "val2014,test2015"
+  block_mobile: True
+  fetching_tags: "val2017"
   # tag_to_store_with_examples is required
   extra_logging: "tag_to_store_with_examples:sasha_test"

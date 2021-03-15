@@ -13,7 +13,7 @@ class VQAOnboardingInstructions extends React.Component {
             <h4 className="my-3" style={{ textAlign: "center" }}>Qualification Phase</h4>
             {this.props.onboardingMode === "validation" ? (
                 <p>
-                    You will be shown a bunch of examples consisting of an image, a question and an answer.
+                    You will be shown a bunch of examples each consisting of an image, a question and an answer.
                     Your task is to validate that the image is required and sufficient to answer the question.
                     Once the question is validated, determine if the answer is correct.
                 </p>

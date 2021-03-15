@@ -54,8 +54,8 @@ class VQAExampleCards extends React.Component {
                 </p>
             </div>
         :   <></>
-        const exampleCards = this.examples.map(example =>
-            <Carousel.Item>
+        const exampleCards = this.examples.map((example, idx) =>
+            <Carousel.Item key={idx}>
                 <ExampleCard example={example} onboardingMode={this.props.onboardingMode}/>
             </Carousel.Item>
         );

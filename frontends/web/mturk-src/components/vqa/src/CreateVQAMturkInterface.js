@@ -93,8 +93,8 @@ class CreateVQAMturkInterface extends React.Component {
     }
 
     getTagList(props) {
-        if (props.taskConfig.context_tags) {
-            return props.taskConfig.context_tags.split(",")
+        if (props.taskConfig && props.taskConfig.fetching_tags) {
+            return props.taskConfig.fetching_tags.split(",")
         } else {
             return []
         }
@@ -175,6 +175,7 @@ class CreateVQAMturkInterface extends React.Component {
                 this.props.taskConfig.task_id,
                 this.state.task.cur_round,
                 this.getTagList(this.props),
+                "least_fooled"
             )
             .then(result => {
                 this.resetStateToContext(result);
