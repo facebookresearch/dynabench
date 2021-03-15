@@ -1,0 +1,10 @@
+eval_config = {
+    "aws_access_key_id": "",
+    "aws_secret_access_key": "",
+    "aws_region": "",
+    "sagemaker_role": "",
+    "dataset_s3_bucket": "",
+    "evaluation_sqs_queue": "",
+    "scheduler_status_dump": "",
+    "computer_status_dump": ""
+}

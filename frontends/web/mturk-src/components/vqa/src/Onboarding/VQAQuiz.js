@@ -15,7 +15,7 @@ class VQAQuiz extends React.Component {
     constructor(props) {
         super(props);
         this.MODEL_STATES = { "UNKNOWN" : -1, "CORRECT": 1, "INCORRECT": 0 };
-        this.examples = VQAQuizExamples;
+        this.examples = VQAQuizExamples(this.props.onboardingMode);
         this.minCorrectValidations = 6;
         this.maxAllowedAttempts = 2;
         this.state = this.props.cache || {

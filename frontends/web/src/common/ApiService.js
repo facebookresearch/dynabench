@@ -252,8 +252,8 @@ export default class ApiService {
     });
   }
 
-  getRandomContext(tid, rid, tags=[]) {
-    return this.fetch(`${this.domain}/contexts/${tid}/${rid}?tags=${encodeURIComponent(tags.join('|'))}`, {
+  getRandomContext(tid, rid, tags=[], method="min") {
+    return this.fetch(`${this.domain}/contexts/${tid}/${rid}/${method}?tags=${encodeURIComponent(tags.join('|'))}`, {
       method: "GET",
     });
   }
@@ -487,6 +487,9 @@ export default class ApiService {
   }
 
   logout() {
+    this.fetch(`${this.domain}/authenticate/logout`, {
+      method: "POST",
+    });
     localStorage.removeItem("id_token");
   }
 

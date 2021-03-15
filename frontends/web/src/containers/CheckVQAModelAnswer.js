@@ -52,6 +52,7 @@ class CheckVQAModelAnswer extends React.Component {
                 </div>
             )
         }
+        const isValidExampleId = this.props.eid && this.props.eid !== "unknown";
         return (
             <div className="mt-3">
                 <span>The model predicted: <strong>{this.props.modelPredStr}</strong></span><br/>
@@ -100,14 +101,14 @@ class CheckVQAModelAnswer extends React.Component {
                     mapKeyToCallback={{
                         "w": {
                             callback: () => {
-                                if (this.props.eid !== "unknown") {
+                                if (isValidExampleId) {
                                     this.handleCorrectButtonClick()
                                 }
                             }
                         },
                         "s": {
                             callback: () => {
-                                if (this.props.eid !== "unknown") {
+                                if (isValidExampleId) {
                                     this.handleIncorrectButtonClick()
                                 }
                             }
