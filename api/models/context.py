@@ -81,14 +81,16 @@ class ContextModel(BaseModel):
             result = result.filter(Context.tag.in_(tags))  # noqa
 
         example_sub_query = (
-            self.dbs.query(Example.cid, db.sql.func.sum(Example.model_wrong))
+            self.dbs.query(Example.cid, db.sql.func.count("*").label("num_fooled"))
+            .filter(Example.model_wrong == 1)
             .group_by(Example.cid)
-            .order_by(db.sql.func.sum(Example.model_wrong).asc(), db.sql.func.rand())
+            .order_by(db.sql.func.count("*"), db.sql.func.rand())
             .subquery()
         )
-
         return (
-            result.join(example_sub_query, Context.id == example_sub_query.c.cid)
+            result.join(
+                example_sub_query, Context.id == example_sub_query.c.cid, isouter=True
+            )
             .limit(n)
             .all()
         )
