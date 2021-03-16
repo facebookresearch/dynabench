@@ -161,45 +161,49 @@ class VQAValidationInterface extends React.Component {
           metadata,
           this.props.providerWorkerId
         )
-        .then((result) => {
-          this.setState(
-            (prevState, _) => {
-              const newTotalValidationsSoFar = new Set(
-                prevState.totalValidationsSoFar
-              );
-              if (prevState.example.id) {
-                newTotalValidationsSoFar.add(prevState.example.id);
-              }
+        .then(
+          (result) => {
+            this.setState(
+              (prevState, _) => {
+                const newTotalValidationsSoFar = new Set(
+                  prevState.totalValidationsSoFar
+                );
+                if (prevState.example.id) {
+                  newTotalValidationsSoFar.add(prevState.example.id);
+                }
 
-              let newHistory = [
-                ...prevState.history,
-                {
-                  id: prevState.example.id,
-                  questionValidationState: prevState.questionValidationState,
-                  responseValidationState: prevState.responseValidationState,
-                  flagReason: prevState.flagReason,
-                  totalNumValidationsSoFar: newTotalValidationsSoFar.size,
-                },
-              ];
+                let newHistory = [
+                  ...prevState.history,
+                  {
+                    id: prevState.example.id,
+                    questionValidationState: prevState.questionValidationState,
+                    responseValidationState: prevState.responseValidationState,
+                    flagReason: prevState.flagReason,
+                    totalNumValidationsSoFar: newTotalValidationsSoFar.size,
+                  },
+                ];
 
-              return {
-                totalValidationsSoFar: newTotalValidationsSoFar,
-                history: newHistory,
-              };
-            },
-            () => {
-              if (this.state.totalValidationsSoFar.size === this.batchAmount) {
-                this.props.onSubmit(this.state.history);
-              } else {
-                this.getNewExample();
+                return {
+                  totalValidationsSoFar: newTotalValidationsSoFar,
+                  history: newHistory,
+                };
+              },
+              () => {
+                if (
+                  this.state.totalValidationsSoFar.size === this.batchAmount
+                ) {
+                  this.props.onSubmit(this.state.history);
+                } else {
+                  this.getNewExample();
+                }
               }
-            }
-          );
-        }),
-        (error) => {
-          console.log(error);
-          this.setState({ showErrorAlert: true });
-        };
+            );
+          },
+          (error) => {
+            console.log(error);
+            this.setState({ showErrorAlert: true });
+          }
+        );
     });
   };
 

@@ -110,12 +110,14 @@ class VerifyInterface extends React.Component {
       var metadata = { annotator_id: this.props.providerWorkerId };
       this.api
         .validateExample(this.state.example.id, action, "user", metadata)
-        .then((result) => {
-          this.props.onSubmit(this.state);
-        }),
-        (error) => {
-          console.log(error);
-        };
+        .then(
+          (result) => {
+            this.props.onSubmit(this.state);
+          },
+          (error) => {
+            console.log(error);
+          }
+        );
     }
   }
   render() {

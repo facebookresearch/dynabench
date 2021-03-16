@@ -78,12 +78,14 @@ class VerifyInterface extends React.Component {
           action_label,
           this.props.providerWorkerId
         )
-        .then((result) => {
-          this.props.onSubmit(this.state.content);
-        }),
-        (error) => {
-          console.log(error);
-        };
+        .then(
+          (result) => {
+            this.props.onSubmit(this.state.content);
+          },
+          (error) => {
+            console.log(error);
+          }
+        );
     }
   }
   render() {
