@@ -96,8 +96,12 @@ class MetricsComputer:
                     self._computing.append(job)
                     return True
 
+            # TODO: avoid explictly pass perturb prefix at multiple places
+            # - take full job information at one interface instead
             predictions = self.parse_outfile(job)
-            eval_metrics_dict = self.datasets[job.dataset_name].eval(predictions)
+            eval_metrics_dict = self.datasets[job.dataset_name].eval(
+                predictions, job.perturb_prefix
+            )
 
             if job.perturb_prefix:
                 sm.update(s.id, **{job.perturb_prefix: eval_metrics_dict["perf"]})

@@ -9,6 +9,12 @@ import boto3
 
 
 def send_eval_request(model_id, dataset_name, config, logger=None):
+    """
+    If dataset name is a perturbed dataset with prefix, will evaluate this
+    perturbed dataset only;
+    else if dataset name is a base dataset name without prefix, will try to
+    evaluate itself plus any perturbed dataset available to generate delta metrics
+    """
     try:
         assert (
             model_id == "*" or isinstance(model_id, int) or isinstance(model_id, list)
@@ -32,7 +38,8 @@ def send_eval_request(model_id, dataset_name, config, logger=None):
         queue = sqs.get_queue_by_name(QueueName=config["evaluation_sqs_queue"])
         msg = {"model_id": model_id, "dataset_name": dataset_name}
         queue.send_message(MessageBody=json.dumps(msg))
-        logger.info(f"Sent message {msg}")
+        if logger:
+            logger.info(f"Sent message {msg}")
         return True
 
 
