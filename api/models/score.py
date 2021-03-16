@@ -2,10 +2,13 @@
 
 import json
 
+import numpy as np
 import sqlalchemy as db
 
 from common import helpers as util
+from models.dataset import Dataset
 from models.round import Round
+from models.task import TaskModel
 from models.user import User
 
 from .base import Base, BaseModel
@@ -117,6 +120,128 @@ class ScoreModel(BaseModel):
             )
         except db.orm.exc.NoResultFound:
             return False
+
+    def getDynaboardByTask(
+        self,
+        tid,
+        metric_to_weight,
+        did_to_weight,
+        sort_by="dynascore",
+        reverse_sort=False,
+        limit=5,
+        offset=0,
+    ):
+        # TODO: normalize weights
+        t = TaskModel()
+        task = t.getWithRound(tid)
+        ordered_datasets = json.loads(task.ordered_datasets)
+        ordered_dataset_ids = [dataset["id"] for dataset in ordered_datasets]
+        ordered_metrics = json.loads(task.ordered_metrics)
+        ordered_metric_weights = [
+            metric_to_weight[metric["name"]] for metric in ordered_metrics
+        ]
+        scores = (
+            self.dbs.query().join(Score, Score.mid == Model.id).filter(Model.tid == tid)
+        )
+        models = self.dbs.query(Model)
+        users = self.dbs.query(User)
+        datasets = self.dbs.query(Dataset)
+        mid_to_uid = {}
+        mid_to_name = {}
+        uid_to_username = {}
+        did_to_name = {}
+        for user in users:
+            uid_to_username[user.id] = user.username
+        for model in models:
+            mid_to_uid[model.id] = model.uid
+            mid_to_name[model.id] = model.name
+        for dataset in datasets:
+            did_to_name[dataset.did] = dataset.name
+
+        mid_to_data = {}
+        for score in scores:
+            score_dict = score.to_dict()
+            if score.mid not in mid_to_data:
+                mid_to_data[score.mid] = {
+                    "model_id": score.mid,
+                    "model_name": mid_to_name[score.mid],
+                    "uid": mid_to_uid[score.uid],
+                    "username": uid_to_username[mid_to_uid[score.mid]],
+                    "datasets": [],
+                }
+            mid_to_data[score.mid]["datasets"].append(
+                {
+                    "id": score.did,
+                    "name": did_to_name[score.did],
+                    "scores": np.array(
+                        [score_dict[metric["field_name"]] for metric in ordered_metrics]
+                    ),
+                }
+            )
+
+        # Compute variances and aggregates
+        count = 0
+        for datum in mid_to_data.values():
+            count += 1
+            id_to_datasets = {}
+            for dataset in datum["datasets"]:
+                if dataset["id"] in id_to_datasets:
+                    id_to_datasets["id"].append(dataset)
+                else:
+                    id_to_datasets["id"] = [dataset]
+            new_datasets = []
+            all_dataset_score_list = []
+            all_dataset_variance_list = []
+            for datasets in sorted(
+                id_to_datasets.values(),
+                key=lambda value: ordered_dataset_ids.index(value["id"]),
+            ):
+                score_list = []
+                for dataset in datasets:
+                    score_list.append(dataset["scores"])
+                mean_scores = np.mean(score_list, axis=0)
+                variances = np.var(score_list, axis=0)
+                all_dataset_score_list.append(
+                    mean_scores * did_to_weight[dataset["id"]]
+                )
+                all_dataset_variance_list.append(
+                    variances * did_to_weight[dataset["id"]]
+                )
+                new_datasets.append(
+                    {
+                        "id": dataset["id"],
+                        "name": dataset["name"],
+                        "scores": mean_scores.tolist(),
+                        "variances": variances.tolist(),
+                    }
+                )
+            datum["averaged_scores"] = np.sum(all_dataset_score_list).tolist()
+            datum["averaged_variances"] = np.sum(all_dataset_variance_list).tolist()
+            datum["dynascore"] = np.dot(
+                all_dataset_score_list, np.array(ordered_metric_weights)
+            ).tolist()
+            datum["dynavariance"] = np.dot(
+                all_dataset_score_list, np.array(ordered_metric_weights)
+            ).tolist()
+            datum["datasets"] = new_datasets
+
+        data_list = list(mid_to_data.values())
+
+        if sort_by == "dynascore":
+            data_list.sort(reverse=reverse_sort, key=lambda model: model["dynascore"])
+        elif sort_by in ordered_metrics:
+            data_list.sort(
+                reverse=reverse_sort,
+                key=lambda model: model["averaged_scores"][
+                    ordered_metrics.index(sort_by)
+                ],
+            )
+        elif sort_by == "model_name":
+            data_list.sort(reverse=reverse_sort, key=lambda model: model["model_name"])
+
+        return util.json_encode(
+            {"count": count, "data": data_list[offset : offset + limit]}
+        )
 
     def getOverallModelPerfByTask(self, tid, n=5, offset=0):
         # Main query to fetch the model details
