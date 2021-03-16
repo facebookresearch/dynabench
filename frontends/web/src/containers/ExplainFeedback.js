@@ -6,18 +6,22 @@
 
 import React from "react";
 
-const ExplainFeedback = ({feedbackSaved, type}) => {
-    const instruction = (type === "explanation" ? "Click out of input box to save" : "Press enter to save or click the submit button");
-    return (
-      <span style={{float: "right"}}>
-        { feedbackSaved === null
-          ? <span style={{color: "#b58c14"}}>Draft. {instruction}.</span>
-          : feedbackSaved === false
-            ? "Saving..."
-            : <span style={{color: "#085756"}}>Saved!</span>
-        }
-      </span>
-    );
+const ExplainFeedback = ({ feedbackSaved, type }) => {
+  const instruction =
+    type === "explanation"
+      ? "Click out of input box to save"
+      : "Press enter to save or click the submit button";
+  return (
+    <span style={{ float: "right" }}>
+      {feedbackSaved === null ? (
+        <span style={{ color: "#b58c14" }}>Draft. {instruction}.</span>
+      ) : feedbackSaved === false ? (
+        "Saving..."
+      ) : (
+        <span style={{ color: "#085756" }}>Saved!</span>
+      )}
+    </span>
+  );
 };
 
 export default ExplainFeedback;

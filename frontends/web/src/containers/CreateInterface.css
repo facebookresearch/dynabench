@@ -4,15 +4,14 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-
- .qa-context > span {
+.qa-context > span {
     /* Fix for react-text-annote token annotator added whitespace around tokens */
     margin-right: -4px;
     white-space: pre-wrap;
     letter-spacing: 0.2px;
     line-height: 1.8;
- }
+}
 
- .qa-context > mark {
-     margin-right: 2px;
- }
+.qa-context > mark {
+    margin-right: 2px;
+}

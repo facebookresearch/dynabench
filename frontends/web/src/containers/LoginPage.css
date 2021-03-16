@@ -7,130 +7,136 @@
 /* STRUCTURE */
 
 .wrapper {
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 20px;
-  width: 100%;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px;
+    width: 100%;
 }
 
 .login-form {
-  border-radius: 10px;
-  box-shadow: 0 30px 60px 0 rgba(0,0,0,0.3);
-  max-width: 450px;
-  overflow: hidden;
-  position: relative;
-  width: 90%;
+    border-radius: 10px;
+    box-shadow: 0 30px 60px 0 rgba(0, 0, 0, 0.3);
+    max-width: 450px;
+    overflow: hidden;
+    position: relative;
+    width: 90%;
 }
 
 .login-form .msg {
-  padding: 0 30px;
+    padding: 0 30px;
 }
 
-/* FORM TYPOGRAPHY*/
+/* FORM TYPOGRAPHY */
 
 .submit-btn {
-  background-color: #1283d8;
-  border: none;
-  font-size: 13px;
-  padding: 15px 80px;
-  transition: all 0.3s ease-in-out;
-  width: 100%;
+    background-color: #1283d8;
+    border: none;
+    font-size: 13px;
+    padding: 15px 80px;
+    transition: all 0.3s ease-in-out;
+    width: 100%;
 }
 
 .submit-btn:hover {
-  background-color: #39ace7;
+    background-color: #39ace7;
 }
 
 .submit-btn:active {
-  transform: scale(0.95);
+    transform: scale(0.95);
 }
 
 .submit-btn:disabled,
 .submit-btn[disabled] {
-  background-color: #cccccc;
-  border: 1px solid #999999;
-  color: #666666;
-  cursor: not-allowed;
+    background-color: #ccc;
+    border: 1px solid #999;
+    color: #666;
+    cursor: not-allowed;
 }
 
-.login-form input[type=text], .login-form input[type=email], .login-form input[type=password] {
-  background-color: #f6f6f6;
-  border: 2px solid #f6f6f6;
-  border-radius: 5px;
-  color: #0d0d0d;
-  padding: 15px 32px;
-  transition: all 0.5s ease-in-out;
-  width: 100%;
+.login-form input[type=text],
+.login-form input[type=email],
+.login-form input[type=password] {
+    background-color: #f6f6f6;
+    border: 2px solid #f6f6f6;
+    border-radius: 5px;
+    color: #0d0d0d;
+    padding: 15px 32px;
+    transition: all 0.5s ease-in-out;
+    width: 100%;
 }
 
 .login-form input:focus {
-  background-color: #fff;
-  border-bottom: 2px solid #5fbae9;
+    background-color: #fff;
+    border-bottom: 2px solid #5fbae9;
 }
 
 /* ANIMATIONS */
 
 /* Simple CSS3 Fade-in-down Animation */
 .fade-in-down {
-  animation: fade-in-down 1s both;
+    animation: fade-in-down 1s both;
 }
 
 @keyframes fade-in-down {
-  0% {
-    opacity: 0;
-    transform: translate3d(0, -100%, 0);
-  }
-  100% {
-    opacity: 1;
-    transform: none;
-  }
+    0% {
+        opacity: 0;
+        transform: translate3d(0, -100%, 0);
+    }
+
+    100% {
+        opacity: 1;
+        transform: none;
+    }
 }
 
 /* Simple CSS3 Fade-in Animation */
-@keyframes fade-in { from { opacity:0; } to { opacity:1; } }
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
 
 .fade-in {
-  opacity:0;
-  animation: fade-in 1s ease-in forwards;
+    opacity: 0;
+    animation: fade-in 1s ease-in forwards;
 }
 
 .fade-in.first {
-  animation-delay: 0.4s;
+    animation-delay: 0.4s;
 }
 
 .fade-in.second {
-  animation-delay: 0.6s;
+    animation-delay: 0.6s;
 }
 
 .fade-in.third {
-  animation-delay: 0.8s;
+    animation-delay: 0.8s;
 }
 
 .fade-in.fourth {
-  animation-delay: 1s;
+    animation-delay: 1s;
 }
 
 /* Simple CSS3 Underline Animation */
 .underline-hover {
-  display: inline-block;
+    display: inline-block;
 }
 
 .underline-hover::after {
-  background-color: #56baed;
-  content: "";
-  display: block;
-  height: 2px;
-  transition: width 0.2s;
-  width: 0;
+    background-color: #56baed;
+    content: "";
+    display: block;
+    height: 2px;
+    transition: width 0.2s;
+    width: 0;
 }
 
 .underline-hover:hover {
-  color: #0d0d0d;
-  text-decoration: none;
+    color: #0d0d0d;
+    text-decoration: none;
 }
 
 .underline-hover:hover::after {
-  width: 100%;
+    width: 100%;
 }

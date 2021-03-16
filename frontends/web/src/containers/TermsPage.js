@@ -64,11 +64,11 @@ const TermsPage = () => (
         User Content and User Models if you desire.
       </p>
       <p>
-        We reserve the right (but have no obligation) to review any User
-        Content and User Models, and to investigate and/or take appropriate
-        action against you in our sole discretion if you violate any other
-        provision of these Terms. Such action may include removing or modifying
-        your User Content and User Models and terminating your account.
+        We reserve the right (but have no obligation) to review any User Content
+        and User Models, and to investigate and/or take appropriate action
+        against you in our sole discretion if you violate any other provision of
+        these Terms. Such action may include removing or modifying your User
+        Content and User Models and terminating your account.
       </p>
       <p>
         You will not submit any confidential, private or personal information
