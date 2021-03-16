@@ -113,6 +113,11 @@ class ScoreModel(BaseModel):
         except db.orm.exc.NoResultFound:
             return False
 
+    # FIXME: Ideally scores table should be deduped by (mid, did)
+    # but all previous evaluations prior to datasets table will have
+    # did = 0 and adding this now will cause prod server failure.
+    # We should add did to scores table and add the dedup constraint
+    # once new datasets are uploaded to eval server.
     def getOneByModelIdAndDataset(self, mid, did):
         try:
             return (
