@@ -97,11 +97,10 @@ class MetricsComputer:
             score_obj["did"] = d_entry.id
 
             rm = RoundModel()
-            # FIXME: note the rid in scores table is r_realid, pending issue #302
             if self.datasets[job.dataset_name].round_id != 0:
-                score_obj["round_id"] = rm.getByTidAndRid(d_entry.tid, d_entry.rid).id
+                score_obj["r_realid"] = rm.getByTidAndRid(d_entry.tid, d_entry.rid).id
             else:
-                score_obj["round_id"] = 0
+                score_obj["r_realid"] = 0
             s = ScoreModel()
             s.create(**score_obj)
             return True
