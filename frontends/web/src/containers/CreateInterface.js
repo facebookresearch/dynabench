@@ -360,7 +360,6 @@ class ResponseInfo extends React.Component {
     this.state = {
       loader: true,
       inspectError: false,
-      livemode: this.props.livemode,
       fooled:
         this.props.obj.fooled === true
           ? "yes"
@@ -370,6 +369,7 @@ class ResponseInfo extends React.Component {
     };
   }
   componentDidMount() {
+    this.props.smoothlyAnimateToBottom();
     this.setState({
       loader: false,
       inspectError: false,
@@ -379,15 +379,14 @@ class ResponseInfo extends React.Component {
   }
   updateHateSpeechTargetMetadata(e) {
     const hate_type = e.target.getAttribute("data");
-    const idx = e.target.getAttribute("data-index");
-    this.setState({ explainSaved: false, hate_type: hate_type });
-    this.context.api.getExampleMetadata(this.props.exampleId).then(
-      (result) => {
-        var metadata = JSON.parse(result);
-        metadata["hate_type"] = hate_type;
-        this.context.api
-          .setExampleMetadata(this.props.exampleId, metadata)
-          .then(
+    const exampleId = e.target.getAttribute("data-index");
+    if (exampleId) {
+      this.setState({ explainSaved: false, hate_type: hate_type });
+      this.context.api.getExampleMetadata(exampleId).then(
+        (result) => {
+          var metadata = JSON.parse(result);
+          metadata["hate_type"] = hate_type;
+          this.context.api.setExampleMetadata(exampleId, metadata).then(
             (result) => {
               this.setState({ explainSaved: true });
             },
@@ -395,11 +394,12 @@ class ResponseInfo extends React.Component {
               console.log(error);
             }
           );
-      },
-      (error) => {
-        console.log(error);
-      }
-    );
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
+    }
   }
   updateExample(exampleId, correctAnswer, fooled) {
     if (!this.props.livemode) {
@@ -425,24 +425,22 @@ class ResponseInfo extends React.Component {
   }
   explainExample(e) {
     e.preventDefault();
-    var idx = e.target.getAttribute("data-index");
     var type = e.target.getAttribute("data-type");
+    var exampleId = e.target.getAttribute("data-index");
     var explanation = e.target.value.trim();
-    if (explanation !== "" || this.state.hasPreviousExplanation) {
+    if (
+      exampleId &&
+      (explanation !== "" || this.state.hasPreviousExplanation)
+    ) {
       this.setState({ explainSaved: false, hasPreviousExplanation: true });
       this.context.api
-        .explainExample(this.props.exampleId, type, explanation)
-        .then(
-          (result) => {
-            this.setState({ explainSaved: true });
-            if (explanation === "") {
-              this.setState({ hasPreviousExplanation: false });
-            }
-          },
-          (error) => {
-            console.log(error);
+        .explainExample(exampleId, type, explanation)
+        .then((result) => {
+          this.setState({ explainSaved: true });
+          if (explanation === "") {
+            this.setState({ hasPreviousExplanation: false });
           }
-        );
+        });
     }
   }
   setModelState(fooled) {
@@ -454,42 +452,52 @@ class ResponseInfo extends React.Component {
   }
   retractExample(e) {
     e.preventDefault();
-    var idx = e.target.getAttribute("data-index");
-    this.context.api.retractExample(this.props.exampleId).then(
-      (result) => {
-        const newContent = this.props.content.slice();
-        newContent[idx].cls = "retracted";
-        newContent[idx].retracted = true;
-        this.setState({ content: newContent });
-      },
-      (error) => {
-        console.log(error);
-      }
-    );
+    var exampleId = e.target.getAttribute("data-index");
+    if (exampleId) {
+      this.context.api.retractExample(exampleId).then(
+        (result) => {
+          this.props.updateContentState(
+            {
+              cls: "retracted",
+              retracted: true,
+            },
+            exampleId
+          );
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
+    }
   }
   flagExample(e) {
     e.preventDefault();
-    var idx = e.target.getAttribute("data-index");
-    this.context.api.flagExample(this.props.exampleId).then(
-      (result) => {
-        const newContent = this.props.content.slice();
-        newContent[idx].cls = "flagged";
-        newContent[idx].flagged = true;
-        this.setState({ content: newContent });
-      },
-      (error) => {
-        console.log(error);
-      }
-    );
+    var exampleId = e.target.getAttribute("data-index");
+    if (exampleId) {
+      this.context.api.flagExample(exampleId).then(
+        (result) => {
+          this.props.updateContentState(
+            {
+              cls: "flagged",
+              flagged: true,
+            },
+            exampleId
+          );
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
+    }
   }
   inspectExample = (e) => {
-    const { content, curTarget, answer } = this.props;
+    const { obj, curTarget, answer } = this.props;
     e.preventDefault();
     this.setState({
       loader: true,
       inspectError: false,
     });
-    var idx = e.target.getAttribute("data-index");
+    var exampleId = this.props.obj.exampleId;
     let target = "None";
     if (!isNaN(parseInt(curTarget))) {
       target = curTarget;
@@ -497,10 +505,10 @@ class ResponseInfo extends React.Component {
     const selectedAnswer =
       answer && answer.length ? answer[answer.length - 1].tokens.join("") : "";
     this.context.api
-      .inspectModel(content[idx].url, {
+      .inspectModel(obj.url, {
         answer: selectedAnswer,
-        context: content[0].text,
-        hypothesis: content[idx].cls === "hypothesis" ? content[idx].text : "",
+        context: obj.context.length === 1 ? obj.context[0] : obj.context,
+        hypothesis: obj.cls === "hypothesis" ? obj.text : "",
         insight: true,
         target,
       })
@@ -535,9 +543,13 @@ class ResponseInfo extends React.Component {
               inspectors = [result];
             }
           }
-          const newContent = this.props.content.slice();
-          newContent[idx].inspect = inspectors;
-          this.setState({ content: newContent, loader: false });
+          this.props.updateContentState(
+            {
+              inspect: inspectors,
+            },
+            exampleId
+          );
+          this.setState({ loader: false });
         },
         (error) => {
           console.log(error);
@@ -548,7 +560,7 @@ class ResponseInfo extends React.Component {
 
   render() {
     let sandboxContent = null;
-    if (!this.state.livemode) {
+    if (!this.props.livemode) {
       sandboxContent = (
         <div>
           This example was not stored because you are in sandbox mode.
@@ -630,7 +642,7 @@ class ResponseInfo extends React.Component {
         <>
           {this.props.taskType === "VQA" ? (
             <CheckVQAModelAnswer
-              eid={this.props.exampleId}
+              eid={this.props.obj.exampleId}
               updateExample={this.updateExample}
               feedbackSaved={this.state.feedbackSaved}
               modelPredStr={this.props.obj.modelPredStr}
@@ -658,7 +670,7 @@ class ResponseInfo extends React.Component {
                         : selectedAnswer) +
                       " is the correct answer"
                     }
-                    data-index={this.props.index}
+                    data-index={this.props.obj.exampleId}
                     data-type="example"
                     onChange={() => this.setState({ explainSaved: null })}
                     onBlur={this.explainExample}
@@ -669,7 +681,7 @@ class ResponseInfo extends React.Component {
                     type="text"
                     style={{ width: 100 + "%" }}
                     placeholder="Explain why you think the model made a mistake"
-                    data-index={this.props.index}
+                    data-index={this.props.obj.exampleId}
                     data-type="model"
                     onChange={() => this.setState({ explainSaved: null })}
                     onBlur={this.explainExample}
@@ -678,7 +690,7 @@ class ResponseInfo extends React.Component {
                 {this.props.taskName === "Hate Speech" ? (
                   <HateSpeechDropdown
                     hateType={this.state.hate_type}
-                    dataIndex={this.props.index}
+                    dataIndex={this.props.obj.exampleId}
                     onClick={this.updateHateSpeechTargetMetadata}
                   />
                 ) : (
@@ -702,7 +714,7 @@ class ResponseInfo extends React.Component {
                     placeholder={
                       "Explain why " + selectedAnswer + " is the correct answer"
                     }
-                    data-index={this.props.index}
+                    data-index={this.props.obj.exampleId}
                     data-type="example"
                     onChange={() => this.setState({ explainSaved: null })}
                     onBlur={this.explainExample}
@@ -713,7 +725,7 @@ class ResponseInfo extends React.Component {
                     type="text"
                     style={{ width: 100 + "%" }}
                     placeholder="Explain what you did to try to trick the model"
-                    data-index={this.props.index}
+                    data-index={this.props.obj.exampleId}
                     data-type="model"
                     onChange={() => this.setState({ explainSaved: null })}
                     onBlur={this.explainExample}
@@ -722,7 +734,7 @@ class ResponseInfo extends React.Component {
                 {this.props.taskName === "Hate Speech" ? (
                   <HateSpeechDropdown
                     hateType={this.state.hate_type}
-                    dataIndex={this.props.index}
+                    dataIndex={this.props.obj.exampleId}
                     onClick={this.updateHateSpeechTargetMetadata}
                   />
                 ) : (
@@ -742,9 +754,8 @@ class ResponseInfo extends React.Component {
             {this.props.obj.inspect &&
               this.props.obj.inspect.map((inspectData, idx) => {
                 return (
-                  <>
+                  <div key={idx}>
                     <TextFeature
-                      key={idx}
                       data={inspectData}
                       curTarget={this.props.curTarget}
                       targets={this.props.targets}
@@ -762,7 +773,7 @@ class ResponseInfo extends React.Component {
                         for the input token layer of the model.
                       </span>
                     </div>
-                  </>
+                  </div>
                 );
               })}
           </div>
@@ -791,7 +802,7 @@ class ResponseInfo extends React.Component {
         </Card.Body>
         {this.props.obj.retracted ||
         this.props.obj.flagged ||
-        !this.state.livemode ? null : (
+        !this.props.livemode ? null : (
           <Card.Footer>
             {
               <div
@@ -810,7 +821,7 @@ class ResponseInfo extends React.Component {
                   )}
                 >
                   <button
-                    data-index={this.props.index}
+                    data-index={this.props.obj.exampleId}
                     onClick={this.retractExample}
                     type="button"
                     className="btn btn-light btn-sm"
@@ -829,7 +840,7 @@ class ResponseInfo extends React.Component {
                   )}
                 >
                   <button
-                    data-index={this.props.index}
+                    data-index={this.props.obj.exampleId}
                     onClick={this.flagExample}
                     type="button"
                     className="btn btn-light btn-sm"
@@ -848,7 +859,7 @@ class ResponseInfo extends React.Component {
                     )}
                   >
                     <button
-                      data-index={this.props.index}
+                      data-index={this.props.obj.exampleId}
                       onClick={this.inspectExample}
                       type="button"
                       className="btn btn-light btn-sm"
@@ -898,9 +909,9 @@ class CreateInterface extends React.Component {
       livemode: true,
       submitDisabled: true,
       refreshDisabled: true,
-      mapKeyToExampleId: {},
     };
     this.getNewContext = this.getNewContext.bind(this);
+    this.smoothlyAnimateToBottom = this.smoothlyAnimateToBottom.bind(this);
     this.handleGoalMessageTargetChange = this.handleGoalMessageTargetChange.bind(
       this
     );
@@ -910,6 +921,7 @@ class CreateInterface extends React.Component {
     this.updateAnswer = this.updateAnswer.bind(this);
     this.updateRetainInput = this.updateRetainInput.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
+    this.updateContentState = this.updateContentState.bind(this);
     this.chatContainerRef = React.createRef();
     this.bottomAnchorRef = React.createRef();
     this.inputRef = React.createRef();
@@ -945,6 +957,12 @@ class CreateInterface extends React.Component {
     );
   }
 
+  getCurrentContextText() {
+    return this.state.content
+      .filter((item) => item.cls === "context")
+      .map((filteredItem) => filteredItem.text);
+  }
+
   updateRetainInput(e) {
     const retainInput = e.target.checked;
     if (this.context.api.loggedIn()) {
@@ -978,6 +996,20 @@ class CreateInterface extends React.Component {
         }
       );
     }
+  }
+
+  updateContentState(updates, exampleId) {
+    this.setState(function (prevState, _) {
+      const idx = prevState.content
+        .map((item) => item.exampleId)
+        .indexOf(parseInt(exampleId));
+      if (idx === -1) {
+        return {};
+      }
+      let newContent = prevState.content;
+      newContent[idx] = { ...newContent[idx], ...updates };
+      return { content: newContent };
+    });
   }
 
   pickModel = (modelUrls) => {
@@ -1063,119 +1095,110 @@ class CreateInterface extends React.Component {
 
       this.context.api
         .getModelResponse(this.state.randomModel, modelInputs)
-        .then(
-          (result) => {
-            if (result.errorMessage) {
+        .then((modelResponse) => {
+          if (modelResponse.errorMessage) {
+            this.setState({
+              submitDisabled: false,
+              refreshDisabled: false,
+              fetchPredictionError: true,
+            });
+          } else {
+            if (this.state.fetchPredictionError) {
               this.setState({
                 submitDisabled: false,
                 refreshDisabled: false,
                 fetchPredictionError: true,
               });
+            }
+            var modelPredIdx = null;
+            var modelPredStr = null;
+            var modelFooled = null;
+            if (this.state.task.type == "clf") {
+              modelPredIdx = modelResponse.prob.indexOf(
+                Math.max(...modelResponse.prob)
+              );
+              modelPredStr = this.state.task.targets[modelPredIdx];
+              modelFooled = modelPredIdx !== this.state.target;
             } else {
-              if (this.state.fetchPredictionError) {
-                this.setState({
-                  fetchPredictionError: false,
-                });
+              // TODO: handle this more elegantly
+              modelResponse.prob = [modelResponse.prob, 1 - modelResponse.prob];
+              this.state.task.targets = ["confidence", "uncertainty"];
+              if (this.state.task.type === "extract") {
+                modelFooled = !modelResponse.model_is_correct;
+                modelPredStr = modelResponse.text;
+              } else if (this.state.task.type === "VQA") {
+                modelPredStr = modelResponse.answer;
               }
-              var modelPredIdx = null;
-              var modelPredStr = null;
-              var modelFooled = null;
-              if (this.state.task.type == "clf") {
-                modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
-                modelPredStr = this.state.task.targets[modelPredIdx];
-                modelFooled = modelPredIdx !== this.state.target;
-              } else {
-                // TODO: handle this more elegantly
-                result.prob = [result.prob, 1 - result.prob];
-                this.state.task.targets = ["confidence", "uncertainty"];
-                if (this.state.task.type === "extract") {
-                  modelFooled = !result.model_is_correct;
-                  modelPredStr = result.text;
-                } else if (this.state.task.type === "VQA") {
-                  modelPredStr = result.answer;
-                }
-              }
-              this.setState(
-                {
-                  content: [
-                    ...this.state.content,
-                    {
-                      cls: "hypothesis",
-                      modelPredIdx: modelPredIdx,
-                      modelPredStr: modelPredStr,
-                      fooled: modelFooled,
-                      text: this.state.hypothesis,
-                      url: this.state.randomModel,
-                      retracted: false,
-                      prob: result.prob,
-                    },
-                  ],
-                },
-                function () {
-                  this.smoothlyAnimateToBottom();
-                  // Save examples.
-                  if (!this.state.livemode) {
-                    // We are in sandbox.
-                    this.setState({
-                      hypothesis: this.state.retainInput
-                        ? this.state.hypothesis
+            }
+            this.setState(function (prevState, _) {
+              return {
+                content: [
+                  ...prevState.content,
+                  {
+                    cls: "hypothesis",
+                    modelPredIdx: modelPredIdx,
+                    modelPredStr: modelPredStr,
+                    fooled: modelFooled,
+                    text: prevState.hypothesis,
+                    context: this.getCurrentContextText(),
+                    url: prevState.randomModel,
+                    retracted: false,
+                    prob: modelResponse.prob,
+                  },
+                ],
+              };
+            });
+            // Save examples.
+            if (!this.state.livemode) {
+              // We are in sandbox.
+              this.setState({
+                hypothesis: this.state.retainInput ? this.state.hypothesis : "",
+                submitDisabled: false,
+                refreshDisabled: false,
+              });
+              return;
+            }
+            const metadata = { model: this.state.randomModel };
+            this.context.api
+              .storeExample(
+                this.state.task.id,
+                this.state.task.selected_round,
+                this.context.user.id,
+                this.state.context.id,
+                this.state.hypothesis,
+                this.state.target,
+                modelResponse,
+                metadata
+              )
+              .then(
+                (result) => {
+                  // Reset state variables and store example id.
+                  this.setState(function (prevState, _) {
+                    let newContent = prevState.content;
+                    newContent[newContent.length - 1]["exampleId"] = result.id;
+                    return {
+                      content: newContent,
+                      hypothesis: prevState.retainInput
+                        ? prevState.hypothesis
                         : "",
                       submitDisabled: false,
                       refreshDisabled: false,
-                    });
-                    return;
+                    };
+                  });
+                  if (!!result.badges) {
+                    this.setState({ showBadges: result.badges });
                   }
-                  const metadata = { model: this.state.randomModel };
-                  this.context.api
-                    .storeExample(
-                      this.state.task.id,
-                      this.state.task.selected_round,
-                      this.context.user.id,
-                      this.state.context.id,
-                      this.state.hypothesis,
-                      this.state.target,
-                      result,
-                      metadata
-                    )
-                    .then(
-                      (result) => {
-                        var key = this.state.content.length - 1;
-                        // Reset state variables and store example id.
-                        this.setState({
-                          hypothesis: this.state.retainInput
-                            ? this.state.hypothesis
-                            : "",
-                          submitDisabled: false,
-                          refreshDisabled: false,
-                          mapKeyToExampleId: {
-                            ...this.state.mapKeyToExampleId,
-                            [key]: result.id,
-                          },
-                        });
-                        if (!!result.badges) {
-                          this.setState({ showBadges: result.badges });
-                        }
-                      },
-                      (error) => {
-                        console.log(error);
-                        this.setState({
-                          submitDisabled: false,
-                          refreshDisabled: false,
-                        });
-                      }
-                    );
+                },
+                (error) => {
+                  console.log(error);
+                  this.setState({
+                    submitDisabled: false,
+                    refreshDisabled: false,
+                  });
                 }
               );
-            }
-          },
-          (error) => {
-            console.log(error);
-            this.setState({
-              submitDisabled: false,
-              refreshDisabled: false,
-            });
           }
-        );
+        });
     });
   }
 
@@ -1252,36 +1275,30 @@ class CreateInterface extends React.Component {
   }
 
   render() {
-    const contextContent = this.state.content
-      .filter((item) => item.cls === "context")
-      .map((item, index) => (
-        <Annotation
-          key={index}
-          placement="bottom-start"
-          tooltip={
-            "This is the context that applies to your particular example. It will be passed to the model alongside your generated text if the model expects a context."
-          }
-        >
-          <ContextInfo
-            index={index}
-            text={item.text}
-            targets={this.state.task.targets}
-            curTarget={this.state.target}
-            taskType={this.state.task.type}
-            taskName={this.state.task.shortname}
-            answer={this.state.answer}
-            updateAnswer={this.updateAnswer}
-          />
-        </Annotation>
-      ));
+    const contextContent = this.getCurrentContextText().map((text, index) => (
+      <Annotation
+        key={index}
+        placement="bottom-start"
+        tooltip={
+          "This is the context that applies to your particular example. It will be passed to the model alongside your generated text if the model expects a context."
+        }
+      >
+        <ContextInfo
+          text={text}
+          targets={this.state.task.targets}
+          curTarget={this.state.target}
+          taskType={this.state.task.type}
+          taskName={this.state.task.shortname}
+          answer={this.state.answer}
+          updateAnswer={this.updateAnswer}
+        />
+      </Annotation>
+    ));
     const responseContent = this.state.content
       .map((item, index) =>
         item.cls === "context" ? undefined : (
           <ResponseInfo
-            randomModel={this.state.randomModel}
             key={index}
-            index={index}
-            exampleId={this.state.mapKeyToExampleId[index]}
             targets={this.state.task.targets}
             curTarget={this.state.target}
             taskType={this.state.task.type}
@@ -1289,7 +1306,8 @@ class CreateInterface extends React.Component {
             answer={this.state.answer}
             livemode={this.state.livemode}
             obj={item}
-            content={this.state.content}
+            smoothlyAnimateToBottom={this.smoothlyAnimateToBottom}
+            updateContentState={this.updateContentState}
             getNewContext={this.getNewContext}
           />
         )
