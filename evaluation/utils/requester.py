@@ -74,7 +74,7 @@ class Requester:
                 task_config = tasks_config.get(dataset.task, tasks_config["default"])
                 for prefix in task_config["delta_metrics"]:
                     if dataset.dataset_available_on_s3(prefix):
-                        self.scheduler.submit(model_id, dataset_name, perturb_prefix)
+                        self.scheduler.submit(model_id, dataset_name, prefix)
         except Exception as ex:
             logger.exception(
                 f"Evaluation request for model {model_id} "

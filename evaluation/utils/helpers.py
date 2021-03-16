@@ -1,6 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
+import os
 import time
 from datetime import datetime, timedelta
 
@@ -29,9 +30,9 @@ def send_eval_request(model_id, dataset_name, config, logger=None):
         )
         sqs = session.resource("sqs")
         queue = sqs.get_queue_by_name(QueueName=config["evaluation_sqs_queue"])
-        queue.send_message(
-            MessageBody=json.dumps({"model_id": model_id, "dataset_name": dataset_name})
-        )
+        msg = {"model_id": model_id, "dataset_name": dataset_name}
+        queue.send_message(MessageBody=json.dumps(msg))
+        logger.info(f"Sent message {msg}")
         return True
 
 
@@ -73,3 +74,21 @@ def get_perturb_prefix(dataset_name, datasets):
         return dataset_name, perturb_prefix
     else:
         raise RuntimeError(f"Dataset {dataset_name} not found.")
+
+
+def get_perturbed_filename(filename, perturb_prefix=None):
+    filename = f"{perturb_prefix}-{filename}" if perturb_prefix else filename
+    return filename
+
+
+def get_data_s3_path(task, filename, perturb_prefix=None):
+    filename = get_perturbed_filename(filename, perturb_prefix)
+    return os.path.join("datasets", task, filename)
+
+
+def path_available_on_s3(s3_client, s3_bucket, path, perturb_prefix=None):
+    response = s3_client.list_objects_v2(Bucket=s3_bucket, Prefix=path)
+    for obj in response.get("Contents", []):
+        if obj["Key"] == path:
+            return True
+    return False

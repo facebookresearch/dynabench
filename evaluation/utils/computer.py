@@ -87,7 +87,7 @@ class MetricsComputer:
             d_entry = dm.getByName(job.dataset_name)
             sm = ScoreModel()
             if job.perturb_prefix:
-                s = sm.getByModelIdAndDataset(job.model_id, d_entry.id)
+                s = sm.getOneByModelIdAndDataset(job.model_id, d_entry.id)
                 if not s:
                     logger.info(
                         f"Haven't received original evaluation for {job.job_name}. "
@@ -100,7 +100,7 @@ class MetricsComputer:
             eval_metrics_dict = self.datasets[job.dataset_name].eval(predictions)
 
             if job.perturb_prefix:
-                s.update(s.id, **{job.perturb_prefix: eval_metrics_dict["perf"]})
+                sm.update(s.id, **{job.perturb_prefix: eval_metrics_dict["perf"]})
 
             else:
                 job_metrics_dict = get_job_metrics(job, self.datasets[job.dataset_name])

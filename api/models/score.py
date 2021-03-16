@@ -113,7 +113,7 @@ class ScoreModel(BaseModel):
         except db.orm.exc.NoResultFound:
             return False
 
-    def getByModelIdAndDataset(self, mid, did):
+    def getOneByModelIdAndDataset(self, mid, did):
         try:
             return (
                 self.dbs.query(Score)
@@ -121,7 +121,7 @@ class ScoreModel(BaseModel):
                 .filter(Score.mid == mid)
                 .filter(Score.did == did)
                 .order_by(Score.perf.desc())
-                .all()
+                .one()
             )
         except db.orm.exc.NoResultFound:
             return False

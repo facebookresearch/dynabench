@@ -11,7 +11,12 @@ import boto3
 
 from eval_config import eval_config
 from metrics import get_eval_metrics, tasks_config
-from utils.helpers import send_eval_request
+from utils.helpers import (
+    get_data_s3_path,
+    get_perturbed_filename,
+    path_available_on_s3,
+    send_eval_request,
+)
 
 
 sys.path.append("../api")  # noqa
@@ -54,14 +59,7 @@ class BaseDataset(ABC):
             self._register_dataset_in_db_and_eval(eval_config)
 
     def _get_data_s3_path(self, perturb_prefix=None):
-        filename = self._get_perturbed_filename(perturb_prefix)
-        return os.path.join("datasets", self.task, filename)
-
-    def _get_perturbed_filename(self, perturb_prefix=None):
-        filename = (
-            f"{perturb_prefix}-{self.filename}" if perturb_prefix else self.filename
-        )
-        return filename
+        return get_data_s3_path(self.task, self.filename, perturb_prefix)
 
     def _get_data_s3_url(self, perturb_prefix=None):
         s3_path = self._get_data_s3_path(perturb_prefix)
@@ -74,11 +72,7 @@ class BaseDataset(ABC):
 
     def dataset_available_on_s3(self, perturb_prefix=None) -> bool:
         path = self._get_data_s3_path(perturb_prefix)
-        response = self.s3_client.list_objects_v2(Bucket=self.s3_bucket, Prefix=path)
-        for obj in response.get("Contents", []):
-            if obj["Key"] == path:
-                return True
-        return False
+        return path_available_on_s3(self.s3_client, self.s3_bucket, path, path)
 
     def _register_dataset_in_db_and_eval(self, eval_config) -> bool:
         t = TaskModel()
@@ -96,7 +90,7 @@ class BaseDataset(ABC):
 
     def get_output_s3_url(self, endpoint_name, perturb_prefix=None):
         prefix = self._get_output_s3_url_prefix(endpoint_name)
-        filename = self._get_perturbed_filename(perturb_prefix)
+        filename = get_perturbed_filename(self.filename, perturb_prefix)
         return os.path.join(prefix, filename + ".out")
 
     def run_batch_transform(
