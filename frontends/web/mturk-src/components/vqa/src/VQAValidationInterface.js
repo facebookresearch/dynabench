@@ -231,7 +231,7 @@ class VQAValidationInterface extends React.Component {
         const INCORRECT = this.VALIDATION_STATES.INCORRECT
         const FLAGGED = this.VALIDATION_STATES.FLAGGED
         let disableSubmit = this.state.submitDisabled
-        if (this.state.questionValidationState === "flagged" && (this.state.flagReason === null || this.state.flagReason.length === 0)) {
+        if (this.state.questionValidationState === "flagged" && (this.state.flagReason === null || this.state.flagReason.trim().length === 0)) {
             disableSubmit = true
         }
         if (this.state.examplesOverError) {
@@ -383,7 +383,11 @@ class VQAValidationInterface extends React.Component {
                             callback: () => this.setState((state, props) => {return { showInstructions: !state.showInstructions }})
                         },
                         "enter": {
-                            callback: () => this.submitValidation()
+                            callback: () => {
+                                if (!disableSubmit) {
+                                    this.submitValidation()
+                                }
+                            }
                         }
                     }}
                 />
