@@ -1,5 +1,10 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+# example usage:
+# python request_evaluation.py --path zm-mnli-dev-matched.jsonl
+# --task nli --perturb-prefix fairness
+# --base-dataset-name zm-mnli-dev-matched
+
 import argparse
 import logging
 import os
@@ -19,7 +24,7 @@ from utils.helpers import (  # isort:skip
     send_eval_request,  # isort:skip
 )
 
-
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("request_evaluation")
 
 
@@ -77,9 +82,6 @@ def upload_to_S3_and_eval(args):
         perturbed_filename = get_perturbed_filename(
             base_filename, perturb_prefix=args.perturb_prefix
         )
-        import pdb
-
-        pdb.set_trace()
         send_eval_request(
             model_id="*",
             dataset_name=perturbed_filename.split(".")[0],

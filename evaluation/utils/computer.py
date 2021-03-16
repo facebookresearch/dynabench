@@ -52,7 +52,7 @@ class MetricsComputer:
         Parse batch transform output by balancing brackets
         """
         output_s3_uri = self.datasets[job.dataset_name].get_output_s3_url(
-            job.endpoint_name
+            job.endpoint_name, job.perturb_prefix
         )
         parts = output_s3_uri.replace("s3://", "").split("/")
         s3_bucket = parts[0]
