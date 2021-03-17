@@ -1,8 +1,11 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+import json
+
 import sqlalchemy as db
 
 from .base import Base, BaseModel
+from .dataset import DatasetModel
 from .round import Round
 from .user import User
 
@@ -41,6 +44,7 @@ class Task(Base):
     has_answer = db.Column(db.Boolean, default=False)
 
     settings_json = db.Column(db.Text)
+    ordered_metrics_json = db.Column(db.Text)
 
     def __repr__(self):
         return f"<Task {self.name}>"
@@ -105,8 +109,18 @@ class TaskModel(BaseModel):
                 .join(Round, (Round.tid == Task.id) & (Round.rid == Task.cur_round))
                 .one()
             )
+            dm = DatasetModel()
+            datasets = dm.getByTid(tid)
+            dataset_list = []
+            for dataset in datasets:
+                dataset_list.append({"id": dataset.id, "name": dataset.name})
+            dataset_list.sort(key=lambda item: item["id"])
+
             t = t.to_dict()
             t["round"] = r.to_dict()
+            t["ordered_datasets"] = dataset_list
+            t["ordered_metrics"] = json.loads(t["ordered_metrics_json"])
+            del t["ordered_metrics_json"]
             return t
         except db.orm.exc.NoResultFound:
             return False

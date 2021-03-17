@@ -29,19 +29,6 @@ def get_task(tid):
     t = TaskModel()
     task = t.getWithRound(tid)
 
-    # TODO: this is dynaboard starter code; make it real
-    task["ordered_datasets"] = [
-        {"id": 1, "name": "Round 1"},
-        {"id": 2, "name": "Round 2"},
-        {"id": 3, "name": "Round 3"},
-        {"id": 4, "name": "Third Party"},
-    ]
-    task["ordered_metrics"] = [
-        {"name": "Accuracy", "unit": "%"},
-        {"name": "Compute", "unit": "examples/second"},
-        {"name": "Memory", "unit": "GB"},
-    ]
-
     if not task:
         bottle.abort(404, "Not found")
     return util.json_encode(task)
@@ -252,6 +239,7 @@ def construct_user_board_response_json(query_result, total_count=0):
 @bottle.get("/tasks/<tid:int>/models/dynaboard")
 def get_dynaboard_starter_code(tid):
     # TODO: this is dynaboard starter code. Make it real!
+
     sort_by = "dynascore"
     sort_direction = "asc"
     limit = 10
@@ -284,6 +272,31 @@ def get_dynaboard_starter_code(tid):
         offset = int(query_dict["offset"][0])
     if "limit" in query_dict:
         limit = int(query_dict["limit"][0])
+
+    tm = TaskModel()
+    task_dict = tm.getWithRound(tid)
+    ordered_metric_and_weight = list(
+        zip(task_dict["ordered_metrics"], ordered_metric_weights)
+    )
+    ordered_did_and_weight = list(
+        zip(
+            [item["id"] for item in task_dict["ordered_datasets"]],
+            ordered_dataset_weights,
+        )
+    )
+
+    sm = ScoreModel()
+    return sm.getDynaboardByTask(
+        tid,
+        ordered_metric_and_weight,
+        ordered_did_and_weight,
+        sort_by,
+        reverse_sort,
+        limit,
+        offset,
+    )
+
+    """
     ordered_metrics = ["Accuracy", "Compute", "Memory"]
     test_data = json.loads(open("controllers/dynaboard_api_test_data.json").read())
     for model in test_data:
@@ -329,6 +342,7 @@ def get_dynaboard_starter_code(tid):
     return util.json_encode(
         {"count": len(test_data), "data": test_data[offset : offset + limit]}
     )
+    """
 
 
 @bottle.get("/tasks/<tid:int>/models")

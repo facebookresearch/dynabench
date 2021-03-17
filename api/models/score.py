@@ -8,7 +8,6 @@ import sqlalchemy as db
 from common import helpers as util
 from models.dataset import Dataset
 from models.round import Round
-from models.task import TaskModel
 from models.user import User
 
 from .base import Base, BaseModel
@@ -85,24 +84,21 @@ class ScoreModel(BaseModel):
     def getDynaboardByTask(
         self,
         tid,
-        metric_to_weight,
-        did_to_weight,
+        ordered_metric_and_weight,
+        ordered_did_and_weight,
         sort_by="dynascore",
         reverse_sort=False,
         limit=5,
         offset=0,
     ):
         # TODO: normalize weights
-        t = TaskModel()
-        task = t.getWithRound(tid)
-        ordered_datasets = json.loads(task.ordered_datasets)
-        ordered_dataset_ids = [dataset["id"] for dataset in ordered_datasets]
-        ordered_metrics = json.loads(task.ordered_metrics)
-        ordered_metric_weights = [
-            metric_to_weight[metric["name"]] for metric in ordered_metrics
-        ]
+        ordered_dataset_ids = [item[0] for item in ordered_did_and_weight]
+        ordered_metric_weights = [item[1] for item in ordered_metric_and_weight]
+        ordered_metric_names = [item[0]["name"] for item in ordered_metric_and_weight]
         scores = (
-            self.dbs.query().join(Score, Score.mid == Model.id).filter(Model.tid == tid)
+            self.dbs.query(Score)
+            .join(Model, Score.mid == Model.id)
+            .filter(Model.tid == tid)
         )
         models = self.dbs.query(Model)
         users = self.dbs.query(User)
@@ -117,28 +113,34 @@ class ScoreModel(BaseModel):
             mid_to_uid[model.id] = model.uid
             mid_to_name[model.id] = model.name
         for dataset in datasets:
-            did_to_name[dataset.did] = dataset.name
+            did_to_name[dataset.id] = dataset.name
 
         mid_to_data = {}
         for score in scores:
-            score_dict = score.to_dict()
-            if score.mid not in mid_to_data:
-                mid_to_data[score.mid] = {
-                    "model_id": score.mid,
-                    "model_name": mid_to_name[score.mid],
-                    "uid": mid_to_uid[score.uid],
-                    "username": uid_to_username[mid_to_uid[score.mid]],
-                    "datasets": [],
-                }
-            mid_to_data[score.mid]["datasets"].append(
-                {
-                    "id": score.did,
-                    "name": did_to_name[score.did],
-                    "scores": np.array(
-                        [score_dict[metric["field_name"]] for metric in ordered_metrics]
-                    ),
-                }
-            )
+            if score.metadata_json is not None:
+                if score.mid not in mid_to_data:
+                    mid_to_data[score.mid] = {
+                        "model_id": score.mid,
+                        "model_name": mid_to_name[score.mid],
+                        "uid": mid_to_uid[score.mid],
+                        "username": uid_to_username[mid_to_uid[score.mid]],
+                        "datasets": [],
+                    }
+
+                mid_to_data[score.mid]["datasets"].append(
+                    {
+                        "id": score.did,
+                        "name": did_to_name[score.did],
+                        "scores": np.array(
+                            [
+                                json.loads(score.metadata_json)[
+                                    item[0]["score_field_name"]
+                                ]
+                                for item in ordered_metric_and_weight
+                            ]
+                        ),
+                    }
+                )
 
         # Compute variances and aggregates
         count = 0
@@ -155,7 +157,7 @@ class ScoreModel(BaseModel):
             all_dataset_variance_list = []
             for datasets in sorted(
                 id_to_datasets.values(),
-                key=lambda value: ordered_dataset_ids.index(value["id"]),
+                key=lambda value: ordered_dataset_ids.index(value[0]["id"]),
             ):
                 score_list = []
                 for dataset in datasets:
@@ -163,10 +165,16 @@ class ScoreModel(BaseModel):
                 mean_scores = np.mean(score_list, axis=0)
                 variances = np.var(score_list, axis=0)
                 all_dataset_score_list.append(
-                    mean_scores * did_to_weight[dataset["id"]]
+                    mean_scores
+                    * ordered_did_and_weight[ordered_dataset_ids.index(dataset["id"])][
+                        1
+                    ]
                 )
                 all_dataset_variance_list.append(
-                    variances * did_to_weight[dataset["id"]]
+                    variances
+                    * ordered_did_and_weight[ordered_dataset_ids.index(dataset["id"])][
+                        1
+                    ]
                 )
                 new_datasets.append(
                     {
@@ -190,11 +198,11 @@ class ScoreModel(BaseModel):
 
         if sort_by == "dynascore":
             data_list.sort(reverse=reverse_sort, key=lambda model: model["dynascore"])
-        elif sort_by in ordered_metrics:
+        elif sort_by in ordered_metric_names:
             data_list.sort(
                 reverse=reverse_sort,
                 key=lambda model: model["averaged_scores"][
-                    ordered_metrics.index(sort_by)
+                    ordered_metric_names.index(sort_by)
                 ],
             )
         elif sort_by == "model_name":
@@ -203,6 +211,15 @@ class ScoreModel(BaseModel):
         return util.json_encode(
             {"count": count, "data": data_list[offset : offset + limit]}
         )
+
+    def getByTid(self, tid):
+        # Main query to fetch the model details
+        query_res = (
+            self.dbs.query(Score)
+            .join(Model, Score.mid == Model.id)
+            .filter(Model.tid == tid)
+        )
+        return query_res
 
     def getOverallModelPerfByTask(self, tid, n=5, offset=0):
         # Main query to fetch the model details
