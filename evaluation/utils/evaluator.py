@@ -23,13 +23,16 @@ logger = logging.getLogger("evaluator")
 
 
 class Job:
-    def __init__(self, model_id, dataset_name):
+    def __init__(self, model_id, dataset_name, perturb_prefix=None):
         self.model_id = model_id
         m = ModelModel()
         model = m.getUnpublishedModelByMid(model_id).to_dict()
         self.endpoint_name = f"ts{model['upload_timestamp']}-{model['name']}"
         self.dataset_name = dataset_name
-        self.job_name = generate_job_name(self.endpoint_name, dataset_name)
+        self.perturb_prefix = perturb_prefix
+        self.job_name = generate_job_name(
+            self.endpoint_name, dataset_name, perturb_prefix
+        )
 
         self.status = None  # will update once job is successfully submitted
         self.aws_metrics = {}  # will update once job is completed
@@ -74,15 +77,15 @@ class JobScheduler:
             )
             return [], [], []
 
-    def submit(self, model_id, dataset_name):
+    def submit(self, model_id, dataset_name, perturb_prefix=None):
         # create batch transform job and
         # update the inprogress queue
-        job = Job(model_id, dataset_name)
+        job = Job(model_id, dataset_name, perturb_prefix)
 
         def _submit(job):
             try:
                 self.datasets[job.dataset_name].run_batch_transform(
-                    self.sagemaker, job.endpoint_name, job.job_name
+                    self.sagemaker, job.endpoint_name, job.job_name, job.perturb_prefix
                 )
             except Exception as ex:
                 logger.exception(f"Exception in submitting job {job.job_name}: {ex}")
@@ -117,9 +120,9 @@ class JobScheduler:
                 if job.status["TransformJobStatus"] != "Completed":
                     self._failed.append(job)
                     done_job_names.add(job.job_name)
-                elif round_end_dt(job.status["TransformEndTime"]) < datetime.now(
-                    tzlocal()
-                ):
+                elif job.perturb_prefix or round_end_dt(
+                    job.status["TransformEndTime"]
+                ) < datetime.now(tzlocal()):
                     self._completed.append(job)
                     done_job_names.add(job.job_name)
         self._submitted = [
@@ -128,7 +131,7 @@ class JobScheduler:
         logger.info("Fetch metrics")
         # fetch AWS metrics for completed jobs
         for job in self._completed:
-            if not job.aws_metrics:
+            if not job.aws_metrics and not job.perturb_prefix:
                 logStreams = self.cloudwatchlog.describe_log_streams(
                     logGroupName=self.cloudwatch_namespace,
                     logStreamNamePrefix=f"{job.job_name}/",

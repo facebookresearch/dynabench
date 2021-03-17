@@ -79,15 +79,21 @@ class RegisterPage extends React.Component {
                           values.password,
                           values.username
                         )
-                        .then((result) => {
-                          console.log(result);
-                          props.updateState({ user: result.user });
-                          this.props.history.push("/");
-                        }, (error) => {
-                          this.setState({ error });
-                          setSubmitting(false);
-                          setFieldError("accept", "Registration failed (" + error.error + ")");
-                        });
+                        .then(
+                          (result) => {
+                            console.log(result);
+                            props.updateState({ user: result.user });
+                            this.props.history.push("/");
+                          },
+                          (error) => {
+                            this.setState({ error });
+                            setSubmitting(false);
+                            setFieldError(
+                              "accept",
+                              "Registration failed (" + error.error + ")"
+                            );
+                          }
+                        );
                     }}
                   >
                     {({
@@ -142,24 +148,26 @@ class RegisterPage extends React.Component {
                               touched.password &&
                               errors.password}
                           </small>
-                          {process.env.REACT_APP_BETA_LOGIN_REQUIRED ?
+                          {process.env.REACT_APP_BETA_LOGIN_REQUIRED ? (
                             <>
-                            <input
-                              type="text"
-                              name="invitecode"
-                              className="fade-in third text-left"
-                              placeholder="Beta invitation code"
-                              onChange={handleChange}
-                              onBlur={handleBlur}
-                              value={values.invitecode}
-                            />
-                            <small className="form-text text-muted">
-                              {errors.invitecode &&
-                                touched.invitecode &&
-                                errors.invitecode}
-                            </small>
-                            </> : <></>
-                          }
+                              <input
+                                type="text"
+                                name="invitecode"
+                                className="fade-in third text-left"
+                                placeholder="Beta invitation code"
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                value={values.invitecode}
+                              />
+                              <small className="form-text text-muted">
+                                {errors.invitecode &&
+                                  touched.invitecode &&
+                                  errors.invitecode}
+                              </small>
+                            </>
+                          ) : (
+                            <></>
+                          )}
                           <div className="fade-in third mt-4">
                             <input
                               type="checkbox"

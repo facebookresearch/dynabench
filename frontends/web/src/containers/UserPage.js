@@ -25,7 +25,7 @@ import BadgeGrid from "./BadgeGrid";
 import {
   METooltip,
   RetractionTooltip,
-  RejectionTooltip
+  RejectionTooltip,
 } from "./UserStatTooltips";
 
 class UserPage extends React.Component {
@@ -60,39 +60,45 @@ class UserPage extends React.Component {
   }
 
   fetchUser = () => {
-    this.context.api
-      .getUser(this.state.userId, true)
-      .then((result) => {
+    this.context.api.getUser(this.state.userId, true).then(
+      (result) => {
         this.setState({ user: result });
-      }, (error) => {
+      },
+      (error) => {
         console.log(error);
         if (error.status_code === 404 || error.status_code === 405) {
           this.props.history.push("/");
         }
-      });
+      }
+    );
   };
 
   fetchModel = (page) => {
     this.context.api
       .getUserModels(this.state.userId, this.state.pageLimit, page)
-      .then((result) => {
-        const isEndOfPage =
-          (page + 1) * this.state.pageLimit >= (result.count || 0);
-        this.setState({
-          isEndOfUserModelsPage: isEndOfPage,
-          userModels: result.data || [],
-        });
-      }, (error) => {
-        console.log(error);
-      });
+      .then(
+        (result) => {
+          const isEndOfPage =
+            (page + 1) * this.state.pageLimit >= (result.count || 0);
+          this.setState({
+            isEndOfUserModelsPage: isEndOfPage,
+            userModels: result.data || [],
+          });
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
   };
 
   paginate = (state) => {
-    var isNext = state === "next"
-    var newUserModelsPage = isNext ? this.state.userModelsPage + 1 : this.state.userModelsPage - 1
+    var isNext = state === "next";
+    var newUserModelsPage = isNext
+      ? this.state.userModelsPage + 1
+      : this.state.userModelsPage - 1;
     this.setState(
       {
-        userModelsPage: newUserModelsPage
+        userModelsPage: newUserModelsPage,
       },
       () => {
         this.fetchModel(this.state.userModelsPage);
@@ -166,148 +172,183 @@ class UserPage extends React.Component {
                   <Col className="m-auto" lg={12}>
                     {this.state.user.id && (
                       <>
-                      <Card>
-                        <Container className="mt-3">
-                          <Row>
-                            <Col>
-                              <Avatar
-                                avatar_url={this.state.user.avatar_url}
-                                username={this.state.user.username}
-                                theme="blue"
-                              />
-                            </Col>
-                          </Row>
-                        </Container>
-                        <Card.Body>
-                          <Form.Group as={Row}>
-                            <Form.Label column sm="6" className="text-right">
-                              Username:
-                            </Form.Label>
-                            <Col sm="4">
-                              <Form.Control
-                                plaintext
-                                readOnly
-                                className="text-right"
-                                defaultValue={this.state.user.username}
-                              />
-                            </Col>
-                          </Form.Group>
-                          <Form.Group as={Row}>
-                            <Form.Label column sm="6" className="text-right">
-                              Affiliation:
-                            </Form.Label>
-                            <Col sm="4">
-                              <Form.Control
-                                plaintext
-                                readOnly
-                                className="text-right"
-                                defaultValue={this.state.user.affiliation}
-                              />
-                            </Col>
-                          </Form.Group>
-                          <Form.Group as={Row}>
-                            <Form.Label column sm="6" className="text-right">
-                              Model error rate (verified/unverified):
-                            </Form.Label>
-                            <Col sm="4">
-                              <OverlayTrigger
-                                placement="right"
-                                delay={{ show: 250, hide: 400 }}
-                                overlay={METooltip}
-                              >
-                                <Form.Control
-                                  plaintext
-                                  readOnly
-                                  className="text-right"
-                                  style={{cursor:'pointer'}}
-                                  defaultValue={
-                                    this.state.user.examples_submitted > 0 ?
-                                      (100 *
-                                        (this.state.user.total_fooled - this.state.user.total_verified_not_correct_fooled)  /
-                                        this.state.user.examples_submitted
-                                      ).toFixed(2).toString() + "% (" +
-                                      (this.state.user.total_fooled - this.state.user.total_verified_not_correct_fooled).toString() + "/" +
-                                      this.state.user.examples_submitted + ") / " +
-                                      (100 *
-                                        this.state.user.total_fooled /
-                                        this.state.user.examples_submitted
-                                      ).toFixed(2).toString() + "% (" +
-                                      this.state.user.total_fooled.toString() + "/" +
-                                      this.state.user.examples_submitted + ")"
-                                    : 'N/A'}
-                                />
-                              </OverlayTrigger>
-                            </Col>
-                          </Form.Group>
-                          <Form.Group as={Row}>
-                            <Form.Label column sm="6" className="text-right">
-                              Rejection rate:
-                            </Form.Label>
-                            <Col sm="4">
-                              <OverlayTrigger
-                                placement="right"
-                                delay={{ show: 250, hide: 400 }}
-                                overlay={RejectionTooltip}
-                              >
-                                <Form.Control
-                                  plaintext
-                                  readOnly
-                                  className="text-right"
-                                  style={{cursor:'pointer'}}
-                                  defaultValue={
-                                    this.state.user.examples_submitted > 0 ?
-                                      (100 *
-                                        this.state.user.total_verified_not_correct_fooled /
-                                        this.state.user.examples_submitted
-                                      ).toFixed(2).toString() + "% (" +
-                                      this.state.user.total_verified_not_correct_fooled.toString() + "/" +
-                                      this.state.user.examples_submitted + ")"
-                                    : 'N/A'}
-                                />
-                              </OverlayTrigger>
-                            </Col>
-                          </Form.Group>
-                          <Form.Group as={Row}>
-                            <Form.Label column sm="6" className="text-right">
-                              Retraction rate:
-                            </Form.Label>
-                            <Col sm="4">
-                              <OverlayTrigger
-                                placement="right"
-                                delay={{ show: 250, hide: 400 }}
-                                overlay={RetractionTooltip}
-                              >
-                                <Form.Control
-                                  plaintext
-                                  readOnly
-                                  className="text-right"
-                                  style={{cursor:'pointer'}}
-                                  defaultValue={
-                                    this.state.user.examples_submitted > 0 ?
-                                      (100 * this.state.user.total_retracted /
-                                        this.state.user.examples_submitted
-                                      ).toFixed(2).toString() + '% (' +
-                                      this.state.user.total_retracted.toString() + '/' +
-                                      this.state.user.examples_submitted + ')'
-                                    : 'N/A'}
-                                />
-                              </OverlayTrigger>
-                            </Col>
-                          </Form.Group>
-                        </Card.Body>
-                        {this.state.user.id === this.context.user.id && (
-                          <Card.Footer>
+                        <Card>
+                          <Container className="mt-3">
                             <Row>
-                              <Col className="text-center">
-                                <Link className="" to="/account#profile">
-                                  Looking for your profile?
-                                </Link>
+                              <Col>
+                                <Avatar
+                                  avatar_url={this.state.user.avatar_url}
+                                  username={this.state.user.username}
+                                  theme="blue"
+                                />
                               </Col>
                             </Row>
-                          </Card.Footer>
-                        )}
-                      </Card>
-                      <BadgeGrid user={this.state.user} />
+                          </Container>
+                          <Card.Body>
+                            <Form.Group as={Row}>
+                              <Form.Label column sm="6" className="text-right">
+                                Username:
+                              </Form.Label>
+                              <Col sm="4">
+                                <Form.Control
+                                  plaintext
+                                  readOnly
+                                  className="text-right"
+                                  defaultValue={this.state.user.username}
+                                />
+                              </Col>
+                            </Form.Group>
+                            <Form.Group as={Row}>
+                              <Form.Label column sm="6" className="text-right">
+                                Affiliation:
+                              </Form.Label>
+                              <Col sm="4">
+                                <Form.Control
+                                  plaintext
+                                  readOnly
+                                  className="text-right"
+                                  defaultValue={this.state.user.affiliation}
+                                />
+                              </Col>
+                            </Form.Group>
+                            <Form.Group as={Row}>
+                              <Form.Label column sm="6" className="text-right">
+                                Model error rate (verified/unverified):
+                              </Form.Label>
+                              <Col sm="4">
+                                <OverlayTrigger
+                                  placement="right"
+                                  delay={{ show: 250, hide: 400 }}
+                                  overlay={METooltip}
+                                >
+                                  <Form.Control
+                                    plaintext
+                                    readOnly
+                                    className="text-right"
+                                    style={{ cursor: "pointer" }}
+                                    defaultValue={
+                                      this.state.user.examples_submitted > 0
+                                        ? (
+                                            (100 *
+                                              (this.state.user.total_fooled -
+                                                this.state.user
+                                                  .total_verified_not_correct_fooled)) /
+                                            this.state.user.examples_submitted
+                                          )
+                                            .toFixed(2)
+                                            .toString() +
+                                          "% (" +
+                                          (
+                                            this.state.user.total_fooled -
+                                            this.state.user
+                                              .total_verified_not_correct_fooled
+                                          ).toString() +
+                                          "/" +
+                                          this.state.user.examples_submitted +
+                                          ") / " +
+                                          (
+                                            (100 *
+                                              this.state.user.total_fooled) /
+                                            this.state.user.examples_submitted
+                                          )
+                                            .toFixed(2)
+                                            .toString() +
+                                          "% (" +
+                                          this.state.user.total_fooled.toString() +
+                                          "/" +
+                                          this.state.user.examples_submitted +
+                                          ")"
+                                        : "N/A"
+                                    }
+                                  />
+                                </OverlayTrigger>
+                              </Col>
+                            </Form.Group>
+                            <Form.Group as={Row}>
+                              <Form.Label column sm="6" className="text-right">
+                                Rejection rate:
+                              </Form.Label>
+                              <Col sm="4">
+                                <OverlayTrigger
+                                  placement="right"
+                                  delay={{ show: 250, hide: 400 }}
+                                  overlay={RejectionTooltip}
+                                >
+                                  <Form.Control
+                                    plaintext
+                                    readOnly
+                                    className="text-right"
+                                    style={{ cursor: "pointer" }}
+                                    defaultValue={
+                                      this.state.user.examples_submitted > 0
+                                        ? (
+                                            (100 *
+                                              this.state.user
+                                                .total_verified_not_correct_fooled) /
+                                            this.state.user.examples_submitted
+                                          )
+                                            .toFixed(2)
+                                            .toString() +
+                                          "% (" +
+                                          this.state.user.total_verified_not_correct_fooled.toString() +
+                                          "/" +
+                                          this.state.user.examples_submitted +
+                                          ")"
+                                        : "N/A"
+                                    }
+                                  />
+                                </OverlayTrigger>
+                              </Col>
+                            </Form.Group>
+                            <Form.Group as={Row}>
+                              <Form.Label column sm="6" className="text-right">
+                                Retraction rate:
+                              </Form.Label>
+                              <Col sm="4">
+                                <OverlayTrigger
+                                  placement="right"
+                                  delay={{ show: 250, hide: 400 }}
+                                  overlay={RetractionTooltip}
+                                >
+                                  <Form.Control
+                                    plaintext
+                                    readOnly
+                                    className="text-right"
+                                    style={{ cursor: "pointer" }}
+                                    defaultValue={
+                                      this.state.user.examples_submitted > 0
+                                        ? (
+                                            (100 *
+                                              this.state.user.total_retracted) /
+                                            this.state.user.examples_submitted
+                                          )
+                                            .toFixed(2)
+                                            .toString() +
+                                          "% (" +
+                                          this.state.user.total_retracted.toString() +
+                                          "/" +
+                                          this.state.user.examples_submitted +
+                                          ")"
+                                        : "N/A"
+                                    }
+                                  />
+                                </OverlayTrigger>
+                              </Col>
+                            </Form.Group>
+                          </Card.Body>
+                          {this.state.user.id === this.context.user.id && (
+                            <Card.Footer>
+                              <Row>
+                                <Col className="text-center">
+                                  <Link className="" to="/account#profile">
+                                    Looking for your profile?
+                                  </Link>
+                                </Col>
+                              </Row>
+                            </Card.Footer>
+                          )}
+                        </Card>
+                        <BadgeGrid user={this.state.user} />
                       </>
                     )}
                   </Col>
@@ -339,7 +380,9 @@ class UserPage extends React.Component {
                             {!this.state.userModels.length ? (
                               <tr>
                                 <td colSpan="3">
-                                  <div className="text-center">No data found</div>
+                                  <div className="text-center">
+                                    No data found
+                                  </div>
                                 </td>
                               </tr>
                             ) : null}
@@ -356,9 +399,13 @@ class UserPage extends React.Component {
                                       {({ tasks }) => {
                                         const task =
                                           model &&
-                                          tasks.filter((e) => e.id === model.tid);
+                                          tasks.filter(
+                                            (e) => e.id === model.tid
+                                          );
                                         return (
-                                          task && task.length && task[0].shortname
+                                          task &&
+                                          task.length &&
+                                          task[0].shortname
                                         );
                                       }}
                                     </TasksContext.Consumer>
