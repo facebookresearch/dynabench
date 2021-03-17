@@ -11,9 +11,9 @@ from .base import SentimentBase
 
 
 class DynasentBase(SentimentBase):
-    def __init__(self, task, name, local_path):
+    def __init__(self, task, name, local_path, round_id=0):
         self.local_path = local_path
-        super().__init__(task=task, name=name, round_id=0)
+        super().__init__(task=task, name=name, round_id=round_id)
 
     def load(self):
         try:
@@ -54,7 +54,7 @@ class DynasentRound1Test(DynasentBase):
             rootpath, "data", "sentiment/sentiment_v1.1/round1/test.jsonl"
         )
         super().__init__(
-            task="sentiment", name="dynasent-r1-test", local_path=local_path
+            task="sentiment", name="dynasent-r1-test", local_path=local_path, round_id=1
         )
 
 
@@ -65,5 +65,5 @@ class DynasentRound2Test(DynasentBase):
             rootpath, "data", "sentiment/sentiment_v1.1/round2/test.jsonl"
         )
         super().__init__(
-            task="sentiment", name="dynasent-r2-test", local_path=local_path
+            task="sentiment", name="dynasent-r2-test", local_path=local_path, round_id=2
         )
