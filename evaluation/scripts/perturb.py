@@ -104,7 +104,7 @@ def print_instructions(args, local_path, base_dataset_name):
 if __name__ == "__main__":
     args = parse_args()
     local_path, base_dataset_name = download_base_from_s3(args)
-    # perturb(local_path, args.task, args.perturb_prefix)
+    perturb(local_path, args.task, args.perturb_prefix)
     print_instructions(args, local_path, base_dataset_name)
     ops = input(f"Remove locally downloaded file at {local_path}? [Y/n] ")
     if ops == "Y":
