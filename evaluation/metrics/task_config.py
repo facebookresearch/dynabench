@@ -9,6 +9,7 @@ _default_config = {
     "instance_count": 1,
     "eval_metrics": ["accuracy"],
     "perf_metric": "accuracy",
+    "delta_metrics": ["fairness", "robustness"],
     "input_keys": ["uid", "context", "hypothesis"],
 }
 

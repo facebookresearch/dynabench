@@ -52,7 +52,7 @@ class MetricsComputer:
         Parse batch transform output by balancing brackets
         """
         output_s3_uri = self.datasets[job.dataset_name].get_output_s3_url(
-            job.endpoint_name
+            job.endpoint_name, job.perturb_prefix
         )
         parts = output_s3_uri.replace("s3://", "").split("/")
         s3_bucket = parts[0]
@@ -83,27 +83,46 @@ class MetricsComputer:
     def update_database(self, job):
         logger.info(f"Evaluating {job.job_name}")
         try:
-            predictions = self.parse_outfile(job)
-            eval_metrics_dict = self.datasets[job.dataset_name].eval(predictions)
-            job_metrics_dict = get_job_metrics(job, self.datasets[job.dataset_name])
-            score_obj = {**eval_metrics_dict, **job_metrics_dict}
-            score_obj["model_id"] = job.model_id
-            score_obj["raw_output_s3_uri"] = self.datasets[
-                job.dataset_name
-            ].get_output_s3_url(job.endpoint_name)
-
             dm = DatasetModel()
             d_entry = dm.getByName(job.dataset_name)
-            score_obj["did"] = d_entry.id
+            sm = ScoreModel()
+            if job.perturb_prefix:
+                s = sm.getOneByModelIdAndDataset(job.model_id, d_entry.id)
+                if not s:
+                    logger.info(
+                        f"Haven't received original evaluation for {job.job_name}. "
+                        f"Postpone computation."
+                    )
+                    self._computing.append(job)
+                    return True
 
-            rm = RoundModel()
-            # FIXME: note the rid in scores table is r_realid, pending issue #302
-            if self.datasets[job.dataset_name].round_id != 0:
-                score_obj["round_id"] = rm.getByTidAndRid(d_entry.tid, d_entry.rid).id
+            # TODO: avoid explictly pass perturb prefix at multiple places
+            # - take full job information at one interface instead
+            predictions = self.parse_outfile(job)
+            eval_metrics_dict = self.datasets[job.dataset_name].eval(
+                predictions, job.perturb_prefix
+            )
+
+            if job.perturb_prefix:
+                sm.update(s.id, **{job.perturb_prefix: eval_metrics_dict["perf"]})
+
             else:
-                score_obj["round_id"] = 0
-            s = ScoreModel()
-            s.create(**score_obj)
+                job_metrics_dict = get_job_metrics(job, self.datasets[job.dataset_name])
+                score_obj = {**eval_metrics_dict, **job_metrics_dict}
+                score_obj["model_id"] = job.model_id
+                score_obj["did"] = d_entry.id
+                score_obj["raw_output_s3_uri"] = self.datasets[
+                    job.dataset_name
+                ].get_output_s3_url(job.endpoint_name)
+
+                rm = RoundModel()
+                if self.datasets[job.dataset_name].round_id != 0:
+                    score_obj["round_id"] = rm.getByTidAndRid(
+                        d_entry.tid, d_entry.rid
+                    ).id
+                else:
+                    score_obj["round_id"] = 0
+                sm.create(**score_obj)
             return True
         except Exception as ex:
             logger.exception(f"Exception in computing metrics {ex}")
