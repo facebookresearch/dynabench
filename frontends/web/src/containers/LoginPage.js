@@ -45,9 +45,8 @@ class LoginPage extends React.Component {
                       return errors;
                     }}
                     onSubmit={(values, { setFieldError, setSubmitting }) => {
-                      props.api
-                        .login(values.email, values.password)
-                        .then((result) => {
+                      props.api.login(values.email, values.password).then(
+                        (result) => {
                           //console.log(result);
                           props.updateState({
                             user: {
@@ -56,12 +55,14 @@ class LoginPage extends React.Component {
                             },
                           });
                           this.props.history.push(values.src);
-                        }, (error) => {
+                        },
+                        (error) => {
                           console.log(error);
                           this.setState({ error });
                           setSubmitting(false);
                           setFieldError("general", "Authentication failed");
-                        });
+                        }
+                      );
                     }}
                   >
                     {({

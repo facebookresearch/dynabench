@@ -5,73 +5,73 @@
  */
 
 .avatar-circle {
-  width: 130px;
-  height: 130px;
-  margin: 0 auto;
-  text-align: center;
-  border-radius: 50%;
-  -webkit-webkit: border radius 50%;
-  -moz-webkit: border radius 50%;
-  -ms-webkit: border radius 50%;
-  -o-webkit: border radius 50%;
+    width: 130px;
+    height: 130px;
+    margin: 0 auto;
+    text-align: center;
+    border-radius: 50%;
+    -webkit-webkit: border radius 50%;
+    -moz-webkit: border radius 50%;
+    -ms-webkit: border radius 50%;
+    -o-webkit: border radius 50%;
 }
 
 .avatar-circle.sm {
-  width: 30px;
-  height: 30px;
+    width: 30px;
+    height: 30px;
 }
 
 .avatar-circle .initials {
-  position: relative;
-  font-size: 45px;
-  line-height: 120px;
-  width: 130px;
-  height: 130px;
-  display: block;
+    position: relative;
+    font-size: 45px;
+    line-height: 120px;
+    width: 130px;
+    height: 130px;
+    display: block;
 }
 
 .avatar-circle.sm .initials {
-  width: 30px;
-  height: 30px;
-  font-size: 10px;
-  line-height: 30px;
+    width: 30px;
+    height: 30px;
+    font-size: 10px;
+    line-height: 30px;
 }
 
 .profile-pic {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  border-radius: 50%;
-  -webkit-webkit: border radius 50%;
-  -moz-webkit: border radius 50%;
-  -ms-webkit: border radius 50%;
-  -o-webkit: border radius 50%;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    -webkit-webkit: border radius 50%;
+    -moz-webkit: border radius 50%;
+    -ms-webkit: border radius 50%;
+    -o-webkit: border radius 50%;
 }
 
 .editPic {
-  border-radius: 50%;
-  width: 35px;
-  height: 35px;
-  border: 2px solid #fff;
-  margin: 0 auto;
-  margin-top: -10px;
-  position: relative;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    border: 2px solid #fff;
+    margin: 0 auto;
+    margin-top: -10px;
+    position: relative;
 }
+
 .edit-pic-icon {
-  width: 19px;
+    width: 19px;
 }
 
 .pic-file-upload {
-  opacity: 0;
-  position: absolute;
-  width: 100%;
-  top: 0;
-  left: 0;
+    opacity: 0;
+    position: absolute;
+    width: 100%;
+    top: 0;
+    left: 0;
 }
 
 .upload-loader {
-  position: absolute;
-  margin: 50px auto;
-  margin-left: -15px;
-  left: 50%;
+    position: absolute;
+    margin: 50px auto;
+    margin-left: -15px;
+    left: 50%;
 }

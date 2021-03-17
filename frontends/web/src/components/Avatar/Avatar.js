@@ -29,7 +29,9 @@ export const Avatar = ({
 
   return (
     <>
-      {loader && <img className="upload-loader pic" src="/loader.gif" alt="loader" />}
+      {loader && (
+        <img className="upload-loader pic" src="/loader.gif" alt="loader" />
+      )}
       {avatar_url && !avatar_url !== "" && avatar_url !== "None" ? (
         <div
           className={`avatar-circle ${

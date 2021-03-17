@@ -85,9 +85,9 @@ const DataPolicyPage = () => (
           This includes any content or submission that you upload, post or
           otherwise share with us on our Website. Examples include any text,
           photos, videos, AI models, tasks, software, services, applications,
-          datasets, or other media or content. We collect this data
-          directly from you and use the data to test the ability of our existing
-          AI systems to make accurate predictions, regardless of the context or
+          datasets, or other media or content. We collect this data directly
+          from you and use the data to test the ability of our existing AI
+          systems to make accurate predictions, regardless of the context or
           terminology that you used.
           <br />
           We ask that you do not submit or provide any confidential, private or
@@ -115,7 +115,6 @@ const DataPolicyPage = () => (
           mentioned above in the section relating to user-generated content, we
           ask that you do not submit or provide any confidential, private or
           personal information when interacting with the AI systems.
-
         </li>
       </ul>
 
@@ -128,8 +127,8 @@ const DataPolicyPage = () => (
       </p>
       <ul>
         <li>
-          You: We collect the content, communications, AI models, tasks, software,
-          services, applications, datasets and other information you
+          You: We collect the content, communications, AI models, tasks,
+          software, services, applications, datasets and other information you
           provide when you use the Website, including your interactions with the
           AI systems.Information collected from other users is collected in the
           same way in order to train AI models.
@@ -397,14 +396,13 @@ const DataPolicyPage = () => (
       <p>
         Under the General Data Protection Regulation, you have the right to
         access, rectify and erase your data under certain circumstances. You
-        also have the right to object to and restrict certain processing of
-        your data. Please note that to protect your information, we may need to
-        verify your identity before processing your request. In some cases,
-        we may need to collect additional information to verify your identity,
-        such as a government issued ID. To exercise your rights under the GDPR,
-        you can email{" "}
-        <a href="mailto:dynabench@fb.com">dynabench@fb.com</a> or contact us by
-        mail at the address provided below.
+        also have the right to object to and restrict certain processing of your
+        data. Please note that to protect your information, we may need to
+        verify your identity before processing your request. In some cases, we
+        may need to collect additional information to verify your identity, such
+        as a government issued ID. To exercise your rights under the GDPR, you
+        can email <a href="mailto:dynabench@fb.com">dynabench@fb.com</a> or
+        contact us by mail at the address provided below.
       </p>
       <p>
         <strong>A note about children</strong>

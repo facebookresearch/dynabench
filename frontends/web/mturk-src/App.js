@@ -4,16 +4,16 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import React from 'react';
+import React from "react";
 
-import 'bootstrap/dist/css/bootstrap.min.css';
+import "bootstrap/dist/css/bootstrap.min.css";
 
-import './App.css';
+import "./App.css";
 
 import { useMephistoTask, getBlockedExplanation } from "mephisto-task";
 import { TaskFrontend } from "./components/core.jsx";
 
-import ApiService from '../src/common/ApiService.js';
+import ApiService from "../src/common/ApiService.js";
 
 function App() {
   const {
@@ -35,8 +35,12 @@ function App() {
     return <h1>{getBlockedExplanation(blockedReason)}</h1>;
   }
 
-  const backend_host = (taskConfig && 'provider_type' in taskConfig && taskConfig['provider_type'] === 'mturk') ?
-    'https://api.dynabench.org' : process.env.REACT_APP_API_HOST;
+  const backend_host =
+    taskConfig &&
+    "provider_type" in taskConfig &&
+    taskConfig["provider_type"] === "mturk"
+      ? "https://api.dynabench.org"
+      : process.env.REACT_APP_API_HOST;
   let api = new ApiService(backend_host);
   api.setMturkMode();
 

@@ -5,33 +5,26 @@
  */
 
 import React from "react";
-import { VQAOnboarder } from "../src/Onboarding/VQAOnboarder.js"
-import { VQAValidationInterface } from "../src/VQAValidationInterface.js"
-import { VQAPreview } from "../src/VQAPreview.js"
+import { VQAOnboarder } from "../src/Onboarding/VQAOnboarder.js";
+import { VQAValidationInterface } from "../src/VQAValidationInterface.js";
+import { VQAPreview } from "../src/VQAPreview.js";
 
 class VQAValPreview extends React.Component {
-    render() {
-        return <VQAPreview previewMode="validation"/>
-    }
+  render() {
+    return <VQAPreview previewMode="validation" />;
+  }
 }
 
 class VQAValOnboarding extends React.Component {
-    render() {
-        return <VQAOnboarder
-            {...this.props}
-            onboardingMode="validation"
-        />
-    }
+  render() {
+    return <VQAOnboarder {...this.props} onboardingMode="validation" />;
+  }
 }
 
 class VQAValMain extends React.Component {
-    render() {
-        return (
-            <VQAValidationInterface
-                {...this.props}
-            />
-        )
-    }
+  render() {
+    return <VQAValidationInterface {...this.props} />;
+  }
 }
 
-export { VQAValPreview, VQAValOnboarding, VQAValMain }
+export { VQAValPreview, VQAValOnboarding, VQAValMain };

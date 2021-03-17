@@ -18,10 +18,7 @@ import Markdown from "react-markdown";
 import { Formik } from "formik";
 import UserContext from "./UserContext";
 import "./SubmitInterface.css";
-import {
-  OverlayProvider,
-  BadgeOverlay,
-} from "./Overlay"
+import { OverlayProvider, BadgeOverlay } from "./Overlay";
 
 class PublishInterface extends React.Component {
   static contextType = UserContext;
@@ -57,19 +54,19 @@ class PublishInterface extends React.Component {
   }
   handleValidation = (values) => {
     const errors = {};
-    if (!values.name || values.name.trim() === '') {
+    if (!values.name || values.name.trim() === "") {
       errors.name = "Required";
     }
-    if (!values.description || values.description.trim() === '') {
+    if (!values.description || values.description.trim() === "") {
       errors.description = "Required";
     }
-    if (!values.params || values.params >>> 0 !== parseFloat(values.params)){
+    if (!values.params || values.params >>> 0 !== parseFloat(values.params)) {
       errors.params = "Required";
     }
-    if (!values.languages || values.languages.trim() === '') {
+    if (!values.languages || values.languages.trim() === "") {
       errors.languages = "Required";
     }
-    if (!values.license || values.license.trim() === '') {
+    if (!values.license || values.license.trim() === "") {
       values.license = "Required";
     }
     return errors;
@@ -84,21 +81,22 @@ class PublishInterface extends React.Component {
       license: values.license,
       model_card: values.model_card,
     };
-    this.context.api
-      .publishModel(reqObj)
-      .then((result) => {
+    this.context.api.publishModel(reqObj).then(
+      (result) => {
         if (!!result.badges) {
-          this.setState({showBadges: result.badges})
+          this.setState({ showBadges: result.badges });
         } else {
           this.props.history.push({
             pathname: `/models/${this.state.model.id}`,
-            state: { src: 'publish' },
+            state: { src: "publish" },
           });
         }
-      }, (error) => {
+      },
+      (error) => {
         console.log(error);
         setSubmitting(false);
-      });
+      }
+    );
   };
 
   render() {
@@ -107,8 +105,7 @@ class PublishInterface extends React.Component {
       (a, b) => a.round_id - b.round_id
     );
 
-    let modelCardTemplate=
-`## Model Details
+    let modelCardTemplate = `## Model Details
 (Enter your model details here)
 
 ## Data
@@ -126,12 +123,14 @@ class PublishInterface extends React.Component {
         <BadgeOverlay
           badgeTypes={this.state.showBadges}
           show={!!this.state.showBadges}
-          onHide={() => {this.setState({showBadges: ""}); this.props.history.push({
-            pathname: `/models/${this.state.model.id}`,
-            state: { src: 'publish' },
-          });}}
-        >
-        </BadgeOverlay>
+          onHide={() => {
+            this.setState({ showBadges: "" });
+            this.props.history.push({
+              pathname: `/models/${this.state.model.id}`,
+              state: { src: "publish" },
+            });
+          }}
+        ></BadgeOverlay>
         <Container>
           <Row>
             <h2 className="text-uppercase blue-color">Publish your model </h2>
@@ -205,7 +204,9 @@ class PublishInterface extends React.Component {
                                 name="description"
                                 type="text"
                                 style={{
-                                  borderColor: errors.description ? "red" : null,
+                                  borderColor: errors.description
+                                    ? "red"
+                                    : null,
                                 }}
                                 placeholder="Provide a description of your model"
                                 onChange={handleChange}
@@ -227,7 +228,11 @@ class PublishInterface extends React.Component {
                                 aria-describedby="paramsHelpBlock"
                               />
                               <Form.Text id="paramsHelpBlock" muted>
-                              <Markdown>To count the number of parameters, you can run `sum(p.numel() for p in model.parameters() if p.requires_grad)` in PyTorch.</Markdown>
+                                <Markdown>
+                                  To count the number of parameters, you can run
+                                  `sum(p.numel() for p in model.parameters() if
+                                  p.requires_grad)` in PyTorch.
+                                </Markdown>
                               </Form.Text>
                             </Form.Group>
                             <Form.Group>
@@ -272,7 +277,12 @@ class PublishInterface extends React.Component {
                                 onChange={handleChange}
                               />
                               <Form.Text id="paramsHelpBlock" muted>
-                                <Markdown>The text will be rendered as [markdown](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet) in model page. For more details on [model cards](https://arxiv.org/abs/1810.03993).</Markdown>
+                                <Markdown>
+                                  The text will be rendered as
+                                  [markdown](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
+                                  in model page. For more details on [model
+                                  cards](https://arxiv.org/abs/1810.03993).
+                                </Markdown>
                               </Form.Text>
                             </Form.Group>
 
