@@ -213,8 +213,6 @@ const OverallModelLeaderboardRow = ({
         model.datasets &&
         model.datasets.map((dataset) => {
           const weight = weightsLookup[dataset.id];
-          const calculatedWeight =
-            totalWeight === 0 ? 0 : Math.round((weight / totalWeight) * 100);
           return (
             <tr key={`score-${dataset.name}`}>
               {/* Title */}
