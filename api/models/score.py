@@ -99,7 +99,7 @@ class ScoreModel(BaseModel):
         limit=5,
         offset=0,
     ):
-        # TODO: normalize weights
+        print(ordered_did_and_weight)
         ordered_dataset_ids = [item[0] for item in ordered_did_and_weight]
         ordered_metric_weights = [item[1] for item in ordered_metric_and_weight]
         ordered_metric_names = [item[0]["name"] for item in ordered_metric_and_weight]
@@ -125,30 +125,39 @@ class ScoreModel(BaseModel):
 
         mid_to_data = {}
         for score in scores:
-            if score.metadata_json is not None:
-                if score.mid not in mid_to_data:
-                    mid_to_data[score.mid] = {
-                        "model_id": score.mid,
-                        "model_name": mid_to_name[score.mid],
-                        "uid": mid_to_uid[score.mid],
-                        "username": uid_to_username[mid_to_uid[score.mid]],
-                        "datasets": [],
-                    }
+            if score.mid not in mid_to_data:
+                mid_to_data[score.mid] = {
+                    "model_id": score.mid,
+                    "model_name": mid_to_name[score.mid],
+                    "uid": mid_to_uid[score.mid],
+                    "username": uid_to_username[mid_to_uid[score.mid]],
+                    "datasets": [],
+                }
 
-                mid_to_data[score.mid]["datasets"].append(
-                    {
-                        "id": score.did,
-                        "name": did_to_name[score.did],
-                        "scores": np.array(
-                            [
-                                json.loads(score.metadata_json)[
-                                    item[0]["score_field_name"]
-                                ]
-                                for item in ordered_metric_and_weight
-                            ]
-                        ),
-                    }
-                )
+            metric_values = []
+            score_dict = score.to_dict()
+            for metric, weight in ordered_metric_and_weight:
+                if metric["score_field_name"] in score_dict:
+                    metric_values.append(score_dict[metric["score_field_name"]])
+                else:
+                    if score.metadata_json is not None:
+                        metadata = json.loads(score.metadata_json)
+                        if metric["score_field_name"] in metadata:
+                            metric_values.append(metadata[metric["score_field_name"]])
+                        else:
+                            metric_values.append(None)
+                    else:
+                        metric_values.append(None)
+
+            mid_to_data[score.mid]["datasets"].append(
+                {
+                    "id": score.did,
+                    "name": did_to_name[score.did],
+                    "scores": np.array(
+                        [0 if item is None else item for item in metric_values]
+                    ),
+                }
+            )
 
         # Compute variances and aggregates
         count = 0

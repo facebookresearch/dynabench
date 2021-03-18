@@ -245,7 +245,7 @@ def get_dynaboard_starter_code(tid):
     limit = 10
     offset = 0
     ordered_metric_weights = [1.0 / 3, 1.0 / 3, 1.0 / 3]
-    ordered_dataset_weights = [1.0 / 4, 1.0 / 4, 1.0 / 4, 1.0 / 4]
+    ordered_dataset_weights = [0.1] * 10
     query_dict = parse_qs(bottle.request.query_string)
     if "sort_by" in query_dict:
         sort_by = query_dict["sort_by"][0]
@@ -259,11 +259,12 @@ def get_dynaboard_starter_code(tid):
         reverse_sort = False
     else:
         pass  # TODO
-
+    """
     if "ordered_metric_weights" in query_dict:
         ordered_metric_weights = [
             float(item) for item in query_dict["ordered_metric_weights"][0].split("|")
         ]
+    """
     if "ordered_dataset_weights" in query_dict:
         ordered_dataset_weights = [
             float(item) for item in query_dict["ordered_dataset_weights"][0].split("|")
@@ -284,6 +285,7 @@ def get_dynaboard_starter_code(tid):
             ordered_dataset_weights,
         )
     )
+    print(task_dict["ordered_datasets"])
 
     sm = ScoreModel()
     return sm.getDynaboardByTask(
