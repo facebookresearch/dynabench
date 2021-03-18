@@ -36,7 +36,7 @@ evaluation/metrics/task_config.py
 See the existing configs there for how to add / update configs. Specifically, the `input_keys` field is usually the list of keys in the test example provided in dynalab, but can exclude keys that are not directly involved in evaluation, e.g. request insights when talking to an endpoint, if your model supports that. In our examples you should set
 ```
 {
-    "input_keys": ["uid", "context", "hypothesis]
+    "input_keys": ["uid", "context", "hypothesis"]
 }
 ```
 
