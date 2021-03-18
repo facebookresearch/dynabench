@@ -47,9 +47,9 @@ const WeightSlider = ({ weight, onWeightChange }) => {
 };
 
 /**
- * Popver to show vairance for a score component (target)
+ * Popover to show variance for a score component (target)
  *
- * @param {Object} props React params destructured.
+ * @param {Object} props React params de-structured.
  * @param {string} props.variance the variance value to display in the popover
  * @param {React.ReactNode} props.children the Score Node that triggers the popover
  * @param {string} props.placement placement of the popover
@@ -83,20 +83,19 @@ const VariancePopover = ({ variance, children, placement = "right" }) => {
 };
 
 /**
- * Popver to show Weight
+ * Popover to show Weight
  *
- * @param {Object} params React params destructured.
+ * @param {Object} params React params de-structured.
  * @param {string} weight the weight value to display in the popover
  * @param {React.ReactNode} children the Node that triggers the popover
  */
 const WeightPopover = ({ label, weight, children }) => {
   const target = useRef(null);
 
-  // if (null === weight || undefined === weight) {
-  //   return children;
-  // }
+  if (null === weight || undefined === weight) {
+    return children;
+  }
 
-  // const target = useRef();
   return (
     <OverlayTrigger
       placement="right"
@@ -148,7 +147,7 @@ const SortContainer = ({
  * This component also manages the expansion state of the row.
  *
  * @param {*} model The model data
- * @param {*} metrics Metrcis metadata use for lables and weights.
+ * @param {*} metrics Metrics metadata use for labels and weights.
  *
  */
 const OverallModelLeaderboardRow = ({
@@ -258,7 +257,7 @@ const OverallModelLeaderboardRow = ({
  * Header component for a metric. Includes sort, title, weight and unit for each metric.
  *
  * @param {Object} props.metric the metric for this instance.
- * @param {number} props.colWidth the proportial width for this column.
+ * @param {number} props.colWidth the proportional width for this column.
  *
  */
 const MetricWeightTableHeader = ({
@@ -305,10 +304,10 @@ const MetricWeightTableHeader = ({
 };
 
 /**
- * The Overall Model Leaderboard component
+ * The Overall Model Leader board component
  *
  * @param {Array} props.models the models to show
- * @param {Object} props.task the task for the leaderboard.
+ * @param {Object} props.task the task for the leader board.
  */
 const OverallModelLeaderBoard = ({
   models,
@@ -328,7 +327,7 @@ const OverallModelLeaderBoard = ({
     0
   );
 
-  const metricColumnWidht =
+  const metricColumnWidth =
     60 / ((metrics?.length ?? 0) === 0 ? 1 : metrics.length);
 
   return (
@@ -352,7 +351,7 @@ const OverallModelLeaderBoard = ({
             return (
               <MetricWeightTableHeader
                 metric={metric}
-                colWidth={metricColumnWidht}
+                colWidth={metricColumnWidth}
                 setMetricWeight={setMetricWeight}
                 enableWeights={enableWeights}
                 total={total}

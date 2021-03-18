@@ -13,9 +13,9 @@ const SortDirection = {
 };
 
 /**
- * Represents the leaderboard for a task. i.e. Dynaboard
+ * Represents the leader board for a task. i.e. Dynaboard
  *
- * @param {Object} props React props destructures.
+ * @param {Object} props React props de-structured.
  * @param {Object} params.task The task
  * @param {number} params.taskId The taskID
  * @param {string} props.location navigation location
@@ -35,7 +35,7 @@ const TaskLeaderboardCard = (props) => {
   // Dataset Weights Array of a set of dataset id and corresponding weight.
   const [datasetWeights, setDatasetWeights] = useState(
     task.ordered_datasets?.map((ds) => {
-      return { id: ds.id, weight: 5 }; // Default wieght to max i.e. 5.
+      return { id: ds.id, weight: 5 }; // Default weight to max i.e. 5.
     })
   );
 
@@ -52,7 +52,7 @@ const TaskLeaderboardCard = (props) => {
   const taskId = props.taskId;
 
   /**
-   * Update weight state for the appropraite metric
+   * Update weight state for the appropriate metric
    *
    *  @param {number} metricID Metric ID
    *  @param {number} newWeight New weight for metric.
@@ -71,7 +71,7 @@ const TaskLeaderboardCard = (props) => {
   };
 
   /**
-   * Update weight state for the appropraite dataset
+   * Update weight state for the appropriate dataset
    *
    *  @param {number} datasetID Dataset ID
    *  @param {number} newWeight New weight for dataset.
@@ -109,7 +109,7 @@ const TaskLeaderboardCard = (props) => {
   };
 
   /**
-   * Invoke APIService to fetch leaderboard data
+   * Invoke APIService to fetch leader board data
    *
    * @param {*} api instance of @see APIService
    * @param {number} page
