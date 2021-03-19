@@ -150,8 +150,25 @@ def update_example(credentials, eid):
                 bottle.abort(403, "Access denied")
             del data["uid"]  # don't store this
 
+        if (
+            "model_wrong" in data
+            and data["model_wrong"] is True
+            and example.model_wrong is False
+        ):
+            cm = ContextModel()
+            rm = RoundModel()
+            context = cm.get(example.cid)
+            rm.updateLastActivity(context.r_realid)
+            rm.incrementFooledCount(context.r_realid)
+            if credentials["id"] != "turk":
+                um = UserModel()
+                info = RoundUserExampleInfoModel()
+                um.incrementFooledCount(example.uid)
+                info.incrementFooledCount(example.uid, context.r_realid)
+
         logger.info(f"Updating example {example.id} with {data}")
         em.update(example.id, data)
+
         if credentials["id"] != "turk":
             if "retracted" in data and data["retracted"] is True:
                 um = UserModel()

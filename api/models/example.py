@@ -94,7 +94,7 @@ class ExampleModel(BaseModel):
                 and "answer" in response
                 and "prob" in response
             ):
-                model_wrong = True
+                model_wrong = False
                 pred = str(response["answer"]) + "|" + str(float(response["prob"][0]))
             elif "model_is_correct" in response and "text" in response:
                 pred = str(response["model_is_correct"]) + "|" + str(response["text"])
