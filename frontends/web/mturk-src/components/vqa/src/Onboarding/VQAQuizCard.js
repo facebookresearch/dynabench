@@ -53,7 +53,6 @@ class VQAQuizCard extends React.Component {
                       this.props.modelState === this.MODEL_STATES.INCORRECT
                     }
                     userMode="user"
-                    interfaceMode="mturk"
                     isQuestion={!this.props.isAnswer}
                     disabled={this.props.disableRadios}
                     header={
@@ -62,6 +61,7 @@ class VQAQuizCard extends React.Component {
                         : "Is the question above valid? (refer to the instructions to see the concept of valid and invalid questions)."
                     }
                     isFlaggingAllowed={false}
+                    isExplainingAllowed={false}
                     setCorrectSelected={() => {
                       this.props.setModelState(
                         this.props.index,
