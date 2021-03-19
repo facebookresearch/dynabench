@@ -272,7 +272,7 @@ def validate_prediction(r_objects, prediction, task_shortname="nli"):
             raise AssertionError("Unrecognized task")
         score_obj = {}
         round_accuracy = {}
-        score_obj["round_id"] = r_obj.id
+        score_obj["r_realid"] = r_obj.id
         score_obj["desc"] = None
         score_obj["longdesc"] = None
         score_obj["metadata_json"] = {}
