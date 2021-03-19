@@ -21,7 +21,7 @@ class Score(Base):
     model = db.orm.relationship("Model", foreign_keys="Score.mid")
     r_realid = db.Column(db.Integer, db.ForeignKey("rounds.id"), nullable=False)
     round = db.orm.relationship("Round", foreign_keys="Score.r_realid")
-    did = db.Column(db.Integer, db.ForeignKey("datasets.id"))
+    did = db.Column(db.Integer, db.ForeignKey("datasets.id"), nullable=False)
 
     desc = db.Column(db.String(length=255))
     longdesc = db.Column(db.Text)
@@ -71,8 +71,9 @@ class ScoreModel(BaseModel):
                 Score(
                     r_realid=score_obj["r_realid"],
                     mid=model_id,
-                    desc=score_obj["desc"],
-                    longdesc=score_obj["longdesc"],
+                    did=score_obj["did"],
+                    desc=score_obj.get("desc", None),
+                    longdesc=score_obj.get("longdesc", None),
                     pretty_perf=score_obj["pretty_perf"],
                     perf=score_obj["perf"],
                     raw_upload_data=raw_upload_data,

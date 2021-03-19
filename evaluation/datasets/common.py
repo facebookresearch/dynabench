@@ -22,6 +22,7 @@ from utils.helpers import (
 sys.path.append("../api")  # noqa
 from models.dataset import DatasetModel  # isort:skip
 from models.task import TaskModel  # isort:skip
+from models.round import RoundModel  # isort:skip
 
 logger = logging.getLogger("datasets")
 
@@ -172,7 +173,14 @@ class BaseDataset(ABC):
             logger.exception(f"Unknown exception {ex}")
         else:
             score_obj = {}
-            score_obj["round_id"] = self.round_id
+            rm = RoundModel()
+            tm = TaskModel()
+            r_realid = rm.getByTidAndRid(
+                tm.getByTaskCode(self.task).id, self.round_id
+            ).id
+            score_obj["r_realid"] = r_realid
+            dm = DatasetModel()
+            score_obj["did"] = dm.getByName(self.name).id
 
             # Get performance
             perf, perf_dict = get_eval_metrics(self.task, predictions, target_labels)
@@ -201,8 +209,6 @@ class BaseDataset(ABC):
                     }
                     for tag, (perf, perf_dict) in perf_by_tag_tuple_dict.items()
                 ]
-
-            score_obj["metadata_json"] = json.dumps(score_obj["metadata_json"])
 
             return score_obj
 
