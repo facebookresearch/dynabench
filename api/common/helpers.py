@@ -4,6 +4,7 @@ import datetime
 import decimal
 import json
 import os
+import sys
 from urllib.parse import urlparse
 
 import bottle
@@ -12,7 +13,11 @@ from sqlalchemy.orm import lazyload
 from transformers.data.metrics.squad_metrics import compute_f1
 
 import common.auth as _auth
+import datasets
 from common.logging import logger
+
+
+sys.path.append("../evaluation")
 
 
 def check_fields(data, fields):
@@ -177,6 +182,7 @@ def validate_prediction(r_objects, prediction, task_shortname="nli"):
     :param prediction: Prediction result
     :return: Score objects, ui response object and overall accuracy
     """
+    """
 
     app = bottle.default_app()
     target_tags = None
@@ -221,6 +227,7 @@ def validate_prediction(r_objects, prediction, task_shortname="nli"):
         prediction
     ):
         raise AssertionError("Prediction and target file length mismatch")
+    """
 
     overall_accuracy = 0
     score_obj_list = []
@@ -228,7 +235,41 @@ def validate_prediction(r_objects, prediction, task_shortname="nli"):
     start_index = 0
     end_index = 0
 
+    loaded_datasets = datasets.load_datasets()
+
     for r_obj in sorted(r_objects, key=lambda x: x.rid):
+        if task_shortname == "nli":
+            if r_obj.rid == 1:
+                s3_dataset = loaded_datasets["anli-r1-test"]
+            elif r_obj.rid == 2:
+                s3_dataset = loaded_datasets["anli-r2-test"]
+            elif r_obj.rid == 3:
+                s3_dataset = loaded_datasets["anli-r3-test"]
+            else:
+                raise AssertionError("Unrecognized round for task")
+        elif task_shortname == "qa":
+            if r_obj.rid == 1:
+                s3_dataset = loaded_datasets["aqa-r1-test"]
+            else:
+                raise AssertionError("Unrecognized round for task")
+        elif task_shortname == "hate speech":
+            if r_obj.rid == 1:
+                s3_dataset = loaded_datasets["ahs-r1-test"]
+            elif r_obj.rid == 2:
+                s3_dataset = loaded_datasets["ahs-r2-test"]
+            elif r_obj.rid == 3:
+                s3_dataset = loaded_datasets["ahs-r3-test"]
+            else:
+                raise AssertionError("Unrecognized round for task")
+        elif task_shortname == "sentiment":
+            if r_obj.rid == 1:
+                s3_dataset = loaded_datasets["dynasent-r1-test"]
+            elif r_obj.rid == 2:
+                s3_dataset = loaded_datasets["dynasent-r2-test"]
+            else:
+                raise AssertionError("Unrecognized round for task")
+        else:
+            raise AssertionError("Unrecognized task")
         score_obj = {}
         round_accuracy = {}
         score_obj["round_id"] = r_obj.id
@@ -237,18 +278,21 @@ def validate_prediction(r_objects, prediction, task_shortname="nli"):
         score_obj["metadata_json"] = {}
 
         # Slice and extract round specific prediction
-        end_index = end_index + len(target_labels[r_obj.rid])
+        # end_index = end_index + len(target_labels[r_obj.rid])
+        end_index = 0
         score_obj["start_index"] = start_index
         score_obj["end_index"] = end_index
         r_prediction = prediction[start_index:end_index]
         start_index = end_index
 
         # Get round performance
-        r_accuracy = eval_fn(r_prediction, target_labels[r_obj.rid])
+        # r_accuracy = eval_fn(r_prediction, target_labels[r_obj.rid])
+        r_accuracy = s3_dataset.eval(r_prediction)
         score_obj["pretty_perf"] = str(round(r_accuracy * 100, 2)) + " %"
         score_obj["perf"] = round(r_accuracy * 100, 2)
 
         # Get performance breakdown for this round across tags
+        """
         if target_tags:
             examples_by_tag = {}
             for r_pred, r_target_label, r_target_tags in zip(
@@ -268,6 +312,7 @@ def validate_prediction(r_objects, prediction, task_shortname="nli"):
                 }
                 for tag, perf in perf_by_tag.items()
             ]
+        """
 
         # Sum rounds accuracy and generate score object list
         overall_accuracy = overall_accuracy + round(r_accuracy * 100, 2)
