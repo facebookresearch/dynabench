@@ -356,7 +356,7 @@ const ExamplesSubPage = (props) => {
               <tbody>
                 {props.tasksWithUserStats.map((taskWithUserStats) => {
                   return (
-                    <tr key={taskWithUserStats.task_shortname}>
+                    <tr key={taskWithUserStats.tid}>
                       <td className="blue-color">
                         {taskWithUserStats.task_shortname || "Unknown"}
                       </td>
@@ -366,9 +366,13 @@ const ExamplesSubPage = (props) => {
                       <td className="text-left">{taskWithUserStats.MER}%</td>
                       <td className="text-left">{taskWithUserStats.vMER}%</td>
                       <td className="text-center" width="200px">
-                        <BBadge variant="success" className="publishStatus">
+                        <Button
+                          className="bg-success"
+                          size="sm"
+                          onClick={() => props.export(taskWithUserStats.tid)}
+                        >
                           Export
-                        </BBadge>
+                        </Button>
                       </td>
                     </tr>
                   );
@@ -556,6 +560,10 @@ class ProfilePage extends React.Component {
         console.log(error);
       }
     );
+  };
+
+  exportUserExamplesInTask = (tid) => {
+    return this.context.api.exportData(tid, null, false);
   };
 
   componentDidUpdate(prevProps) {
@@ -852,6 +860,7 @@ class ProfilePage extends React.Component {
                 tasksWithUserStatsPage={this.state.tasksWithUserStatsPage}
                 isEndOfTasksWithUserStats={this.state.isEndOfTasksWithUserStats}
                 paginate={this.paginateTasksWithUserStats}
+                export={this.exportUserExamplesInTask}
               />
             ) : null}
             {this.props.location.hash === "#notifications" ? (

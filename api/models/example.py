@@ -201,6 +201,29 @@ class ExampleModel(BaseModel):
         except db.orm.exc.NoResultFound:
             return False
 
+    def getByTidAndUid(self, tid, uid):
+        try:
+            return (
+                self.dbs.query(Example)
+                .join(Context, Example.cid == Context.id)
+                .join(Round, Context.r_realid == Round.id)
+                .filter(Round.tid == tid)
+                .filter(Example.uid == uid)
+            )
+        except db.orm.exc.NoResultFound:
+            return False
+
+    def getFoolingRateByTidAndUid(self, tid, uid):
+        try:
+            examples_in_task = self.getByTidAndUid(tid, uid)
+            total_examples_in_task = examples_in_task.count()
+            total_fooling_examples_in_task = examples_in_task.filter(
+                Example.model_wrong.is_(True)
+            ).count()
+            return total_fooling_examples_in_task, total_examples_in_task
+        except db.orm.exc.NoResultFound:
+            return False
+
     def getByTidAndRid(self, tid, rid):
         try:
             return (
@@ -214,7 +237,7 @@ class ExampleModel(BaseModel):
         except db.orm.exc.NoResultFound:
             return False
 
-    def getByTidAndRidWithValidationIds(self, tid, rid):
+    def getByTidAndRidWithValidationIds(self, tid, rid, uid=None):
         try:
             validations_query = (
                 self.dbs.query(Example, db.func.group_concat(Validation.id))
@@ -234,6 +257,9 @@ class ExampleModel(BaseModel):
                 .filter(db.not_(db.exists().where(Validation.eid == Example.id)))
                 .group_by(Example.id)
             )
+            if uid is not None:
+                validations_query = validations_query.filter(Example.uid == uid)
+                no_validations_query = no_validations_query.filter(Example.uid == uid)
             return validations_query.union(no_validations_query).all()
         except db.orm.exc.NoResultFound:
             return False

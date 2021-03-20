@@ -1,6 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
+from urllib.parse import parse_qs
 
 import bottle
 
@@ -52,6 +53,7 @@ def get_tasks_with_user_stats(uid):
 
         tasks_with_user_stats.append(
             {
+                "tid": tid,
                 "task_shortname": task_shortname,
                 "examples_submitted_cnt": user_stats_in_task["examples_submitted_cnt"],
                 "MER": "0.00"
@@ -75,7 +77,6 @@ def get_tasks_with_user_stats(uid):
                 ),
             }
         )
-
     return util.json_encode({"data": tasks_with_user_stats, "count": total_tasks_count})
 
 
@@ -140,9 +141,10 @@ def get_leaderboard_by_task_and_round(tid, rid):
         bottle.abort(400, "Invalid task/round detail")
 
 
-def get_round_data_for_export(tid, rid):
+def get_round_data_for_export(tid, rid, uid):
     e = ExampleModel()
-    examples_with_validation_ids = e.getByTidAndRidWithValidationIds(tid, rid)
+    examples_with_validation_ids = e.getByTidAndRidWithValidationIds(tid, rid, uid)
+    mode = "owner" if uid is None else "user"
     example_and_validations_dicts = []
     rm = RoundModel()
     secret = rm.getByTidAndRid(tid, rid).secret
@@ -164,16 +166,17 @@ def get_round_data_for_export(tid, rid):
             example.metadata_json and json.loads(example.metadata_json)["annotator_id"]
         ):
             example_and_validations_dict = example.to_dict()
-            if example.uid:
-                example_and_validations_dict["anon_uid"] = get_anon_uid_with_cache(
-                    secret, example.uid, cache
-                )
-            else:
-                example_and_validations_dict["anon_uid"] = get_anon_uid_with_cache(
-                    secret,
-                    json.loads(example.metadata_json)["annotator_id"],
-                    turk_cache,
-                )
+            if mode == "owner":
+                if example.uid:
+                    example_and_validations_dict["anon_uid"] = get_anon_uid_with_cache(
+                        secret, example.uid, cache
+                    )
+                else:
+                    example_and_validations_dict["anon_uid"] = get_anon_uid_with_cache(
+                        secret,
+                        json.loads(example.metadata_json)["annotator_id"],
+                        turk_cache,
+                    )
             example_and_validations_dict["validations"] = []
             for validation_id in [
                 int(id)
@@ -185,29 +188,32 @@ def get_round_data_for_export(tid, rid):
                     and json.loads(validation.metadata_json)["annotator_id"]
                 ):
                     if validation.uid:
-                        validation_info = [
-                            validation.label.name,
-                            validation.mode.name,
-                            get_anon_uid_with_cache(
-                                secret + "-validator", validation.uid, cache
-                            ),
-                        ]
+                        validation_info = [validation.label.name, validation.mode.name]
+                        if mode == "owner":
+                            validation_info.append(
+                                get_anon_uid_with_cache(
+                                    secret + "-validator", validation.uid, cache
+                                )
+                            )
                     else:
-                        validation_info = [
-                            validation.label.name,
-                            validation.mode.name,
-                            get_anon_uid_with_cache(
-                                secret + "-validator",
-                                json.loads(validation.metadata_json)["annotator_id"],
-                                cache,
-                            ),
-                        ]
+                        validation_info = [validation.label.name, validation.mode.name]
+                        if mode == "owner":
+                            validation_info.append(
+                                get_anon_uid_with_cache(
+                                    secret + "-validator",
+                                    json.loads(validation.metadata_json)[
+                                        "annotator_id"
+                                    ],
+                                    cache,
+                                )
+                            )
 
                     if validation.metadata_json:
                         validation_info.append(json.loads(validation.metadata_json))
 
                     example_and_validations_dict["validations"].append(validation_info)
             example_and_validations_dicts.append(example_and_validations_dict)
+    print(len(example_and_validations_dicts))
     return example_and_validations_dicts
 
 
@@ -229,15 +235,18 @@ def export_current_round_data(credentials, tid, rid):
 def export_task_data(credentials, tid):
     um = UserModel()
     user = um.get(credentials["id"])
+    query_dict = parse_qs(bottle.request.query_string)
+    is_owner_request = "mode" in query_dict and query_dict["mode"][0] == "owner"
     if not user.admin:
-        if (tid, "owner") not in [
+        if is_owner_request and (tid, "owner") not in [
             (perm.tid, perm.type) for perm in user.task_permissions
         ]:
             bottle.abort(403, "Access denied")
     rm = RoundModel()
+    uid = None if is_owner_request else user.id
     example_and_validations_dicts = []
     for rid in [round.rid for round in rm.getByTid(tid)]:
-        example_and_validations_dicts += get_round_data_for_export(tid, rid)
+        example_and_validations_dicts += get_round_data_for_export(tid, rid, uid)
     return util.json_encode(example_and_validations_dicts)
 
 

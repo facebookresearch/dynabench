@@ -389,12 +389,12 @@ export default class ApiService {
     );
   }
 
-  exportData(tid, rid = null) {
+  exportData(tid, rid = null, isOwnerRequest = true) {
     var export_link = `${this.domain}/tasks/${tid}`;
     if (rid !== null) {
       export_link += `/rounds/${rid}`;
     }
-    export_link += "/export";
+    export_link += `/export?mode=${isOwnerRequest ? "owner" : "user"}`;
     return this.fetch(export_link, {
       method: "GET",
     }).then((res) => {
