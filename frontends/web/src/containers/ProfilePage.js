@@ -326,20 +326,95 @@ const ModelSubPage = (props) => {
   );
 };
 
+const ExamplesSubPage = (props) => {
+  return (
+    <Container className="mb-5 pb-5">
+      <h1 className="my-4 pt-3 text-uppercase text-center">Your Examples</h1>
+      <Col className="m-auto" lg={8}>
+        <Card className="profile-card">
+          <Card.Body>
+            <Table className="mb-0">
+              <thead className="blue-color border-bottom">
+                <tr>
+                  <td>
+                    <b>Task</b>
+                  </td>
+                  <td>
+                    <b>Examples Created</b>
+                  </td>
+                  <td>
+                    <b>MER</b>
+                  </td>
+                  <td>
+                    <b>vMER</b>
+                  </td>
+                  <td className="text-center" width="200px">
+                    <b>Action</b>
+                  </td>
+                </tr>
+              </thead>
+              <tbody>
+                {props.tasksWithUserStats.map((taskWithUserStats) => {
+                  return (
+                    <tr key={taskWithUserStats.task_shortname}>
+                      <td className="blue-color">
+                        {taskWithUserStats.task_shortname || "Unknown"}
+                      </td>
+                      <td className="text-left">
+                        {taskWithUserStats.examples_submitted_cnt}
+                      </td>
+                      <td className="text-left">{taskWithUserStats.MER}%</td>
+                      <td className="text-left">{taskWithUserStats.vMER}%</td>
+                      <td className="text-center" width="200px">
+                        <BBadge variant="success" className="publishStatus">
+                          Export
+                        </BBadge>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+          </Card.Body>
+          <Card.Footer className="text-center">
+            <Pagination className="mb-0 float-right" size="sm">
+              <Pagination.Item
+                disabled={!props.tasksWithUserStatsPage}
+                onClick={() => props.paginate("prev")}
+              >
+                Previous
+              </Pagination.Item>
+              <Pagination.Item
+                disabled={props.isEndOfTasksWithUserStats}
+                onClick={() => props.paginate("next")}
+              >
+                Next
+              </Pagination.Item>
+            </Pagination>
+          </Card.Footer>
+        </Card>
+      </Col>
+    </Container>
+  );
+};
+
 class ProfilePage extends React.Component {
   static contextType = UserContext;
   constructor(props) {
     super(props);
+    this.pageLimit = 10;
     this.state = {
       ctxUserId: null,
       user: {},
       userModels: [],
       userModelsPage: 0,
+      tasksWithUserStats: [],
+      tasksWithUserStatsPage: 0,
       notifications: [],
       notificationsPage: 0,
-      pageLimit: 10,
       isEndOfUserModelsPage: true,
       isEndOfNotificationsPage: true,
+      isEndOfTasksWithUserStats: true,
       invalidFileUpload: false,
       loader: true,
     };
@@ -357,6 +432,8 @@ class ProfilePage extends React.Component {
       this.fetchUser();
     } else if (this.props.location.hash === "#models") {
       this.fetchModels(0);
+    } else if (this.props.location.hash === "#examples") {
+      this.fetchTasksWithUserStats(0);
     }
   }
 
@@ -414,12 +491,24 @@ class ProfilePage extends React.Component {
     );
   };
 
+  paginateTasksWithUserStats = (action) => {
+    this.setState(
+      function (prevState, _) {
+        return action === "next"
+          ? { tasksWithUserStatsPage: prevState.tasksWithUserStatsPage + 1 }
+          : { tasksWithUserStatsPage: prevState.tasksWithUserStatsPage - 1 };
+      },
+      () => {
+        this.fetchTasksWithUserStats(this.state.tasksWithUserStatsPage);
+      }
+    );
+  };
+
   fetchNotifications = (page) => {
     const user = this.context.api.getCredentials();
-    this.context.api.getNotifications(user.id, this.state.pageLimit, page).then(
+    this.context.api.getNotifications(user.id, this.pageLimit, page).then(
       (result) => {
-        const isEndOfPage =
-          (page + 1) * this.state.pageLimit >= (result.count || 0);
+        const isEndOfPage = (page + 1) * this.pageLimit >= (result.count || 0);
         this.setState(
           {
             isEndOfNotificationsPage: isEndOfPage,
@@ -437,12 +526,27 @@ class ProfilePage extends React.Component {
     );
   };
 
+  fetchTasksWithUserStats = (page) => {
+    const user = this.context.api.getCredentials();
+    this.context.api.getTaskStatsForUser(user.id, this.pageLimit, page).then(
+      (result) => {
+        const isEndOfPage = (page + 1) * this.pageLimit >= result.count;
+        this.setState({
+          isEndOfTasksWithUserStats: isEndOfPage,
+          tasksWithUserStats: result.data || [],
+        });
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
+  };
+
   fetchModels = (page) => {
     const user = this.context.api.getCredentials();
-    this.context.api.getUserModels(user.id, this.state.pageLimit, page).then(
+    this.context.api.getUserModels(user.id, this.pageLimit, page).then(
       (result) => {
-        const isEndOfPage =
-          (page + 1) * this.state.pageLimit >= (result.count || 0);
+        const isEndOfPage = (page + 1) * this.pageLimit >= (result.count || 0);
         this.setState({
           isEndOfUserModelsPage: isEndOfPage,
           userModels: result.data || [],
@@ -560,6 +664,16 @@ class ProfilePage extends React.Component {
                   }`}
                 >
                   Models
+                </Nav.Link>
+              </Nav.Item>
+              <Nav.Item>
+                <Nav.Link
+                  href="#examples"
+                  className={`gray-color p-4 px-lg-6 ${
+                    this.props.location.hash === "#examples" ? "active" : ""
+                  }`}
+                >
+                  Examples
                 </Nav.Link>
               </Nav.Item>
             </Nav>
@@ -730,6 +844,14 @@ class ProfilePage extends React.Component {
                 isEndOfUserModelsPage={this.state.isEndOfUserModelsPage}
                 paginate={this.paginateUserModels}
                 {...this.props}
+              />
+            ) : null}
+            {this.props.location.hash === "#examples" ? (
+              <ExamplesSubPage
+                tasksWithUserStats={this.state.tasksWithUserStats}
+                tasksWithUserStatsPage={this.state.tasksWithUserStatsPage}
+                isEndOfTasksWithUserStats={this.state.isEndOfTasksWithUserStats}
+                paginate={this.paginateTasksWithUserStats}
               />
             ) : null}
             {this.props.location.hash === "#notifications" ? (

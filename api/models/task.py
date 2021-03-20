@@ -2,6 +2,8 @@
 
 import sqlalchemy as db
 
+from common import helpers as util
+
 from .base import Base, BaseModel
 from .round import Round, RoundModel
 from .user import User
@@ -96,6 +98,12 @@ class TaskModel(BaseModel):
         for ii, r in enumerate([x[1] for x in rows]):
             tasks[ii]["round"] = r.to_dict()
         return tasks
+
+    def getPaginated(self, n=5, offset=0):
+        query = self.dbs.query(Task).filter(Task.hidden.is_(False))
+        rows = query.limit(n).offset(offset * n).all()
+        tasks = [x.to_dict() for x in rows]
+        return tasks, util.get_query_count(query)
 
     def getWithRound(self, tid):
         try:

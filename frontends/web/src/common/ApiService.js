@@ -136,6 +136,17 @@ export default class ApiService {
     });
   }
 
+  getTaskStatsForUser(userId, limit, offset) {
+    return this.fetch(
+      `${this.domain}/tasks/users/${userId}?limit=${limit || 5}&offset=${
+        offset || 0
+      }`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
   submitModel(data) {
     const token = this.getToken();
     const formData = new FormData();

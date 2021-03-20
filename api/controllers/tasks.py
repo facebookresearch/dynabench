@@ -23,6 +23,62 @@ def tasks():
     return util.json_encode(tasks)
 
 
+@bottle.get("/tasks/users/<uid:int>")
+def get_tasks_with_user_stats(uid):
+    limit, offset = util.get_limit_and_offset_from_request()
+    tm = TaskModel()
+    tasks, total_tasks_count = tm.getPaginated(n=limit, offset=offset)
+    info = RoundUserExampleInfoModel()
+    rm = RoundModel()
+    tasks_with_user_stats = []
+    for tid, task_shortname in [(task["id"], task["shortname"]) for task in tasks]:
+        user_stats_in_task = {
+            "examples_submitted_cnt": 0,
+            "total_fooled_cnt": 0,
+            "total_verified_not_correct_fooled_cnt": 0,
+        }
+        for r_realid in [round.id for round in rm.getByTid(tid)]:
+            stats = info.getUserStats(r_realid, uid)
+            examples_submitted_cnt = stats[0]
+            total_fooled_cnt = stats[1]
+            total_verified_not_correct_fooled_cnt = stats[2]
+            user_stats_in_task["examples_submitted_cnt"] += int(
+                examples_submitted_cnt or 0
+            )
+            user_stats_in_task["total_fooled_cnt"] += int(total_fooled_cnt or 0)
+            user_stats_in_task["total_verified_not_correct_fooled_cnt"] += int(
+                total_verified_not_correct_fooled_cnt or 0
+            )
+
+        tasks_with_user_stats.append(
+            {
+                "task_shortname": task_shortname,
+                "examples_submitted_cnt": user_stats_in_task["examples_submitted_cnt"],
+                "MER": "0.00"
+                if user_stats_in_task["examples_submitted_cnt"] == 0
+                else round(
+                    user_stats_in_task["total_fooled_cnt"]
+                    / user_stats_in_task["examples_submitted_cnt"]
+                    * 100,
+                    2,
+                ),
+                "vMER": "0.00"
+                if user_stats_in_task["examples_submitted_cnt"] == 0
+                else round(
+                    (
+                        user_stats_in_task["total_fooled_cnt"]
+                        - user_stats_in_task["total_verified_not_correct_fooled_cnt"]
+                    )
+                    / user_stats_in_task["examples_submitted_cnt"]
+                    * 100,
+                    2,
+                ),
+            }
+        )
+
+    return util.json_encode({"data": tasks_with_user_stats, "count": total_tasks_count})
+
+
 @bottle.get("/tasks/<tid:int>")
 def get_task(tid):
     t = TaskModel()

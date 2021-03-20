@@ -123,3 +123,28 @@ class RoundUserExampleInfoModel(BaseModel):
         )
 
         return query_res.limit(n).offset(n * offset), util.get_query_count(query_res)
+
+    def getUserStats(self, r_realid, uid):
+        total_fooled_cnt = db.sql.func.sum(RoundUserExampleInfo.total_fooled).label(
+            "total_fooled_cnt"
+        )
+        total_verified_not_correct_fooled_cnt = db.sql.func.sum(
+            RoundUserExampleInfo.total_verified_not_correct_fooled
+        ).label("total_verified_not_correct_fooled_cnt")
+        examples_submitted_cnt = db.sql.func.sum(
+            RoundUserExampleInfo.examples_submitted
+        ).label("examples_submitted_cnt")
+        return (
+            self.dbs.query(
+                examples_submitted_cnt,
+                total_fooled_cnt,
+                total_verified_not_correct_fooled_cnt,
+            )
+            .filter(
+                db.and_(
+                    RoundUserExampleInfo.r_realid == r_realid,
+                    RoundUserExampleInfo.uid == uid,
+                )
+            )
+            .one()
+        )
