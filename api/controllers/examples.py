@@ -61,6 +61,13 @@ def get_random_filtered_example(
     return util.json_encode(example)
 
 
+@bottle.get("/examples/<tid:int>/inspiration")
+def get_random_example_for_inspiration(tid):
+    em = ExampleModel()
+    fooling_example_with_context = em.getRandomFoolingExampleWithContext(tid)
+    return util.json_encode(fooling_example_with_context[0].to_dict())
+
+
 @bottle.get("/examples/<tid:int>/<rid:int>")
 @_auth.requires_auth_or_turk
 def get_random_example(credentials, tid, rid):

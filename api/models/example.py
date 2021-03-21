@@ -238,6 +238,21 @@ class ExampleModel(BaseModel):
         except db.orm.exc.NoResultFound:
             return False
 
+    def getRandomFoolingExampleWithContext(self, tid, n=1):
+        try:
+            return (
+                self.dbs.query(Example)
+                .join(Context, Example.cid == Context.id)
+                .join(Round, Context.r_realid == Round.id)
+                .filter(Round.tid == tid)
+                .filter(Example.retracted == False)  # noqa
+                .filter(Example.model_wrong == True)
+                .order_by(db.sql.func.rand())
+                .limit(n)
+            )
+        except db.orm.exc.NoResultFound:
+            return False
+
     def getRandom(
         self,
         rid,

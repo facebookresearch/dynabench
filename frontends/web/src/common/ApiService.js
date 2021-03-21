@@ -262,6 +262,12 @@ export default class ApiService {
     );
   }
 
+  getRandomExampleForInspiration(tid) {
+    return this.fetch(`${this.domain}/examples/${tid}/inspiration`, {
+      method: "GET",
+    });
+  }
+
   getRandomExample(tid, rid, tags = [], annotator_id = null) {
     let annotator_query = annotator_id ? `&annotator_id=${annotator_id}` : "";
     return this.fetch(

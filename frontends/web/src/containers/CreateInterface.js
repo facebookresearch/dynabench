@@ -31,7 +31,7 @@ import { TokenAnnotator } from "react-text-annotate";
 import { PieRechart } from "../components/Rechart";
 import { formatWordImportances } from "../utils/color";
 import { KeyboardShortcuts } from "./KeyboardShortcuts.js";
-import BootstrapSwitchButton from "bootstrap-switch-button-react";
+import { FoolingExampleCard } from "./FoolingExampleCard.js";
 import {
   OverlayProvider,
   Annotation,
@@ -39,6 +39,7 @@ import {
   BadgeOverlay,
 } from "./Overlay";
 import { HateSpeechDropdown } from "./HateSpeechDropdown.js";
+import { ModeDropdown } from "./ModeDropdown.js";
 import "./CreateInterface.css";
 
 const Explainer = (props) => (
@@ -884,9 +885,15 @@ class CreateInterface extends React.Component {
   static contextType = UserContext;
   constructor(props) {
     super(props);
+    this.MODES = {
+      LIVE: "live",
+      SANDBOX: "sandbox",
+      INSPIRATION: "inspiration",
+    };
     this.state = {
       answer: [],
       taskId: null,
+      example: {},
       task: {},
       context: null,
       target: 0,
@@ -895,18 +902,21 @@ class CreateInterface extends React.Component {
       hypothesis: "",
       content: [],
       retainInput: false,
-      livemode: true,
+      mode: this.MODES.LIVE,
       submitDisabled: true,
       refreshDisabled: true,
       mapKeyToExampleId: {},
     };
     this.getNewContext = this.getNewContext.bind(this);
+    this.getNewFoolingExampleWithContext = this.getNewFoolingExampleWithContext.bind(
+      this
+    );
     this.handleGoalMessageTargetChange = this.handleGoalMessageTargetChange.bind(
       this
     );
     this.handleResponse = this.handleResponse.bind(this);
     this.handleResponseChange = this.handleResponseChange.bind(this);
-    this.switchLiveMode = this.switchLiveMode.bind(this);
+    this.handleModeChange = this.handleModeChange.bind(this);
     this.updateAnswer = this.updateAnswer.bind(this);
     this.updateRetainInput = this.updateRetainInput.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
@@ -933,6 +943,7 @@ class CreateInterface extends React.Component {
                 randomModel: randomModel,
                 context: result,
                 content: [{ cls: "context", text: result.context }],
+                example: {},
                 submitDisabled: false,
                 refreshDisabled: false,
               });
@@ -1114,7 +1125,7 @@ class CreateInterface extends React.Component {
                 function () {
                   this.smoothlyAnimateToBottom();
                   // Save examples.
-                  if (!this.state.livemode) {
+                  if (this.state.mode === this.MODES.SANDBOX) {
                     // We are in sandbox.
                     this.setState({
                       hypothesis: this.state.retainInput
@@ -1183,8 +1194,9 @@ class CreateInterface extends React.Component {
     this.setState({ hypothesis: e.target.value });
   }
 
-  switchLiveMode(checked) {
-    if (checked === true && !this.context.api.loggedIn()) {
+  handleModeChange(e) {
+    const mode = e.target.getAttribute("data");
+    if (mode === this.MODES.LIVE && !this.context.api.loggedIn()) {
       this.props.history.push(
         "/register?msg=" +
           encodeURIComponent(
@@ -1194,7 +1206,24 @@ class CreateInterface extends React.Component {
           encodeURIComponent("/tasks/" + this.props.taskId + "/create")
       );
     }
-    this.setState({ livemode: checked });
+    this.setState({ mode });
+    if (mode === this.MODES.INSPIRATION) {
+      this.getNewFoolingExampleWithContext();
+    } else if (mode === this.MODES.LIVE || this.MODES.SANDBOX) {
+      this.getNewContext();
+    }
+  }
+
+  getNewFoolingExampleWithContext() {
+    this.context.api
+      .getRandomExampleForInspiration(this.state.task.id)
+      .then((foolingExample) => {
+        this.setState({
+          example: foolingExample,
+          context: foolingExample.context,
+          content: [{ cls: "context", text: foolingExample.context.context }],
+        });
+      });
   }
 
   componentDidMount() {
@@ -1202,7 +1231,7 @@ class CreateInterface extends React.Component {
       match: { params },
     } = this.props;
     if (!this.context.api.loggedIn()) {
-      this.setState({ livemode: false });
+      this.setState({ mode: this.MODES.SANDBOX });
     } else {
       const user = this.context.api.getCredentials();
       this.context.api.getUser(user.id, true).then(
@@ -1287,7 +1316,7 @@ class CreateInterface extends React.Component {
             taskType={this.state.task.type}
             taskName={this.state.task.shortname}
             answer={this.state.answer}
-            livemode={this.state.livemode}
+            livemode={this.state.mode === this.MODES.LIVE}
             obj={item}
             content={this.state.content}
             getNewContext={this.getNewContext}
@@ -1331,7 +1360,10 @@ class CreateInterface extends React.Component {
       );
     }
     function renderSandboxTooltip(props) {
-      return renderTooltip(props, "Switch in and out of sandbox mode.");
+      return renderTooltip(
+        props,
+        "Switch between sandbox, inspiration and live modes."
+      );
     }
     function renderSwitchRoundTooltip(props) {
       return renderTooltip(
@@ -1429,20 +1461,22 @@ class CreateInterface extends React.Component {
               </Modal>
             </div>
             <Explainer taskName={this.state.task.name} />
-            <Annotation
-              placement="top"
-              tooltip={
-                "This is your goal. Dynabench specifies what the true label should be of your model-fooling example. You can change this label by clicking it."
-              }
-            >
-              <GoalMessage
-                targets={this.state.task.targets}
-                curTarget={this.state.target}
-                taskType={this.state.task.type}
-                taskShortName={this.state.task.shortname}
-                onChange={this.handleGoalMessageTargetChange}
-              />
-            </Annotation>
+            {this.state.mode !== this.MODES.INSPIRATION && (
+              <Annotation
+                placement="top"
+                tooltip={
+                  "This is your goal. Dynabench specifies what the true label should be of your model-fooling example. You can change this label by clicking it."
+                }
+              >
+                <GoalMessage
+                  targets={this.state.task.targets}
+                  curTarget={this.state.target}
+                  taskType={this.state.task.type}
+                  taskShortName={this.state.task.shortname}
+                  onChange={this.handleGoalMessageTargetChange}
+                />
+              </Annotation>
+            )}
             <Card className="profile-card overflow-hidden">
               {contextContent}
               <Card.Body
@@ -1452,47 +1486,57 @@ class CreateInterface extends React.Component {
                 }}
                 ref={this.chatContainerRef}
               >
-                {responseContent}
+                {this.state.mode === this.MODES.INSPIRATION &&
+                Object.keys(this.state.example).length > 0 ? (
+                  <FoolingExampleCard
+                    task={this.state.task}
+                    example={this.state.example}
+                  />
+                ) : (
+                  responseContent
+                )}
                 <div className="bottom-anchor" ref={this.bottomAnchorRef} />
               </Card.Body>
               <Form>
-                <Annotation placement="top" tooltip="Enter your example here">
-                  <InputGroup>
-                    <FormControl
-                      className="m-3 p-3 rounded-1 thick-border h-auto light-gray-bg"
-                      placeholder={
-                        [
-                          "NLI",
-                          "QA",
-                          "VQA",
-                          "Sentiment",
-                          "Hate Speech",
-                        ].includes(this.state.task.shortname)
-                          ? {
-                              NLI:
-                                "Enter " +
-                                this.state.task.targets[this.state.target] +
-                                " hypothesis..",
-                              QA: "Enter question...",
-                              VQA: "Enter question...",
-                              Sentiment:
-                                "Enter " +
-                                this.state.task.targets[this.state.target] +
-                                " statement..",
-                              "Hate Speech":
-                                "Enter " +
-                                this.state.task.targets[this.state.target] +
-                                " statement..",
-                            }[this.state.task.shortname]
-                          : "Enter statement.."
-                      }
-                      value={this.state.hypothesis}
-                      onChange={this.handleResponseChange}
-                      required={true}
-                      ref={this.inputRef}
-                    />
-                  </InputGroup>
-                </Annotation>
+                {this.state.mode !== this.MODES.INSPIRATION && (
+                  <Annotation placement="top" tooltip="Enter your example here">
+                    <InputGroup>
+                      <FormControl
+                        className="m-3 p-3 rounded-1 thick-border h-auto light-gray-bg"
+                        placeholder={
+                          [
+                            "NLI",
+                            "QA",
+                            "VQA",
+                            "Sentiment",
+                            "Hate Speech",
+                          ].includes(this.state.task.shortname)
+                            ? {
+                                NLI:
+                                  "Enter " +
+                                  this.state.task.targets[this.state.target] +
+                                  " hypothesis..",
+                                QA: "Enter question...",
+                                VQA: "Enter question...",
+                                Sentiment:
+                                  "Enter " +
+                                  this.state.task.targets[this.state.target] +
+                                  " statement..",
+                                "Hate Speech":
+                                  "Enter " +
+                                  this.state.task.targets[this.state.target] +
+                                  " statement..",
+                              }[this.state.task.shortname]
+                            : "Enter statement.."
+                        }
+                        value={this.state.hypothesis}
+                        onChange={this.handleResponseChange}
+                        required={true}
+                        ref={this.inputRef}
+                      />
+                    </InputGroup>
+                  </Annotation>
+                )}
 
                 <Row className="p-3">
                   <Col xs={6}>
@@ -1505,24 +1549,18 @@ class CreateInterface extends React.Component {
                         <span style={{ marginRight: 10 }}>
                           <Annotation
                             placement="left"
-                            tooltip="If you want to just play around without storing your examples, you can switch to Sandbox mode here."
+                            tooltip="If you want to just play around without storing your examples, you can switch to Sandbox mode here. Select the Inspiration mode to get model fooling examples and inspire yourself."
                           >
-                            <BootstrapSwitchButton
-                              checked={this.state.livemode}
-                              onlabel="Live Mode"
-                              onstyle="primary blue-bg"
-                              offstyle="warning"
-                              offlabel="Sandbox"
-                              width={120}
-                              onChange={(checked) => {
-                                this.switchLiveMode(checked);
-                              }}
+                            <ModeDropdown
+                              selectedMode={this.state.mode}
+                              onClick={this.handleModeChange}
                             />
                           </Annotation>
                         </span>
                       </OverlayTrigger>
 
-                      {this.state.task.cur_round > 1 ? (
+                      {this.state.mode !== this.MODES.INSPIRATION &&
+                      this.state.task.cur_round > 1 ? (
                         <OverlayTrigger
                           placement="bottom"
                           delay={{ show: 250, hide: 400 }}
@@ -1554,52 +1592,68 @@ class CreateInterface extends React.Component {
                     </InputGroup>
                   </Col>
                   <Col xs={6}>
-                    <InputGroup className="d-flex justify-content-end">
-                      <OverlayTrigger
-                        placement="bottom"
-                        delay={{ show: 250, hide: 400 }}
-                        overlay={renderSwitchContextTooltip}
-                      >
+                    {this.state.mode === this.MODES.INSPIRATION ? (
+                      <InputGroup className="d-flex justify-content-end">
                         <Annotation
-                          placement="left"
-                          tooltip="Don’t like this context, or this goal label? Try another one."
+                          placement="top"
+                          tooltip="Click it to get another fooling example"
                         >
                           <Button
-                            className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"
-                            onClick={this.getNewContext}
-                            disabled={this.state.refreshDisabled}
+                            className="font-weight-bold blue-bg border-0 task-action-btn"
+                            onClick={this.getNewFoolingExampleWithContext}
                           >
-                            Switch to next context
+                            Next Example
                           </Button>
                         </Annotation>
-                      </OverlayTrigger>
-                      <Annotation
-                        placement="top"
-                        tooltip="When you’re done, you can submit the example and we’ll find out what the model thinks!"
-                      >
-                        <Button
-                          type="submit"
-                          className="font-weight-bold blue-bg border-0 task-action-btn"
-                          onClick={this.handleResponse}
-                          disabled={this.state.submitDisabled}
+                      </InputGroup>
+                    ) : (
+                      <InputGroup className="d-flex justify-content-end">
+                        <OverlayTrigger
+                          placement="bottom"
+                          delay={{ show: 250, hide: 400 }}
+                          overlay={renderSwitchContextTooltip}
                         >
-                          {"Submit "}
-                          <i
-                            className={
-                              this.state.submitDisabled
-                                ? "fa fa-cog fa-spin"
-                                : ""
-                            }
-                          />
-                        </Button>
-                      </Annotation>
-                    </InputGroup>
+                          <Annotation
+                            placement="left"
+                            tooltip="Don’t like this context, or this goal label? Try another one."
+                          >
+                            <Button
+                              className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"
+                              onClick={this.getNewContext}
+                              disabled={this.state.refreshDisabled}
+                            >
+                              Switch to next context
+                            </Button>
+                          </Annotation>
+                        </OverlayTrigger>
+                        <Annotation
+                          placement="top"
+                          tooltip="When you’re done, you can submit the example and we’ll find out what the model thinks!"
+                        >
+                          <Button
+                            type="submit"
+                            className="font-weight-bold blue-bg border-0 task-action-btn"
+                            onClick={this.handleResponse}
+                            disabled={this.state.submitDisabled}
+                          >
+                            {"Submit "}
+                            <i
+                              className={
+                                this.state.submitDisabled
+                                  ? "fa fa-cog fa-spin"
+                                  : ""
+                              }
+                            />
+                          </Button>
+                        </Annotation>
+                      </InputGroup>
+                    )}
                   </Col>
                 </Row>
               </Form>
               <div className="p-2">
-                {this.state.task.cur_round !==
-                this.state.task.selected_round ? (
+                {this.state.mode !== this.MODES.INSPIRATION &&
+                this.state.task.cur_round !== this.state.task.selected_round ? (
                   <p style={{ color: "red" }}>
                     WARNING: You are talking to an outdated model for a round
                     that is no longer active. Examples you generate may be less
@@ -1608,7 +1662,7 @@ class CreateInterface extends React.Component {
                 ) : (
                   ""
                 )}
-                {!this.state.livemode ? (
+                {this.state.mode === this.MODES.SANDBOX ? (
                   <p style={{ color: "red" }}>
                     WARNING: You are in "just playing" sandbox mode. Your
                     examples are not saved!!
@@ -1628,28 +1682,6 @@ class CreateInterface extends React.Component {
               </div>
             </Card>
           </Col>
-          {this.state.task.type === "VQA" && (
-            <KeyboardShortcuts
-              allowedShortcutsInText={["escape"]}
-              mapKeyToCallback={{
-                i: {
-                  callback: (action) => this.manageTextInput(action),
-                  params: "focus",
-                },
-                escape: {
-                  callback: (action) => this.manageTextInput(action),
-                  params: "blur",
-                },
-                d: {
-                  callback: () => {
-                    if (!this.state.refreshDisabled) {
-                      this.getNewContext();
-                    }
-                  },
-                },
-              }}
-            />
-          )}
         </Container>
       </OverlayProvider>
     );
