@@ -3,7 +3,7 @@
 A dataset: a single evaluation set that contains input examples and their corresponding labels.
 A task: a collection of evaluation sets. Tasks are identified by a task code on evaluation cloud. Currently we have four published tasks: nli, hs, sentiment and qa.
 ## Tasks
-Assume you've added a new task in Dynabench database, whose task code is `my-task` and task id is `n`. To start model upload and evaluation for your task, first create a new file in `dynalab` repo (https://github.com/fairinternal/dynalab) at
+Assume you've added a new task in Dynabench database, whose task code is `my-task` and task id is `n`. To start model upload and evaluation for your task, first create a new file in `dynalab` repo (https://github.com/facebookresearch/dynalab) at
 ```
 dynalab/tasks/my-task.py
 ```
@@ -15,9 +15,9 @@ data = {
     "hypothesis": "which specifies the input keys",
 }
 ```
-Note your input should always contain an `id` or equivalent field to uniquely identify an example.
+Note your input should always contain an `id` or equivalent field to uniquely identify an example. This defines the full set of input keys.
 
-The output format is defined by a `verify_response` method that will be used to validate model response, i.e. a single json object. The model output should encompass both the keys for batch evaluation (i.e. an example identifier passed from input, and a definite prediction) and talking to the endpoint (e.g. some additional insights of the inference such as probability list). To do this, declare a `TaskIO` class that inherits `BaseTaskIO`. Your class has to be called `TaskIO` so don't rename it.
+The output format is defined by a `verify_response` method that will be used to validate model response, i.e. a single json object. The model output should encompass both the keys for batch evaluation (i.e. an example identifier passed from input, and a definite prediction) and talking to the endpoint (e.g. some additional insights of the inference such as probability list). To do this, declare a `TaskIO` class that inherits `BaseTaskIO`. Your class has to be called `TaskIO` so don't rename it. This function defines the full set of output keys.
 ```
 from dynalab.tasks.common import BaseTaskIO
 class TaskIO(BaseTaskIO):
@@ -33,10 +33,10 @@ Now that we've defined the task I/O, let's go back to dynabench and sync these r
 ```
 evaluation/metrics/task_config.py
 ```
-See the existing configs there for how to add / update configs. Specifically, the `input_keys` field is the list of keys in the test example provided in dynalab, e.g. in our examples you should set
+See the existing configs there for how to add / update configs. Specifically, the `input_keys` field is usually the list of keys in the test example provided in dynalab, but can exclude keys that are not directly involved in evaluation, e.g. request insights when talking to an endpoint, if your model supports that. In our examples you should set
 ```
 {
-    "input_keys": ["uid", "context", "hypothesis]
+    "input_keys": ["uid", "context", "hypothesis"]
 }
 ```
 
