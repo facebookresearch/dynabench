@@ -156,7 +156,14 @@ const TaskLeaderboardCard = (props) => {
     fetchOverallModelLeaderboard(context.api, page);
     setIsLoading(false);
     return () => {};
-  }, [page, sort, metrics, datasetWeights]);
+  }, [
+    page,
+    sort,
+    metrics,
+    datasetWeights,
+    fetchOverallModelLeaderboard,
+    context.api,
+  ]);
 
   const isEndOfPage = (page + 1) * pageLimit >= total;
 

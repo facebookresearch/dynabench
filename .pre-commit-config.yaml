@@ -68,8 +68,9 @@ repos:
     rev: v7.21.0
     hooks:
     -   id: eslint
-        args: [--fix]
+        args: [--fix --silent]
         files: \.[jt]sx?$
         types: [file]
         additional_dependencies:
+            - eslint@7.21.0
             - eslint-config-react-app
