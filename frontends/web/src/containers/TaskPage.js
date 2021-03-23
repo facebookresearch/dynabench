@@ -32,6 +32,8 @@ import { Avatar } from "../components/Avatar/Avatar";
 import Moment from "react-moment";
 import DragAndDrop from "../components/DragAndDrop/DragAndDrop";
 import { OverlayProvider, Annotation, OverlayContext } from "./Overlay";
+import TaskLeaderboardCard from "../components/TaskLeaderboard/TaskLeaderboardCard";
+import OldTaskLeaderboardCard from "../components/TaskLeaderboard/OldTaskLeaderboardCard";
 
 const chartSizes = {
   xs: { fontSize: 10 },
@@ -248,6 +250,22 @@ const OverallTaskStats = (props) => {
             % )
           </td>
         </tr>
+        {props.task.round && (
+          <tr>
+            <td>Correct/Validated (Validated Model Error rate)</td>
+            <td>
+              {props.task.round?.correct_validations}/
+              {props.task.round?.total_validations} (
+              {props.task.round?.total_validations > 0
+                ? (
+                    (100 * props.task.round?.correct_validations) /
+                    props.task.round?.total_validations
+                  ).toFixed(2)
+                : "0.00"}
+              % )
+            </td>
+          </tr>
+        )}
         <tr>
           <td>Last activity:</td>
           <td>
@@ -256,68 +274,6 @@ const OverallTaskStats = (props) => {
             </Moment>
           </td>
         </tr>
-      </tbody>
-    </Table>
-  );
-};
-
-const OverallModelLeaderBoard = (props) => {
-  return (
-    <Table hover className="mb-0">
-      <thead>
-        <tr>
-          <th>Model</th>
-          {props.tags.map((tag) => {
-            return (
-              <th className="text-right" key={`th-${tag}`}>
-                {tag}
-              </th>
-            );
-          })}
-          {props.taskShortName === "QA" ? (
-            <th className="text-right pr-4">Overall F1</th>
-          ) : (
-            <th className="text-right pr-4">Mean Accuracy</th>
-          )}
-        </tr>
-      </thead>
-      <tbody>
-        {props.data.map((data) => {
-          return (
-            <tr key={data.model_id}>
-              <td>
-                <Link to={`/models/${data.model_id}`} className="btn-link">
-                  {data.model_name}
-                </Link>{" "}
-                <Link
-                  to={`/users/${data.owner_id}#profile`}
-                  className="btn-link"
-                >
-                  ({data.owner})
-                </Link>
-              </td>
-              {props.tags.map((tag) => {
-                let tag_result = "-";
-                if (data.metadata_json && data.metadata_json.perf_by_tag) {
-                  let selected_tag = data.metadata_json.perf_by_tag.filter(
-                    (t) => t.tag === tag
-                  );
-                  if (selected_tag.length > 0)
-                    tag_result =
-                      parseFloat(selected_tag[0].perf).toFixed(2) + "%";
-                }
-                return (
-                  <td className="text-right" key={`${tag}-${data.model_id}`}>
-                    {tag_result}
-                  </td>
-                );
-              })}
-              <td className="text-right pr-4">
-                {parseFloat(data.accuracy).toFixed(2)}%
-              </td>
-            </tr>
-          );
-        })}
       </tbody>
     </Table>
   );
@@ -514,7 +470,6 @@ class TaskPage extends React.Component {
             : this.state.task.cur_round,
       },
       () => {
-        this.fetchOverallModelLeaderboard(this.state.modelLeaderBoardPage);
         this.fetchOverallUserLeaderboard(this.state.userLeaderBoardPage);
         if (this.props.location.hash === "#overall") this.fetchTrend();
       }
@@ -543,29 +498,6 @@ class TaskPage extends React.Component {
         console.log(error);
       }
     );
-  }
-
-  fetchOverallModelLeaderboard(page) {
-    this.context.api
-      .getOverallModelLeaderboard(
-        this.state.taskId,
-        this.props.location.hash.replace("#", ""),
-        this.state.pageLimit,
-        page
-      )
-      .then(
-        (result) => {
-          const isEndOfPage = (page + 1) * this.state.pageLimit >= result.count;
-          this.setState({
-            isEndOfModelLeaderPage: isEndOfPage,
-            modelLeaderBoardData: result.data,
-            modelLeaderBoardTags: result.leaderboard_tags,
-          });
-        },
-        (error) => {
-          console.log(error);
-        }
-      );
   }
 
   fetchOverallUserLeaderboard(page) {
@@ -645,11 +577,7 @@ class TaskPage extends React.Component {
             : --this.state[componentPageState],
       },
       () => {
-        if (component === "model") {
-          this.fetchOverallModelLeaderboard(this.state[componentPageState]);
-        } else {
-          this.fetchOverallUserLeaderboard(this.state[componentPageState]);
-        }
+        this.fetchOverallUserLeaderboard(this.state[componentPageState]);
       }
     );
   };
@@ -931,52 +859,45 @@ class TaskPage extends React.Component {
                   />
                 </Col>
               </Row>
+              {process.env.REACT_APP_ENABLE_DYNABOARD === "true" &&
+                this.state.task &&
+                this.state.task.ordered_datasets && (
+                  <Row>
+                    <Col xs={12} md={12}>
+                      <Annotation
+                        placement="left"
+                        tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
+                      >
+                        <TaskLeaderboardCard
+                          {...this.props}
+                          modelLeaderBoardData={this.state.modelLeaderBoardData}
+                          modelLeaderBoardTags={this.state.modelLeaderBoardTags}
+                          task={this.state.task}
+                          taskId={this.state.taskId}
+                          displayRoundId={this.state.displayRoundId}
+                        />
+                      </Annotation>
+                    </Col>
+                  </Row>
+                )}
               <Row>
                 <Col
                   xs={12}
                   md={this.props.location.hash === "#overall" ? 6 : 12}
                 >
-                  {this.state.modelLeaderBoardData.length ? (
+                  {process.env.REACT_APP_ENABLE_DYNABOARD !== "true" && (
                     <Annotation
                       placement="left"
                       tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
                     >
-                      <Card className="my-4">
-                        <Card.Header className="p-3 light-gray-bg">
-                          <h2 className="text-uppercase m-0 text-reset">
-                            {this.props.location.hash === "#overall"
-                              ? "Overall Model Leaderboard"
-                              : "Round " +
-                                this.state.displayRoundId +
-                                " Model Leaderboard"}
-                          </h2>
-                        </Card.Header>
-                        <Card.Body className="p-0 leaderboard-container">
-                          <OverallModelLeaderBoard
-                            data={this.state.modelLeaderBoardData}
-                            tags={this.state.modelLeaderBoardTags}
-                            taskShortName={this.state.task.shortname}
-                          />
-                        </Card.Body>
-                        <Card.Footer className="text-center">
-                          <Pagination className="mb-0 float-right" size="sm">
-                            <Pagination.Item
-                              disabled={!this.state.modelLeaderBoardPage}
-                              onClick={() => this.paginate("model", "previous")}
-                            >
-                              Previous
-                            </Pagination.Item>
-                            <Pagination.Item
-                              disabled={this.state.isEndOfModelLeaderPage}
-                              onClick={() => this.paginate("model", "next")}
-                            >
-                              Next
-                            </Pagination.Item>
-                          </Pagination>
-                        </Card.Footer>
-                      </Card>
+                      <OldTaskLeaderboardCard
+                        {...this.props}
+                        task={this.state.task}
+                        taskId={this.state.taskId}
+                        displayRoundId={this.state.displayRoundId}
+                      />
                     </Annotation>
-                  ) : null}
+                  )}
                   {/*Do not display the user leaderboard if there is no data or if it is for a pre-dynabench round.*/}
                   {this.state.userLeaderBoardData.length &&
                   !(

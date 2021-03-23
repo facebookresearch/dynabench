@@ -6,7 +6,7 @@ import sqlalchemy as db
 
 from .base import Base, BaseModel
 from .dataset import DatasetModel
-from .round import Round
+from .round import Round, RoundModel
 from .user import User
 
 
@@ -117,10 +117,15 @@ class TaskModel(BaseModel):
             dataset_list.sort(key=lambda item: item["id"])
 
             t = t.to_dict()
-            t["round"] = r.to_dict()
+            r = r.to_dict()
+            rm = RoundModel()
             t["ordered_datasets"] = dataset_list
             t["ordered_metrics"] = json.loads(t["ordered_metrics_json"])
             del t["ordered_metrics_json"]
+            validation_stats = rm.getValidationStats(tid, r["rid"])
+            r["total_validations"] = validation_stats["total_validations"]
+            r["correct_validations"] = validation_stats["correct_validations"]
+            t["round"] = r
             return t
         except db.orm.exc.NoResultFound:
             return False

@@ -94,7 +94,7 @@ class ExampleModel(BaseModel):
                 and "answer" in response
                 and "prob" in response
             ):
-                model_wrong = True
+                model_wrong = False
                 pred = str(response["answer"]) + "|" + str(float(response["prob"][0]))
             elif "model_is_correct" in response and "text" in response:
                 pred = str(response["model_is_correct"]) + "|" + str(response["text"])
@@ -285,10 +285,27 @@ class ExampleModel(BaseModel):
                 )
             )
         )
-        if my_uid is not None and mode == "owner":
-            cnt_uid = db.sql.func.sum(
-                case([(Validation.uid == my_uid, 1)], else_=0)
-            ).label("cnt_uid")
+        if my_uid is not None:
+            if mode == "owner":
+                cnt_uid = db.sql.func.sum(
+                    case([(Validation.uid == my_uid, 1)], else_=0)
+                ).label("cnt_uid")
+            elif mode == "user":
+                result_partially_validated = result_partially_validated.filter(
+                    db.cast(Example.metadata_json, JSON)["annotator_id"] != my_uid
+                )
+                cnt_uid = db.sql.func.sum(
+                    case(
+                        [
+                            (
+                                db.cast(Validation.metadata_json, JSON)["annotator_id"]
+                                == my_uid,
+                                1,
+                            )
+                        ],
+                        else_=0,
+                    )
+                ).label("cnt_uid")
             result_partially_validated = result_partially_validated.group_by(
                 Validation.eid
             ).having(cnt_uid == 0)
@@ -300,11 +317,6 @@ class ExampleModel(BaseModel):
 
         if my_uid is not None and mode == "owner":
             result = result.filter(Example.uid != my_uid)
-
-        if my_uid is not None and mode == "user":
-            result = result.filter(
-                db.cast(Example.metadata_json, JSON)["annotator_id"] != my_uid
-            )
 
         result = (
             result.order_by(

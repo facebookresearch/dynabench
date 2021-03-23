@@ -10,10 +10,17 @@ _default_config = {
     "eval_metrics": ["accuracy"],
     "perf_metric": "accuracy",
     "delta_metrics": ["fairness", "robustness"],
-    "input_keys": ["uid", "context", "hypothesis"],
+    "input_keys": ["uid", "context"],
 }
 
-_custom_config = {"qa": {"eval_metrics": ["f1"], "perf_metric": "f1"}}
+_custom_config = {
+    "nli": {"input_keys": ["uid", "context", "hypothesis"]},
+    "qa": {
+        "input_keys": ["uid", "context", "question"],
+        "eval_metrics": ["f1"],
+        "perf_metric": "f1",
+    },
+}
 
 
 def _get_config(config=None):
@@ -28,7 +35,7 @@ def _get_config(config=None):
 
 tasks_config = {
     "default": _get_config(),
-    "nli": _get_config(),
+    "nli": _get_config(_custom_config["nli"]),
     "hs": _get_config(),
     "sentiment": _get_config(),
     "qa": _get_config(_custom_config["qa"]),
