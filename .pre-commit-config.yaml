@@ -72,4 +72,5 @@ repos:
         files: \.[jt]sx?$
         types: [file]
         additional_dependencies:
+            - eslint@7.21.0
             - eslint-config-react-app

@@ -12,6 +12,7 @@ from sqlalchemy.orm import lazyload
 
 import common.auth as _auth
 from common.logging import logger
+from models.dataset import DatasetModel
 
 
 def check_fields(data, fields):
@@ -49,6 +50,40 @@ def check_data_path_exists(path):
         return True
 
 
+def get_dynabench_nli_test_dataset(datasets, rid):
+    if rid == 1:
+        return datasets["anli-r1-test"]
+    if rid == 2:
+        return datasets["anli-r2-test"]
+    if rid == 3:
+        return datasets["anli-r3-test"]
+    raise AssertionError("Unrecognized round for task")
+
+
+def get_dynabench_hs_test_dataset(datasets, rid):
+    if rid == 1:
+        return datasets["ahs-r1-test"]
+    if rid == 2:
+        return datasets["ahs-r2-test"]
+    if rid == 3:
+        return datasets["ahs-r3-test"]
+    raise AssertionError("Unrecognized round for task")
+
+
+def get_dynabench_qa_test_dataset(datasets, rid):
+    if rid == 1:
+        return datasets["aqa-r1-test"]
+    raise AssertionError("Unrecognized round for task")
+
+
+def get_dynabench_sentiment_test_dataset(datasets, rid):
+    if rid == 1:
+        return datasets["dynasent-r1-test"]
+    if rid == 2:
+        return datasets["dynasent-r2-test"]
+    raise AssertionError("Unrecognized round for task")
+
+
 def validate_prediction(r_objects, prediction, task_shortname="nli"):
     """
     Function help as calculated the accuracy and convert them into scores object
@@ -65,53 +100,31 @@ def validate_prediction(r_objects, prediction, task_shortname="nli"):
     rounds_accuracy_list = []
     for r_obj in sorted(r_objects, key=lambda x: x.rid):
         if task_shortname == "nli":
-            output_key = "label"
-            if r_obj.rid == 1:
-                s3_dataset = datasets["anli-r1-test"]
-            elif r_obj.rid == 2:
-                s3_dataset = datasets["anli-r2-test"]
-            elif r_obj.rid == 3:
-                s3_dataset = datasets["anli-r3-test"]
-            else:
-                raise AssertionError("Unrecognized round for task")
+            s3_dataset = get_dynabench_nli_test_dataset(datasets, r_obj.rid)
         elif task_shortname == "qa":
-            output_key = "answer"
-            if r_obj.rid == 1:
-                s3_dataset = datasets["aqa-r1-test"]
-            else:
-                raise AssertionError("Unrecognized round for task")
+            s3_dataset = get_dynabench_qa_test_dataset(datasets, r_obj.rid)
         elif task_shortname == "hate speech":
-            output_key = "label"
-            if r_obj.rid == 1:
-                s3_dataset = datasets["ahs-r1-test"]
-            elif r_obj.rid == 2:
-                s3_dataset = datasets["ahs-r2-test"]
-            elif r_obj.rid == 3:
-                s3_dataset = datasets["ahs-r3-test"]
-            else:
-                raise AssertionError("Unrecognized round for task")
+            s3_dataset = get_dynabench_hs_test_dataset(datasets, r_obj.rid)
         elif task_shortname == "sentiment":
-            output_key = "label"
-            if r_obj.rid == 1:
-                s3_dataset = datasets["dynasent-r1-test"]
-            elif r_obj.rid == 2:
-                s3_dataset = datasets["dynasent-r2-test"]
-            else:
-                raise AssertionError("Unrecognized round for task")
+            s3_dataset = get_dynabench_sentiment_test_dataset(datasets, r_obj.rid)
         else:
             raise AssertionError("Unrecognized task")
         r_target_ids = {item["id"] for item in s3_dataset.read_labels()}
         r_predictions = []
-        for key, value in prediction.items():
-            if key in r_target_ids:
-                r_predictions.append({"id": key, output_key: value})
+        for item in prediction:
+            id = item["id"]
+            if id in r_target_ids:
+                r_predictions.append(item)
         score_obj = s3_dataset.eval(r_predictions)
+        score_obj["r_realid"] = r_obj.id
+        dm = DatasetModel()
+        score_obj["did"] = dm.getByName(s3_dataset.name).id
 
         # Sum rounds accuracy and generate score object list
-        overall_accuracy = overall_accuracy + round(score_obj["perf"], 2)
+        overall_accuracy = overall_accuracy + score_obj["perf"]
         round_accuracy = {}
         round_accuracy["round_id"] = r_obj.rid
-        round_accuracy["accuracy"] = round(score_obj["perf"], 2)
+        round_accuracy["accuracy"] = score_obj["perf"]
         rounds_accuracy_list.append(round_accuracy)
         score_obj_list.append(score_obj)
 

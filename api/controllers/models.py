@@ -81,9 +81,9 @@ def do_upload(credentials):
     task_shortname = str(bottle.request.forms.get("taskShortName")).lower()
 
     try:
-        raw_upload_data = json.loads(
-            upload.file.read().decode("utf-8")
-        )  # use standard SQuAD JSON format
+        raw_upload_data = [
+            json.loads(line.decode("utf-8")) for line in upload.file.readlines()
+        ]
         test_raw_data = raw_upload_data
 
     except Exception as ex:

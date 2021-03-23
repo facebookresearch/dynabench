@@ -1,7 +1,5 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
-import json
-
 import sqlalchemy as db
 
 from common import helpers as util
@@ -79,7 +77,7 @@ class ScoreModel(BaseModel):
                     raw_upload_data=raw_upload_data,
                     eval_id_start=score_obj.get("start_index", -1),
                     eval_id_end=score_obj.get("end_index", -1),
-                    metadata_json=json.dumps(score_obj["metadata_json"]),
+                    metadata_json=score_obj["metadata_json"],
                     memory_utilization=score_obj.get("memory_utilization", None),
                     examples_per_second=score_obj.get("examples_per_second", None),
                 )

@@ -61,7 +61,7 @@ class SubmitInterface extends React.Component {
 
   handleValidation = (values) => {
     const errors = {};
-    let allowedTaskExtension = ".json";
+    let allowedTaskExtension = ".jsonl";
     const allowedExtensions = new RegExp(
       this.escapeRegExp(allowedTaskExtension) + "$",
       "i"
@@ -129,15 +129,15 @@ class SubmitInterface extends React.Component {
                   <p>
                     The Dynabench NLI test sets can be found{" "}
                     <a href="https://github.com/facebookresearch/anli">here</a>.
-                    Upload predicted answers as a <em>.json</em> file in the
-                    format{" "}
+                    Upload predicted answers as a <em>.jsonl</em> file where
+                    each line has the format{" "}
                     <code>
-                      {"{"}"uid_1": "answer_1", "uid_2": "answer_2", ...{"}"}
+                      {"{"}"id": {"<id>"}, "label": {"<label>"}
+                      {"}"}
                     </code>{" "}
-                    (i.e. standard SQuAD prediction format) where an answer is
-                    either "e", "n", or "c". If you submit for multiple rounds
-                    in one go (i.e., overall), simply concatenate the answers
-                    from each round into your prediction file.
+                    and a label is "e", "n", or "c". If you submit for multiple
+                    rounds in one go (i.e., overall), simply concatenate the
+                    answers from each round into your prediction file.
                   </p>
                 ) : null}
 
@@ -145,14 +145,15 @@ class SubmitInterface extends React.Component {
                   <p>
                     The Dynabench QA test sets can be found{" "}
                     <a href="https://adversarialqa.github.io/">here</a>. Upload
-                    predicted answers as a <em>.json</em> file in the format{" "}
+                    predicted answers as a <em>.jsonl</em> file where each line
+                    has the format{" "}
                     <code>
-                      {"{"}"id_1": "answer_1", "id_2": "answer_2", ...{"}"}
-                    </code>{" "}
-                    (i.e. standard SQuAD prediction format). If you submit for
-                    multiple rounds in one go (i.e., overall), simply
-                    concatenate the answers from each round into your prediction
-                    file.
+                      {"{"}"id": {"<id>"}, "answer": {"<answer>"}
+                      {"}"}
+                    </code>
+                    . If you submit for multiple rounds in one go (i.e.,
+                    overall), simply concatenate the answers from each round
+                    into your prediction file.
                   </p>
                 ) : null}
 
@@ -163,15 +164,16 @@ class SubmitInterface extends React.Component {
                       {" "}
                       here
                     </a>
-                    . Upload predicted answers as a <em>.json</em> file in the
-                    format{" "}
+                    . Upload predicted answers as a <em>.jsonl</em> file where
+                    each line has the format{" "}
                     <code>
-                      {"{"}"id_1": "answer_1", "id_2": "answer_2", ...{"}"}
+                      {"{"}"id": {"<id>"}, "label": {"<label>"}
+                      {"}"}
                     </code>{" "}
-                    (i.e. standard SQuAD prediction format) where an answer is
-                    either "hate" or "nothate". If you submit for multiple
-                    rounds in one go (i.e., overall), simply concatenate the
-                    answers from each round into your prediction file.
+                    and a label is "hate" or "nothate". If you submit for
+                    multiple rounds in one go (i.e., overall), simply
+                    concatenate the answers from each round into your prediction
+                    file.
                   </p>
                 ) : null}
 
@@ -179,15 +181,14 @@ class SubmitInterface extends React.Component {
                   <p>
                     The DynaSent test sets can be found{" "}
                     <a href="https://github.com/cgpotts/dynasent"> here</a>.
-                    Upload predicted answers as a <em>.json</em> file in the
-                    format{" "}
+                    Upload predicted answers as a <em>.jsonl</em> file where
+                    each line has the format{" "}
                     <code>
-                      {"{"}"text_id_1": "answer_1", "text_id_2": "answer_2", ...
+                      {"{"}"id": {"<id>"}, "label": {"<label>"}
                       {"}"}
                     </code>{" "}
-                    (i.e. standard SQuAD prediction format) where an answer is
-                    "positive", "negative", or "neutral". If you submit for
-                    multiple rounds in one go (i.e., overall), simply
+                    and a label is "positive", "negative", or "neutral". If you
+                    submit for multiple rounds in one go (i.e., overall), simply
                     concatenate the answers from each round into your prediction
                     file.
                   </p>
