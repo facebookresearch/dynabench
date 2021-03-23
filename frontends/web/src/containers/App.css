@@ -251,3 +251,19 @@ table.inspectModel thead td {
         opacity: 1;
     }
 }
+
+.carousel-control-next {
+    display: inline-block;
+    margin-right: -60px;
+    margin-top: 0;
+    top: 50%;
+    filter: invert(100%);
+}
+
+.carousel-control-prev {
+    display: inline-block;
+    margin-left: -60px;
+    margin-top: 0;
+    top: 50%;
+    filter: invert(100%);
+}
