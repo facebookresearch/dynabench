@@ -10,14 +10,7 @@ import bottle
 
 from common.config import config
 from common.cors import *  # noqa
-from common.helpers import (
-    check_fields,
-    is_fields_blank,
-    read_hate_speech_round_labels,
-    read_nli_round_labels,
-    read_qa_round_labels,
-    read_sentiment_round_labels,
-)
+from common.helpers import check_fields, is_fields_blank
 from common.logging import init_logger
 from common.mail_service import get_mail_session
 from common.migrator import run_migrations
@@ -32,6 +25,10 @@ from controllers.notifications import *  # noqa
 from controllers.tasks import *  # noqa
 from controllers.users import *  # noqa
 from controllers.validations import *  # noqa
+
+
+sys.path.append("../evaluation")  # noqa
+import datasets  # isort:skip
 
 
 assert len(sys.argv) == 2, "Missing arg (prod or dev?)"
@@ -76,13 +73,9 @@ if "smtp_user" in config and config["smtp_user"] != "":
     )
     app.config["mail"] = mail
 
-# add the nli test labels in app context -to reduce the turnaround time
-ROOT_PATH = os.path.dirname(os.path.realpath("__file__"))
-nli_labels = read_nli_round_labels(ROOT_PATH)
-app.config["nli_labels"] = nli_labels
-app.config["hate_speech_labels"] = read_hate_speech_round_labels(ROOT_PATH)
-app.config["qa_labels"] = read_qa_round_labels(ROOT_PATH)
-app.config["sentiment_labels"] = read_sentiment_round_labels(ROOT_PATH)
+# initialize the evaluation dataset classes in app context,
+# to reduce the turnaround time.
+app.config["datasets"] = datasets.load_datasets()
 
 # initialize sagemaker endpoint if set
 if "aws_access_key_id" in config and config["aws_access_key_id"] != "":

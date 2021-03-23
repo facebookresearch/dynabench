@@ -172,7 +172,6 @@ class BaseDataset(ABC):
             logger.exception(f"Unknown exception {ex}")
         else:
             score_obj = {}
-            score_obj["round_id"] = self.round_id
 
             # Get performance
             perf, perf_dict = get_eval_metrics(self.task, predictions, target_labels)
@@ -195,8 +194,8 @@ class BaseDataset(ABC):
                 score_obj["metadata_json"]["perf_by_tag"] = [
                     {
                         "tag": tag,
-                        "pretty_perf": str(round(perf * 100, 2)) + " %",
-                        "perf": round(perf * 100, 2),
+                        "pretty_perf": str(perf * 100) + " %",
+                        "perf": perf * 100,
                         "perf_dict": perf_dict,
                     }
                     for tag, (perf, perf_dict) in perf_by_tag_tuple_dict.items()
