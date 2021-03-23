@@ -11,7 +11,7 @@ from .base import Base, BaseModel
 from .example import Example
 from .notification import NotificationModel
 from .round import RoundModel
-from .score import ScoreModel
+from .score import Score, ScoreModel
 from .user import User, UserModel
 from .validation import Validation
 
@@ -516,9 +516,9 @@ class BadgeModel(BaseModel):
             )
             == 0
         ):
-            sm = ScoreModel()
             rm = RoundModel()
-            scores = sm.getByMid(model.id)
+            sm = ScoreModel()
+            scores = self.dbs.query(Score).filter(Score.mid == model.id).all()
             for score in scores:
                 round = rm.get(score.r_realid)
                 if model.id == sm.getOverallModelPerfByTask(round.tid)[0][0][0]:

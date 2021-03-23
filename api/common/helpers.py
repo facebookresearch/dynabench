@@ -9,10 +9,10 @@ from urllib.parse import urlparse
 import bottle
 import sqlalchemy as db
 from sqlalchemy.orm import lazyload
-from transformers.data.metrics.squad_metrics import compute_f1
 
 import common.auth as _auth
 from common.logging import logger
+from models.dataset import DatasetModel
 
 
 def check_fields(data, fields):
@@ -50,124 +50,38 @@ def check_data_path_exists(path):
         return True
 
 
-# TODO need to change it in future - to read the test data from db of
-# config files
-def read_round_labels(root_path, task_dir_name, field_converter):
-    full_path = os.path.join(root_path, "data", task_dir_name)
-
-    if not check_data_path_exists(full_path):
-        return {}
-
-    r_file_paths = [
-        name
-        for name in os.listdir(full_path)
-        if os.path.isdir(os.path.join(full_path, name))
-    ]
-    labels = {}
-    for r_file_path in r_file_paths:
-        r_num = r_file_path[len(r_file_path) - 1 : len(r_file_path)]
-        r_file_path = full_path + "/" + r_file_path
-        loaded_data = [
-            json.loads(l) for l in open(f"{r_file_path}/test.jsonl").read().splitlines()
-        ]
-        labels[int(r_num)] = [field_converter(example) for example in loaded_data]
-    return labels
+def get_dynabench_nli_test_dataset(datasets, rid):
+    if rid == 1:
+        return datasets["anli-r1-test"]
+    if rid == 2:
+        return datasets["anli-r2-test"]
+    if rid == 3:
+        return datasets["anli-r3-test"]
+    raise AssertionError("Unrecognized round for task")
 
 
-def read_nli_round_labels(root_path):
-    """
-    Load the files from NLI directory and label them automatically
-    :param root_path: We assume anli_v0.1 test set present in api folder
-    :return: Dict object
-    """
-
-    def nli_field_converter(example):
-        return {
-            "id": example["uid"],
-            "answer": example["label"],
-            "tags": example["tags"] if "tags" in example else "",
-        }
-
-    return read_round_labels(root_path, "anli_v1.0", nli_field_converter)
+def get_dynabench_hs_test_dataset(datasets, rid):
+    if rid == 1:
+        return datasets["ahs-r1-test"]
+    if rid == 2:
+        return datasets["ahs-r2-test"]
+    if rid == 3:
+        return datasets["ahs-r3-test"]
+    raise AssertionError("Unrecognized round for task")
 
 
-def read_hate_speech_round_labels(root_path):
-    """
-    Load the files from the Hate Speech directory and label them automatically
-    :param root_path: We assume hate_speech_v0.1 test set present in api folder
-    :return: Dict object
-    """
-
-    def hs_field_converter(example):
-        return {
-            "id": example["id"],
-            "answer": example["answer"],
-            "tags": example["tags"] if "tags" in example else "",
-        }
-
-    return read_round_labels(root_path, "hate_speech_v0.1", hs_field_converter)
+def get_dynabench_qa_test_dataset(datasets, rid):
+    if rid == 1:
+        return datasets["aqa-r1-test"]
+    raise AssertionError("Unrecognized round for task")
 
 
-def read_sentiment_round_labels(root_path):
-    """
-    Load the files from the Sentiment directory and label them automatically
-    :param root_path: We assume sentiment_v1.1 test sets from
-        https://github.com/cgpotts/dynasent in individual round folders
-        are present in api folder.
-    :return: Dict object
-    """
-
-    def sentiment_field_converter(example):
-        return {
-            "id": example["text_id"],
-            "answer": example["gold_label"],
-            "tags": example["tags"] if "tags" in example else "",
-        }
-
-    return read_round_labels(root_path, "sentiment_v1.1", sentiment_field_converter)
-
-
-def read_qa_round_labels(root_path):
-    """
-    Load the files from QA directory and label them automatically
-    :param root_path: We assume aqa_v1.0 test set present in api folder
-    :return: Dict object
-    """
-
-    def qa_field_converter(example):
-        return {
-            "id": example["id"],
-            "answer": example["answers"][0]["text"],
-            "tags": example["tags"] if "tags" in example else "",
-        }
-
-    return read_round_labels(root_path, "aqa_v1.0", qa_field_converter)
-
-
-def get_accuracy(prediction, target):
-    """
-    Calculate accuracy compared with target label and prediction label
-    :param prediction: model predicted label
-    :param target: correctly labeled set
-    :return: int accuracy value
-    """
-
-    return sum(
-        1 if prediction[index] == target[index] else 0 for index in range(len(target))
-    ) / len(target)
-
-
-def get_f1(prediction, target):
-    """
-    Calculate word-overlap f1 score between target label and prediction label
-    :param prediction: (list of) model predicted label
-    :param target: (list of) correctly labeled set
-    :return: int sum of f1 values
-    """
-
-    return sum(
-        compute_f1(target[index], prediction[index]) for index in range(len(target))
-    ) / len(target)
+def get_dynabench_sentiment_test_dataset(datasets, rid):
+    if rid == 1:
+        return datasets["dynasent-r1-test"]
+    if rid == 2:
+        return datasets["dynasent-r2-test"]
+    raise AssertionError("Unrecognized round for task")
 
 
 def validate_prediction(r_objects, prediction, task_shortname="nli"):
@@ -179,100 +93,38 @@ def validate_prediction(r_objects, prediction, task_shortname="nli"):
     """
 
     app = bottle.default_app()
-    target_tags = None
-
-    if task_shortname == "nli":
-        target_examples = app.config["nli_labels"]
-        eval_fn = get_accuracy
-    elif task_shortname == "hate speech":
-        target_examples = app.config["hate_speech_labels"]
-        eval_fn = get_accuracy
-    elif task_shortname == "sentiment":
-        target_examples = app.config["sentiment_labels"]
-        eval_fn = get_accuracy
-    elif task_shortname == "qa":
-        target_examples = app.config["qa_labels"]
-        eval_fn = get_f1
-    else:
-        raise AssertionError("Unrecognized task")
-
-    target_ids = {
-        r_id: [x["id"] for x in target_examples[r_id]] for r_id in target_examples
-    }
-    target_labels = {
-        r_id: [x["answer"] for x in target_examples[r_id]] for r_id in target_examples
-    }
-    target_tags = {
-        r_id: [x["tags"] for x in target_examples[r_id]] for r_id in target_examples
-    }
-    # we are using SQuAD JSON format, so align the predictions with
-    # the target labels
-    aligned_prediction = []
-    for r_id in sorted(target_examples):
-        for id in target_ids[r_id]:
-            if id in prediction:
-                aligned_prediction.append(prediction[id])
-    prediction = aligned_prediction
-
-    # validate prediction and target labels length
-    if len(r_objects) > 1 and len(prediction) != len(sum(target_labels.values(), [])):
-        raise AssertionError("Prediction and target file length mismatch")
-    elif len(r_objects) == 1 and len(target_labels[r_objects[0].rid]) != len(
-        prediction
-    ):
-        raise AssertionError("Prediction and target file length mismatch")
+    datasets = app.config["datasets"]
 
     overall_accuracy = 0
     score_obj_list = []
     rounds_accuracy_list = []
-    start_index = 0
-    end_index = 0
-
     for r_obj in sorted(r_objects, key=lambda x: x.rid):
-        score_obj = {}
-        round_accuracy = {}
+        if task_shortname == "nli":
+            s3_dataset = get_dynabench_nli_test_dataset(datasets, r_obj.rid)
+        elif task_shortname == "qa":
+            s3_dataset = get_dynabench_qa_test_dataset(datasets, r_obj.rid)
+        elif task_shortname == "hate speech":
+            s3_dataset = get_dynabench_hs_test_dataset(datasets, r_obj.rid)
+        elif task_shortname == "sentiment":
+            s3_dataset = get_dynabench_sentiment_test_dataset(datasets, r_obj.rid)
+        else:
+            raise AssertionError("Unrecognized task")
+        r_target_ids = {item["id"] for item in s3_dataset.read_labels()}
+        r_predictions = []
+        for item in prediction:
+            id = item["id"]
+            if id in r_target_ids:
+                r_predictions.append(item)
+        score_obj = s3_dataset.eval(r_predictions)
         score_obj["r_realid"] = r_obj.id
-        score_obj["desc"] = None
-        score_obj["longdesc"] = None
-        score_obj["metadata_json"] = {}
-
-        # Slice and extract round specific prediction
-        end_index = end_index + len(target_labels[r_obj.rid])
-        score_obj["start_index"] = start_index
-        score_obj["end_index"] = end_index
-        r_prediction = prediction[start_index:end_index]
-        start_index = end_index
-
-        # Get round performance
-        r_accuracy = eval_fn(r_prediction, target_labels[r_obj.rid])
-        score_obj["pretty_perf"] = str(round(r_accuracy * 100, 2)) + " %"
-        score_obj["perf"] = round(r_accuracy * 100, 2)
-
-        # Get performance breakdown for this round across tags
-        if target_tags:
-            examples_by_tag = {}
-            for r_pred, r_target_label, r_target_tags in zip(
-                r_prediction, target_labels[r_obj.rid], target_tags[r_obj.rid]
-            ):
-                for tag in r_target_tags:
-                    examples_by_tag.setdefault(tag, []).append((r_pred, r_target_label))
-            perf_by_tag = {
-                k: eval_fn(*list(zip(*examples)))
-                for k, examples in examples_by_tag.items()
-            }
-            score_obj["metadata_json"]["perf_by_tag"] = [
-                {
-                    "tag": tag,
-                    "pretty_perf": str(round(perf * 100, 2)) + " %",
-                    "perf": round(perf * 100, 2),
-                }
-                for tag, perf in perf_by_tag.items()
-            ]
+        dm = DatasetModel()
+        score_obj["did"] = dm.getByName(s3_dataset.name).id
 
         # Sum rounds accuracy and generate score object list
-        overall_accuracy = overall_accuracy + round(r_accuracy * 100, 2)
+        overall_accuracy = overall_accuracy + score_obj["perf"]
+        round_accuracy = {}
         round_accuracy["round_id"] = r_obj.rid
-        round_accuracy["accuracy"] = round(r_accuracy * 100, 2)
+        round_accuracy["accuracy"] = score_obj["perf"]
         rounds_accuracy_list.append(round_accuracy)
         score_obj_list.append(score_obj)
 
