@@ -22,49 +22,49 @@ steps = [
     step(
         """
         UPDATE scores SET did=(SELECT id FROM datasets WHERE name="anli-r2-test")
-        where r_realid=(SELECT id FROM rounds WHERE rid=1 and tid=1)
+        where r_realid=(SELECT id FROM rounds WHERE rid=2 and tid=1)
         """
     ),
     step(
         """
         UPDATE scores SET did=(SELECT id FROM datasets WHERE name="anli-r3-test")
-        where r_realid=(SELECT id FROM rounds WHERE rid=1 and tid=1)
+        where r_realid=(SELECT id FROM rounds WHERE rid=3 and tid=1)
         """
     ),
     step(
         """
         UPDATE scores SET did=(SELECT id FROM datasets WHERE name="aqa-r1-test")
-        where r_realid=(SELECT id FROM rounds WHERE rid=1 and tid=1)
+        where r_realid=(SELECT id FROM rounds WHERE rid=1 and tid=2)
         """
     ),
     step(
         """
         UPDATE scores SET did=(SELECT id FROM datasets WHERE name="dynasent-r1-test")
-        where r_realid=(SELECT id FROM rounds WHERE rid=1 and tid=1)
+        where r_realid=(SELECT id FROM rounds WHERE rid=1 and tid=3)
         """
     ),
     step(
         """
         UPDATE scores SET did=(SELECT id FROM datasets WHERE name="dynasent-r2-test")
-        where r_realid=(SELECT id FROM rounds WHERE rid=1 and tid=1)
+        where r_realid=(SELECT id FROM rounds WHERE rid=2 and tid=3)
         """
     ),
     step(
         """
         UPDATE scores SET did=(SELECT id FROM datasets WHERE name="hs-r1-test")
-        where r_realid=(SELECT id FROM rounds WHERE rid=1 and tid=1)
+        where r_realid=(SELECT id FROM rounds WHERE rid=1 and tid=5)
         """
     ),
     step(
         """
         UPDATE scores SET did=(SELECT id FROM datasets WHERE name="hs-r2-test")
-        where r_realid=(SELECT id FROM rounds WHERE rid=1 and tid=1)
+        where r_realid=(SELECT id FROM rounds WHERE rid=2 and tid=5)
         """
     ),
     step(
         """
         UPDATE scores SET did=(SELECT id FROM datasets WHERE name="hs-r3-test")
-        where r_realid=(SELECT id FROM rounds WHERE rid=1 and tid=1)
+        where r_realid=(SELECT id FROM rounds WHERE rid=3 and tid=5)
         """
     ),
 ]
