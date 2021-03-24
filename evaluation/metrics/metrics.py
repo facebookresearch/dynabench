@@ -47,9 +47,8 @@ def get_memory_utilization_meta(task):
 def get_seconds_per_example(job, dataset):
     n_examples = dataset.get_n_examples()
     eps = (
-        n_examples
-        / (job.status["TransformEndTime"] - job.status["TransformStartTime"]).seconds
-    )
+        job.status["TransformEndTime"] - job.status["TransformStartTime"]
+    ).seconds / n_examples
     return round(eps, 2)
 
 

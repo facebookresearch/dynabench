@@ -37,6 +37,7 @@ if __name__ == "__main__":
         for message in queue.receive_messages():
             msg = json.loads(message.body)
             logger.info(f"Evaluation server received SQS message {msg}")
+            requester.request(msg)
             queue.delete_messages(
                 Entries=[
                     {"Id": str(uuid.uuid4()), "ReceiptHandle": message.receipt_handle}
