@@ -52,5 +52,9 @@ def get_seconds_per_example(job, dataset):
     return round(eps, 2)
 
 
-def get_seconds_per_example_meta(task=None):
-    return {"unit": "seconds", "range": (0, 10), "pretty_name": "Seconds per Example"}
+def get_seconds_per_example_meta(task):
+    return {
+        "unit": "seconds",
+        "range": (0, get_task_config_safe(task)["instance_config"]["compute_cap"]),
+        "pretty_name": "Seconds per Example",
+    }
