@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 import boto3
 
 from eval_config import eval_config
-from metrics import get_eval_metrics, tasks_config
+from metrics import get_eval_metrics, get_task_config_safe
 from utils.helpers import (
     get_data_s3_path,
     get_perturbed_filename,
@@ -97,7 +97,7 @@ class BaseDataset(ABC):
         self, sagemaker_client, endpoint_name, job_name, perturb_prefix=None
     ) -> bool:
         # submit an evaluation job
-        task_config = tasks_config.get(self.task, tasks_config["default"])
+        task_config = get_task_config_safe(self.task)
         sagemaker_client.create_transform_job(
             ModelName=endpoint_name,
             TransformJobName=job_name,
