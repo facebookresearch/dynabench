@@ -7,6 +7,6 @@ instance_property = {
         "cpu_count": 4,
         "gpu_count": 0,
         "memory_gb": 32,
-        "aws_metrics": ["memory_utilization", "examples_per_second"],
+        "aws_metrics": ["memory_utilization", "seconds_per_example"],
     }
 }

@@ -44,7 +44,7 @@ def get_memory_utilization_meta(task):
     }
 
 
-def get_examples_per_second(job, dataset):
+def get_seconds_per_example(job, dataset):
     n_examples = dataset.get_n_examples()
     eps = (
         n_examples
@@ -53,9 +53,5 @@ def get_examples_per_second(job, dataset):
     return round(eps, 2)
 
 
-def get_sec_per_example_meta(task=None):
-    return {
-        "unit": "sec per example",
-        "range": (0, 10),
-        "pretty_name": "Seconds per Example",
-    }
+def get_seconds_per_example_meta(task=None):
+    return {"unit": "seconds", "range": (0, 10), "pretty_name": "Seconds per Example"}
