@@ -23,7 +23,7 @@ def get_job_metrics(job, dataset) -> dict:
     return {key: job_metrics_config[key](job, dataset) for key in job_metrics}
 
 
-def get_metric_meta(task):
+def get_task_metrics_meta(task):
     task_config = get_task_config_safe(task)
     instance_config = task_config["instance_config"]
     perf_metric = task_config["perf_metric"]
