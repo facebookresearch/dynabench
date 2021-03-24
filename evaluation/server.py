@@ -3,6 +3,7 @@
 import json
 import logging
 import time
+import uuid
 
 import boto3
 
@@ -36,8 +37,11 @@ if __name__ == "__main__":
         for message in queue.receive_messages():
             msg = json.loads(message.body)
             logger.info(f"Evaluation server received SQS message {msg}")
-            requester.request(msg)
-            message.delete()
+            queue.delete_messages(
+                Entries=[
+                    {"Id": str(uuid.uuid4()), "ReceiptHandle": message.receipt_handle}
+                ]
+            )
 
         # Update job status on scheduler interval
         if timer >= scheduler_update_interval:
