@@ -23,7 +23,7 @@ _custom_config = {
 }
 
 
-def _get_config(config=None):
+def _gen_config(config=None):
     if not config:
         return _default_config
 
@@ -34,9 +34,13 @@ def _get_config(config=None):
 
 
 tasks_config = {
-    "default": _get_config(),
-    "nli": _get_config(_custom_config["nli"]),
-    "hs": _get_config(),
-    "sentiment": _get_config(),
-    "qa": _get_config(_custom_config["qa"]),
+    "default": _gen_config(),
+    "nli": _gen_config(_custom_config["nli"]),
+    "hs": _gen_config(),
+    "sentiment": _gen_config(),
+    "qa": _gen_config(_custom_config["qa"]),
 }
+
+
+def get_task_config_safe(task):
+    return tasks_config.get(task, tasks_config["default"])

@@ -5,10 +5,10 @@
 
 import logging
 import sys
-import uuid
 
 import torch
 import torch.nn.functional as F
+import uuid
 from ts.torch_handler.base_handler import BaseHandler
 
 from allennlp.data.iterators import BasicIterator

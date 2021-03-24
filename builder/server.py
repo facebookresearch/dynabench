@@ -4,6 +4,7 @@ import sys
 import time
 
 import boto3
+import uuid
 
 from deploy_config import deploy_config
 from utils.deployer import ModelDeployer
@@ -104,5 +105,9 @@ if __name__ == "__main__":
                         eval_queue.send_message(
                             MessageBody=json.dumps({"model_id": model_id})
                         )
-            message.delete()
+            queue.delete_messages(
+                Entries=[
+                    {"Id": str(uuid.uuid4()), "ReceiptHandle": message.receipt_handle}
+                ]
+            )
         time.sleep(5)
