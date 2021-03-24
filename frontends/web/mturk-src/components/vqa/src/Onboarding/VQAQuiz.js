@@ -35,20 +35,19 @@ class VQAQuiz extends React.Component {
   scrollToTop = () => window.scrollTo(0, 0);
 
   setModelState = (idxToModify, newState) => {
-    this.setState({
-      modelState: this.state.modelState.map((prevState, idx) => {
-        if (idx === idxToModify) {
-          return newState;
-        }
-        return prevState;
-      }),
+    this.setState(function (prevState, _) {
+      let newModelState = prevState.modelState;
+      newModelState[idxToModify] = newState;
+      return {
+        modelState: newModelState,
+      };
     });
   };
 
-  checkAnswers = () => {
+  checkAnswers = (state) => {
     let correctValidations = 0;
-    let hints = this.examples[this.state.attempt].map((example, index) => {
-      if (this.state.modelState[index] != example.isModelCorrect) {
+    let hints = this.examples[state.attempt].map((example, index) => {
+      if (state.modelState[index] != example.isModelCorrect) {
         return example.hint;
       }
       correctValidations += 1;
@@ -57,48 +56,53 @@ class VQAQuiz extends React.Component {
     return { correctValidations, hints };
   };
 
-  missingAnswers = () =>
-    this.state.modelState.filter((ans) => ans === this.MODEL_STATES.UNKNOWN)
-      .length > 0;
+  missingAnswers = (state) =>
+    state.modelState.filter((ans) => ans === this.MODEL_STATES.UNKNOWN).length >
+    0;
 
   handleCheckAnswersButtonClick = (e) => {
     e.preventDefault();
-    if (this.missingAnswers()) {
-      this.setState({ missingAnswers: true, currentAttemptChecked: true });
-    } else {
-      const { correctValidations, hints } = this.checkAnswers();
-      this.setState(
-        {
-          hints,
-          correctValidations,
-          currentAttemptChecked: true,
-          missingAnswers: false,
-        },
-        () => {
-          if (correctValidations >= this.minCorrectValidations) {
-            this.props.setPhaseCompleted();
-          } else if (this.state.attempt === this.maxAllowedAttempts) {
-            this.setState({ onboardingFailed: true });
-          }
+    this.setState(
+      function (prevState, _) {
+        if (this.missingAnswers(prevState)) {
+          return {
+            missingAnswers: true,
+            currentAttemptChecked: true,
+          };
+        } else {
+          const { correctValidations, hints } = this.checkAnswers(prevState);
+          return {
+            hints,
+            correctValidations,
+            currentAttemptChecked: true,
+            missingAnswers: false,
+            onboardingFailed:
+              prevState.attempt === this.maxAllowedAttempts &&
+              correctValidations < this.minCorrectValidations,
+          };
         }
-      );
-    }
+      },
+      () => {
+        if (this.state.correctValidations >= this.minCorrectValidations) {
+          this.props.setPhaseCompleted();
+        }
+      }
+    );
   };
 
   handleTryAgainButtonClick = () => {
-    this.setState(
-      {
-        attempt: this.state.attempt + 1,
-        modelState: this.examples[this.state.attempt + 1].map(
+    this.setState(function (prevState, _) {
+      return {
+        attempt: prevState.attempt + 1,
+        modelState: this.examples[prevState.attempt + 1].map(
           () => this.MODEL_STATES.UNKNOWN
         ),
-        hints: this.examples[this.state.attempt + 1].map(() => ""),
+        hints: this.examples[prevState.attempt + 1].map(() => ""),
         currentAttemptChecked: false,
         missingAnswers: false,
         correctValidations: -1,
-      },
-      this.scrollToTop
-    );
+      };
+    }, this.scrollToTop);
   };
 
   componentWillUnmount() {
