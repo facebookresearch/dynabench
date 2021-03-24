@@ -3,9 +3,9 @@
 import json
 import logging
 import time
-import uuid
 
 import boto3
+import uuid
 
 from datasets import load_datasets
 from eval_config import eval_config

@@ -2,9 +2,9 @@ import json
 import subprocess
 import sys
 import time
+import uuid
 
 import boto3
-import uuid
 
 from deploy_config import deploy_config
 from utils.deployer import ModelDeployer
