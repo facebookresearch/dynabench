@@ -21,27 +21,32 @@ class VQAOnboarder extends React.Component {
   }
 
   nextPhase = () => {
-    if (this.state.currPhase < this.totalPhases - 1) {
-      this.setState((state) => {
-        return { currPhase: state.currPhase + 1 };
-      });
-    }
+    this.setState(function (prevState, _) {
+      if (prevState.currPhase < this.totalPhases - 1) {
+        return { currPhase: prevState.currPhase + 1 };
+      }
+      return {};
+    });
   };
 
   prevPhase = () => {
-    if (this.state.currPhase > 0) {
-      this.setState((state) => {
-        return { currPhase: state.currPhase - 1 };
-      });
-    }
+    this.setState(function (prevState, _) {
+      if (prevState.currPhase > 0) {
+        return { currPhase: prevState.currPhase - 1 };
+      }
+      return {};
+    });
   };
 
   setPhaseCompleted = () => {
-    if (!this.state.phasesCompleted[this.state.currPhase]) {
-      let updatedPhasesStatus = this.state.phasesCompleted;
-      updatedPhasesStatus[this.state.currPhase] = true;
-      this.setState({ phasesCompleted: updatedPhasesStatus });
-    }
+    this.setState(function (prevState, _) {
+      if (!prevState.phasesCompleted[prevState.currPhase]) {
+        let updatedPhasesStatus = prevState.phasesCompleted;
+        updatedPhasesStatus[prevState.currPhase] = true;
+        return { phasesCompleted: updatedPhasesStatus };
+      }
+      return {};
+    });
   };
 
   submitOnboarding = (status) => {
