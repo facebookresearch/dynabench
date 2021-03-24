@@ -117,11 +117,11 @@ class MetricsComputer:
 
                 rm = RoundModel()
                 if self.datasets[job.dataset_name].round_id != 0:
-                    score_obj["round_id"] = rm.getByTidAndRid(
+                    score_obj["r_realid"] = rm.getByTidAndRid(
                         d_entry.tid, d_entry.rid
                     ).id
                 else:
-                    score_obj["round_id"] = 0
+                    score_obj["r_realid"] = 0
                 sm.create(**score_obj)
             return True
         except Exception as ex:
