@@ -6,6 +6,7 @@ import os
 import pickle
 import sys
 import tempfile
+from enum import Enum
 
 import boto3
 
@@ -18,6 +19,12 @@ from models.score import ScoreModel  # isort:skip
 from models.dataset import DatasetModel  # isort:skip
 
 logger = logging.getLogger("computer")
+
+
+class ComputeStatusEnum(Enum):
+    successful = "successful"
+    failed = "failed"
+    postponed = "postponed"
 
 
 class MetricsComputer:
@@ -93,8 +100,7 @@ class MetricsComputer:
                         f"Haven't received original evaluation for {job.job_name}. "
                         f"Postpone computation."
                     )
-                    self._computing.append(job)
-                    return True
+                    return ComputeStatusEnum.postponed
 
             # TODO: avoid explictly pass perturb prefix at multiple places
             # - take full job information at one interface instead
@@ -105,7 +111,6 @@ class MetricsComputer:
 
             if job.perturb_prefix:
                 sm.update(s.id, **{job.perturb_prefix: eval_metrics_dict["perf"]})
-
             else:
                 job_metrics_dict = get_job_metrics(job, self.datasets[job.dataset_name])
                 score_obj = {**eval_metrics_dict, **job_metrics_dict}
@@ -123,10 +128,10 @@ class MetricsComputer:
                 else:
                     score_obj["r_realid"] = 0
                 sm.create(**score_obj)
-            return True
+            return ComputeStatusEnum.successful
         except Exception as ex:
             logger.exception(f"Exception in computing metrics {ex}")
-            return False
+            return ComputeStatusEnum.failed
 
     def _get_job_metrics(self, job):
         "Compute job performance metrics: CpuUtilization, MemoryUtilization"
@@ -138,16 +143,20 @@ class MetricsComputer:
             self._dump()
 
     def compute(self, N=1):
+        n = len(self._computing)
         if N == -1:
-            N = len(self._computing)
-        i = 0
-        while self._computing and i < N:
-            job = self._computing[0]
-            if self.update_database(job):
-                self._computing.pop(0)
+            N = n
+        computed, traversed = 0, 0
+        while self._computing and computed < N and traversed < n:
+            job = self._computing.pop(0)
+            traversed += 1
+            status = self.update_database(job)
+            if status == ComputeStatusEnum.postponed:
+                self._computing.append(job)
             else:
-                self._failed.append(self._computing.pop(0))
-            i += 1
+                computed += 1
+                if status == ComputeStatusEnum.failed:
+                    self._failed.append(job)
             self._dump()
 
     def get_jobs(self, status="Failed"):

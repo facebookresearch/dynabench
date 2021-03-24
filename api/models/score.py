@@ -38,7 +38,7 @@ class Score(Base):
     metadata_json = db.Column(db.Text)
 
     memory_utilization = db.Column(db.Float)
-    examples_per_second = db.Column(db.Float)
+    seconds_per_example = db.Column(db.Float)
 
     fairness = db.Column(db.Float)
     robustness = db.Column(db.Float)
@@ -242,24 +242,6 @@ class ScoreModel(BaseModel):
             {"count": count, "data": data_list[offset : offset + limit]}
         )
 
-    # FIXME: Ideally scores table should be deduped by (mid, did)
-    # but all previous evaluations prior to datasets table will have
-    # did = 0 and adding this now will cause prod server failure.
-    # We should add did to scores table and add the dedup constraint
-    # once new datasets are uploaded to eval server.
-    def getOneByModelIdAndDataset(self, mid, did):
-        try:
-            return (
-                self.dbs.query(Score)
-                .join(Model)
-                .filter(Score.mid == mid)
-                .filter(Score.did == did)
-                .order_by(Score.perf.desc())
-                .one()
-            )
-        except db.orm.exc.NoResultFound:
-            return False
-
     def getByTid(self, tid):
         # Main query to fetch the model details
         query_res = (
@@ -310,6 +292,24 @@ class ScoreModel(BaseModel):
         )
 
         return query_res.limit(n).offset(offset * n), util.get_query_count(query_res)
+
+    # FIXME: Ideally scores table should be deduped by (mid, did)
+    # but all previous evaluations prior to datasets table will have
+    # did = 0 and adding this now will cause prod server failure.
+    # We should add did to scores table and add the dedup constraint
+    # once new datasets are uploaded to eval server.
+    def getOneByModelIdAndDataset(self, mid, did):
+        try:
+            return (
+                self.dbs.query(Score)
+                .join(Model)
+                .filter(Score.mid == mid)
+                .filter(Score.did == did)
+                .order_by(Score.perf.desc())
+                .one()
+            )
+        except db.orm.exc.NoResultFound:
+            return False
 
     def getTrendsByTid(self, tid, n=10, offset=0):
         # subquery to get the top performance model

@@ -47,7 +47,11 @@ def generate_job_name(endpoint_name, dataset_name, perturb_prefix=None):
     # :63 is AWS requirement; timestamp has fewer digits than uuid and should be
     # sufficient for dedup purpose
     perturb_prefix = f"{perturb_prefix}-" if perturb_prefix else ""
-    return f"{endpoint_name}-{perturb_prefix}{dataset_name}-{int(time.time())}"[:63]
+    timestamp = str(int(time.time()))
+    jobname_prefix = f"{endpoint_name}-{perturb_prefix}{dataset_name}"[
+        : 62 - len(timestamp)
+    ]
+    return f"{jobname_prefix}-{timestamp}"
 
 
 def round_end_dt(dt, delta=60, offset=1):

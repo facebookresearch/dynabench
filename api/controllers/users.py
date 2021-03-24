@@ -1,10 +1,10 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import os
-import uuid
 from datetime import datetime, timedelta
 
 import bottle
+import uuid
 
 import common.auth as _auth
 import common.helpers as util
