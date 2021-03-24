@@ -1,6 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
-COMPUTE_CAP_CONSTANT = 10
+COMPUTE_CAP_CONSTANT = 10  # for score normalization to compute dynascore
 
 instance_property = {
     "ml.m5.xlarge": {
