@@ -160,6 +160,8 @@ class ScoreModel(BaseModel):
                 }
             )
 
+        print(mid_to_data[2])
+
         # Compute variances and aggregates
         count = 0
         for datum in mid_to_data.values():
@@ -167,9 +169,10 @@ class ScoreModel(BaseModel):
             id_to_datasets = {}
             for dataset in datum["datasets"]:
                 if dataset["id"] in id_to_datasets:
-                    id_to_datasets["id"].append(dataset)
+                    id_to_datasets[dataset["id"]].append(dataset)
                 else:
-                    id_to_datasets["id"] = [dataset]
+                    id_to_datasets[dataset["id"]] = [dataset]
+            print(id_to_datasets)
             new_datasets = []
             all_dataset_score_list = []
             all_dataset_variance_list = []
@@ -202,14 +205,21 @@ class ScoreModel(BaseModel):
                         "variances": variances.tolist(),
                     }
                 )
-            datum["averaged_scores"] = np.sum(all_dataset_score_list).tolist()
-            datum["averaged_variances"] = np.sum(all_dataset_variance_list).tolist()
-            datum["dynascore"] = np.dot(
-                all_dataset_score_list, np.array(ordered_metric_weights)
+            datum["averaged_scores"] = np.sum(all_dataset_score_list, axis=0).tolist()
+            datum["averaged_variances"] = np.sum(
+                all_dataset_variance_list, axis=0
             ).tolist()
-            datum["dynavariance"] = np.dot(
-                all_dataset_score_list, np.array(ordered_metric_weights)
-            ).tolist()
+            datum["dynascore"] = float(
+                np.dot(
+                    np.array(datum["averaged_scores"]), np.array(ordered_metric_weights)
+                )
+            )
+            datum["dynavariance"] = float(
+                np.dot(
+                    np.array(datum["averaged_variances"]),
+                    np.array(ordered_metric_weights),
+                )
+            )
             datum["datasets"] = new_datasets
 
         data_list = list(mid_to_data.values())
@@ -225,6 +235,8 @@ class ScoreModel(BaseModel):
             )
         elif sort_by == "model_name":
             data_list.sort(reverse=reverse_sort, key=lambda model: model["model_name"])
+
+        print(data_list[offset : offset + limit])
 
         return util.json_encode(
             {"count": count, "data": data_list[offset : offset + limit]}
