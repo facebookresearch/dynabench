@@ -1,6 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
+import sys
 from urllib.parse import parse_qs
 
 import bottle
@@ -15,6 +16,10 @@ from models.score import ScoreModel
 from models.task import TaskModel
 from models.user import UserModel
 from models.validation import Validation, ValidationModel
+
+
+sys.path.append("../evaluation")  # noqa
+import metrics  # isort:skip
 
 
 @bottle.get("/tasks")
@@ -239,19 +244,43 @@ def construct_user_board_response_json(query_result, total_count=0):
 @bottle.get("/tasks/<tid:int>/models/dynaboard")
 def get_dynaboard_starter_code(tid):
     # TODO: this is dynaboard starter code. Make it real!
+    if tid == 1:
+        ordered_metrics = [
+            dict({"field_name": item[0]}, **item[1])
+            for item in sorted(
+                metrics.get_task_metrics_meta("nli").items(), key=lambda item: item[0]
+            )
+        ]
+    elif tid == 2:
+        ordered_metrics = [
+            dict({"field_name": item[0]}, **item[1])
+            for item in sorted(
+                metrics.get_task_metrics_meta("qa").items(), key=lambda item: item[0]
+            )
+        ]
+    elif tid == 3:
+        ordered_metrics = [
+            dict({"field_name": item[0]}, **item[1])
+            for item in sorted(
+                metrics.get_task_metrics_meta("sentiment").items(),
+                key=lambda item: item[0],
+            )
+        ]
+    elif tid == 5:
+        ordered_metrics = [
+            dict({"field_name": item[0]}, **item[1])
+            for item in sorted(
+                metrics.get_task_metrics_meta("hs").items(), key=lambda item: item[0]
+            )
+        ]
+    else:
+        pass  # TODO
 
-    sort_by = "dynascore"
-    sort_direction = "asc"
-    limit = 10
-    offset = 0
-    ordered_metric_weights = [1.0 / 3, 1.0 / 3, 1.0 / 3]
-    ordered_dataset_weights = [0.1] * 10
     query_dict = parse_qs(bottle.request.query_string)
     if "sort_by" in query_dict:
         sort_by = query_dict["sort_by"][0]
     if "sort_direction" in query_dict:
         sort_direction = query_dict["sort_direction"][0]
-    print(sort_direction)
 
     if sort_direction == "asc":
         reverse_sort = True
@@ -259,12 +288,11 @@ def get_dynaboard_starter_code(tid):
         reverse_sort = False
     else:
         pass  # TODO
-    """
+
     if "ordered_metric_weights" in query_dict:
         ordered_metric_weights = [
             float(item) for item in query_dict["ordered_metric_weights"][0].split("|")
         ]
-    """
     if "ordered_dataset_weights" in query_dict:
         ordered_dataset_weights = [
             float(item) for item in query_dict["ordered_dataset_weights"][0].split("|")
@@ -276,16 +304,17 @@ def get_dynaboard_starter_code(tid):
 
     tm = TaskModel()
     task_dict = tm.getWithRound(tid)
-    ordered_metric_and_weight = list(
-        zip(task_dict["ordered_metrics"], ordered_metric_weights)
-    )
-    ordered_did_and_weight = list(
-        zip(
-            [item["id"] for item in task_dict["ordered_datasets"]],
+    ordered_metric_and_weight = [
+        dict({"weight": item[0]}, **item[1])
+        for item in zip(ordered_metric_weights, ordered_metrics)
+    ]
+    ordered_did_and_weight = [
+        {"weisght": item[0], "did": item[1]}
+        for item in zip(
             ordered_dataset_weights,
+            [item["id"] for item in task_dict["ordered_datasets"]],
         )
-    )
-    print(task_dict["ordered_datasets"])
+    ]
 
     sm = ScoreModel()
     return sm.getDynaboardByTask(
@@ -297,54 +326,6 @@ def get_dynaboard_starter_code(tid):
         limit,
         offset,
     )
-
-    """
-    ordered_metrics = ["Accuracy", "Compute", "Memory"]
-    test_data = json.loads(open("controllers/dynaboard_api_test_data.json").read())
-    for model in test_data:
-        dynascore = 0
-        dynascore_variance = 0
-        overall = [0, 0, 0]
-        overall_variances = [0, 0, 0]
-        for dataset_index in range(len(model["datasets"])):
-            for metric_index in range(len(model["datasets"][dataset_index]["scores"])):
-                dynascore += (
-                    model["datasets"][dataset_index]["scores"][metric_index]
-                    * ordered_dataset_weights[dataset_index]
-                    * ordered_metric_weights[metric_index]
-                )
-                dynascore_variance += (
-                    model["datasets"][dataset_index]["variances"][metric_index]
-                    * ordered_dataset_weights[dataset_index]
-                    * ordered_metric_weights[metric_index]
-                )
-                overall[metric_index] += (
-                    model["datasets"][dataset_index]["scores"][metric_index]
-                    * ordered_dataset_weights[dataset_index]
-                )
-                overall_variances[metric_index] += (
-                    model["datasets"][dataset_index]["variances"][metric_index]
-                    * ordered_dataset_weights[dataset_index]
-                )
-        model["dynascore"] = dynascore
-        model["averaged_scores"] = overall
-        model["dynavariance"] = dynascore_variance
-        model["averaged_variances"] = overall_variances
-
-    if sort_by == "dynascore":
-        test_data.sort(reverse=reverse_sort, key=lambda model: model["dynascore"])
-    elif sort_by in ordered_metrics:
-        test_data.sort(
-            reverse=reverse_sort,
-            key=lambda model: model["averaged_scores"][ordered_metrics.index(sort_by)],
-        )
-    elif sort_by == "model_name":
-        test_data.sort(reverse=reverse_sort, key=lambda model: model["model_name"])
-
-    return util.json_encode(
-        {"count": len(test_data), "data": test_data[offset : offset + limit]}
-    )
-    """
 
 
 @bottle.get("/tasks/<tid:int>/models")

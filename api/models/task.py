@@ -1,6 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
-import json
+import sys
 
 import sqlalchemy as db
 
@@ -8,6 +8,10 @@ from .base import Base, BaseModel
 from .dataset import DatasetModel
 from .round import Round, RoundModel
 from .user import User
+
+
+sys.path.append("../evaluation")  # noqa
+import metrics  # isort:skip
 
 
 class Task(Base):
@@ -120,8 +124,55 @@ class TaskModel(BaseModel):
             r = r.to_dict()
             rm = RoundModel()
             t["ordered_datasets"] = dataset_list
-            t["ordered_metrics"] = json.loads(t["ordered_metrics_json"])
-            del t["ordered_metrics_json"]
+            if tid == 1:
+                ordered_metrics = [
+                    dict(
+                        {"name": item[1]["pretty_name"], "field_name": item[0]},
+                        **item[1],
+                    )
+                    for item in sorted(
+                        metrics.get_task_metrics_meta("nli").items(),
+                        key=lambda item: item[0],
+                    )
+                ]
+            elif tid == 2:
+                ordered_metrics = [
+                    dict(
+                        {"name": item[1]["pretty_name"], "field_name": item[0]},
+                        **item[1],
+                    )
+                    for item in sorted(
+                        metrics.get_task_metrics_meta("qa").items(),
+                        key=lambda item: item[0],
+                    )
+                ]
+            elif tid == 3:
+                ordered_metrics = [
+                    dict(
+                        {"name": item[1]["pretty_name"], "field_name": item[0]},
+                        **item[1],
+                    )
+                    for item in sorted(
+                        metrics.get_task_metrics_meta("sentiment").items(),
+                        key=lambda item: item[0],
+                    )
+                ]
+            elif tid == 5:
+                ordered_metrics = [
+                    dict(
+                        {"name": item[1]["pretty_name"], "field_name": item[0]},
+                        **item[1],
+                    )
+                    for item in sorted(
+                        metrics.get_task_metrics_meta("hs").items(),
+                        key=lambda item: item[0],
+                    )
+                ]
+            else:
+                ordered_metrics = []
+
+            t["ordered_metrics"] = ordered_metrics
+
             validation_stats = rm.getValidationStats(tid, r["rid"])
             r["total_validations"] = validation_stats["total_validations"]
             r["correct_validations"] = validation_stats["correct_validations"]

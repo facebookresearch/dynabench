@@ -93,153 +93,190 @@ class ScoreModel(BaseModel):
     def getDynaboardByTask(
         self,
         tid,
-        ordered_metric_and_weight,
-        ordered_did_and_weight,
+        ordered_metrics_with_weight_and_range,
+        ordered_dids_with_weight,
         sort_by="dynascore",
         reverse_sort=False,
         limit=5,
         offset=0,
     ):
-        print(ordered_did_and_weight)
-        ordered_dataset_ids = [item[0] for item in ordered_did_and_weight]
-        ordered_metric_weights = [item[1] for item in ordered_metric_and_weight]
-        ordered_metric_names = [item[0]["name"] for item in ordered_metric_and_weight]
+
+        data = {}
+
+        models = (
+            self.dbs.query(Model).filter(Model.tid == tid).filter(Model.is_published)
+        )
+        for model in models:
+            data[model.id] = {}
+            for d_item in ordered_dids_with_weight:
+                data[model.id][d_item["did"]] = np.array(
+                    [
+                        m_item["range"][0]
+                        for m_item in ordered_metrics_with_weight_and_range
+                    ]
+                )
+
         scores = (
             self.dbs.query(Score)
             .join(Model, Score.mid == Model.id)
             .filter(Model.tid == tid)
+            .filter(Model.is_published)
         )
-        models = self.dbs.query(Model)
+
+        for score in scores:
+            data[score.mid][score.did] = [
+                score.to_dict().get(
+                    m_item["field_name"],
+                    json.loads(score.metadata_json).get(m_item["field_name"], 0) / 100,
+                )
+                for m_item in ordered_metrics_with_weight_and_range
+            ]  # TODO should there be 0's if we cant find a field?
+            data[score.mid][score.did] = np.array(
+                [item if item is not None else 0 for item in data[score.mid][score.did]]
+            )
+
+        M = np.array(
+            [
+                [data[m][d] for d in [item["did"] for item in ordered_dids_with_weight]]
+                for m in [model.id for model in models]
+            ]
+        )
+
+        def normalize_data(data):
+            # Q: should we normalize everything to [0,1] or just to utility
+            # (i.e., anything where higher=better)?
+            # Q: what is the best way to normalize compute and mem?
+            # Q: what is the best way to normalize fairness/robustness delta?
+            # Q: should we or should we not center (i.e. zero-mean) the data when done?
+            # Proposal: hard-cap at X as worst, with 0 as best? (no strong opinion)
+            ordered_field_names = [
+                m_item["field_name"] for m_item in ordered_metrics_with_weight_and_range
+            ]
+
+            # 2 - compute: inverted clip-normalized score
+            if "seconds_per_example" in ordered_field_names:
+                index = ordered_field_names.index("seconds_per_example")
+                compute_cap = ordered_metrics_with_weight_and_range[index]["range"][
+                    1
+                ]  # this should be a big enough number
+                M[:, :, index] = (
+                    1 - np.clip(M[:, :, index], 0, compute_cap) / compute_cap
+                )
+
+            # 3 - memory: inverted clip-normalized score
+            if "memory_utilization" in ordered_field_names:
+                index = ordered_field_names.index("memory_utilization")
+                memory_cap = ordered_metrics_with_weight_and_range[index]["range"][
+                    1
+                ]  # this should be a big enough number (this comes from the machine)
+                M[:, :, index] = 1 - np.clip(M[:, :, index], 0, memory_cap) / memory_cap
+
+            # 4/5 - fairness and robustness: clip-normalized absolute score
+            if "fairness" in ordered_field_names:
+                index = ordered_field_names.index("fairness")
+                fairness_cap = ordered_metrics_with_weight_and_range[index]["range"][1]
+                M[:, :, index] = (
+                    np.clip(np.abs(M[:, :, index]), 0, fairness_cap) / fairness_cap
+                )
+
+            if "robustness" in ordered_field_names:
+                index = ordered_field_names.index("robustness")
+                robustness_cap = ordered_metrics_with_weight_and_range[index]["range"][
+                    1
+                ]
+                M[:, :, index] = (
+                    np.clip(np.abs(M[:, :, index]), 0, robustness_cap) / robustness_cap
+                )
+
+            assert M.max() <= 1 and M.min() >= 0
+            return M
+
+        M = normalize_data(M)
+
+        def apply_weights(M):
+            # Q: since we are only normalized on scale, should we first center
+            # on the means, before we apply weights?
+            dataset_weights = np.array(
+                [item["weight"] for item in ordered_dids_with_weight]
+            )
+            W = np.dot(M.transpose(0, 2, 1), dataset_weights)
+            return W
+
+        W = apply_weights(M)
+
+        def dynascore(W):
+            metric_weights = np.array(
+                [item["weight"] for item in ordered_metrics_with_weight_and_range]
+            )
+            # simple weighted aggregation:
+            S = np.dot(W, metric_weights.T)
+            # TODO: Replace this with MRS-based version
+            # Kawin?
+            return S
+
+        S = dynascore(W)
+
         users = self.dbs.query(User)
-        datasets = self.dbs.query(Dataset)
-        mid_to_uid = {}
-        mid_to_name = {}
         uid_to_username = {}
-        did_to_name = {}
         for user in users:
             uid_to_username[user.id] = user.username
-        for model in models:
-            mid_to_uid[model.id] = model.uid
-            mid_to_name[model.id] = model.name
+
+        datasets = self.dbs.query(Dataset)
+        did_to_name = {}
         for dataset in datasets:
             did_to_name[dataset.id] = dataset.name
 
-        mid_to_data = {}
-        for score in scores:
-            if score.mid not in mid_to_data:
-                mid_to_data[score.mid] = {
-                    "model_id": score.mid,
-                    "model_name": mid_to_name[score.mid],
-                    "uid": mid_to_uid[score.mid],
-                    "username": uid_to_username[mid_to_uid[score.mid]],
-                    "datasets": [],
-                }
-
-            metric_values = []
-            score_dict = score.to_dict()
-            for metric, weight in ordered_metric_and_weight:
-                if metric["score_field_name"] in score_dict:
-                    metric_values.append(score_dict[metric["score_field_name"]])
-                else:
-                    if score.metadata_json is not None:
-                        metadata = json.loads(score.metadata_json)
-                        if metric["score_field_name"] in metadata:
-                            metric_values.append(metadata[metric["score_field_name"]])
-                        else:
-                            metric_values.append(None)
-                    else:
-                        metric_values.append(None)
-
-            mid_to_data[score.mid]["datasets"].append(
-                {
-                    "id": score.did,
-                    "name": did_to_name[score.did],
-                    "scores": np.array(
-                        [0 if item is None else item for item in metric_values]
-                    ),
-                }
-            )
-
-        print(mid_to_data[2])
-
-        # Compute variances and aggregates
-        count = 0
-        for datum in mid_to_data.values():
-            count += 1
-            id_to_datasets = {}
-            for dataset in datum["datasets"]:
-                if dataset["id"] in id_to_datasets:
-                    id_to_datasets[dataset["id"]].append(dataset)
-                else:
-                    id_to_datasets[dataset["id"]] = [dataset]
-            print(id_to_datasets)
-            new_datasets = []
-            all_dataset_score_list = []
-            all_dataset_variance_list = []
-            for datasets in sorted(
-                id_to_datasets.values(),
-                key=lambda value: ordered_dataset_ids.index(value[0]["id"]),
-            ):
-                score_list = []
-                for dataset in datasets:
-                    score_list.append(dataset["scores"])
-                mean_scores = np.mean(score_list, axis=0)
-                variances = np.var(score_list, axis=0)
-                all_dataset_score_list.append(
-                    mean_scores
-                    * ordered_did_and_weight[ordered_dataset_ids.index(dataset["id"])][
-                        1
-                    ]
-                )
-                all_dataset_variance_list.append(
-                    variances
-                    * ordered_did_and_weight[ordered_dataset_ids.index(dataset["id"])][
-                        1
-                    ]
-                )
-                new_datasets.append(
+        data_list = []
+        model_index = 0
+        for model in models:
+            datasets = []
+            dataset_index = 0
+            for _ in M[model_index]:
+                datasets.append(
                     {
-                        "id": dataset["id"],
-                        "name": dataset["name"],
-                        "scores": mean_scores.tolist(),
-                        "variances": variances.tolist(),
+                        "id": ordered_dids_with_weight[dataset_index]["did"],
+                        "name": did_to_name[
+                            ordered_dids_with_weight[dataset_index]["did"]
+                        ],
+                        "scores": M[model_index][dataset_index].tolist(),
+                        "variances": [0] * len(M[model_index][dataset_index].tolist()),
                     }
                 )
-            datum["averaged_scores"] = np.sum(all_dataset_score_list, axis=0).tolist()
-            datum["averaged_variances"] = np.sum(
-                all_dataset_variance_list, axis=0
-            ).tolist()
-            datum["dynascore"] = float(
-                np.dot(
-                    np.array(datum["averaged_scores"]), np.array(ordered_metric_weights)
-                )
+                dataset_index += 1
+            data_list.append(
+                {
+                    "model_id": model.id,
+                    "model_name": model.name,
+                    "uid": model.uid,
+                    "username": uid_to_username[model.uid],
+                    "averaged_scores": W[model_index].tolist(),
+                    "averaged_variances": [0] * len(W[model_index].tolist()),
+                    "dynascore": float(S[model_index]),
+                    "dynavariance": 0,
+                    "datasets": datasets,
+                }
             )
-            datum["dynavariance"] = float(
-                np.dot(
-                    np.array(datum["averaged_variances"]),
-                    np.array(ordered_metric_weights),
-                )
-            )
-            datum["datasets"] = new_datasets
-
-        data_list = list(mid_to_data.values())
+            model_index += 1
 
         if sort_by == "dynascore":
             data_list.sort(reverse=reverse_sort, key=lambda model: model["dynascore"])
-        elif sort_by in ordered_metric_names:
+        elif sort_by in [
+            m_item["pretty_name"] for m_item in ordered_metrics_with_weight_and_range
+        ]:
             data_list.sort(
                 reverse=reverse_sort,
                 key=lambda model: model["averaged_scores"][
-                    ordered_metric_names.index(sort_by)
+                    [
+                        m_item["pretty_name"]
+                        for m_item in ordered_metrics_with_weight_and_range
+                    ].index(sort_by)
                 ],
             )
         elif sort_by == "model_name":
             data_list.sort(reverse=reverse_sort, key=lambda model: model["model_name"])
 
-        print(data_list[offset : offset + limit])
-
         return util.json_encode(
-            {"count": count, "data": data_list[offset : offset + limit]}
+            {"count": len(data_list), "data": data_list[offset : offset + limit]}
         )
 
     def getByTid(self, tid):
