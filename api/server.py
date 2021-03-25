@@ -73,10 +73,6 @@ if "smtp_user" in config and config["smtp_user"] != "":
     )
     app.config["mail"] = mail
 
-# initialize the evaluation dataset classes in app context,
-# to reduce the turnaround time.
-app.config["datasets"] = datasets.load_datasets()
-
 # initialize sagemaker endpoint if set
 if "aws_access_key_id" in config and config["aws_access_key_id"] != "":
     sagemaker_client = boto3.client(
@@ -114,6 +110,10 @@ if running_mode == "dev":
         keyfile=config["ssl_org_pem_file_path"],
     )
 elif running_mode == "prod":
+    # initialize the evaluation dataset classes in app context,
+    # to reduce the turnaround time.
+    app.config["datasets"] = datasets.load_datasets()
+
     # Assertion for necessary configuration
     if not check_fields(
         config, ["smtp_user", "smtp_host", "smtp_port", "smtp_secret"]
