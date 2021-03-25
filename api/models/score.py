@@ -112,6 +112,9 @@ class ScoreModel(BaseModel):
                 data[model.id][d_item["did"]] = np.array(
                     [
                         m_item["range"][0]
+                        if m_item["field_name"]
+                        in ["accuracy", "fairness", "robustness"]
+                        else 100
                         for m_item in ordered_metrics_with_weight_and_range
                     ]
                 )
@@ -127,12 +130,15 @@ class ScoreModel(BaseModel):
             data[score.mid][score.did] = [
                 score.to_dict().get(
                     m_item["field_name"],
-                    json.loads(score.metadata_json).get(m_item["field_name"], 0) / 100,
+                    json.loads(score.metadata_json).get(m_item["field_name"], None),
                 )
                 for m_item in ordered_metrics_with_weight_and_range
             ]  # TODO should there be 0's if we cant find a field?
             data[score.mid][score.did] = np.array(
-                [item if item is not None else 0 for item in data[score.mid][score.did]]
+                [
+                    item if item is not None else 100
+                    for item in data[score.mid][score.did]
+                ]
             )
 
         M = np.array(
@@ -142,7 +148,8 @@ class ScoreModel(BaseModel):
             ]
         )
 
-        def normalize_data(data):
+        def normalize_data(M):
+            M = M.copy()
             # Q: should we normalize everything to [0,1] or just to utility
             # (i.e., anything where higher=better)?
             # Q: what is the best way to normalize compute and mem?
@@ -152,6 +159,14 @@ class ScoreModel(BaseModel):
             ordered_field_names = [
                 m_item["field_name"] for m_item in ordered_metrics_with_weight_and_range
             ]
+
+            if "accuracy" in ordered_field_names:
+                index = ordered_field_names.index("accuracy")
+                M[:, :, index] = M[:, :, index] / 100
+
+            if "f1" in ordered_field_names:
+                index = ordered_field_names.index("f1")
+                M[:, :, index] = M[:, :, index] / 100
 
             # 2 - compute: inverted clip-normalized score
             if "seconds_per_example" in ordered_field_names:
@@ -191,9 +206,14 @@ class ScoreModel(BaseModel):
             assert M.max() <= 1 and M.min() >= 0
             return M
 
-        M = normalize_data(M)
+        print(M)
+
+        N = normalize_data(M)
+
+        print(M)
 
         def apply_weights(M):
+            M = M.copy()
             # Q: since we are only normalized on scale, should we first center
             # on the means, before we apply weights?
             dataset_weights = np.array(
@@ -202,9 +222,11 @@ class ScoreModel(BaseModel):
             W = np.dot(M.transpose(0, 2, 1), dataset_weights)
             return W
 
-        W = apply_weights(M)
+        W = apply_weights(N)
+        WD = apply_weights(M)
 
         def dynascore(W):
+            W = W.copy()
             metric_weights = np.array(
                 [item["weight"] for item in ordered_metrics_with_weight_and_range]
             )
@@ -249,9 +271,9 @@ class ScoreModel(BaseModel):
                     "model_name": model.name,
                     "uid": model.uid,
                     "username": uid_to_username[model.uid],
-                    "averaged_scores": W[model_index].tolist(),
-                    "averaged_variances": [0] * len(W[model_index].tolist()),
-                    "dynascore": float(S[model_index]),
+                    "averaged_scores": WD[model_index].tolist(),
+                    "averaged_variances": [0] * len(WD[model_index].tolist()),
+                    "dynascore": float(S[model_index]) * 100,
                     "dynavariance": 0,
                     "datasets": datasets,
                 }
@@ -274,6 +296,8 @@ class ScoreModel(BaseModel):
             )
         elif sort_by == "model_name":
             data_list.sort(reverse=reverse_sort, key=lambda model: model["model_name"])
+
+        print(data_list[offset : offset + limit])
 
         return util.json_encode(
             {"count": len(data_list), "data": data_list[offset : offset + limit]}

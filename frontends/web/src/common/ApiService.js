@@ -239,8 +239,8 @@ export default class ApiService {
   }
 
   getOverallModelLeaderboard(taskId, round, limit, offset) {
-    this.getTask(taskId).then((result) => console.log(result));
-    this.getDynaboardExample().then((result) => console.log(result));
+    //this.getTask(taskId).then((result) => console.log(result));
+    //this.getDynaboardExample().then((result) => console.log(result));
     const url =
       round === "overall"
         ? `/models?limit=${limit || 10}&offset=${offset || 0}`

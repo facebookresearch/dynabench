@@ -309,7 +309,7 @@ def get_dynaboard_starter_code(tid):
         for item in zip(ordered_metric_weights, ordered_metrics)
     ]
     ordered_did_and_weight = [
-        {"weisght": item[0], "did": item[1]}
+        {"weight": item[0], "did": item[1]}
         for item in zip(
             ordered_dataset_weights,
             [item["id"] for item in task_dict["ordered_datasets"]],
