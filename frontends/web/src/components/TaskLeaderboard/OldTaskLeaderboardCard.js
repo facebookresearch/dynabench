@@ -48,7 +48,7 @@ const OldTaskLeaderboardCard = (props) => {
     fetchOverallModelLeaderboard(context.api, page);
     setIsLoading(false);
     return () => {};
-  }, [page]);
+  }, [context.api, fetchOverallModelLeaderboard, page]);
 
   if (!data) {
     return null;

@@ -3,7 +3,7 @@
 import logging
 import sys
 
-from metrics.task_config import tasks_config
+from metrics.task_config import get_task_config_safe
 from models.dataset import DatasetModel
 from utils.computer import MetricsComputer
 from utils.evaluator import JobScheduler
@@ -71,7 +71,7 @@ class Requester:
             self.scheduler.submit(model_id, dataset_name, perturb_prefix)
             if not perturb_prefix:
                 dataset = self.datasets[dataset_name]
-                task_config = tasks_config.get(dataset.task, tasks_config["default"])
+                task_config = get_task_config_safe(dataset.task)
                 for prefix in task_config["delta_metrics"]:
                     if dataset.dataset_available_on_s3(prefix):
                         self.scheduler.submit(model_id, dataset_name, prefix)
