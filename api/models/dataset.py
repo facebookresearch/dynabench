@@ -65,6 +65,17 @@ class DatasetModel(BaseModel):
         except db.orm.exc.NoResultFound:
             return False
 
+    def getByTidAndAccessType(self, task_id, access_type):
+        try:
+            return (
+                self.dbs.query(Dataset)
+                .filter(Dataset.tid == task_id)
+                .filter(Dataset.access_type == access_type)
+                .all()
+            )
+        except db.orm.exc.NoResultFound:
+            return False
+
     def getByName(self, name):
         try:
             return self.dbs.query(Dataset).filter(Dataset.name == name).one()
