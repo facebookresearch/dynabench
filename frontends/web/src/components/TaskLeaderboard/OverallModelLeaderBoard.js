@@ -1,4 +1,11 @@
-import { Form, OverlayTrigger, Popover } from "react-bootstrap";
+import {
+  Form,
+  OverlayTrigger,
+  Popover,
+  Container,
+  Row,
+  Col,
+} from "react-bootstrap";
 import React from "react";
 import { useState, useRef } from "react";
 import { Table } from "react-bootstrap";
@@ -29,12 +36,11 @@ const ChevronExpandButton = ({ expanded }) => {
  */
 const WeightSlider = ({ weight, onWeightChange }) => {
   return (
-    <Form className="d-flex ml-2 float-right" style={{ width: "50%" }}>
+    <Form className="d-flex ml-2 float-right">
       <Form.Control
         type="range"
         className="flex-grow-1"
         size="sm"
-        style={{ width: "50%" }}
         min={0}
         max={5}
         value={weight}
@@ -223,14 +229,6 @@ const OverallModelLeaderboardRow = ({
                       <WeightIndicator weight={weight} />
                     </span>
                   </WeightPopover>
-                  {enableWeights && (
-                    <WeightSlider
-                      weight={weight}
-                      onWeightChange={(newWeight) => {
-                        setDatasetWeight(dataset.id, newWeight);
-                      }}
-                    />
-                  )}
                 </div>
               </td>
               {dataset.scores &&
@@ -345,7 +343,7 @@ const OverallModelLeaderBoard = ({
               </SortContainer>
             </th>
           )}
-          {enableWeights && <th className="align-bottom">Adjust Weights</th>}
+          {enableWeights && <th className="align-top">Metric Weights</th>}
 
           {metrics?.map((metric) => {
             return (
@@ -374,6 +372,41 @@ const OverallModelLeaderBoard = ({
             </SortContainer>
           </th>
         </tr>
+        {enableWeights && (
+          <tr>
+            <th className="align-top">Dataset Weights</th>
+            <th colSpan={metrics.length}>
+              <Container fluid className="px-0">
+                <Row>
+                  {datasetWeights?.map((dataset) => {
+                    return (
+                      <Col xs={12} sm={6} md={3}>
+                        <WeightPopover
+                          label={dataset.name}
+                          weight={dataset.weight}
+                        >
+                          <span className="d-flex align-items-center justify-content-end">
+                            {dataset.name}&nbsp;
+                            <WeightIndicator weight={dataset.weight} />
+                          </span>
+                        </WeightPopover>
+                        <div>
+                          <WeightSlider
+                            weight={dataset.weight}
+                            onWeightChange={(newWeight) => {
+                              setDatasetWeight(dataset.id, newWeight);
+                            }}
+                          />
+                        </div>
+                      </Col>
+                    );
+                  })}
+                </Row>
+              </Container>
+            </th>
+            <th />
+          </tr>
+        )}
       </thead>
       <tbody>
         {models?.map((model) => (
