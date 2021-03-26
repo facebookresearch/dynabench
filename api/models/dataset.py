@@ -1,8 +1,16 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+import enum
+
 import sqlalchemy as db
 
 from .base import Base, BaseModel
+
+
+class AccessTypeEnum(enum.Enum):
+    scoring = "scoring"
+    standard = "standard"
+    hidden = "hidden"
 
 
 class Dataset(Base):
@@ -16,6 +24,7 @@ class Dataset(Base):
     rid = db.Column(db.Integer, default=0)
 
     desc = db.Column(db.String(length=255))
+    access_type = db.Column(db.Enum(AccessTypeEnum), default=AccessTypeEnum.scoring)
 
     def __repr__(self):
         return f"<Dataset {self.name}>"
