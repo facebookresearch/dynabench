@@ -35,7 +35,7 @@ const TaskLeaderboardCard = (props) => {
   // Dataset Weights Array of a set of dataset id and corresponding weight.
   const [datasetWeights, setDatasetWeights] = useState(
     task.ordered_datasets?.map((ds) => {
-      return { id: ds.id, weight: 5 }; // Default weight to max i.e. 5.
+      return { id: ds.id, weight: 5, name: ds.name }; // Default weight to max i.e. 5.
     })
   );
 
@@ -108,62 +108,56 @@ const TaskLeaderboardCard = (props) => {
     });
   };
 
-  /**
-   * Invoke APIService to fetch leader board data
-   *
-   * @param {*} api instance of @see APIService
-   * @param {number} page
-   */
-  const fetchOverallModelLeaderboard = (api, page) => {
-    const metricSum = metrics?.reduce((acc, entry) => acc + entry.weight, 0);
-    const orderedMetricWeights = metrics?.map((entry) =>
-      metricSum === 0 ? 0.0 : entry.weight / metricSum
-    );
-    const dataSetSum = datasetWeights?.reduce(
-      (acc, entry) => acc + entry.weight,
-      0
-    );
-    const orderedDatasetWeights = datasetWeights?.map((entry) =>
-      dataSetSum === 0 ? 0.0 : entry.weight / dataSetSum
-    );
-
-    api
-      .getDynaboardScores(
-        taskId,
-        pageLimit,
-        page * pageLimit,
-        sort.field,
-        sort.direction,
-        orderedMetricWeights,
-        orderedDatasetWeights
-      )
-      .then(
-        (result) => {
-          setData(result.data);
-          setTotal(result.count);
-        },
-        (error) => {
-          console.log(error);
-        }
-      );
-  };
-
   const context = useContext(UserContext);
 
   // Call api on sort, page and weights changed.
   useEffect(() => {
+    /**
+     * Invoke APIService to fetch leader board data
+     *
+     * @param {*} api instance of @see APIService
+     * @param {number} page
+     */
+    const fetchOverallModelLeaderboard = (api, page) => {
+      const metricSum = metrics?.reduce((acc, entry) => acc + entry.weight, 0);
+      const orderedMetricWeights = metrics?.map((entry) =>
+        metricSum === 0 ? 0.0 : entry.weight / metricSum
+      );
+      const dataSetSum = datasetWeights?.reduce(
+        (acc, entry) => acc + entry.weight,
+        0
+      );
+      const orderedDatasetWeights = datasetWeights?.map((entry) =>
+        dataSetSum === 0 ? 0.0 : entry.weight / dataSetSum
+      );
+
+      api
+        .getDynaboardScores(
+          taskId,
+          pageLimit,
+          page * pageLimit,
+          sort.field,
+          sort.direction,
+          orderedMetricWeights,
+          orderedDatasetWeights
+        )
+        .then(
+          (result) => {
+            setData(result.data);
+            setTotal(result.count);
+          },
+          (error) => {
+            console.log(error);
+          }
+        );
+    };
+
     setIsLoading(true);
+
     fetchOverallModelLeaderboard(context.api, page);
     setIsLoading(false);
     return () => {};
-  }, [
-    page,
-    sort,
-    metrics,
-    datasetWeights,
-    fetchOverallModelLeaderboard,
-    context.api,
-  ]);
+  }, [page, sort, metrics, datasetWeights, context.api, taskId, pageLimit]);
 
   const isEndOfPage = (page + 1) * pageLimit >= total;
 
