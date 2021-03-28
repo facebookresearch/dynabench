@@ -47,13 +47,22 @@ def _getTags(query_dict):
 def _getContext(tid, rid, method="min", tags=None):
     rm = RoundModel()
     round = rm.getByTidAndRid(tid, rid)
+
     c = ContextModel()
     if method == "uniform":
         context = c.getRandom(round.id, n=1, tags=tags)
     elif method == "min":
         context = c.getRandomMin(round.id, n=1, tags=tags)
     elif method == "least_fooled":
-        context = c.getRandomLeastFooled(round.id, n=1, tags=tags)
+        tm = TaskModel()
+        task = tm.get(tid)
+        num_matching_validations = 3
+        if task.settings_json:
+            settings = json.loads(task.settings_json)
+            num_matching_validations = settings["num_matching_validations"]
+        context = c.getRandomLeastFooled(
+            round.id, num_matching_validations, n=1, tags=tags
+        )
     if not context:
         bottle.abort(500, f"No contexts available ({round.id})")
     context = context[0].to_dict()
