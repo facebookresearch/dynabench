@@ -98,7 +98,7 @@ class ContextModel(BaseModel):
             .group_by(Example.cid)
             .having(
                 db.and_(
-                    cnt_correct_val == 0,
+                    cnt_correct_val < num_matching_validations,
                     db.or_(
                         cnt_incorrect_val >= num_matching_validations,
                         cnt_flagged_val >= num_matching_validations,
