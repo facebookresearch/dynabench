@@ -239,8 +239,6 @@ export default class ApiService {
   }
 
   getOverallModelLeaderboard(taskId, round, limit, offset) {
-    //this.getTask(taskId).then((result) => console.log(result));
-    //this.getDynaboardExample().then((result) => console.log(result));
     const url =
       round === "overall"
         ? `/models?limit=${limit || 10}&offset=${offset || 0}`
@@ -248,24 +246,6 @@ export default class ApiService {
     return this.fetch(`${this.domain}/tasks/${taskId}${url}`, {
       method: "GET",
     });
-  }
-
-  getDynaboardExample() {
-    const taskId = 1;
-    const metric_weights = [0.5, 0.17, 0.33];
-    const dataset_weights = [0.25, 0.25, 0.25, 0.25];
-    return this.fetch(
-      `${
-        this.domain
-      }/tasks/${taskId}/models/dynaboard?sort_by=dynascore&sort_direction=asc&offset=0&limit=2&ordered_metric_weights=${encodeURIComponent(
-        metric_weights.join("|")
-      )}&ordered_dataset_weights${encodeURIComponent(
-        dataset_weights.join("|")
-      )}`,
-      {
-        method: "GET",
-      }
-    );
   }
 
   getOverallUserLeaderboard(taskId, round, limit, offset) {

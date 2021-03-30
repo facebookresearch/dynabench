@@ -48,7 +48,6 @@ class Task(Base):
     has_answer = db.Column(db.Boolean, default=False)
 
     settings_json = db.Column(db.Text)
-    ordered_metrics_json = db.Column(db.Text)
 
     def __repr__(self):
         return f"<Task {self.name}>"
@@ -105,7 +104,7 @@ class TaskModel(BaseModel):
             tasks[ii]["round"] = r.to_dict()
         return tasks
 
-    def getWithRound(self, tid):
+    def getWithRoundAndMetricMeta(self, tid):
         try:
             t, r = (
                 self.dbs.query(Task, Round)
@@ -124,50 +123,27 @@ class TaskModel(BaseModel):
             r = r.to_dict()
             rm = RoundModel()
             t["ordered_datasets"] = dataset_list
-            if tid == 1:
+            shortname_to_metrics_task_name = {
+                "NLI": "nli",
+                "QA": "qa",
+                "Sentiment": "sentiment",
+                "Hate Speech": "hs",
+            }
+            if t["shortname"] in shortname_to_metrics_task_name:
+                metrics_task_name = shortname_to_metrics_task_name[t["shortname"]]
                 ordered_metrics = [
                     dict(
                         {"name": item[1]["pretty_name"], "field_name": item[0]},
                         **item[1],
                     )
                     for item in sorted(
-                        metrics.get_task_metrics_meta("nli").items(),
+                        metrics.get_task_metrics_meta(metrics_task_name).items(),
                         key=lambda item: item[0],
                     )
                 ]
-            elif tid == 2:
-                ordered_metrics = [
-                    dict(
-                        {"name": item[1]["pretty_name"], "field_name": item[0]},
-                        **item[1],
-                    )
-                    for item in sorted(
-                        metrics.get_task_metrics_meta("qa").items(),
-                        key=lambda item: item[0],
-                    )
-                ]
-            elif tid == 3:
-                ordered_metrics = [
-                    dict(
-                        {"name": item[1]["pretty_name"], "field_name": item[0]},
-                        **item[1],
-                    )
-                    for item in sorted(
-                        metrics.get_task_metrics_meta("sentiment").items(),
-                        key=lambda item: item[0],
-                    )
-                ]
-            elif tid == 5:
-                ordered_metrics = [
-                    dict(
-                        {"name": item[1]["pretty_name"], "field_name": item[0]},
-                        **item[1],
-                    )
-                    for item in sorted(
-                        metrics.get_task_metrics_meta("hs").items(),
-                        key=lambda item: item[0],
-                    )
-                ]
+                t["perf_metric_field_name"] = metrics.get_task_config_safe(
+                    metrics_task_name
+                )["perf_metric"]
             else:
                 ordered_metrics = []
 

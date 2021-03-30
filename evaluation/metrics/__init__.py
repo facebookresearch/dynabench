@@ -36,4 +36,5 @@ def get_task_metrics_meta(task):
     }
     for metric in task_config["delta_metrics"]:
         metrics_meta[metric]["pretty_name"] = metric.capitalize()
+        metrics_meta[metric]["positive_utility_conversion"] = lambda x: -abs(x)
     return metrics_meta
