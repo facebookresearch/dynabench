@@ -38,12 +38,17 @@ cp config.py.example config.py
 cd ../
 ```
 
-Next step is to install mysql to run the database locally, on mac, we recommend doing `brew install mysql`.
+Next step is to install mysql to run the database locally, on mac, we recommend using [homebrew](https://docs.brew.sh/Installation)
+```
+brew install mysql@5.7
+brew link --force mysql@5.7
+```
 This will ask for the password of the root user while installation so keep that handy.
 
 Launch MySQL using the command:
 
 ```
+brew services start mysql@5.7
 mysql -u root -p
 ```
 
