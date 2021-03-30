@@ -1,6 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import sqlalchemy as db
+from sqlalchemy import case
 
 from .base import Base, BaseModel
 
@@ -73,14 +74,45 @@ class ContextModel(BaseModel):
             .all()
         )
 
-    def getRandomLeastFooled(self, rid, n=1, tags=None):
+    def getRandomLeastFooled(self, rid, num_matching_validations, n=1, tags=None):
         from models.example import Example
+        from models.validation import Validation, LabelEnum
 
         result = self.dbs.query(Context).filter(Context.r_realid == rid)
         if tags:
             result = result.filter(Context.tag.in_(tags))  # noqa
 
-        example_sub_query = (
+        cnt_correct_val = db.sql.func.sum(
+            case([(Validation.label == LabelEnum.correct, 1)], else_=0)
+        ).label("cnt_correct_val")
+        cnt_incorrect_val = db.sql.func.sum(
+            case([(Validation.label == LabelEnum.incorrect, 1)], else_=0)
+        ).label("cnt_incorrect_val")
+        cnt_flagged_val = db.sql.func.sum(
+            case([(Validation.label == LabelEnum.flagged, 1)], else_=0)
+        ).label("cnt_flagged_val")
+
+        least_validated_fooled_examples = (
+            result.join(Example, Context.id == Example.cid)
+            .join(Validation, Example.id == Validation.eid)
+            .group_by(Example.cid)
+            .having(
+                db.and_(
+                    cnt_correct_val < num_matching_validations,
+                    db.or_(
+                        cnt_incorrect_val >= num_matching_validations,
+                        cnt_flagged_val >= num_matching_validations,
+                    ),
+                )
+            )
+            .order_by(db.sql.func.rand())
+            .limit(n)
+        )
+
+        if len(least_validated_fooled_examples.all()) == n:
+            return least_validated_fooled_examples.all()
+
+        least_fooled_examples_sub_query = (
             self.dbs.query(
                 Example.cid,
                 db.sql.func.sum(
@@ -90,14 +122,26 @@ class ContextModel(BaseModel):
             .group_by(Example.cid)
             .subquery()
         )
-        return (
+        least_fooled_examples = (
             result.join(
-                example_sub_query, Context.id == example_sub_query.c.cid, isouter=True
+                least_fooled_examples_sub_query,
+                Context.id == least_fooled_examples_sub_query.c.cid,
+                isouter=True,
             )
-            .order_by(example_sub_query.c.num_fooled.asc(), db.sql.func.rand())
-            .limit(n)
-            .all()
+            .filter(
+                db.not_(
+                    db.exists().where(
+                        least_validated_fooled_examples.subquery().c.id == Context.id
+                    )
+                )
+            )
+            .order_by(
+                least_fooled_examples_sub_query.c.num_fooled.asc(), db.sql.func.rand()
+            )
+            .limit(n - len(least_validated_fooled_examples.all()))
         )
+
+        return least_validated_fooled_examples.all() + least_fooled_examples.all()
 
     def incrementCountDate(self, cid):
         c = self.get(cid)
