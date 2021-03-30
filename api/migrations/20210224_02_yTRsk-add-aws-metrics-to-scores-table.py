@@ -56,14 +56,12 @@ steps = [
         ADD COLUMN did INT,
         ADD COLUMN memory_utilization FLOAT COMMENT 'Unit: GiB',
         ADD COLUMN examples_per_second FLOAT,
-        ADD CONSTRAINT dataset_id FOREIGN KEY (did) REFERENCES datasets (id),
-        ADD CONSTRAINT ck_data_exist CHECK ((rid<>0) OR (NOT did IS NULL))
+        ADD CONSTRAINT dataset_id FOREIGN KEY (did) REFERENCES datasets (id)
         """,
         """
         ALTER TABLE scores
         DROP COLUMN memory_utilization,
         DROP COLUMN examples_per_second,
-        DROP CONSTRAINT ck_data_exist,
         DROP FOREIGN KEY dataset_id,
         DROP COLUMN did
         """,
