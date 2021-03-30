@@ -27,10 +27,6 @@ from controllers.users import *  # noqa
 from controllers.validations import *  # noqa
 
 
-sys.path.append("../evaluation")  # noqa
-import datasets  # isort:skip
-
-
 assert len(sys.argv) == 2, "Missing arg (prod or dev?)"
 assert sys.argv[1] in ["prod", "dev"], "Unknown running mode"
 
@@ -112,6 +108,9 @@ if running_mode == "dev":
 elif running_mode == "prod":
     # initialize the evaluation dataset classes in app context,
     # to reduce the turnaround time.
+    sys.path.append("../evaluation")  # noqa
+    import datasets  # isort:skip
+
     app.config["datasets"] = datasets.load_datasets()
 
     # Assertion for necessary configuration
