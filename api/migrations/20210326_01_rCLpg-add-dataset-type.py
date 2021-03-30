@@ -21,5 +21,20 @@ steps = [
         """
         ALTER TABLE datasets DROP COLUMN access_type
         """,
-    )
+    ),
+    # for backward compatibility, setting all dev sets to standard
+    step(
+        """
+        UPDATE datasets SET access_type = 'standard' WHERE
+        name LIKE '%-dev-%' OR
+        name LIKE '%-dev' OR
+        name LIKE 'dev-%'
+        """,
+        """
+        UPDATE datasets SET access_type = 'scoring' WHERE
+        name LIKE '%-dev-%' OR
+        name LIKE '%-dev' OR
+        name LIKE 'dev-%'
+        """,
+    ),
 ]
