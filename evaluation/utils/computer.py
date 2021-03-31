@@ -148,45 +148,52 @@ class MetricsComputer:
 
             # TODO: avoid explictly pass perturb prefix at multiple places
             # - take full job information at one interface instead
+            dataset = self.datasets[job.dataset_name]
             predictions = self.parse_outfile(job)
-            eval_metrics_dict = self.datasets[job.dataset_name].eval(
+            eval_metrics_dict = dataset.eval(
                 predictions, perturb_prefix=job.perturb_prefix
             )
 
             if job.perturb_prefix:
                 targets = self.read_predictions(job, original=True)
-                delta_metrics_dict = self.datasets[job.dataset_name].eval(
+                targets = [
+                    dataset.pred_to_target_converter(
+                        dataset.pred_field_converter(prediction)
+                    )
+                    for prediction in targets
+                ]
+
+                delta_metrics_dict = dataset.eval(
                     predictions, targets, perturb_prefix=job.perturb_prefix
                 )
 
+                eval_metadata_json = json.loads(eval_metrics_dict["metadata_json"])
                 eval_metadata_json = {
-                    f"{job.perturb_prefix}-{metric}": eval_metrics_dict[
-                        "metadata_json"
-                    ][metric]
-                    for metric in eval_metrics_dict
-                    if metric != "perf_by_tag"
+                    f"{job.perturb_prefix}-{metric}": eval_metadata_json[metric]
+                    for metric in eval_metadata_json
                 }
-                metadata_json = {
-                    **{eval_metadata_json},
-                    **{delta_metrics_dict["metadata_json"]},
-                }
-
                 original_metadata_json = json.loads(s.metadata_json)
-                metadata_json = {**original_metadata_json, **metadata_json}
+                metadata_json = json.dumps(
+                    {
+                        **original_metadata_json,
+                        **eval_metadata_json,
+                        **json.loads(delta_metrics_dict["metadata_json"]),
+                    }
+                )
 
                 score_obj = {**delta_metrics_dict, "metadata_json": metadata_json}
                 sm.update(s.id, **score_obj)
             else:
-                job_metrics_dict = get_job_metrics(job, self.datasets[job.dataset_name])
+                job_metrics_dict = get_job_metrics(job, dataset)
                 score_obj = {**eval_metrics_dict, **job_metrics_dict}
                 score_obj["model_id"] = job.model_id
                 score_obj["did"] = d_entry.id
-                score_obj["raw_output_s3_uri"] = self.datasets[
-                    job.dataset_name
-                ].get_output_s3_url(job.endpoint_name)
+                score_obj["raw_output_s3_uri"] = dataset.get_output_s3_url(
+                    job.endpoint_name
+                )
 
                 rm = RoundModel()
-                if self.datasets[job.dataset_name].round_id != 0:
+                if dataset.round_id != 0:
                     score_obj["r_realid"] = rm.getByTidAndRid(
                         d_entry.tid, d_entry.rid
                     ).id

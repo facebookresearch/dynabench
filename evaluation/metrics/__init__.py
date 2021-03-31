@@ -1,6 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 from metrics.metric_config import (
+    delta_metrics_config,
     eval_metrics_config,
     job_metrics_config,
     metrics_meta_config,
@@ -31,9 +32,11 @@ def get_delta_metrics(
     targets: a list of labels
     """
     task_config = get_task_config_safe(task)
-    delta_metrics = task_config["delta_metrics"]
+    perf_metric = eval_metrics_config[task_config["perf_metric"]]
     delta_metrics_dict = {
-        perturb_prefix: delta_metrics[perturb_prefix](predictions, targets)
+        perturb_prefix: delta_metrics_config[perturb_prefix](
+            predictions, targets, perf_metric
+        )
     }
     return delta_metrics_dict
 

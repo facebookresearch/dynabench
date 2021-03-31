@@ -195,9 +195,10 @@ class BaseDataset(ABC):
             predictions_dict = {id: [] for id in target_ids}
             try:
                 id_mapping = self.read_labels(perturb_prefix)
+                id_mapping = {m["id"]: m["input_id"] for m in id_mapping}
                 for p in predictions:
                     predictions_dict[id_mapping[p["id"]]].append(p["pred"])
-                predictions = [predictions_dict["id"] for id in target_ids]
+                predictions = [predictions_dict[id] for id in target_ids]
             except KeyError as ex:
                 logger.exception(f"Prediction and target file example mismatch: {ex}")
             except Exception as ex:
@@ -206,7 +207,10 @@ class BaseDataset(ABC):
                 delta_metrics_dict = get_delta_metrics(
                     self.task, predictions, target_labels, perturb_prefix
                 )
-                score_obj = {**delta_metrics_dict, "metadata_json": delta_metrics_dict}
+                score_obj = {
+                    **delta_metrics_dict,
+                    "metadata_json": json.dumps(delta_metrics_dict),
+                }
 
         else:  # compute normal eval metrics
             # validate alignment of prediction and target labels
@@ -258,10 +262,16 @@ class BaseDataset(ABC):
         return score_obj
 
     def perturb_label_field_converter(self, example):
-        return {
-            "input_id": example.get["input_id"],
-            **self.label_field_converter(example),
-        }
+        return {"input_id": example["input_id"], **self.label_field_converter(example)}
+
+    def pred_to_target_converter(self, pred):
+        """
+        Used for fairness and robustness to compute
+        unperturbed percentage on output
+        """
+        pred["answer"] = pred.pop("pred")
+        pred["tags"] = []
+        return pred
 
     @abstractmethod
     def load(self) -> bool:
@@ -284,7 +294,7 @@ class BaseDataset(ABC):
         {
             "id": <a unique identifier>,
             "answer": <the correct answer that will be used to calculate metrics>,
-            "tags": <can be empty>
+            "tags": <list of string, can be empty>
         }
         """
         raise NotImplementedError
