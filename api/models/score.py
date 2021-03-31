@@ -97,21 +97,43 @@ class ScoreModel(BaseModel):
     # normalization is automatically done via AMRS
     # e.g., raw FLOPs are on the scale of 10e7 but the AMRS-converted compute is in
     # [0,100]
-    def dynascore(self, perf_metric_field_name, data, weights):
+    def dynascore(
+        self,
+        perf_metric_field_name,
+        data,
+        weights,
+        direction_multipliers,
+        delta_cutoff_proportion=0.01,
+    ):
         converted_data = data.copy(deep=True)
+        for metric in list(data):
+            converted_data[metric] = (
+                direction_multipliers[metric] * converted_data[metric]
+            )
+
         converted_data["dynascore"] = 0
 
         denominator = sum(weights.values())
         for key in weights:
             weights[key] /= denominator
 
-        delta = data.diff()
+        # We don't want small denominators to make AMRS super sensitive to noise in
+        # the model submissions.
+        delta = converted_data.diff()
+        delta_threshold = (
+            converted_data[perf_metric_field_name].max() * delta_cutoff_proportion
+        )
+        satisfied_indices = []
+        for index in range(len(delta[perf_metric_field_name])):
+            if abs(delta[perf_metric_field_name][index]) > delta_threshold:
+                satisfied_indices.append(index)
 
         for metric in list(data):
             AMRS = (1 if metric == perf_metric_field_name else -1) * (
-                delta[metric] / delta[perf_metric_field_name]
+                delta[metric][satisfied_indices]
+                / delta[perf_metric_field_name][satisfied_indices]
             ).mean(skipna=True)
-            converted_data[metric] = data[metric] / AMRS
+            converted_data[metric] = converted_data[metric] / AMRS
             converted_data["dynascore"] += converted_data[metric] * weights.get(
                 metric, 0
             )
@@ -133,19 +155,50 @@ class ScoreModel(BaseModel):
         datasets = self.dbs.query(Dataset).filter(
             Dataset.id.in_([item["did"] for item in ordered_dids_with_weight])
         )
-        models = (
-            self.dbs.query(Model).filter(Model.tid == tid).filter(Model.is_published)
-        )
         scores = (
             self.dbs.query(Score)
             .join(Model, Score.mid == Model.id)
             .filter(Model.tid == tid)
             .filter(Model.is_published)
+            .filter(Score.did != None)  # noqa
         )
+
+        # Filter models and scores so that we have complete sets of scores.
+        # Unclear what the "null" values should be if we wanted to complete them.
+        mid_to_unique_dids = {}
+        all_unique_dids = {item["did"] for item in ordered_dids_with_weight}
+        for score in scores:
+            complete_score_for_dataset = True
+            for item in ordered_metrics_with_weight_and_conversion:
+                if (score.to_dict().get(item["field_name"], None) is None) and (
+                    score.metadata_json is None
+                    or json.loads(score.metadata_json).get(item["field_name"], None)
+                    is None
+                ):
+                    complete_score_for_dataset = False
+            if complete_score_for_dataset:
+                if score.mid in mid_to_unique_dids:
+                    mid_to_unique_dids[score.mid].add(score.did)
+                else:
+                    mid_to_unique_dids[score.mid] = {score.did}
+        filtered_scores = []
+        for score in scores:
+            if mid_to_unique_dids.get(score.mid, set()) == all_unique_dids:
+                filtered_scores.append(score)
+        scores = filtered_scores
+        models = (
+            self.dbs.query(Model).filter(Model.tid == tid).filter(Model.is_published)
+        )
+        filtered_models = []
+        for model in models:
+            if mid_to_unique_dids.get(model.id, set()) == all_unique_dids:
+                filtered_models.append(model)
+        models = filtered_models
+
+        # Format the score data so that we can put it in Pandas data frames.
         mid_and_did_to_scores = {}
         for score in scores:
             mid_and_did_to_scores[(score.mid, score.did)] = score
-
         dataset_results_dict = {}
         for dataset in datasets:
             dataset_results_dict[dataset.id] = {
@@ -153,49 +206,18 @@ class ScoreModel(BaseModel):
                 for item in ordered_metrics_with_weight_and_conversion
             }
             for model in models:
-                if (model.id, dataset.id) in mid_and_did_to_scores:
-                    score = mid_and_did_to_scores[(model.id, dataset.id)]
-                    for field_name in dataset_results_dict[dataset.id]:
-                        if field_name == perf_metric_field_name:
-                            dataset_results_dict[dataset.id][field_name].append(
-                                score.perf
-                            )
-                        elif (
-                            field_name in score.to_dict()
-                            and score.to_dict()[field_name] is not None
-                        ):
-                            dataset_results_dict[dataset.id][field_name].append(
-                                score.to_dict()[field_name]
-                            )
-                        elif (
-                            score.metadata_json is not None
-                            and field_name in json.loads(score.metadata_json)
-                            and json.loads(score.metadata_json)[field_name] is not None
-                        ):
-                            dataset_results_dict[dataset.id][field_name].append(
-                                json.loads(score.metadata_json)[field_name]
-                            )
-                        else:
-                            dataset_results_dict[dataset.id][field_name].append(
-                                0.0
-                            )  # We assume that 0 is the null score
-                            # (perfect for cost metrics, but worst for performance)
-                else:
-                    for field_name in dataset_results_dict[dataset.id]:
-                        dataset_results_dict[dataset.id][field_name].append(
-                            0.0
-                        )  # We assume that 0 is the null scor
-                        # (perfect for cost metrics, but worst for performance)
+                score = mid_and_did_to_scores[(model.id, dataset.id)]
+                for field_name in dataset_results_dict[dataset.id]:
+                    result = score.to_dict().get(field_name, None)
+                    if result is None:
+                        result = json.loads(score.metadata_json)[field_name]
+                    dataset_results_dict[dataset.id][field_name].append(result)
+
+        # Average the results accross datasets.
         averaged_dataset_results = None
-        positive_utility_conversions = {
-            item["field_name"]: item["positive_utility_conversion"]
-            for item in ordered_metrics_with_weight_and_conversion
-        }
         for key, value in dataset_results_dict.items():
             df = pd.DataFrame.from_dict(value)
             dataset_results_dict[key] = df
-            for metric in positive_utility_conversions:
-                df[metric] = positive_utility_conversions[metric](df[metric])
             if averaged_dataset_results is None:
                 averaged_dataset_results = {
                     item["did"]: item["weight"] for item in ordered_dids_with_weight
@@ -204,6 +226,8 @@ class ScoreModel(BaseModel):
                 averaged_dataset_results += {
                     item["did"]: item["weight"] for item in ordered_dids_with_weight
                 }[key] * df
+
+        # Compute the dynascore.
         converted_dataset_results = self.dynascore(
             perf_metric_field_name,
             averaged_dataset_results,
@@ -211,8 +235,13 @@ class ScoreModel(BaseModel):
                 item["field_name"]: item["weight"]
                 for item in ordered_metrics_with_weight_and_conversion
             },
+            direction_multipliers={
+                item["field_name"]: item["utility_direction"]
+                for item in ordered_metrics_with_weight_and_conversion
+            },
         )
 
+        # Convert the Pandas results into an output json.
         users = self.dbs.query(User)
         uid_to_username = {}
         for user in users:
@@ -259,9 +288,11 @@ class ScoreModel(BaseModel):
                     "averaged_variances": averaged_variances,
                     "dynascore": dynascore
                     if not math.isnan(dynascore)
-                    else 0,  # It is possible for the dynascore to be nan if,
-                    # for any metric, all models on the leaderboard have tha
-                    # metric as 0.
+                    else 0,  # It is possible for the dynascore to be nan if
+                    # the leaderboard is uninteresting. For example, if,
+                    # for any metric, all models on the leaderboard have that
+                    # metric as 0. In these cases, dynascores for all models
+                    # will be nan.
                     "dynavariance": 0,  # TODO
                     "datasets": datasets_list,
                 }
@@ -286,7 +317,6 @@ class ScoreModel(BaseModel):
         elif sort_by == "model_name":
             data_list.sort(reverse=reverse_sort, key=lambda model: model["model_name"])
 
-        print(data_list[offset : offset + limit])
         return util.json_encode(
             {"count": len(data_list), "data": data_list[offset : offset + limit]}
         )
