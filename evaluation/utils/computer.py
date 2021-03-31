@@ -6,10 +6,9 @@ import os
 import pickle
 import sys
 import tempfile
-from enum import Enum
 
 import boto3
-from botocore.exceptions import ClientError
+from enum import Enum
 
 from metrics import get_job_metrics
 from models.round import RoundModel
@@ -101,11 +100,6 @@ class MetricsComputer:
                     f.write(json.dumps(pred) + "\n")
             self.s3_client.upload_file(parsed_pred_file, s3_bucket, s3_path)
             os.remove(parsed_pred_file)
-        except ClientError as e:
-            logger.error(
-                f"Error in parsing and overwriting output file for {job.name}: {e}"
-            )
-            return False
         except Exception as e:
             logger.exception(f"Exception in parsing output file for {job.name}: {e}")
             return False

@@ -176,13 +176,13 @@ class BaseDataset(ABC):
         the given target, and the target id should be original id
         """
         # load target examples
-        targets_examples = self.read_labels(perturb_prefix) if not targets else targets
-        target_ids = [x["id"] for x in targets_examples]
+        target_examples = self.read_labels(perturb_prefix) if not targets else targets
+        target_ids = [x["id"] for x in target_examples]
         # note to compute accuracy with changed label,
         # each perturbed example needs to have a unique id too
-        target_labels = {t["id"]: t["answer"] for t in targets_examples}
+        target_labels = {t["id"]: t["answer"] for t in target_examples}
         target_labels = [target_labels[id] for id in target_ids]
-        target_tags = {t["id"]: t["tags"] for t in targets_examples}
+        target_tags = {t["id"]: t["tags"] for t in target_examples}
         target_tags = [target_tags[id] for id in target_ids]
 
         predictions = [
