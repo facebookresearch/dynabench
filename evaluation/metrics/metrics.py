@@ -26,6 +26,19 @@ def get_f1_meta(task=None):
     return {"unit": "%", "pretty_name": "F1", "utility_direction": 1}
 
 
+def get_unperturbed_percent(predictions: list, targets: list):
+    total_unperturbed_weights, total = 0, 0
+    for pl, t in zip(predictions, targets):
+        if pl:
+            total_unperturbed_weights += sum([p == t for p in pl]) / len(pl)
+            total += 1
+    return round(total_unperturbed_weights / total * 100, 2)
+
+
+def get_unperturbed_percent_meta(task=None):
+    return {"unit": "%", "pretty_name": "Unperturbed Percent", "utility_direction": 1}
+
+
 # job_metrics, takes raw job and dataset as input
 def get_memory_utilization(job, dataset):
     mem = (

@@ -103,3 +103,10 @@ def path_available_on_s3(s3_client, s3_bucket, path, perturb_prefix=None):
         if obj["Key"] == path:
             return True
     return False
+
+
+def parse_s3_uri(s3_uri):
+    parts = s3_uri.replace("s3://", "").split("/")
+    s3_bucket = parts[0]
+    s3_path = "/".join(parts[1:])
+    return s3_bucket, s3_path

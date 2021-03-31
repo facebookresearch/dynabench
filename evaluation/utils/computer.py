@@ -9,9 +9,11 @@ import tempfile
 from enum import Enum
 
 import boto3
+from botocore.exceptions import ClientError
 
 from metrics import get_job_metrics
 from models.round import RoundModel
+from utils.helpers import parse_s3_uri
 
 
 sys.path.append("../api")  # noqa
@@ -54,38 +56,80 @@ class MetricsComputer:
             )
             return [], []
 
-    def parse_outfile(self, job):
+    def parse_outfile(self, job, original=False):
         """
         Parse batch transform output by balancing brackets
         """
-        output_s3_uri = self.datasets[job.dataset_name].get_output_s3_url(
-            job.endpoint_name, job.perturb_prefix
-        )
-        parts = output_s3_uri.replace("s3://", "").split("/")
-        s3_bucket = parts[0]
-        s3_path = "/".join(parts[1:])
-        tmp_pred_file = tempfile.mkstemp(prefix="predictions")[1]
-        self.s3_client.download_file(s3_bucket, s3_path, tmp_pred_file)
-        with open(tmp_pred_file) as f:
-            tmp = ""
-            predictions = []
-            line = f.readline().strip()
-            lb = 0
-            while line:
-                for c in line:
-                    if c == "{":
-                        lb += 1
-                    elif c == "}":
-                        lb -= 1
-                if lb == 0 and tmp:
-                    tmp += line
-                    predictions.append(json.loads(tmp))
-                    tmp = ""
-                elif line:
-                    tmp += line.replace("\n", "")
+        perturb_prefix = None if original else job.perturb_prefix
+        try:
+            raw_output_s3_uri = self.datasets[job.dataset_name].get_output_s3_url(
+                job.endpoint_name, raw=True, perturb_prefix=perturb_prefix
+            )
+            raw_s3_bucket, raw_s3_path = parse_s3_uri(raw_output_s3_uri)
+
+            # download raw predictions and parse
+            raw_pred_file = tempfile.mkstemp(prefix="predictions")[1]
+            self.s3_client.download_file(raw_s3_bucket, raw_s3_path, raw_pred_file)
+            with open(raw_pred_file) as f:
+                tmp = ""
+                predictions = []
                 line = f.readline().strip()
-        os.remove(tmp_pred_file)
+                lb = 0
+                while line:
+                    for c in line:
+                        if c == "{":
+                            lb += 1
+                        elif c == "}":
+                            lb -= 1
+                    if lb == 0 and tmp:
+                        tmp += line
+                        predictions.append(json.loads(tmp))
+                        tmp = ""
+                    elif line:
+                        tmp += line.replace("\n", "")
+                    line = f.readline().strip()
+            os.remove(raw_pred_file)
+
+            # upload parsed file
+            output_s3_uri = self.datasets[job.dataset_name].get_output_s3_url(
+                job.endpoint_name, raw=False, perturb_prefix=perturb_prefix
+            )
+            s3_bucket, s3_path = parse_s3_uri(output_s3_uri)
+            parsed_pred_file = tempfile.mkstemp(prefix="predictions")[1]
+            with open(parsed_pred_file, "w") as f:
+                for pred in predictions:
+                    f.write(json.dumps(pred) + "\n")
+            self.s3_client.upload_file(parsed_pred_file, s3_bucket, s3_path)
+            os.remove(parsed_pred_file)
+        except ClientError as e:
+            logger.error(
+                f"Error in parsing and overwriting output file for {job.name}: {e}"
+            )
+            return False
+        except Exception as e:
+            logger.exception(f"Exception in parsing output file for {job.name}: {e}")
+            return False
         return predictions
+
+    def read_predictions(self, job, original=False):
+        try:
+            perturb_prefix = None if original else job.perturb_prefix
+            output_s3_uri = self.datasets[job.dataset_name].get_output_s3_url(
+                job.endpoint_name, raw=False, perturb_prefix=perturb_prefix
+            )
+            s3_bucket, s3_path = parse_s3_uri(output_s3_uri)
+            tf = tempfile.mkstemp(prefix=self.name)[1]
+            self.s3_client.download_file(s3_bucket, s3_path, tf)
+            predictions = [json.loads(l) for l in open(tf).readlines()]
+        except Exception:
+            predictions = self.parse_outfile(job, original=original)
+        finally:
+            if not predictions:
+                raise RuntimeError(
+                    f"Error fetch predictions for job {job.name}, "
+                    f"where request original output is {original}"
+                )
+            return predictions
 
     def update_database(self, job):
         logger.info(f"Evaluating {job.job_name}")
@@ -106,11 +150,32 @@ class MetricsComputer:
             # - take full job information at one interface instead
             predictions = self.parse_outfile(job)
             eval_metrics_dict = self.datasets[job.dataset_name].eval(
-                predictions, job.perturb_prefix
+                predictions, perturb_prefix=job.perturb_prefix
             )
 
             if job.perturb_prefix:
-                sm.update(s.id, **{job.perturb_prefix: eval_metrics_dict["perf"]})
+                targets = self.read_predictions(job, original=True)
+                delta_metrics_dict = self.datasets[job.dataset_name].eval(
+                    predictions, targets, perturb_prefix=job.perturb_prefix
+                )
+
+                eval_metadata_json = {
+                    f"{job.perturb_prefix}-{metric}": eval_metrics_dict[
+                        "metadata_json"
+                    ][metric]
+                    for metric in eval_metrics_dict
+                    if metric != "perf_by_tag"
+                }
+                metadata_json = {
+                    **{eval_metadata_json},
+                    **{delta_metrics_dict["metadata_json"]},
+                }
+
+                original_metadata_json = json.loads(s.metadata_json)
+                metadata_json = {**original_metadata_json, **metadata_json}
+
+                score_obj = {**delta_metrics_dict, "metadata_json": metadata_json}
+                sm.update(s.id, **score_obj)
             else:
                 job_metrics_dict = get_job_metrics(job, self.datasets[job.dataset_name])
                 score_obj = {**eval_metrics_dict, **job_metrics_dict}
