@@ -227,7 +227,7 @@ export default class ApiService {
       : "";
 
     const datasetWeightsQuery = datasetWeights
-      ? `&ordered_dataset_weights=${encodeURIComponent(
+      ? `&ordered_scoring_dataset_weights=${encodeURIComponent(
           datasetWeights.join("|")
         )}`
       : "";

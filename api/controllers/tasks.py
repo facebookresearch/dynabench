@@ -275,9 +275,10 @@ def get_dynaboard_info(tid):
     else:
         bottle.abort(400, "missing metric weight data")
 
-    if "ordered_dataset_weights" in query_dict:
+    if "ordered_scoring_dataset_weights" in query_dict:
         ordered_dataset_weights = [
-            float(item) for item in query_dict["ordered_dataset_weights"][0].split("|")
+            float(item)
+            for item in query_dict["ordered_scoring_dataset_weights"][0].split("|")
         ]
     else:
         bottle.abort(400, "missing dataset weight data")
@@ -292,7 +293,7 @@ def get_dynaboard_info(tid):
         {"weight": item[0], "did": item[1]}
         for item in zip(
             ordered_dataset_weights,
-            [item["id"] for item in task_dict["ordered_datasets"]],
+            [item["id"] for item in task_dict["ordered_scoring_datasets"]],
         )
     ]
 

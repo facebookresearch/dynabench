@@ -158,7 +158,7 @@ const SortContainer = ({
  */
 const OverallModelLeaderboardRow = ({
   model,
-  ordered_datasets,
+  ordered_scoring_datasets,
   metrics,
   enableWeights,
   datasetWeights,
@@ -423,7 +423,7 @@ const OverallModelLeaderBoard = ({
         {models?.map((model) => (
           <OverallModelLeaderboardRow
             model={model}
-            ordered_datasets={task.datasets}
+            ordered_scoring_datasets={task.datasets}
             metrics={metrics}
             key={`model-${model.model_id}`}
             enableWeights={enableWeights}

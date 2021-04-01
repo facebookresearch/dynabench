@@ -106,6 +106,7 @@ class ScoreModel(BaseModel):
         direction_multipliers,
         delta_cutoff_proportion=0.01,
     ):
+
         converted_data = data.copy(deep=True)
         for metric in list(data):
             converted_data[metric] = (
@@ -161,7 +162,7 @@ class ScoreModel(BaseModel):
             .join(Model, Score.mid == Model.id)
             .filter(Model.tid == tid)
             .filter(Model.is_published)
-            .filter(Score.did != None)  # noqa
+            .filter(Score.did.in_([item["did"] for item in ordered_dids_with_weight]))
         )
 
         # Filter models and scores so that we have complete sets of scores.

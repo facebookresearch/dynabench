@@ -5,7 +5,7 @@ import sys
 import sqlalchemy as db
 
 from .base import Base, BaseModel
-from .dataset import DatasetModel
+from .dataset import AccessTypeEnum, DatasetModel
 from .round import Round, RoundModel
 from .user import User
 
@@ -115,13 +115,20 @@ class TaskModel(BaseModel):
             dm = DatasetModel()
             datasets = dm.getByTid(tid)
             dataset_list = []
+            scoring_dataset_list = []
             for dataset in datasets:
                 dataset_list.append({"id": dataset.id, "name": dataset.name})
+                if dataset.access_type == AccessTypeEnum.scoring:
+                    scoring_dataset_list.append(
+                        {"id": dataset.id, "name": dataset.name}
+                    )
             dataset_list.sort(key=lambda item: item["id"])
+            scoring_dataset_list.sort(key=lambda item: item["id"])
 
             t = t.to_dict()
             r = r.to_dict()
             rm = RoundModel()
+            t["ordered_scoring_datasets"] = scoring_dataset_list
             t["ordered_datasets"] = dataset_list
             shortname_to_metrics_task_name = {
                 "NLI": "nli",
