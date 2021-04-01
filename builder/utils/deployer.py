@@ -16,8 +16,8 @@ from sagemaker.predictor import Predictor
 from tqdm import tqdm
 
 from deploy_config import deploy_config
-from utils.logging import logger
 from dynalab_cli.utils import SetupConfigHandler
+from utils.logging import logger
 
 
 class ModelDeployer:
@@ -167,9 +167,11 @@ class ModelDeployer:
         for f in os.listdir(docker_dir):
             shutil.copyfile(os.path.join(docker_dir, f), os.path.join(self.root_dir, f))
 
-        # tarball current folder but exclude checkpoints 
+        # tarball current folder but exclude checkpoints
         exclude_list_file = "exclude.txt"
-        self.config_handler.write_exclude_filelist(exclude_list_file, self.name, exclude_model=True)
+        self.config_handler.write_exclude_filelist(
+            exclude_list_file, self.name, exclude_model=True
+        )
         process = subprocess.run(
             [
                 "tar",
@@ -312,9 +314,7 @@ class ModelDeployer:
             "-f",
         ]
         if self.config["model_files"]:
-            extra_files = ",".join(
-                shlex.quote(f) for f in self.config["model_files"]
-            )
+            extra_files = ",".join(shlex.quote(f) for f in self.config["model_files"])
             archive_command += ["--extra-files", extra_files]
         process = subprocess.run(
             archive_command,
