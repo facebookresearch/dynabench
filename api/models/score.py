@@ -95,8 +95,9 @@ class ScoreModel(BaseModel):
 
     # calculate the dynascore
     # normalization is automatically done via AMRS
-    # e.g., raw FLOPs are on the scale of 10e7 but the AMRS-converted compute is in
-    # [0,100]
+    # e.g., raw FLOPs are on the scale of 10e7 but the AMRS-converted compute is
+    # at approximately the same scale as all the other metrics (not necessarily
+    # in a fixed range like [0, 100], though)
     def dynascore(
         self,
         perf_metric_field_name,
