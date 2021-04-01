@@ -22,9 +22,17 @@ def load_datasets():
         "dynasent-r1-test": dynasent.DynasentRound1Test(),
         "dynasent-r2-test": dynasent.DynasentRound2Test(),
         "aqa-r1-test": aqa.AqaRound1Test(),
-        "ahs-r1-test": ahs.AhsRound1Test(),
-        "ahs-r2-test": ahs.AhsRound2Test(),
-        "ahs-r3-test": ahs.AhsRound3Test(),
+        "hs-r1-test": ahs.AhsRound1Test(),
+        "hs-r2-test": ahs.AhsRound2Test(),
+        "hs-r3-test": ahs.AhsRound3Test(),
     }
-
+    _verify_dataset(datasets)
     return datasets
+
+
+def _verify_dataset(datasets: dict):
+    for dataset in datasets:
+        assert dataset == datasets[dataset].name, (
+            f"{dataset} name does not match the attribute name "
+            f"{datasets[dataset].name} from its defining class"
+        )
