@@ -71,18 +71,6 @@ class ModelDeployer:
         subprocess.run(shlex.split(f"tar xf {shlex.quote(save_tarball)}"))
         os.remove(save_tarball)
 
-    def get_config(self):
-        # TODO: use dynalab SetupConfigHandler to load config
-        # when dynalab is available to install
-        config_path = f"./.dynalab/{self.name}/setup_config.json"
-        if os.path.exists(config_path):
-            with open(config_path) as f:
-                return json.load(f)
-        else:
-            raise RuntimeError(
-                f"No config found. Please call dynalab-cli init to initiate this repo. "
-            )
-
     def setup_sagemaker_env(self):
         env = {}
 
@@ -186,7 +174,7 @@ class ModelDeployer:
             [
                 "tar",
                 f"--exclude-from={exclude_list_file}",
-                "-cf",
+                "-czf",
                 shlex.quote(f"{self.unique_name}.tar.gz"),
                 ".",
             ],
