@@ -169,13 +169,13 @@ class ModelDeployer:
                 return cur, N
         return None
 
-    def build_docker(self):
+    def build_docker(self, secret):
         docker_dir = os.path.join(sys.path[0], "dockerfiles")
         for f in os.listdir(docker_dir):
             shutil.copyfile(os.path.join(docker_dir, f), os.path.join(self.tmp_dir, f))
 
         # build docker
-        docker_build_args = f"--build-arg tarball_name={shlex.quote(self.unique_name)} --build-arg requirements={shlex.quote(str(self.config['requirements']))} --build-arg setup={shlex.quote(str(self.config['setup']))}"
+        docker_build_args = f"--build-arg tarball_name={shlex.quote(self.unique_name)} --build-arg requirements={shlex.quote(str(self.config['requirements']))} --build-arg setup={shlex.quote(str(self.config['setup']))} --build-arg my_secret={secret}"
         docker_build_command = f"docker build --network host -t {shlex.quote(self.unique_name)} -f Dockerfile {docker_build_args} ."
         with subprocess.Popen(
             shlex.split(docker_build_command),
@@ -218,9 +218,9 @@ class ModelDeployer:
                 logger.exception(f"Error in docker build for model {self.name}")
                 raise RuntimeError("Error in docker build")
 
-    def build_and_push_docker(self):
+    def build_and_push_docker(self, secret):
         logger.info(f"Building docker for model {self.name}")
-        self.build_docker()
+        self.build_docker(secret)
 
         # docker login
         docker_credentials = self.env["ecr_client"].get_authorization_token()[
@@ -367,9 +367,9 @@ class ModelDeployer:
         )
         return f"{deploy_config['gateway_url']}?model={self.unique_name}"
 
-    def deploy(self):
+    def deploy(self, secret):
         self.delete_existing_endpoints()
-        image_ecr_path = self.build_and_push_docker()
+        image_ecr_path = self.build_and_push_docker(secret)
         model_s3_path = self.archive_and_upload_model()
         endpoint_url = self.deploy_model(image_ecr_path, model_s3_path)
         return endpoint_url

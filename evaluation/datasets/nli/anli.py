@@ -7,13 +7,17 @@ import tempfile
 
 from datasets.common import logger
 
-from .base import NliBase
+from .base import AccessTypeEnum, NliBase
 
 
 class AnliBase(NliBase):
-    def __init__(self, task, name, local_path, round_id=0):
+    def __init__(
+        self, task, name, local_path, round_id=0, access_type=AccessTypeEnum.scoring
+    ):
         self.local_path = local_path
-        super().__init__(task=task, name=name, round_id=round_id)
+        super().__init__(
+            task=task, name=name, round_id=round_id, access_type=access_type
+        )
 
     def load(self):
         try:
@@ -53,7 +57,11 @@ class AnliRound1Dev(AnliBase):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "nli/anli_v1.0/R1/dev.jsonl")
         super().__init__(
-            task="nli", name="anli-r1-dev", local_path=local_path, round_id=1
+            task="nli",
+            name="anli-r1-dev",
+            local_path=local_path,
+            round_id=1,
+            access_type=AccessTypeEnum.standard,
         )
 
 
@@ -71,7 +79,11 @@ class AnliRound2Dev(AnliBase):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "nli/anli_v1.0/R2/dev.jsonl")
         super().__init__(
-            task="nli", name="anli-r2-dev", local_path=local_path, round_id=2
+            task="nli",
+            name="anli-r2-dev",
+            local_path=local_path,
+            round_id=2,
+            access_type=AccessTypeEnum.standard,
         )
 
 
@@ -89,7 +101,11 @@ class AnliRound3Dev(AnliBase):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "nli/anli_v1.0/R3/dev.jsonl")
         super().__init__(
-            task="nli", name="anli-r3-dev", local_path=local_path, round_id=3
+            task="nli",
+            name="anli-r3-dev",
+            local_path=local_path,
+            round_id=3,
+            access_type=AccessTypeEnum.standard,
         )
 
 
