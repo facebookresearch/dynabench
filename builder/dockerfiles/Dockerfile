@@ -43,6 +43,6 @@ RUN if [ -f code/requirements.txt ] && [ ${requirements} = True ]; then pip inst
 RUN if [ -f code/setup.py ] && [ ${setup} = True ]; then pip install --no-cache-dir -Ie code; fi
 
 ENV PYTHONIOENCODING=UTF-8
-ENV my_secret=${my_secret}
+ENV MY_SECRET=${my_secret}
 ENTRYPOINT ["/usr/local/bin/dockerd-entrypoint.sh"]
 CMD ["serve"]
