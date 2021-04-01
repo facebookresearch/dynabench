@@ -52,6 +52,8 @@ class Model(Base):
         db.Enum(DeploymentStatusEnum), default=DeploymentStatusEnum.unknown
     )
 
+    secret = db.Column(db.Text)
+
     def __repr__(self):
         return f"<Model {self.id}>"
 
