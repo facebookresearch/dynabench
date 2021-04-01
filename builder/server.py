@@ -36,14 +36,13 @@ if __name__ == "__main__":
                 model_id = msg["model_id"]
                 s3_uri = msg["s3_uri"]
 
-                logger.info(f"Start to deploy model {model_id}")
-
                 m = ModelModel()
                 model = m.getUnpublishedModelByMid(model_id)
 
                 if (
                     model.deployment_status == DeploymentStatusEnum.uploaded
                 ):  # handles SQS duplicate message
+                    logger.info(f"Start to deploy model {model_id}")
                     name = model.name
                     msg["name"] = name
                     deployed = False
@@ -52,7 +51,7 @@ if __name__ == "__main__":
                     )
                     try:
                         deployer = ModelDeployer(name, s3_uri)
-                        endpoint_url = deployer.deploy()
+                        endpoint_url = deployer.deploy(model.secret)
                     except RuntimeError as e:  # handles all user exceptions
                         msg["exception"] = e
                     except Exception as e:

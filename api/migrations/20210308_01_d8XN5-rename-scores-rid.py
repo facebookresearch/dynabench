@@ -19,22 +19,8 @@ steps = [
         """,
     ),
     step(
-        "ALTER TABLE scores DROP CONSTRAINT ck_data_exist",
-        """
-        ALTER TABLE scores ADD CONSTRAINT ck_data_exist
-        CHECK ((rid<>0) OR (NOT did IS NULL))
-        """,
-    ),
-    step(
-        "ALTER TABLE scores RENAME COLUMN rid TO r_realid",
-        "ALTER TABLE scores RENAME COLUMN r_realid TO rid",
-    ),
-    step(
-        """
-        ALTER TABLE scores ADD CONSTRAINT ck_data_exist
-        CHECK ((r_realid<>0) OR (NOT did IS NULL))
-        """,
-        "ALTER TABLE scores DROP CONSTRAINT ck_data_exist",
+        "ALTER TABLE scores CHANGE rid r_realid INT",
+        "ALTER TABLE scores CHANGE r_realid rid INT",
     ),
     step(
         """

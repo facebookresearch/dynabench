@@ -1,6 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
+import secrets
 import time
 
 import boto3
@@ -274,6 +275,7 @@ def upload_to_s3(credentials):
         upload_datetime=db.sql.func.now(),
         upload_timestamp=ts,
         deployment_status=DeploymentStatusEnum.uploaded,
+        secret=secrets.token_hex(),
     )
 
     um = UserModel()

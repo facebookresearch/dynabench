@@ -20,17 +20,26 @@ from utils.helpers import (
 
 
 sys.path.append("../api")  # noqa
-from models.dataset import DatasetModel  # isort:skip
+from models.dataset import DatasetModel, AccessTypeEnum  # isort:skip
 from models.task import TaskModel  # isort:skip
 
 logger = logging.getLogger("datasets")
 
 
 class BaseDataset(ABC):
-    def __init__(self, task, name, round_id, config=eval_config, ext=".jsonl"):
+    def __init__(
+        self,
+        task,
+        name,
+        round_id,
+        access_type=AccessTypeEnum.scoring,
+        config=eval_config,
+        ext=".jsonl",
+    ):
         self.task = task
         self.name = name
         self.round_id = round_id
+        self.access_type = access_type
         self.filename = self.name + ext
         self._n_examples = {}  # will be get through API
         self.s3_bucket = config["dataset_s3_bucket"]
@@ -79,7 +88,12 @@ class BaseDataset(ABC):
         task_id = t.getByTaskCode(self.task).id
         d = DatasetModel()
         if not d.getByName(self.name):  # avoid id increment for unsuccessful creation
-            if d.create(name=self.name, task_id=task_id, rid=self.round_id):
+            if d.create(
+                name=self.name,
+                task_id=task_id,
+                rid=self.round_id,
+                access_type=self.access_type,
+            ):
                 logger.info(f"Registered {self.name} in datasets db.")
                 send_eval_request(
                     model_id="*",
