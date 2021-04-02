@@ -44,8 +44,6 @@ class Score(Base):
     fairness = db.Column(db.Float)
     robustness = db.Column(db.Float)
 
-    # TODO: make all of these go from 0 onwards
-
     def __repr__(self):
         return f"<Score {self.id}>"
 
@@ -153,28 +151,31 @@ class ScoreModel(BaseModel):
         limit=5,
         offset=0,
     ):
+        ordered_dids = [
+            did_and_weight["did"] for did_and_weight in ordered_dids_with_weight
+        ]
 
-        datasets = self.dbs.query(Dataset).filter(
-            Dataset.id.in_([item["did"] for item in ordered_dids_with_weight])
-        )
+        datasets = self.dbs.query(Dataset).filter(Dataset.id.in_(ordered_dids))
         scores = (
             self.dbs.query(Score)
             .join(Model, Score.mid == Model.id)
             .filter(Model.tid == tid)
             .filter(Model.is_published)
-            .filter(Score.did.in_([item["did"] for item in ordered_dids_with_weight]))
+            .filter(Score.did.in_(ordered_dids))
         )
 
         # Filter models and scores so that we have complete sets of scores.
         # Unclear what the "null" values should be if we wanted to complete them.
         mid_to_unique_dids = {}
-        all_unique_dids = {item["did"] for item in ordered_dids_with_weight}
+        all_unique_dids = set(ordered_dids)
         for score in scores:
             complete_score_for_dataset = True
-            for item in ordered_metrics_with_weight_and_conversion:
-                if (score.to_dict().get(item["field_name"], None) is None) and (
+            for metric_info in ordered_metrics_with_weight_and_conversion:
+                if (score.to_dict().get(metric_info["field_name"], None) is None) and (
                     score.metadata_json is None
-                    or json.loads(score.metadata_json).get(item["field_name"], None)
+                    or json.loads(score.metadata_json).get(
+                        metric_info["field_name"], None
+                    )
                     is None
                 ):
                     complete_score_for_dataset = False
@@ -204,8 +205,8 @@ class ScoreModel(BaseModel):
         dataset_results_dict = {}
         for dataset in datasets:
             dataset_results_dict[dataset.id] = {
-                item["field_name"]: []
-                for item in ordered_metrics_with_weight_and_conversion
+                metric_info["field_name"]: []
+                for metric_info in ordered_metrics_with_weight_and_conversion
             }
             for model in models:
                 score = mid_and_did_to_scores[(model.id, dataset.id)]
@@ -217,29 +218,29 @@ class ScoreModel(BaseModel):
 
         # Average the results accross datasets.
         averaged_dataset_results = None
+        did_to_weight = {
+            did_and_weight["did"]: did_and_weight["weight"]
+            for did_and_weight in ordered_dids_with_weight
+        }
         for key, value in dataset_results_dict.items():
             df = pd.DataFrame.from_dict(value)
             dataset_results_dict[key] = df
             if averaged_dataset_results is None:
-                averaged_dataset_results = {
-                    item["did"]: item["weight"] for item in ordered_dids_with_weight
-                }[key] * df
+                averaged_dataset_results = did_to_weight[key] * df
             else:
-                averaged_dataset_results += {
-                    item["did"]: item["weight"] for item in ordered_dids_with_weight
-                }[key] * df
+                averaged_dataset_results += did_to_weight[key] * df
 
         # Compute the dynascore.
         converted_dataset_results = self.dynascore(
             perf_metric_field_name,
             averaged_dataset_results,
             weights={
-                item["field_name"]: item["weight"]
-                for item in ordered_metrics_with_weight_and_conversion
+                metric_info["field_name"]: metric_info["weight"]
+                for metric_info in ordered_metrics_with_weight_and_conversion
             },
             direction_multipliers={
-                item["field_name"]: item["utility_direction"]
-                for item in ordered_metrics_with_weight_and_conversion
+                metric_info["field_name"]: metric_info["utility_direction"]
+                for metric_info in ordered_metrics_with_weight_and_conversion
             },
         )
 
@@ -250,14 +251,15 @@ class ScoreModel(BaseModel):
             uid_to_username[user.id] = user.username
         data_list = []
         model_index = 0
+        ordered_metric_field_names = [
+            metric_info["field_name"]
+            for metric_info in ordered_metrics_with_weight_and_conversion
+        ]
         for model in models:
             datasets_list = []
             for dataset in datasets:
                 scores = []
-                for field_name in [
-                    item["field_name"]
-                    for item in ordered_metrics_with_weight_and_conversion
-                ]:
+                for field_name in ordered_metric_field_names:
                     scores.append(
                         dataset_results_dict[dataset.id][field_name][model_index]
                     )
@@ -271,10 +273,7 @@ class ScoreModel(BaseModel):
                     }
                 )
             averaged_scores = []
-            for field_name in [
-                item["field_name"]
-                for item in ordered_metrics_with_weight_and_conversion
-            ]:
+            for field_name in ordered_metric_field_names:
                 averaged_scores.append(
                     averaged_dataset_results[field_name][model_index]
                 )
@@ -301,19 +300,17 @@ class ScoreModel(BaseModel):
             )
             model_index += 1
 
+        ordered_metric_pretty_names = [
+            metric_info["pretty_name"]
+            for metric_info in ordered_metrics_with_weight_and_conversion
+        ]
         if sort_by == "dynascore":
             data_list.sort(reverse=reverse_sort, key=lambda model: model["dynascore"])
-        elif sort_by in [
-            m_item["pretty_name"]
-            for m_item in ordered_metrics_with_weight_and_conversion
-        ]:
+        elif sort_by in ordered_metric_pretty_names:
             data_list.sort(
                 reverse=reverse_sort,
                 key=lambda model: model["averaged_scores"][
-                    [
-                        m_item["pretty_name"]
-                        for m_item in ordered_metrics_with_weight_and_conversion
-                    ].index(sort_by)
+                    ordered_metric_pretty_names.index(sort_by)
                 ],
             )
         elif sort_by == "model_name":

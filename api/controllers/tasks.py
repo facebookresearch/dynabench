@@ -27,7 +27,7 @@ def tasks():
 @bottle.get("/tasks/<tid:int>")
 def get_task(tid):
     t = TaskModel()
-    task = t.getWithRoundAndMetricMeta(tid)
+    task = t.getWithRoundAndMetricMetadata(tid)
 
     if not task:
         bottle.abort(404, "Not found")
@@ -200,7 +200,7 @@ def update_task_settings(credentials, tid):
         ]:
             bottle.abort(403, "Access denied")
     tm = TaskModel()
-    task = tm.getWithRoundAndMetricMeta(tid)
+    task = tm.getWithRoundAndMetricMetadata(tid)
     if not task:
         bottle.abort(404, "Not found")
 
@@ -240,7 +240,7 @@ def construct_user_board_response_json(query_result, total_count=0):
 def get_dynaboard_info(tid):
 
     tm = TaskModel()
-    t_dict = tm.getWithRoundAndMetricMeta(tid)
+    t_dict = tm.getWithRoundAndMetricMetadata(tid)
     ordered_metrics = t_dict["ordered_metrics"]
     perf_metric_field_name = t_dict["perf_metric_field_name"]
 
@@ -270,30 +270,31 @@ def get_dynaboard_info(tid):
 
     if "ordered_metric_weights" in query_dict:
         ordered_metric_weights = [
-            float(item) for item in query_dict["ordered_metric_weights"][0].split("|")
+            float(weight)
+            for weight in query_dict["ordered_metric_weights"][0].split("|")
         ]
     else:
         bottle.abort(400, "missing metric weight data")
 
     if "ordered_scoring_dataset_weights" in query_dict:
         ordered_dataset_weights = [
-            float(item)
-            for item in query_dict["ordered_scoring_dataset_weights"][0].split("|")
+            float(weight)
+            for weight in query_dict["ordered_scoring_dataset_weights"][0].split("|")
         ]
     else:
         bottle.abort(400, "missing dataset weight data")
 
     tm = TaskModel()
-    task_dict = tm.getWithRoundAndMetricMeta(tid)
+    task_dict = tm.getWithRoundAndMetricMetadata(tid)
     ordered_metric_and_weight = [
-        dict({"weight": item[0]}, **item[1])
-        for item in zip(ordered_metric_weights, ordered_metrics)
+        dict({"weight": weight}, **metric)
+        for weight, metric in zip(ordered_metric_weights, ordered_metrics)
     ]
     ordered_did_and_weight = [
-        {"weight": item[0], "did": item[1]}
-        for item in zip(
+        {"weight": weight, "did": did}
+        for weight, did in zip(
             ordered_dataset_weights,
-            [item["id"] for item in task_dict["ordered_scoring_datasets"]],
+            [dataset["id"] for dataset in task_dict["ordered_scoring_datasets"]],
         )
     ]
 

@@ -114,7 +114,11 @@ def do_upload(credentials):
         logger.exception(ex)
         bottle.abort(400, "Upload valid contexts file")
 
-    r_realid = TaskModel().getWithRoundAndMetricMeta(task_id)["round"]["id"]
+    tm = TaskModel()
+    task = tm.get(task_id)
+    rm = RoundModel()
+    round = rm.getByTidAndRid(task_id, task.cur_round)
+    r_realid = round.id
     contexts_to_add = []
     for context_info in parsed_upload_data:
         c = Context(

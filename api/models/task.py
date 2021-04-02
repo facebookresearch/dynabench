@@ -104,7 +104,7 @@ class TaskModel(BaseModel):
             tasks[ii]["round"] = r.to_dict()
         return tasks
 
-    def getWithRoundAndMetricMeta(self, tid):
+    def getWithRoundAndMetricMetadata(self, tid):
         try:
             t, r = (
                 self.dbs.query(Task, Round)
