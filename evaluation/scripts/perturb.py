@@ -7,6 +7,7 @@
 
 import argparse
 import logging
+import json
 import os
 import sys
 
@@ -17,6 +18,8 @@ from dynalab_cli.utils import get_tasks
 
 sys.path.append("..")  # noqa
 from eval_config import eval_config as config  # isort:skip
+from fairness import FairnessPerturbation
+from robustness import RobustnessPerturbation
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("perturb")
@@ -87,8 +90,28 @@ def download_base_from_s3(args):
         return False
 
 
+def load_examples(path):
+    examples = []
+    with open(path, 'rt') as f:
+        for line in f:
+            example = json.loads(line.rstrip())
+            examples.append(example)
+    return examples
+
+
 def perturb(path, task, perturb_prefix):
-    raise NotImplementedError
+    examples = load_examples(path)
+    if perturb_prefix == "fairness":
+        pert = FairnessPerturbation()
+    elif perturb_prefix == "robustness":
+        pert = RobustnessPerturbation()
+    
+    perturb_examples = []
+    for example in examples:
+        perturbed = pert.perturb(task, example)
+        perturb_examples.extend(perturbed)
+
+    return perturb_examples
 
 
 def print_instructions(args, local_path, base_dataset_name):
