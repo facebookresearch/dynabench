@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 # Copyright (c) Facebook, Inc. and its affiliates.
+import pandas as pd
+from mephisto.core.data_browser import DataBrowser as MephistoDataBrowser
+from mephisto.core.local_database import LocalMephistoDB
+from mephisto.data_model.assignment import Unit
+from mephisto.data_model.worker import Worker
+
 
 import os  # isort:skip
 import sys  # isort:skip
@@ -7,13 +13,6 @@ import sys  # isort:skip
 if os.path.exists("./Mephisto"):  # isort:skip
     sys.path.append(os.path.abspath("./Mephisto"))  # isort:skip
     print("WARNING: Loading Mephisto from local directory")  # isort:skip
-
-from mephisto.core.data_browser import DataBrowser as MephistoDataBrowser
-from mephisto.core.local_database import LocalMephistoDB
-from mephisto.data_model.assignment import Unit
-from mephisto.data_model.worker import Worker
-
-import pandas as pd
 
 
 parsed_validations = pd.read_csv(
