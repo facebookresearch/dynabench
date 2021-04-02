@@ -48,7 +48,6 @@ class ModelPage extends React.Component {
   fetchModel = () => {
     this.context.api.getModel(this.state.modelId).then(
       (result) => {
-        console.log(result);
         this.setState({ model: result });
       },
       (error) => {
