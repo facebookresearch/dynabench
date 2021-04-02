@@ -40,17 +40,18 @@ def get_memory_utilization_meta(task):
     return {"unit": "GiB", "pretty_name": "Memory_GB", "utility_direction": -1}
 
 
-def get_seconds_per_example(job, dataset):
+def get_examples_per_second(job, dataset):
     n_examples = dataset.get_n_examples()
     eps = (
-        job.status["TransformEndTime"] - job.status["TransformStartTime"]
-    ).seconds / n_examples
+        n_examples
+        / (job.status["TransformEndTime"] - job.status["TransformStartTime"]).seconds
+    )
     return round(eps, 2)
 
 
-def get_seconds_per_example_meta(task):
+def get_examples_per_second_meta(task):
     return {
-        "unit": "seconds",
-        "pretty_name": "Seconds per Example",
-        "utility_direction": -1,
+        "unit": "examples/seconds",
+        "pretty_name": "Examples per Second",
+        "utility_direction": 1,
     }
