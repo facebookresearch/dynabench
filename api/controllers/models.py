@@ -14,6 +14,7 @@ import common.helpers as util
 from common.config import config
 from common.logging import logger
 from models.badge import BadgeModel
+from models.dataset import AccessTypeEnum, DatasetModel
 from models.model import DeploymentStatusEnum, ModelModel
 from models.round import RoundModel
 from models.score import ScoreModel
@@ -36,6 +37,7 @@ def get_model(mid):
 def get_model_detail(credentials, mid):
     m = ModelModel()
     s = ScoreModel()
+    dm = DatasetModel()
     try:
         query_result = m.getModelUserByMid(mid)
         model = query_result[0].to_dict()
@@ -48,9 +50,35 @@ def get_model_detail(credentials, mid):
         model["user"] = query_result[1].to_dict()
         # Construct Score information based on model id
         scores = s.getByMid(mid)
-        fields = ["accuracy", "round_id"]
-        s_dicts = [dict(zip(fields, d)) for d in scores]
-        model["scores"] = s_dicts
+        datasets = dm.getByTid(model["tid"])
+        did_to_dataset_name = {}
+        did_to_dataset_access_type = {}
+        for dataset in datasets:
+            did_to_dataset_name[dataset.id] = dataset.name
+            did_to_dataset_access_type[dataset.id] = dataset.access_type
+        fields = ["accuracy", "round_id", "did"]
+        s_dicts = [
+            dict(
+                zip(fields, d),
+                **{
+                    "dataset_name": did_to_dataset_name.get(d.did, None),
+                    "dataset_access_type": did_to_dataset_access_type.get(d.did, None),
+                },
+            )
+            for d in scores
+        ]
+        model["leaderboard_scores"] = list(
+            filter(
+                lambda s_dict: s_dict["dataset_access_type"] == AccessTypeEnum.scoring,
+                s_dicts,
+            )
+        )
+        model["non_leaderboard_scores"] = list(
+            filter(
+                lambda s_dict: s_dict["dataset_access_type"] == AccessTypeEnum.standard,
+                s_dicts,
+            )
+        )
         return util.json_encode(model)
     except AssertionError:
         logger.exception("Not authorized to access unpublished model detail")
