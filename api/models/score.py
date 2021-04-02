@@ -173,7 +173,7 @@ class ScoreModel(BaseModel):
 
     def getByMid(self, mid):
         return (
-            self.dbs.query(Score.perf, Round.rid)
+            self.dbs.query(Score.perf, Round.rid, Score.did)
             .join(Round, Round.id == Score.r_realid, isouter=True)
             .filter(Score.mid == mid)
             .all()

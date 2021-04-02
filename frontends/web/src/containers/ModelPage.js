@@ -48,6 +48,7 @@ class ModelPage extends React.Component {
   fetchModel = () => {
     this.context.api.getModel(this.state.modelId).then(
       (result) => {
+        console.log(result);
         this.setState({ model: result });
       },
       (error) => {
@@ -101,8 +102,14 @@ class ModelPage extends React.Component {
     const isModelOwner =
       parseInt(this.state.model.user.id) === parseInt(this.state.ctxUserId);
     const { model } = this.state;
-    const { scores } = this.state.model;
-    let orderedScores = (scores || []).sort((a, b) => a.round_id - b.round_id);
+    const { leaderboard_scores } = this.state.model;
+    const { non_leaderboard_scores } = this.state.model;
+    let orderedLeaderboardScores = (leaderboard_scores || []).sort(
+      (a, b) => a.round_id - b.round_id
+    );
+    let orderedNonLeaderboardScores = (non_leaderboard_scores || []).sort(
+      (a, b) => a.round_id - b.round_id
+    );
     return (
       <OverlayProvider initiallyHide={true}>
         <BadgeOverlay
@@ -185,20 +192,41 @@ class ModelPage extends React.Component {
                       </tr>
                       <tr>
                         <td colSpan={2}>
-                          <h6 className="blue-color">Performance</h6>
+                          <h6 className="blue-color">
+                            Performance (Leaderboard Datasets)
+                          </h6>
                         </td>
                       </tr>
-                      <tr>
-                        <td style={{ paddingLeft: 50 }}>Overall</td>
-                        <td>{model.overall_perf}%</td>
-                      </tr>
-                      {orderedScores.map((data) => {
+                      {orderedLeaderboardScores.map((data) => {
                         return (
                           <tr key={data.round_id}>
                             <td
                               style={{ paddingLeft: 50, whiteSpace: "nowrap" }}
                             >
-                              Round {data.round_id}
+                              {data.dataset_name
+                                ? data.dataset_name
+                                : "Round " + data.round_id}
+                            </td>
+                            <td>{Number(data.accuracy).toFixed(2)}%</td>
+                          </tr>
+                        );
+                      })}
+                      <tr>
+                        <td colSpan={2}>
+                          <h6 className="blue-color">
+                            Performance (Non-Leaderboard Datasets)
+                          </h6>
+                        </td>
+                      </tr>
+                      {orderedNonLeaderboardScores.map((data) => {
+                        return (
+                          <tr key={data.round_id}>
+                            <td
+                              style={{ paddingLeft: 50, whiteSpace: "nowrap" }}
+                            >
+                              {data.dataset_name
+                                ? data.dataset_name
+                                : "Round " + data.round_id}
                             </td>
                             <td>{Number(data.accuracy).toFixed(2)}%</td>
                           </tr>
