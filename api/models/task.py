@@ -122,8 +122,8 @@ class TaskModel(BaseModel):
                     scoring_dataset_list.append(
                         {"id": dataset.id, "name": dataset.name}
                     )
-            dataset_list.sort(key=lambda item: item["id"])
-            scoring_dataset_list.sort(key=lambda item: item["id"])
+            dataset_list.sort(key=lambda dataset: dataset["id"])
+            scoring_dataset_list.sort(key=lambda dataset: dataset["id"])
 
             t = t.to_dict()
             r = r.to_dict()
@@ -140,12 +140,15 @@ class TaskModel(BaseModel):
                 metrics_task_name = shortname_to_metrics_task_name[t["shortname"]]
                 ordered_metrics = [
                     dict(
-                        {"name": item[1]["pretty_name"], "field_name": item[0]},
-                        **item[1],
+                        {
+                            "name": metric_info[1]["pretty_name"],
+                            "field_name": metric_info[0],
+                        },
+                        **metric_info[1],
                     )
-                    for item in sorted(
+                    for metric_info in sorted(
                         metrics.get_task_metrics_meta(metrics_task_name).items(),
-                        key=lambda item: item[0],
+                        key=lambda metric_info: metric_info[0],
                     )
                 ]
                 t["perf_metric_field_name"] = metrics.get_task_config_safe(
