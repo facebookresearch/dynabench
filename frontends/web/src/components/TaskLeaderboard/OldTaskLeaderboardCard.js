@@ -19,36 +19,36 @@ const OldTaskLeaderboardCard = (props) => {
 
   const taskId = props.taskId;
 
-  const fetchOverallModelLeaderboard = (api, page) => {
-    api
-      .getOverallModelLeaderboard(
-        taskId,
-        props.location.hash.replace("#", ""),
-        10,
-        page
-      )
-      .then(
-        (result) => {
-          // const isEndOfPage = (page + 1) * this.state.pageLimit >= result.count;
-          setData(result.data);
-          setTags(result.leaderboard_tags);
-        },
-        (error) => {
-          console.log(error);
-        }
-      );
-  };
-
   const paginate = (component, state) => {};
 
   const context = useContext(UserContext);
 
   useEffect(() => {
+    const fetchOverallModelLeaderboard = (api, page) => {
+      api
+        .getOverallModelLeaderboard(
+          taskId,
+          props.location.hash.replace("#", ""),
+          10,
+          page
+        )
+        .then(
+          (result) => {
+            // const isEndOfPage = (page + 1) * this.state.pageLimit >= result.count;
+            setData(result.data);
+            setTags(result.leaderboard_tags);
+          },
+          (error) => {
+            console.log(error);
+          }
+        );
+    };
+
     setIsLoading(true);
     fetchOverallModelLeaderboard(context.api, page);
     setIsLoading(false);
     return () => {};
-  }, [context.api, fetchOverallModelLeaderboard, page]);
+  }, [context.api, page, props.location.hash, taskId]);
 
   if (!data) {
     return null;
