@@ -14,7 +14,7 @@ def get_accuracy(predictions: list, targets: list):
 
 
 def get_accuracy_meta(task=None):
-    return {"unit": "%", "range": (0, 100), "pretty_name": "Accuracy"}
+    return {"unit": "%", "pretty_name": "Accuracy", "utility_direction": 1}
 
 
 def get_f1(predictions: list, targets: list):
@@ -23,7 +23,7 @@ def get_f1(predictions: list, targets: list):
 
 
 def get_f1_meta(task=None):
-    return {"unit": "%", "range": (0, 100), "pretty_name": "F1"}
+    return {"unit": "%", "pretty_name": "F1", "utility_direction": 1}
 
 
 # job_metrics, takes raw job and dataset as input
@@ -37,11 +37,7 @@ def get_memory_utilization(job, dataset):
 
 
 def get_memory_utilization_meta(task):
-    return {
-        "unit": "GiB",
-        "range": (0, get_task_config_safe(task)["instance_config"]["memory_gb"]),
-        "pretty_name": "Memory_GB",
-    }
+    return {"unit": "GiB", "pretty_name": "Memory_GB", "utility_direction": -1}
 
 
 def get_seconds_per_example(job, dataset):
@@ -55,6 +51,6 @@ def get_seconds_per_example(job, dataset):
 def get_seconds_per_example_meta(task):
     return {
         "unit": "seconds",
-        "range": (0, get_task_config_safe(task)["instance_config"]["compute_cap"]),
         "pretty_name": "Seconds per Example",
+        "utility_direction": -1,
     }

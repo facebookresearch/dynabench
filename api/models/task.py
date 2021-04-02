@@ -1,10 +1,17 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+import sys
+
 import sqlalchemy as db
 
 from .base import Base, BaseModel
+from .dataset import AccessTypeEnum, DatasetModel
 from .round import Round, RoundModel
 from .user import User
+
+
+sys.path.append("../evaluation")  # noqa
+import metrics  # isort:skip
 
 
 class Task(Base):
@@ -97,7 +104,7 @@ class TaskModel(BaseModel):
             tasks[ii]["round"] = r.to_dict()
         return tasks
 
-    def getWithRound(self, tid):
+    def getWithRoundAndMetricMetadata(self, tid):
         try:
             t, r = (
                 self.dbs.query(Task, Round)
@@ -105,9 +112,53 @@ class TaskModel(BaseModel):
                 .join(Round, (Round.tid == Task.id) & (Round.rid == Task.cur_round))
                 .one()
             )
+            dm = DatasetModel()
+            datasets = dm.getByTid(tid)
+            dataset_list = []
+            scoring_dataset_list = []
+            for dataset in datasets:
+                dataset_list.append({"id": dataset.id, "name": dataset.name})
+                if dataset.access_type == AccessTypeEnum.scoring:
+                    scoring_dataset_list.append(
+                        {"id": dataset.id, "name": dataset.name}
+                    )
+            dataset_list.sort(key=lambda dataset: dataset["id"])
+            scoring_dataset_list.sort(key=lambda dataset: dataset["id"])
+
             t = t.to_dict()
             r = r.to_dict()
             rm = RoundModel()
+            t["ordered_scoring_datasets"] = scoring_dataset_list
+            t["ordered_datasets"] = dataset_list
+            shortname_to_metrics_task_name = {
+                "NLI": "nli",
+                "QA": "qa",
+                "Sentiment": "sentiment",
+                "Hate Speech": "hs",
+            }
+            if t["shortname"] in shortname_to_metrics_task_name:
+                metrics_task_name = shortname_to_metrics_task_name[t["shortname"]]
+                ordered_metrics = [
+                    dict(
+                        {
+                            "name": metric_info[1]["pretty_name"],
+                            "field_name": metric_info[0],
+                        },
+                        **metric_info[1],
+                    )
+                    for metric_info in sorted(
+                        metrics.get_task_metrics_meta(metrics_task_name).items(),
+                        key=lambda metric_info: metric_info[0],
+                    )
+                ]
+                t["perf_metric_field_name"] = metrics.get_task_config_safe(
+                    metrics_task_name
+                )["perf_metric"]
+            else:
+                ordered_metrics = []
+
+            t["ordered_metrics"] = ordered_metrics
+
             validation_stats = rm.getValidationStats(tid, r["rid"])
             r["total_validations"] = validation_stats["total_validations"]
             r["correct_validations"] = validation_stats["correct_validations"]
