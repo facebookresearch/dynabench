@@ -39,7 +39,7 @@ class Score(Base):
     metadata_json = db.Column(db.Text)
 
     memory_utilization = db.Column(db.Float)
-    seconds_per_example = db.Column(db.Float)
+    examples_per_second = db.Column(db.Float)
 
     fairness = db.Column(db.Float)
     robustness = db.Column(db.Float)
