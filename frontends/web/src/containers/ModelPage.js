@@ -190,10 +190,14 @@ class ModelPage extends React.Component {
                         </td>
                       </tr>
                       <tr>
+                        <td style={{ paddingLeft: 50, whiteSpace: "nowrap" }}>
+                          Overall Performance
+                        </td>
+                        <td>{Number(model.overall_perf).toFixed(2)}%</td>
+                      </tr>
+                      <tr>
                         <td colSpan={2}>
-                          <h6 className="blue-color">
-                            Performance (Leaderboard Datasets)
-                          </h6>
+                          <h6 className="blue-color">Leaderboard Datasets</h6>
                         </td>
                       </tr>
                       {orderedLeaderboardScores.map((data) => {
@@ -213,7 +217,7 @@ class ModelPage extends React.Component {
                       <tr>
                         <td colSpan={2}>
                           <h6 className="blue-color">
-                            Performance (Non-Leaderboard Datasets)
+                            Non-Leaderboard Datasets
                           </h6>
                         </td>
                       </tr>
