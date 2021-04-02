@@ -1,8 +1,13 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+import json
+import math
+
+import pandas as pd
 import sqlalchemy as db
 
 from common import helpers as util
+from models.dataset import Dataset
 from models.round import Round
 from models.user import User
 
@@ -85,6 +90,244 @@ class ScoreModel(BaseModel):
             ]
         )
         return self.dbs.commit()
+
+    # calculate the dynascore
+    # normalization is automatically done via AMRS
+    # e.g., raw FLOPs are on the scale of 10e7 but the AMRS-converted compute is
+    # at approximately the same scale as all the other metrics (not necessarily
+    # in a fixed range like [0, 100], though)
+    def dynascore(
+        self,
+        perf_metric_field_name,
+        data,
+        weights,
+        direction_multipliers,
+        delta_cutoff_proportion=0.01,
+    ):
+
+        converted_data = data.copy(deep=True)
+        for metric in list(data):
+            converted_data[metric] = (
+                direction_multipliers[metric] * converted_data[metric]
+            )
+
+        converted_data["dynascore"] = 0
+
+        denominator = sum(weights.values())
+        for key in weights:
+            weights[key] /= denominator
+
+        # We don't want small denominators to make AMRS super sensitive to noise in
+        # the model submissions.
+        delta = converted_data.diff()
+        delta_threshold = (
+            converted_data[perf_metric_field_name].max() * delta_cutoff_proportion
+        )
+        satisfied_indices = []
+        for index in range(len(delta[perf_metric_field_name])):
+            if abs(delta[perf_metric_field_name][index]) > delta_threshold:
+                satisfied_indices.append(index)
+
+        for metric in list(data):
+            AMRS = (1 if metric == perf_metric_field_name else -1) * (
+                delta[metric][satisfied_indices]
+                / delta[perf_metric_field_name][satisfied_indices]
+            ).mean(skipna=True)
+            converted_data[metric] = converted_data[metric] / AMRS
+            converted_data["dynascore"] += converted_data[metric] * weights.get(
+                metric, 0
+            )
+
+        return converted_data
+
+    def getDynaboardByTask(
+        self,
+        tid,
+        perf_metric_field_name,
+        ordered_metrics_with_weight_and_conversion,
+        ordered_dids_with_weight,
+        sort_by="dynascore",
+        reverse_sort=False,
+        limit=5,
+        offset=0,
+    ):
+        ordered_dids = [
+            did_and_weight["did"] for did_and_weight in ordered_dids_with_weight
+        ]
+
+        datasets = self.dbs.query(Dataset).filter(Dataset.id.in_(ordered_dids))
+        scores = (
+            self.dbs.query(Score)
+            .join(Model, Score.mid == Model.id)
+            .filter(Model.tid == tid)
+            .filter(Model.is_published)
+            .filter(Score.did.in_(ordered_dids))
+        )
+
+        # Filter models and scores so that we have complete sets of scores.
+        # Unclear what the "null" values should be if we wanted to complete them.
+        mid_to_unique_dids = {}
+        all_unique_dids = set(ordered_dids)
+        for score in scores:
+            complete_score_for_dataset = True
+            for metric_info in ordered_metrics_with_weight_and_conversion:
+                if (score.to_dict().get(metric_info["field_name"], None) is None) and (
+                    score.metadata_json is None
+                    or json.loads(score.metadata_json).get(
+                        metric_info["field_name"], None
+                    )
+                    is None
+                ):
+                    complete_score_for_dataset = False
+            if complete_score_for_dataset:
+                if score.mid in mid_to_unique_dids:
+                    mid_to_unique_dids[score.mid].add(score.did)
+                else:
+                    mid_to_unique_dids[score.mid] = {score.did}
+        filtered_scores = []
+        for score in scores:
+            if mid_to_unique_dids.get(score.mid, set()) == all_unique_dids:
+                filtered_scores.append(score)
+        scores = filtered_scores
+        models = (
+            self.dbs.query(Model).filter(Model.tid == tid).filter(Model.is_published)
+        )
+        filtered_models = []
+        for model in models:
+            if mid_to_unique_dids.get(model.id, set()) == all_unique_dids:
+                filtered_models.append(model)
+        models = filtered_models
+
+        # Format the score data so that we can put it in Pandas data frames.
+        mid_and_did_to_scores = {}
+        for score in scores:
+            mid_and_did_to_scores[(score.mid, score.did)] = score
+        dataset_results_dict = {}
+        for dataset in datasets:
+            dataset_results_dict[dataset.id] = {
+                metric_info["field_name"]: []
+                for metric_info in ordered_metrics_with_weight_and_conversion
+            }
+            for model in models:
+                score = mid_and_did_to_scores[(model.id, dataset.id)]
+                for field_name in dataset_results_dict[dataset.id]:
+                    result = score.to_dict().get(field_name, None)
+                    if result is None:
+                        result = json.loads(score.metadata_json)[field_name]
+                    dataset_results_dict[dataset.id][field_name].append(result)
+
+        # Average the results accross datasets.
+        averaged_dataset_results = None
+        did_to_weight = {
+            did_and_weight["did"]: did_and_weight["weight"]
+            for did_and_weight in ordered_dids_with_weight
+        }
+        for key, value in dataset_results_dict.items():
+            df = pd.DataFrame.from_dict(value)
+            dataset_results_dict[key] = df
+            if averaged_dataset_results is None:
+                averaged_dataset_results = did_to_weight[key] * df
+            else:
+                averaged_dataset_results += did_to_weight[key] * df
+
+        # Compute the dynascore.
+        converted_dataset_results = self.dynascore(
+            perf_metric_field_name,
+            averaged_dataset_results,
+            weights={
+                metric_info["field_name"]: metric_info["weight"]
+                for metric_info in ordered_metrics_with_weight_and_conversion
+            },
+            direction_multipliers={
+                metric_info["field_name"]: metric_info["utility_direction"]
+                for metric_info in ordered_metrics_with_weight_and_conversion
+            },
+        )
+
+        # Convert the Pandas results into an output json.
+        users = self.dbs.query(User)
+        uid_to_username = {}
+        for user in users:
+            uid_to_username[user.id] = user.username
+        data_list = []
+        model_index = 0
+        ordered_metric_field_names = [
+            metric_info["field_name"]
+            for metric_info in ordered_metrics_with_weight_and_conversion
+        ]
+        for model in models:
+            datasets_list = []
+            for dataset in datasets:
+                scores = []
+                for field_name in ordered_metric_field_names:
+                    scores.append(
+                        dataset_results_dict[dataset.id][field_name][model_index]
+                    )
+                variances = [0] * len(scores)  # TODO
+                datasets_list.append(
+                    {
+                        "id": dataset.id,
+                        "name": dataset.name,
+                        "scores": scores,
+                        "variances": variances,
+                    }
+                )
+            averaged_scores = []
+            for field_name in ordered_metric_field_names:
+                averaged_scores.append(
+                    averaged_dataset_results[field_name][model_index]
+                )
+            averaged_variances = [0] * len(averaged_scores)  # TODO
+            dynascore = converted_dataset_results["dynascore"][model_index]
+            data_list.append(
+                {
+                    "model_id": model.id,
+                    "model_name": model.name,
+                    "uid": model.uid,
+                    "username": uid_to_username[model.uid],
+                    "averaged_scores": averaged_scores,
+                    "averaged_variances": averaged_variances,
+                    "dynascore": dynascore
+                    if not math.isnan(dynascore)
+                    else 0,  # It is possible for the dynascore to be nan if
+                    # the leaderboard is uninteresting. For example, if,
+                    # for any metric, all models on the leaderboard have that
+                    # metric as 0. In these cases, dynascores for all models
+                    # will be nan.
+                    "dynavariance": 0,  # TODO
+                    "datasets": datasets_list,
+                }
+            )
+            model_index += 1
+
+        ordered_metric_pretty_names = [
+            metric_info["pretty_name"]
+            for metric_info in ordered_metrics_with_weight_and_conversion
+        ]
+        if sort_by == "dynascore":
+            data_list.sort(reverse=reverse_sort, key=lambda model: model["dynascore"])
+        elif sort_by in ordered_metric_pretty_names:
+            data_list.sort(
+                reverse=reverse_sort,
+                key=lambda model: model["averaged_scores"][
+                    ordered_metric_pretty_names.index(sort_by)
+                ],
+            )
+        elif sort_by == "model_name":
+            data_list.sort(reverse=reverse_sort, key=lambda model: model["model_name"])
+
+        return util.json_encode(
+            {"count": len(data_list), "data": data_list[offset : offset + limit]}
+        )
+
+    def getByTid(self, tid):
+        # Main query to fetch the model details
+        query_res = (
+            self.dbs.query(Score)
+            .join(Model, Score.mid == Model.id)
+            .filter(Model.tid == tid)
+        )
+        return query_res
 
     def getOverallModelPerfByTask(self, tid, n=5, offset=0):
         # Main query to fetch the model details

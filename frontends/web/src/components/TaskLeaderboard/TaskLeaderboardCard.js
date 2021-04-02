@@ -34,7 +34,7 @@ const TaskLeaderboardCard = (props) => {
 
   // Dataset Weights Array of a set of dataset id and corresponding weight.
   const [datasetWeights, setDatasetWeights] = useState(
-    task.ordered_datasets?.map((ds) => {
+    task.ordered_scoring_datasets?.map((ds) => {
       return { id: ds.id, weight: 5, name: ds.name }; // Default weight to max i.e. 5.
     })
   );

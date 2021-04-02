@@ -158,7 +158,7 @@ const SortContainer = ({
  */
 const OverallModelLeaderboardRow = ({
   model,
-  ordered_datasets,
+  ordered_scoring_datasets,
   metrics,
   enableWeights,
   datasetWeights,
@@ -167,7 +167,7 @@ const OverallModelLeaderboardRow = ({
 }) => {
   const [expanded, setExpanded] = useState(false);
 
-  const dynascore = parseFloat(model.dynascore).toFixed(0);
+  const dynascore = parseFloat(model.dynascore).toFixed(2);
 
   const totalRows = expanded ? model.datasets.length + 1 : 1;
 
@@ -201,15 +201,24 @@ const OverallModelLeaderboardRow = ({
                 className="text-right t-2"
                 key={`score-${model.model_name}-${metrics[i].id}-overall`}
               >
-                <VariancePopover variance={variance}>
-                  <span>{expanded ? <b>{score}</b> : score}</span>
+                <VariancePopover variance={parseFloat(variance).toFixed(2)}>
+                  <span>
+                    {expanded ? (
+                      <b>{parseFloat(score).toFixed(2)}</b>
+                    ) : (
+                      parseFloat(score).toFixed(2)
+                    )}
+                  </span>
                 </VariancePopover>
               </td>
             );
           })}
 
         <td className="text-right  align-middle pr-4 " rowSpan={totalRows}>
-          <VariancePopover variance={model.dynavariance} placement="top">
+          <VariancePopover
+            variance={parseFloat(model.dynavariance).toFixed(2)}
+            placement="top"
+          >
             <span>{expanded ? <h1>{dynascore}</h1> : dynascore}</span>
           </VariancePopover>
         </td>
@@ -238,8 +247,10 @@ const OverallModelLeaderboardRow = ({
                       className="text-right "
                       key={`score-${model.model_name}-${dataset.id}-${i}-overall`}
                     >
-                      <VariancePopover variance={dataset.variances[i]}>
-                        <span>{score}</span>
+                      <VariancePopover
+                        variance={parseFloat(dataset.variances[i]).toFixed(2)}
+                      >
+                        <span>{parseFloat(score).toFixed(2)}</span>
                       </VariancePopover>
                     </td>
                   );
@@ -412,7 +423,7 @@ const OverallModelLeaderBoard = ({
         {models?.map((model) => (
           <OverallModelLeaderboardRow
             model={model}
-            ordered_datasets={task.datasets}
+            ordered_scoring_datasets={task.datasets}
             metrics={metrics}
             key={`model-${model.model_id}`}
             enableWeights={enableWeights}

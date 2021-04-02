@@ -1,6 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
+from urllib.parse import parse_qs
 
 import bottle
 
@@ -26,7 +27,8 @@ def tasks():
 @bottle.get("/tasks/<tid:int>")
 def get_task(tid):
     t = TaskModel()
-    task = t.getWithRound(tid)
+    task = t.getWithRoundAndMetricMetadata(tid)
+
     if not task:
         bottle.abort(404, "Not found")
     return util.json_encode(task)
@@ -198,7 +200,7 @@ def update_task_settings(credentials, tid):
         ]:
             bottle.abort(403, "Access denied")
     tm = TaskModel()
-    task = tm.getWithRound(tid)
+    task = tm.getWithRoundAndMetricMetadata(tid)
     if not task:
         bottle.abort(404, "Not found")
 
@@ -232,6 +234,81 @@ def construct_user_board_response_json(query_result, total_count=0):
     else:
         resp_obj = {"count": 0, "data": []}
         return util.json_encode(resp_obj)
+
+
+@bottle.get("/tasks/<tid:int>/models/dynaboard")
+def get_dynaboard_info(tid):
+
+    tm = TaskModel()
+    t_dict = tm.getWithRoundAndMetricMetadata(tid)
+    ordered_metrics = t_dict["ordered_metrics"]
+    perf_metric_field_name = t_dict["perf_metric_field_name"]
+
+    # defaults
+    sort_by = "dynascore"
+    sort_direction = "asc"
+    offset = 0
+    limit = 5
+
+    query_dict = parse_qs(bottle.request.query_string)
+    if "sort_by" in query_dict:
+        sort_by = query_dict["sort_by"][0]
+    if "sort_direction" in query_dict:
+        sort_direction = query_dict["sort_direction"][0]
+
+    if sort_direction == "asc":
+        reverse_sort = True
+    elif sort_direction == "desc":
+        reverse_sort = False
+    else:
+        bottle.abort(400, "unrecognized sort direction")
+
+    if "offset" in query_dict:
+        offset = int(query_dict["offset"][0])
+    if "limit" in query_dict:
+        limit = int(query_dict["limit"][0])
+
+    if "ordered_metric_weights" in query_dict:
+        ordered_metric_weights = [
+            float(weight)
+            for weight in query_dict["ordered_metric_weights"][0].split("|")
+        ]
+    else:
+        bottle.abort(400, "missing metric weight data")
+
+    if "ordered_scoring_dataset_weights" in query_dict:
+        ordered_dataset_weights = [
+            float(weight)
+            for weight in query_dict["ordered_scoring_dataset_weights"][0].split("|")
+        ]
+    else:
+        bottle.abort(400, "missing dataset weight data")
+
+    tm = TaskModel()
+    task_dict = tm.getWithRoundAndMetricMetadata(tid)
+    ordered_metric_and_weight = [
+        dict({"weight": weight}, **metric)
+        for weight, metric in zip(ordered_metric_weights, ordered_metrics)
+    ]
+    ordered_did_and_weight = [
+        {"weight": weight, "did": did}
+        for weight, did in zip(
+            ordered_dataset_weights,
+            [dataset["id"] for dataset in task_dict["ordered_scoring_datasets"]],
+        )
+    ]
+
+    sm = ScoreModel()
+    return sm.getDynaboardByTask(
+        tid,
+        perf_metric_field_name,
+        ordered_metric_and_weight,
+        ordered_did_and_weight,
+        sort_by,
+        reverse_sort,
+        limit,
+        offset,
+    )
 
 
 @bottle.get("/tasks/<tid:int>/models")
