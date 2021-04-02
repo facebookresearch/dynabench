@@ -1,6 +1,8 @@
+# Typo attack function from:
+# https://github.com/danishpruthi/Adversarial-Misspellings
+
 import numpy as np
 from collections import defaultdict
-
 
 class RobustnessPerturbation:
     def __init__(self):
@@ -67,7 +69,6 @@ class RobustnessPerturbation:
         
         return text, changed
 
-    # Typo attack function from
     def get_random_attack(self, line, num_tries):
         num_chars = len(line)
 
