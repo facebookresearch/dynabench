@@ -39,9 +39,11 @@ class RobustnessPerturbation:
     def perturb_typo(self, task, example):
         perturb_example = example
         perturb_example['input_id'] = example['uid']
+        # perturb context for all tasks
         context = example['context']
         pt_context, changed = self.perturb_typo_text(context)
         perturb_example['context'] = pt_context
+        # perturb additional fields for "qa" and "nli"
         if task == "qa":
             question = example['question']
             pt_question, changed_question = self.perturb_typo_text(question)

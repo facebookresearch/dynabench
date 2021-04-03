@@ -91,12 +91,8 @@ def download_base_from_s3(args):
 
 
 def load_examples(path):
-    examples = []
-    with open(path, 'rt') as f:
-        for line in f:
-            example = json.loads(line.rstrip())
-            examples.append(example)
-    return examples
+    with open(path, 'rt') as f: 
+        return [json.loads(line) for line in f] 
 
 
 def perturb(path, task, perturb_prefix):

@@ -6,7 +6,7 @@ from util import preprocess, postprocess
 class FairnessPerturbation:
     def __init__(self):
         # initialize perturbation lists.
-        self.fdir = "../name_list/"
+        self.fdir = "../data/"
         self.gender_name_list = self.load_gender_name_list()
         self.gender_word_list = self.load_gender_word_list()
         self.ethnic_name_list = self.load_ethnic_name_list()
@@ -97,9 +97,11 @@ class FairnessPerturbation:
     def perturb_gender(self, task, example):
         perturb_example = example
         perturb_example['input_id'] = example['uid']
+        # perturb context for all tasks
         context = example['context']
         pt_context, changed = self.perturb_gender_text(context)
         perturb_example['context'] = pt_context
+        # perturb additional fields for task "qa" and "nli"
         if task == "qa":
             question = example['question']
             pt_question, changed_question = self.perturb_gender_text(question)
@@ -142,7 +144,7 @@ class FairnessPerturbation:
         text = preprocess(text)
         perturb_text = []
         changed = False
-        for tok in text.split(' '):
+        for tok in text.split():
             new_name = self.gender_name_list.get(tok, None)
             if new_name is not None:
                 perturb_text.append(new_name)
@@ -152,7 +154,7 @@ class FairnessPerturbation:
             new_tok = self.gender_word_list.get(tok.lower(), None)
             if new_tok is not None:
                 if tok[0].isupper():
-                    new_tok = new_tok[0].upper() + new_tok[1:]
+                    new_tok = new_tok.capitalize()
                 perturb_text.append(new_tok)
                 changed = True
             else:

@@ -1,23 +1,11 @@
-# utility functions for simple text preprocessing and post-processing
+# Utility functions for simple text preprocessing and post-processing
+import re
+
 def preprocess(sent):
-    sent = sent.replace('.', ' .')
-    sent = sent.replace(',', ' ,')
-    sent = sent.replace('!', ' !')
-    sent = sent.replace('?', ' ?')
-    sent = sent.replace("\"", " \" ")
-    sent = sent.replace("\'", " \' ")
-    sent = sent.replace(":", " :")
-    sent = sent.replace("-", " - ")
+    sent = re.sub('([.,!?\'\:\-])', r' \1 ', sent)
     return sent
 
 
 def postprocess(sent):
-    sent = sent.replace(' .', '.')
-    sent = sent.replace(' ,', ',')
-    sent = sent.replace(' !', '!')
-    sent = sent.replace(' ?', '?')
-    sent = sent.replace(" \" ", "\"")
-    sent = sent.replace(" \' ", "\'")
-    sent = sent.replace(" :", ":")
-    sent = sent.replace(" - ", "-")
+    sent = re.sub(r'\s+([.,!?"\'\:\-])', r'\1', sent).strip()
     return sent
