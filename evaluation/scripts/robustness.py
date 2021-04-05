@@ -1,8 +1,9 @@
 # Typo attack function from:
 # https://github.com/danishpruthi/Adversarial-Misspellings
 
-import numpy as np
 from collections import defaultdict
+
+import numpy as np
 
 
 class RobustnessPerturbation:

@@ -6,20 +6,20 @@
 # --task nli --perturb-prefix fairness
 
 import argparse
-import logging
 import json
+import logging
 import os
 import sys
 
 import boto3
 
 from dynalab_cli.utils import get_tasks
+from fairness import FairnessPerturbation
+from robustness import RobustnessPerturbation
 
 
 sys.path.append("..")  # noqa
 from eval_config import eval_config as config  # isort:skip
-from fairness import FairnessPerturbation
-from robustness import RobustnessPerturbation
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("perturb")

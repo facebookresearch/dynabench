@@ -1,6 +1,7 @@
 import os
 import random
-from util import preprocess, postprocess
+
+from util import postprocess, preprocess
 
 
 class FairnessPerturbation:
