@@ -91,8 +91,8 @@ def download_base_from_s3(args):
 
 
 def load_examples(path):
-    with open(path, 'rt') as f: 
-        return [json.loads(line) for line in f] 
+    with open(path, "rt") as f:
+        return [json.loads(line) for line in f]
 
 
 def perturb(path, task, perturb_prefix):
@@ -101,7 +101,7 @@ def perturb(path, task, perturb_prefix):
         pert = FairnessPerturbation()
     elif perturb_prefix == "robustness":
         pert = RobustnessPerturbation()
-    
+
     perturb_examples = []
     for example in examples:
         perturbed = pert.perturb(task, example)

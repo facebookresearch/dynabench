@@ -13,13 +13,13 @@ class FairnessPerturbation:
         return
 
     def load_gender_name_list(self):
-        male_words = os.path.join(self.fdir, 'male_word_file.txt')
-        female_words = os.path.join(self.fdir, 'female_word_file.txt')
+        male_words = os.path.join(self.fdir, "male_word_file.txt")
+        female_words = os.path.join(self.fdir, "female_word_file.txt")
 
-        with open(male_words, 'r') as f:
+        with open(male_words, "r") as f:
             male = f.read().splitlines()
 
-        with open(female_words, 'r') as f:
+        with open(female_words, "r") as f:
             female = f.read().splitlines()
 
         # build random pairs
@@ -32,15 +32,15 @@ class FairnessPerturbation:
         return gendered_list
 
     def load_gender_word_list(self):
-        male_names = os.path.join(self.fdir, 'male_names.txt')
-        female_names = os.path.join(self.fdir, 'female_names.txt')
+        male_names = os.path.join(self.fdir, "male_names.txt")
+        female_names = os.path.join(self.fdir, "female_names.txt")
 
-        with open(male_names, 'r') as f:
+        with open(male_names, "r") as f:
             male = f.read().splitlines()
 
-        with open(female_names, 'r') as f:
+        with open(female_names, "r") as f:
             female = f.read().splitlines()
-    
+
         name_list = {}
         random.shuffle(female)
         for i in range(len(female)):
@@ -55,17 +55,17 @@ class FairnessPerturbation:
 
     def load_ethnic_name_list(self):
         folder = self.fdir
-        white_names = os.path.join(folder, 'white_names.txt')
-        black_names = os.path.join(folder, 'black_names.txt')
-        api_names = os.path.join(folder, 'api_names.txt')
-        hisp_names = os.path.join(folder, 'hispanic_names.txt')
- 
-        white_name_list = open(white_names, 'rt').read().split(', ')
-        black_name_list = open(black_names, 'rt').read().split(', ')
-        api_name_list = open(api_names, 'rt').read().split(', ')
-        hisp_name_list = open(hisp_names, 'rt').read().split(', ')
+        white_names = os.path.join(folder, "white_names.txt")
+        black_names = os.path.join(folder, "black_names.txt")
+        api_names = os.path.join(folder, "api_names.txt")
+        hisp_names = os.path.join(folder, "hispanic_names.txt")
+
+        white_name_list = open(white_names, "rt").read().split(", ")
+        black_name_list = open(black_names, "rt").read().split(", ")
+        api_name_list = open(api_names, "rt").read().split(", ")
+        hisp_name_list = open(hisp_names, "rt").read().split(", ")
         all_names = [white_name_list, black_name_list, api_name_list, hisp_name_list]
-    
+
         # build random pairs
         ethnic_name_list = {}
         for i in range(len(all_names)):
@@ -78,7 +78,6 @@ class FairnessPerturbation:
                 ethnic_name_list[name] = all_names[new_group][idx]
 
         return ethnic_name_list
-
 
     def perturb(self, task, example):
         perturbed = []
@@ -93,24 +92,23 @@ class FairnessPerturbation:
 
         return perturbed
 
-
     def perturb_gender(self, task, example):
         perturb_example = example
-        perturb_example['input_id'] = example['uid']
+        perturb_example["input_id"] = example["uid"]
         # perturb context for all tasks
-        context = example['context']
+        context = example["context"]
         pt_context, changed = self.perturb_gender_text(context)
-        perturb_example['context'] = pt_context
+        perturb_example["context"] = pt_context
         # perturb additional fields for task "qa" and "nli"
         if task == "qa":
-            question = example['question']
+            question = example["question"]
             pt_question, changed_question = self.perturb_gender_text(question)
-            perturb_example['question'] = pt_question
+            perturb_example["question"] = pt_question
             changed = changed or changed_question
         elif task == "nli":
-            hypothesis = example['hypothesis']
-            pt_hypothesis, changed_hypothesis = self.perturb_gender_text(hypothesis) 
-            perturb_example['hypothesis'] = pt_hypothesis
+            hypothesis = example["hypothesis"]
+            pt_hypothesis, changed_hypothesis = self.perturb_gender_text(hypothesis)
+            perturb_example["hypothesis"] = pt_hypothesis
             changed = changed or changed_hypothesis
 
         if changed:
@@ -120,23 +118,23 @@ class FairnessPerturbation:
 
     def perturb_ethnic(self, task, example):
         perturb_example = example
-        perturb_example['input_id'] = example['uid']
-        context = example['context']
+        perturb_example["input_id"] = example["uid"]
+        context = example["context"]
         pt_context, changed = self.perturb_ethnic_text(context)
-        perturb_example['context'] = pt_context
+        perturb_example["context"] = pt_context
         if task == "qa":
-            question = example['question']
+            question = example["question"]
             pt_question, changed_question = self.perturb_ethnic_text(question)
-            perturb_example['question'] = pt_question
+            perturb_example["question"] = pt_question
             changed = changed or changed_question
         elif task == "nli":
-            hypothesis = example['hypothesis']
-            pt_hypothesis, changed_hypothesis = self.perturb_ethnic_text(hypothesis) 
-            perturb_example['hypothesis'] = pt_hypothesis
+            hypothesis = example["hypothesis"]
+            pt_hypothesis, changed_hypothesis = self.perturb_ethnic_text(hypothesis)
+            perturb_example["hypothesis"] = pt_hypothesis
             changed = changed or changed_hypothesis
 
         if changed:
-           return perturb_example
+            return perturb_example
 
         return None
 
@@ -160,13 +158,13 @@ class FairnessPerturbation:
             else:
                 perturb_text.append(tok)
 
-        return postprocess(' '.join(perturb_text)), changed
+        return postprocess(" ".join(perturb_text)), changed
 
     def perturb_ethnic_text(self, text):
         text = preprocess(text)
         perturb_text = []
         changed = False
-        for tok in text.split(' '):
+        for tok in text.split(" "):
             new_name = self.ethnic_name_list.get(tok, None)
             if new_name is not None:
                 perturb_text.append(new_name)
@@ -174,4 +172,4 @@ class FairnessPerturbation:
             else:
                 perturb_text.append(tok)
 
-        return postprocess(' '.join(perturb_text)), changed
+        return postprocess(" ".join(perturb_text)), changed
