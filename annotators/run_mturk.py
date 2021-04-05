@@ -40,6 +40,7 @@ class DynaBenchConfig:
     round_id: int = 0
     block_mobile: Optional[bool] = True
     fetching_tags: Optional[str] = None
+    fetching_method: Optional[str] = None
     # ; separating dictionary keys;
     # comma separating list items;
     # ie., "key:value0,value1,value2;key2:value4"
@@ -105,8 +106,7 @@ def main(cfg: DictConfig) -> None:
     def is_onboarding_successful(onboarding_data):
         if "outputs" not in onboarding_data:
             return False
-        if onboarding_data["outputs"] is None:
-            return False
+
         if "success" not in onboarding_data["outputs"]:
             return False
 
