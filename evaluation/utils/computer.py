@@ -12,7 +12,7 @@ from enum import Enum
 
 from metrics import get_job_metrics
 from models.round import RoundModel
-from utils.helpers import parse_s3_uri
+from utils.helpers import parse_s3_uri, update_metadata_json_string
 
 
 sys.path.append("../api")  # noqa
@@ -132,14 +132,13 @@ class MetricsComputer:
             dm = DatasetModel()
             d_entry = dm.getByName(job.dataset_name)
             sm = ScoreModel()
-            if job.perturb_prefix:
-                s = sm.getOneByModelIdAndDataset(job.model_id, d_entry.id)
-                if not s:
-                    logger.info(
-                        f"Haven't received original evaluation for {job.job_name}. "
-                        f"Postpone computation."
-                    )
-                    return ComputeStatusEnum.postponed
+            s = sm.getOneByModelIdAndDataset(job.model_id, d_entry.id)
+            if job.perturb_prefix and not s:
+                logger.info(
+                    f"Haven't received original evaluation for {job.job_name}. "
+                    f"Postpone computation."
+                )
+                return ComputeStatusEnum.postponed
 
             # TODO: avoid explictly pass perturb prefix at multiple places
             # - take full job information at one interface instead
@@ -167,13 +166,12 @@ class MetricsComputer:
                     f"{job.perturb_prefix}-{metric}": eval_metadata_json[metric]
                     for metric in eval_metadata_json
                 }
-                original_metadata_json = json.loads(s.metadata_json)
-                metadata_json = json.dumps(
-                    {
-                        **original_metadata_json,
-                        **eval_metadata_json,
-                        **json.loads(delta_metrics_dict["metadata_json"]),
-                    }
+                metadata_json = update_metadata_json_string(
+                    s.metadata_json,
+                    [
+                        json.dumps(eval_metadata_json),
+                        delta_metrics_dict["metadata_json"],
+                    ],
                 )
 
                 score_obj = {**delta_metrics_dict, "metadata_json": metadata_json}
@@ -181,28 +179,30 @@ class MetricsComputer:
             else:
                 job_metrics_dict = get_job_metrics(job, dataset)
                 score_obj = {**eval_metrics_dict, **job_metrics_dict}
-                score_obj["model_id"] = job.model_id
-                score_obj["did"] = d_entry.id
-                score_obj["raw_output_s3_uri"] = dataset.get_output_s3_url(
-                    job.endpoint_name
-                )
-
-                rm = RoundModel()
-                if dataset.round_id != 0:
-                    score_obj["r_realid"] = rm.getByTidAndRid(
-                        d_entry.tid, d_entry.rid
-                    ).id
+                if s:
+                    score_obj["metadata_json"] = update_metadata_json_string(
+                        s.metadata_json, [score_obj["metadata_json"]]
+                    )
+                    sm.update(s.id, **score_obj)
                 else:
-                    score_obj["r_realid"] = 0
-                sm.create(**score_obj)
+                    score_obj["model_id"] = job.model_id
+                    score_obj["did"] = d_entry.id
+                    score_obj["raw_output_s3_uri"] = dataset.get_output_s3_url(
+                        job.endpoint_name
+                    )
+
+                    rm = RoundModel()
+                    if dataset.round_id != 0:
+                        score_obj["r_realid"] = rm.getByTidAndRid(
+                            d_entry.tid, d_entry.rid
+                        ).id
+                    else:
+                        score_obj["r_realid"] = 0
+                    sm.create(**score_obj)
             return ComputeStatusEnum.successful
         except Exception as ex:
             logger.exception(f"Exception in computing metrics {ex}")
             return ComputeStatusEnum.failed
-
-    def _get_job_metrics(self, job):
-        "Compute job performance metrics: CpuUtilization, MemoryUtilization"
-        return get_job_metrics(job)
 
     def update_status(self, jobs: list):
         if jobs:
