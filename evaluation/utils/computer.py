@@ -115,6 +115,7 @@ class MetricsComputer:
             tf = tempfile.mkstemp(prefix=self.name)[1]
             self.s3_client.download_file(s3_bucket, s3_path, tf)
             predictions = [json.loads(l) for l in open(tf).readlines()]
+            os.remove(tf)
         except Exception:
             predictions = self.parse_outfile(job, original=original)
         finally:
