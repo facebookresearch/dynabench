@@ -41,8 +41,9 @@ class RobustnessPerturbation:
         return perturbed
 
     def perturb_typo(self, task, example):
-        perturb_example = example
+        perturb_example = example.copy()
         perturb_example["input_id"] = example["uid"]
+        perturb_example["uid"] = example["uid"] + "_ptypo"
         # perturb context for all tasks
         context = example["context"]
         pt_context, changed = self.perturb_typo_text(context)

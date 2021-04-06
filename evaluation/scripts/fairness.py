@@ -94,8 +94,9 @@ class FairnessPerturbation:
         return perturbed
 
     def perturb_gender(self, task, example):
-        perturb_example = example
+        perturb_example = example.copy()
         perturb_example["input_id"] = example["uid"]
+        perturb_example["uid"] = example["uid"] + "_pgen"
         # perturb context for all tasks
         context = example["context"]
         pt_context, changed = self.perturb_gender_text(context)
@@ -118,8 +119,9 @@ class FairnessPerturbation:
         return None
 
     def perturb_ethnic(self, task, example):
-        perturb_example = example
+        perturb_example = example.copy()
         perturb_example["input_id"] = example["uid"]
+        perturb_example["uid"] = example["uid"] + "_peth"
         context = example["context"]
         pt_context, changed = self.perturb_ethnic_text(context)
         perturb_example["context"] = pt_context
