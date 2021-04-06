@@ -6,6 +6,7 @@
 # --task nli --perturb-prefix fairness
 
 import argparse
+import json
 import logging
 import os
 import sys
@@ -13,6 +14,8 @@ import sys
 import boto3
 
 from dynalab_cli.utils import get_tasks
+from fairness import FairnessPerturbation
+from robustness import RobustnessPerturbation
 
 
 sys.path.append("..")  # noqa
@@ -87,8 +90,24 @@ def download_base_from_s3(args):
         return False
 
 
+def load_examples(path):
+    with open(path, "rt") as f:
+        return [json.loads(line) for line in f]
+
+
 def perturb(path, task, perturb_prefix):
-    raise NotImplementedError
+    examples = load_examples(path)
+    if perturb_prefix == "fairness":
+        pert = FairnessPerturbation()
+    elif perturb_prefix == "robustness":
+        pert = RobustnessPerturbation()
+
+    perturb_examples = []
+    for example in examples:
+        perturbed = pert.perturb(task, example)
+        perturb_examples.extend(perturbed)
+
+    return perturb_examples
 
 
 def print_instructions(args, local_path, base_dataset_name):
