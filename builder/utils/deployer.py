@@ -379,8 +379,10 @@ class ModelDeployer:
             os.chdir(self.owd)
             self.tmp.cleanup()
             # clean up local docker images
-            
-            subprocess.run(shlex.split(f"docker rmi {shlex.quote(self.repository_name)}"))
+
+            subprocess.run(
+                shlex.split(f"docker rmi {shlex.quote(self.repository_name)}")
+            )
             image_tag = f"{self.env['ecr_registry']}/{self.repository_name}"
             subprocess.run(shlex.split(f"docker rmi {shlex.quote(image_tag)}"))
         except Exception as ex:
