@@ -23,6 +23,7 @@ class ModelDeployer:
     def __init__(self, model_name, s3_uri):
         self.name = model_name
         s3_bucket, s3_path, self.s3_dir, self.unique_name = self.parse_s3_uri(s3_uri)
+        self.repository_name = self.unique_name.lower()
         self.tmp = tempfile.TemporaryDirectory(prefix=self.unique_name)
         self.tmp_dir = self.tmp.name
         logger.info(f"{model_name} folder loaded temporarily at {self.tmp_dir}")
@@ -147,12 +148,12 @@ class ModelDeployer:
         # TODO: manage deletion by version
         try:
             response = self.env["ecr_client"].delete_repository(
-                repositoryName=self.unique_name, force=True
+                repositoryName=self.repository_name, force=True
             )
-            logger.info(f"- Deleting the docker repository {self.unique_name:}")
+            logger.info(f"- Deleting the docker repository {self.repository_name:}")
         except self.env["ecr_client"].exceptions.RepositoryNotFoundException:
             logger.info(
-                f"Repository {self.unique_name} not found. If deploying, this will be created"
+                f"Repository {self.repository_name} not found. If deploying, this will be created"
             )
         else:
             if response:
@@ -176,7 +177,7 @@ class ModelDeployer:
 
         # build docker
         docker_build_args = f"--build-arg tarball_name={shlex.quote(self.unique_name)} --build-arg requirements={shlex.quote(str(self.config['requirements']))} --build-arg setup={shlex.quote(str(self.config['setup']))} --build-arg my_secret={secret}"
-        docker_build_command = f"docker build --network host -t {shlex.quote(self.unique_name)} -f Dockerfile {docker_build_args} ."
+        docker_build_command = f"docker build --network host -t {shlex.quote(self.repository_name)} -f Dockerfile {docker_build_args} ."
         with subprocess.Popen(
             shlex.split(docker_build_command),
             bufsize=1,
@@ -239,11 +240,10 @@ class ModelDeployer:
         else:
             logger.debug(process.stdout)
         # tag docker
-        repository_name = self.unique_name
-        image_ecr_path = f"{self.env['ecr_registry']}/{repository_name}"
+        image_ecr_path = f"{self.env['ecr_registry']}/{self.repository_name}"
         process = subprocess.run(
             shlex.split(
-                f"docker tag {shlex.quote(repository_name)} {shlex.quote(image_ecr_path)}"
+                f"docker tag {shlex.quote(self.repository_name)} {shlex.quote(image_ecr_path)}"
             ),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -259,7 +259,7 @@ class ModelDeployer:
         logger.info(f"Create ECR repository for model {self.name}")
         try:
             response = self.env["ecr_client"].create_repository(
-                repositoryName=self.unique_name,
+                repositoryName=self.repository_name,
                 imageScanningConfiguration={"scanOnPush": True},
             )
         except self.env["ecr_client"].exceptions.RepositoryAlreadyExistsException as e:
@@ -379,8 +379,9 @@ class ModelDeployer:
             os.chdir(self.owd)
             self.tmp.cleanup()
             # clean up local docker images
-            subprocess.run(shlex.split(f"docker rmi {shlex.quote(self.unique_name)}"))
-            image_tag = f"{self.env['ecr_registry']}/{self.unique_name}"
+            
+            subprocess.run(shlex.split(f"docker rmi {shlex.quote(self.repository_name)}"))
+            image_tag = f"{self.env['ecr_registry']}/{self.repository_name}"
             subprocess.run(shlex.split(f"docker rmi {shlex.quote(image_tag)}"))
         except Exception as ex:
             logger.exception(
