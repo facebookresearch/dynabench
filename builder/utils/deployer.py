@@ -16,6 +16,7 @@ from sagemaker.predictor import Predictor
 from tqdm import tqdm
 
 from deploy_config import deploy_config
+from dynalab_cli.utils import SetupConfigHandler
 from utils.logging import logger
 
 
@@ -24,16 +25,18 @@ class ModelDeployer:
         self.name = model_name
         s3_bucket, s3_path, self.s3_dir, self.unique_name = self.parse_s3_uri(s3_uri)
         self.repository_name = self.unique_name.lower()
-        self.tmp = tempfile.TemporaryDirectory(prefix=self.unique_name)
-        self.tmp_dir = self.tmp.name
         logger.info(f"{model_name} folder loaded temporarily at {self.tmp_dir}")
+        self.rootp = tempfile.TemporaryDirectory(prefix=self.unique_name)
+        self.root_dir = self.rootp.name
+        logger.info(f"{model_name} folder loaded temporarily at {self.root_dir}")
         self.archive_name = f"archive.{self.unique_name}"
 
         self.env = self.setup_sagemaker_env()
         self.owd = os.getcwd()
 
         try:
-            self.config = self.initialize(s3_bucket, s3_path)
+            self.config_handler = self.initialize(s3_bucket, s3_path)
+            self.config = self.config_handler.load_config()
         except Exception as ex:
             logger.exception(
                 f"Exception in fetching model folder and loading config {ex}"
@@ -49,35 +52,24 @@ class ModelDeployer:
         return s3_bucket, s3_path, s3_dir, unique_name
 
     def initialize(self, s3_bucket, s3_path):
-        if os.path.exists(self.tmp_dir):
-            shutil.rmtree(self.tmp_dir)
-        os.makedirs(self.tmp_dir)
-        os.chdir(self.tmp_dir)
+        if os.path.exists(self.root_dir):
+            shutil.rmtree(self.root_dir)
+        os.makedirs(self.root_dir)
+        os.chdir(self.root_dir)
         logger.info(f"Fetching model folder {s3_path} for {self.name}")
-        self.fetch_folder(s3_bucket, s3_path)
+        self._fetch_folder(s3_bucket, s3_path)
         logger.info("Load the model setup config")
-        config = self.get_config()
-        return config
+        config_handler = SetupConfigHandler(self.name)
+        return config_handler
 
-    def fetch_folder(self, s3_bucket, s3_path):
+    def _fetch_folder(self, s3_bucket, s3_path):
         save_tarball = f"{self.unique_name}.tar.gz"
         response = self.env["s3_client"].download_file(s3_bucket, s3_path, save_tarball)
         if response:
             logger.debug(f"Response from fetching S3 folder {response}")
 
         subprocess.run(shlex.split(f"tar xf {shlex.quote(save_tarball)}"))
-
-    def get_config(self):
-        # TODO: use dynalab SetupConfigHandler to load config
-        # when dynalab is available to install
-        config_path = f"./.dynalab/{self.name}/setup_config.json"
-        if os.path.exists(config_path):
-            with open(config_path) as f:
-                return json.load(f)
-        else:
-            raise RuntimeError(
-                f"No config found. Please call dynalab-cli init to initiate this repo. "
-            )
+        os.remove(save_tarball)
 
     def setup_sagemaker_env(self):
         env = {}
@@ -173,7 +165,29 @@ class ModelDeployer:
     def build_docker(self, secret):
         docker_dir = os.path.join(sys.path[0], "dockerfiles")
         for f in os.listdir(docker_dir):
-            shutil.copyfile(os.path.join(docker_dir, f), os.path.join(self.tmp_dir, f))
+            shutil.copyfile(os.path.join(docker_dir, f), os.path.join(self.root_dir, f))
+
+        # tarball current folder but exclude checkpoints
+        exclude_list_file = "exclude.txt"
+        self.config_handler.write_exclude_filelist(
+            exclude_list_file, self.name, exclude_model=True
+        )
+        process = subprocess.run(
+            [
+                "tar",
+                f"--exclude-from={exclude_list_file}",
+                "-czf",
+                shlex.quote(f"{self.unique_name}.tar.gz"),
+                ".",
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        )
+        if process.returncode != 0:
+            raise RuntimeError(
+                f"Exception in tarballing the project directory {process.stderr}"
+            )
 
         # build docker
         docker_build_args = f"--build-arg tarball_name={shlex.quote(self.unique_name)} --build-arg requirements={shlex.quote(str(self.config['requirements']))} --build-arg setup={shlex.quote(str(self.config['setup']))} --build-arg my_secret={secret}"
@@ -300,9 +314,7 @@ class ModelDeployer:
             "-f",
         ]
         if self.config["model_files"]:
-            extra_files = ",".join(
-                shlex.quote(f) for f in self.config["model_files"].split(",")
-            )
+            extra_files = ",".join(shlex.quote(f) for f in self.config["model_files"])
             archive_command += ["--extra-files", extra_files]
         process = subprocess.run(
             archive_command,
@@ -377,7 +389,7 @@ class ModelDeployer:
     def cleanup_post_deployment(self):
         try:
             os.chdir(self.owd)
-            self.tmp.cleanup()
+            self.rootp.cleanup()
             # clean up local docker images
 
             subprocess.run(
