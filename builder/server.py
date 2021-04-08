@@ -89,16 +89,17 @@ if __name__ == "__main__":
                             )
                         else:
                             mail_session = None
-                        mail.send(
-                            server=mail_session,
-                            config=config,
-                            contacts=[user.email, "dynabench@fb.com"],
-                            template_name=f"templates/{template}.txt",
-                            msg_dict=msg,
-                            subject=subject,
-                        )
-                        nm = NotificationModel()
-                        nm.create(user.id, "MODEL_DEPLOYMENT_STATUS", template.upper())
+                        if mail_session: 
+                            mail.send(
+                                server=mail_session,
+                                config=config,
+                                contacts=[user.email, "dynabench@fb.com"],
+                                template_name=f"templates/{template}.txt",
+                                msg_dict=msg,
+                                subject=subject,
+                            )
+                            nm = NotificationModel()
+                            nm.create(user.id, "MODEL_DEPLOYMENT_STATUS", template.upper())
 
                     if deployed:
                         eval_queue.send_message(
