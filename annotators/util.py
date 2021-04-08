@@ -44,6 +44,7 @@ MTURK_QUALIFICATIONS = {
             {"Country": "GB"},
             {"Country": "AU"},
             {"Country": "NZ"},
+            {"Country": "MT"},
         ],
         "ActionsGuarded": "DiscoverPreviewAndAccept",
     },

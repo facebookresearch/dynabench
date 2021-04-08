@@ -7,5 +7,6 @@
     "reward_in_dollars": 0.75,
     "tags": "testing",
     "onboarding_qualification_name": "max-qa-1-onboarding",
+    // "qualifications": []
     "qualifications": ["1000_hits_approved", "98_percent_approved", "english_only"]
 }

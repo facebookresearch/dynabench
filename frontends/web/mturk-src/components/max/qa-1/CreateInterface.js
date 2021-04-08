@@ -57,6 +57,8 @@ class CreateInterface extends React.Component {
   constructor(props) {
     super(props);
     this.api = props.api;
+    this.model_name = props.model_name
+    this.model_url = props.model_url
     this.state = {
       answer: [],
       taskId: props.taskConfig.task_id,
@@ -83,11 +85,12 @@ class CreateInterface extends React.Component {
   }
   getNewContext() {
     this.setState({submitDisabled: true, refreshDisabled: true}, function () {
-      this.api.getRandomContext(this.state.taskId, this.state.task.cur_round)
+      this.api.getRandomContext(this.state.taskId, this.state.task.cur_round, ['test'])
       .then(result => {
         var randomTarget = Math.floor(Math.random() * this.state.task.targets.length);
         this.setState({target: randomTarget, context: result, content: [{cls: 'context', text: result.context}], submitDisabled: false, refreshDisabled: false});
-	console.log(this.props);
+	      // console.log(this.props);
+        // console.log(result);
       })
       .catch(error => {
         console.log(error);
@@ -147,7 +150,8 @@ class CreateInterface extends React.Component {
         answer: answer_text,
         insight: false,
       };
-      this.api.getModelResponse(this.state.task.round.url, modelInputs)
+      // this.model_url was this.state.task.round.url
+      this.api.getModelResponse(this.model_url, modelInputs)
         .then(result => {
           if (this.state.task.type != 'extract') {
             var modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
@@ -178,7 +182,9 @@ class CreateInterface extends React.Component {
           const metadata = {
             'annotator_id': this.props.providerWorkerId,
             'mephisto_id': this.props.mephistoWorkerId,
-            'model': 'model-name-unknown', //TODO: add model name
+            'model': 'no-model',
+            'model_name': this.model_name,
+            'model_url': this.model_url,
             'agentId': this.props.agentId,
             'assignmentId': this.props.assignmentId,
             'modelInputs': modelInputs,
@@ -209,7 +215,7 @@ class CreateInterface extends React.Component {
                   this.setState({taskCompleted: true});
                 }*/}
 		      if (this.state.tries == this.state.total_tries) {
-                  console.log('Success! You can submit HIT');
+                  console.log('Success! You can submit the HIT');
                   this.setState({taskCompleted: true});
                 }
               });
@@ -282,12 +288,10 @@ class CreateInterface extends React.Component {
                   (item.fooled ?
                     <>
                       <span><strong>Well done!</strong> You fooled the model. The model predicted <strong>{item.modelPredStr}</strong> instead. </span><br />
-			  {/*<span>Made a mistake? You can still <a href="#" data-index={item.index} onClick={this.retractExample} className="btn-link">retract this example</a>. Otherwise, we will have it verified.</span>*/}
                     </>
                     :
                     <>
                       <span><strong>Bad luck!</strong> The model correctly predicted <strong>{item.modelPredStr}</strong>. Try again.</span>
-			  {/*<span>We will still store this as an example that the model got right. You can <a href="#" data-index={item.index} onClick={this.retractExample} className="btn-link">retract this example</a> if you don't want it saved.</span>*/}
                     </>
                   )
                 }</small>
@@ -314,9 +318,6 @@ class CreateInterface extends React.Component {
     }
     return (
       <Container>
-	{/*<Row>
-          <h2>Find examples for - {this.state.task.name}</h2>
-        </Row>*/}
         <Row>
           <CardGroup style={{marginTop: 8, width: '100%'}}>
             <Card border='dark'>
@@ -328,7 +329,7 @@ class CreateInterface extends React.Component {
           <InputGroup>
             <FormControl
               style={{ width: '100%', marginTop: 8 }}
-              placeholder={this.state.task.type == 'extract' ? 'Ask a question..' : 'Enter hypothesis..'}
+              placeholder={this.state.task.type == 'extract' ? 'Ask a question..' : 'Type your question..'}
               value={this.state.hypothesis}
               onChange={this.handleResponseChange}
               required
@@ -340,7 +341,6 @@ class CreateInterface extends React.Component {
           {errorMessage}
           <InputGroup>
             <Button className="btn btn-primary mt-2 mr-1" onClick={this.handleResponse} disabled={this.state.submitDisabled}>Submit Question{this.state.submitDisabled ? <Spinner className="ml-2" animation="border" role="status" size="sm" /> : null}</Button>
-	    {/*<Button className="btn btn-secondary" style={{marginRight: 2}} onClick={this.getNewContext} disabled={this.state.refreshDisabled}>Switch to next context</Button>*/}
             {taskTracker}
           </InputGroup>
         </Row>

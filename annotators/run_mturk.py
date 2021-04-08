@@ -61,8 +61,10 @@ class TestScriptConfig(RunScriptConfig):
         ]
     )
     dynabench: DynaBenchConfig = DynaBenchConfig()
-    num_jobs: int = 3
-    preselected_qualifications: List[str] = ("100_hits_approved", "english_only")
+    num_jobs: int = 1
+    #TODO: look at mephisto worker whitelist
+    # preselected_qualifications: List[str] = ("100_hits_approved", "english_only")
+    preselected_qualifications: List[str] = ()
     frontend_dir: str = f"{CURRENT_DIRECTORY}/../frontends"
 
 
@@ -106,8 +108,9 @@ def main(cfg: DictConfig) -> None:
     def is_onboarding_successful(onboarding_data):
         if "outputs" not in onboarding_data:
             return False
-        if onboarding_data["outputs"] is None:
-            return False
+        # Hackfix by Sasha
+        # if onboarding_data["outputs"] is None:
+        #     return False
         if "success" not in onboarding_data["outputs"]:
             return False
 

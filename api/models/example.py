@@ -114,8 +114,8 @@ class ExampleModel(BaseModel):
         else:
             pred_str = pred
 
-        if uid == "turk" and "model" in metadata and metadata["model"] == "no-model":
-            pass  # ignore signature when we don't have a model in the loop with turkers
+        if uid == "turk" and ("model" in metadata and metadata["model"] == "no-model") or ("model_url" in metadata and metadata["model_url"] != ""):
+            pass  # ignore signature when we don't have a model in the loop with turkers or if a model_url is specified
         else:
             if "signed" not in response or not self.verify_signature(
                 response["signed"], c, hypothesis, pred_str

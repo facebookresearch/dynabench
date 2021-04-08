@@ -10,8 +10,15 @@ mephisto:
     task_description: >
       You will be asked to write questions and select answers for a given question. An AI will then try to answer your question - if it answers incorrectly, you win, but if it gets the answer right, you lose and will have to try again. Good luck!
     task_reward: 0.75
+    assignment_duration_in_seconds: 3600
+    maximum_units_per_worker: 150
+    max_num_concurrent_units: 250  # how much it launches at a given time (how many HITs running at any given time)
     task_tags: "question answering, question, beat the AI, reading comprehension, AI"
 dynabench:
   task_name: max-qa-1
   task_id: 2
   round_id: 2
+  block_mobile: True
+  # fetching_tags: "val2017"
+  # tag_to_store_with_examples is required
+  extra_logging: "tag_to_store_with_examples:max_test"

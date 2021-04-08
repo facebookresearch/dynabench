@@ -115,9 +115,9 @@ class TaskOnboardingCompletedInstructions extends React.Component {
         <ul>
           <li key="1"><strong>The instructions for the downstream task are different than the onboarding.</strong></li>
           <li key="2">Please email us at <a href="mailto:NoahTurkProject.1032@gmail.com" target="_blank">NoahTurkProject.1032@gmail.com</a> if you do not understand any parts of the instructions or if there is anything else that we can help with. We will try to respond as quickly as possible.</li>
-          <li key="3">If. upon clicking "Complete Onboarding", the interface does not re-route you to the main task, please refresh your page.</li>
+          <li key="3">If, upon clicking "Complete Onboarding", the interface does not re-route you to the main task, please refresh your page.</li>
         </ul>
-        <p>We appreciate your work and are eagerly looking forward to seeing how you manage to <b>beat the AI</b>.</p>
+        <p>We appreciate your work and are eagerly looking forward to seeing how you manage to <b>beat the AI</b> by asking questions that it cannot answer.</p>
         </>;
   }
 }
@@ -129,7 +129,7 @@ class TaskModelInstructions extends React.Component {
         <div className="text-left" style={{ marginBottom: '16px'}}>
             <h4>Can you Beat the AI?</h4>
             <p>You will be given a <em>passage</em> from Wikipedia. You will need to ask hard <em>questions</em> and highlight the correct <em>answers</em> from the passage.</p>
-            <p>An AI will then try to answer your question. If it answers correctly, the AI wins, you lose - and you have to try again. If it gets the answer wrong, you've <strong>beaten the AI</strong> and can move on to the next question.</p>
+            <p>An AI will then try to answer your question. If it answers correctly, the AI wins, you lose - and you have to try again. If it gets the answer wrong, you've <strong>beaten the AI</strong> and will receive a bonus for each question that the AI <strong>fails to answer correctly and another human validator manages to answer correctly</strong>.</p>
 
             <strong>You MUST ensure that:</strong>
             <ol>
@@ -151,9 +151,7 @@ class TaskModelInstructions extends React.Component {
           </p>
 
           <p className="block-text">
-              Spend around 5 minutes on the following paragraph to ask 5 hard questions! If you can't ask 5
-              questions, ask 4 or 3 (worse), but do your best to ask 5. Select the answer from the paragraph by highlighting <b>the shortest span of the paragraph that answers
-              the question.</b>
+              Select the answer from the paragraph by highlighting <b>the shortest span of the paragraph that answers the question.</b>
           </p>
 
           <hr />
@@ -196,10 +194,23 @@ class TaskModelInstructions extends React.Component {
   }
 }
 
+
 class MaxQATaskMain extends React.Component {
   constructor(props) {
     super(props);
     this.api = props.api;
+    this.model_names = [
+      'roberta_r1', 
+      'roberta_r2', 
+      'roberta_r2_synthq', 
+      'roberta_r2_synthq_ext',
+    ];
+    this.model_urls = [
+      'https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=qa-r1-2', 
+      'https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=qa-r2-1', 
+      'https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=qa-r2-2',
+      'https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=qa-r2-3',
+    ];
     this.state = {showInstructions: false};
     this.showInstructions = this.showInstructions.bind(this);
   }
@@ -207,19 +218,23 @@ class MaxQATaskMain extends React.Component {
     this.setState({ showInstructions: !this.state.showInstructions });
   }
   render() {
-    console.log(this.props);
-    // if (this.props.mephistoWorkerId % 2 == 0) {
+    // console.log(this.props);
+    // if (this.props.mephistoWorkerId % 5 == 0) {
+    // TODO: do some sort of combined hash + random num generator
+    var model_id = 0;
+    var model_name = this.model_names[model_id];
+    var model_url = this.model_urls[model_id];
     return <>
         <Container>
         <Row>
-          <div className="card-header text-white py-2" style={{backgroundColor: '#007bff', borderColor: '#007bff', width: '100%', borderRadius: '0 0 4px 4px', cursor: 'pointer' }} onClick={this.showInstructions}><strong>Instructions</strong> (Click to expand)</div>
+          <div className="card-header text-white py-2" style={{backgroundColor: '#007bff', borderColor: '#007bff', width: '100%', borderRadius: '0 0 4px 4px', cursor: 'pointer' }} onClick={this.showInstructions}><span style={{fontWeight: 'bold'}}>Instructions</span>&nbsp; (Click to expand)</div>
         </Row>
         {this.state.showInstructions && <Row> <TaskModelInstructions /> </Row>}
         <Row>
           <h4 className="mt-3">Can you ask Questions that the AI can't answer?</h4>
         </Row>
         </Container>
-        <CreateInterface api={this.api} {...this.props} />
+        <CreateInterface api={this.api} model_name={model_name} model_url={model_url} {...this.props} />
       </>;
   }
 }

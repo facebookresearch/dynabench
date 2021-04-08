@@ -5,6 +5,12 @@
  */
 
 
+ li {
+    list-style: disc outside none;
+    display: list-item;
+    margin-left: 1.5em;
+  }
+
  .qa-context > span {
     /* Fix for react-text-annote token annotator added whitespace around tokens */
     margin-right: -4px;
