@@ -103,3 +103,19 @@ def path_available_on_s3(s3_client, s3_bucket, path, perturb_prefix=None):
         if obj["Key"] == path:
             return True
     return False
+
+
+def parse_s3_uri(s3_uri):
+    parts = s3_uri.replace("s3://", "").split("/")
+    s3_bucket = parts[0]
+    s3_path = "/".join(parts[1:])
+    return s3_bucket, s3_path
+
+
+def update_metadata_json_string(original_json_string, new_json_string_list):
+    original_json = json.loads(original_json_string)
+    for new_json_string in new_json_string_list:
+        new_json = json.loads(new_json_string)
+        original_json = {**original_json, **new_json}
+    metadata_json_string = json.dumps(original_json)
+    return metadata_json_string

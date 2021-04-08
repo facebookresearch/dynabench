@@ -1,7 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import enum
-
 import sqlalchemy as db
 
 from .base import Base, BaseModel
