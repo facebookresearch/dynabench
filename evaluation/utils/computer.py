@@ -57,7 +57,8 @@ class MetricsComputer:
 
     def parse_outfile(self, job, original=False):
         """
-        Parse batch transform output by balancing brackets
+        Parse batch transform output by balancing brackets, since AWS output
+        pretty prints json by default
         """
         perturb_prefix = None if original else job.perturb_prefix
         try:
