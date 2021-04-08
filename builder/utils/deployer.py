@@ -25,7 +25,6 @@ class ModelDeployer:
         self.name = model_name
         s3_bucket, s3_path, self.s3_dir, self.unique_name = self.parse_s3_uri(s3_uri)
         self.repository_name = self.unique_name.lower()
-        logger.info(f"{model_name} folder loaded temporarily at {self.tmp_dir}")
         self.rootp = tempfile.TemporaryDirectory(prefix=self.unique_name)
         self.root_dir = self.rootp.name
         logger.info(f"{model_name} folder loaded temporarily at {self.root_dir}")
