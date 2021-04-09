@@ -155,16 +155,19 @@ class ModelDeployer:
             shutil.copyfile(os.path.join(docker_dir, f), os.path.join(self.root_dir, f))
 
         # tarball current folder but exclude checkpoints
-        exclude_list_file = "exclude.txt"
+        tmp_dir = os.path.join(self.config_handler.config_dir, "tmp")
+        os.makedirs(tmp_dir, exist_ok=True)
+        exclude_list_file = os.path.join(tmp_dir, "exclude.txt")
         self.config_handler.write_exclude_filelist(
             exclude_list_file, self.name, exclude_model=True
         )
+        tarball = os.path.join(tmp_dir, f"{self.unique_name}.tar.gz")
         process = subprocess.run(
             [
                 "tar",
                 f"--exclude-from={exclude_list_file}",
-                "-cf",
-                shlex.quote(f"{self.unique_name}.tar.gz"),
+                "-czf",
+                shlex.quote(tarball),
                 ".",
             ],
             stdout=subprocess.PIPE,
@@ -177,7 +180,7 @@ class ModelDeployer:
             )
 
         # build docker
-        docker_build_args = f"--build-arg tarball_name={shlex.quote(self.unique_name)} --build-arg requirements={shlex.quote(str(self.config['requirements']))} --build-arg setup={shlex.quote(str(self.config['setup']))} --build-arg my_secret={secret}"
+        docker_build_args = f"--build-arg tarball={shlex.quote(tarball)} --build-arg requirements={shlex.quote(str(self.config['requirements']))} --build-arg setup={shlex.quote(str(self.config['setup']))} --build-arg my_secret={secret}"
         docker_build_command = f"docker build --network host -t {shlex.quote(self.repository_name)} -f Dockerfile {docker_build_args} ."
         with subprocess.Popen(
             shlex.split(docker_build_command),
@@ -200,6 +203,8 @@ class ModelDeployer:
             if process.returncode != 0:
                 logger.exception(f"Error in docker build for model {self.name}")
                 raise RuntimeError("Error in docker build")
+
+        os.remove(tarball)
 
     def build_and_push_docker(self, secret):
         logger.info(f"Building docker for model {self.name}")
@@ -298,13 +303,13 @@ class ModelDeployer:
 
         # tarball the .mar
         logger.info(f"Tarballing the archived model {self.name} ...")
-        tarball_name = f"{self.archive_name}.tar.gz"
-        mar_name = f"{self.archive_name}.mar"
+        tarball = f"{self.archive_name}.tar.gz"
+        mar = f"{self.archive_name}.mar"
         tarball_command = [
             "tar",
             "cfz",
-            shlex.quote(tarball_name),
-            shlex.quote(mar_name),
+            shlex.quote(tarball),
+            shlex.quote(mar),
         ]
         process = subprocess.run(
             tarball_command,
@@ -320,13 +325,14 @@ class ModelDeployer:
 
         # upload model tarball to S3
         logger.info(f"Uploading the archived model {self.name} to S3 ...")
-        tarball = f"{self.archive_name}.tar.gz"
         response = self.env["s3_client"].upload_file(
             tarball, self.env["bucket_name"], f"{self.s3_dir}/{tarball}"
         )
         if response:
             logger.debug(f"Response from the mar file upload to s3 {response}")
         model_s3_path = f"s3://{self.env['bucket_name']}/{self.s3_dir}/{tarball}"
+        os.remove(tarball)
+        os.remove(mar)
         return model_s3_path
 
     def deploy_model(self, image_ecr_path, model_s3_path):
