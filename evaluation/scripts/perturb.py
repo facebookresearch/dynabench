@@ -120,7 +120,7 @@ def perturb(path, task, perturb_prefix):
 
 def print_instructions(args, outpath, base_dataset_name):
     logger.info(
-        "Once you are happy with the perturbation, use the following command"
+        "Once you are happy with the perturbation, use the following command "
         "to upload the data back to S3 and request evaluation\n"
         f"python request_evaluation.py --path {outpath} --task {args.task} "
         f"--perturb-prefix {args.perturb_prefix} "
