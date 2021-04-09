@@ -13,7 +13,6 @@ import boto3
 import sagemaker
 from sagemaker.model import Model
 from sagemaker.predictor import Predictor
-from tqdm import tqdm
 
 from deploy_config import deploy_config
 from dynalab_cli.utils import SetupConfigHandler
@@ -150,33 +149,21 @@ class ModelDeployer:
             if response:
                 logger.info(f"Response from deleting ECR repository {response}")
 
-    def _parse_docker_build_status(self, line):
-        ## TODO: use re for this function
-        status_start = line.find("[")
-        status_end = line.find("]")
-        if status_start != -1:
-            status = line[status_start + 1 : status_end]
-            if "/" in status:
-                cur, N = [int(n.strip()) for n in status.split("/")]
-                return cur, N
-        return None
-
     def build_docker(self, secret):
-        docker_dir = os.path.join(sys.path[0], "dockerfiles")
-        for f in os.listdir(docker_dir):
-            shutil.copyfile(os.path.join(docker_dir, f), os.path.join(self.root_dir, f))
-
         # tarball current folder but exclude checkpoints
-        exclude_list_file = "exclude.txt"
+        tmp_dir = os.path.join(self.config_handler.config_dir, "tmp")
+        os.makedirs(tmp_dir, exist_ok=True)
+        exclude_list_file = os.path.join(tmp_dir, "exclude.txt")
         self.config_handler.write_exclude_filelist(
             exclude_list_file, self.name, exclude_model=True
         )
+        tarball = os.path.join(tmp_dir, f"{self.unique_name}.tar.gz")
         process = subprocess.run(
             [
                 "tar",
                 f"--exclude-from={exclude_list_file}",
                 "-czf",
-                shlex.quote(f"{self.unique_name}.tar.gz"),
+                shlex.quote(tarball),
                 ".",
             ],
             stdout=subprocess.PIPE,
@@ -188,49 +175,37 @@ class ModelDeployer:
                 f"Exception in tarballing the project directory {process.stderr}"
             )
 
+        # copy dockerfiles into current folder
+        docker_dir = os.path.join(sys.path[0], "dockerfiles")
+        for f in os.listdir(docker_dir):
+            shutil.copyfile(os.path.join(docker_dir, f), os.path.join(self.root_dir, f))
+
         # build docker
-        docker_build_args = f"--build-arg tarball_name={shlex.quote(self.unique_name)} --build-arg requirements={shlex.quote(str(self.config['requirements']))} --build-arg setup={shlex.quote(str(self.config['setup']))} --build-arg my_secret={secret}"
+        docker_build_args = f"--build-arg tarball={shlex.quote(tarball)} --build-arg requirements={shlex.quote(str(self.config['requirements']))} --build-arg setup={shlex.quote(str(self.config['setup']))} --build-arg my_secret={secret}"
         docker_build_command = f"docker build --network host -t {shlex.quote(self.repository_name)} -f Dockerfile {docker_build_args} ."
         with subprocess.Popen(
             shlex.split(docker_build_command),
             bufsize=1,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             universal_newlines=True,
         ) as process:
-            N = 0
-            nextline = process.stderr.readline().rstrip("\n")
-            while nextline or process.poll() is None:
-                if nextline:
-                    logger.debug(nextline)
-                    status = self._parse_docker_build_status(nextline)
-                    if status:
-                        N = status[1]
-                        break
-                else:
-                    time.sleep(1)
-                nextline = process.stderr.readline().rstrip("\n")
-            with tqdm(total=N + 1, unit="steps", desc="docker build") as t:
-                while nextline or process.poll() is None:
-                    if nextline:
-                        logger.debug(nextline)
-                        status = self._parse_docker_build_status(nextline)
-                        if status:
-                            cur = status[0]
-                            if cur > t.n:
-                                t.update(cur - t.n)
-                                time.sleep(0.1)
-                    else:
-                        time.sleep(1)
-                    nextline = process.stderr.readline().rstrip("\n")
-                _, stderr = process.communicate()
-                logger.debug(stderr)
-                while t.n < t.total:
-                    t.update(1)
+            while process.poll() is None:
+                print(".", end="", flush=True)
+                out = process.stdout.readline().rstrip("\n")
+                while out:
+                    logger.debug(out)
+                    out = process.stdout.readline().rstrip("\n")
+                time.sleep(10)
+            stdout, _ = process.communicate()
+            logger.debug(stdout)
+            print("!")
 
             if process.returncode != 0:
                 logger.exception(f"Error in docker build for model {self.name}")
                 raise RuntimeError("Error in docker build")
+
+        os.remove(tarball)
 
     def build_and_push_docker(self, secret):
         logger.info(f"Building docker for model {self.name}")
@@ -329,14 +304,9 @@ class ModelDeployer:
 
         # tarball the .mar
         logger.info(f"Tarballing the archived model {self.name} ...")
-        tarball_name = f"{self.archive_name}.tar.gz"
-        mar_name = f"{self.archive_name}.mar"
-        tarball_command = [
-            "tar",
-            "cfz",
-            shlex.quote(tarball_name),
-            shlex.quote(mar_name),
-        ]
+        tarball = f"{self.archive_name}.tar.gz"
+        mar = f"{self.archive_name}.mar"
+        tarball_command = ["tar", "cfz", shlex.quote(tarball), shlex.quote(mar)]
         process = subprocess.run(
             tarball_command,
             stdout=subprocess.PIPE,
@@ -351,13 +321,14 @@ class ModelDeployer:
 
         # upload model tarball to S3
         logger.info(f"Uploading the archived model {self.name} to S3 ...")
-        tarball = f"{self.archive_name}.tar.gz"
         response = self.env["s3_client"].upload_file(
             tarball, self.env["bucket_name"], f"{self.s3_dir}/{tarball}"
         )
         if response:
             logger.debug(f"Response from the mar file upload to s3 {response}")
         model_s3_path = f"s3://{self.env['bucket_name']}/{self.s3_dir}/{tarball}"
+        os.remove(tarball)
+        os.remove(mar)
         return model_s3_path
 
     def deploy_model(self, image_ecr_path, model_s3_path):
