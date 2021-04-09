@@ -13,7 +13,6 @@ import boto3
 import sagemaker
 from sagemaker.model import Model
 from sagemaker.predictor import Predictor
-from tqdm import tqdm
 
 from deploy_config import deploy_config
 from dynalab_cli.utils import SetupConfigHandler
@@ -150,17 +149,6 @@ class ModelDeployer:
             if response:
                 logger.info(f"Response from deleting ECR repository {response}")
 
-    def _parse_docker_build_status(self, line):
-        ## TODO: use re for this function
-        status_start = line.find("[")
-        status_end = line.find("]")
-        if status_start != -1:
-            status = line[status_start + 1 : status_end]
-            if "/" in status:
-                cur, N = [int(n.strip()) for n in status.split("/")]
-                return cur, N
-        return None
-
     def build_docker(self, secret):
         docker_dir = os.path.join(sys.path[0], "dockerfiles")
         for f in os.listdir(docker_dir):
@@ -198,35 +186,16 @@ class ModelDeployer:
             stderr=subprocess.STDOUT,
             universal_newlines=True,
         ) as process:
-            N = 0
-            nextline = process.stdout.readline().rstrip("\n")
-            while nextline or process.poll() is None:
-                if nextline:
-                    logger.debug(nextline)
-                    status = self._parse_docker_build_status(nextline)
-                    if status:
-                        N = status[1]
-                        break
-                else:
-                    time.sleep(1)
-                nextline = process.stdout.readline().rstrip("\n")
-            with tqdm(total=N + 1, unit="steps", desc="docker build") as t:
-                while nextline or process.poll() is None:
-                    if nextline:
-                        logger.debug(nextline)
-                        status = self._parse_docker_build_status(nextline)
-                        if status:
-                            cur = status[0]
-                            if cur > t.n:
-                                t.update(cur - t.n)
-                                time.sleep(0.1)
-                    else:
-                        time.sleep(1)
-                    nextline = process.stdout.readline().rstrip("\n")
-                stdout, _ = process.communicate()
-                logger.debug(stdout)
-                while t.n < t.total:
-                    t.update(1)
+            while process.poll() is None:
+                print(".", end="", flush=True)
+                out = process.stdout.readline().rstrip("\n")
+                while out:
+                    logger.debug(out)
+                    out = process.stdout.readline().rstrip("\n")
+                time.sleep(10)
+            stdout, _ = process.communicate()
+            logger.debug(stdout)
+            print("!")
 
             if process.returncode != 0:
                 logger.exception(f"Error in docker build for model {self.name}")
