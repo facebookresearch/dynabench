@@ -175,7 +175,7 @@ class ModelDeployer:
             [
                 "tar",
                 f"--exclude-from={exclude_list_file}",
-                "-czf",
+                "-cf",
                 shlex.quote(f"{self.unique_name}.tar.gz"),
                 ".",
             ],
@@ -195,11 +195,11 @@ class ModelDeployer:
             shlex.split(docker_build_command),
             bufsize=1,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             universal_newlines=True,
         ) as process:
             N = 0
-            nextline = process.stderr.readline().rstrip("\n")
+            nextline = process.stdout.readline().rstrip("\n")
             while nextline or process.poll() is None:
                 if nextline:
                     logger.debug(nextline)
@@ -209,7 +209,7 @@ class ModelDeployer:
                         break
                 else:
                     time.sleep(1)
-                nextline = process.stderr.readline().rstrip("\n")
+                nextline = process.stdout.readline().rstrip("\n")
             with tqdm(total=N + 1, unit="steps", desc="docker build") as t:
                 while nextline or process.poll() is None:
                     if nextline:
@@ -222,9 +222,9 @@ class ModelDeployer:
                                 time.sleep(0.1)
                     else:
                         time.sleep(1)
-                    nextline = process.stderr.readline().rstrip("\n")
-                _, stderr = process.communicate()
-                logger.debug(stderr)
+                    nextline = process.stdout.readline().rstrip("\n")
+                stdout, _ = process.communicate()
+                logger.debug(stdout)
                 while t.n < t.total:
                     t.update(1)
 
