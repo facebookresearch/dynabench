@@ -89,7 +89,7 @@ if __name__ == "__main__":
                             )
                         else:
                             mail_session = None
-                        if mail_session: 
+                        if mail_session:
                             mail.send(
                                 server=mail_session,
                                 config=config,
@@ -99,7 +99,9 @@ if __name__ == "__main__":
                                 subject=subject,
                             )
                             nm = NotificationModel()
-                            nm.create(user.id, "MODEL_DEPLOYMENT_STATUS", template.upper())
+                            nm.create(
+                                user.id, "MODEL_DEPLOYMENT_STATUS", template.upper()
+                            )
 
                     if deployed:
                         eval_queue.send_message(
