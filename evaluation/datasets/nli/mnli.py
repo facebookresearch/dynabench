@@ -11,9 +11,9 @@ from .base import AccessTypeEnum, NliBase
 
 
 class MnliBase(NliBase):
-    def __init__(self, task, name, local_path, access_type=AccessTypeEnum.scoring):
+    def __init__(self, name, local_path, access_type=AccessTypeEnum.scoring):
         self.local_path = local_path
-        super().__init__(task=task, name=name, round_id=0, access_type=access_type)
+        super().__init__(name=name, round_id=0, access_type=access_type)
 
     def load(self):
         try:
@@ -53,7 +53,6 @@ class MnliDevMismatched(MnliBase):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "nli/mnli/mm_dev.jsonl")
         super().__init__(
-            task="nli",
             name="mnli-dev-mismatched",
             local_path=local_path,
             access_type=AccessTypeEnum.standard,
@@ -65,7 +64,6 @@ class MnliDevMatched(MnliBase):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "nli/mnli/m_dev.jsonl")
         super().__init__(
-            task="nli",
             name="mnli-dev-matched",
             local_path=local_path,
             access_type=AccessTypeEnum.standard,

@@ -6,14 +6,17 @@ import sys
 import tempfile
 
 from datasets.common import logger
+from models.dataset import AccessTypeEnum
 
 from .base import HsBase
 
 
 class AhsBase(HsBase):
-    def __init__(self, name, local_path, round_id=0):
+    def __init__(
+        self, name, local_path, round_id=0, access_type=AccessTypeEnum.scoring
+    ):
         self.local_path = local_path
-        super().__init__(name=name, round_id=round_id)
+        super().__init__(name=name, round_id=round_id, access_type=access_type)
 
     def load(self):
         try:
@@ -72,18 +75,33 @@ class AhsRound1Dev(AhsBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "hs/hate_speech_v0.1/R1/dev.jsonl")
-        super().__init__(name="hs-r1-dev", local_path=local_path, round_id=1)
+        super().__init__(
+            name="hs-r1-dev",
+            local_path=local_path,
+            round_id=1,
+            access_type=AccessTypeEnum.standard,
+        )
 
 
 class AhsRound2Dev(AhsBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "hs/hate_speech_v0.1/R2/dev.jsonl")
-        super().__init__(name="hs-r2-dev", local_path=local_path, round_id=2)
+        super().__init__(
+            name="hs-r2-dev",
+            local_path=local_path,
+            round_id=2,
+            access_type=AccessTypeEnum.standard,
+        )
 
 
 class AhsRound3Dev(AhsBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "hs/hate_speech_v0.1/R3/dev.jsonl")
-        super().__init__(name="hs-r3-dev", local_path=local_path, round_id=3)
+        super().__init__(
+            name="hs-r3-dev",
+            local_path=local_path,
+            round_id=3,
+            access_type=AccessTypeEnum.standard,
+        )

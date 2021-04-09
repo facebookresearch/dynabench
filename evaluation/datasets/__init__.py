@@ -67,6 +67,8 @@ def load_datasets():
         "hs-r2-dev": ahs.AhsRound2Dev(),
         "hs-r3-dev": ahs.AhsRound3Dev(),
         "hatecheck": hatecheck.HateCheckFull(),
+        "hatecheck-l-hate": hatecheck.LabelHate(),
+        "hatecheck-l-nothate": hatecheck.LabelNotHate(),
         "hatecheck-f-slur-homonym-nh": hatecheck.FunctionalitySlurHomonymNh(),
         "hatecheck-f-target-group-nh": hatecheck.FunctionalityTargetGroupNh(),
         "hatecheck-f-derog-neg-emote-h": hatecheck.FunctionalityDerogNegEmoteH(),

@@ -16,10 +16,7 @@ class Hans(NliBase):
         self.local_path = os.path.join(
             rootpath, "data", "nli/hans/heuristics_evaluation_set.jsonl"
         )
-        task = "nli"
-        name = "hans"
-        access_type = AccessTypeEnum.standard
-        super().__init__(task=task, name=name, round_id=0, access_type=access_type)
+        super().__init__(name="hans", round_id=0, access_type=AccessTypeEnum.standard)
 
     def load(self):
         try:

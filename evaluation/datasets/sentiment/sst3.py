@@ -6,14 +6,17 @@ import sys
 import tempfile
 
 from datasets.common import logger
+from models.dataset import AccessTypeEnum
 
 from .base import SentimentBase
 
 
 class Sst3Base(SentimentBase):
-    def __init__(self, task, name, local_path, round_id=0):
+    def __init__(
+        self, name, local_path, round_id=0, access_type=AccessTypeEnum.scoring
+    ):
         self.local_path = local_path
-        super().__init__(task=task, name=name, round_id=round_id)
+        super().__init__(name=name, round_id=round_id, access_type=access_type)
 
     def load(self):
         try:
@@ -51,9 +54,7 @@ class Sst3Test(Sst3Base):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "sentiment/sst3/sst3-test.jsonl")
-        super().__init__(
-            task="sentiment", name="sst3-test", local_path=local_path, round_id=0
-        )
+        super().__init__(name="sst3-test", local_path=local_path, round_id=0)
 
 
 class Sst3Dev(Sst3Base):
@@ -61,5 +62,8 @@ class Sst3Dev(Sst3Base):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "sentiment/sst3/sst3-dev.jsonl")
         super().__init__(
-            task="sentiment", name="sst3-dev", local_path=local_path, round_id=0
+            name="sst3-dev",
+            local_path=local_path,
+            round_id=0,
+            access_type=AccessTypeEnum.standard,
         )

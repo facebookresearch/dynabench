@@ -6,14 +6,17 @@ import sys
 import tempfile
 
 from datasets.common import logger
+from models.dataset import AccessTypeEnum
 
 from .base import SentimentBase
 
 
 class AmazonReviewBase(SentimentBase):
-    def __init__(self, task, name, local_path, round_id=0):
+    def __init__(
+        self, name, local_path, round_id=0, access_type=AccessTypeEnum.scoring
+    ):
         self.local_path = local_path
-        super().__init__(task=task, name=name, round_id=round_id)
+        super().__init__(name=name, round_id=round_id, access_type=access_type)
 
     def load(self):
         try:
@@ -53,12 +56,7 @@ class AmazonReviewTest(AmazonReviewBase):
         local_path = os.path.join(
             rootpath, "data", "sentiment/amazon_review/amazon-review-test.jsonl"
         )
-        super().__init__(
-            task="sentiment",
-            name="amazon-review-test",
-            local_path=local_path,
-            round_id=0,
-        )
+        super().__init__(name="amazon-review-test", local_path=local_path, round_id=0)
 
 
 class AmazonReviewDev(AmazonReviewBase):
@@ -68,8 +66,8 @@ class AmazonReviewDev(AmazonReviewBase):
             rootpath, "data", "sentiment/amazon_review/amazon-review-dev.jsonl"
         )
         super().__init__(
-            task="sentiment",
             name="amazon-review-dev",
             local_path=local_path,
             round_id=0,
+            access_type=AccessTypeEnum.standard,
         )

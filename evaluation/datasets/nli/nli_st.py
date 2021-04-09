@@ -12,12 +12,10 @@ from .base import AccessTypeEnum, NliBase
 
 class NLIStressTestBase(NliBase):
     def __init__(
-        self, task, name, local_path, round_id=0, access_type=AccessTypeEnum.scoring
+        self, name, local_path, round_id=0, access_type=AccessTypeEnum.standard
     ):
         self.local_path = local_path
-        super().__init__(
-            task=task, name=name, round_id=round_id, access_type=access_type
-        )
+        super().__init__(name=name, round_id=round_id, access_type=access_type)
 
     def load(self):
         try:
@@ -71,7 +69,6 @@ class AntoynmMatched(NLIStressTestBase):
             "nli/Stress_Tests/Antonym/multinli_0.9_antonym_matched.jsonl",
         )
         super().__init__(
-            task="nli",
             name="nli-st-antonym-matched",
             local_path=local_path,
             round_id=0,
@@ -88,7 +85,6 @@ class AntoynmMismatched(NLIStressTestBase):
             "nli/Stress_Tests/Antonym/multinli_0.9_antonym_mismatched.jsonl",
         )
         super().__init__(
-            task="nli",
             name="nli-st-antonym-mismatched",
             local_path=local_path,
             round_id=0,
@@ -106,7 +102,6 @@ class LengthMismatchMatched(NLIStressTestBase):
             + "multinli_0.9_length_mismatch_matched.jsonl",
         )
         super().__init__(
-            task="nli",
             name="nli-st-length-mismatch-matched",
             local_path=local_path,
             round_id=0,
@@ -124,7 +119,6 @@ class LengthMismatchMismatched(NLIStressTestBase):
             + "multinli_0.9_length_mismatch_mismatched.jsonl",
         )
         super().__init__(
-            task="nli",
             name="nli-st-length-mismatch-mismatched",
             local_path=local_path,
             round_id=0,
@@ -141,7 +135,6 @@ class NegationMatched(NLIStressTestBase):
             "nli/Stress_Tests/Negation/multinli_0.9_negation_matched.jsonl",
         )
         super().__init__(
-            task="nli",
             name="nli-st-negation-matched",
             local_path=local_path,
             round_id=0,
@@ -158,7 +151,6 @@ class NegationMismatched(NLIStressTestBase):
             "nli/Stress_Tests/Negation/multinli_0.9_negation_mismatched.jsonl",
         )
         super().__init__(
-            task="nli",
             name="nli-st-negation-mismatched",
             local_path=local_path,
             round_id=0,
@@ -175,7 +167,6 @@ class NumericalReasoning(NLIStressTestBase):
             "nli/Stress_Tests/Numerical_Reasoning/multinli_0.9_quant_hard.jsonl",
         )
         super().__init__(
-            task="nli",
             name="nli-st-numerical-reasoning",
             local_path=local_path,
             round_id=0,
@@ -192,7 +183,6 @@ class MisspellMatched(NLIStressTestBase):
             "nli/Stress_Tests/Spelling_Error/multinli_0.9_dev_gram_swap_matched.jsonl",
         )
         super().__init__(
-            task="nli",
             name="nli-st-misspell-matched",
             local_path=local_path,
             round_id=0,
@@ -210,7 +200,6 @@ class MisspellMismatched(NLIStressTestBase):
             + "multinli_0.9_dev_gram_swap_mismatched.jsonl",
         )
         super().__init__(
-            task="nli",
             name="nli-st-misspell-mismatched",
             local_path=local_path,
             round_id=0,
@@ -228,7 +217,6 @@ class MisspellContentMatched(NLIStressTestBase):
             + "multinli_0.9_dev_gram_contentword_swap_perturbed_matched.jsonl",
         )
         super().__init__(
-            task="nli",
             name="nli-st-misspell-content-matched",
             local_path=local_path,
             round_id=0,
@@ -246,7 +234,6 @@ class MisspellContentMismatched(NLIStressTestBase):
             + "multinli_0.9_dev_gram_contentword_swap_perturbed_mismatched.jsonl",
         )
         super().__init__(
-            task="nli",
             name="nli-st-misspell-content-mismatched",
             local_path=local_path,
             round_id=0,
@@ -264,7 +251,6 @@ class MisspellFunctionMatched(NLIStressTestBase):
             + "multinli_0.9_dev_gram_functionword_swap_perturbed_matched.jsonl",
         )
         super().__init__(
-            task="nli",
             name="nli-st-misspell-function-matched",
             local_path=local_path,
             round_id=0,
@@ -282,7 +268,6 @@ class MisspellFunctionMismatched(NLIStressTestBase):
             + "multinli_0.9_dev_gram_functionword_swap_perturbed_mismatched.jsonl",
         )
         super().__init__(
-            task="nli",
             name="nli-st-misspell-function-mismatched",
             local_path=local_path,
             round_id=0,
@@ -300,7 +285,6 @@ class MisspellKeyboardMatched(NLIStressTestBase):
             + "multinli_0.9_dev_gram_keyboard_matched.jsonl",
         )
         super().__init__(
-            task="nli",
             name="nli-st-misspell-keyboard-matched",
             local_path=local_path,
             round_id=0,
@@ -318,7 +302,6 @@ class MisspellKeyboardMismatched(NLIStressTestBase):
             + "multinli_0.9_dev_gram_keyboard_mismatched.jsonl",
         )
         super().__init__(
-            task="nli",
             name="nli-st-misspell-keyboard-mismatched",
             local_path=local_path,
             round_id=0,
@@ -335,7 +318,6 @@ class WordOverlapMatched(NLIStressTestBase):
             "nli/Stress_Tests/Word_Overlap/multinli_0.9_taut2_matched.jsonl",
         )
         super().__init__(
-            task="nli",
             name="nli-st-word-overlap-matched",
             local_path=local_path,
             round_id=0,
@@ -352,7 +334,6 @@ class WordOverlapMismatched(NLIStressTestBase):
             "nli/Stress_Tests/Word_Overlap/multinli_0.9_taut2_mismatched.jsonl",
         )
         super().__init__(
-            task="nli",
             name="nli-st-word-overlap-mismatched",
             local_path=local_path,
             round_id=0,

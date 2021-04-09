@@ -11,9 +11,9 @@ from .base import AccessTypeEnum, NliBase
 
 
 class SnliBase(NliBase):
-    def __init__(self, task, name, local_path, access_type=AccessTypeEnum.scoring):
+    def __init__(self, name, local_path, access_type=AccessTypeEnum.scoring):
         self.local_path = local_path
-        super().__init__(task=task, name=name, round_id=0, access_type=access_type)
+        super().__init__(name=name, round_id=0, access_type=access_type)
 
     def load(self):
         try:
@@ -60,10 +60,7 @@ class SnliDev(SnliBase):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "nli/snli_1.0/snli_1.0_dev.jsonl")
         super().__init__(
-            task="nli",
-            name="snli-dev",
-            local_path=local_path,
-            access_type=AccessTypeEnum.standard,
+            name="snli-dev", local_path=local_path, access_type=AccessTypeEnum.standard
         )
 
 
@@ -71,4 +68,4 @@ class SnliTest(SnliBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "nli/snli_1.0/snli_1.0_test.jsonl")
-        super().__init__(task="nli", name="snli-test", local_path=local_path)
+        super().__init__(name="snli-test", local_path=local_path)

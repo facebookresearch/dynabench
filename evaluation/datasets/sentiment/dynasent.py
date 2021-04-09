@@ -6,14 +6,17 @@ import sys
 import tempfile
 
 from datasets.common import logger
+from models.dataset import AccessTypeEnum
 
 from .base import SentimentBase
 
 
 class DynasentBase(SentimentBase):
-    def __init__(self, task, name, local_path, round_id=0):
+    def __init__(
+        self, name, local_path, round_id=0, access_type=AccessTypeEnum.scoring
+    ):
         self.local_path = local_path
-        super().__init__(task=task, name=name, round_id=round_id)
+        super().__init__(name=name, round_id=round_id, access_type=access_type)
 
     def load(self):
         try:
@@ -53,9 +56,7 @@ class DynasentRound1Test(DynasentBase):
         local_path = os.path.join(
             rootpath, "data", "sentiment/sentiment_v1.1/round1/test.jsonl"
         )
-        super().__init__(
-            task="sentiment", name="dynasent-r1-test", local_path=local_path, round_id=1
-        )
+        super().__init__(name="dynasent-r1-test", local_path=local_path, round_id=1)
 
 
 class DynasentRound2Test(DynasentBase):
@@ -64,9 +65,7 @@ class DynasentRound2Test(DynasentBase):
         local_path = os.path.join(
             rootpath, "data", "sentiment/sentiment_v1.1/round2/test.jsonl"
         )
-        super().__init__(
-            task="sentiment", name="dynasent-r2-test", local_path=local_path, round_id=2
-        )
+        super().__init__(name="dynasent-r2-test", local_path=local_path, round_id=2)
 
 
 class DynasentRound1Dev(DynasentBase):
@@ -78,7 +77,10 @@ class DynasentRound1Dev(DynasentBase):
             "sentiment/sentiment_v1.1/round1/dynasent-v1.1-round01-yelp-dev.jsonl",
         )
         super().__init__(
-            task="sentiment", name="dynasent-r1-dev", local_path=local_path, round_id=1
+            name="dynasent-r1-dev",
+            local_path=local_path,
+            round_id=1,
+            access_type=AccessTypeEnum.standard,
         )
 
 
@@ -91,5 +93,8 @@ class DynasentRound2Dev(DynasentBase):
             "sentiment/sentiment_v1.1/round2/dynasent-v1.1-round02-dynabench-dev.jsonl",
         )
         super().__init__(
-            task="sentiment", name="dynasent-r2-dev", local_path=local_path, round_id=2
+            name="dynasent-r2-dev",
+            local_path=local_path,
+            round_id=2,
+            access_type=AccessTypeEnum.standard,
         )

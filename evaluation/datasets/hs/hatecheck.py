@@ -6,19 +6,29 @@ import sys
 import tempfile
 
 from datasets.common import logger
+from models.dataset import AccessTypeEnum
 
 from .base import HsBase
 
 
 class HateCheck(HsBase):
-    def __init__(self, name, functionality=None, target=None, round_id=0):
+    def __init__(
+        self,
+        name,
+        functionality=None,
+        target=None,
+        label=None,
+        round_id=0,
+        access_type=AccessTypeEnum.standard,
+    ):
         rootpath = os.path.dirname(sys.path[0])
         self.functionality = functionality
         self.target = target
+        self.label = label
         self.local_path = os.path.join(
             rootpath, "data", "hs/hatecheck/test_suite_cases_formatted.jsonl"
         )
-        super().__init__(name=name, round_id=round_id)
+        super().__init__(name=name, round_id=round_id, access_type=access_type)
 
     def load(self):
         try:
@@ -32,20 +42,46 @@ class HateCheck(HsBase):
                     }
                     if self.functionality is not None:
                         if self.target is not None:
-                            if (
-                                jl["functionality"] == self.functionality
-                                and jl["target"] == self.target
-                            ):
-                                tmp.write(json.dumps(tmp_jl) + "\n")
+                            if self.label is not None:
+                                if (
+                                    jl["functionality"] == self.functionality
+                                    and jl["target"] == self.target
+                                    and jl["answer"] == self.label
+                                ):
+                                    tmp.write(json.dumps(tmp_jl) + "\n")
+                            else:
+                                if (
+                                    jl["functionality"] == self.functionality
+                                    and jl["target"] == self.target
+                                ):
+                                    tmp.write(json.dumps(tmp_jl) + "\n")
                         else:
-                            if jl["functionality"] == self.functionality:
-                                tmp.write(json.dumps(tmp_jl) + "\n")
+                            if self.label is not None:
+                                if (
+                                    jl["functionality"] == self.functionality
+                                    and jl["answer"] == self.label
+                                ):
+                                    tmp.write(json.dumps(tmp_jl) + "\n")
+                            else:
+                                if jl["functionality"] == self.functionality:
+                                    tmp.write(json.dumps(tmp_jl) + "\n")
                     else:
                         if self.target is not None:
-                            if jl["target"] == self.target:
-                                tmp.write(json.dumps(tmp_jl) + "\n")
+                            if self.label is not None:
+                                if (
+                                    jl["target"] == self.target
+                                    and jl["answer"] == self.label
+                                ):
+                                    tmp.write(json.dumps(tmp_jl) + "\n")
+                            else:
+                                if jl["target"] == self.target:
+                                    tmp.write(json.dumps(tmp_jl) + "\n")
                         else:
-                            tmp.write(json.dumps(tmp_jl) + "\n")
+                            if self.label is not None:
+                                if jl["answer"] == self.label:
+                                    tmp.write(json.dumps(tmp_jl) + "\n")
+                            else:
+                                tmp.write(json.dumps(tmp_jl) + "\n")
                 tmp.close()
                 response = self.s3_client.upload_file(
                     tmp.name, self.s3_bucket, self._get_data_s3_path()
@@ -69,7 +105,17 @@ class HateCheck(HsBase):
 
 class HateCheckFull(HateCheck):
     def __init__(self):
-        super().__init__(name="hatecheck")
+        super().__init__(name="hatecheck", access_type=AccessTypeEnum.scoring)
+
+
+class LabelHate(HateCheck):
+    def __init__(self):
+        super().__init__(name="hatecheck-l-hate", label="hate")
+
+
+class LabelNotHate(HateCheck):
+    def __init__(self):
+        super().__init__(name="hatecheck-l-nothate", label="hate")
 
 
 class FunctionalityTargetGroupNh(HateCheck):

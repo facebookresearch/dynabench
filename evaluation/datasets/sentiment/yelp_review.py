@@ -6,14 +6,17 @@ import sys
 import tempfile
 
 from datasets.common import logger
+from models.dataset import AccessTypeEnum
 
 from .base import SentimentBase
 
 
 class YelpReviewBase(SentimentBase):
-    def __init__(self, task, name, local_path, round_id=0):
+    def __init__(
+        self, name, local_path, round_id=0, access_type=AccessTypeEnum.scoring
+    ):
         self.local_path = local_path
-        super().__init__(task=task, name=name, round_id=round_id)
+        super().__init__(name=name, round_id=round_id, access_type=access_type)
 
     def load(self):
         try:
@@ -53,9 +56,7 @@ class YelpReviewTest(YelpReviewBase):
         local_path = os.path.join(
             rootpath, "data", "sentiment/yelp_review/yelp-review-test.jsonl"
         )
-        super().__init__(
-            task="sentiment", name="yelp-review-test", local_path=local_path, round_id=0
-        )
+        super().__init__(name="yelp-review-test", local_path=local_path, round_id=0)
 
 
 class YelpReviewDev(YelpReviewBase):
@@ -65,5 +66,8 @@ class YelpReviewDev(YelpReviewBase):
             rootpath, "data", "sentiment/yelp_review/yelp-review-dev.jsonl"
         )
         super().__init__(
-            task="sentiment", name="yelp-review-dev", local_path=local_path, round_id=0
+            name="yelp-review-dev",
+            local_path=local_path,
+            round_id=0,
+            access_type=AccessTypeEnum.standard,
         )
