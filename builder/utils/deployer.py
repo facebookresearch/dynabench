@@ -306,12 +306,7 @@ class ModelDeployer:
         logger.info(f"Tarballing the archived model {self.name} ...")
         tarball = f"{self.archive_name}.tar.gz"
         mar = f"{self.archive_name}.mar"
-        tarball_command = [
-            "tar",
-            "cfz",
-            shlex.quote(tarball),
-            shlex.quote(mar),
-        ]
+        tarball_command = ["tar", "cfz", shlex.quote(tarball), shlex.quote(mar)]
         process = subprocess.run(
             tarball_command,
             stdout=subprocess.PIPE,
