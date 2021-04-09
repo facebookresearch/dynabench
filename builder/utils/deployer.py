@@ -150,10 +150,6 @@ class ModelDeployer:
                 logger.info(f"Response from deleting ECR repository {response}")
 
     def build_docker(self, secret):
-        docker_dir = os.path.join(sys.path[0], "dockerfiles")
-        for f in os.listdir(docker_dir):
-            shutil.copyfile(os.path.join(docker_dir, f), os.path.join(self.root_dir, f))
-
         # tarball current folder but exclude checkpoints
         tmp_dir = os.path.join(self.config_handler.config_dir, "tmp")
         os.makedirs(tmp_dir, exist_ok=True)
@@ -178,6 +174,11 @@ class ModelDeployer:
             raise RuntimeError(
                 f"Exception in tarballing the project directory {process.stderr}"
             )
+
+        # copy dockerfiles into current folder
+        docker_dir = os.path.join(sys.path[0], "dockerfiles")
+        for f in os.listdir(docker_dir):
+            shutil.copyfile(os.path.join(docker_dir, f), os.path.join(self.root_dir, f))
 
         # build docker
         docker_build_args = f"--build-arg tarball={shlex.quote(tarball)} --build-arg requirements={shlex.quote(str(self.config['requirements']))} --build-arg setup={shlex.quote(str(self.config['setup']))} --build-arg my_secret={secret}"
