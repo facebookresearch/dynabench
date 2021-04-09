@@ -51,7 +51,16 @@ class AqaBase(QaBase):
 class AqaRound1Test(AqaBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
-        local_path = os.path.join(rootpath, "data", "aqa/aqa_v1.0/round1/test.jsonl")
+        local_path = os.path.join(rootpath, "data", "qa/aqa_v1.0/round1/test.jsonl")
         super().__init__(
             task="qa", name="aqa-r1-test", local_path=local_path, round_id=1
+        )
+
+
+class AqaRound1Dev(AqaBase):
+    def __init__(self):
+        rootpath = os.path.dirname(sys.path[0])
+        local_path = os.path.join(rootpath, "data", "qa/aqa_v1.0/round1/dev.jsonl")
+        super().__init__(
+            task="qa", name="aqa-r1-dev", local_path=local_path, round_id=1
         )

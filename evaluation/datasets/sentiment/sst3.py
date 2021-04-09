@@ -10,7 +10,7 @@ from datasets.common import logger
 from .base import SentimentBase
 
 
-class DynasentBase(SentimentBase):
+class Sst3Base(SentimentBase):
     def __init__(self, task, name, local_path, round_id=0):
         self.local_path = local_path
         super().__init__(task=task, name=name, round_id=round_id)
@@ -47,49 +47,19 @@ class DynasentBase(SentimentBase):
         }
 
 
-class DynasentRound1Test(DynasentBase):
+class Sst3Test(Sst3Base):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
-        local_path = os.path.join(
-            rootpath, "data", "sentiment/sentiment_v1.1/round1/test.jsonl"
-        )
+        local_path = os.path.join(rootpath, "data", "sentiment/sst3/sst3-test.jsonl")
         super().__init__(
-            task="sentiment", name="dynasent-r1-test", local_path=local_path, round_id=1
+            task="sentiment", name="sst3-test", local_path=local_path, round_id=0
         )
 
 
-class DynasentRound2Test(DynasentBase):
+class Sst3Dev(Sst3Base):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
-        local_path = os.path.join(
-            rootpath, "data", "sentiment/sentiment_v1.1/round2/test.jsonl"
-        )
+        local_path = os.path.join(rootpath, "data", "sentiment/sst3/sst3-dev.jsonl")
         super().__init__(
-            task="sentiment", name="dynasent-r2-test", local_path=local_path, round_id=2
-        )
-
-
-class DynasentRound1Dev(DynasentBase):
-    def __init__(self):
-        rootpath = os.path.dirname(sys.path[0])
-        local_path = os.path.join(
-            rootpath,
-            "data",
-            "sentiment/sentiment_v1.1/round1/dynasent-v1.1-round01-yelp-dev.jsonl",
-        )
-        super().__init__(
-            task="sentiment", name="dynasent-r1-dev", local_path=local_path, round_id=1
-        )
-
-
-class DynasentRound2Dev(DynasentBase):
-    def __init__(self):
-        rootpath = os.path.dirname(sys.path[0])
-        local_path = os.path.join(
-            rootpath,
-            "data",
-            "sentiment/sentiment_v1.1/round2/dynasent-v1.1-round02-dynabench-dev.jsonl",
-        )
-        super().__init__(
-            task="sentiment", name="dynasent-r2-dev", local_path=local_path, round_id=2
+            task="sentiment", name="sst3-dev", local_path=local_path, round_id=0
         )
