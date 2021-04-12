@@ -6,9 +6,8 @@ import sys
 import tempfile
 
 from datasets.common import logger
-from models.dataset import AccessTypeEnum
 
-from .base import SentimentBase
+from .base import AccessTypeEnum, SentimentBase
 
 
 class AmazonReviewBase(SentimentBase):

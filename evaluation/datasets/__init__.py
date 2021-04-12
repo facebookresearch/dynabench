@@ -29,6 +29,8 @@ def load_datasets():
         "nli-st-word-overlap-mismatched": nli_st.WordOverlapMismatched(),
         "mnli-dev-mismatched": mnli.MnliDevMismatched(),
         "mnli-dev-matched": mnli.MnliDevMatched(),
+        "mnli-test-fake-mismatched": mnli.MnliTestMismatched(),
+        "mnli-test-fake-matched": mnli.MnliTestMatched(),
         "snli-dev": snli.SnliDev(),
         "snli-test": snli.SnliTest(),
         "anli-r1-dev": anli.AnliRound1Dev(),

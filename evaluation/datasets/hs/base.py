@@ -1,7 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
-from datasets.common import BaseDataset
-from models.dataset import AccessTypeEnum
+from datasets.common import AccessTypeEnum, BaseDataset
 
 
 class HsBase(BaseDataset):

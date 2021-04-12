@@ -2,8 +2,7 @@
 
 import sys
 
-from datasets.common import BaseDataset
-from models.dataset import AccessTypeEnum
+from datasets.common import AccessTypeEnum, BaseDataset
 
 
 sys.path.append("../api")

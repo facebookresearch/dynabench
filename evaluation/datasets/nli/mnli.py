@@ -20,17 +20,23 @@ class MnliBase(NliBase):
             with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
                 for line in open(self.local_path).readlines():
                     jl = json.loads(line)
-                    tmp_jl = {
-                        "uid": jl["uid"],
-                        "context": jl["premise"],
-                        "hypothesis": jl["hypothesis"],
-                        "label": jl["label"].lower(),
-                    }
-                    tmp.write(json.dumps(tmp_jl) + "\n")
+                    if jl["gold_label"] != "-":
+                        tmp_jl = {
+                            "uid": jl["pairID"],
+                            "context": jl["sentence1"],
+                            "hypothesis": jl["sentence2"],
+                            "label": {
+                                "entailment": "e",
+                                "neutral": "n",
+                                "contradiction": "c",
+                            }[jl["gold_label"]],
+                        }
+                        tmp.write(json.dumps(tmp_jl) + "\n")
                 tmp.close()
                 response = self.s3_client.upload_file(
                     tmp.name, self.s3_bucket, self._get_data_s3_path()
                 )
+                print(self.name + " DATA UPLOADED :D :D :D")
                 os.remove(tmp.name)
                 if response:
                     logger.info(response)
@@ -65,6 +71,28 @@ class MnliDevMatched(MnliBase):
         local_path = os.path.join(rootpath, "data", "nli/mnli/m_dev.jsonl")
         super().__init__(
             name="mnli-dev-matched",
+            local_path=local_path,
+            access_type=AccessTypeEnum.standard,
+        )
+
+
+class MnliTestMismatched(MnliBase):
+    def __init__(self):
+        rootpath = os.path.dirname(sys.path[0])
+        local_path = os.path.join(rootpath, "data", "nli/mnli/mm_test_fake.jsonl")
+        super().__init__(
+            name="mnli-test-fake-mismatched",
+            local_path=local_path,
+            access_type=AccessTypeEnum.standard,
+        )
+
+
+class MnliTestMatched(MnliBase):
+    def __init__(self):
+        rootpath = os.path.dirname(sys.path[0])
+        local_path = os.path.join(rootpath, "data", "nli/mnli/m_test_fake.jsonl")
+        super().__init__(
+            name="mnli-test-fake-matched",
             local_path=local_path,
             access_type=AccessTypeEnum.standard,
         )
