@@ -79,9 +79,10 @@ class MnliDevMatched(MnliBase):
 class MnliTestMismatched(MnliBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
-        local_path = os.path.join(rootpath, "data", "nli/mnli/mm_test_fake.jsonl")
+        local_path = os.path.join(rootpath, "data", "nli/mnli/mm_test.jsonl")
+
         super().__init__(
-            name="mnli-test-fake-mismatched",
+            name="mnli-test-mismatched",
             local_path=local_path,
             access_type=AccessTypeEnum.standard,
         )
@@ -90,9 +91,9 @@ class MnliTestMismatched(MnliBase):
 class MnliTestMatched(MnliBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
-        local_path = os.path.join(rootpath, "data", "nli/mnli/m_test_fake.jsonl")
+        local_path = os.path.join(rootpath, "data", "nli/mnli/m_test.jsonl")
         super().__init__(
-            name="mnli-test-fake-matched",
+            name="mnli-test-matched",
             local_path=local_path,
             access_type=AccessTypeEnum.standard,
-        )
+            )
