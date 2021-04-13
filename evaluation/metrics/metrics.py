@@ -25,6 +25,7 @@ def get_f1(predictions: list, targets: list):
 def get_f1_meta(task=None):
     return {"unit": "%", "pretty_name": "F1", "utility_direction": 1}
 
+
 # TODO: split into different functions for fairness and robustness.
 def get_unperturbed_percent(predictions: list, targets: list, metric_func):
     total_unperturbed_weights, total = 0, 0
