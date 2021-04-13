@@ -98,29 +98,26 @@ class JobScheduler:
                 logger.exception(
                     f"Requeueing job {job.job_name} due to AWS limit exceeds {ex}."
                 )
-                self._queued.insert(0, job)
-                return False
+                self._queued.append(job)
             except Exception as ex:
                 logger.exception(f"Exception in submitting job {job.job_name}: {ex}")
                 self._failed.append(job)
-                return True
             else:
                 job.status = self.sagemaker.describe_transform_job(
                     TransformJobName=job.job_name
                 )
                 logger.info(f"Submitted {job.job_name} for batch transform.")
                 self._submitted.append(job)
-                return True
 
         self._queued.append(job)
         logger.info(f"Queued {job.job_name} for submission")
 
         # Submit remaining jobs
         N_to_submit = min(self.max_submission - len(self._submitted), len(self._queued))
-        for _ in range(N_to_submit):
-            job = self._queued.pop(0)
-            if not _create_batch_transform(job):
-                break
+        if N_to_submit > 0:
+            for _ in range(N_to_submit):
+                job = self._queued.pop(0)
+                _create_batch_transform(job)
 
         if dump:
             self._dump()
