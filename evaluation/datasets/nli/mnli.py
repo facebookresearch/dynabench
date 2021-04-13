@@ -11,22 +11,27 @@ from .base import AccessTypeEnum, NliBase
 
 
 class MnliBase(NliBase):
-    def __init__(self, task, name, local_path, access_type=AccessTypeEnum.scoring):
+    def __init__(self, name, local_path, access_type=AccessTypeEnum.scoring):
         self.local_path = local_path
-        super().__init__(task=task, name=name, round_id=0, access_type=access_type)
+        super().__init__(name=name, round_id=0, access_type=access_type)
 
     def load(self):
         try:
             with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
                 for line in open(self.local_path).readlines():
                     jl = json.loads(line)
-                    tmp_jl = {
-                        "uid": jl["uid"],
-                        "context": jl["premise"],
-                        "hypothesis": jl["hypothesis"],
-                        "label": jl["label"].lower(),
-                    }
-                    tmp.write(json.dumps(tmp_jl) + "\n")
+                    if jl["gold_label"] != "-":
+                        tmp_jl = {
+                            "uid": jl["pairID"],
+                            "context": jl["sentence1"],
+                            "hypothesis": jl["sentence2"],
+                            "label": {
+                                "entailment": "e",
+                                "neutral": "n",
+                                "contradiction": "c",
+                            }[jl["gold_label"]],
+                        }
+                        tmp.write(json.dumps(tmp_jl) + "\n")
                 tmp.close()
                 response = self.s3_client.upload_file(
                     tmp.name, self.s3_bucket, self._get_data_s3_path()
@@ -53,7 +58,6 @@ class MnliDevMismatched(MnliBase):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "nli/mnli/mm_dev.jsonl")
         super().__init__(
-            task="nli",
             name="mnli-dev-mismatched",
             local_path=local_path,
             access_type=AccessTypeEnum.standard,
@@ -65,8 +69,22 @@ class MnliDevMatched(MnliBase):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "nli/mnli/m_dev.jsonl")
         super().__init__(
-            task="nli",
             name="mnli-dev-matched",
             local_path=local_path,
             access_type=AccessTypeEnum.standard,
         )
+
+
+class MnliTestMismatched(MnliBase):
+    def __init__(self):
+        rootpath = os.path.dirname(sys.path[0])
+        local_path = os.path.join(rootpath, "data", "nli/mnli/mm_test.jsonl")
+
+        super().__init__(name="mnli-test-mismatched", local_path=local_path)
+
+
+class MnliTestMatched(MnliBase):
+    def __init__(self):
+        rootpath = os.path.dirname(sys.path[0])
+        local_path = os.path.join(rootpath, "data", "nli/mnli/m_test.jsonl")
+        super().__init__(name="mnli-test-matched", local_path=local_path)

@@ -10,10 +10,13 @@ from datasets.common import logger
 from .base import AccessTypeEnum, NliBase
 
 
-class SnliBase(NliBase):
-    def __init__(self, name, local_path, access_type=AccessTypeEnum.scoring):
-        self.local_path = local_path
-        super().__init__(name=name, round_id=0, access_type=access_type)
+class Hans(NliBase):
+    def __init__(self):
+        rootpath = os.path.dirname(sys.path[0])
+        self.local_path = os.path.join(
+            rootpath, "data", "nli/hans/heuristics_evaluation_set.jsonl"
+        )
+        super().__init__(name="hans", round_id=0, access_type=AccessTypeEnum.standard)
 
     def load(self):
         try:
@@ -27,11 +30,9 @@ class SnliBase(NliBase):
                             "uid": jl["pairID"],
                             "context": jl["sentence1"],
                             "hypothesis": jl["sentence2"],
-                            "label": {
-                                "entailment": "e",
-                                "neutral": "n",
-                                "contradiction": "c",
-                            }[jl["gold_label"]],
+                            "label": {"entailment": "e", "non-entailment": ["n", "c"]}[
+                                jl["gold_label"]
+                            ],
                         }
                         tmp.write(json.dumps(tmp_jl) + "\n")
                 tmp.close()
@@ -53,19 +54,3 @@ class SnliBase(NliBase):
             "answer": example["label"],
             "tags": example.get("tags", []),
         }
-
-
-class SnliDev(SnliBase):
-    def __init__(self):
-        rootpath = os.path.dirname(sys.path[0])
-        local_path = os.path.join(rootpath, "data", "nli/snli_1.0/snli_1.0_dev.jsonl")
-        super().__init__(
-            name="snli-dev", local_path=local_path, access_type=AccessTypeEnum.standard
-        )
-
-
-class SnliTest(SnliBase):
-    def __init__(self):
-        rootpath = os.path.dirname(sys.path[0])
-        local_path = os.path.join(rootpath, "data", "nli/snli_1.0/snli_1.0_test.jsonl")
-        super().__init__(name="snli-test", local_path=local_path)
