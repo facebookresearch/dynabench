@@ -35,8 +35,12 @@ def get_unperturbed_percent(predictions: list, targets: list, metric_func):
     return round(total_unperturbed_weights / total, 2)
 
 
-def get_unperturbed_percent_meta(task=None):
-    return {"unit": "%", "pretty_name": "Unperturbed Percent", "utility_direction": 1}
+def get_fairness_meta(task=None):
+    return {"unit": "%", "pretty_name": "Fairness", "utility_direction": 1}
+
+
+def get_robustness_meta(task=None):
+    return {"unit": "%", "pretty_name": "Robustness", "utility_direction": 1}
 
 
 # job_metrics, takes raw job and dataset as input
@@ -64,7 +68,7 @@ def get_examples_per_second(job, dataset):
 
 def get_examples_per_second_meta(task):
     return {
-        "unit": "examples/seconds",
+        "unit": "examples/second",
         "pretty_name": "Examples per Second",
         "utility_direction": 1,
     }
