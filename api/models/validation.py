@@ -1,8 +1,8 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
-import enum
 import json
 
+import enum
 import sqlalchemy as db
 
 from common.logging import logger

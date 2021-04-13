@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 import boto3
 
 from eval_config import eval_config
-from metrics import get_eval_metrics, get_task_config_safe
+from metrics import get_delta_metrics, get_eval_metrics, get_task_config_safe
 from utils.helpers import (
     get_data_s3_path,
     get_perturbed_filename,
@@ -78,6 +78,11 @@ class BaseDataset(ABC):
             f"s3://{self.s3_bucket}", "predictions", endpoint_name, self.task
         )
 
+    def _get_raw_output_s3_url_prefix(self, endpoint_name):
+        return os.path.join(
+            f"s3://{self.s3_bucket}", "predictions", endpoint_name, "raw", self.task
+        )
+
     def dataset_available_on_s3(self, perturb_prefix=None) -> bool:
         path = self._get_data_s3_path(perturb_prefix)
         return path_available_on_s3(self.s3_client, self.s3_bucket, path, path)
@@ -101,8 +106,11 @@ class BaseDataset(ABC):
                     logger=logger,
                 )
 
-    def get_output_s3_url(self, endpoint_name, perturb_prefix=None):
-        prefix = self._get_output_s3_url_prefix(endpoint_name)
+    def get_output_s3_url(self, endpoint_name, raw=False, perturb_prefix=None):
+        if raw:
+            prefix = self._get_raw_output_s3_url_prefix(endpoint_name)
+        else:
+            prefix = self._get_output_s3_url_prefix(endpoint_name)
         filename = get_perturbed_filename(self.filename, perturb_prefix)
         return os.path.join(prefix, filename + ".out")
 
@@ -128,7 +136,7 @@ class BaseDataset(ABC):
             },
             TransformOutput={
                 # change to config
-                "S3OutputPath": self._get_output_s3_url_prefix(endpoint_name),
+                "S3OutputPath": self._get_raw_output_s3_url_prefix(endpoint_name),
                 "Accept": "application/json",
                 "AssembleWith": "Line",
             },
@@ -146,7 +154,10 @@ class BaseDataset(ABC):
             self.s3_bucket, self._get_data_s3_path(perturb_prefix), tf
         )
         data = [json.loads(l) for l in open(tf).readlines()]
-        labels = [self.label_field_converter(example) for example in data]
+        if perturb_prefix:
+            labels = [self.perturb_label_field_converter(example) for example in data]
+        else:
+            labels = [self.label_field_converter(example) for example in data]
         os.remove(tf)
         if not self._n_examples.get(perturb_prefix, None):
             self._n_examples[perturb_prefix] = len(labels)
@@ -157,14 +168,17 @@ class BaseDataset(ABC):
             self.read_labels(perturb_prefix)
         return self._n_examples[perturb_prefix]
 
-    def eval(self, predictions: list, perturb_prefix=None) -> dict:
+    def eval(self, predictions: list, targets=None, perturb_prefix=None) -> dict:
         """
         Adapted from common.helpers.validate_prediction, compute accuracy / f1, etc.
+        If targets is passed, will compute weighted delta metrics against
+        the given target, and the target id should be original id
         """
         # load target examples
-        target_examples = self.read_labels(perturb_prefix)
-        # validate alignment of prediction and target labels
+        target_examples = self.read_labels(perturb_prefix) if not targets else targets
         target_ids = [x["id"] for x in target_examples]
+        # note to compute accuracy with changed label,
+        # each perturbed example needs to have a unique id too
         target_labels = {t["id"]: t["answer"] for t in target_examples}
         target_labels = [target_labels[id] for id in target_ids]
         target_tags = {t["id"]: t["tags"] for t in target_examples}
@@ -173,50 +187,90 @@ class BaseDataset(ABC):
         predictions = [
             self.pred_field_converter(prediction) for prediction in predictions
         ]
-        predictions = {p["id"]: p["pred"] for p in predictions}
-        try:
-            predictions = [predictions[id] for id in target_ids]
-            assert len(predictions) == len(target_labels)
-        except AssertionError:
-            logger.exception("Prediction and target file length mismatch")
-        except KeyError as ex:
-            logger.exception(f"Prediction and target file example mismatch: {ex}")
-        except Exception as ex:
-            logger.exception(f"Unknown exception {ex}")
-        else:
-            score_obj = {}
 
-            # Get performance
-            perf, perf_dict = get_eval_metrics(self.task, predictions, target_labels)
-            score_obj["perf"] = perf
-            score_obj["pretty_perf"] = str(perf) + " %"
-            score_obj["metadata_json"] = perf_dict
+        score_obj = {}  # score_obj keys always correspond to scores table columns
 
-            # Get performance breakdown for this round across tags
-            if target_tags:
-                examples_by_tag = {}
-                for pred, target_label, target_tags in zip(
-                    predictions, target_labels, target_tags
-                ):
-                    for tag in target_tags:
-                        examples_by_tag.setdefault(tag, []).append((pred, target_label))
-                perf_by_tag_tuple_dict = {
-                    k: get_eval_metrics(self.task, *list(zip(*examples)))
-                    for k, examples in examples_by_tag.items()
+        if targets and perturb_prefix:  # i.e compute perturb percentage
+            predictions_dict = {id: [] for id in target_ids}
+            try:
+                id_mapping = self.read_labels(perturb_prefix)
+                id_mapping = {m["id"]: m["input_id"] for m in id_mapping}
+                for p in predictions:
+                    predictions_dict[id_mapping[p["id"]]].append(p["pred"])
+                predictions = [predictions_dict[id] for id in target_ids]
+            except KeyError as ex:
+                logger.exception(f"Prediction and target file example mismatch: {ex}")
+            except Exception as ex:
+                logger.exception(f"Unknown exception {ex}")
+            else:
+                delta_metrics_dict = get_delta_metrics(
+                    self.task, predictions, target_labels, perturb_prefix
+                )
+                score_obj = {
+                    **delta_metrics_dict,
+                    "metadata_json": json.dumps(delta_metrics_dict),
                 }
-                score_obj["metadata_json"]["perf_by_tag"] = [
-                    {
-                        "tag": tag,
-                        "pretty_perf": str(perf * 100) + " %",
-                        "perf": perf * 100,
-                        "perf_dict": perf_dict,
+
+        else:  # compute normal eval metrics
+            # validate alignment of prediction and target labels
+            predictions = {p["id"]: p["pred"] for p in predictions}
+            try:
+                predictions = [predictions[id] for id in target_ids]
+                assert len(predictions) == len(target_labels)
+            except AssertionError:
+                logger.exception("Prediction and target file length mismatch")
+            except KeyError as ex:
+                logger.exception(f"Prediction and target file example mismatch: {ex}")
+            except Exception as ex:
+                logger.exception(f"Unknown exception {ex}")
+            else:
+                # Get performance
+                perf, perf_dict = get_eval_metrics(
+                    self.task, predictions, target_labels
+                )
+                score_obj["perf"] = perf
+                score_obj["pretty_perf"] = str(perf) + " %"
+                score_obj["metadata_json"] = perf_dict
+
+                # Get performance breakdown for this round across tags
+                if target_tags:
+                    examples_by_tag = {}
+                    for pred, target_label, target_tags in zip(
+                        predictions, target_labels, target_tags
+                    ):
+                        for tag in target_tags:
+                            examples_by_tag.setdefault(tag, []).append(
+                                (pred, target_label)
+                            )
+                    perf_by_tag_tuple_dict = {
+                        k: get_eval_metrics(self.task, *list(zip(*examples)))
+                        for k, examples in examples_by_tag.items()
                     }
-                    for tag, (perf, perf_dict) in perf_by_tag_tuple_dict.items()
-                ]
+                    score_obj["metadata_json"]["perf_by_tag"] = [
+                        {
+                            "tag": tag,
+                            "pretty_perf": str(perf * 100) + " %",
+                            "perf": perf * 100,
+                            "perf_dict": perf_dict,
+                        }
+                        for tag, (perf, perf_dict) in perf_by_tag_tuple_dict.items()
+                    ]
 
-            score_obj["metadata_json"] = json.dumps(score_obj["metadata_json"])
+                score_obj["metadata_json"] = json.dumps(score_obj["metadata_json"])
 
-            return score_obj
+        return score_obj
+
+    def perturb_label_field_converter(self, example):
+        return {"input_id": example["input_id"], **self.label_field_converter(example)}
+
+    def pred_to_target_converter(self, pred):
+        """
+        Used for fairness and robustness to compute
+        unperturbed percentage on output
+        """
+        pred["answer"] = pred.pop("pred")
+        pred["tags"] = []
+        return pred
 
     @abstractmethod
     def load(self) -> bool:
@@ -239,7 +293,7 @@ class BaseDataset(ABC):
         {
             "id": <a unique identifier>,
             "answer": <the correct answer that will be used to calculate metrics>,
-            "tags": <can be empty>
+            "tags": <list of string, can be empty>
         }
         """
         raise NotImplementedError

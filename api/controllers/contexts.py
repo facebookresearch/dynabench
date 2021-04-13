@@ -37,6 +37,13 @@ def getRandomMinLeastFooledContext(tid, rid):
     return _getContext(tid, rid, "least_fooled", tags=tags)
 
 
+@bottle.get("/contexts/<tid:int>/<rid:int>/validation_failed")
+def getRandomValidationFailedContext(tid, rid):
+    query_dict = parse_qs(bottle.request.query_string)
+    tags = _getTags(query_dict)
+    return _getContext(tid, rid, "validation_failed", tags=tags)
+
+
 def _getTags(query_dict):
     tags = None
     if "tags" in query_dict and len(query_dict["tags"]) > 0:
@@ -54,13 +61,15 @@ def _getContext(tid, rid, method="min", tags=None):
     elif method == "min":
         context = c.getRandomMin(round.id, n=1, tags=tags)
     elif method == "least_fooled":
+        context = c.getRandomLeastFooled(round.id, n=1, tags=tags)
+    elif method == "validation_failed":
         tm = TaskModel()
         task = tm.get(tid)
         num_matching_validations = 3
         if task.settings_json:
             settings = json.loads(task.settings_json)
             num_matching_validations = settings["num_matching_validations"]
-        context = c.getRandomLeastFooled(
+        context = c.getRandomValidationFailed(
             round.id, num_matching_validations, n=1, tags=tags
         )
     if not context:
