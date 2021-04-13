@@ -9,8 +9,8 @@ import botocore
 import uuid
 
 from deploy_config import deploy_config
-from utils.helpers import load_queue_dump
 from utils.deployer import ModelDeployer
+from utils.helpers import load_queue_dump
 from utils.logging import init_logger, logger
 
 
