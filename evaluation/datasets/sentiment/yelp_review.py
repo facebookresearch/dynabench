@@ -10,7 +10,7 @@ from datasets.common import logger
 from .base import AccessTypeEnum, SentimentBase
 
 
-class DynasentBase(SentimentBase):
+class YelpReviewBase(SentimentBase):
     def __init__(
         self, name, local_path, round_id=0, access_type=AccessTypeEnum.scoring
     ):
@@ -49,51 +49,24 @@ class DynasentBase(SentimentBase):
         }
 
 
-class DynasentRound1Test(DynasentBase):
+class YelpReviewTest(YelpReviewBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(
-            rootpath, "data", "sentiment/sentiment_v1.1/round1/test.jsonl"
+            rootpath, "data", "sentiment/yelp_review/yelp-review-test.jsonl"
         )
-        super().__init__(name="dynasent-r1-test", local_path=local_path, round_id=1)
+        super().__init__(name="yelp-review-test", local_path=local_path, round_id=0)
 
 
-class DynasentRound2Test(DynasentBase):
+class YelpReviewDev(YelpReviewBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(
-            rootpath, "data", "sentiment/sentiment_v1.1/round2/test.jsonl"
-        )
-        super().__init__(name="dynasent-r2-test", local_path=local_path, round_id=2)
-
-
-class DynasentRound1Dev(DynasentBase):
-    def __init__(self):
-        rootpath = os.path.dirname(sys.path[0])
-        local_path = os.path.join(
-            rootpath,
-            "data",
-            "sentiment/sentiment_v1.1/round1/dynasent-v1.1-round01-yelp-dev.jsonl",
+            rootpath, "data", "sentiment/yelp_review/yelp-review-dev.jsonl"
         )
         super().__init__(
-            name="dynasent-r1-dev",
+            name="yelp-review-dev",
             local_path=local_path,
-            round_id=1,
-            access_type=AccessTypeEnum.standard,
-        )
-
-
-class DynasentRound2Dev(DynasentBase):
-    def __init__(self):
-        rootpath = os.path.dirname(sys.path[0])
-        local_path = os.path.join(
-            rootpath,
-            "data",
-            "sentiment/sentiment_v1.1/round2/dynasent-v1.1-round02-dynabench-dev.jsonl",
-        )
-        super().__init__(
-            name="dynasent-r2-dev",
-            local_path=local_path,
-            round_id=2,
+            round_id=0,
             access_type=AccessTypeEnum.standard,
         )

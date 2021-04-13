@@ -12,12 +12,10 @@ from .base import AccessTypeEnum, NliBase
 
 class AnliBase(NliBase):
     def __init__(
-        self, task, name, local_path, round_id=0, access_type=AccessTypeEnum.scoring
+        self, name, local_path, round_id=0, access_type=AccessTypeEnum.scoring
     ):
         self.local_path = local_path
-        super().__init__(
-            task=task, name=name, round_id=round_id, access_type=access_type
-        )
+        super().__init__(name=name, round_id=round_id, access_type=access_type)
 
     def load(self):
         try:
@@ -57,7 +55,6 @@ class AnliRound1Dev(AnliBase):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "nli/anli_v1.0/R1/dev.jsonl")
         super().__init__(
-            task="nli",
             name="anli-r1-dev",
             local_path=local_path,
             round_id=1,
@@ -69,9 +66,7 @@ class AnliRound1Test(AnliBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "nli/anli_v1.0/R1/test.jsonl")
-        super().__init__(
-            task="nli", name="anli-r1-test", local_path=local_path, round_id=1
-        )
+        super().__init__(name="anli-r1-test", local_path=local_path, round_id=1)
 
 
 class AnliRound2Dev(AnliBase):
@@ -79,7 +74,6 @@ class AnliRound2Dev(AnliBase):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "nli/anli_v1.0/R2/dev.jsonl")
         super().__init__(
-            task="nli",
             name="anli-r2-dev",
             local_path=local_path,
             round_id=2,
@@ -91,9 +85,7 @@ class AnliRound2Test(AnliBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "nli/anli_v1.0/R2/test.jsonl")
-        super().__init__(
-            task="nli", name="anli-r2-test", local_path=local_path, round_id=2
-        )
+        super().__init__(name="anli-r2-test", local_path=local_path, round_id=2)
 
 
 class AnliRound3Dev(AnliBase):
@@ -101,7 +93,6 @@ class AnliRound3Dev(AnliBase):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "nli/anli_v1.0/R3/dev.jsonl")
         super().__init__(
-            task="nli",
             name="anli-r3-dev",
             local_path=local_path,
             round_id=3,
@@ -113,6 +104,4 @@ class AnliRound3Test(AnliBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "data", "nli/anli_v1.0/R3/test.jsonl")
-        super().__init__(
-            task="nli", name="anli-r3-test", local_path=local_path, round_id=3
-        )
+        super().__init__(name="anli-r3-test", local_path=local_path, round_id=3)
