@@ -30,6 +30,9 @@ if __name__ == "__main__":
     )
     queue = sqs.get_queue_by_name(QueueName=eval_config["evaluation_sqs_queue"])
     dataset_dict = load_datasets()
+    while not dataset_dict:
+        logger.info("Haven't got dataset_dict. Sleep.")
+        time.sleep(sleep_interval)
     requester = Requester(eval_config, dataset_dict)
     timer = scheduler_update_interval
     while True:
