@@ -86,18 +86,30 @@ class JobScheduler:
         job = Job(model_id, dataset_name, perturb_prefix)
 
         def _create_batch_transform(job):
+            """
+            Return True if we can continue to submit batch transforms,
+            else return False
+            """
             try:
                 self.datasets[job.dataset_name].run_batch_transform(
                     self.sagemaker, job.endpoint_name, job.job_name, job.perturb_prefix
                 )
+            except self.sagemaker.exceptions.ResourceLimitExceeded as ex:
+                logger.exception(
+                    f"Requeueing job {job.job_name} due to AWS limit exceeds {ex}."
+                )
+                self._queued.insert(0, job)
+                return False
             except Exception as ex:
                 logger.exception(f"Exception in submitting job {job.job_name}: {ex}")
-                return False
+                self._failed.append(job)
+                return True
             else:
                 job.status = self.sagemaker.describe_transform_job(
                     TransformJobName=job.job_name
                 )
                 logger.info(f"Submitted {job.job_name} for batch transform.")
+                self._submitted.append(job)
                 return True
 
         self._queued.append(job)
@@ -107,10 +119,8 @@ class JobScheduler:
         N_to_submit = min(self.max_submission - len(self._submitted), len(self._queued))
         for _ in range(N_to_submit):
             job = self._queued.pop(0)
-            if _create_batch_transform(job):
-                self._submitted.append(job)
-            else:
-                self._failed.append(job)
+            if not _create_batch_transform(job):
+                break
 
         if dump:
             self._dump()
