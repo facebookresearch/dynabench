@@ -21,6 +21,6 @@ metrics_meta_config = {
     "f1": metrics.get_f1_meta,
     "memory_utilization": metrics.get_memory_utilization_meta,
     "examples_per_second": metrics.get_examples_per_second_meta,
-    "fairness": metrics.get_unperturbed_percent_meta,
-    "robustness": metrics.get_unperturbed_percent_meta,
+    "fairness": metrics.get_fairness_meta,
+    "robustness": metrics.get_robustness_meta,
 }
