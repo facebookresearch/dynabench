@@ -6,6 +6,7 @@
 # --task nli --perturb-prefix fairness
 
 import argparse
+import json
 import logging
 import os
 import sys
@@ -13,6 +14,8 @@ import sys
 import boto3
 
 from dynalab_cli.utils import get_tasks
+from fairness import FairnessPerturbation
+from robustness import RobustnessPerturbation
 
 
 sys.path.append("..")  # noqa
@@ -87,15 +90,39 @@ def download_base_from_s3(args):
         return False
 
 
+def load_examples(path):
+    with open(path) as f:
+        return [json.loads(line) for line in f]
+
+
 def perturb(path, task, perturb_prefix):
-    raise NotImplementedError
+    examples = load_examples(path)
+    if perturb_prefix == "fairness":
+        pert = FairnessPerturbation()
+    elif perturb_prefix == "robustness":
+        pert = RobustnessPerturbation()
+
+    perturb_examples = []
+    for example in examples:
+        perturbed = pert.perturb(task, example)
+        perturb_examples.extend(perturbed)
+
+    outpath = os.path.join(
+        os.path.dirname(local_path), f"{perturb_prefix}-{os.path.basename(local_path)}"
+    )
+    with open(outpath, "w") as f:
+        for example in perturb_examples:
+            f.write(json.dumps(example) + "\n")
+    logger.info(f"Wrote perturbed dataset to {outpath}")
+
+    return outpath
 
 
-def print_instructions(args, local_path, base_dataset_name):
+def print_instructions(args, outpath, base_dataset_name):
     logger.info(
-        "Once you are happy with the perturbation, use the following command"
+        "Once you are happy with the perturbation, use the following command "
         "to upload the data back to S3 and request evaluation\n"
-        f"python request_evaluation.py --path {local_path} --task {args.task} "
+        f"python request_evaluation.py --path {outpath} --task {args.task} "
         f"--perturb-prefix {args.perturb_prefix} "
         f"--base-dataset-name {base_dataset_name}"
     )
@@ -104,8 +131,8 @@ def print_instructions(args, local_path, base_dataset_name):
 if __name__ == "__main__":
     args = parse_args()
     local_path, base_dataset_name = download_base_from_s3(args)
-    perturb(local_path, args.task, args.perturb_prefix)
-    print_instructions(args, local_path, base_dataset_name)
+    outpath = perturb(local_path, args.task, args.perturb_prefix)
+    print_instructions(args, outpath, base_dataset_name)
     ops = input(f"Remove locally downloaded file at {local_path}? [Y/n] ")
     if ops == "Y":
         os.remove(local_path)

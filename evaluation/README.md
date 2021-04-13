@@ -112,3 +112,14 @@ The evaluation metrics, such as accuracy, f1, etc. are implemented in the metric
    metrics.task_config
    ```
    for your task. You can either add your metric as one of the `eval_metrics`, whose value will be stored as an entry in the metric json object for query, or use it as the `perf_metric` to sort models. Note that the changes will only take effect on new evaluations requested after the codebase has been deployed. Computing a new metric on retrospective evaluations is yet to be supported.
+
+## Perturb datasets
+Use the scripts in scripts folder to perturb datasets and request evaluation.
+For example, to perturb a dataset for task nli to fairness dataset, do
+```
+cd scripts
+python perturb.py --s3-uri <s3-uri> --task nli --perturb-prefix fairness
+```
+The `s3-uri` is the "S3 URI" under "Object overview" in S3, and it should point to an original dataset (i.e. unperturbed version). S3 uri is usually in the format of `s3://{bucket}/{path}`.
+
+Follow the prompt to check the output and if everything looks good, copy paste the given command to upload the dataset and request an evaluation.

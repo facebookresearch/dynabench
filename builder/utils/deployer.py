@@ -13,9 +13,9 @@ import boto3
 import sagemaker
 from sagemaker.model import Model
 from sagemaker.predictor import Predictor
-from tqdm import tqdm
 
 from deploy_config import deploy_config
+from dynalab_cli.utils import SetupConfigHandler
 from utils.logging import logger
 
 
@@ -23,16 +23,18 @@ class ModelDeployer:
     def __init__(self, model_name, s3_uri):
         self.name = model_name
         s3_bucket, s3_path, self.s3_dir, self.unique_name = self.parse_s3_uri(s3_uri)
-        self.tmp = tempfile.TemporaryDirectory(prefix=self.unique_name)
-        self.tmp_dir = self.tmp.name
-        logger.info(f"{model_name} folder loaded temporarily at {self.tmp_dir}")
+        self.repository_name = self.unique_name.lower()
+        self.rootp = tempfile.TemporaryDirectory(prefix=self.unique_name)
+        self.root_dir = self.rootp.name
+        logger.info(f"{model_name} folder loaded temporarily at {self.root_dir}")
         self.archive_name = f"archive.{self.unique_name}"
 
         self.env = self.setup_sagemaker_env()
         self.owd = os.getcwd()
 
         try:
-            self.config = self.initialize(s3_bucket, s3_path)
+            self.config_handler = self.initialize(s3_bucket, s3_path)
+            self.config = self.config_handler.load_config()
         except Exception as ex:
             logger.exception(
                 f"Exception in fetching model folder and loading config {ex}"
@@ -48,35 +50,24 @@ class ModelDeployer:
         return s3_bucket, s3_path, s3_dir, unique_name
 
     def initialize(self, s3_bucket, s3_path):
-        if os.path.exists(self.tmp_dir):
-            shutil.rmtree(self.tmp_dir)
-        os.makedirs(self.tmp_dir)
-        os.chdir(self.tmp_dir)
+        if os.path.exists(self.root_dir):
+            shutil.rmtree(self.root_dir)
+        os.makedirs(self.root_dir)
+        os.chdir(self.root_dir)
         logger.info(f"Fetching model folder {s3_path} for {self.name}")
-        self.fetch_folder(s3_bucket, s3_path)
+        self._fetch_folder(s3_bucket, s3_path)
         logger.info("Load the model setup config")
-        config = self.get_config()
-        return config
+        config_handler = SetupConfigHandler(self.name)
+        return config_handler
 
-    def fetch_folder(self, s3_bucket, s3_path):
+    def _fetch_folder(self, s3_bucket, s3_path):
         save_tarball = f"{self.unique_name}.tar.gz"
         response = self.env["s3_client"].download_file(s3_bucket, s3_path, save_tarball)
         if response:
             logger.debug(f"Response from fetching S3 folder {response}")
 
         subprocess.run(shlex.split(f"tar xf {shlex.quote(save_tarball)}"))
-
-    def get_config(self):
-        # TODO: use dynalab SetupConfigHandler to load config
-        # when dynalab is available to install
-        config_path = f"./.dynalab/{self.name}/setup_config.json"
-        if os.path.exists(config_path):
-            with open(config_path) as f:
-                return json.load(f)
-        else:
-            raise RuntimeError(
-                f"No config found. Please call dynalab-cli init to initiate this repo. "
-            )
+        os.remove(save_tarball)
 
     def setup_sagemaker_env(self):
         env = {}
@@ -147,76 +138,74 @@ class ModelDeployer:
         # TODO: manage deletion by version
         try:
             response = self.env["ecr_client"].delete_repository(
-                repositoryName=self.unique_name, force=True
+                repositoryName=self.repository_name, force=True
             )
-            logger.info(f"- Deleting the docker repository {self.unique_name:}")
+            logger.info(f"- Deleting the docker repository {self.repository_name:}")
         except self.env["ecr_client"].exceptions.RepositoryNotFoundException:
             logger.info(
-                f"Repository {self.unique_name} not found. If deploying, this will be created"
+                f"Repository {self.repository_name} not found. If deploying, this will be created"
             )
         else:
             if response:
                 logger.info(f"Response from deleting ECR repository {response}")
 
-    def _parse_docker_build_status(self, line):
-        ## TODO: use re for this function
-        status_start = line.find("[")
-        status_end = line.find("]")
-        if status_start != -1:
-            status = line[status_start + 1 : status_end]
-            if "/" in status:
-                cur, N = [int(n.strip()) for n in status.split("/")]
-                return cur, N
-        return None
-
     def build_docker(self, secret):
+        # tarball current folder but exclude checkpoints
+        tmp_dir = os.path.join(self.config_handler.config_dir, "tmp")
+        os.makedirs(tmp_dir, exist_ok=True)
+        exclude_list_file = os.path.join(tmp_dir, "exclude.txt")
+        self.config_handler.write_exclude_filelist(
+            exclude_list_file, self.name, exclude_model=True
+        )
+        tarball = os.path.join(tmp_dir, f"{self.unique_name}.tar.gz")
+        process = subprocess.run(
+            [
+                "tar",
+                f"--exclude-from={exclude_list_file}",
+                "-czf",
+                shlex.quote(tarball),
+                ".",
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        )
+        if process.returncode != 0:
+            raise RuntimeError(
+                f"Exception in tarballing the project directory {process.stderr}"
+            )
+
+        # copy dockerfiles into current folder
         docker_dir = os.path.join(sys.path[0], "dockerfiles")
         for f in os.listdir(docker_dir):
-            shutil.copyfile(os.path.join(docker_dir, f), os.path.join(self.tmp_dir, f))
+            shutil.copyfile(os.path.join(docker_dir, f), os.path.join(self.root_dir, f))
 
         # build docker
-        docker_build_args = f"--build-arg tarball_name={shlex.quote(self.unique_name)} --build-arg requirements={shlex.quote(str(self.config['requirements']))} --build-arg setup={shlex.quote(str(self.config['setup']))} --build-arg my_secret={secret}"
-        docker_build_command = f"docker build --network host -t {shlex.quote(self.unique_name)} -f Dockerfile {docker_build_args} ."
+        docker_build_args = f"--build-arg tarball={shlex.quote(tarball)} --build-arg requirements={shlex.quote(str(self.config['requirements']))} --build-arg setup={shlex.quote(str(self.config['setup']))} --build-arg my_secret={secret}"
+        docker_build_command = f"docker build --network host -t {shlex.quote(self.repository_name)} -f Dockerfile {docker_build_args} ."
         with subprocess.Popen(
             shlex.split(docker_build_command),
             bufsize=1,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             universal_newlines=True,
         ) as process:
-            N = 0
-            nextline = process.stderr.readline().rstrip("\n")
-            while nextline or process.poll() is None:
-                if nextline:
-                    logger.debug(nextline)
-                    status = self._parse_docker_build_status(nextline)
-                    if status:
-                        N = status[1]
-                        break
-                else:
-                    time.sleep(1)
-                nextline = process.stderr.readline().rstrip("\n")
-            with tqdm(total=N + 1, unit="steps", desc="docker build") as t:
-                while nextline or process.poll() is None:
-                    if nextline:
-                        logger.debug(nextline)
-                        status = self._parse_docker_build_status(nextline)
-                        if status:
-                            cur = status[0]
-                            if cur > t.n:
-                                t.update(cur - t.n)
-                                time.sleep(0.1)
-                    else:
-                        time.sleep(1)
-                    nextline = process.stderr.readline().rstrip("\n")
-                _, stderr = process.communicate()
-                logger.debug(stderr)
-                while t.n < t.total:
-                    t.update(1)
+            while process.poll() is None:
+                print(".", end="", flush=True)
+                out = process.stdout.readline().rstrip("\n")
+                while out:
+                    logger.debug(out)
+                    out = process.stdout.readline().rstrip("\n")
+                time.sleep(10)
+            stdout, _ = process.communicate()
+            logger.debug(stdout)
+            print("!")
 
             if process.returncode != 0:
                 logger.exception(f"Error in docker build for model {self.name}")
                 raise RuntimeError("Error in docker build")
+
+        os.remove(tarball)
 
     def build_and_push_docker(self, secret):
         logger.info(f"Building docker for model {self.name}")
@@ -239,11 +228,10 @@ class ModelDeployer:
         else:
             logger.debug(process.stdout)
         # tag docker
-        repository_name = self.unique_name
-        image_ecr_path = f"{self.env['ecr_registry']}/{repository_name}"
+        image_ecr_path = f"{self.env['ecr_registry']}/{self.repository_name}"
         process = subprocess.run(
             shlex.split(
-                f"docker tag {shlex.quote(repository_name)} {shlex.quote(image_ecr_path)}"
+                f"docker tag {shlex.quote(self.repository_name)} {shlex.quote(image_ecr_path)}"
             ),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -259,7 +247,7 @@ class ModelDeployer:
         logger.info(f"Create ECR repository for model {self.name}")
         try:
             response = self.env["ecr_client"].create_repository(
-                repositoryName=self.unique_name,
+                repositoryName=self.repository_name,
                 imageScanningConfiguration={"scanOnPush": True},
             )
         except self.env["ecr_client"].exceptions.RepositoryAlreadyExistsException as e:
@@ -300,9 +288,7 @@ class ModelDeployer:
             "-f",
         ]
         if self.config["model_files"]:
-            extra_files = ",".join(
-                shlex.quote(f) for f in self.config["model_files"].split(",")
-            )
+            extra_files = ",".join(shlex.quote(f) for f in self.config["model_files"])
             archive_command += ["--extra-files", extra_files]
         process = subprocess.run(
             archive_command,
@@ -318,14 +304,9 @@ class ModelDeployer:
 
         # tarball the .mar
         logger.info(f"Tarballing the archived model {self.name} ...")
-        tarball_name = f"{self.archive_name}.tar.gz"
-        mar_name = f"{self.archive_name}.mar"
-        tarball_command = [
-            "tar",
-            "cfz",
-            shlex.quote(tarball_name),
-            shlex.quote(mar_name),
-        ]
+        tarball = f"{self.archive_name}.tar.gz"
+        mar = f"{self.archive_name}.mar"
+        tarball_command = ["tar", "cfz", shlex.quote(tarball), shlex.quote(mar)]
         process = subprocess.run(
             tarball_command,
             stdout=subprocess.PIPE,
@@ -340,13 +321,14 @@ class ModelDeployer:
 
         # upload model tarball to S3
         logger.info(f"Uploading the archived model {self.name} to S3 ...")
-        tarball = f"{self.archive_name}.tar.gz"
         response = self.env["s3_client"].upload_file(
             tarball, self.env["bucket_name"], f"{self.s3_dir}/{tarball}"
         )
         if response:
             logger.debug(f"Response from the mar file upload to s3 {response}")
         model_s3_path = f"s3://{self.env['bucket_name']}/{self.s3_dir}/{tarball}"
+        os.remove(tarball)
+        os.remove(mar)
         return model_s3_path
 
     def deploy_model(self, image_ecr_path, model_s3_path):
@@ -377,10 +359,13 @@ class ModelDeployer:
     def cleanup_post_deployment(self):
         try:
             os.chdir(self.owd)
-            self.tmp.cleanup()
+            self.rootp.cleanup()
             # clean up local docker images
-            subprocess.run(shlex.split(f"docker rmi {shlex.quote(self.unique_name)}"))
-            image_tag = f"{self.env['ecr_registry']}/{self.unique_name}"
+
+            subprocess.run(
+                shlex.split(f"docker rmi {shlex.quote(self.repository_name)}")
+            )
+            image_tag = f"{self.env['ecr_registry']}/{self.repository_name}"
             subprocess.run(shlex.split(f"docker rmi {shlex.quote(image_tag)}"))
         except Exception as ex:
             logger.exception(

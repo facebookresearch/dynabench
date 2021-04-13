@@ -74,9 +74,41 @@ class ContextModel(BaseModel):
             .all()
         )
 
-    def getRandomLeastFooled(self, rid, num_matching_validations, n=1, tags=None):
+    def getRandomLeastFooled(self, rid, n=1, tags=None):
+        from models.example import Example
+
+        result = self.dbs.query(Context).filter(Context.r_realid == rid)
+        if tags:
+            result = result.filter(Context.tag.in_(tags))  # noqa
+
+        least_fooled_examples_sub_query = (
+            self.dbs.query(
+                Example.cid,
+                db.sql.func.sum(
+                    db.case(value=Example.model_wrong, whens={1: 1}, else_=0)
+                ).label("num_fooled"),
+            )
+            .group_by(Example.cid)
+            .subquery()
+        )
+
+        return (
+            result.join(
+                least_fooled_examples_sub_query,
+                Context.id == least_fooled_examples_sub_query.c.cid,
+                isouter=True,
+            )
+            .order_by(
+                least_fooled_examples_sub_query.c.num_fooled.asc(), db.sql.func.rand()
+            )
+            .limit(n)
+            .all()
+        )
+
+    def getRandomValidationFailed(self, rid, num_matching_validations, n=1, tags=None):
         from models.example import Example
         from models.validation import Validation, LabelEnum
+        from sqlalchemy import distinct
 
         result = self.dbs.query(Context).filter(Context.r_realid == rid)
         if tags:
@@ -91,57 +123,107 @@ class ContextModel(BaseModel):
         cnt_flagged_val = db.sql.func.sum(
             case([(Validation.label == LabelEnum.flagged, 1)], else_=0)
         ).label("cnt_flagged_val")
+        cnt_total_val = db.sql.func.count(distinct(Validation.id)).label(
+            "cnt_total_val"
+        )
 
-        least_validated_fooled_examples = (
-            result.join(Example, Context.id == Example.cid)
-            .join(Validation, Example.id == Validation.eid)
-            .group_by(Example.cid)
-            .having(
+        example_with_validation_data = (
+            self.dbs.query(
+                Example.cid,
+                Example.id,
+                cnt_correct_val,
+                cnt_incorrect_val,
+                cnt_flagged_val,
+                cnt_total_val,
+            )
+            .join(Validation, Validation.eid == Example.id, isouter=True)
+            .group_by(Example.cid, Example.id)
+            .subquery()
+        )
+
+        contexts_with_example_stats = (
+            self.dbs.query(
+                example_with_validation_data.c.cid,
+                db.sql.func.sum(
+                    case(
+                        [
+                            (
+                                example_with_validation_data.c.cnt_correct_val
+                                >= num_matching_validations,
+                                1,
+                            )
+                        ],
+                        else_=0,
+                    )
+                ).label("cnt_correct_examples"),
+                db.sql.func.sum(
+                    case(
+                        [
+                            (
+                                db.and_(
+                                    example_with_validation_data.c.cnt_correct_val
+                                    < num_matching_validations,
+                                    db.or_(
+                                        example_with_validation_data.c.cnt_incorrect_val
+                                        >= num_matching_validations,
+                                        example_with_validation_data.c.cnt_flagged_val
+                                        >= num_matching_validations,
+                                    ),
+                                ),
+                                1,
+                            )
+                        ],
+                        else_=0,
+                    )
+                ).label("cnt_failed_examples"),
+                db.sql.func.sum(
+                    case(
+                        [
+                            (
+                                db.and_(
+                                    example_with_validation_data.c.cnt_correct_val
+                                    < num_matching_validations,
+                                    example_with_validation_data.c.cnt_incorrect_val
+                                    < num_matching_validations,
+                                    example_with_validation_data.c.cnt_flagged_val
+                                    < num_matching_validations,
+                                    example_with_validation_data.c.cnt_total_val > 0,
+                                ),
+                                1,
+                            )
+                        ],
+                        else_=0,
+                    )
+                ).label("cnt_inflight_examples"),
+                db.sql.func.sum(
+                    case(
+                        [(example_with_validation_data.c.cnt_total_val == 0, 1)],
+                        else_=0,
+                    )
+                ).label("cnt_pre_val_examples"),
+            )
+            .group_by(example_with_validation_data.c.cid)
+            .subquery()
+        )
+
+        return_result = (
+            result.join(
+                contexts_with_example_stats,
+                contexts_with_example_stats.c.cid == Context.id,
+            )
+            .filter(
                 db.and_(
-                    cnt_correct_val < num_matching_validations,
-                    db.or_(
-                        cnt_incorrect_val >= num_matching_validations,
-                        cnt_flagged_val >= num_matching_validations,
-                    ),
+                    contexts_with_example_stats.c.cnt_inflight_examples == 0,
+                    contexts_with_example_stats.c.cnt_correct_examples == 0,
+                    contexts_with_example_stats.c.cnt_failed_examples > 0,
+                    contexts_with_example_stats.c.cnt_pre_val_examples == 0,
                 )
             )
             .order_by(db.sql.func.rand())
             .limit(n)
         )
 
-        if len(least_validated_fooled_examples.all()) == n:
-            return least_validated_fooled_examples.all()
-
-        least_fooled_examples_sub_query = (
-            self.dbs.query(
-                Example.cid,
-                db.sql.func.sum(
-                    db.case(value=Example.model_wrong, whens={1: 1}, else_=0)
-                ).label("num_fooled"),
-            )
-            .group_by(Example.cid)
-            .subquery()
-        )
-        least_fooled_examples = (
-            result.join(
-                least_fooled_examples_sub_query,
-                Context.id == least_fooled_examples_sub_query.c.cid,
-                isouter=True,
-            )
-            .filter(
-                db.not_(
-                    db.exists().where(
-                        least_validated_fooled_examples.subquery().c.id == Context.id
-                    )
-                )
-            )
-            .order_by(
-                least_fooled_examples_sub_query.c.num_fooled.asc(), db.sql.func.rand()
-            )
-            .limit(n - len(least_validated_fooled_examples.all()))
-        )
-
-        return least_validated_fooled_examples.all() + least_fooled_examples.all()
+        return return_result.all()
 
     def incrementCountDate(self, cid):
         c = self.get(cid)
