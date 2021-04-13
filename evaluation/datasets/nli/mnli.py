@@ -36,7 +36,6 @@ class MnliBase(NliBase):
                 response = self.s3_client.upload_file(
                     tmp.name, self.s3_bucket, self._get_data_s3_path()
                 )
-                print(self.name + " DATA UPLOADED :D :D :D")
                 os.remove(tmp.name)
                 if response:
                     logger.info(response)
