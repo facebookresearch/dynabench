@@ -51,6 +51,7 @@ def load_datasets():
         "sst3-dev": sst3.Sst3Dev(),
         "aqa-r1-test": aqa.AqaRound1Test(),
         "aqa-r1-dev": aqa.AqaRound1Dev(),
+        "bio-asq-dev": mrqa_shared_dev.BioAsq(),
         "drop-dev": mrqa_shared_dev.Drop(),
         "duo-rc-paraphrase-rc-dev": mrqa_shared_dev.DuoRcParaphraseRc(),
         "hotpot-qa-dev": mrqa_shared_dev.HotpotQa(),

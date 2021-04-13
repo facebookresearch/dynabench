@@ -52,6 +52,13 @@ class MrqaSharedDev(QaBase):
         }
 
 
+class BioAsq(MrqaSharedDev):
+    def __init__(self):
+        rootpath = os.path.dirname(sys.path[0])
+        local_path = os.path.join(rootpath, "data", "qa/mrqa_shared_dev/BioASQ.jsonl")
+        super().__init__(name="bio-asq-dev", local_path=local_path, round_id=0)
+
+
 class Drop(MrqaSharedDev):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
