@@ -53,76 +53,62 @@ class Requester:
         else:
             for model_id in model_ids:
                 for dataset_name in dataset_names:
-                    dataset_name, perturb_prefix = get_perturb_prefix(
-                        dataset_name, self.datasets
-                    )
-                    logger.info(
-                        f"Request to evaluate model "
-                        f"{model_id} on dataset {dataset_name}"
-                        f"for perturb prefix {perturb_prefix}"
-                    )
-                    self._eval_model_on_dataset(model_id, dataset_name, perturb_prefix)
+                    self._eval_model_on_dataset(model_id, dataset_name)
         self.scheduler._dump()
         return True
 
-    def _eval_model_on_dataset(self, model_id, dataset_name, perturb_prefix=None):
+    def _eval_model_on_dataset(self, model_id, dataset_name):
         # evaluate a given model on given datasets
         try:
+            dataset_name, perturb_prefix = get_perturb_prefix(
+                dataset_name, self.datasets
+            )
+        except RuntimeError as ex:
+            logger.exception(ex)
+        else:
             self.scheduler.submit(model_id, dataset_name, perturb_prefix)
             if not perturb_prefix:
                 dataset = self.datasets[dataset_name]
                 task_config = get_task_config_safe(dataset.task)
                 for prefix in task_config["delta_metrics"]:
                     if dataset.dataset_available_on_s3(prefix):
-                        self.scheduler.submit(model_id, dataset_name, prefix)
-        except Exception as ex:
-            logger.exception(
-                f"Evaluation request for model {model_id} "
-                f"on dataset {dataset_name} failed due to {ex}"
-            )
+                        self.scheduler.submit(
+                            model_id, dataset_name, prefix, dump=False
+                        )
 
     def _eval_model(self, model_id):
         # given a model_id, evaluate all datasets for the
         # model's primary task
-        try:
-            m = ModelModel()
-            task_id = m.getUnpublishedModelByMid(model_id).tid
-            d = DatasetModel()
-            datasets = d.getByTid(task_id)
+        m = ModelModel()
+        tid = m.getUnpublishedModelByMid(model_id).tid
+        d = DatasetModel()
+        datasets = d.getByTid(tid)
+        if tid and datasets:
             dataset_names = [dataset.name for dataset in datasets]
-            if dataset_names:
-                for dataset_name in dataset_names:
-                    dataset_name, perturb_prefix = get_perturb_prefix(
-                        dataset_name, self.datasets
-                    )
-                    self._eval_model_on_dataset(model_id, dataset_name, perturb_prefix)
-        except Exception as ex:
-            logger.exception(
-                f"Evaluation request for model {model_id} failed due to {ex}"
-            )
+            for dataset_name in dataset_names:
+                self._eval_model_on_dataset(model_id, dataset_name)
+        else:
+            if not tid:
+                logger.exception(f"Task not found for model {model_id}")
+            else:
+                logger.warning(f"No datasets are available for task {tid}")
 
     def _eval_dataset(self, dataset_name):
         # given a dataset id, evaluate all models for the
         # dataset's task
-        try:
-            dataset_name, perturb_prefix = get_perturb_prefix(
-                dataset_name, self.datasets
-            )
-            t = TaskModel()
-            tid = t.getByTaskCode(self.datasets[dataset_name].task).id
-            m = ModelModel()
-            models = m.getByTid(tid)
-            if models:
-                for model in models:
-                    if model.deployment_status == DeploymentStatusEnum.deployed:
-                        model_id = model.id
-                        self._eval_model_on_dataset(
-                            model_id, dataset_name, perturb_prefix
-                        )
-        except Exception as ex:
-            logger.exception(
-                f"Evaluation request for dataset {dataset_name} failed due to {ex}"
-            )
+        t = TaskModel()
+        tid = t.getByTaskCode(self.datasets[dataset_name].task).id
+        m = ModelModel()
+        models = m.getByTid(tid)
+        if tid and models:
+            for model in models:
+                if model.deployment_status == DeploymentStatusEnum.deployed:
+                    self._eval_model_on_dataset(model.id, dataset_name)
+        else:
+            if not tid:
+                logger.exception(f"Task not found for dataset {dataset_name}")
+            else:
+                logger.warning(f"No models are available for task {tid}")
 
     def update_status(self):
         self.scheduler.update_status()

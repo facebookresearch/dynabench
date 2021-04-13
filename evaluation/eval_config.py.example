@@ -6,5 +6,6 @@ eval_config = {
     "dataset_s3_bucket": "",
     "evaluation_sqs_queue": "",
     "scheduler_status_dump": "",
-    "computer_status_dump": ""
+    "computer_status_dump": "",
+    "max_submission": 20
 }
