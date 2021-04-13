@@ -1,9 +1,5 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
-# sys.path.append("../api")  # noqa
-# from models.dataset import DatasetModel, AccessTypeEnum  # isort:skip
-# from models.task import TaskModel  # isort:skip
-import enum
 import json
 import logging
 import os
@@ -14,14 +10,17 @@ import boto3
 
 from eval_config import eval_config
 from metrics import get_eval_metrics, get_task_config_safe
-from utils.helpers import get_data_s3_path, get_perturbed_filename, path_available_on_s3
+from utils.helpers import (
+    get_data_s3_path,
+    get_perturbed_filename,
+    path_available_on_s3,
+    send_eval_request,
+)
 
 
-class AccessTypeEnum(enum.Enum):
-    scoring = "scoring"
-    standard = "standard"
-    hidden = "hidden"
-
+sys.path.append("../api")  # noqa
+from models.dataset import DatasetModel, AccessTypeEnum  # isort:skip
+from models.task import TaskModel  # isort:skip
 
 logger = logging.getLogger("datasets")
 
@@ -84,8 +83,6 @@ class BaseDataset(ABC):
         return path_available_on_s3(self.s3_client, self.s3_bucket, path, path)
 
     def _register_dataset_in_db_and_eval(self, eval_config) -> bool:
-        return
-        """
         t = TaskModel()
         task_id = t.getByTaskCode(self.task).id
         d = DatasetModel()
@@ -103,7 +100,6 @@ class BaseDataset(ABC):
                     config=eval_config,
                     logger=logger,
                 )
-        """
 
     def get_output_s3_url(self, endpoint_name, perturb_prefix=None):
         prefix = self._get_output_s3_url_prefix(endpoint_name)
