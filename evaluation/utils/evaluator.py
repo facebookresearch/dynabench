@@ -71,18 +71,13 @@ class JobScheduler:
             status = pickle.load(open(self._status_dump, "rb"))
             logger.info(f"Load existing status from {self._status_dump}.")
             return (
-                status["submitted"],
-                status["queued"],
-                status["completed"],
-                status["failed"],
+                status.get("submitted", []),
+                status.get("queued", []),
+                status.get("completed", []),
+                status.get("failed", []),
             )
         except FileNotFoundError:
             logger.info("No existing scheduler status found. Re-initializing...")
-            return [], [], [], []
-        except Exception as ex:
-            logger.exception(
-                f"Exception in loading scheduler status {ex}. Re-initializing"
-            )
             return [], [], [], []
 
     def submit(self, model_id, dataset_name, perturb_prefix=None, dump=True):
