@@ -104,7 +104,7 @@ class HateCheck(HsBase):
 
 class HateCheckFull(HateCheck):
     def __init__(self):
-        super().__init__(name="hatecheck", access_type=AccessTypeEnum.scoring)
+        super().__init__(name="hatecheck")
 
 
 class LabelHate(HateCheck):
