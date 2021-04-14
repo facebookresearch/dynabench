@@ -1,13 +1,16 @@
 import json
+import pickle
 import subprocess
 import sys
 import time
 
 import boto3
+import botocore
 import uuid
 
 from deploy_config import deploy_config
 from utils.deployer import ModelDeployer
+from utils.helpers import load_queue_dump
 from utils.logging import init_logger, logger
 
 
@@ -28,6 +31,11 @@ if __name__ == "__main__":
     )
     queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
     eval_queue = sqs.get_queue_by_name(QueueName=config["evaluation_sqs_queue"])
+    redeployment_queue = load_queue_dump(deploy_config["queue_dump"], logger=logger)
+    if redeployment_queue:
+        for msg in redeployment_queue:  # ask for redeployment
+            queue.send_message(MessageBody=json.dumps(msg))
+        redeployment_queue = []
     while True:
         for message in queue.receive_messages():
             msg = json.loads(message.body)
@@ -46,12 +54,25 @@ if __name__ == "__main__":
                     name = model.name
                     msg["name"] = name
                     deployed = False
+                    delayed = False
                     m.update(
                         model_id, deployment_status=DeploymentStatusEnum.processing
                     )
                     try:
                         deployer = ModelDeployer(name, s3_uri)
                         endpoint_url = deployer.deploy(model.secret)
+                    except botocore.exceptions.ResourceLimitExceeded as ex:
+                        delayed = True
+                        redeployment_queue.append(msg)
+                        pickle.dump(
+                            redeployment_queue, open(deploy_config["queue_dump"], "wb")
+                        )
+                        logger.exception(
+                            f"Model deployment for {name} delayed due to AWS resource limit exceeded {ex}"
+                        )
+                        msg[
+                            "exception"
+                        ] = f"Model deployment for {name} is delayed. You will get an email when it is successfully deployed."
                     except RuntimeError as e:  # handles all user exceptions
                         msg["exception"] = e
                     except Exception as e:
@@ -63,11 +84,19 @@ if __name__ == "__main__":
                         deployed = True
                     finally:
                         if not deployed:
-                            subject = f"Model {name} deployment failed"
                             template = "model_deployment_fail"
-                            m.update(
-                                model_id, deployment_status=DeploymentStatusEnum.failed
-                            )
+                            if delayed:
+                                subject = f"Model {name} deployment delayed"
+                                m.update(
+                                    model_id,
+                                    deployment_status=DeploymentStatusEnum.uploaded,
+                                )
+                            else:
+                                subject = f"Model {name} deployment failed"
+                                m.update(
+                                    model_id,
+                                    deployment_status=DeploymentStatusEnum.failed,
+                                )
                             deployer.cleanup_on_failure()
                         else:
                             subject = f"Model {name} deployment successful"

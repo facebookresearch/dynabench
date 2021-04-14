@@ -80,9 +80,9 @@ def get_perturb_prefix(dataset_name, datasets):
         return dataset_name, None
 
     perturb_prefix = dataset_name.split("-")[0]
-    dataset_name = dataset_name[len(perturb_prefix) + 1 :]
-    if dataset_name in datasets:
-        return dataset_name, perturb_prefix
+    original_dataset_name = dataset_name[len(perturb_prefix) + 1 :]
+    if original_dataset_name in datasets:
+        return original_dataset_name, perturb_prefix
     else:
         raise RuntimeError(f"Dataset {dataset_name} not found.")
 
