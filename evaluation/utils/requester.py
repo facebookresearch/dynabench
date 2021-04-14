@@ -61,7 +61,12 @@ class Requester:
         self.scheduler.submit()
 
     def _eval_model_on_dataset(self, model_id, dataset_name):
-        # evaluate a given model on given datasets
+        """
+        evaluate a given model on given datasets
+        if the given dataset_name is an original dataset,
+        will evaluate all perturbed datasets too, otherwise
+        it will automatically figure out the perturb prefix
+        """
         try:
             dataset_name, perturb_prefix = get_perturb_prefix(
                 dataset_name, self.datasets
@@ -84,34 +89,39 @@ class Requester:
         # model's primary task
         m = ModelModel()
         tid = m.getUnpublishedModelByMid(model_id).tid
-        d = DatasetModel()
-        datasets = d.getByTid(tid)
-        if tid and datasets:
-            dataset_names = [dataset.name for dataset in datasets]
-            for dataset_name in dataset_names:
-                self._eval_model_on_dataset(model_id, dataset_name)
-        else:
-            if not tid:
-                logger.exception(f"Task not found for model {model_id}")
+        if tid:
+            d = DatasetModel()
+            datasets = d.getByTid(tid)
+            if datasets:
+                dataset_names = [dataset.name for dataset in datasets]
+                for dataset_name in dataset_names:
+                    self._eval_model_on_dataset(model_id, dataset_name)
             else:
                 logger.warning(f"No datasets are available for task {tid}")
+        else:
+            logger.exception(f"Task not found for model {model_id}")
 
     def _eval_dataset(self, dataset_name):
         # given a dataset id, evaluate all models for the
         # dataset's task
-        t = TaskModel()
-        tid = t.getByTaskCode(self.datasets[dataset_name].task).id
-        m = ModelModel()
-        models = m.getByTid(tid)
-        if tid and models:
-            for model in models:
-                if model.deployment_status == DeploymentStatusEnum.deployed:
-                    self._eval_model_on_dataset(model.id, dataset_name)
+        try:
+            original_dataset_name, _ = get_perturb_prefix(dataset_name, self.datasets)
+        except RuntimeError as ex:
+            logger.exception(ex)
         else:
-            if not tid:
-                logger.exception(f"Task not found for dataset {dataset_name}")
+            t = TaskModel()
+            tid = t.getByTaskCode(self.datasets[original_dataset_name].task).id
+            if tid:
+                m = ModelModel()
+                models = m.getByTid(tid)
+                if models:
+                    for model in models:
+                        if model.deployment_status == DeploymentStatusEnum.deployed:
+                            self._eval_model_on_dataset(model.id, dataset_name)
+                else:
+                    logger.warning(f"No models are available for task {tid}")
             else:
-                logger.warning(f"No models are available for task {tid}")
+                logger.exception(f"Task not found for dataset {dataset_name}")
 
     def update_status(self):
         self.scheduler.update_status()
