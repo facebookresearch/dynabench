@@ -10,6 +10,6 @@ instance_property = {
         "gpu_count": 0,
         "memory_gb": 32,
         "compute_cap": COMPUTE_CAP_CONSTANT,
-        "aws_metrics": ["memory_utilization", "examples_per_second"],
+        "aws_metrics": ["examples_per_second", "memory_utilization"],
     }
 }
