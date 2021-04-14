@@ -5,4 +5,5 @@ deploy_config = {
     "sagemaker_role": "",
     "gateway_url": "",
     "instance_type": "ml.m5.xlarge",
+    "queue_dump": "",
 }

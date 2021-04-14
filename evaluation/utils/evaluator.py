@@ -41,7 +41,10 @@ class Job:
 class JobScheduler:
     def __init__(self, config, datasets):
         self._status_dump = config["scheduler_status_dump"]
-        self._submitted, self._completed, self._failed = self._load_status()
+        self._submitted, self._queued, self._completed, self._failed = (
+            self._load_status()
+        )
+        self.max_submission = config["max_submission"]
         self.datasets = datasets
         self.sagemaker = boto3.client(
             "sagemaker",
@@ -67,40 +70,71 @@ class JobScheduler:
         try:
             status = pickle.load(open(self._status_dump, "rb"))
             logger.info(f"Load existing status from {self._status_dump}.")
-            return status["submitted"], status["completed"], status["failed"]
+            return (
+                status.get("submitted", []),
+                status.get("queued", []),
+                status.get("completed", []),
+                status.get("failed", []),
+            )
         except FileNotFoundError:
             logger.info("No existing scheduler status found. Re-initializing...")
-            return [], [], []
-        except Exception as ex:
-            logger.exception(
-                f"Exception in loading scheduler status {ex}. Re-initializing"
-            )
-            return [], [], []
+            return [], [], [], []
 
-    def submit(self, model_id, dataset_name, perturb_prefix=None):
+    def enqueue(self, model_id, dataset_name, perturb_prefix=None, dump=True):
         # create batch transform job and
         # update the inprogress queue
         job = Job(model_id, dataset_name, perturb_prefix)
+        self._queued.append(job)
+        logger.info(f"Queued {job.job_name} for submission")
 
-        def _submit(job):
+        if dump:
+            self.dump()
+
+    def submit(self):
+        def _create_batch_transform(job):
+            """
+            Return True if a job is successfully submitted
+            """
             try:
                 self.datasets[job.dataset_name].run_batch_transform(
                     self.sagemaker, job.endpoint_name, job.job_name, job.perturb_prefix
                 )
+            except self.sagemaker.exceptions.ResourceLimitExceeded as ex:
+                logger.exception(
+                    f"Requeueing job {job.job_name} due to AWS limit exceeds."
+                )
+                logger.debug(f"{ex}")
+                self._queued.append(job)
+                return False
+            except self.sagemaker.exceptions.ResourceInUse as ex:
+                logger.exception(
+                    f"Job {job.job_name} already submitted. Re-computing the metrics."
+                )
+                logger.debug(f"{ex}")
+                job.status = self.sagemaker.describe_transform_job(
+                    TransformJobName=job.job_name
+                )
+                self._submitted.append(job)
+                return True
             except Exception as ex:
                 logger.exception(f"Exception in submitting job {job.job_name}: {ex}")
+                self._failed.append(job)
                 return False
             else:
                 job.status = self.sagemaker.describe_transform_job(
                     TransformJobName=job.job_name
                 )
                 logger.info(f"Submitted {job.job_name} for batch transform.")
+                self._submitted.append(job)
                 return True
 
-        if _submit(job):
-            self._submitted.append(job)
-        else:
-            self._failed.append(job)
+        # Submit remaining jobs
+        N_to_submit = min(self.max_submission - len(self._submitted), len(self._queued))
+        if N_to_submit > 0:
+            for _ in range(N_to_submit):
+                job = self._queued.pop(0)
+                _create_batch_transform(job)
+            self.dump()
 
     def update_status(self):
         def _update_job_status(job):
@@ -170,7 +204,7 @@ class JobScheduler:
                                         process_aws_metrics(r["Datapoints"])
                                     )
         # dump the updated status
-        self._dump()
+        self.dump()
 
     def pop_jobs(self, status, N=1):
         def _pop_jobs(queue, N, status):
@@ -201,7 +235,7 @@ class JobScheduler:
         else:
             raise NotImplementedError(f"Job status {status} not supported to pop")
         if jobs:
-            self._dump()
+            self.dump()
         return jobs
 
     def get_jobs(self, status="Failed"):
@@ -214,16 +248,18 @@ class JobScheduler:
         else:
             raise NotImplementedError(f"Scheduler does not maintain {status} queue")
 
-    def _dump(self):
+    def dump(self):
         # dump status to pre-specified path
         status = {
             "submitted": self._submitted,
+            "queued": self._queued,
             "completed": self._completed,
             "failed": self._failed,
         }
         logger.info(
             f"Scheduler status: \n"
             + f"Running jobs: {[job.job_name for job in status['submitted']]}\n"
+            + f"Queued jobs: {[job.job_name for job in status['queued']]}\n"
             + f"completed jobs: {[job.job_name for job in status['completed']]}\n"
             + f"failed jobs: {[job.job_name for job in status['failed']]}"
         )

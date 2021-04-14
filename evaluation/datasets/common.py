@@ -60,7 +60,10 @@ class BaseDataset(ABC):
                 f"Pushing to {self.s3_url} now..."
             )
             loaded = self.load()
-            logger.info(f"Loaded {self.name} on S3 at {self.s3_url}")
+            if loaded:
+                logger.info(f"Loaded {self.name} on S3 at {self.s3_url}")
+            else:
+                logger.exception(f"Failed to load {self.name} to S3")
         else:
             logger.info(f"Dataset {self.name} exists on S3 at {self.s3_url}")
 
