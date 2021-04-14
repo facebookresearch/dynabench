@@ -87,6 +87,10 @@ if __name__ == "__main__":
                             template = "model_deployment_fail"
                             if delayed:
                                 subject = f"Model {name} deployment delayed"
+                                m.update(
+                                    model_id, 
+                                    deployment_status=DeploymentStatusEnum.uploaded
+                                )
                             else:
                                 subject = f"Model {name} deployment failed"
                                 m.update(
