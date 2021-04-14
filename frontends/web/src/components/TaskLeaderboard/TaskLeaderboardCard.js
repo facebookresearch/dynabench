@@ -26,18 +26,25 @@ const TaskLeaderboardCard = (props) => {
   const [data, setData] = useState([]);
   const [enableWeights, setEnableWeights] = useState(false);
   // Map task metrics to include weights for UI
-  const [metrics, setMetrics] = useState(
-    task?.ordered_metrics?.map((m) => {
-      return { id: m.name, label: m.name, weight: 5, unit: m.unit };
-    })
-  );
+  const [metrics, setMetrics] = useState([]);
 
   // Dataset Weights Array of a set of dataset id and corresponding weight.
-  const [datasetWeights, setDatasetWeights] = useState(
-    task.ordered_scoring_datasets?.map((ds) => {
-      return { id: ds.id, weight: 5, name: ds.name }; // Default weight to max i.e. 5.
-    })
-  );
+  const [datasetWeights, setDatasetWeights] = useState([]);
+  // Update weights on task change
+  useEffect(() => {
+    setMetrics(
+      task?.ordered_metrics?.map((m) => {
+        return { id: m.name, label: m.name, weight: 5, unit: m.unit };
+      })
+    );
+
+    setDatasetWeights(
+      task.ordered_scoring_datasets?.map((ds) => {
+        return { id: ds.id, weight: 5, name: ds.name }; // Default weight to max i.e. 5.
+      })
+    );
+    return () => {};
+  }, [task]);
 
   const [sort, setSort] = useState({
     field: "dynascore",

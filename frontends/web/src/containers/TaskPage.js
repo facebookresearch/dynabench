@@ -861,7 +861,8 @@ class TaskPage extends React.Component {
               </Row>
               {process.env.REACT_APP_ENABLE_DYNABOARD === "true" &&
                 this.state.task &&
-                this.state.task.ordered_scoring_datasets && (
+                this.state.task.ordered_scoring_datasets &&
+                this.props.location.hash === "#overall" && (
                   <Row>
                     <Col xs={12} md={12}>
                       <Annotation
