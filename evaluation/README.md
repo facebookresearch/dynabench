@@ -123,3 +123,18 @@ python perturb.py --s3-uri <s3-uri> --task nli --perturb-prefix fairness
 The `s3-uri` is the "S3 URI" under "Object overview" in S3, and it should point to an original dataset (i.e. unperturbed version). S3 uri is usually in the format of `s3://{bucket}/{path}`.
 
 Follow the prompt to check the output and if everything looks good, copy paste the given command to upload the dataset and request an evaluation.
+
+## [Developer only] Update a registered dataset and request evaluation on demand
+**[zoe] TODO write a script to standardize this process**
+
+If you need to update the version of a dataset on S3, without changing the dataset name, you should request a new evaluation after the update. In the following code section, make sure you set the queue name correctly in the `eval_config` for the request to be routed to the correct server.
+```
+$ cd evaluation
+$ python
+>>> from utils.helpers import send_eval_request
+>>> from eval_config import eval_config
+>>> send_eval_request(model_id="*", dataset_name="zm-mnli-dev-matched", config=eval_config)
+True # you'll see False and error message if request fails
+```
+
+Note that `dataset_name` can be either original dataset name, or perturbed dataset name (e.g. `fairness-zm-mnli-dev-matched` in the given example.)
