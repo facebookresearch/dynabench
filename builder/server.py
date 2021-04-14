@@ -88,8 +88,8 @@ if __name__ == "__main__":
                             if delayed:
                                 subject = f"Model {name} deployment delayed"
                                 m.update(
-                                    model_id, 
-                                    deployment_status=DeploymentStatusEnum.uploaded
+                                    model_id,
+                                    deployment_status=DeploymentStatusEnum.uploaded,
                                 )
                             else:
                                 subject = f"Model {name} deployment failed"
