@@ -114,7 +114,7 @@ class LabelHate(HateCheck):
 
 class LabelNotHate(HateCheck):
     def __init__(self):
-        super().__init__(name="hatecheck-l-nothate", label="hate")
+        super().__init__(name="hatecheck-l-nothate", label="nothate")
 
 
 class FunctionalityTargetGroupNh(HateCheck):
