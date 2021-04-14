@@ -121,13 +121,9 @@ class JobScheduler:
         # Submit remaining jobs
         N_to_submit = min(self.max_submission - len(self._submitted), len(self._queued))
         if N_to_submit > 0:
-            for _ in self._queued:
-                if N_to_submit > 0:
-                    job = self._queued.pop(0)
-                    if _create_batch_transform(job):
-                        N_to_submit -= 1
-                else:
-                    break
+            for _ in range(N_to_submit):
+                job = self._queued.pop(0)
+                _create_batch_transform(job)
             self.dump()
 
     def update_status(self):
