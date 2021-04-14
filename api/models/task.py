@@ -138,18 +138,18 @@ class TaskModel(BaseModel):
             }
             if t["shortname"] in shortname_to_metrics_task_name:
                 metrics_task_name = shortname_to_metrics_task_name[t["shortname"]]
+                metrics_meta, ordered_field_names = metrics.get_task_metrics_meta(
+                    metrics_task_name
+                )
                 ordered_metrics = [
                     dict(
                         {
-                            "name": metric_info[1]["pretty_name"],
-                            "field_name": metric_info[0],
+                            "name": metrics_meta[field_name]["pretty_name"],
+                            "field_name": field_name,
                         },
-                        **metric_info[1],
+                        **metrics_meta[field_name],
                     )
-                    for metric_info in sorted(
-                        metrics.get_task_metrics_meta(metrics_task_name).items(),
-                        key=lambda metric_info: metric_info[0],
-                    )
+                    for field_name in ordered_field_names
                 ]
                 t["perf_metric_field_name"] = metrics.get_task_config_safe(
                     metrics_task_name

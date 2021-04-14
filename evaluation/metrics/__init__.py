@@ -45,11 +45,11 @@ def get_task_metrics_meta(task):
     task_config = get_task_config_safe(task)
     instance_config = task_config["instance_config"]
     perf_metric = task_config["perf_metric"]
-    metrics = (
-        [perf_metric] + task_config["delta_metrics"] + instance_config["aws_metrics"]
+    ordered_metric_field_names = (
+        [perf_metric] + instance_config["aws_metrics"] + task_config["delta_metrics"]
     )
     metrics_meta = {
         metric: metrics_meta_config.get(metric, metrics_meta_config[perf_metric])(task)
-        for metric in metrics
+        for metric in ordered_metric_field_names
     }
-    return metrics_meta
+    return metrics_meta, ordered_metric_field_names
