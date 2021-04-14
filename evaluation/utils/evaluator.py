@@ -101,11 +101,21 @@ class JobScheduler:
                 )
             except self.sagemaker.exceptions.ResourceLimitExceeded as ex:
                 logger.exception(
-                    f"Requeueing job {job.job_name} due to AWS limit exceeds"
+                    f"Requeueing job {job.job_name} due to AWS limit exceeds."
                 )
                 logger.debug(f"{ex}")
                 self._queued.append(job)
                 return False
+            except self.sagemaker.exceptions.ResourceInUse as ex:
+                logger.exception(
+                    f"Job {job.job_name} already submitted. Re-computing the metrics."
+                )
+                logger.debug(f"{ex}")
+                job.status = self.sagemaker.describe_transform_job(
+                    TransformJobName=job.job_name
+                )
+                self._submitted.append(job)
+                return True
             except Exception as ex:
                 logger.exception(f"Exception in submitting job {job.job_name}: {ex}")
                 self._failed.append(job)
