@@ -54,8 +54,11 @@ class Requester:
             for model_id in model_ids:
                 for dataset_name in dataset_names:
                     self._eval_model_on_dataset(model_id, dataset_name)
-        self.scheduler._dump()
+        self.scheduler.dump()
         return True
+
+    def submit(self):
+        self.scheduler.submit()
 
     def _eval_model_on_dataset(self, model_id, dataset_name):
         # evaluate a given model on given datasets
@@ -66,13 +69,13 @@ class Requester:
         except RuntimeError as ex:
             logger.exception(ex)
         else:
-            self.scheduler.submit(model_id, dataset_name, perturb_prefix)
+            self.scheduler.enqueue(model_id, dataset_name, perturb_prefix, dump=False)
             if not perturb_prefix:
                 dataset = self.datasets[dataset_name]
                 task_config = get_task_config_safe(dataset.task)
                 for prefix in task_config["delta_metrics"]:
                     if dataset.dataset_available_on_s3(prefix):
-                        self.scheduler.submit(
+                        self.scheduler.enqueue(
                             model_id, dataset_name, prefix, dump=False
                         )
 

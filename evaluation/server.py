@@ -46,6 +46,7 @@ if __name__ == "__main__":
                     {"Id": str(uuid.uuid4()), "ReceiptHandle": message.receipt_handle}
                 ]
             )
+        requester.submit()
 
         # Update job status on scheduler interval
         if timer >= scheduler_update_interval:

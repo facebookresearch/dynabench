@@ -80,15 +80,20 @@ class JobScheduler:
             logger.info("No existing scheduler status found. Re-initializing...")
             return [], [], [], []
 
-    def submit(self, model_id, dataset_name, perturb_prefix=None, dump=True):
+    def enqueue(self, model_id, dataset_name, perturb_prefix=None, dump=True):
         # create batch transform job and
         # update the inprogress queue
         job = Job(model_id, dataset_name, perturb_prefix)
+        self._queued.append(job)
+        logger.info(f"Queued {job.job_name} for submission")
 
+        if dump:
+            self.dump()
+
+    def submit(self):
         def _create_batch_transform(job):
             """
-            Return True if we can continue to submit batch transforms,
-            else return False
+            Return True if a job is successfully submitted
             """
             try:
                 self.datasets[job.dataset_name].run_batch_transform(
@@ -99,28 +104,29 @@ class JobScheduler:
                     f"Requeueing job {job.job_name} due to AWS limit exceeds {ex}."
                 )
                 self._queued.append(job)
+                return False
             except Exception as ex:
                 logger.exception(f"Exception in submitting job {job.job_name}: {ex}")
                 self._failed.append(job)
+                return False
             else:
                 job.status = self.sagemaker.describe_transform_job(
                     TransformJobName=job.job_name
                 )
                 logger.info(f"Submitted {job.job_name} for batch transform.")
                 self._submitted.append(job)
-
-        self._queued.append(job)
-        logger.info(f"Queued {job.job_name} for submission")
+                return True
 
         # Submit remaining jobs
         N_to_submit = min(self.max_submission - len(self._submitted), len(self._queued))
-        if N_to_submit > 0:
-            for _ in range(N_to_submit):
+        for _ in self._queued:
+            if N_to_submit > 0:
                 job = self._queued.pop(0)
-                _create_batch_transform(job)
-
-        if dump:
-            self._dump()
+                if _create_batch_transform(job):
+                    N_to_submit -= 1
+            else:
+                break
+        self.dump()
 
     def update_status(self):
         def _update_job_status(job):
@@ -190,7 +196,7 @@ class JobScheduler:
                                         process_aws_metrics(r["Datapoints"])
                                     )
         # dump the updated status
-        self._dump()
+        self.dump()
 
     def pop_jobs(self, status, N=1):
         def _pop_jobs(queue, N, status):
@@ -221,7 +227,7 @@ class JobScheduler:
         else:
             raise NotImplementedError(f"Job status {status} not supported to pop")
         if jobs:
-            self._dump()
+            self.dump()
         return jobs
 
     def get_jobs(self, status="Failed"):
@@ -234,7 +240,7 @@ class JobScheduler:
         else:
             raise NotImplementedError(f"Scheduler does not maintain {status} queue")
 
-    def _dump(self):
+    def dump(self):
         # dump status to pre-specified path
         status = {
             "submitted": self._submitted,
