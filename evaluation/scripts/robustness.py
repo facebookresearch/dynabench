@@ -1,3 +1,5 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+
 # Typo attack function from:
 # https://github.com/danishpruthi/Adversarial-Misspellings
 
@@ -43,7 +45,7 @@ class RobustnessPerturbation:
     def perturb_typo(self, task, example):
         perturb_example = example.copy()
         perturb_example["input_id"] = example["uid"]
-        perturb_example["uid"] = example["uid"] + "_ptypo"
+        perturb_example["uid"] = str(example["uid"]) + "_ptypo"
         # perturb context for all tasks
         context = example["context"]
         pt_context, changed = self.perturb_typo_text(context)
