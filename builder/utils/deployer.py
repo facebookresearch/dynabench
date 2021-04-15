@@ -340,6 +340,7 @@ class ModelDeployer:
             sagemaker_session=self.env["sagemaker_session"],
             predictor_cls=Predictor,
             name=self.unique_name,
+            enable_network_isolation=True
         )
 
         torchserve_model.deploy(
