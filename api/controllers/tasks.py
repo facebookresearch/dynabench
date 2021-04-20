@@ -257,9 +257,9 @@ def get_dynaboard_info(tid):
         sort_direction = query_dict["sort_direction"][0]
 
     if sort_direction == "asc":
-        reverse_sort = True
-    elif sort_direction == "desc":
         reverse_sort = False
+    elif sort_direction == "desc":
+        reverse_sort = True
     else:
         bottle.abort(400, "unrecognized sort direction")
 

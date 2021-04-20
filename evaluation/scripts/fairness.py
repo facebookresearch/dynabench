@@ -1,3 +1,5 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+
 import os
 import random
 
@@ -17,10 +19,10 @@ class FairnessPerturbation:
         male_words = os.path.join(self.fdir, "male_word_file.txt")
         female_words = os.path.join(self.fdir, "female_word_file.txt")
 
-        with open(male_words, "r") as f:
+        with open(male_words) as f:
             male = f.read().splitlines()
 
-        with open(female_words, "r") as f:
+        with open(female_words) as f:
             female = f.read().splitlines()
 
         # build random pairs
@@ -36,10 +38,10 @@ class FairnessPerturbation:
         male_names = os.path.join(self.fdir, "male_names.txt")
         female_names = os.path.join(self.fdir, "female_names.txt")
 
-        with open(male_names, "r") as f:
+        with open(male_names) as f:
             male = f.read().splitlines()
 
-        with open(female_names, "r") as f:
+        with open(female_names) as f:
             female = f.read().splitlines()
 
         name_list = {}
@@ -61,10 +63,10 @@ class FairnessPerturbation:
         api_names = os.path.join(folder, "api_names.txt")
         hisp_names = os.path.join(folder, "hispanic_names.txt")
 
-        white_name_list = open(white_names, "rt").read().split(", ")
-        black_name_list = open(black_names, "rt").read().split(", ")
-        api_name_list = open(api_names, "rt").read().split(", ")
-        hisp_name_list = open(hisp_names, "rt").read().split(", ")
+        white_name_list = open(white_names).read().split(", ")
+        black_name_list = open(black_names).read().split(", ")
+        api_name_list = open(api_names).read().split(", ")
+        hisp_name_list = open(hisp_names).read().split(", ")
         all_names = [white_name_list, black_name_list, api_name_list, hisp_name_list]
 
         # build random pairs
@@ -96,7 +98,7 @@ class FairnessPerturbation:
     def perturb_gender(self, task, example):
         perturb_example = example.copy()
         perturb_example["input_id"] = example["uid"]
-        perturb_example["uid"] = example["uid"] + "_pgen"
+        perturb_example["uid"] = str(example["uid"]) + "_pgen"
         # perturb context for all tasks
         context = example["context"]
         pt_context, changed = self.perturb_gender_text(context)
@@ -121,7 +123,7 @@ class FairnessPerturbation:
     def perturb_ethnic(self, task, example):
         perturb_example = example.copy()
         perturb_example["input_id"] = example["uid"]
-        perturb_example["uid"] = example["uid"] + "_peth"
+        perturb_example["uid"] = str(example["uid"]) + "_peth"
         context = example["context"]
         pt_context, changed = self.perturb_ethnic_text(context)
         perturb_example["context"] = pt_context
