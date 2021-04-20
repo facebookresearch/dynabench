@@ -102,13 +102,14 @@ class ScoreModel(BaseModel):
         data,
         weights,
         direction_multipliers,
+        offsets,
         delta_cutoff_proportion=0.01,
     ):
 
         converted_data = data.copy(deep=True)
         for metric in list(data):
             converted_data[metric] = (
-                direction_multipliers[metric] * converted_data[metric]
+                direction_multipliers[metric] * converted_data[metric] + offsets[metric]
             )
 
         converted_data["dynascore"] = 0
@@ -133,7 +134,7 @@ class ScoreModel(BaseModel):
                 delta[metric][satisfied_indices]
                 / delta[perf_metric_field_name][satisfied_indices]
             ).mean(skipna=True)
-            converted_data[metric] = converted_data[metric] / AMRS
+            converted_data[metric] = converted_data[metric] / abs(AMRS)
             converted_data["dynascore"] += converted_data[metric] * weights.get(
                 metric, 0
             )
@@ -240,6 +241,10 @@ class ScoreModel(BaseModel):
             },
             direction_multipliers={
                 metric_info["field_name"]: metric_info["utility_direction"]
+                for metric_info in ordered_metrics_with_weight_and_conversion
+            },
+            offsets={
+                metric_info["field_name"]: metric_info["offset"]
                 for metric_info in ordered_metrics_with_weight_and_conversion
             },
         )
