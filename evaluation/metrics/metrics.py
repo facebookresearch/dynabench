@@ -29,7 +29,7 @@ def get_accuracy(predictions: list, targets: list):
 
 
 def get_accuracy_meta(task=None):
-    return {"unit": "%", "pretty_name": "Accuracy", "utility_direction": 1}
+    return {"unit": "%", "pretty_name": "Accuracy", "utility_direction": 1, "offset": 0}
 
 
 def get_f1(predictions: list, targets: list):
@@ -57,7 +57,7 @@ def get_f1(predictions: list, targets: list):
 
 
 def get_f1_meta(task=None):
-    return {"unit": "%", "pretty_name": "F1", "utility_direction": 1}
+    return {"unit": "%", "pretty_name": "F1", "utility_direction": 1, "offset": 0}
 
 
 # TODO: split into different functions for fairness and robustness.
@@ -71,11 +71,16 @@ def get_unperturbed_percent(predictions: list, targets: list, metric_func):
 
 
 def get_fairness_meta(task=None):
-    return {"unit": "%", "pretty_name": "Fairness", "utility_direction": 1}
+    return {"unit": "%", "pretty_name": "Fairness", "utility_direction": 1, "offset": 0}
 
 
 def get_robustness_meta(task=None):
-    return {"unit": "%", "pretty_name": "Robustness", "utility_direction": 1}
+    return {
+        "unit": "%",
+        "pretty_name": "Robustness",
+        "utility_direction": 1,
+        "offset": 0,
+    }
 
 
 # job_metrics, takes raw job and dataset as input
@@ -89,7 +94,12 @@ def get_memory_utilization(job, dataset):
 
 
 def get_memory_utilization_meta(task):
-    return {"unit": "GiB", "pretty_name": "Memory", "utility_direction": -1}
+    return {
+        "unit": "GiB",
+        "pretty_name": "Memory",
+        "utility_direction": -1,
+        "offset": get_task_config_safe(task)["instance_config"]["memory_gb"],
+    }
 
 
 def get_examples_per_second(job, dataset):
@@ -102,4 +112,9 @@ def get_examples_per_second(job, dataset):
 
 
 def get_examples_per_second_meta(task):
-    return {"unit": "examples/second", "pretty_name": "Compute", "utility_direction": 1}
+    return {
+        "unit": "examples/second",
+        "pretty_name": "Compute",
+        "utility_direction": 1,
+        "offset": 0,
+    }
