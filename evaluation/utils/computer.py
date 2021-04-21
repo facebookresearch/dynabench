@@ -213,7 +213,7 @@ class MetricsComputer:
     def update_status(self, jobs: list):
         if jobs:
             self._computing.extend(jobs)
-            self._dump()
+            self.dump()
 
     def compute(self, N=1):
         n = len(self._computing)
@@ -230,7 +230,7 @@ class MetricsComputer:
                 computed += 1
                 if status == ComputeStatusEnum.failed:
                     self._failed.append(job)
-            self._dump()
+            self.dump()
 
     def get_jobs(self, status="Failed"):
         if status == "Failed":
@@ -240,7 +240,7 @@ class MetricsComputer:
         else:
             raise NotImplementedError(f"Scheduler does not maintain {status} queue")
 
-    def _dump(self):
+    def dump(self):
         # dump status to pre-specified path
         status = {"computing": self._computing, "failed": self._failed}
         logger.info(
