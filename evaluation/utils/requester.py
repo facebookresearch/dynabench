@@ -3,11 +3,12 @@
 import logging
 import sys
 
+from common.config import config
 from metrics.task_config import get_task_config_safe
 from models.dataset import DatasetModel
 from utils.computer import MetricsComputer
 from utils.evaluator import JobScheduler
-from utils.helpers import get_perturb_prefix
+from utils.helpers import get_perturb_prefix, send_takedown_model_request
 
 
 sys.path.append("../api")  # noqa
@@ -127,6 +128,54 @@ class Requester:
         self.scheduler.update_status()
         jobs = self.scheduler.pop_jobs(status="Completed", N=-1)
         self.computer.update_status(jobs)
+
+        failed_models = set()
+        mm = ModelModel()
+        remaining_failed_job_ids = []
+        for i, job in self.scheduler._failed:
+            if job.status and job.status.get("FailureReason", "").startswith(
+                "AlgorithmError"
+            ):
+                failed_models.add(job.model_id)
+            else:
+                remaining_failed_job_ids.append(i)
+
+        remaining_queued_job_ids = []
+        remaining_submitted_job_ids = []
+        remaining_evaluating_job_ids = []
+        for mid in failed_models:
+            mm.update(mid, deployment_status=DeploymentStatusEnum.Failed)
+            send_takedown_model_request(model_id=mid, config=config)
+            for i, job in self.scheduler._queued:
+                if job.model_id != mid:
+                    remaining_queued_job_ids.append(i)
+
+            for i, job in self.scheduler._submitted:
+                if job.model_id == mid:
+                    self.scheduler.stop(job)
+                else:
+                    remaining_submitted_job_ids.append(i)
+
+            for i, job in self.computer._evaluating:
+                if job.model_id != mid:
+                    remaining_evaluating_job_ids.append(i)
+
+        self.scheduler._queued = [
+            self.scheduler._queued[i] for i in remaining_queued_job_ids
+        ]
+        self.scheduler._submitted = [
+            self.scheduler._submitted[i] for i in remaining_submitted_job_ids
+        ]
+        self.computer._evaluating = [
+            self.computer._evaluating[i] for i in remaining_evaluating_job_ids
+        ]
+
+        self.scheduler._failed = [
+            self.scheduler._failed[i] for i in remaining_failed_job_ids
+        ]
+
+        self.scheduler.dump()
+        self.computer.dump()
 
     def compute(self, N=1):
         self.computer.compute(N=N)

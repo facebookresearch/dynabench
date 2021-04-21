@@ -136,6 +136,9 @@ class JobScheduler:
                 _create_batch_transform(job)
             self.dump()
 
+    def stop(self, job):
+        self.datasets[job.dataset_name].stop_batch_transform(self.sagemaker, job)
+
     def update_status(self):
         def _update_job_status(job):
             try:
