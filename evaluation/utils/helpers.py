@@ -39,7 +39,7 @@ def send_eval_request(model_id, dataset_name, config, logger=None):
         msg = {"model_id": model_id, "dataset_name": dataset_name}
         queue.send_message(MessageBody=json.dumps(msg))
         if logger:
-            logger.info(f"Sent message {msg}")
+            logger.info(f"Sent message to {config['evaluation_sqs_queue']}: {msg}")
         return True
 
 
@@ -56,7 +56,7 @@ def send_takedown_model_request(model_id, config, s3_uri=None, logger=None):
     msg = {"model_id": model_id, "s3_uri": s3_uri}
     queue.send_message(MessageBody=json.dumps(msg))
     if logger:
-        logger.info(f"Sent message {msg}")
+        logger.info(f"Sent message to {config['builder_sqs_queue']}: {msg}")
     return True
 
 

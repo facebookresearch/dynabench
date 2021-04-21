@@ -21,20 +21,26 @@ from models.model import DeploymentStatusEnum, ModelModel  # noqa isort:skip
 
 
 def get_failed_endpoints(eval_config, release_failed_jobs=False):
-    s = pickle.load(open(eval_config["scheduler_status_dump"], "rb"))
     endpoints, failed_jobs = {}, set()
-    for j in s["failed"]:
-        if j.status and j.status.get("FailureReason", "").startswith("AlgorithmError"):
-            endpoints[j.model_id] = j.endpoint_name
-            failed_jobs.add(j.job_name)
+    try:
+        s = pickle.load(open(eval_config["scheduler_status_dump"], "rb"))
+        for j in s["failed"]:
+            if j.status and j.status.get("FailureReason", "").startswith(
+                "AlgorithmError"
+            ):
+                endpoints[j.model_id] = j.endpoint_name
+                failed_jobs.add(j.job_name)
+    except FileNotFoundError:
+        s = None
     mm = ModelModel()
     models = mm.getByDeploymentStatus(deployment_status=DeploymentStatusEnum.failed)
     for m in models:
         if m.id not in endpoints:
             endpoints[m.id] = f"ts{m.upload_timestamp}-{m.name}"
-            for j in s["failed"]:
-                if j.model_id == m.id:
-                    failed_jobs.add(j.job_name)
+            if s:
+                for j in s["failed"]:
+                    if j.model_id == m.id:
+                        failed_jobs.add(j.job_name)
     return endpoints, failed_jobs
 
 
@@ -48,13 +54,16 @@ def update_db_and_request_cleanup(endpoints):
 
 
 def release_failed_jobs(eval_config, failed_jobs):
-    s = pickle.load(open(eval_config["scheduler_status_dump"]))
-    failed_job_names = set()
-    for j in failed_jobs:
-        failed_job_names.add(j.job_name)
-    s["failed"] = [j for j in s["failed"] if j.job_name not in failed_job_names]
-    pickle.dump(s, open(eval_config["scheduler_status_dump"], "wb"))
-    print(f"Released failed jobs {failed_job_names}")
+    try:
+        s = pickle.load(open(eval_config["scheduler_status_dump"], "rb"))
+        failed_job_names = set()
+        for j in failed_jobs:
+            failed_job_names.add(j.job_name)
+        s["failed"] = [j for j in s["failed"] if j.job_name not in failed_job_names]
+        pickle.dump(s, open(eval_config["scheduler_status_dump"], "wb"))
+        print(f"Released failed jobs {failed_job_names}")
+    except FileNotFoundError:
+        pass
 
 
 if __name__ == "__main__":

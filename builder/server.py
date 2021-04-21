@@ -3,6 +3,7 @@ import pickle
 import subprocess
 import sys
 import time
+import os
 
 import boto3
 import botocore
@@ -12,7 +13,6 @@ from deploy_config import deploy_config
 from utils.deployer import ModelDeployer
 from utils.helpers import load_queue_dump, get_endpoint_name
 from utils.logging import init_logger, logger
-
 
 sys.path.append("../api")  # noqa
 import common.mail_service as mail  # isort:skip
@@ -48,7 +48,7 @@ if __name__ == "__main__":
                 model = m.getUnpublishedModelByMid(model_id)
                 name = model.name
                 endpoint_name = get_endpoint_name(model)
-
+ 
                 if model.deployment_status == DeploymentStatusEnum.uploaded:
                     logger.info(f"Start to deploy model {model_id}")
                     msg["name"] = name
@@ -57,12 +57,15 @@ if __name__ == "__main__":
                     m.update(
                         model_id, deployment_status=DeploymentStatusEnum.processing
                     )
+                    deployer = ModelDeployer(name, endpoint_name)
                     try:
-                        deployer = ModelDeployer(name, endpoint_name)
                         endpoint_url = deployer.deploy(model.secret, s3_uri)
                     except RuntimeError as e:  # handles all user exceptions
+                        deployer.cleanup_on_failure(s3_uri)
+                        logger.exception(e)
                         msg["exception"] = e
                     except botocore.exceptions.ClientError as e:
+                        deployer.cleanup_on_failure(s3_uri)
                         if e.response["Error"]["Code"] == "LimitExceededException":
                             delayed = True
                             redeployment_queue.append(msg)
@@ -82,11 +85,13 @@ if __name__ == "__main__":
                             )
                             msg["exception"] = "Unexpected error"
                     except Exception as e:
+                        deployer.cleanup_on_failure(s3_uri)
                         logger.exception(
                             f"Unexpected error: {sys.exc_info()[0]} with message {e}"
                         )
                         msg["exception"] = "Unexpected error"
                     else:
+                        deployer.cleanup_post_deployment()
                         deployed = True
                     finally:
                         if not deployed:
@@ -103,7 +108,6 @@ if __name__ == "__main__":
                                     model_id,
                                     deployment_status=DeploymentStatusEnum.failed,
                                 )
-                            deployer.cleanup_on_failure(s3_uri)
                         else:
                             subject = f"Model {name} deployment successful"
                             template = "model_deployment_successful"
@@ -111,7 +115,6 @@ if __name__ == "__main__":
                                 model_id,
                                 deployment_status=DeploymentStatusEnum.deployed,
                             )
-                            deployer.cleanup_post_deployment()
                         # send email
                         user = m.getModelUserByMid(model_id)[1]
 
@@ -122,9 +125,6 @@ if __name__ == "__main__":
                                 smtp_user=config["smtp_user"],
                                 smtp_secret=config["smtp_secret"],
                             )
-                        else:
-                            mail_session = None
-                        if mail_session:
                             mail.send(
                                 server=mail_session,
                                 config=config,
@@ -142,14 +142,15 @@ if __name__ == "__main__":
                         eval_queue.send_message(
                             MessageBody=json.dumps({"model_id": model_id})
                         )
+
                 elif model.deployment_status == DeploymentStatusEnum.failed:
                     logger.info(f"Clean up failed model {endpoint_name}")
+                    m.update(model_id, deployment_status=DeploymentStatusEnum.unknown)
                     deployer = ModelDeployer(name, endpoint_name)
                     deployer.cleanup_on_failure(s3_uri)
-
             queue.delete_messages(
                 Entries=[
                     {"Id": str(uuid.uuid4()), "ReceiptHandle": message.receipt_handle}
                 ]
             )
-        time.sleep(5)
+            time.sleep(5)

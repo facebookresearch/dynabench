@@ -21,6 +21,7 @@ from utils.logging import logger
 
 class ModelDeployer:
     def __init__(self, model_name, endpoint_name):
+        logger.info(f"Set up deployer for model {endpoint_name}")
         self.name = model_name
         self.unique_name = endpoint_name
         self.repository_name = self.unique_name.lower()
@@ -200,12 +201,13 @@ class ModelDeployer:
                     logger.debug(out)
                     out = process.stdout.readline().rstrip("\n")
                 time.sleep(10)
-            stdout, _ = process.communicate()
+            stdout, stderr = process.communicate()
             logger.debug(stdout)
             print("!")
 
             if process.returncode != 0:
                 logger.exception(f"Error in docker build for model {self.name}")
+                logger.info(stderr)
                 raise RuntimeError("Error in docker build")
 
         os.remove(tarball)
@@ -362,12 +364,12 @@ class ModelDeployer:
         )
         model_s3_path = self.archive_and_upload_model(setup_config, s3_dir)
         endpoint_url = self.deploy_model(image_ecr_path, model_s3_path)
-        self.chdir(self.owd)
+        os.chdir(self.owd)
         return endpoint_url
 
     def cleanup_post_deployment(self):
-        os.chdir(self.owd)
         try:
+            os.chdir(self.owd)
             self.rootp.cleanup()
             # clean up local docker images
             subprocess.run(
