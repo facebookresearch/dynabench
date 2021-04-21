@@ -120,3 +120,10 @@ class ModelModel(BaseModel):
             .filter(Model.id == id)
             .one()
         )
+
+    def getByDeploymentStatus(self, deployment_status):
+        return (
+            self.dbs.query(Model)
+            .filter(Model.deployment_status == deployment_status)
+            .all()
+        )
