@@ -62,20 +62,25 @@ if __name__ == "__main__":
                         endpoint_url = deployer.deploy(model.secret, s3_uri)
                     except RuntimeError as e:  # handles all user exceptions
                         msg["exception"] = e
-                    except deployer.env[
-                        "sagemaker_client"
-                    ].exceptions.ResourceLimitExceeded as ex:
-                        delayed = True
-                        redeployment_queue.append(msg)
-                        pickle.dump(
-                            redeployment_queue, open(deploy_config["queue_dump"], "wb")
-                        )
-                        logger.exception(
-                            f"Model deployment for {name} delayed due to AWS resource limit exceeded {ex}"
-                        )
-                        msg[
-                            "exception"
-                        ] = f"Model deployment for {name} is delayed. You will get an email when it is successfully deployed."
+                    except botocore.exceptions.ClientError as e:
+                        if e.response["Error"]["Code"] == "LimitExceededException":
+                            delayed = True
+                            redeployment_queue.append(msg)
+                            pickle.dump(
+                                redeployment_queue,
+                                open(deploy_config["queue_dump"], "wb"),
+                            )
+                            logger.exception(
+                                f"Model deployment for {name} delayed due to AWS resource limit exceeded {ex}"
+                            )
+                            msg[
+                                "exception"
+                            ] = f"Model deployment for {name} is delayed. You will get an email when it is successfully deployed."
+                        else:
+                            logger.exception(
+                                f"Unexpected error: {sys.exc_info()[0]} with message {e}"
+                            )
+                            msg["exception"] = "Unexpected error"
                     except Exception as e:
                         logger.exception(
                             f"Unexpected error: {sys.exc_info()[0]} with message {e}"
