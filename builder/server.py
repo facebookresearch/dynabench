@@ -46,13 +46,11 @@ if __name__ == "__main__":
 
                 m = ModelModel()
                 model = m.getUnpublishedModelByMid(model_id)
+                name = model.name
+                endpoint_name = get_endpoint_name(model)
 
-                if (
-                    model.deployment_status == DeploymentStatusEnum.uploaded
-                ): 
+                if model.deployment_status == DeploymentStatusEnum.uploaded:
                     logger.info(f"Start to deploy model {model_id}")
-                    name = model.name
-                    endpoint_name = get_endpoint_name(model)
                     msg["name"] = name
                     deployed = False
                     delayed = False
@@ -62,7 +60,11 @@ if __name__ == "__main__":
                     try:
                         deployer = ModelDeployer(name, endpoint_name)
                         endpoint_url = deployer.deploy(model.secret, s3_uri)
-                    except botocore.exceptions.ResourceLimitExceeded as ex:
+                    except RuntimeError as e:  # handles all user exceptions
+                        msg["exception"] = e
+                    except deployer.env[
+                        "sagemaker_client"
+                    ].exceptions.ResourceLimitExceeded as ex:
                         delayed = True
                         redeployment_queue.append(msg)
                         pickle.dump(
@@ -74,8 +76,6 @@ if __name__ == "__main__":
                         msg[
                             "exception"
                         ] = f"Model deployment for {name} is delayed. You will get an email when it is successfully deployed."
-                    except RuntimeError as e:  # handles all user exceptions
-                        msg["exception"] = e
                     except Exception as e:
                         logger.exception(
                             f"Unexpected error: {sys.exc_info()[0]} with message {e}"
@@ -137,12 +137,10 @@ if __name__ == "__main__":
                         eval_queue.send_message(
                             MessageBody=json.dumps({"model_id": model_id})
                         )
-                elif (
-                    model.deployment_status == DeploymentStatusEnum.failed
-                ): 
+                elif model.deployment_status == DeploymentStatusEnum.failed:
+                    logger.info(f"Clean up failed model {endpoint_name}")
                     deployer = ModelDeployer(name, endpoint_name)
                     deployer.cleanup_on_failure(s3_uri)
-
 
             queue.delete_messages(
                 Entries=[

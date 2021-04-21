@@ -26,7 +26,9 @@ class ModelDeployer:
         self.repository_name = self.unique_name.lower()
         self.rootp = tempfile.TemporaryDirectory(prefix=self.unique_name)
         self.root_dir = self.rootp.name
-        logger.info(f"{model_name} folder loaded temporarily at {self.root_dir}")
+        if os.path.exists(self.root_dir):
+            shutil.rmtree(self.root_dir)
+        os.makedirs(self.root_dir)
         self.archive_name = f"archive.{self.unique_name}"
         self.owd = os.getcwd()
 
@@ -43,12 +45,12 @@ class ModelDeployer:
     def load_model(self, s3_uri):
         try:
             s3_bucket, s3_path, s3_dir, unique_name = self.parse_s3_uri(s3_uri)
-            assert unique_name == self.unique_name, f"Model at S3 path mismatches model endpoint name"
-            if os.path.exists(self.root_dir):
-                shutil.rmtree(self.root_dir)
-            os.makedirs(self.root_dir)
+            assert (
+                unique_name == self.unique_name
+            ), f"Model at S3 path mismatches model endpoint name"
             logger.info(f"Fetching model folder {s3_path} for {self.name}")
             self._fetch_folder(s3_bucket, s3_path)
+            logger.info(f"{self.name} folder loaded temporarily at {self.root_dir}")
             logger.info("Load the model setup config")
             config_handler = SetupConfigHandler(self.name)
             config = config_handler.load_config()
@@ -73,26 +75,23 @@ class ModelDeployer:
 
     def setup_sagemaker_env(self):
         env = {}
-        try:
-            session = boto3.Session(
-                aws_access_key_id=deploy_config["aws_access_key_id"],
-                aws_secret_access_key=deploy_config["aws_secret_access_key"],
-                region_name=deploy_config["aws_region"],
-            )
-            env["region"] = session.region_name
-            env["account"] = session.client("sts").get_caller_identity().get("Account")
-            env["sagemaker_client"] = session.client("sagemaker")
-            env["s3_client"] = session.client("s3")
-            env["ecr_client"] = session.client("ecr")
+        session = boto3.Session(
+            aws_access_key_id=deploy_config["aws_access_key_id"],
+            aws_secret_access_key=deploy_config["aws_secret_access_key"],
+            region_name=deploy_config["aws_region"],
+        )
+        env["region"] = session.region_name
+        env["account"] = session.client("sts").get_caller_identity().get("Account")
+        env["sagemaker_client"] = session.client("sagemaker")
+        env["s3_client"] = session.client("s3")
+        env["ecr_client"] = session.client("ecr")
 
-            env["sagemaker_session"] = sagemaker.Session(boto_session=session)
-            env["bucket_name"] = env["sagemaker_session"].default_bucket()
+        env["sagemaker_session"] = sagemaker.Session(boto_session=session)
+        env["bucket_name"] = env["sagemaker_session"].default_bucket()
 
-            env["ecr_registry"] = f"{env['account']}.dkr.ecr.{env['region']}.amazonaws.com"
+        env["ecr_registry"] = f"{env['account']}.dkr.ecr.{env['region']}.amazonaws.com"
 
-            return env
-        except Exception as ex:
-            logger.exception(f"Error in setting up sagemaker environment for deploying model {self.name}")
+        return env
 
     def delete_existing_endpoints(self):
         # remove endpoint
@@ -158,7 +157,7 @@ class ModelDeployer:
         tmp_dir = os.path.join(setup_config_handler.config_dir, "tmp")
         os.makedirs(tmp_dir, exist_ok=True)
         exclude_list_file = os.path.join(tmp_dir, "exclude.txt")
-        config_handler.write_exclude_filelist(
+        setup_config_handler.write_exclude_filelist(
             exclude_list_file, self.name, exclude_model=True
         )
         tarball = os.path.join(tmp_dir, f"{self.unique_name}.tar.gz")
@@ -358,7 +357,9 @@ class ModelDeployer:
         self.delete_existing_endpoints()
         os.chdir(self.root_dir)
         setup_config_handler, setup_config, s3_dir = self.load_model(s3_uri)
-        image_ecr_path = self.build_and_push_docker(secret, setup_config_handler, setup_config)
+        image_ecr_path = self.build_and_push_docker(
+            secret, setup_config_handler, setup_config
+        )
         model_s3_path = self.archive_and_upload_model(setup_config, s3_dir)
         endpoint_url = self.deploy_model(image_ecr_path, model_s3_path)
         self.chdir(self.owd)
@@ -369,7 +370,6 @@ class ModelDeployer:
         try:
             self.rootp.cleanup()
             # clean up local docker images
-
             subprocess.run(
                 shlex.split(f"docker rmi {shlex.quote(self.repository_name)}")
             )
