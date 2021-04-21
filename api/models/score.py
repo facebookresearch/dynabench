@@ -103,7 +103,7 @@ class ScoreModel(BaseModel):
         weights,
         direction_multipliers,
         offsets,
-        delta_cutoff_proportion=0.01,
+        delta_cutoff_proportion=0.0001,
     ):
 
         converted_data = data.copy(deep=True)
