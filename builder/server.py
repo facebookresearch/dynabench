@@ -10,7 +10,7 @@ import uuid
 
 from deploy_config import deploy_config
 from utils.deployer import ModelDeployer
-from utils.helpers import load_queue_dump
+from utils.helpers import load_queue_dump, get_endpoint_name
 from utils.logging import init_logger, logger
 
 
@@ -49,9 +49,10 @@ if __name__ == "__main__":
 
                 if (
                     model.deployment_status == DeploymentStatusEnum.uploaded
-                ):  # handles SQS duplicate message
+                ): 
                     logger.info(f"Start to deploy model {model_id}")
                     name = model.name
+                    endpoint_name = get_endpoint_name(model)
                     msg["name"] = name
                     deployed = False
                     delayed = False
@@ -59,8 +60,8 @@ if __name__ == "__main__":
                         model_id, deployment_status=DeploymentStatusEnum.processing
                     )
                     try:
-                        deployer = ModelDeployer(name, s3_uri)
-                        endpoint_url = deployer.deploy(model.secret)
+                        deployer = ModelDeployer(name, endpoint_name)
+                        endpoint_url = deployer.deploy(model.secret, s3_uri)
                     except botocore.exceptions.ResourceLimitExceeded as ex:
                         delayed = True
                         redeployment_queue.append(msg)
@@ -97,7 +98,7 @@ if __name__ == "__main__":
                                     model_id,
                                     deployment_status=DeploymentStatusEnum.failed,
                                 )
-                            deployer.cleanup_on_failure()
+                            deployer.cleanup_on_failure(s3_uri)
                         else:
                             subject = f"Model {name} deployment successful"
                             template = "model_deployment_successful"
@@ -136,6 +137,13 @@ if __name__ == "__main__":
                         eval_queue.send_message(
                             MessageBody=json.dumps({"model_id": model_id})
                         )
+                elif (
+                    model.deployment_status == DeploymentStatusEnum.failed
+                ): 
+                    deployer = ModelDeployer(name, endpoint_name)
+                    deployer.cleanup_on_failure(s3_uri)
+
+
             queue.delete_messages(
                 Entries=[
                     {"Id": str(uuid.uuid4()), "ReceiptHandle": message.receipt_handle}
