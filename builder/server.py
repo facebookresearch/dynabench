@@ -1,17 +1,18 @@
 import json
+import os
 import pickle
 import subprocess
 import sys
 import time
-import os
 
 import boto3
 import uuid
 
 from deploy_config import deploy_config
 from utils.deployer import ModelDeployer
-from utils.helpers import load_queue_dump, get_endpoint_name
+from utils.helpers import get_endpoint_name, load_queue_dump
 from utils.logging import init_logger, logger
+
 
 sys.path.append("../api")  # noqa
 import common.mail_service as mail  # isort:skip
