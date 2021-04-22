@@ -1,5 +1,6 @@
 import pickle
 
+
 def load_queue_dump(path, logger=None):
     try:
         queue = pickle.load(open(path, "rb"))

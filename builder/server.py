@@ -6,7 +6,6 @@ import time
 import os
 
 import boto3
-import botocore
 import uuid
 
 from deploy_config import deploy_config
@@ -48,101 +47,64 @@ if __name__ == "__main__":
                 model = m.getUnpublishedModelByMid(model_id)
                 name = model.name
                 endpoint_name = get_endpoint_name(model)
- 
+
                 if model.deployment_status == DeploymentStatusEnum.uploaded:
+                    # deploy model
                     logger.info(f"Start to deploy model {model_id}")
-                    msg["name"] = name
-                    deployed = False
-                    delayed = False
                     m.update(
                         model_id, deployment_status=DeploymentStatusEnum.processing
                     )
                     deployer = ModelDeployer(name, endpoint_name)
-                    try:
-                        endpoint_url = deployer.deploy(model.secret, s3_uri)
-                    except RuntimeError as e:  # handles all user exceptions
-                        deployer.cleanup_on_failure(s3_uri)
-                        logger.exception(e)
-                        msg["exception"] = e
-                    except botocore.exceptions.ClientError as e:
-                        deployer.cleanup_on_failure(s3_uri)
-                        if e.response["Error"]["Code"] == "LimitExceededException":
-                            delayed = True
-                            redeployment_queue.append(msg)
-                            pickle.dump(
-                                redeployment_queue,
-                                open(deploy_config["queue_dump"], "wb"),
-                            )
-                            logger.exception(
-                                f"Model deployment for {name} delayed due to AWS resource limit exceeded {ex}"
-                            )
-                            msg[
-                                "exception"
-                            ] = f"Model deployment for {name} is delayed. You will get an email when it is successfully deployed."
-                        else:
-                            logger.exception(
-                                f"Unexpected error: {sys.exc_info()[0]} with message {e}"
-                            )
-                            msg["exception"] = "Unexpected error"
-                    except Exception as e:
-                        deployer.cleanup_on_failure(s3_uri)
-                        logger.exception(
-                            f"Unexpected error: {sys.exc_info()[0]} with message {e}"
+                    response = deployer.deploy(model.secret, s3_uri)
+
+                    # process deployment result
+                    msg["name"] = name
+                    msg["exception"] = response["ex_msg"]
+                    if response["status"] == "delayed":
+                        redeployment_queue.append(msg)
+                        pickle.dump(
+                            redeployment_queue, open(deploy_config["queue_dump"], "wb")
                         )
-                        msg["exception"] = "Unexpected error"
-                    else:
-                        deployer.cleanup_post_deployment()
-                        deployed = True
-                    finally:
-                        if not deployed:
-                            template = "model_deployment_fail"
-                            if delayed:
-                                subject = f"Model {name} deployment delayed"
-                                m.update(
-                                    model_id,
-                                    deployment_status=DeploymentStatusEnum.uploaded,
-                                )
-                            else:
-                                subject = f"Model {name} deployment failed"
-                                m.update(
-                                    model_id,
-                                    deployment_status=DeploymentStatusEnum.failed,
-                                )
-                        else:
-                            subject = f"Model {name} deployment successful"
-                            template = "model_deployment_successful"
-                            m.update(
-                                model_id,
-                                deployment_status=DeploymentStatusEnum.deployed,
-                            )
-                        # send email
-                        user = m.getModelUserByMid(model_id)[1]
-
-                        if "smtp_user" in config and config["smtp_user"] != "":
-                            mail_session = mail.get_mail_session(
-                                host=config["smtp_host"],
-                                port=config["smtp_port"],
-                                smtp_user=config["smtp_user"],
-                                smtp_secret=config["smtp_secret"],
-                            )
-                            mail.send(
-                                server=mail_session,
-                                config=config,
-                                contacts=[user.email, "dynabench@fb.com"],
-                                template_name=f"templates/{template}.txt",
-                                msg_dict=msg,
-                                subject=subject,
-                            )
-                            nm = NotificationModel()
-                            nm.create(
-                                user.id, "MODEL_DEPLOYMENT_STATUS", template.upper()
-                            )
-
-                    if deployed:
+                        m.update(
+                            model_id, deployment_status=DeploymentStatusEnum.uploaded
+                        )
+                        subject = f"Model {name} deployment delayed"
+                        template = "model_deployment_fail"
+                    elif response["status"] == "failed":
+                        m.update(
+                            model_id, deployment_status=DeploymentStatusEnum.failed
+                        )
+                        subject = f"Model {name} deployment failed"
+                        template = "model_deployment_fail"
+                    elif response["status"] == "deployed":
+                        m.update(
+                            model_id, deployment_status=DeploymentStatusEnum.deployed
+                        )
+                        subject = f"Model {name} deployment successful"
+                        template = "model_deployment_successful"
                         eval_queue.send_message(
                             MessageBody=json.dumps({"model_id": model_id})
                         )
 
+                    # send email
+                    user = m.getModelUserByMid(model_id)[1]
+                    if "smtp_user" in config and config["smtp_user"] != "":
+                        mail_session = mail.get_mail_session(
+                            host=config["smtp_host"],
+                            port=config["smtp_port"],
+                            smtp_user=config["smtp_user"],
+                            smtp_secret=config["smtp_secret"],
+                        )
+                        mail.send(
+                            server=mail_session,
+                            config=config,
+                            contacts=[user.email, "dynabench@fb.com"],
+                            template_name=f"templates/{template}.txt",
+                            msg_dict=msg,
+                            subject=subject,
+                        )
+                        nm = NotificationModel()
+                        nm.create(user.id, "MODEL_DEPLOYMENT_STATUS", template.upper())
                 elif model.deployment_status == DeploymentStatusEnum.failed:
                     logger.info(f"Clean up failed model {endpoint_name}")
                     deployer = ModelDeployer(name, endpoint_name)
@@ -153,4 +115,4 @@ if __name__ == "__main__":
                     {"Id": str(uuid.uuid4()), "ReceiptHandle": message.receipt_handle}
                 ]
             )
-            time.sleep(5)
+        time.sleep(5)

@@ -10,6 +10,7 @@ import tempfile
 import time
 
 import boto3
+import botocore
 import sagemaker
 from sagemaker.model import Model
 from sagemaker.predictor import Predictor
@@ -356,20 +357,48 @@ class ModelDeployer:
         return f"{deploy_config['gateway_url']}?model={self.unique_name}"
 
     def deploy(self, secret, s3_uri):
-        self.delete_existing_endpoints()
-        os.chdir(self.root_dir)
-        setup_config_handler, setup_config, s3_dir = self.load_model(s3_uri)
-        image_ecr_path = self.build_and_push_docker(
-            secret, setup_config_handler, setup_config
-        )
-        model_s3_path = self.archive_and_upload_model(setup_config, s3_dir)
-        endpoint_url = self.deploy_model(image_ecr_path, model_s3_path)
-        os.chdir(self.owd)
-        return endpoint_url
+        deployed, delayed, ex_msg = False, False, ""
+        try:
+            self.delete_existing_endpoints()
+            os.chdir(self.root_dir)
+            setup_config_handler, setup_config, s3_dir = self.load_model(s3_uri)
+            image_ecr_path = self.build_and_push_docker(
+                secret, setup_config_handler, setup_config
+            )
+            model_s3_path = self.archive_and_upload_model(setup_config, s3_dir)
+            endpoint_url = self.deploy_model(image_ecr_path, model_s3_path)
+        except RuntimeError as e:
+            logger.exception(e)
+            self.cleanup_on_failure(s3_uri)
+            ex_msg = e
+        except botocore.exceptions.ClientError as e:
+            logger.exception(e)
+            self.cleanup_on_failure(s3_uri)
+            if e.response["Error"]["Code"] == "ResourceLimitExceeded":
+                delayed = True
+                ex_msg = f"Model deployment for {self.name} is delayed. You will get an email when it is successfully deployed."
+            else:
+                ex_msg = "Unexpected error"
+        except Exception as e:
+            logger.exception(e)
+            self.cleanup_on_failure(s3_uri)
+            ex_msg = "Unexpected error"
+        else:
+            self.cleanup_post_deployment()
+            deployed = True
+        finally:
+            os.chdir(self.owd)
+            if delayed:
+                status = "delayed"
+            elif deployed:
+                status = "deployed"
+            else:
+                status = "failed"
+            response = {"status": status, "ex_msg": ex_msg}
+            return response
 
     def cleanup_post_deployment(self):
         try:
-            os.chdir(self.owd)
             self.rootp.cleanup()
             # clean up local docker images
             subprocess.run(
