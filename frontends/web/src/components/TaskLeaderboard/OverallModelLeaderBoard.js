@@ -62,7 +62,8 @@ const WeightSlider = ({ weight, onWeightChange }) => {
  */
 const VariancePopover = ({ variance, children, placement = "right" }) => {
   const target = useRef(null);
-  if (null === variance || undefined === variance) {
+  // TODO: remove true when we have variances to show.
+  if (null === variance || undefined === variance || true) {
     return children;
   }
 
