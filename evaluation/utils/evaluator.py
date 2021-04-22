@@ -137,7 +137,12 @@ class JobScheduler:
             self.dump()
 
     def stop(self, job):
-        self.datasets[job.dataset_name].stop_batch_transform(self.sagemaker, job)
+        try:
+            self.sagemaker.stop_transform_job(TransformJobName=job.job_name)
+        except Exception as ex:
+            logger.exception(f"Error in stopping {job.job_name}: {ex}")
+        else:
+            logger.info(f"Stopped batch transform job {job.job_name}")
 
     def update_status(self):
         def _update_job_status(job):
