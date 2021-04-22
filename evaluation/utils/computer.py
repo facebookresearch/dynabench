@@ -66,11 +66,10 @@ class MetricsComputer:
                 job.endpoint_name, raw=True, perturb_prefix=perturb_prefix
             )
             raw_s3_bucket, raw_s3_path = parse_s3_uri(raw_output_s3_uri)
-
             # download raw predictions and parse
             fd, raw_pred_file = tempfile.mkstemp(suffix="raw", prefix=job.job_name)
             self.s3_client.download_file(raw_s3_bucket, raw_s3_path, raw_pred_file)
-            with os.fdopen(fd, "w") as f:
+            with open(raw_pred_file) as f:
                 tmp = ""
                 predictions = []
                 line = f.readline().strip()
@@ -88,6 +87,7 @@ class MetricsComputer:
                     elif line:
                         tmp += line.replace("\n", "")
                     line = f.readline().strip()
+            os.close(fd)
             os.remove(raw_pred_file)
 
             # upload parsed file
@@ -98,10 +98,11 @@ class MetricsComputer:
             fd, parsed_pred_file = tempfile.mkstemp(
                 suffix="parsed", prefix=job.job_name
             )
-            with os.fdopen(fd, "w") as f:
+            with open(parsed_pred_file, "w") as f:
                 for pred in predictions:
                     f.write(json.dumps(pred) + "\n")
             self.s3_client.upload_file(parsed_pred_file, s3_bucket, s3_path)
+            os.close(fd)
             os.remove(parsed_pred_file)
         except Exception as e:
             logger.exception(
