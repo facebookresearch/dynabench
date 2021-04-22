@@ -138,9 +138,9 @@ class JobScheduler:
 
     def stop(self, job):
         try:
-            self.sagemaker.stop_batch_transform(TransformJobName=job.job_name)
-        except self.sagemaker.exceptions.ResourceNotFound:
-            logger.exception(f"Tried to stop {job.job_name} but job not found")
+            self.sagemaker.stop_transform_job(TransformJobName=job.job_name)
+        except Exception as ex:
+            logger.exception(f"Error in stopping {job.job_name}: {ex}")
         else:
             logger.info(f"Stopped batch transform job {job.job_name}")
 
