@@ -34,7 +34,9 @@ const TaskLeaderboardCard = (props) => {
   useEffect(() => {
     setMetrics(
       task?.ordered_metrics?.map((m) => {
-        return { id: m.name, label: m.name, weight: 5, unit: m.unit };
+        return task.perf_metric_field_name === m.field_name
+          ? { id: m.name, label: m.name, weight: 5, unit: m.unit }
+          : { id: m.name, label: m.name, weight: 1, unit: m.unit };
       })
     );
 
