@@ -22,7 +22,7 @@ from common.config import config  # noqa isort:skip
 from models.model import DeploymentStatusEnum, ModelModel  # noqa isort:skip
 
 
-def get_failed_endpoints(eval_config, release_failed_jobs=False):
+def get_failed_endpoints(eval_config):
     endpoints, failed_jobs = {}, set()
     try:
         s = pickle.load(open(eval_config["scheduler_status_dump"], "rb"))
@@ -55,12 +55,9 @@ def update_db_and_request_cleanup(endpoints):
             send_takedown_model_request(mid, config, logger=logger)
 
 
-def release_failed_jobs(eval_config, failed_jobs):
+def release_failed_jobs(eval_config, failed_job_names):
     try:
         s = pickle.load(open(eval_config["scheduler_status_dump"], "rb"))
-        failed_job_names = set()
-        for j in failed_jobs:
-            failed_job_names.add(j.job_name)
         s["failed"] = [j for j in s["failed"] if j.job_name not in failed_job_names]
         pickle.dump(s, open(eval_config["scheduler_status_dump"], "wb"))
         print(f"Released failed jobs {failed_job_names}")
@@ -69,6 +66,6 @@ def release_failed_jobs(eval_config, failed_jobs):
 
 
 if __name__ == "__main__":
-    endpoints, failed_jobs = get_failed_endpoints(eval_config, release_failed_jobs=True)
+    endpoints, failed_job_names = get_failed_endpoints(eval_config)
     update_db_and_request_cleanup(endpoints)
-    release_failed_jobs(eval_config, failed_jobs)
+    release_failed_jobs(eval_config, failed_job_names)
