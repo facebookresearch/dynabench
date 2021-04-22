@@ -1,6 +1,8 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 """
 usage python scripts/cleanup_failed_models.py
+please make sure evaluation server is off when running this script
+in order to release failed jobs
 """
 
 import logging
