@@ -1,7 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 """
-Add more model deployment status
+Add more model deployment statuses
 """
 
 from yoyo import step
