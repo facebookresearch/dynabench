@@ -145,9 +145,9 @@ if __name__ == "__main__":
 
                 elif model.deployment_status == DeploymentStatusEnum.failed:
                     logger.info(f"Clean up failed model {endpoint_name}")
-                    m.update(model_id, deployment_status=DeploymentStatusEnum.unknown)
                     deployer = ModelDeployer(name, endpoint_name)
                     deployer.cleanup_on_failure(s3_uri)
+                    m.update(model_id, deployment_status=DeploymentStatusEnum.takendown)
             queue.delete_messages(
                 Entries=[
                     {"Id": str(uuid.uuid4()), "ReceiptHandle": message.receipt_handle}
