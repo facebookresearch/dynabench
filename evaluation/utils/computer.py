@@ -69,7 +69,7 @@ class MetricsComputer:
             # download raw predictions and parse
             fd, raw_pred_file = tempfile.mkstemp(suffix="raw", prefix=job.job_name)
             self.s3_client.download_file(raw_s3_bucket, raw_s3_path, raw_pred_file)
-            with os.fdopen(fd, "w") as f:
+            with open(raw_pred_file) as f:
                 tmp = ""
                 predictions = []
                 line = f.readline().strip()
