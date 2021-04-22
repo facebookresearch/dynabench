@@ -72,9 +72,10 @@ class MetricsComputer:
             with open(raw_pred_file) as f:
                 tmp = ""
                 predictions = []
-                line = f.readline().strip()
+                line = f.readline()
                 lb = 0
                 while line:
+                    line = line.strip()
                     for c in line:
                         if c == "{":
                             lb += 1
@@ -85,8 +86,8 @@ class MetricsComputer:
                         predictions.append(json.loads(tmp))
                         tmp = ""
                     elif line:
-                        tmp += line.replace("\n", "")
-                    line = f.readline().strip()
+                        tmp += line
+                    line = f.readline()
             os.close(fd)
             os.remove(raw_pred_file)
 
