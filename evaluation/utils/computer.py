@@ -72,9 +72,10 @@ class MetricsComputer:
             with open(raw_pred_file) as f:
                 tmp = ""
                 predictions = []
-                line = f.readline().strip()
+                line = f.readline()
                 lb = 0
                 while line:
+                    line = line.strip()
                     for c in line:
                         if c == "{":
                             lb += 1
@@ -85,8 +86,8 @@ class MetricsComputer:
                         predictions.append(json.loads(tmp))
                         tmp = ""
                     elif line:
-                        tmp += line.replace("\n", "")
-                    line = f.readline().strip()
+                        tmp += line
+                    line = f.readline()
             os.close(fd)
             os.remove(raw_pred_file)
 
@@ -213,7 +214,7 @@ class MetricsComputer:
     def update_status(self, jobs: list):
         if jobs:
             self._computing.extend(jobs)
-            self._dump()
+            self.dump()
 
     def compute(self, N=1):
         n = len(self._computing)
@@ -230,7 +231,7 @@ class MetricsComputer:
                 computed += 1
                 if status == ComputeStatusEnum.failed:
                     self._failed.append(job)
-            self._dump()
+            self.dump()
 
     def get_jobs(self, status="Failed"):
         if status == "Failed":
@@ -240,7 +241,7 @@ class MetricsComputer:
         else:
             raise NotImplementedError(f"Scheduler does not maintain {status} queue")
 
-    def _dump(self):
+    def dump(self):
         # dump status to pre-specified path
         status = {"computing": self._computing, "failed": self._failed}
         logger.info(

@@ -10,6 +10,7 @@ import tempfile
 import time
 
 import boto3
+import botocore
 import sagemaker
 from sagemaker.model import Model
 from sagemaker.predictor import Predictor
@@ -20,26 +21,20 @@ from utils.logging import logger
 
 
 class ModelDeployer:
-    def __init__(self, model_name, s3_uri):
+    def __init__(self, model_name, endpoint_name):
+        logger.info(f"Set up deployer for model {endpoint_name}")
         self.name = model_name
-        s3_bucket, s3_path, self.s3_dir, self.unique_name = self.parse_s3_uri(s3_uri)
+        self.unique_name = endpoint_name
         self.repository_name = self.unique_name.lower()
         self.rootp = tempfile.TemporaryDirectory(prefix=self.unique_name)
         self.root_dir = self.rootp.name
-        logger.info(f"{model_name} folder loaded temporarily at {self.root_dir}")
+        if os.path.exists(self.root_dir):
+            shutil.rmtree(self.root_dir)
+        os.makedirs(self.root_dir)
         self.archive_name = f"archive.{self.unique_name}"
-
-        self.env = self.setup_sagemaker_env()
         self.owd = os.getcwd()
 
-        try:
-            self.config_handler = self.initialize(s3_bucket, s3_path)
-            self.config = self.config_handler.load_config()
-        except Exception as ex:
-            logger.exception(
-                f"Exception in fetching model folder and loading config {ex}"
-            )
-            raise RuntimeError("Exception in fetching model folder and loading config")
+        self.env = self.setup_sagemaker_env()
 
     def parse_s3_uri(self, s3_uri):
         parts = s3_uri.replace("s3://", "").split("/")
@@ -49,16 +44,27 @@ class ModelDeployer:
         unique_name = os.path.basename(s3_path).replace(".tar.gz", "")
         return s3_bucket, s3_path, s3_dir, unique_name
 
-    def initialize(self, s3_bucket, s3_path):
-        if os.path.exists(self.root_dir):
-            shutil.rmtree(self.root_dir)
-        os.makedirs(self.root_dir)
-        os.chdir(self.root_dir)
-        logger.info(f"Fetching model folder {s3_path} for {self.name}")
-        self._fetch_folder(s3_bucket, s3_path)
-        logger.info("Load the model setup config")
-        config_handler = SetupConfigHandler(self.name)
-        return config_handler
+    def load_model(self, s3_uri):
+        try:
+            s3_bucket, s3_path, s3_dir, unique_name = self.parse_s3_uri(s3_uri)
+            assert (
+                unique_name == self.unique_name
+            ), f"Model at S3 path mismatches model endpoint name"
+            logger.info(f"Fetching model folder {s3_path} for {self.name}")
+            self._fetch_folder(s3_bucket, s3_path)
+            logger.info(f"{self.name} folder loaded temporarily at {self.root_dir}")
+            logger.info("Load the model setup config")
+            config_handler = SetupConfigHandler(self.name)
+            config = config_handler.load_config()
+            return config_handler, config, s3_dir
+        except AssertionError as ex:
+            logger.exception(ex)
+            raise RuntimeError(ex)
+        except Exception as ex:
+            logger.exception(
+                f"Exception in fetching model folder and loading config {ex}"
+            )
+            raise RuntimeError("Exception in fetching model folder and loading config")
 
     def _fetch_folder(self, s3_bucket, s3_path):
         save_tarball = f"{self.unique_name}.tar.gz"
@@ -71,7 +77,6 @@ class ModelDeployer:
 
     def setup_sagemaker_env(self):
         env = {}
-
         session = boto3.Session(
             aws_access_key_id=deploy_config["aws_access_key_id"],
             aws_secret_access_key=deploy_config["aws_secret_access_key"],
@@ -149,12 +154,12 @@ class ModelDeployer:
             if response:
                 logger.info(f"Response from deleting ECR repository {response}")
 
-    def build_docker(self, secret):
+    def build_docker(self, secret, setup_config_handler, setup_config):
         # tarball current folder but exclude checkpoints
-        tmp_dir = os.path.join(self.config_handler.config_dir, "tmp")
+        tmp_dir = os.path.join(setup_config_handler.config_dir, "tmp")
         os.makedirs(tmp_dir, exist_ok=True)
         exclude_list_file = os.path.join(tmp_dir, "exclude.txt")
-        self.config_handler.write_exclude_filelist(
+        setup_config_handler.write_exclude_filelist(
             exclude_list_file, self.name, exclude_model=True
         )
         tarball = os.path.join(tmp_dir, f"{self.unique_name}.tar.gz")
@@ -181,7 +186,7 @@ class ModelDeployer:
             shutil.copyfile(os.path.join(docker_dir, f), os.path.join(self.root_dir, f))
 
         # build docker
-        docker_build_args = f"--build-arg tarball={shlex.quote(tarball)} --build-arg requirements={shlex.quote(str(self.config['requirements']))} --build-arg setup={shlex.quote(str(self.config['setup']))} --build-arg my_secret={secret}"
+        docker_build_args = f"--build-arg tarball={shlex.quote(tarball)} --build-arg requirements={shlex.quote(str(setup_config['requirements']))} --build-arg setup={shlex.quote(str(setup_config['setup']))} --build-arg my_secret={secret}"
         docker_build_command = f"docker build --network host -t {shlex.quote(self.repository_name)} -f Dockerfile {docker_build_args} ."
         with subprocess.Popen(
             shlex.split(docker_build_command),
@@ -197,19 +202,20 @@ class ModelDeployer:
                     logger.debug(out)
                     out = process.stdout.readline().rstrip("\n")
                 time.sleep(10)
-            stdout, _ = process.communicate()
+            stdout, stderr = process.communicate()
             logger.debug(stdout)
             print("!")
 
             if process.returncode != 0:
                 logger.exception(f"Error in docker build for model {self.name}")
+                logger.info(stderr)
                 raise RuntimeError("Error in docker build")
 
         os.remove(tarball)
 
-    def build_and_push_docker(self, secret):
+    def build_and_push_docker(self, secret, setup_config_handler, setup_config):
         logger.info(f"Building docker for model {self.name}")
-        self.build_docker(secret)
+        self.build_docker(secret, setup_config_handler, setup_config)
 
         # docker login
         docker_credentials = self.env["ecr_client"].get_authorization_token()[
@@ -271,7 +277,7 @@ class ModelDeployer:
             logger.debug(process.stdout)
         return image_ecr_path
 
-    def archive_and_upload_model(self):
+    def archive_and_upload_model(self, setup_config, s3_dir):
         # torchserve archive model to .tar.gz (.mar)
         # TODO: allow proper model versioning together with docker tag
         logger.info(f"Archiving the model {self.name} ...")
@@ -280,15 +286,15 @@ class ModelDeployer:
             "--model-name",
             shlex.quote(self.archive_name),
             "--serialized-file",
-            shlex.quote(self.config["checkpoint"]),
+            shlex.quote(setup_config["checkpoint"]),
             "--handler",
-            shlex.quote(self.config["handler"]),
+            shlex.quote(setup_config["handler"]),
             "--version",
             "1.0",  # TODO: proper versioning
             "-f",
         ]
-        if self.config["model_files"]:
-            extra_files = ",".join(shlex.quote(f) for f in self.config["model_files"])
+        if setup_config["model_files"]:
+            extra_files = ",".join(shlex.quote(f) for f in setup_config["model_files"])
             archive_command += ["--extra-files", extra_files]
         process = subprocess.run(
             archive_command,
@@ -322,11 +328,11 @@ class ModelDeployer:
         # upload model tarball to S3
         logger.info(f"Uploading the archived model {self.name} to S3 ...")
         response = self.env["s3_client"].upload_file(
-            tarball, self.env["bucket_name"], f"{self.s3_dir}/{tarball}"
+            tarball, self.env["bucket_name"], f"{s3_dir}/{tarball}"
         )
         if response:
             logger.debug(f"Response from the mar file upload to s3 {response}")
-        model_s3_path = f"s3://{self.env['bucket_name']}/{self.s3_dir}/{tarball}"
+        model_s3_path = f"s3://{self.env['bucket_name']}/{s3_dir}/{tarball}"
         os.remove(tarball)
         os.remove(mar)
         return model_s3_path
@@ -350,19 +356,51 @@ class ModelDeployer:
         )
         return f"{deploy_config['gateway_url']}?model={self.unique_name}"
 
-    def deploy(self, secret):
-        self.delete_existing_endpoints()
-        image_ecr_path = self.build_and_push_docker(secret)
-        model_s3_path = self.archive_and_upload_model()
-        endpoint_url = self.deploy_model(image_ecr_path, model_s3_path)
-        return endpoint_url
+    def deploy(self, secret, s3_uri):
+        deployed, delayed, ex_msg = False, False, ""
+        try:
+            self.delete_existing_endpoints()
+            os.chdir(self.root_dir)
+            setup_config_handler, setup_config, s3_dir = self.load_model(s3_uri)
+            image_ecr_path = self.build_and_push_docker(
+                secret, setup_config_handler, setup_config
+            )
+            model_s3_path = self.archive_and_upload_model(setup_config, s3_dir)
+            endpoint_url = self.deploy_model(image_ecr_path, model_s3_path)
+        except RuntimeError as e:
+            logger.exception(e)
+            self.cleanup_on_failure(s3_uri)
+            ex_msg = e
+        except botocore.exceptions.ClientError as e:
+            logger.exception(e)
+            self.cleanup_on_failure(s3_uri)
+            if e.response["Error"]["Code"] == "ResourceLimitExceeded":
+                delayed = True
+                ex_msg = f"Model deployment for {self.name} is delayed. You will get an email when it is successfully deployed."
+            else:
+                ex_msg = "Unexpected error"
+        except Exception as e:
+            logger.exception(e)
+            self.cleanup_on_failure(s3_uri)
+            ex_msg = "Unexpected error"
+        else:
+            self.cleanup_post_deployment()
+            deployed = True
+        finally:
+            os.chdir(self.owd)
+            if delayed:
+                status = "delayed"
+            elif deployed:
+                status = "deployed"
+            else:
+                status = "failed"
+            response = {"status": status, "ex_msg": ex_msg}
+            return response
 
     def cleanup_post_deployment(self):
         try:
-            os.chdir(self.owd)
             self.rootp.cleanup()
             # clean up local docker images
-
             subprocess.run(
                 shlex.split(f"docker rmi {shlex.quote(self.repository_name)}")
             )
@@ -373,14 +411,17 @@ class ModelDeployer:
                 f"Clean up post deployment for {self.unique_name} failed: {ex}"
             )
 
-    def cleanup_on_failure(self):
+    def cleanup_on_failure(self, s3_uri=None):
         try:
             self.cleanup_post_deployment()
             self.delete_existing_endpoints()
-            self.env["s3_client"].delete_object(
-                Bucket=self.env["bucket_name"],
-                Key=f"{self.s3_dir}/{self.archive_name}.tar.gz",
-            )
+            if s3_uri:
+                _, _, s3_dir, unique_name = self.parse_s3_uri(s3_uri)
+                if unique_name == self.unique_name or unique_name == self.archive_name:
+                    self.env["s3_client"].delete_object(
+                        Bucket=self.env["bucket_name"],
+                        Key=f"{s3_dir}/{self.archive_name}.tar.gz",
+                    )
         except Exception as ex:
             logger.exception(
                 f"Clean up on failed deployment for {self.unique_name} failed: {ex}"

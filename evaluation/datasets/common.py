@@ -152,6 +152,9 @@ class BaseDataset(ABC):
         )
         return True
 
+    def stop_batch_transform(self, sagemaker_client, job):
+        sagemaker_client.stop_transform_job(job.job_name)
+
     def read_labels(self, perturb_prefix=None):
         tf = tempfile.mkstemp(prefix=self.name)[1]
         self.s3_client.download_file(
