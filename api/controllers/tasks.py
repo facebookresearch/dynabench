@@ -87,29 +87,44 @@ def get_leaderboard_by_task_and_round(tid, rid):
 
 
 def get_round_data_for_export(tid, rid):
+    import time
+
+    start_time = time.time()
     e = ExampleModel()
+    print("DEBUG: example model created")
     examples_with_validation_ids = e.getByTidAndRidWithValidationIds(tid, rid)
+    print(f"DEBUG: 2 examples with val ids: {examples_with_validation_ids[:2]}")
     example_and_validations_dicts = []
     rm = RoundModel()
+    print("DEBUG: round model created")
     secret = rm.getByTidAndRid(tid, rid).secret
     vm = ValidationModel()
+    print("DEBUG: validation model created")
     validations = vm.dbs.query(Validation)
     validation_dict = {}
     for validation in validations:
         validation_dict[validation.id] = validation
     turk_cache = {}
     cache = {}
+    print(
+        f"DEBUG: validation dict populated, size: {len(list(validation_dict.keys()))}"
+    )
 
     def get_anon_uid_with_cache(secret, uid, cache):
         if (secret, uid) not in cache:
             cache[(secret, uid)] = e.get_anon_uid(secret, uid)
         return cache[(secret, uid)]
 
-    for example, validation_ids in examples_with_validation_ids:
+    start_example_time = time.time()
+    total_validation_time = 0
+    for e_idx, (example, validation_ids) in enumerate(examples_with_validation_ids):
         if example.uid or (
             example.metadata_json and json.loads(example.metadata_json)["annotator_id"]
         ):
             example_and_validations_dict = example.to_dict()
+            if e_idx % 2000 == 0:
+                print(f"DEBUG: example_uid: {example}")
+
             if example.uid:
                 example_and_validations_dict["anon_uid"] = get_anon_uid_with_cache(
                     secret, example.uid, cache
@@ -121,11 +136,25 @@ def get_round_data_for_export(tid, rid):
                     turk_cache,
                 )
             example_and_validations_dict["validations"] = []
+            start_validation_time = time.time()
             for validation_id in [
                 int(id)
                 for id in filter(lambda item: item != "", validation_ids.split(","))
             ]:
+                start_val_time = time.time()
                 validation = validation_dict[validation_id]
+                if validation_id % 200 == 0:
+                    print(f"DEBUG validation id: {validation_id}")
+                    if validation.uid:
+                        annotator_id = validation.uid
+                    else:
+                        annotator_id = json.loads(validation.metadata_json)[
+                            "annotator_id"
+                        ]
+                    print(
+                        f"      validation uid/meta_data: {annotator_id}/{validation.metadata_json}"
+                    )
+
                 if validation.uid or (
                     validation.metadata_json
                     and json.loads(validation.metadata_json)["annotator_id"]
@@ -153,7 +182,20 @@ def get_round_data_for_export(tid, rid):
                         validation_info.append(json.loads(validation.metadata_json))
 
                     example_and_validations_dict["validations"].append(validation_info)
+
             example_and_validations_dicts.append(example_and_validations_dict)
+            total_validation_time += time.time() - start_validation_time
+
+    total_example_time = time.time() - start_example_time
+    end_time = time.time()
+    print(
+        f"DEBUG: populated example_and_validations_dicts, size: {len(example_and_validations_dicts)}"
+    )
+    print(f"DEBUG total time: {end_time-start_time} secs passed")
+    print(f"      example time: {total_example_time} secs passed")
+    print(f"      val time: {total_validation_time} secs passed")
+    print(f"      val/example: {total_validation_time * 1.0 / total_example_time}")
+    print(f"      example/total: {total_example_time * 1.0 / (end_time-start_time)}")
     return example_and_validations_dicts
 
 
@@ -162,10 +204,12 @@ def get_round_data_for_export(tid, rid):
 def export_current_round_data(credentials, tid, rid):
     um = UserModel()
     user = um.get(credentials["id"])
+    print(f"DEBUG user id: {user.id}")
     if not user.admin:
         if (tid, "owner") not in [
             (perm.tid, perm.type) for perm in user.task_permissions
         ]:
+            print("DEBUG access denied")
             bottle.abort(403, "Access denied")
     return util.json_encode(get_round_data_for_export(tid, rid))
 
