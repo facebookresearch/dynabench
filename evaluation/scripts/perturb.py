@@ -16,10 +16,11 @@ import boto3
 from dynalab_cli.utils import get_tasks
 from fairness import FairnessPerturbation
 from robustness import RobustnessPerturbation
+from textflint_util import run_textflint
 
 
 sys.path.append("..")  # noqa
-from eval_config import eval_config as config  # isort:skip
+#from eval_config import eval_config as config  # isort:skip
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("perturb")
@@ -106,6 +107,12 @@ def perturb(path, task, perturb_prefix):
     for example in examples:
         perturbed = pert.perturb(task, example)
         perturb_examples.extend(perturbed)
+
+    # Add perturbation from textflint
+    # TO-DO: currently the format of QA is not compatible in textflint
+    if perturb_prefix == "robustness" and task != "qa":
+        textflint_examples = run_textflint(examples, task)
+        perturb_examples.extend(textflint_examples)
 
     outpath = os.path.join(
         os.path.dirname(local_path), f"{perturb_prefix}-{os.path.basename(local_path)}"
