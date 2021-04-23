@@ -20,7 +20,7 @@ from textflint_util import run_textflint
 
 
 sys.path.append("..")  # noqa
-#from eval_config import eval_config as config  # isort:skip
+from eval_config import eval_config as config  # isort:skip
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("perturb")
