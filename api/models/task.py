@@ -158,7 +158,7 @@ class TaskModel(BaseModel):
             scoring_dataset_list.sort(key=lambda dataset: dataset["id"])
 
             t_dict = t.to_dict()
-            r = r.to_dict()
+            r_dict = r.to_dict()
             rm = RoundModel()
             t_dict["ordered_scoring_datasets"] = scoring_dataset_list
             t_dict["ordered_datasets"] = dataset_list
@@ -194,10 +194,10 @@ class TaskModel(BaseModel):
 
             t_dict["ordered_metrics"] = ordered_metrics
 
-            validation_stats = rm.getValidationStats(tid, r["rid"])
-            r["total_validations"] = validation_stats["total_validations"]
-            r["correct_validations"] = validation_stats["correct_validations"]
-            t_dict["round"] = r
+            validation_stats = rm.getValidationStats(tid, r_dict["rid"])
+            r_dict["total_validations"] = validation_stats["total_validations"]
+            r_dict["correct_validations"] = validation_stats["correct_validations"]
+            t_dict["round"] = r_dict
             return t_dict
         except db.orm.exc.NoResultFound:
             return False
