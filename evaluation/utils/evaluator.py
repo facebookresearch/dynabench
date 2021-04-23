@@ -136,6 +136,14 @@ class JobScheduler:
                 _create_batch_transform(job)
             self.dump()
 
+    def stop(self, job):
+        try:
+            self.sagemaker.stop_transform_job(TransformJobName=job.job_name)
+        except Exception as ex:
+            logger.exception(f"Error in stopping {job.job_name}: {ex}")
+        else:
+            logger.info(f"Stopped batch transform job {job.job_name}")
+
     def update_status(self):
         def _update_job_status(job):
             try:

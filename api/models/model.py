@@ -15,6 +15,7 @@ class DeploymentStatusEnum(enum.Enum):
     deployed = "deployed"
     failed = "failed"
     unknown = "unknown"
+    takendown = "takendown"
 
 
 class Model(Base):
@@ -119,4 +120,11 @@ class ModelModel(BaseModel):
             .join(User, User.id == Model.uid)
             .filter(Model.id == id)
             .one()
+        )
+
+    def getByDeploymentStatus(self, deployment_status):
+        return (
+            self.dbs.query(Model)
+            .filter(Model.deployment_status == deployment_status)
+            .all()
         )
