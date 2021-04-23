@@ -34,15 +34,18 @@ const TaskLeaderboardCard = (props) => {
   useEffect(() => {
     setMetrics(
       task?.ordered_metrics?.map((m) => {
-        return task.perf_metric_field_name === m.field_name
-          ? { id: m.name, label: m.name, weight: 5, unit: m.unit }
-          : { id: m.name, label: m.name, weight: 1, unit: m.unit };
+        return {
+          id: m.name,
+          label: m.name,
+          weight: m.default_weight,
+          unit: m.unit,
+        };
       })
     );
 
     setDatasetWeights(
       task.ordered_scoring_datasets?.map((ds) => {
-        return { id: ds.id, weight: 5, name: ds.name }; // Default weight to max i.e. 5.
+        return { id: ds.id, weight: ds.default_weight, name: ds.name };
       })
     );
     return () => {};
