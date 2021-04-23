@@ -107,6 +107,7 @@ class ScoreModel(BaseModel):
     ):
 
         converted_data = data.copy(deep=True)
+        converted_data.sort_values(perf_metric_field_name, inplace=True)
         for metric in list(data):
             converted_data[metric] = (
                 direction_multipliers[metric] * converted_data[metric] + offsets[metric]
@@ -130,8 +131,8 @@ class ScoreModel(BaseModel):
                 satisfied_indices.append(index)
 
         for metric in list(data):
-            AMRS = (1 if metric == perf_metric_field_name else -1) * (
-                delta[metric][satisfied_indices]
+            AMRS = (
+                delta[metric][satisfied_indices].abs()
                 / delta[perf_metric_field_name][satisfied_indices]
             ).mean(skipna=True)
             converted_data[metric] = converted_data[metric] / abs(AMRS)
