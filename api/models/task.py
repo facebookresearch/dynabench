@@ -1,5 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+import json
 import sys
 
 import sqlalchemy as db
@@ -104,7 +105,32 @@ class TaskModel(BaseModel):
             tasks[ii]["round"] = r.to_dict()
         return tasks
 
+    def get_default_dataset_weight(self, task, name):
+        if task.settings_json is not None:
+            weight = (
+                json.loads(task.settings_json)
+                .get("default_dataset_weights", {})
+                .get(name, None)
+            )
+            if weight is not None:
+                return weight
+        return 5
+
+    def get_default_metric_weight(self, task, field_name, perf_metric_field_name):
+        if task.settings_json is not None:
+            weight = (
+                json.loads(task.settings_json)
+                .get("default_metric_weights", {})
+                .get(field_name, None)
+            )
+            if weight is not None:
+                return weight
+        if field_name == perf_metric_field_name:
+            return 5
+        return 1
+
     def getWithRoundAndMetricMetadata(self, tid):
+
         try:
             t, r = (
                 self.dbs.query(Task, Round)
@@ -120,24 +146,33 @@ class TaskModel(BaseModel):
                 dataset_list.append({"id": dataset.id, "name": dataset.name})
                 if dataset.access_type == AccessTypeEnum.scoring:
                     scoring_dataset_list.append(
-                        {"id": dataset.id, "name": dataset.name}
+                        {
+                            "id": dataset.id,
+                            "name": dataset.name,
+                            "default_weight": self.get_default_dataset_weight(
+                                t, dataset.name
+                            ),
+                        }
                     )
             dataset_list.sort(key=lambda dataset: dataset["id"])
             scoring_dataset_list.sort(key=lambda dataset: dataset["id"])
 
-            t = t.to_dict()
+            t_dict = t.to_dict()
             r = r.to_dict()
             rm = RoundModel()
-            t["ordered_scoring_datasets"] = scoring_dataset_list
-            t["ordered_datasets"] = dataset_list
+            t_dict["ordered_scoring_datasets"] = scoring_dataset_list
+            t_dict["ordered_datasets"] = dataset_list
             shortname_to_metrics_task_name = {
                 "NLI": "nli",
                 "QA": "qa",
                 "Sentiment": "sentiment",
                 "Hate Speech": "hs",
             }
-            if t["shortname"] in shortname_to_metrics_task_name:
-                metrics_task_name = shortname_to_metrics_task_name[t["shortname"]]
+            if t_dict["shortname"] in shortname_to_metrics_task_name:
+                metrics_task_name = shortname_to_metrics_task_name[t_dict["shortname"]]
+                t_dict["perf_metric_field_name"] = metrics.get_task_config_safe(
+                    metrics_task_name
+                )["perf_metric"]
                 metrics_meta, ordered_field_names = metrics.get_task_metrics_meta(
                     metrics_task_name
                 )
@@ -146,24 +181,24 @@ class TaskModel(BaseModel):
                         {
                             "name": metrics_meta[field_name]["pretty_name"],
                             "field_name": field_name,
+                            "default_weight": self.get_default_metric_weight(
+                                t, field_name, t_dict["perf_metric_field_name"]
+                            ),
                         },
                         **metrics_meta[field_name],
                     )
                     for field_name in ordered_field_names
                 ]
-                t["perf_metric_field_name"] = metrics.get_task_config_safe(
-                    metrics_task_name
-                )["perf_metric"]
             else:
                 ordered_metrics = []
 
-            t["ordered_metrics"] = ordered_metrics
+            t_dict["ordered_metrics"] = ordered_metrics
 
             validation_stats = rm.getValidationStats(tid, r["rid"])
             r["total_validations"] = validation_stats["total_validations"]
             r["correct_validations"] = validation_stats["correct_validations"]
-            t["round"] = r
-            return t
+            t_dict["round"] = r
+            return t_dict
         except db.orm.exc.NoResultFound:
             return False
 
