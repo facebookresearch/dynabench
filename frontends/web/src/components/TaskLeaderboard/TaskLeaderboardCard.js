@@ -1,6 +1,12 @@
 import React from "react";
 import { useEffect, useState, useContext } from "react";
-import { Card, Pagination, Button } from "react-bootstrap";
+import {
+  Card,
+  Pagination,
+  Button,
+  Tooltip,
+  OverlayTrigger,
+} from "react-bootstrap";
 import UserContext from "../../containers/UserContext";
 import OverallModelLeaderBoard from "./OverallModelLeaderBoard";
 
@@ -25,6 +31,7 @@ const TaskLeaderboardCard = (props) => {
 
   const [data, setData] = useState([]);
   const [enableWeights, setEnableWeights] = useState(false);
+  const [enableDatasetWeights, setEnableDatasetWeights] = useState(false);
   // Map task metrics to include weights for UI
   const [metrics, setMetrics] = useState([]);
 
@@ -172,20 +179,48 @@ const TaskLeaderboardCard = (props) => {
 
   return (
     <Card className="my-4">
-      <Card.Header className="p-3 light-gray-bg">
+      <Card.Header className="light-gray-bg d-flex align-items-center">
         <h2 className="text-uppercase m-0 text-reset">
           {props && props.location && props.location.hash === "#overall"
             ? "Overall Model Leaderboard"
             : "Round " + props.displayRoundId + " Model Leaderboard"}
         </h2>
-        <Button
-          className="btn bg-transparent border-0 float-right"
-          onClick={() => setEnableWeights(!enableWeights)}
-        >
-          <span className="text-black-50">
-            <i className="fas fa-sliders-h"></i>
-          </span>
-        </Button>
+        <div className="d-flex justify-content-end flex-fill">
+          <OverlayTrigger
+            placement="top"
+            overlay={<Tooltip id="tip-metric-weights">Metric Weights</Tooltip>}
+          >
+            <Button
+              className="btn bg-transparent border-0"
+              onClick={() => {
+                setEnableWeights(!enableWeights);
+                setEnableDatasetWeights(false);
+              }}
+            >
+              <span className="text-black-50">
+                <i className="fas fa-sliders-h"></i>
+              </span>
+            </Button>
+          </OverlayTrigger>
+          <OverlayTrigger
+            placement="top"
+            overlay={
+              <Tooltip id="tip-dataset-weights">Dataset Weights</Tooltip>
+            }
+          >
+            <Button
+              className="btn bg-transparent border-0"
+              onClick={() => {
+                setEnableDatasetWeights(!enableDatasetWeights);
+                setEnableWeights(false);
+              }}
+            >
+              <span className="text-black-50">
+                <i class="fas fa-database"></i>
+              </span>
+            </Button>
+          </OverlayTrigger>
+        </div>
       </Card.Header>
       <Card.Body className="p-0 leaderboard-container">
         <OverallModelLeaderBoard
@@ -194,6 +229,7 @@ const TaskLeaderboardCard = (props) => {
           enableWeights={enableWeights}
           metrics={metrics}
           setMetricWeight={setMetricWeight}
+          enableDatasetWeights={enableDatasetWeights}
           datasetWeights={datasetWeights}
           setDatasetWeight={setDatasetWeight}
           taskShortName={props.task.shortname}
