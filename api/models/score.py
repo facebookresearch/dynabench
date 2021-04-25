@@ -395,31 +395,6 @@ class ScoreModel(BaseModel):
         except db.orm.exc.NoResultFound:
             return False
 
-    def getTrendsByTid(self, tid, n=10, offset=0):
-        # subquery to get the top performance model
-        sub_query = (
-            self.dbs.query(Model.id.label("m_id"), Model.name)
-            .join(Score, Score.mid == Model.id)
-            .filter(Model.tid == tid)
-            .filter(Model.is_published == True)  # noqa
-            .group_by(Model.id)
-            .order_by(db.sql.func.avg(Score.perf).desc())
-            .limit(n)
-            .offset(offset * n)
-            .subquery()
-        )
-
-        return (
-            self.dbs.query(
-                sub_query.c.m_id,
-                sub_query.c.name,
-                Score.perf.label("avg_perg"),
-                Round.rid,
-            )
-            .join(Score, Round.id == Score.r_realid)
-            .filter(Score.mid == sub_query.c.m_id)
-        )
-
     def getByMid(self, mid):
         return (
             self.dbs.query(Score.perf, Round.rid, Score.did)

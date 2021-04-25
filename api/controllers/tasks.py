@@ -8,7 +8,9 @@ import bottle
 import common.auth as _auth
 import common.helpers as util
 from common.logging import logger
+from models.dataset import Dataset
 from models.example import ExampleModel
+from models.model import Model
 from models.round import RoundModel
 from models.round_user_example_info import RoundUserExampleInfoModel
 from models.score import ScoreModel
@@ -362,9 +364,89 @@ def get_task_trends(tid):
     :param tid: Task id
     :return: Json Object
     """
-    model = ScoreModel()
     try:
-        query_result = model.getTrendsByTid(tid=tid)
+        sm = ScoreModel()
+        tm = TaskModel()
+        task_dict = tm.getWithRoundAndMetricMetadata(tid)
+        ordered_metric_and_weight = list(
+            map(
+                lambda metric: dict({"weight": metric["default_weight"]}, **metric),
+                task_dict["ordered_metrics"],
+            )
+        )
+        ordered_did_and_weight = list(
+            map(
+                lambda dataset: dict(
+                    {"weight": dataset["default_weight"], "did": dataset["id"]},
+                    **dataset,
+                ),
+                task_dict["ordered_scoring_datasets"],
+            )
+        )
+        dynaboard_response = sm.getDynaboardByTask(
+            tid,
+            task_dict["perf_metric_field_name"],
+            ordered_metric_and_weight,
+            ordered_did_and_weight,
+            "dynascore",
+            True,
+            10,
+            0,
+        )
+        mid_and_rid_to_perf = {}
+        did_to_rid = {}
+        for dataset in sm.dbs.query(Dataset):
+            did_to_rid[dataset.id] = dataset.rid
+        rid_to_did_to_weight = {}
+        for did_and_weight in ordered_did_and_weight:
+            rid = did_to_rid[did_and_weight["did"]]
+            if rid in rid_to_did_to_weight:
+                rid_to_did_to_weight[rid][did_and_weight["did"]] = did_and_weight[
+                    "weight"
+                ]
+            else:
+                rid_to_did_to_weight[rid] = {
+                    did_and_weight["did"]: did_and_weight["weight"]
+                }
+        mid_to_name = {}
+        for model in sm.dbs.query(Model):
+            mid_to_name[model.id] = model.name
+
+        for model_results in json.loads(dynaboard_response)["data"]:
+            for dataset_results in model_results["datasets"]:
+                rid = did_to_rid[dataset_results["id"]]
+                if rid != 0:
+                    ordered_metric_field_names = list(
+                        map(
+                            lambda metric: metric["field_name"],
+                            task_dict["ordered_metrics"],
+                        )
+                    )
+                    perf = dataset_results["scores"][
+                        ordered_metric_field_names.index(
+                            task_dict["perf_metric_field_name"]
+                        )
+                    ]
+                    mid_and_rid = (model_results["model_id"], rid)
+                    # Weighting is needed in case there are multiple scoring
+                    # datasets for the same round.
+                    weighted_perf = (
+                        perf
+                        * rid_to_did_to_weight[rid][dataset_results["id"]]
+                        / sum(rid_to_did_to_weight[rid].values())
+                    )
+                    if mid_and_rid in mid_and_rid_to_perf:
+                        mid_and_rid_to_perf[
+                            (model_results["model_id"], rid)
+                        ] += weighted_perf
+                    else:
+                        mid_and_rid_to_perf[
+                            (model_results["model_id"], rid)
+                        ] = weighted_perf
+        query_result = []
+        for (mid, rid), perf in mid_and_rid_to_perf.items():
+            query_result.append((mid, mid_to_name[mid], perf, rid))
+
         return construct_trends_response_json(query_result=query_result)
     except Exception as ex:
         logger.exception("User trends data loading failed: (%s)" % (ex))
@@ -422,6 +504,8 @@ def construct_trends_response_json(query_result):
                 reslt[1] + "_" + str(reslt[0]): reslt[2],
             }
     if response_obj:
-        return util.json_encode(list(response_obj.values()))
+        return util.json_encode(
+            sorted(list(response_obj.values()), key=lambda value: value["round"])
+        )
     else:
         return util.json_encode([])
