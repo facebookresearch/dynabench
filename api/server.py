@@ -106,12 +106,6 @@ if running_mode == "dev":
         keyfile=config["ssl_org_pem_file_path"],
     )
 elif running_mode == "prod":
-    # initialize the evaluation dataset classes in app context,
-    # to reduce the turnaround time.
-    sys.path.append("../evaluation")  # noqa
-    import datasets  # isort:skip
-
-    app.config["datasets"] = datasets.load_datasets()
 
     # Assertion for necessary configuration
     if not check_fields(

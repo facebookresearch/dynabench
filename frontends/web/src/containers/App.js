@@ -27,7 +27,6 @@ import ApiService from "../common/ApiService";
 import ScrollToTop from "./ScrollToTop.js";
 import CreateInterface from "./CreateInterface.js";
 import VerifyInterface from "./VerifyInterface.js";
-import SubmitInterface from "./SubmitInterface.js";
 import PublishInterface from "./PublishInterface.js";
 import GenerateAPITokenPage from "./GenerateAPITokenPage.js";
 import { Avatar } from "../components/Avatar/Avatar";
@@ -239,10 +238,6 @@ class App extends React.Component {
                 <Route
                   path="/tasks/:taskId/validate"
                   component={VerifyInterface}
-                />
-                <Route
-                  path="/tasks/:taskId/submit"
-                  component={SubmitInterface}
                 />
                 <Route
                   path="/tasks/:taskId/models/:modelId/publish"

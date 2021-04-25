@@ -152,9 +152,6 @@ const TaskActionButtons = (props) => {
       "Verify examples where the model may have failed"
     );
   }
-  function renderSubmitTooltip(props) {
-    return renderTooltip(props, "Submit model predictions on this task");
-  }
 
   return (
     <Nav className="my-4">
@@ -198,31 +195,6 @@ const TaskActionButtons = (props) => {
           </OverlayTrigger>
         </Annotation>
       </Nav.Item>
-      {props.task.shortname === "NLI" ||
-      props.task.shortname === "QA" ||
-      props.task.shortname === "Hate Speech" ||
-      props.task.shortname === "Sentiment" ? (
-        <Nav.Item className="task-action-btn">
-          <Annotation
-            placement="right"
-            tooltip="Click here to submit your model predictions for previous rounds."
-          >
-            <OverlayTrigger
-              placement="bottom"
-              delay={{ show: 250, hide: 400 }}
-              overlay={renderSubmitTooltip}
-            >
-              <Button
-                as={Link}
-                className="border-0 blue-color font-weight-bold light-gray-bg"
-                to={"/tasks/" + props.taskId + "/submit"}
-              >
-                Submit Predictions
-              </Button>
-            </OverlayTrigger>
-          </Annotation>
-        </Nav.Item>
-      ) : null}
     </Nav>
   );
 };
