@@ -27,8 +27,6 @@ class PublishInterface extends React.Component {
       taskId: props.match.params.taskId,
       modelId: props.match.params.modelId,
       model: {},
-      accuracy: "",
-      scores: [],
       isPublished: false,
     };
   }
@@ -46,8 +44,6 @@ class PublishInterface extends React.Component {
     }
     this.setState({
       model: propState.detail,
-      accuracy: (propState.detail && propState.detail.overall_perf) || "",
-      scores: (propState.detail && propState.detail.scores) || [],
       isPublished: (propState.detail && propState.detail.isPublished) || false,
     });
   }
@@ -66,7 +62,7 @@ class PublishInterface extends React.Component {
       errors.languages = "Required";
     }
     if (!values.license || values.license.trim() === "") {
-      values.license = "Required";
+      errors.license = "Required";
     }
     return errors;
   };
@@ -100,9 +96,6 @@ class PublishInterface extends React.Component {
 
   render() {
     const { model } = this.state;
-    let orderedScores = (model.scores || []).sort(
-      (a, b) => a.round_id - b.round_id
-    );
 
     let modelCardTemplate = `## Model Details
 (Enter your model details here)
@@ -138,26 +131,6 @@ class PublishInterface extends React.Component {
             <CardGroup style={{ marginTop: 20, width: "100%" }}>
               <Card>
                 <Card.Body>
-                  <Container>
-                    <Row className="mt-4">
-                      <Col sm="4" className="mb-2">
-                        <b>Your Performance</b>
-                      </Col>
-                      <Col sm="8">
-                        <b>{model.overall_perf}%</b>
-                      </Col>
-                    </Row>
-                    {orderedScores.map((data) => {
-                      return (
-                        <Row key={data.round_id}>
-                          <Col sm="4" className="row-wise">
-                            Round {data.round_id}
-                          </Col>
-                          <Col sm="7">{Number(data.accuracy).toFixed(2)}%</Col>
-                        </Row>
-                      );
-                    })}
-                  </Container>
                   {Object.keys(model).length ? (
                     <Formik
                       initialValues={{
@@ -179,7 +152,7 @@ class PublishInterface extends React.Component {
                         isSubmitting,
                       }) => (
                         <>
-                          <form onSubmit={handleSubmit} className="mt-5 ml-2">
+                          <form onSubmit={handleSubmit} className="ml-2">
                             <Form.Group>
                               <Form.Label>
                                 <b>Model Name</b>

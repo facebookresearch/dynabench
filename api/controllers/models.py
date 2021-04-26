@@ -210,7 +210,6 @@ def upload_to_s3(credentials):
         shortname="",
         longdesc="",
         desc="",
-        overall_perf="",
         upload_datetime=db.sql.func.now(),
         upload_timestamp=ts,
         deployment_status=DeploymentStatusEnum.uploaded,

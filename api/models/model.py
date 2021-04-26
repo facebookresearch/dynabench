@@ -42,8 +42,6 @@ class Model(Base):
     upload_datetime = db.Column(db.DateTime)
     model_card = db.Column(db.Text)
 
-    overall_perf = db.Column(db.Text)
-
     is_published = db.Column(db.BOOLEAN, default=False)
 
     # deployment
