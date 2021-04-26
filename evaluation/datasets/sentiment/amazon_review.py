@@ -12,7 +12,7 @@ from .base import AccessTypeEnum, SentimentBase
 
 class AmazonReviewBase(SentimentBase):
     def __init__(
-        self, name, local_path, round_id=0, access_type=AccessTypeEnum.scoring
+        self, name, local_path, round_id=0, access_type=AccessTypeEnum.standard
     ):
         self.local_path = local_path
         super().__init__(name=name, round_id=round_id, access_type=access_type)
@@ -64,9 +64,4 @@ class AmazonReviewDev(AmazonReviewBase):
         local_path = os.path.join(
             rootpath, "data", "sentiment/amazon_review/amazon-review-dev.jsonl"
         )
-        super().__init__(
-            name="amazon-review-dev",
-            local_path=local_path,
-            round_id=0,
-            access_type=AccessTypeEnum.standard,
-        )
+        super().__init__(name="amazon-review-dev", local_path=local_path, round_id=0)
