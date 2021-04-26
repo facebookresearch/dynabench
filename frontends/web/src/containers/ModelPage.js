@@ -34,7 +34,6 @@ class ModelPage extends React.Component {
         user: {
           username: "",
         },
-        accuracy: null,
       },
     };
   }
@@ -188,12 +187,6 @@ class ModelPage extends React.Component {
                             ) : null}
                           </h5>
                         </td>
-                      </tr>
-                      <tr>
-                        <td style={{ paddingLeft: 50, whiteSpace: "nowrap" }}>
-                          Overall Performance
-                        </td>
-                        <td>{Number(model.overall_perf).toFixed(2)}%</td>
                       </tr>
                       <tr>
                         <td colSpan={2}>

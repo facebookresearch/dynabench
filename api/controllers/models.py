@@ -147,7 +147,6 @@ def do_upload(credentials):
                 shortname="",
                 longdesc="",
                 desc="",
-                overall_perf=f"{overall_accuracy:.2f}",
                 upload_datetime=db.sql.func.now(),
             )
             s = ScoreModel()
@@ -299,7 +298,6 @@ def upload_to_s3(credentials):
         shortname="",
         longdesc="",
         desc="",
-        overall_perf="",
         upload_datetime=db.sql.func.now(),
         upload_timestamp=ts,
         deployment_status=DeploymentStatusEnum.uploaded,
