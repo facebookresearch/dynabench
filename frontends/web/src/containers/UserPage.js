@@ -371,9 +371,6 @@ class UserPage extends React.Component {
                               <td>
                                 <b>Task</b>
                               </td>
-                              <td className="text-right">
-                                <b>Performance</b>
-                              </td>
                             </tr>
                           </thead>
                           <tbody>
@@ -409,9 +406,6 @@ class UserPage extends React.Component {
                                         );
                                       }}
                                     </TasksContext.Consumer>
-                                  </td>
-                                  <td className="text-right">
-                                    {model.overall_perf}
                                   </td>
                                 </tr>
                               );
