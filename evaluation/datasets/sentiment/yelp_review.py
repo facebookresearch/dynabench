@@ -12,7 +12,7 @@ from .base import AccessTypeEnum, SentimentBase
 
 class YelpReviewBase(SentimentBase):
     def __init__(
-        self, name, local_path, round_id=0, access_type=AccessTypeEnum.scoring
+        self, name, local_path, round_id=0, access_type=AccessTypeEnum.standard
     ):
         self.local_path = local_path
         super().__init__(name=name, round_id=round_id, access_type=access_type)
@@ -64,9 +64,4 @@ class YelpReviewDev(YelpReviewBase):
         local_path = os.path.join(
             rootpath, "data", "sentiment/yelp_review/yelp-review-dev.jsonl"
         )
-        super().__init__(
-            name="yelp-review-dev",
-            local_path=local_path,
-            round_id=0,
-            access_type=AccessTypeEnum.standard,
-        )
+        super().__init__(name="yelp-review-dev", local_path=local_path, round_id=0)
