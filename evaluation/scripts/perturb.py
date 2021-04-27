@@ -16,7 +16,7 @@ import boto3
 from dynalab_cli.utils import get_tasks
 from fairness import FairnessPerturbation
 from robustness import RobustnessPerturbation
-from textflint_util import run_textflint
+from textflint_utils.utils import run_textflint
 
 
 sys.path.append("..")  # noqa

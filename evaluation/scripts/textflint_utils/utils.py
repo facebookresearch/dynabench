@@ -9,7 +9,7 @@ import torch
 from textflint import Engine
 
 
-CONFIG_PATH = "../configs"
+CONFIG_PATH = "textflint_utils/configs"
 TRANSFORM_FIELDS = {
     "nli": {"context": "premise", "hypothesis": "hypothesis"},
     "sentiment": {"context": "x"},

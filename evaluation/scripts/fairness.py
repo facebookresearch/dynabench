@@ -9,7 +9,7 @@ from util import postprocess, preprocess
 class FairnessPerturbation:
     def __init__(self):
         # initialize perturbation lists.
-        self.fdir = "../data/"
+        self.fdir = "data/"
         self.gender_name_list = self.load_gender_name_list()
         self.gender_word_list = self.load_gender_word_list()
         self.ethnic_name_list = self.load_ethnic_name_list()
