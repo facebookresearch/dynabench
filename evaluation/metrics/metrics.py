@@ -106,7 +106,9 @@ def get_examples_per_second(job, dataset):
     n_examples = dataset.get_n_examples()
     eps = (
         n_examples
-        / (job.status["TransformEndTime"] - job.status["TransformStartTime"]).seconds
+        / (
+            job.status["TransformEndTime"] - job.status["TransformStartTime"]
+        ).total_seconds()
     )
     return round(eps, 2)
 
