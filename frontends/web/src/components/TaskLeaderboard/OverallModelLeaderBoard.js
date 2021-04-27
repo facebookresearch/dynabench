@@ -420,9 +420,6 @@ const OverallModelLeaderBoard = ({
               </th>
               <th />
             </tr>
-            <tr>
-              <th className="align-top">Dataset Weights</th>
-            </tr>
           </>
         )}
       </thead>
