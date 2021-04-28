@@ -17,12 +17,7 @@ TRANSFORM_FIELDS = {
     "qa": {"context": "context", "question": "question"},
 }
 
-LABEL_FIELD = {
-    "nli": "label",
-    "sentiment": "label",
-    "hs": "label",
-    "qa": "answer",
-}
+LABEL_FIELD = {"nli": "label", "sentiment": "label", "hs": "label", "qa": "answer"}
 
 LABEL_MAP = {
     "nli": {"n": "neutral", "c": "contradiction", "e": "entailment"},
@@ -82,9 +77,7 @@ def get_transformed_data(config_path, data, task):
         with open(fname, "rt") as f:
             for line in f:
                 sample = json.loads(line)
-                trans_sample = {
-                    "input_id": get_orig_value(data, sample, "uid"),
-                }
+                trans_sample = {"input_id": get_orig_value(data, sample, "uid")}
                 trans_sample[label_field] = get_orig_value(data, sample, label_field)
                 for key, value in perturb_fields.items():
                     trans_sample[key] = sample[value]
