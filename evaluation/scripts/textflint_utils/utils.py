@@ -17,6 +17,13 @@ TRANSFORM_FIELDS = {
     "qa": {"context": "context", "question": "question"},
 }
 
+LABEL_FIELD = {
+    "nli": "label",
+    "sentiment": "label",
+    "hs": "label",
+    "qa": "answer",
+}
+
 LABEL_MAP = {
     "nli": {"n": "neutral", "c": "contradiction", "e": "entailment"},
     "sentiment": {"positive": "positive", "negative": "negative", "neutral": "neutral"},
@@ -25,13 +32,21 @@ LABEL_MAP = {
 
 
 # This converts dynabench dataset to textflint format
-def convert_data_to_textflint(samples, task):
+def reformat_data_to_textflint(samples, task):
     converted_samples = []
     perturb_fields = TRANSFORM_FIELDS.get(task, None)
     label_map = LABEL_MAP.get(task, None)
     for i in range(len(samples)):
         sample = samples[i]
-        converted = {"y": label_map[sample["label"]], "sample_id": i + 1}
+        converted = {"sample_id": i + 1}
+        if task == "qa":
+            answer = sample["answer"]
+            pos = sample["context"].find(answer)
+            converted["answers"] = [{"text": answer, "answer_start": pos}]
+            converted["title"] = ""
+            converted["is_impossible"] = False
+        else:
+            converted["y"] = label_map[sample["label"]]
         for key, value in perturb_fields.items():
             converted[value] = sample[key]
         converted_samples.append(converted)
@@ -57,8 +72,7 @@ def get_transformed_data(config_path, data, task):
     out_files = os.listdir(out_dir)
     trans_samples = []
     perturb_fields = TRANSFORM_FIELDS.get(task, None)
-    label_map = LABEL_MAP.get(task, None)
-    label_map = {v: k for k, v in label_map.items()}
+    label_field = LABEL_FIELD.get(task, None)
     for fname in out_files:
         if fname.startswith("ori"):
             continue
@@ -69,9 +83,9 @@ def get_transformed_data(config_path, data, task):
             for line in f:
                 sample = json.loads(line)
                 trans_sample = {
-                    "label": get_orig_value(data, sample, "label"),
                     "input_id": get_orig_value(data, sample, "uid"),
                 }
+                trans_sample[label_field] = get_orig_value(data, sample, label_field)
                 for key, value in perturb_fields.items():
                     trans_sample[key] = sample[value]
                 # create an unique uid for new examples
@@ -82,7 +96,7 @@ def get_transformed_data(config_path, data, task):
 
 
 def run_textflint(data, task):
-    textflint_data = convert_data_to_textflint(data, task)
+    textflint_data = reformat_data_to_textflint(data, task)
     engine = Engine()
     config_file = os.path.join(CONFIG_PATH, task + "_config.json")
     engine.run(textflint_data, config_file)

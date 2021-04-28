@@ -1,6 +1,6 @@
 {
-  "task": "NLI",
-  "out_dir": "./tmp/nli",
+  "task": "MRC",
+  "out_dir": "./tmp/qa",
   "trans_methods": [
     "Contraction",
     "Keyboard",

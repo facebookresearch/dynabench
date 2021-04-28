@@ -109,8 +109,7 @@ def perturb(path, task, perturb_prefix):
         perturb_examples.extend(perturbed)
 
     # Add perturbation from textflint
-    # TO-DO: currently the format of QA is not compatible in textflint
-    if perturb_prefix == "robustness" and task != "qa":
+    if perturb_prefix == "robustness":
         textflint_examples = run_textflint(examples, task)
         perturb_examples.extend(textflint_examples)
 
