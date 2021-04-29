@@ -5,6 +5,7 @@ import sys
 
 sys.path.append("../api")  # noqa
 
+# TODO: find a way not to comment the follow imports to skip linter
 from datasets.hs import ahs, hatecheck  # isort:skip
 from datasets.nli import anli, hans, mnli, nli_st, snli  # isort:skip
 from datasets.qa import aqa, mrqa_shared_dev  # isort:skip
