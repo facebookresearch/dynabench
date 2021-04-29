@@ -107,9 +107,6 @@ class JobScheduler:
                     f"Job {job.job_name} already submitted. Re-computing the metrics."
                 )
                 logger.debug(f"{ex}")
-                job.status = self.sagemaker.describe_transform_job(
-                    TransformJobName=job.job_name
-                )
                 self._submitted.append(job)
                 return True
             except Exception as ex:
@@ -117,9 +114,6 @@ class JobScheduler:
                 self._failed.append(job)
                 return False
             else:
-                job.status = self.sagemaker.describe_transform_job(
-                    TransformJobName=job.job_name
-                )
                 logger.info(f"Submitted {job.job_name} for batch transform.")
                 self._submitted.append(job)
                 return True
