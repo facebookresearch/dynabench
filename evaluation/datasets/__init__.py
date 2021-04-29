@@ -2,13 +2,14 @@
 
 import sys
 
-from datasets.hs import ahs, hatecheck
-from datasets.nli import anli, hans, mnli, nli_st, snli
-from datasets.qa import aqa, mrqa_shared_dev
-from datasets.sentiment import amazon_review, dynasent, sst3, yelp_review
 
+sys.path.append("../api")  # noqa
 
-sys.path.append("../api")
+# TODO: find a way not to comment the follow imports to skip linter
+from datasets.hs import ahs, hatecheck  # isort:skip
+from datasets.nli import anli, hans, mnli, nli_st, snli  # isort:skip
+from datasets.qa import aqa, mrqa_shared_dev  # isort:skip
+from datasets.sentiment import amazon_review, dynasent, sst3, yelp_review  # isort:skip
 
 
 def load_datasets():
