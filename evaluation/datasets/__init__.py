@@ -1,6 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 from datasets.hs import ahs, hatecheck
+from datasets.mt import flores
 from datasets.nli import anli, hans, mnli, nli_st, snli
 from datasets.qa import aqa, mrqa_shared_dev
 from datasets.sentiment import amazon_review, dynasent, sst3, yelp_review
@@ -109,6 +110,15 @@ def load_datasets():
         "hatecheck-t-disabled-people": hatecheck.TargetDisabledPeople(),
         "hatecheck-t-women": hatecheck.TargetWomen(),
         "hatecheck-t-black-people": hatecheck.TargetBlackPeople(),
+        "flores101-full-dev": flores.Flores101FullDev(),
+        "flores101-full-devtest": flores.Flores101FullDevTest(),
+        "flores101-full-test": flores.Flores101FullTest(),
+        "flores101-small1-dev": flores.Flores101Small1Dev(),
+        "flores101-small1-devtest": flores.Flores101Small1DevTest(),
+        "flores101-small1-test": flores.Flores101Small1Test(),
+        "flores101-small2-dev": flores.Flores101Small2Dev(),
+        "flores101-small2-devtest": flores.Flores101Small2DevTest(),
+        "flores101-small2-test": flores.Flores101Small2Test(),
     }
     _verify_dataset(datasets)
     return datasets
