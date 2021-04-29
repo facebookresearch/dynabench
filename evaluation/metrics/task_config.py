@@ -5,7 +5,7 @@ from metrics.instance_property import instance_property
 
 # TODO: long term, move task I/O keys here too
 _default_config = {
-    "instance_config": instance_property["ml.m5.xlarge"],
+    "instance_config": instance_property["ml.m5.2xlarge"],
     "instance_count": 1,
     "eval_metrics": ["accuracy"],
     "perf_metric": "accuracy",
