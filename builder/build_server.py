@@ -10,7 +10,7 @@ import uuid
 
 from deploy_config import deploy_config
 from utils.deployer import ModelDeployer
-from utils.helpers import get_endpoint_name, load_queue_dump
+from utils.helpers import load_queue_dump
 from utils.logging import init_logger, logger
 
 
@@ -46,8 +46,6 @@ if __name__ == "__main__":
 
                 m = ModelModel()
                 model = m.getUnpublishedModelByMid(model_id)
-                name = model.name
-                endpoint_name = get_endpoint_name(model)
 
                 if model.deployment_status == DeploymentStatusEnum.uploaded:
                     # deploy model
@@ -55,11 +53,11 @@ if __name__ == "__main__":
                     m.update(
                         model_id, deployment_status=DeploymentStatusEnum.processing
                     )
-                    deployer = ModelDeployer(name, endpoint_name)
-                    response = deployer.deploy(model.secret, s3_uri)
+                    deployer = ModelDeployer(model)
+                    response = deployer.deploy(s3_uri)
 
                     # process deployment result
-                    msg["name"] = name
+                    msg["name"] = model.name
                     msg["exception"] = response["ex_msg"]
                     if response["status"] == "delayed":
                         redeployment_queue.append(msg)
@@ -69,19 +67,19 @@ if __name__ == "__main__":
                         m.update(
                             model_id, deployment_status=DeploymentStatusEnum.uploaded
                         )
-                        subject = f"Model {name} deployment delayed"
+                        subject = f"Model {model.name} deployment delayed"
                         template = "model_deployment_fail"
                     elif response["status"] == "failed":
                         m.update(
                             model_id, deployment_status=DeploymentStatusEnum.failed
                         )
-                        subject = f"Model {name} deployment failed"
+                        subject = f"Model {model.name} deployment failed"
                         template = "model_deployment_fail"
                     elif response["status"] == "deployed":
                         m.update(
                             model_id, deployment_status=DeploymentStatusEnum.deployed
                         )
-                        subject = f"Model {name} deployment successful"
+                        subject = f"Model {model.name} deployment successful"
                         template = "model_deployment_successful"
                         eval_queue.send_message(
                             MessageBody=json.dumps({"model_id": model_id})
@@ -107,8 +105,8 @@ if __name__ == "__main__":
                         nm = NotificationModel()
                         nm.create(user.id, "MODEL_DEPLOYMENT_STATUS", template.upper())
                 elif model.deployment_status == DeploymentStatusEnum.failed:
-                    logger.info(f"Clean up failed model {endpoint_name}")
-                    deployer = ModelDeployer(name, endpoint_name)
+                    logger.info(f"Clean up failed model {model.endpoint_name}")
+                    deployer = ModelDeployer(model)
                     deployer.cleanup_on_failure(s3_uri)
                     m.update(model_id, deployment_status=DeploymentStatusEnum.takendown)
             queue.delete_messages(
