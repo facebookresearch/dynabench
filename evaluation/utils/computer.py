@@ -4,20 +4,17 @@ import json
 import logging
 import os
 import pickle
-import sys
 import tempfile
 
 import boto3
 from enum import Enum
 
 from metrics import get_job_metrics
+from models.dataset import DatasetModel
 from models.round import RoundModel
+from models.score import ScoreModel
 from utils.helpers import parse_s3_uri, update_metadata_json_string
 
-
-sys.path.append("../api")  # noqa
-from models.score import ScoreModel  # isort:skip
-from models.dataset import DatasetModel  # isort:skip
 
 logger = logging.getLogger("computer")
 

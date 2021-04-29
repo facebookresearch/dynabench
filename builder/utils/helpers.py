@@ -11,7 +11,3 @@ def load_queue_dump(path, logger=None):
         if logger:
             logger.info("No existing deployment queue found. Re-initializing...")
         return []
-
-
-def get_endpoint_name(model):
-    return f"ts{model.upload_timestamp}-{model.name}"

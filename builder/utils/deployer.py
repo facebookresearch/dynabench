@@ -21,19 +21,18 @@ from utils.logging import logger
 
 
 class ModelDeployer:
-    def __init__(self, model_name, endpoint_name):
-        logger.info(f"Set up deployer for model {endpoint_name}")
-        self.name = model_name
-        self.unique_name = endpoint_name
-        self.repository_name = self.unique_name.lower()
-        self.rootp = tempfile.TemporaryDirectory(prefix=self.unique_name)
-        self.root_dir = self.rootp.name
-        if os.path.exists(self.root_dir):
-            shutil.rmtree(self.root_dir)
-        os.makedirs(self.root_dir)
-        self.archive_name = f"archive.{self.unique_name}"
-        self.owd = os.getcwd()
+    def __init__(self, model):
+        logger.info(f"Set up deployer for model {model.endpoint_name}")
+        self.model = model
+        self.name = model.name
+        self.endpoint_name = model.endpoint_name
+        self.repository_name = self.endpoint_name.lower()
+        self.archive_name = f"archive.{self.endpoint_name}"
 
+        self.rootp = tempfile.TemporaryDirectory(prefix=self.endpoint_name)
+        self.root_dir = self.rootp.name
+
+        self.owd = os.getcwd()
         self.env = self.setup_sagemaker_env()
 
     def parse_s3_uri(self, s3_uri):
@@ -41,14 +40,14 @@ class ModelDeployer:
         s3_bucket = parts[0]
         s3_path = "/".join(parts[1:])
         s3_dir = os.path.dirname(s3_path)
-        unique_name = os.path.basename(s3_path).replace(".tar.gz", "")
-        return s3_bucket, s3_path, s3_dir, unique_name
+        endpoint_name = os.path.basename(s3_path).replace(".tar.gz", "")
+        return s3_bucket, s3_path, s3_dir, endpoint_name
 
     def load_model(self, s3_uri):
         try:
-            s3_bucket, s3_path, s3_dir, unique_name = self.parse_s3_uri(s3_uri)
+            s3_bucket, s3_path, s3_dir, endpoint_name = self.parse_s3_uri(s3_uri)
             assert (
-                unique_name == self.unique_name
+                endpoint_name == self.endpoint_name
             ), f"Model at S3 path mismatches model endpoint name"
             logger.info(f"Fetching model folder {s3_path} for {self.name}")
             self._fetch_folder(s3_bucket, s3_path)
@@ -67,7 +66,7 @@ class ModelDeployer:
             raise RuntimeError("Exception in fetching model folder and loading config")
 
     def _fetch_folder(self, s3_bucket, s3_path):
-        save_tarball = f"{self.unique_name}.tar.gz"
+        save_tarball = f"{self.endpoint_name}.tar.gz"
         response = self.env["s3_client"].download_file(s3_bucket, s3_path, save_tarball)
         if response:
             logger.debug(f"Response from fetching S3 folder {response}")
@@ -101,14 +100,14 @@ class ModelDeployer:
             SortBy="Name",
             SortOrder="Ascending",
             MaxResults=100,
-            NameContains=self.unique_name,
+            NameContains=self.endpoint_name,
         )
         endpoints = endpoint_response["Endpoints"]
         for endpoint in endpoints:
-            if endpoint["EndpointName"] == self.unique_name:
-                logger.info(f"- Deleting the endpoint {self.unique_name:}")
+            if endpoint["EndpointName"] == self.endpoint_name:
+                logger.info(f"- Deleting the endpoint {self.endpoint_name:}")
                 self.env["sagemaker_client"].delete_endpoint(
-                    EndpointName=self.unique_name
+                    EndpointName=self.endpoint_name
                 )
 
         # remove sagemaker model
@@ -116,27 +115,27 @@ class ModelDeployer:
             SortBy="Name",
             SortOrder="Ascending",
             MaxResults=100,
-            NameContains=self.unique_name,
+            NameContains=self.endpoint_name,
         )
         sm_models = model_response["Models"]
         for sm_model in sm_models:
-            if sm_model["ModelName"] == self.unique_name:
-                logger.info(f"- Deleting the model {self.unique_name:}")
-                self.env["sagemaker_client"].delete_model(ModelName=self.unique_name)
+            if sm_model["ModelName"] == self.endpoint_name:
+                logger.info(f"- Deleting the model {self.endpoint_name:}")
+                self.env["sagemaker_client"].delete_model(ModelName=self.endpoint_name)
 
         # remove config
         config_response = self.env["sagemaker_client"].list_endpoint_configs(
             SortBy="Name",
             SortOrder="Ascending",
             MaxResults=100,
-            NameContains=self.unique_name,
+            NameContains=self.endpoint_name,
         )
         endpoint_configs = config_response["EndpointConfigs"]
         for endpoint_config in endpoint_configs:
-            if endpoint_config["EndpointConfigName"] == self.unique_name:
-                logger.info(f"- Deleting the endpoint config {self.unique_name:}")
+            if endpoint_config["EndpointConfigName"] == self.endpoint_name:
+                logger.info(f"- Deleting the endpoint config {self.endpoint_name:}")
                 self.env["sagemaker_client"].delete_endpoint_config(
-                    EndpointConfigName=self.unique_name
+                    EndpointConfigName=self.endpoint_name
                 )
 
         # remove docker image
@@ -154,7 +153,7 @@ class ModelDeployer:
             if response:
                 logger.info(f"Response from deleting ECR repository {response}")
 
-    def build_docker(self, secret, setup_config_handler, setup_config):
+    def build_docker(self, setup_config_handler, setup_config):
         # tarball current folder but exclude checkpoints
         tmp_dir = os.path.join(setup_config_handler.config_dir, "tmp")
         os.makedirs(tmp_dir, exist_ok=True)
@@ -162,7 +161,7 @@ class ModelDeployer:
         setup_config_handler.write_exclude_filelist(
             exclude_list_file, self.name, exclude_model=True
         )
-        tarball = os.path.join(tmp_dir, f"{self.unique_name}.tar.gz")
+        tarball = os.path.join(tmp_dir, f"{self.endpoint_name}.tar.gz")
         process = subprocess.run(
             [
                 "tar",
@@ -186,7 +185,7 @@ class ModelDeployer:
             shutil.copyfile(os.path.join(docker_dir, f), os.path.join(self.root_dir, f))
 
         # build docker
-        docker_build_args = f"--build-arg tarball={shlex.quote(tarball)} --build-arg requirements={shlex.quote(str(setup_config['requirements']))} --build-arg setup={shlex.quote(str(setup_config['setup']))} --build-arg my_secret={secret}"
+        docker_build_args = f"--build-arg tarball={shlex.quote(tarball)} --build-arg requirements={shlex.quote(str(setup_config['requirements']))} --build-arg setup={shlex.quote(str(setup_config['setup']))} --build-arg my_secret={self.model.secret}"
         docker_build_command = f"docker build --network host -t {shlex.quote(self.repository_name)} -f Dockerfile {docker_build_args} ."
         with subprocess.Popen(
             shlex.split(docker_build_command),
@@ -213,9 +212,9 @@ class ModelDeployer:
 
         os.remove(tarball)
 
-    def build_and_push_docker(self, secret, setup_config_handler, setup_config):
+    def build_and_push_docker(self, setup_config_handler, setup_config):
         logger.info(f"Building docker for model {self.name}")
-        self.build_docker(secret, setup_config_handler, setup_config)
+        self.build_docker(setup_config_handler, setup_config)
 
         # docker login
         docker_credentials = self.env["ecr_client"].get_authorization_token()[
@@ -345,25 +344,25 @@ class ModelDeployer:
             role=deploy_config["sagemaker_role"],
             sagemaker_session=self.env["sagemaker_session"],
             predictor_cls=Predictor,
-            name=self.unique_name,
+            name=self.endpoint_name,
             enable_network_isolation=True,
         )
 
         torchserve_model.deploy(
             instance_type=deploy_config["instance_type"],
             initial_instance_count=1,
-            endpoint_name=self.unique_name,
+            endpoint_name=self.endpoint_name,
         )
-        return f"{deploy_config['gateway_url']}?model={self.unique_name}"
+        return f"{deploy_config['gateway_url']}?model={self.endpoint_name}"
 
-    def deploy(self, secret, s3_uri):
+    def deploy(self, s3_uri):
         deployed, delayed, ex_msg = False, False, ""
         try:
             self.delete_existing_endpoints()
             os.chdir(self.root_dir)
             setup_config_handler, setup_config, s3_dir = self.load_model(s3_uri)
             image_ecr_path = self.build_and_push_docker(
-                secret, setup_config_handler, setup_config
+                setup_config_handler, setup_config
             )
             model_s3_path = self.archive_and_upload_model(setup_config, s3_dir)
             endpoint_url = self.deploy_model(image_ecr_path, model_s3_path)
@@ -408,7 +407,7 @@ class ModelDeployer:
             subprocess.run(shlex.split(f"docker rmi {shlex.quote(image_tag)}"))
         except Exception as ex:
             logger.exception(
-                f"Clean up post deployment for {self.unique_name} failed: {ex}"
+                f"Clean up post deployment for {self.endpoint_name} failed: {ex}"
             )
 
     def cleanup_on_failure(self, s3_uri=None):
@@ -416,13 +415,21 @@ class ModelDeployer:
             self.cleanup_post_deployment()
             self.delete_existing_endpoints()
             if s3_uri:
-                _, _, s3_dir, unique_name = self.parse_s3_uri(s3_uri)
-                if unique_name == self.unique_name or unique_name == self.archive_name:
+                _, _, s3_dir, endpoint_name = self.parse_s3_uri(s3_uri)
+                if (
+                    endpoint_name == self.endpoint_name
+                    or endpoint_name == self.archive_name
+                ):
                     self.env["s3_client"].delete_object(
                         Bucket=self.env["bucket_name"],
                         Key=f"{s3_dir}/{self.archive_name}.tar.gz",
                     )
+            else:  # if no s3_uri is specified, use the default path, may not really find it
+                self.env["s3_client"].delete_object(
+                    Bucket=self.env["bucket_name"],
+                    Key=f"torchserve/models/{self.model.task.task_code}/{self.archive_name}.tar.gz",
+                )
         except Exception as ex:
             logger.exception(
-                f"Clean up on failed deployment for {self.unique_name} failed: {ex}"
+                f"Clean up on failed deployment for {self.endpoint_name} failed: {ex}"
             )

@@ -45,7 +45,7 @@ class Model(Base):
     is_published = db.Column(db.BOOLEAN, default=False)
 
     # deployment
-    upload_timestamp = db.Column(db.BigInteger)
+    endpoint_name = db.Column(db.Text)
     deployment_status = db.Column(
         db.Enum(DeploymentStatusEnum), default=DeploymentStatusEnum.unknown
     )
