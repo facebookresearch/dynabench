@@ -142,21 +142,24 @@ class JobScheduler:
                 )
             except Exception as ex:
                 logger.exception(ex)
-            return job.status
+                logger.info(f"Postponing fetching status for {job.job_name}")
+                return False
+            else:
+                return True
 
         logger.info("Updating status")
         done_job_names = set()
         for job in self._submitted:
-            _update_job_status(job)
-            if job.status["TransformJobStatus"] != "InProgress":
-                if job.status["TransformJobStatus"] != "Completed":
-                    self._failed.append(job)
-                    done_job_names.add(job.job_name)
-                elif job.perturb_prefix or round_end_dt(
-                    job.status["TransformEndTime"]
-                ) < datetime.now(tzlocal()):
-                    self._completed.append(job)
-                    done_job_names.add(job.job_name)
+            if _update_job_status(job):
+                if job.status["TransformJobStatus"] != "InProgress":
+                    if job.status["TransformJobStatus"] != "Completed":
+                        self._failed.append(job)
+                        done_job_names.add(job.job_name)
+                    elif job.perturb_prefix or round_end_dt(
+                        job.status["TransformEndTime"]
+                    ) < datetime.now(tzlocal()):
+                        self._completed.append(job)
+                        done_job_names.add(job.job_name)
         self._submitted = [
             job for job in self._submitted if job.job_name not in done_job_names
         ]
