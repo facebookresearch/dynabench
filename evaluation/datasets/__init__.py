@@ -7,6 +7,7 @@ sys.path.append("../api")  # noqa
 
 # TODO: find a way not to comment the follow imports to skip linter
 from datasets.hs import ahs, hatecheck  # isort:skip
+from datasets.mt import flores  # isort:skip
 from datasets.nli import anli, hans, mnli, nli_st, snli, sg_winogender  # isort:skip
 from datasets.qa import aqa, mrqa_shared_dev  # isort:skip
 from datasets.sentiment import amazon_review, dynasent, sst3, yelp_review  # isort:skip
@@ -63,6 +64,15 @@ def load_datasets():
         "ahs-r3-dev": ahs.AhsRound3Dev(),
         "ahs-r4-dev": ahs.AhsRound4Dev(),
         "hatecheck": hatecheck.HateCheck(),
+        "flores101-full-dev": flores.Flores101FullDev(),
+        "flores101-full-devtest": flores.Flores101FullDevTest(),
+        "flores101-full-test": flores.Flores101FullTest(),
+        "flores101-small1-dev": flores.Flores101Small1Dev(),
+        "flores101-small1-devtest": flores.Flores101Small1DevTest(),
+        "flores101-small1-test": flores.Flores101Small1Test(),
+        "flores101-small2-dev": flores.Flores101Small2Dev(),
+        "flores101-small2-devtest": flores.Flores101Small2DevTest(),
+        "flores101-small2-test": flores.Flores101Small2Test(),
     }
     _verify_dataset(datasets)
     return datasets

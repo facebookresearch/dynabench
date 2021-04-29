@@ -12,6 +12,13 @@ _default_config = {
     "delta_metrics": ["fairness", "robustness"],
     "input_keys": ["uid", "statement"],
 }
+flores_config = {
+    "instance_config": instance_property["ml.m5.xlarge"],
+    "instance_count": 1,
+    "eval_metrics": ["bleu"],
+    "perf_metric": "bleu",
+    "input_keys": ["uid", "source_text", "source_language", "target_language"],
+}
 
 _custom_config = {
     "nli": {"input_keys": ["uid", "context", "hypothesis"]},
@@ -20,6 +27,9 @@ _custom_config = {
         "eval_metrics": ["f1"],
         "perf_metric": "f1",
     },
+    "flores-full": flores_config,
+    "flores-small1": flores_config,
+    "flores-small2": flores_config,
 }
 
 
