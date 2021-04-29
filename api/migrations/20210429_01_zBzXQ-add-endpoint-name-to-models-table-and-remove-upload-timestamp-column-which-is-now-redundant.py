@@ -21,10 +21,11 @@ steps = [
     ),
     step(
         """
-        UPDATE models SET endpoint_name=CONCAT("ts", UPLOAD_TIMESTAMP, "-", NAME)
+        UPDATE models SET endpoint_name=CONCAT("ts", upload_timestamp, "-", name)
+        where deployment_status="deployed"
         """,
         """
-        UPDATE models SET endpoint_name=NULL
+        UPDATE models SET endpoint_name=NULL where deployment_status="deployed"
         """,
     ),
     step(

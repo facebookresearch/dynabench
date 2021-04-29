@@ -1,19 +1,15 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import logging
-import sys
 
 from common.config import config
 from metrics.task_config import get_task_config_safe
 from models.dataset import DatasetModel
+from models.model import DeploymentStatusEnum, ModelModel
+from models.task import TaskModel
 from utils.computer import MetricsComputer
 from utils.evaluator import JobScheduler
 from utils.helpers import get_perturb_prefix, send_takedown_model_request
-
-
-sys.path.append("../api")  # noqa
-from models.task import TaskModel  # isort:skip
-from models.model import DeploymentStatusEnum, ModelModel  # isort:skip
 
 
 logger = logging.getLogger("requester")

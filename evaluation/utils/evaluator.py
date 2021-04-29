@@ -1,22 +1,18 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 import logging
 import pickle
-import sys
 from datetime import datetime
 
 import boto3
 from dateutil.tz import tzlocal
 
+from models.model import ModelModel
 from utils.helpers import (
     generate_job_name,
     process_aws_metrics,
     round_end_dt,
     round_start_dt,
 )
-
-
-sys.path.append("../api")  # noqa
-from models.model import ModelModel  # isort:skip
 
 
 logger = logging.getLogger("evaluator")

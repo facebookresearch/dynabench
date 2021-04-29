@@ -22,7 +22,7 @@ from utils.logging import logger
 
 class ModelDeployer:
     def __init__(self, model):
-        logger.info(f"Set up deployer for model {endpoint_name}")
+        logger.info(f"Set up deployer for model {model.endpoint_name}")
         self.model = model
         self.name = model.name
         self.endpoint_name = model.endpoint_name
