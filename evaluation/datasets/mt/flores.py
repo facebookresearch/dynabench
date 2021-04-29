@@ -145,7 +145,7 @@ class Flores101FullDev(Flores101Base):
         super().__init__(
             task="flores-full",
             name="flores101-full-dev",
-            round_id="1",
+            round_id=1,
             local_path=local_path,
             partition="dev",
             languages=FLORES101_FULL_LANGS,
@@ -159,7 +159,7 @@ class Flores101FullDevTest(Flores101Base):
         super().__init__(
             task="flores-full",
             name="flores101-full-devtest",
-            round_id="1",
+            round_id=1,
             local_path=local_path,
             partition="devtest",
             languages=FLORES101_FULL_LANGS,
@@ -173,7 +173,7 @@ class Flores101FullTest(Flores101Base):
         super().__init__(
             task="flores-full",
             name="flores101-full-test",
-            round_id="1",
+            round_id=1,
             local_path=local_path,
             partition="test",
             languages=FLORES101_FULL_LANGS,
@@ -187,7 +187,7 @@ class Flores101Small1Dev(Flores101Base):
         super().__init__(
             task="flores-small1",
             name="flores101-small1-dev",
-            round_id="1",
+            round_id=1,
             local_path=local_path,
             partition="dev",
             languages=FLORES101_SMALL1_LANGS,
@@ -201,7 +201,7 @@ class Flores101Small1DevTest(Flores101Base):
         super().__init__(
             task="flores-small1",
             name="flores101-small1-devtest",
-            round_id="1",
+            round_id=1,
             local_path=local_path,
             partition="devtest",
             languages=FLORES101_SMALL1_LANGS,
@@ -215,7 +215,7 @@ class Flores101Small1Test(Flores101Base):
         super().__init__(
             task="flores-small1",
             name="flores101-small1-test",
-            round_id="1",
+            round_id=1,
             local_path=local_path,
             partition="test",
             languages=FLORES101_SMALL1_LANGS,
@@ -229,7 +229,7 @@ class Flores101Small2Dev(Flores101Base):
         super().__init__(
             task="flores-small2",
             name="flores101-small2-dev",
-            round_id="1",
+            round_id=1,
             local_path=local_path,
             partition="dev",
             languages=FLORES101_SMALL2_LANGS,
@@ -243,7 +243,7 @@ class Flores101Small2DevTest(Flores101Base):
         super().__init__(
             task="flores-small2",
             name="flores101-small2-devtest",
-            round_id="1",
+            round_id=1,
             local_path=local_path,
             partition="devtest",
             languages=FLORES101_SMALL2_LANGS,
@@ -257,7 +257,7 @@ class Flores101Small2Test(Flores101Base):
         super().__init__(
             task="flores-small2",
             name="flores101-small2-test",
-            round_id="1",
+            round_id=1,
             local_path=local_path,
             partition="test",
             languages=FLORES101_SMALL2_LANGS,
