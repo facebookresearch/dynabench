@@ -926,11 +926,13 @@ class CreateInterface extends React.Component {
               var randomTarget = Math.floor(
                 Math.random() * this.state.task.targets.length
               );
-              const randomModel = this.pickModel(this.state.task.round.url);
+              const randomTargetModel = this.pickModel(
+                this.state.task.round.url
+              );
               this.setState({
                 hypothesis: "",
                 target: randomTarget,
-                randomModel: randomModel,
+                randomTargetModel: randomTargetModel,
                 context: result,
                 content: [{ cls: "context", text: result.context }],
                 submitDisabled: false,
@@ -1060,9 +1062,15 @@ class CreateInterface extends React.Component {
         answer: answer_text,
         insight: false,
       };
-
+      console.log(this.state.selectedModel);
+      console.log(modelInputs);
       this.context.api
-        .getModelResponse(this.state.randomModel, modelInputs)
+        .getModelResponse(
+          this.state.selectedModel
+            ? this.state.selectedModel
+            : this.state.randomTargetModel,
+          modelInputs
+        )
         .then(
           (result) => {
             if (result.errorMessage) {
@@ -1081,13 +1089,17 @@ class CreateInterface extends React.Component {
               var modelPredStr = null;
               var modelFooled = null;
               if (this.state.task.type == "clf") {
-                modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
+                if (result.prob & result.prob.indexOf) {
+                  modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
+                }
+                console.log(result);
                 modelPredStr = this.state.task.targets[modelPredIdx];
                 modelFooled = modelPredIdx !== this.state.target;
               } else {
                 // TODO: handle this more elegantly
                 result.prob = [result.prob, 1 - result.prob];
                 this.state.task.targets = ["confidence", "uncertainty"];
+                console.log(result.model_is_correct);
                 if (this.state.task.type === "extract") {
                   modelFooled = !result.model_is_correct;
                   modelPredStr = result.text;
@@ -1105,7 +1117,7 @@ class CreateInterface extends React.Component {
                       modelPredStr: modelPredStr,
                       fooled: modelFooled,
                       text: this.state.hypothesis,
-                      url: this.state.randomModel,
+                      url: this.state.randomTargetModel,
                       retracted: false,
                       prob: result.prob,
                     },
@@ -1125,7 +1137,7 @@ class CreateInterface extends React.Component {
                     });
                     return;
                   }
-                  const metadata = { model: this.state.randomModel };
+                  const metadata = { model: this.state.randomTargetModel };
                   this.context.api
                     .storeExample(
                       this.state.task.id,
@@ -1198,6 +1210,14 @@ class CreateInterface extends React.Component {
   }
 
   componentDidMount() {
+    const propState = this.props.location.state;
+    if (!propState) {
+      this.props.history.push("/");
+      return;
+    }
+    this.setState({
+      selectedModel: propState.detail,
+    });
     const {
       match: { params },
     } = this.props;
@@ -1278,7 +1298,7 @@ class CreateInterface extends React.Component {
       .map((item, index) =>
         item.cls === "context" ? undefined : (
           <ResponseInfo
-            randomModel={this.state.randomModel}
+            randomTargetModel={this.state.randomTargetModel}
             key={index}
             index={index}
             exampleId={this.state.mapKeyToExampleId[index]}
