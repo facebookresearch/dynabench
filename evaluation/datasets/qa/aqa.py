@@ -27,7 +27,7 @@ class AqaBase(QaBase):
                         "context": jl["context"],
                         "question": jl["question"],
                         "answer": jl["answers"][0]["text"],
-                        "tags": jl["tags"],
+                        "tags": jl.get("tags", []),
                     }
                     tmp.write(json.dumps(tmp_jl) + "\n")
                 tmp.close()
