@@ -33,6 +33,11 @@ class Hans(NliBase):
                             "label": {"entailment": "e", "non-entailment": ["n", "c"]}[
                                 jl["gold_label"]
                             ],
+                            "tags": [
+                                "Template: " + jl["template"],
+                                "Heuristic: " + jl["heuristic"],
+                                "Subcase: " + jl["template"] + ", " + jl["subcase"],
+                            ],
                         }
                         tmp.write(json.dumps(tmp_jl) + "\n")
                 tmp.close()
