@@ -126,7 +126,7 @@ class TaskModel(BaseModel):
             if weight is not None:
                 return weight
         if field_name == perf_metric_field_name:
-            return 5
+            return 4
         return 1
 
     def getWithRoundAndMetricMetadata(self, tid):
