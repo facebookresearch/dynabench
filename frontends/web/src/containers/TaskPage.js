@@ -584,12 +584,7 @@ class TaskPage extends React.Component {
 
   render() {
     const pwc_logo = (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        height="30"
-        width="30"
-        viewBox="0 0 512 512"
-      >
+      <svg height="30" width="30" viewBox="0 0 512 512">
         <path
           fill="#21cbce"
           d="M88 128h48v256H88zm144 0h48v256h-48zm-72 16h48v224h-48zm144 0h48v224h-48zm72-16h48v256h-48z"
