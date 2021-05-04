@@ -247,6 +247,7 @@ class ExampleModel(BaseModel):
         mode="owner",
         my_uid=None,
         tags=None,
+        context_tags=None,
     ):
         cnt_correct = db.sql.func.sum(
             case([(Validation.label == LabelEnum.correct, 1)], else_=0)
@@ -260,12 +261,22 @@ class ExampleModel(BaseModel):
         cnt_owner_validated = db.sql.func.sum(
             case([(Validation.mode == ModeEnum.owner, 1)], else_=0)
         ).label("cnt_owner_validated")
-        result = (
-            self.dbs.query(Example)
-            .join(Context, Example.cid == Context.id)
-            .filter(Context.r_realid == rid)
-            .filter(Example.retracted == False)  # noqa
-        )
+
+        if context_tags:
+            result = (
+                self.dbs.query(Example)
+                .join(Context, Example.cid == Context.id)
+                .filter(Context.r_realid == rid)
+                .filter(Example.retracted == False)  # noqa
+                .filter(Context.tag.in_(context_tags))
+            )
+        else:
+            result = (
+                self.dbs.query(Example)
+                .join(Context, Example.cid == Context.id)
+                .filter(Context.r_realid == rid)
+                .filter(Example.retracted == False)  # noqa
+            )
 
         if tags:
             result = result.filter(Example.tag.in_(tags))  # noqa
@@ -286,33 +297,31 @@ class ExampleModel(BaseModel):
             )
         )
         if my_uid is not None:
-            if mode == "owner":
-                cnt_uid = db.sql.func.sum(
-                    case([(Validation.uid == my_uid, 1)], else_=0)
-                ).label("cnt_uid")
-            elif mode == "user":
-                result_partially_validated = result_partially_validated.filter(
-                    db.cast(Example.metadata_json, JSON)["annotator_id"] != my_uid
-                )
-                cnt_uid = db.sql.func.sum(
-                    case(
-                        [
-                            (
-                                db.cast(Validation.metadata_json, JSON)["annotator_id"]
-                                == my_uid,
-                                1,
-                            )
-                        ],
-                        else_=0,
-                    )
-                ).label("cnt_uid")
-            result_partially_validated = result_partially_validated.group_by(
-                Validation.eid
-            ).having(cnt_uid == 0)
+            result_partially_validated = self._filter_out_self_created_examples(
+                result_partially_validated, mode, my_uid
+            )
 
-        result_not_validated = result.filter(
-            db.not_(db.exists().where(Validation.eid == Example.id))
+        cm = ContextModel()
+        (
+            contexts_with_example_stats,
+            examples_with_validation_stats,
+        ) = cm.getContextValidationResults(num_matching_validations)
+        examples_with_validation_stats = examples_with_validation_stats.subquery()
+        contexts_with_example_stats = contexts_with_example_stats.subquery()
+
+        result_not_validated = (
+            result.join(
+                examples_with_validation_stats,
+                examples_with_validation_stats.c.id == Example.id,
+            )
+            .filter(examples_with_validation_stats.c.cnt_total_val == 0)
+            .join(
+                contexts_with_example_stats,
+                contexts_with_example_stats.c.cid == Example.cid,
+            )
+            .filter(contexts_with_example_stats.c.cnt_correct_examples == 0)
         )
+
         result = result_partially_validated.union(result_not_validated)
 
         if my_uid is not None and mode == "owner":
@@ -327,6 +336,30 @@ class ExampleModel(BaseModel):
             .limit(n)
             .all()
         )
+        return result
+
+    def _filter_out_self_created_examples(self, examples, mode, my_uid):
+        if mode == "owner":
+            cnt_uid = db.sql.func.sum(
+                case([(Validation.uid == my_uid, 1)], else_=0)
+            ).label("cnt_uid")
+        elif mode == "user":
+            result = examples.filter(
+                db.cast(Example.metadata_json, JSON)["annotator_id"] != my_uid
+            )
+            cnt_uid = db.sql.func.sum(
+                case(
+                    [
+                        (
+                            db.cast(Validation.metadata_json, JSON)["annotator_id"]
+                            == my_uid,
+                            1,
+                        )
+                    ],
+                    else_=0,
+                )
+            ).label("cnt_uid")
+        result = result.group_by(Validation.eid).having(cnt_uid == 0)
         return result
 
     def getRandomFiltered(
