@@ -1,22 +1,18 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 import logging
 import pickle
-import sys
 from datetime import datetime
 
 import boto3
 from dateutil.tz import tzlocal
 
+from models.model import ModelModel
 from utils.helpers import (
     generate_job_name,
     process_aws_metrics,
     round_end_dt,
     round_start_dt,
 )
-
-
-sys.path.append("../api")  # noqa
-from models.model import ModelModel  # isort:skip
 
 
 logger = logging.getLogger("evaluator")
@@ -26,8 +22,8 @@ class Job:
     def __init__(self, model_id, dataset_name, perturb_prefix=None):
         self.model_id = model_id
         m = ModelModel()
-        model = m.getUnpublishedModelByMid(model_id).to_dict()
-        self.endpoint_name = f"ts{model['upload_timestamp']}-{model['name']}"
+        model = m.getUnpublishedModelByMid(model_id)
+        self.endpoint_name = model.endpoint_name
         self.dataset_name = dataset_name
         self.perturb_prefix = perturb_prefix
         self.job_name = generate_job_name(
@@ -111,9 +107,6 @@ class JobScheduler:
                     f"Job {job.job_name} already submitted. Re-computing the metrics."
                 )
                 logger.debug(f"{ex}")
-                job.status = self.sagemaker.describe_transform_job(
-                    TransformJobName=job.job_name
-                )
                 self._submitted.append(job)
                 return True
             except Exception as ex:
@@ -121,9 +114,6 @@ class JobScheduler:
                 self._failed.append(job)
                 return False
             else:
-                job.status = self.sagemaker.describe_transform_job(
-                    TransformJobName=job.job_name
-                )
                 logger.info(f"Submitted {job.job_name} for batch transform.")
                 self._submitted.append(job)
                 return True
@@ -152,21 +142,24 @@ class JobScheduler:
                 )
             except Exception as ex:
                 logger.exception(ex)
-            return job.status
+                logger.info(f"Postponing fetching status for {job.job_name}")
+                return False
+            else:
+                return True
 
         logger.info("Updating status")
         done_job_names = set()
         for job in self._submitted:
-            _update_job_status(job)
-            if job.status["TransformJobStatus"] != "InProgress":
-                if job.status["TransformJobStatus"] != "Completed":
-                    self._failed.append(job)
-                    done_job_names.add(job.job_name)
-                elif job.perturb_prefix or round_end_dt(
-                    job.status["TransformEndTime"]
-                ) < datetime.now(tzlocal()):
-                    self._completed.append(job)
-                    done_job_names.add(job.job_name)
+            if _update_job_status(job):
+                if job.status["TransformJobStatus"] != "InProgress":
+                    if job.status["TransformJobStatus"] != "Completed":
+                        self._failed.append(job)
+                        done_job_names.add(job.job_name)
+                    elif job.perturb_prefix or round_end_dt(
+                        job.status["TransformEndTime"]
+                    ) < datetime.now(tzlocal()):
+                        self._completed.append(job)
+                        done_job_names.add(job.job_name)
         self._submitted = [
             job for job in self._submitted if job.job_name not in done_job_names
         ]

@@ -4,20 +4,17 @@ import json
 import logging
 import os
 import pickle
-import sys
 import tempfile
 
 import boto3
 from enum import Enum
 
 from metrics import get_job_metrics
+from models.dataset import DatasetModel
 from models.round import RoundModel
+from models.score import ScoreModel
 from utils.helpers import parse_s3_uri, update_metadata_json_string
 
-
-sys.path.append("../api")  # noqa
-from models.score import ScoreModel  # isort:skip
-from models.dataset import DatasetModel  # isort:skip
 
 logger = logging.getLogger("computer")
 
@@ -76,11 +73,10 @@ class MetricsComputer:
                 lb = 0
                 while line:
                     line = line.strip()
-                    for c in line:
-                        if c == "{":
-                            lb += 1
-                        elif c == "}":
-                            lb -= 1
+                    if line.startswith("{") or line.endswith("{"):
+                        lb += 1
+                    elif line.startswith("}") or line.endswith("}"):
+                        lb -= 1
                     if lb == 0 and tmp:
                         tmp += line
                         predictions.append(json.loads(tmp))

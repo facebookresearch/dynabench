@@ -38,7 +38,7 @@ def get_failed_endpoints(eval_config):
     models = mm.getByDeploymentStatus(deployment_status=DeploymentStatusEnum.failed)
     for m in models:
         if m.id not in endpoints:
-            endpoints[m.id] = f"ts{m.upload_timestamp}-{m.name}"
+            endpoints[m.id] = m.endpoint_name
             if s:
                 for j in s["failed"]:
                     if j.model_id == m.id:
@@ -50,7 +50,7 @@ def update_db_and_request_cleanup(endpoints):
     mm = ModelModel()
     for mid in endpoints:
         model = mm.getUnpublishedModelByMid(mid)
-        if f"ts{model.upload_timestamp}-{model.name}" == endpoints[mid]:
+        if model.endpoint_name == endpoints[mid]:
             mm.update(mid, deployment_status=DeploymentStatusEnum.failed)
             send_takedown_model_request(mid, config, logger=logger)
 

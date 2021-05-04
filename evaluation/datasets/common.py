@@ -3,7 +3,6 @@
 import json
 import logging
 import os
-import sys
 import tempfile
 from abc import ABC, abstractmethod
 
@@ -11,6 +10,8 @@ import boto3
 
 from eval_config import eval_config
 from metrics import get_delta_metrics, get_eval_metrics, get_task_config_safe
+from models.dataset import AccessTypeEnum, DatasetModel
+from models.task import TaskModel
 from utils.helpers import (
     get_data_s3_path,
     get_perturbed_filename,
@@ -18,10 +19,6 @@ from utils.helpers import (
     send_eval_request,
 )
 
-
-sys.path.append("../api")  # noqa
-from models.dataset import DatasetModel, AccessTypeEnum  # isort:skip
-from models.task import TaskModel  # isort:skip
 
 logger = logging.getLogger("datasets")
 

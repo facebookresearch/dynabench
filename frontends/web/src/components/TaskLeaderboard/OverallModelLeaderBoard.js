@@ -325,6 +325,7 @@ const OverallModelLeaderBoard = ({
   enableWeights,
   metrics,
   setMetricWeight,
+  enableDatasetWeights,
   datasetWeights,
   setDatasetWeight,
   sort,
@@ -384,40 +385,42 @@ const OverallModelLeaderBoard = ({
             </SortContainer>
           </th>
         </tr>
-        {enableWeights && (
-          <tr>
-            <th className="align-top">Dataset Weights</th>
-            <th colSpan={metrics.length}>
-              <Container fluid className="px-0">
-                <Row>
-                  {datasetWeights?.map((dataset) => {
-                    return (
-                      <Col xs={12} sm={6} md={3}>
-                        <WeightPopover
-                          label={dataset.name}
-                          weight={dataset.weight}
-                        >
-                          <span className="d-flex align-items-center justify-content-end">
-                            {dataset.name}&nbsp;
-                            <WeightIndicator weight={dataset.weight} />
-                          </span>
-                        </WeightPopover>
-                        <div>
-                          <WeightSlider
+        {enableDatasetWeights && (
+          <>
+            <tr>
+              <th className="align-top">Dataset Weights</th>
+              <th colSpan={metrics.length}>
+                <Container fluid className="px-0">
+                  <Row>
+                    {datasetWeights?.map((dataset) => {
+                      return (
+                        <Col xs={12} sm={6} md={3}>
+                          <WeightPopover
+                            label={dataset.name}
                             weight={dataset.weight}
-                            onWeightChange={(newWeight) => {
-                              setDatasetWeight(dataset.id, newWeight);
-                            }}
-                          />
-                        </div>
-                      </Col>
-                    );
-                  })}
-                </Row>
-              </Container>
-            </th>
-            <th />
-          </tr>
+                          >
+                            <span className="d-flex align-items-center justify-content-end">
+                              {dataset.name}&nbsp;
+                              <WeightIndicator weight={dataset.weight} />
+                            </span>
+                          </WeightPopover>
+                          <div>
+                            <WeightSlider
+                              weight={dataset.weight}
+                              onWeightChange={(newWeight) => {
+                                setDatasetWeight(dataset.id, newWeight);
+                              }}
+                            />
+                          </div>
+                        </Col>
+                      );
+                    })}
+                  </Row>
+                </Container>
+              </th>
+              <th />
+            </tr>
+          </>
         )}
       </thead>
       <tbody>

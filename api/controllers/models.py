@@ -183,9 +183,8 @@ def upload_to_s3(credentials):
     sagemaker_session = sagemaker.Session(boto_session=session)
     bucket_name = sagemaker_session.default_bucket()
 
-    ts = int(time.time())
-    unique_name = f"ts{ts}-{model_name}"
-    s3_filename = f"{unique_name}.tar.gz"
+    endpoint_name = f"ts{int(time.time())}-{model_name}"[:63]
+    s3_filename = f"{endpoint_name}.tar.gz"
     t = TaskModel()
     task_code = t.get(task_id).task_code
     s3_path = f"torchserve/models/{task_code}/{s3_filename}"
@@ -210,9 +209,8 @@ def upload_to_s3(credentials):
         shortname="",
         longdesc="",
         desc="",
-        overall_perf="",
         upload_datetime=db.sql.func.now(),
-        upload_timestamp=ts,
+        endpoint_name=endpoint_name,
         deployment_status=DeploymentStatusEnum.uploaded,
         secret=secrets.token_hex(),
     )

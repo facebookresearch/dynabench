@@ -277,12 +277,22 @@ export default class ApiService {
     );
   }
 
-  getRandomExample(tid, rid, tags = [], annotator_id = null) {
+  getRandomExample(
+    tid,
+    rid,
+    tags = [],
+    context_tags = [],
+    annotator_id = null
+  ) {
     let annotator_query = annotator_id ? `&annotator_id=${annotator_id}` : "";
+    let context_tags_query =
+      context_tags.length > 0
+        ? `&context_tags=${encodeURIComponent(context_tags.join("|"))}`
+        : "";
     return this.fetch(
       `${this.domain}/examples/${tid}/${rid}?tags=${encodeURIComponent(
         tags.join("|")
-      )}${annotator_query}`,
+      )}${context_tags_query}${annotator_query}`,
       {
         method: "GET",
       }

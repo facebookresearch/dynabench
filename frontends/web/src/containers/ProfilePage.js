@@ -253,9 +253,6 @@ const ModelSubPage = (props) => {
                   <td>
                     <b>Task</b>
                   </td>
-                  <td className="text-right">
-                    <b>Performance</b>
-                  </td>
                   <td className="text-center" width="200px">
                     <b>Status</b>
                   </td>
@@ -286,7 +283,6 @@ const ModelSubPage = (props) => {
                           }}
                         </TasksContext.Consumer>
                       </td>
-                      <td className="text-right">{model.overall_perf}</td>
                       <td className="text-center" width="200px">
                         {model.is_published === true ? (
                           <BBadge variant="success" className="publishStatus">
