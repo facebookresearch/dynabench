@@ -26,10 +26,13 @@ INSERT INTO `tasks` (
 """,
         task,
     )
+    insert_round_one(task, cursor)
 
 
 def delete_task(task: dict, conn):
-    conn.execute("DELETE FROM `tasks` WHERE shortname=%(shortname)s", task)
+    cursor = conn.cursor()
+    delete_round_one(task, cursor)
+    cursor.execute("DELETE FROM `tasks` WHERE shortname=%(shortname)s", task)
 
 
 def get_task_id(shortname: str, cursor):
@@ -41,8 +44,7 @@ def get_task_id(shortname: str, cursor):
     return tid
 
 
-def insert_round(task: dict, conn):
-    cursor = conn.cursor()
+def insert_round_one(task: dict, cursor):
     task_id = get_task_id(task["shortname"], cursor)
     cursor.execute(
         "INSERT INTO `rounds` (tid, rid, secret, url) VALUES (%s, 1, %s, %s)",
@@ -50,10 +52,8 @@ def insert_round(task: dict, conn):
     )
 
 
-def delete_round(task: dict, conn):
-    cursor = conn.cursor()
+def delete_round_one(task: dict, cursor):
     task_id = get_task_id(task["shortname"], cursor)
-    cursor.execute("DELETE FROM `rounds` WHERE tid=%s AND url=%s", (task_id, MODEL_URL))
     cursor.execute("DELETE FROM `rounds` WHERE tid=%s AND url=%s", (task_id, MODEL_URL))
 
 
@@ -63,20 +63,20 @@ tasks = [
         "shortname": "FLORES-SMALL1",
         "desc": """Machine Translation Evaluation for Central/East European languages:
 Croatian, Hungarian, Estonian, Serbian, Macedonian, English""",
-        "task_code": "flores-small1",
+        "task_code": "flores_small1",
     },
     {
         "name": "Flores MT Evaluation (Small task 2)",
         "shortname": "FLORES-SMALL2",
         "desc": """Machine Translation Evaluation East Asian languages:
 Sundanese, Javanese, Indonesian, Malay, Tagalog, Tamil, English""",
-        "task_code": "flores-small2",
+        "task_code": "flores_small2",
     },
     {
         "name": "Flores MT Evaluation (FULL)",
         "shortname": "FLORES-FULL",
         "desc": "Machine Translation Evaluation for 100+ Languages",
-        "task_code": "flores-full",
+        "task_code": "flores_full",
     },
 ]
 
@@ -85,9 +85,4 @@ steps = []
 for task in tasks:
     steps.append(
         step(functools.partial(insert_task, task), functools.partial(delete_task, task))
-    )
-    steps.append(
-        step(
-            functools.partial(insert_round, task), functools.partial(delete_round, task)
-        )
     )
