@@ -114,9 +114,9 @@ class NLIStressTest(NliBase):
                             "context": jl["sentence1"],
                             "hypothesis": jl["sentence2"],
                             "label": {
-                                "entailment": "e",
-                                "neutral": "n",
-                                "contradiction": "c",
+                                "entailment": "entailed",
+                                "neutral": "neutral",
+                                "contradiction": "contradictory",
                             }[jl["gold_label"]],
                             "tags": [tag_name],
                         }

@@ -30,9 +30,10 @@ class Hans(NliBase):
                             "uid": jl["pairID"],
                             "context": jl["sentence1"],
                             "hypothesis": jl["sentence2"],
-                            "label": {"entailment": "e", "non-entailment": ["n", "c"]}[
-                                jl["gold_label"]
-                            ],
+                            "label": {
+                                "entailment": "entailed",
+                                "non-entailment": ["neutral", "contradictory"],
+                            }[jl["gold_label"]],
                             "tags": [
                                 "Template: " + jl["template"],
                                 "Heuristic: " + jl["heuristic"],

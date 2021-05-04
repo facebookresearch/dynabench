@@ -27,8 +27,10 @@ class HateCheck(HsBase):
                     jl = json.loads(line)
                     tmp_jl = {
                         "uid": jl["id"],
-                        "context": jl["text"],
-                        "label": [jl["answer"]],
+                        "statement": jl["text"],
+                        "label": {"nothate": "not-hateful", "hate": "hateful"}[
+                            jl["answer"]
+                        ],
                         "tags": [
                             "Functionality: " + jl["functionality"],
                             "Target: " + jl["target"],
