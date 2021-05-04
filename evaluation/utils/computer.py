@@ -73,11 +73,10 @@ class MetricsComputer:
                 lb = 0
                 while line:
                     line = line.strip()
-                    for c in line:
-                        if c == "{":
-                            lb += 1
-                        elif c == "}":
-                            lb -= 1
+                    if line.startswith("{") or line.endswith("{"):
+                        lb += 1
+                    elif line.startswith("}") or line.endswith("}"):
+                        lb -= 1
                     if lb == 0 and tmp:
                         tmp += line
                         predictions.append(json.loads(tmp))
