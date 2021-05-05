@@ -250,8 +250,8 @@ class BaseDataset(ABC):
                     score_obj["metadata_json"]["perf_by_tag"] = [
                         {
                             "tag": tag,
-                            "pretty_perf": str(perf * 100) + " %",
-                            "perf": perf * 100,
+                            "pretty_perf": str(perf) + " %",
+                            "perf": perf,
                             "perf_dict": perf_dict,
                         }
                         for tag, (perf, perf_dict) in perf_by_tag_tuple_dict.items()

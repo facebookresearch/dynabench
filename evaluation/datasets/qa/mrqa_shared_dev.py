@@ -26,8 +26,14 @@ class MrqaSharedDev(QaBase):
                     for qas in jl["qas"]:
                         tmp_jl = {
                             "uid": qas["qid"],
-                            "context": jl["context"],
-                            "question": qas["question"],
+                            "context": jl["context"]
+                            .replace("[TLE]", "")
+                            .replace("[SEP]", "\n")
+                            .replace("[PAR]", "\n\n"),
+                            "question": qas["question"]
+                            .replace("[TLE]", "")
+                            .replace("[SEP]", "\n")
+                            .replace("[PAR]", "\n\n"),
                             "answer": qas["answers"],
                         }
                         tmp.write(json.dumps(tmp_jl) + "\n")

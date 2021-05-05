@@ -10,7 +10,7 @@ _default_config = {
     "eval_metrics": ["accuracy"],
     "perf_metric": "accuracy",
     "delta_metrics": ["fairness", "robustness"],
-    "input_keys": ["uid", "context"],
+    "input_keys": ["uid", "statement"],
 }
 
 _custom_config = {
