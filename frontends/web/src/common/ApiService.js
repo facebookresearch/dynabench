@@ -136,22 +136,6 @@ export default class ApiService {
     });
   }
 
-  submitModel(data) {
-    const token = this.getToken();
-    const formData = new FormData();
-    formData.append("file", data.file);
-    formData.append("type", data.roundType);
-    formData.append("taskId", data.taskId);
-    formData.append("taskShortName", data.taskShortName);
-    return this.fetch(`${this.domain}/models/upload`, {
-      method: "POST",
-      body: formData,
-      headers: {
-        Authorization: token ? "Bearer " + token : "None",
-      },
-    });
-  }
-
   submitContexts(data) {
     const token = this.getToken();
     const formData = new FormData();
