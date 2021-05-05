@@ -305,7 +305,11 @@ class ExampleModel(BaseModel):
         (
             contexts_with_example_stats,
             examples_with_validation_stats,
-        ) = cm.getContextValidationResults(num_matching_validations)
+        ) = cm.getContextValidationResults(
+            num_matching_validations,
+            validate_non_fooling=validate_non_fooling,
+            example_tags=tags,
+        )
         examples_with_validation_stats = examples_with_validation_stats.subquery()
         contexts_with_example_stats = contexts_with_example_stats.subquery()
 
