@@ -26,9 +26,9 @@ class MnliBase(NliBase):
                             "context": jl["sentence1"],
                             "hypothesis": jl["sentence2"],
                             "label": {
-                                "entailment": "e",
-                                "neutral": "n",
-                                "contradiction": "c",
+                                "entailment": "entailed",
+                                "neutral": "neutral",
+                                "contradiction": "contradictory",
                             }[jl["gold_label"]],
                         }
                         tmp.write(json.dumps(tmp_jl) + "\n")

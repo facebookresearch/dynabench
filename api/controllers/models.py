@@ -55,7 +55,7 @@ def get_model_detail(credentials, mid):
         for dataset in datasets:
             did_to_dataset_name[dataset.id] = dataset.name
             did_to_dataset_access_type[dataset.id] = dataset.access_type
-        fields = ["accuracy", "round_id", "did"]
+        fields = ["accuracy", "round_id", "did", "metadata_json"]
         s_dicts = [
             dict(
                 zip(fields, d),

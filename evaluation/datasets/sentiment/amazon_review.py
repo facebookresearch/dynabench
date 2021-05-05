@@ -24,7 +24,7 @@ class AmazonReviewBase(SentimentBase):
                     jl = json.loads(line)
                     tmp_jl = {
                         "uid": jl["text_id"],
-                        "context": jl["sentence"],
+                        "statement": jl["sentence"],
                         "label": jl["gold_label"],
                     }
                     tmp.write(json.dumps(tmp_jl) + "\n")
