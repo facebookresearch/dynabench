@@ -2,6 +2,7 @@
 
 """
 Remove datasets from the DB that have been converted to tags within other datasets.
+As part of this PR, the existing models won't work anymore, so set them to failed.
 """
 
 from yoyo import step
@@ -13,6 +14,7 @@ __depends__ = {
 }
 
 steps = [
+    step("UPDATE models SET deployment_status='failed'"),
     step(
         """
         DELETE FROM scores WHERE did in (SELECT id FROM datasets WHERE name in
