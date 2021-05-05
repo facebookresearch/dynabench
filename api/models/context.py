@@ -105,7 +105,9 @@ class ContextModel(BaseModel):
             .all()
         )
 
-    def getContextValidationResults(self, num_matching_validations):
+    def getContextValidationResults(
+        self, num_matching_validations, validate_non_fooling=False, example_tags=None
+    ):
         from models.example import Example
         from models.validation import Validation, LabelEnum
         from sqlalchemy import distinct
@@ -135,6 +137,16 @@ class ContextModel(BaseModel):
             .join(Validation, Validation.eid == Example.id, isouter=True)
             .group_by(Example.cid, Example.id)
         )
+
+        if not validate_non_fooling:
+            example_with_validation = example_with_validation.filter(
+                Example.model_wrong.is_(True)  # noqa
+            )
+
+        if example_tags:
+            example_with_validation = example_with_validation.filter(
+                Example.tag.in_(example_tags)
+            )
 
         example_with_validation_data = example_with_validation.subquery()
 
@@ -204,8 +216,8 @@ class ContextModel(BaseModel):
 
         contexts_with_example_stats, _ = self.getContextValidationResults(
             num_matching_validations
-        ).subquery()
-
+        )
+        contexts_with_example_stats = contexts_with_example_stats.subquery()
         return_result = (
             result.join(
                 contexts_with_example_stats,
