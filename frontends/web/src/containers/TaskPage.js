@@ -152,6 +152,9 @@ const TaskActionButtons = (props) => {
       "Verify examples where the model may have failed"
     );
   }
+  function renderSubmitTooltip(props) {
+    return renderTooltip(props, "Submit models for this task");
+  }
 
   return (
     <Nav className="my-4">
@@ -170,7 +173,7 @@ const TaskActionButtons = (props) => {
               className="border-0 blue-color font-weight-bold light-gray-bg"
               to={"/tasks/" + props.taskId + "/create"}
             >
-              Create Examples
+              <i class="fas fa-pen"></i> Create Examples
             </Button>
           </OverlayTrigger>
         </Annotation>
@@ -190,11 +193,35 @@ const TaskActionButtons = (props) => {
               className="border-0 blue-color font-weight-bold light-gray-bg"
               to={"/tasks/" + props.taskId + "/validate"}
             >
-              Validate Examples
+              <i class="fas fa-search"></i> Validate Examples
             </Button>
           </OverlayTrigger>
         </Annotation>
       </Nav.Item>
+      {props.task.shortname === "NLI" ||
+      props.task.shortname === "QA" ||
+      props.task.shortname === "Hate Speech" ||
+      props.task.shortname === "Sentiment" ? (
+        <Nav.Item className="task-action-btn">
+          <Annotation
+            placement="right"
+            tooltip="Click here to submit your model predictions for previous rounds."
+          >
+            <OverlayTrigger
+              placement="bottom"
+              delay={{ show: 250, hide: 400 }}
+              overlay={renderSubmitTooltip}
+            >
+              <Button
+                className="border-0 blue-color font-weight-bold light-gray-bg"
+                href="https://github.com/facebookresearch/dynalab"
+              >
+                <i class="fas fa-upload"></i> Submit Models
+              </Button>
+            </OverlayTrigger>
+          </Annotation>
+        </Nav.Item>
+      ) : null}
     </Nav>
   );
 };
