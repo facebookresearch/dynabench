@@ -347,6 +347,7 @@ class ExampleModel(BaseModel):
             cnt_uid = db.sql.func.sum(
                 case([(Validation.uid == my_uid, 1)], else_=0)
             ).label("cnt_uid")
+            result = examples
         elif mode == "user":
             result = examples.filter(
                 db.cast(Example.metadata_json, JSON)["annotator_id"] != my_uid
@@ -363,8 +364,7 @@ class ExampleModel(BaseModel):
                     else_=0,
                 )
             ).label("cnt_uid")
-        result = result.group_by(Validation.eid).having(cnt_uid == 0)
-        return result
+        return result.group_by(Validation.eid).having(cnt_uid == 0)
 
     def getRandomFiltered(
         self,
