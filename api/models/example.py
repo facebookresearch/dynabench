@@ -249,15 +249,6 @@ class ExampleModel(BaseModel):
         tags=None,
         context_tags=None,
     ):
-        cnt_correct = db.sql.func.sum(
-            case([(Validation.label == LabelEnum.correct, 1)], else_=0)
-        ).label("cnt_correct")
-        cnt_flagged = db.sql.func.sum(
-            case([(Validation.label == LabelEnum.flagged, 1)], else_=0)
-        ).label("cnt_flagged")
-        cnt_incorrect = db.sql.func.sum(
-            case([(Validation.label == LabelEnum.incorrect, 1)], else_=0)
-        ).label("cnt_incorrect")
         cnt_owner_validated = db.sql.func.sum(
             case([(Validation.mode == ModeEnum.owner, 1)], else_=0)
         ).label("cnt_owner_validated")
@@ -284,23 +275,6 @@ class ExampleModel(BaseModel):
         if not validate_non_fooling:
             result = result.filter(Example.model_wrong == True)  # noqa
 
-        result_partially_validated = (
-            result.join(Validation, Example.id == Validation.eid)
-            .group_by(Validation.eid)
-            .having(
-                db.and_(
-                    cnt_correct < num_matching_validations,
-                    cnt_flagged < num_matching_validations,
-                    cnt_incorrect < num_matching_validations,
-                    cnt_owner_validated == 0,
-                )
-            )
-        )
-        if my_uid is not None:
-            result_partially_validated = self._filter_out_self_created_examples(
-                result_partially_validated, mode, my_uid
-            )
-
         cm = ContextModel()
         (
             contexts_with_example_stats,
@@ -310,9 +284,29 @@ class ExampleModel(BaseModel):
             validate_non_fooling=validate_non_fooling,
             example_tags=tags,
         )
-        examples_with_validation_stats = examples_with_validation_stats.subquery()
-        contexts_with_example_stats = contexts_with_example_stats.subquery()
 
+        examples_with_validation_stats = examples_with_validation_stats.subquery()
+        result_partially_validated = result.join(
+            examples_with_validation_stats,
+            examples_with_validation_stats.c.id == Example.id,
+        ).having(
+            db.and_(
+                examples_with_validation_stats.c.cnt_correct_val
+                < num_matching_validations,
+                examples_with_validation_stats.c.cnt_flagged_val
+                < num_matching_validations,
+                examples_with_validation_stats.c.cnt_incorrect_val
+                < num_matching_validations,
+                examples_with_validation_stats.c.cnt_total_val > 0,
+                cnt_owner_validated == 0,
+            )
+        )
+        if my_uid is not None:
+            result_partially_validated = self._filter_out_self_created_examples(
+                result_partially_validated, mode, my_uid
+            )
+
+        contexts_with_example_stats = contexts_with_example_stats.subquery()
         result_not_validated = (
             result.join(
                 examples_with_validation_stats,
