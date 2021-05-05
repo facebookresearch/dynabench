@@ -17,7 +17,6 @@ import {
 import Markdown from "react-markdown";
 import { Formik } from "formik";
 import UserContext from "./UserContext";
-import "./SubmitInterface.css";
 import { OverlayProvider, BadgeOverlay } from "./Overlay";
 
 class PublishInterface extends React.Component {

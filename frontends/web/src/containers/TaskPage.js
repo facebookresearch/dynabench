@@ -153,7 +153,7 @@ const TaskActionButtons = (props) => {
     );
   }
   function renderSubmitTooltip(props) {
-    return renderTooltip(props, "Submit model predictions on this task");
+    return renderTooltip(props, "Submit models for this task");
   }
 
   return (
@@ -173,7 +173,7 @@ const TaskActionButtons = (props) => {
               className="border-0 blue-color font-weight-bold light-gray-bg"
               to={"/tasks/" + props.taskId + "/create"}
             >
-              Create Examples
+              <i class="fas fa-pen"></i> Create Examples
             </Button>
           </OverlayTrigger>
         </Annotation>
@@ -193,7 +193,7 @@ const TaskActionButtons = (props) => {
               className="border-0 blue-color font-weight-bold light-gray-bg"
               to={"/tasks/" + props.taskId + "/validate"}
             >
-              Validate Examples
+              <i class="fas fa-search"></i> Validate Examples
             </Button>
           </OverlayTrigger>
         </Annotation>
@@ -213,11 +213,10 @@ const TaskActionButtons = (props) => {
               overlay={renderSubmitTooltip}
             >
               <Button
-                as={Link}
                 className="border-0 blue-color font-weight-bold light-gray-bg"
-                to={"/tasks/" + props.taskId + "/submit"}
+                href="https://github.com/facebookresearch/dynalab"
               >
-                Submit Predictions
+                <i class="fas fa-upload"></i> Submit Models
               </Button>
             </OverlayTrigger>
           </Annotation>
