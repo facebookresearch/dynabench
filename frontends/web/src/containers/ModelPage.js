@@ -13,6 +13,7 @@ import {
   Card,
   Button,
   Table,
+  InputGroup,
 } from "react-bootstrap";
 import Moment from "react-moment";
 import Markdown from "react-markdown";
@@ -21,6 +22,85 @@ import TasksContext from "./TasksContext";
 import UserContext from "./UserContext";
 import "./ModelPage.css";
 import { OverlayProvider, BadgeOverlay } from "./Overlay";
+import { useState } from "react";
+
+const ChevronExpandButton = ({ expanded }) => {
+  return (
+    <a type="button" className="position-absolute start-100">
+      {expanded ? (
+        <i className="fas fa-chevron-down"></i>
+      ) : (
+        <i className="fas fa-chevron-right"></i>
+      )}
+    </a>
+  );
+};
+
+const ScoreRow = ({ score }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  const perf_by_tag =
+    score.metadata_json &&
+    JSON.parse(score.metadata_json).hasOwnProperty("perf_by_tag")
+      ? JSON.parse(score.metadata_json)["perf_by_tag"]
+      : [];
+
+  const clickable = perf_by_tag.length !== 0;
+
+  return (
+    <Table hover className="mb-0 hover" style={{ tableLayout: "fixed" }}>
+      <tbody>
+        <tr
+          key={score.dataset_name}
+          onClick={() => (clickable ? setExpanded(!expanded) : "")}
+        >
+          <td>
+            {expanded ? <b>{score.dataset_name}</b> : score.dataset_name}
+            {clickable ? (
+              <div style={{ float: "right" }}>
+                <ChevronExpandButton expanded={expanded} />
+              </div>
+            ) : (
+              ""
+            )}
+          </td>
+          <td
+            className="text-right t-2"
+            key={`score-${score.dataset_name}-overall`}
+          >
+            <span>
+              {expanded ? (
+                <b>{parseFloat(score.accuracy).toFixed(2)}</b>
+              ) : (
+                parseFloat(score.accuracy).toFixed(2)
+              )}
+            </span>
+          </td>
+        </tr>
+        {expanded &&
+          perf_by_tag.map((perf_and_tag) => {
+            return (
+              <tr style={{ border: `none` }}>
+                <td className="text-right pr-4  text-nowrap">
+                  <div className="d-flex justify-content-end align-items-center">
+                    <span className="d-flex align-items-center">
+                      {perf_and_tag.tag}&nbsp;
+                    </span>
+                  </div>
+                </td>
+                <td
+                  className="text-right "
+                  key={`score-${score.dataset_name}-${perf_and_tag.tag}-overall`}
+                >
+                  <span>{parseFloat(perf_and_tag.perf).toFixed(2)}</span>
+                </td>
+              </tr>
+            );
+          })}
+      </tbody>
+    </Table>
+  );
+};
 
 class ModelPage extends React.Component {
   static contextType = UserContext;
@@ -179,124 +259,112 @@ class ModelPage extends React.Component {
                   </div>
                 </div>
                 {model.id ? (
-                  <Table className="mb-0">
-                    <thead />
-                    <tbody>
-                      <tr>
-                        <td colSpan="2">
-                          <h5 className="mx-0">
-                            <span className="blue-color">
-                              {model.name || "Unknown"}
-                            </span>
-                            <span className="float-right">
-                              uploaded{" "}
-                              <Moment fromNow>{model.upload_datetime}</Moment>
-                            </span>
-                            {isModelOwner && model.is_published === "True" ? (
-                              <Badge variant="success" className="ml-2">
-                                Published
-                              </Badge>
-                            ) : null}
-                            {isModelOwner && model.is_published === "False" ? (
-                              <Badge variant="danger" className="ml-2">
-                                Unpublished
-                              </Badge>
-                            ) : null}
-                          </h5>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td colSpan={2}>
-                          <h6 className="blue-color">Leaderboard Datasets</h6>
-                        </td>
-                      </tr>
-                      {orderedLeaderboardScores.map((data) => {
-                        return (
-                          <tr key={data.round_id}>
-                            <td
-                              style={{ paddingLeft: 50, whiteSpace: "nowrap" }}
-                            >
-                              {data.dataset_name
-                                ? data.dataset_name
-                                : "Round " + data.round_id}
-                            </td>
-                            <td>{Number(data.accuracy).toFixed(2)}%</td>
-                          </tr>
-                        );
-                      })}
-                      <tr>
-                        <td colSpan={2}>
-                          <h6 className="blue-color">
-                            Non-Leaderboard Datasets
-                          </h6>
-                        </td>
-                      </tr>
-                      {orderedNonLeaderboardScores.map((data) => {
-                        return (
-                          <tr key={data.round_id}>
-                            <td
-                              style={{ paddingLeft: 50, whiteSpace: "nowrap" }}
-                            >
-                              {data.dataset_name
-                                ? data.dataset_name
-                                : "Round " + data.round_id}
-                            </td>
-                            <td>{Number(data.accuracy).toFixed(2)}%</td>
-                          </tr>
-                        );
-                      })}
-                      <tr>
-                        <td colSpan={2}>
-                          <h6 className="blue-color">Model Information</h6>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Owner</td>
-                        <td>
-                          <Link to={`/users/${model.user.id}`}>
-                            {model.user && model.user.username}
-                          </Link>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Task</td>
-                        <td>
-                          <Link to={`/tasks/${model.tid}#overall`}>
-                            <TasksContext.Consumer>
-                              {({ tasks }) => {
-                                const task =
-                                  model &&
-                                  tasks.filter((e) => e.id === model.tid);
-                                return task && task.length && task[0].shortname;
-                              }}
-                            </TasksContext.Consumer>
-                          </Link>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Summary</td>
-                        <td>{model.longdesc}</td>
-                      </tr>
-                      <tr>
-                        <td style={{ whiteSpace: "nowrap" }}># Parameters</td>
-                        <td>{model.params}</td>
-                      </tr>
-                      <tr>
-                        <td>Language(s)</td>
-                        <td>{model.languages}</td>
-                      </tr>
-                      <tr>
-                        <td>License(s)</td>
-                        <td>{model.license}</td>
-                      </tr>
-                      <tr>
-                        <td style={{ verticalAlign: "middle" }}>Model Card</td>
-                        <td className="modelCard">
-                          <Markdown>{model.model_card}</Markdown>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </Table>
+                  <InputGroup>
+                    <Table className="mb-0">
+                      <thead />
+                      <tbody>
+                        <tr>
+                          <td colSpan="2">
+                            <h5 className="mx-0">
+                              <span className="blue-color">
+                                {model.name || "Unknown"}
+                              </span>
+                              <span className="float-right">
+                                uploaded{" "}
+                                <Moment fromNow>{model.upload_datetime}</Moment>
+                              </span>
+                              {isModelOwner && model.is_published === "True" ? (
+                                <Badge variant="success" className="ml-2">
+                                  Published
+                                </Badge>
+                              ) : null}
+                              {isModelOwner &&
+                              model.is_published === "False" ? (
+                                <Badge variant="danger" className="ml-2">
+                                  Unpublished
+                                </Badge>
+                              ) : null}
+                            </h5>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </Table>
+                    <tr>
+                      <td colSpan={2}>
+                        <h6 className="blue-color">Leaderboard Datasets</h6>
+                      </td>
+                    </tr>
+                    {orderedLeaderboardScores.map((score) => (
+                      <ScoreRow score={score} />
+                    ))}
+                    <tr>
+                      <td colSpan={2}>
+                        <h6 className="blue-color">Non-Leaderboard Datasets</h6>
+                      </td>
+                    </tr>
+                    {orderedNonLeaderboardScores.map((score) => (
+                      <ScoreRow score={score} />
+                    ))}
+                    <tr style={{ border: `none` }}>
+                      <td colSpan={2}>
+                        <h6 className="blue-color">Model Information</h6>
+                      </td>
+                    </tr>
+                    <Table hover className="mb-0">
+                      <thead />
+                      <tbody>
+                        <tr style={{ border: `none` }}>
+                          <td>Owner</td>
+                          <td>
+                            <Link to={`/users/${model.user.id}`}>
+                              {model.user && model.user.username}
+                            </Link>
+                          </td>
+                        </tr>
+                        <tr style={{ border: `none` }}>
+                          <td>Task</td>
+                          <td>
+                            <Link to={`/tasks/${model.tid}#overall`}>
+                              <TasksContext.Consumer>
+                                {({ tasks }) => {
+                                  const task =
+                                    model &&
+                                    tasks.filter((e) => e.id === model.tid);
+                                  return (
+                                    task && task.length && task[0].shortname
+                                  );
+                                }}
+                              </TasksContext.Consumer>
+                            </Link>
+                          </td>
+                        </tr>
+                        <tr style={{ border: `none` }}>
+                          <td>Summary</td>
+                          <td>{model.longdesc}</td>
+                        </tr>
+                        <tr style={{ border: `none` }}>
+                          <td style={{ whiteSpace: "nowrap" }}># Parameters</td>
+                          <td>{model.params}</td>
+                        </tr>
+                        <tr style={{ border: `none` }}>
+                          <td>Language(s)</td>
+                          <td>{model.languages}</td>
+                        </tr>
+                        <tr style={{ border: `none` }}>
+                          <td>License(s)</td>
+                          <td>{model.license}</td>
+                        </tr>
+                        <tr style={{ border: `none` }}>
+                          <td style={{ verticalAlign: "middle" }}>
+                            Model Card
+                          </td>
+                          <td className="modelCard">
+                            <Markdown>{model.model_card}</Markdown>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </Table>
+                  </InputGroup>
                 ) : (
                   <Container>
                     <Row>

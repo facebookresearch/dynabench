@@ -153,7 +153,7 @@ const TaskActionButtons = (props) => {
     );
   }
   function renderSubmitTooltip(props) {
-    return renderTooltip(props, "Submit model predictions on this task");
+    return renderTooltip(props, "Submit models for this task");
   }
 
   return (
@@ -173,7 +173,7 @@ const TaskActionButtons = (props) => {
               className="border-0 blue-color font-weight-bold light-gray-bg"
               to={"/tasks/" + props.taskId + "/create"}
             >
-              Create Examples
+              <i class="fas fa-pen"></i> Create Examples
             </Button>
           </OverlayTrigger>
         </Annotation>
@@ -193,7 +193,7 @@ const TaskActionButtons = (props) => {
               className="border-0 blue-color font-weight-bold light-gray-bg"
               to={"/tasks/" + props.taskId + "/validate"}
             >
-              Validate Examples
+              <i class="fas fa-search"></i> Validate Examples
             </Button>
           </OverlayTrigger>
         </Annotation>
@@ -213,11 +213,10 @@ const TaskActionButtons = (props) => {
               overlay={renderSubmitTooltip}
             >
               <Button
-                as={Link}
                 className="border-0 blue-color font-weight-bold light-gray-bg"
-                to={"/tasks/" + props.taskId + "/submit"}
+                href="https://github.com/facebookresearch/dynalab"
               >
-                Submit Predictions
+                <i class="fas fa-upload"></i> Submit Models
               </Button>
             </OverlayTrigger>
           </Annotation>
@@ -583,6 +582,25 @@ class TaskPage extends React.Component {
   };
 
   render() {
+    const pwc_logo = (
+      <svg height="30" width="30" viewBox="0 0 512 512">
+        <path
+          fill="#21cbce"
+          d="M88 128h48v256H88zm144 0h48v256h-48zm-72 16h48v224h-48zm144 0h48v224h-48zm72-16h48v256h-48z"
+        ></path>
+        <path
+          fill="#21cbce"
+          d="M104 104V56H16v400h88v-48H64V104zm304-48v48h40v304h-40v48h88V56z"
+        ></path>
+      </svg>
+    );
+    const shortname_to_pwc_links = {
+      QA: "https://paperswithcode.com/task/question-answering/latest",
+      NLI: "https://paperswithcode.com/task/natural-language-inference/latest",
+      "Hate Speech":
+        "https://paperswithcode.com/task/hate-speech-detection/latest",
+      Sentiment: "https://paperswithcode.com/task/sentiment-analysis/latest",
+    };
     return (
       <OverlayProvider initiallyHide={true} delayMs="1700">
         <Container fluid>
@@ -597,7 +615,14 @@ class TaskPage extends React.Component {
             </Col>
             <Col lg={10} className="px-4 px-lg-5">
               <h2 className="task-page-header text-reset ml-0">
-                {this.state.task.name}
+                {this.state.task.name}{" "}
+                {this.state.task.shortname in shortname_to_pwc_links ? (
+                  <a href={shortname_to_pwc_links[this.state.task.shortname]}>
+                    {pwc_logo}
+                  </a>
+                ) : (
+                  ""
+                )}
               </h2>
               <div style={{ float: "right", marginTop: 30 }}>
                 <ButtonGroup>

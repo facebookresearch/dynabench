@@ -16,7 +16,6 @@ from common.logging import logger
 from models.badge import BadgeModel
 from models.dataset import AccessTypeEnum, DatasetModel
 from models.model import DeploymentStatusEnum, ModelModel
-from models.round import RoundModel
 from models.score import ScoreModel
 from models.task import TaskModel
 from models.user import UserModel
@@ -56,7 +55,7 @@ def get_model_detail(credentials, mid):
         for dataset in datasets:
             did_to_dataset_name[dataset.id] = dataset.name
             did_to_dataset_access_type[dataset.id] = dataset.access_type
-        fields = ["accuracy", "round_id", "did"]
+        fields = ["accuracy", "round_id", "did", "metadata_json"]
         s_dicts = [
             dict(
                 zip(fields, d),
@@ -86,93 +85,6 @@ def get_model_detail(credentials, mid):
     except Exception as ex:
         logger.exception("Model detail exception : (%s)" % (ex))
         bottle.abort(404, "Not found")
-
-
-@bottle.post("/models/upload")
-@_auth.requires_auth
-def do_upload(credentials):
-    """
-    Upload the result file for the overall task or specific rounds
-    and save those results into the models and scores table
-    :param credentials:
-    :return: Models scores detail
-    """
-    u = UserModel()
-    user_id = credentials["id"]
-    user = u.get(user_id)
-    if not user:
-        logger.error("Invalid user detail for id (%s)" % (user_id))
-        bottle.abort(404, "User information not found")
-
-    round_id = bottle.request.forms.get("type")
-    upload = bottle.request.files.get("file")
-    task_id = bottle.request.forms.get("taskId")
-    task_shortname = str(bottle.request.forms.get("taskShortName")).lower()
-
-    try:
-        raw_upload_data = [
-            json.loads(line.decode("utf-8")) for line in upload.file.readlines()
-        ]
-        test_raw_data = raw_upload_data
-
-    except Exception as ex:
-        logger.exception(ex)
-        bottle.abort(400, "Upload valid model result file")
-
-    r = RoundModel()
-    if round_id == "overall":
-        rounds = r.getByTid(task_id)
-        # Pass only rounds available for submission
-        if len(rounds) > 1:
-            rounds = rounds[:-1]
-    else:
-        rounds = [r.getByTidAndRid(task_id, round_id)]
-    if not rounds:
-        bottle.abort(400, "Model evaluation failed")
-
-    if len(test_raw_data) > 0:
-        try:
-            (
-                rounds_accuracy_list,
-                score_obj_list,
-                overall_accuracy,
-            ) = util.validate_prediction(
-                rounds, test_raw_data, task_shortname=task_shortname
-            )
-            m = ModelModel()
-            model = m.create(
-                task_id=task_id,
-                user_id=user_id,
-                name="",
-                shortname="",
-                longdesc="",
-                desc="",
-                upload_datetime=db.sql.func.now(),
-            )
-            s = ScoreModel()
-            s.bulk_create(
-                model_id=model.id,
-                score_objs=score_obj_list,
-                raw_upload_data=json.dumps(raw_upload_data),
-            )
-
-            user_dict = user.to_dict()
-
-            um = UserModel()
-            um.incrementModelSubmitCount(user_dict["id"])
-
-            response = model.to_dict()
-            response["user"] = user_dict
-            response["scores"] = rounds_accuracy_list
-
-            return util.json_encode(response)
-        except AssertionError:
-            bottle.abort(400, "Submission file length mismatch")
-    #        except Exception as error_message:
-    #            logger.exception('Model evaluation failed: %s' % (error_message))
-    #            bottle.abort(400, 'Model evaluation failed: %s' % (error_message))
-    else:
-        bottle.abort(400, "Invalid file submitted")
 
 
 @bottle.put("/models/<mid:int>/publish")

@@ -69,6 +69,10 @@ def get_random_example(credentials, tid, rid):
     if "tags" in query_dict and len(query_dict["tags"]) > 0:
         tags = query_dict["tags"][0].split("|")
 
+    context_tags = None
+    if "context_tags" in query_dict and len(query_dict["context_tags"]) > 0:
+        context_tags = query_dict["context_tags"][0].split("|")
+
     tm = TaskModel()
     task = tm.get(tid)
     validate_non_fooling = False
@@ -95,11 +99,16 @@ def get_random_example(credentials, tid, rid):
         n=1,
         my_uid=uid,
         tags=tags,
+        context_tags=context_tags,
     )
-
     if not example:
         bottle.abort(500, f"No examples available ({round.id})")
-    example = example[0].to_dict()
+
+    example = example[0]
+    if example not in em.dbs:
+        example = em.dbs.merge(example)
+
+    example = example.to_dict()
     return util.json_encode(example)
 
 

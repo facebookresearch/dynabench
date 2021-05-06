@@ -26,7 +26,11 @@ class AnliBase(NliBase):
                         "uid": jl["uid"],
                         "context": jl["context"],
                         "hypothesis": jl["hypothesis"],
-                        "label": jl["label"],
+                        "label": {
+                            "e": "entailed",
+                            "n": "neutral",
+                            "c": "contradictory",
+                        }[jl["label"]],
                     }
                     tmp.write(json.dumps(tmp_jl) + "\n")
                 tmp.close()

@@ -46,10 +46,17 @@ class RobustnessPerturbation:
         perturb_example = example.copy()
         perturb_example["input_id"] = example["uid"]
         perturb_example["uid"] = str(example["uid"]) + "_ptypo"
-        # perturb context for all tasks
-        context = example["context"]
-        pt_context, changed = self.perturb_typo_text(context)
-        perturb_example["context"] = pt_context
+        # perturb context for all tasks if it exists
+        if "context" in example:
+            context = example["context"]
+            pt_context, changed = self.perturb_typo_text(context)
+            perturb_example["context"] = pt_context
+        # perturb statement for hs and sentiment
+        if task in ["hs", "sentiment"]:
+            statement = example["statement"]
+            pt_statement, changed = self.perturb_typo_text(statement)
+            perturb_example["statement"] = pt_statement
+
         # perturb additional fields for "qa" and "nli"
         if task == "qa":
             question = example["question"]

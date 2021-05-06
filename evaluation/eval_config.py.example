@@ -5,7 +5,7 @@ eval_config = {
     "sagemaker_role": "",
     "dataset_s3_bucket": "",
     "evaluation_sqs_queue": "",
-    "scheduler_status_dump": "",
-    "computer_status_dump": "",
+    "scheduler_status_dump": "scheduler.dump",
+    "computer_status_dump": "computer.dump",
     "max_submission": 20
 }
