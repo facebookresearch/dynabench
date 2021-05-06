@@ -37,7 +37,10 @@ def reformat_data_to_textflint(samples, task):
         if task == "qa":
             answer = sample["answer"]
             pos = sample["context"].find(answer)
-            converted["answers"] = [{"text": answer, "answer_start": pos}]
+            converted["answers"] = [
+                {"text": answer, "answer_start": match.start()}
+                for i in re.finditer(answer, sample["context"])
+            ]
             converted["title"] = ""
             converted["is_impossible"] = False
         else:
