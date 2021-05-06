@@ -1,0 +1,12 @@
+{
+  "task": "MRC",
+  "out_dir": "./tmp/qa",
+  "trans_methods": [
+    "Contraction",
+    "Keyboard",
+    "Ocr",
+    "Punctuation",
+    "SpellingError",
+    "Typos"
+  ]
+}
