@@ -101,11 +101,14 @@ def get_random_example(credentials, tid, rid):
         tags=tags,
         context_tags=context_tags,
     )
-
     if not example:
         bottle.abort(500, f"No examples available ({round.id})")
 
-    example = example[0].to_dict()
+    example = example[0]
+    if example not in em.dbs:
+        example = em.dbs.merge(example)
+
+    example = example.to_dict()
     return util.json_encode(example)
 
 
