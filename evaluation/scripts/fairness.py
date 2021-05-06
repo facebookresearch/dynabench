@@ -99,10 +99,17 @@ class FairnessPerturbation:
         perturb_example = example.copy()
         perturb_example["input_id"] = example["uid"]
         perturb_example["uid"] = str(example["uid"]) + "_pgen"
-        # perturb context for all tasks
-        context = example["context"]
-        pt_context, changed = self.perturb_gender_text(context)
-        perturb_example["context"] = pt_context
+        # perturb context for all tasks if it exists
+        if "context" in example:
+            context = example["context"]
+            pt_context, changed = self.perturb_gender_text(context)
+            perturb_example["context"] = pt_context
+        # perturb statement for hs and sentiment
+        if task in ["hs", "sentiment"]:
+            statement = example["statement"]
+            pt_statement, changed = self.perturb_gender_text(statement)
+            perturb_example["statement"] = pt_statement
+
         # perturb additional fields for task "qa" and "nli"
         if task == "qa":
             question = example["question"]
@@ -124,9 +131,17 @@ class FairnessPerturbation:
         perturb_example = example.copy()
         perturb_example["input_id"] = example["uid"]
         perturb_example["uid"] = str(example["uid"]) + "_peth"
-        context = example["context"]
-        pt_context, changed = self.perturb_ethnic_text(context)
-        perturb_example["context"] = pt_context
+        # perturb context for all tasks if it exists
+        if "context" in example:
+            context = example["context"]
+            pt_context, changed = self.perturb_ethnic_text(context)
+            perturb_example["context"] = pt_context
+        # perturb statement for hs and sentiment
+        if task in ["hs", "sentiment"]:
+            statement = example["statement"]
+            pt_statement, changed = self.perturb_ethnic_text(statement)
+            perturb_example["statement"] = pt_statement
+
         if task == "qa":
             question = example["question"]
             pt_question, changed_question = self.perturb_ethnic_text(question)
