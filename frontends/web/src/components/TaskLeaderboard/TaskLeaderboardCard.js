@@ -8,7 +8,7 @@ import {
   OverlayTrigger,
 } from "react-bootstrap";
 import UserContext from "../../containers/UserContext";
-import OverallModelLeaderBoard from "./OverallModelLeaderBoard";
+import HCOverallModelLeaderBoard from "./HCOverallModelLeaderBoard";
 
 const SortDirection = {
   ASC: "asc",
@@ -180,6 +180,10 @@ const TaskLeaderboardCard = (props) => {
 
   const isEndOfPage = (page + 1) * pageLimit >= total;
 
+  if (!data) {
+    return null;
+  }
+
   return (
     <Card className="my-4">
       <Card.Header className="light-gray-bg d-flex align-items-center">
@@ -226,7 +230,7 @@ const TaskLeaderboardCard = (props) => {
         </div>
       </Card.Header>
       <Card.Body className="p-0 leaderboard-container">
-        <OverallModelLeaderBoard
+        <HCOverallModelLeaderBoard
           models={data}
           task={task}
           enableWeights={enableWeights}
