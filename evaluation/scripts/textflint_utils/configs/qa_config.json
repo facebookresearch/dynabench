@@ -7,7 +7,6 @@
     "Ocr",
     "Punctuation",
     "SpellingError",
-    "Typos",
-    "WordCase"
+    "Typos"
   ]
 }

@@ -3,6 +3,7 @@
 # Convert data to textflint format and run transform functions in textflint
 import json
 import os
+import re
 
 import torch
 
@@ -38,7 +39,7 @@ def reformat_data_to_textflint(samples, task):
             answer = sample["answer"]
             pos = sample["context"].find(answer)
             converted["answers"] = [
-                {"text": answer, "answer_start": match.start()}
+                {"text": answer, "answer_start": i.start()}
                 for i in re.finditer(answer, sample["context"])
             ]
             converted["title"] = ""
