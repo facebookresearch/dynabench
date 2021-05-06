@@ -279,49 +279,79 @@ class ExampleModel(BaseModel):
         (
             contexts_with_example_stats,
             examples_with_validation_stats,
+            # contexts stats:
+            # how many examples passed, failed, inflight, pre-validation per context
+            (
+                cnt_correct_examples,
+                cnt_failed_examples,
+                cnt_inflight_examples,
+                cnt_pre_val_examples,
+            ),
+            # example stats:
+            # how many validations correct, incorrect, flagged, total per example
+            (cnt_correct_val, cnt_incorrect_val, cnt_flagged_val, cnt_total_val),
         ) = cm.getContextValidationResults(
             num_matching_validations,
             validate_non_fooling=validate_non_fooling,
             example_tags=tags,
         )
 
-        examples_with_validation_stats = examples_with_validation_stats.subquery()
-        result_partially_validated = result.join(
-            examples_with_validation_stats,
-            examples_with_validation_stats.c.id == Example.id,
-        ).having(
+        if my_uid is not None:
+            if mode == "owner":
+                cnt_uid = db.sql.func.sum(
+                    case([(Validation.uid == my_uid, 1)], else_=0)
+                ).label("cnt_uid")
+            elif mode == "user":
+                examples_with_validation_stats = examples_with_validation_stats.filter(
+                    db.cast(Example.metadata_json, JSON)["annotator_id"] != my_uid
+                )
+                cnt_uid = db.sql.func.sum(
+                    case(
+                        [
+                            (
+                                db.cast(Validation.metadata_json, JSON)["annotator_id"]
+                                == my_uid,
+                                1,
+                            )
+                        ],
+                        else_=0,
+                    )
+                ).label("cnt_uid")
+            examples_with_validation_stats = examples_with_validation_stats.having(
+                cnt_uid == 0
+            )
+
+        # partially validated
+        examples_partially_validated = examples_with_validation_stats.having(
             db.and_(
-                examples_with_validation_stats.c.cnt_correct_val
-                < num_matching_validations,
-                examples_with_validation_stats.c.cnt_flagged_val
-                < num_matching_validations,
-                examples_with_validation_stats.c.cnt_incorrect_val
-                < num_matching_validations,
-                examples_with_validation_stats.c.cnt_total_val > 0,
+                cnt_correct_val < num_matching_validations,
+                cnt_flagged_val < num_matching_validations,
+                cnt_incorrect_val < num_matching_validations,
+                cnt_total_val > 0,
                 cnt_owner_validated == 0,
             )
         )
-        if my_uid is not None:
-            result_partially_validated = self._filter_out_self_created_examples(
-                result_partially_validated, mode, my_uid
-            )
-
-        contexts_with_example_stats = contexts_with_example_stats.subquery()
-        result_not_validated = (
-            result.join(
-                examples_with_validation_stats,
-                examples_with_validation_stats.c.id == Example.id,
-            )
-            .filter(examples_with_validation_stats.c.cnt_total_val == 0)
-            .join(
-                contexts_with_example_stats,
-                contexts_with_example_stats.c.cid == Example.cid,
-            )
-            .filter(contexts_with_example_stats.c.cnt_correct_examples == 0)
+        examples_partially_validated = examples_partially_validated.subquery()
+        result_partially_validated = result.join(
+            examples_partially_validated,
+            examples_partially_validated.c.id == Example.id,
         )
 
-        result = result_partially_validated.union(result_not_validated)
+        # not validated
+        examples_not_validated = examples_with_validation_stats.having(
+            db.and_(cnt_total_val == 0, cnt_owner_validated == 0)
+        )
+        examples_not_validated = examples_not_validated.subquery()
+        contexts_with_example_stats = contexts_with_example_stats.having(
+            cnt_correct_examples == 0
+        )
+        contexts_with_example_stats = contexts_with_example_stats.subquery()
+        result_not_validated = result.join(
+            contexts_with_example_stats,
+            contexts_with_example_stats.c.cid == Example.cid,
+        ).join(examples_not_validated, examples_not_validated.c.id == Example.id)
 
+        result = result_partially_validated.union(result_not_validated)
         if my_uid is not None and mode == "owner":
             result = result.filter(Example.uid != my_uid)
 
@@ -335,30 +365,6 @@ class ExampleModel(BaseModel):
             .all()
         )
         return result
-
-    def _filter_out_self_created_examples(self, examples, mode, my_uid):
-        if mode == "owner":
-            cnt_uid = db.sql.func.sum(
-                case([(Validation.uid == my_uid, 1)], else_=0)
-            ).label("cnt_uid")
-            result = examples
-        elif mode == "user":
-            result = examples.filter(
-                db.cast(Example.metadata_json, JSON)["annotator_id"] != my_uid
-            )
-            cnt_uid = db.sql.func.sum(
-                case(
-                    [
-                        (
-                            db.cast(Validation.metadata_json, JSON)["annotator_id"]
-                            == my_uid,
-                            1,
-                        )
-                    ],
-                    else_=0,
-                )
-            ).label("cnt_uid")
-        return result.group_by(Validation.eid).having(cnt_uid == 0)
 
     def getRandomFiltered(
         self,
