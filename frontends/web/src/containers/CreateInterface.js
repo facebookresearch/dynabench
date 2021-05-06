@@ -46,9 +46,15 @@ const Explainer = (props) => (
     <p className="text-uppercase mb-0 spaced-header">
       {props.taskName || <span>&nbsp;</span>}
     </p>
-    <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
-      Find examples that fool the model
-    </h2>
+    {props.selectedModel ? (
+      <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
+        Find examples that fool <i>{props.selectedModel.name}</i>
+      </h2>
+    ) : (
+      <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
+        Find examples that fool the model
+      </h2>
+    )}
   </div>
 );
 
@@ -1059,15 +1065,15 @@ class CreateInterface extends React.Component {
       let modelInputs = {
         [contextKey]: this.state.context.context,
         [hypothesisKey]: this.state.hypothesis,
+        question: this.state.hypothesis, // TODO: if we reupload target QA models with dynalab, we can remove "hypothesis" in our message when talking to QA models. Right now dynalab QA models take "question" and target QA models take the same input in the "hypothesis" field.
         answer: answer_text,
         insight: false,
+        statement: this.state.hypothesis, // TODO: if we reupload target HS and Sentiment models with dynalab, we can remove "hypothesis" in our message when talking to HS and Sentiment models. Right now dynalab HS and Sentiment models take "statement" and target HS and Sentiment models take the same input in the "hypothesis" field
       };
-      console.log(this.state.selectedModel);
-      console.log(modelInputs);
       this.context.api
         .getModelResponse(
           this.state.selectedModel
-            ? this.state.selectedModel
+            ? this.state.selectedModel.endpointUrl
             : this.state.randomTargetModel,
           modelInputs
         )
@@ -1089,22 +1095,44 @@ class CreateInterface extends React.Component {
               var modelPredStr = null;
               var modelFooled = null;
               if (this.state.task.type == "clf") {
-                if (result.prob & result.prob.indexOf) {
+                if (!this.state.selectedModel) {
+                  // TODO: reupload target models via dynalab and we won't need this.
                   modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
+                  modelPredStr = this.state.task.targets[modelPredIdx];
+                  modelFooled = modelPredIdx !== this.state.target;
+                } else {
+                  if (result.prob) {
+                    // Make prob an ordered list.
+                    result.prob = this.state.task.targets.map(
+                      (label) => result.prob[label]
+                    );
+                  }
+                  modelPredStr = result.label;
+                  modelFooled =
+                    modelPredStr !== this.state.task.targets[this.state.target];
                 }
-                console.log(result);
-                modelPredStr = this.state.task.targets[modelPredIdx];
-                modelFooled = modelPredIdx !== this.state.target;
               } else {
                 // TODO: handle this more elegantly
                 result.prob = [result.prob, 1 - result.prob];
                 this.state.task.targets = ["confidence", "uncertainty"];
-                console.log(result.model_is_correct);
-                if (this.state.task.type === "extract") {
-                  modelFooled = !result.model_is_correct;
-                  modelPredStr = result.text;
-                } else if (this.state.task.type === "VQA") {
-                  modelPredStr = result.answer;
+                if (!this.state.selectedModel) {
+                  // TODO: reupload target models via dynalab and we won't need this.
+                  if (this.state.task.type === "extract") {
+                    modelFooled = !result.model_is_correct;
+                    modelPredStr = result.text;
+                  } else if (this.state.task.type === "VQA") {
+                    modelPredStr = result.answer;
+                  }
+                } else {
+                  if (this.state.task.type === "extract") {
+                    // TODO: We don't have model_is_correct in dynalab because we want one unified
+                    // model_is_correct function (or do we?). Regardless, it probably shouldn't be
+                    // an exact string match.
+                    modelFooled = result.answer !== answer_text;
+                    modelPredStr = result.answer;
+                  } else if (this.state.task.type === "VQA") {
+                    modelPredStr = result.answer;
+                  }
                 }
               }
               this.setState(
@@ -1211,17 +1239,13 @@ class CreateInterface extends React.Component {
 
   componentDidMount() {
     const propState = this.props.location.state;
-    if (!propState) {
-      this.props.history.push("/");
-      return;
-    }
     this.setState({
-      selectedModel: propState.detail,
+      selectedModel: propState?.detail,
     });
     const {
       match: { params },
     } = this.props;
-    if (!this.context.api.loggedIn()) {
+    if (!this.context.api.loggedIn() || propState?.detail) {
       this.setState({ livemode: false });
     } else {
       const user = this.context.api.getCredentials();
@@ -1448,7 +1472,10 @@ class CreateInterface extends React.Component {
                 </Modal.Body>
               </Modal>
             </div>
-            <Explainer taskName={this.state.task.name} />
+            <Explainer
+              taskName={this.state.task.name}
+              selectedModel={this.state.selectedModel}
+            />
             <Annotation
               placement="top"
               tooltip={
@@ -1517,30 +1544,34 @@ class CreateInterface extends React.Component {
                 <Row className="p-3">
                   <Col xs={6}>
                     <InputGroup>
-                      <OverlayTrigger
-                        placement="bottom"
-                        delay={{ show: 250, hide: 400 }}
-                        overlay={renderSandboxTooltip}
-                      >
-                        <span style={{ marginRight: 10 }}>
-                          <Annotation
-                            placement="left"
-                            tooltip="If you want to just play around without storing your examples, you can switch to Sandbox mode here."
-                          >
-                            <BootstrapSwitchButton
-                              checked={this.state.livemode}
-                              onlabel="Live Mode"
-                              onstyle="primary blue-bg"
-                              offstyle="warning"
-                              offlabel="Sandbox"
-                              width={120}
-                              onChange={(checked) => {
-                                this.switchLiveMode(checked);
-                              }}
-                            />
-                          </Annotation>
-                        </span>
-                      </OverlayTrigger>
+                      {this.state.selectedModel ? (
+                        ""
+                      ) : (
+                        <OverlayTrigger
+                          placement="bottom"
+                          delay={{ show: 250, hide: 400 }}
+                          overlay={renderSandboxTooltip}
+                        >
+                          <span style={{ marginRight: 10 }}>
+                            <Annotation
+                              placement="left"
+                              tooltip="If you want to just play around without storing your examples, you can switch to Sandbox mode here."
+                            >
+                              <BootstrapSwitchButton
+                                checked={this.state.livemode}
+                                onlabel="Live Mode"
+                                onstyle="primary blue-bg"
+                                offstyle="warning"
+                                offlabel="Sandbox"
+                                width={120}
+                                onChange={(checked) => {
+                                  this.switchLiveMode(checked);
+                                }}
+                              />
+                            </Annotation>
+                          </span>
+                        </OverlayTrigger>
+                      )}
 
                       {this.state.task.cur_round > 1 ? (
                         <OverlayTrigger
@@ -1618,8 +1649,8 @@ class CreateInterface extends React.Component {
                 </Row>
               </Form>
               <div className="p-2">
-                {this.state.task.cur_round !==
-                this.state.task.selected_round ? (
+                {this.state.task.cur_round !== this.state.task.selected_round &&
+                !this.state.selectedModel ? (
                   <p style={{ color: "red" }}>
                     WARNING: You are talking to an outdated model for a round
                     that is no longer active. Examples you generate may be less
@@ -1631,7 +1662,15 @@ class CreateInterface extends React.Component {
                 {!this.state.livemode ? (
                   <p style={{ color: "red" }}>
                     WARNING: You are in "just playing" sandbox mode. Your
-                    examples are not saved!!
+                    examples are not saved.
+                  </p>
+                ) : (
+                  ""
+                )}
+                {this.state.selectedModel ? (
+                  <p style={{ color: "red" }}>
+                    WARNING: You are talking to a user-uploaded model. You
+                    cannot switch out of sandbox mode.
                   </p>
                 ) : (
                   ""

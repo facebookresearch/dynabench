@@ -353,10 +353,9 @@ export default class ApiService {
 
   getModelResponse(
     modelUrl,
-    { context, hypothesis, answer, image_url, question, insight }
+    { context, hypothesis, answer, image_url, question, insight, statement }
   ) {
     const uid = "0"; //A requied field for dynalab uploaded models
-    question = "toooo";
     return this.doFetch(
       modelUrl,
       {
@@ -369,6 +368,7 @@ export default class ApiService {
           image_url,
           question,
           insight,
+          statement,
         }),
       },
       false

@@ -149,9 +149,12 @@ class ModelPage extends React.Component {
     this.props.history.push({
       pathname: `/tasks/${this.state.model.tid}/create`,
       state: {
-        detail:
-          "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=" +
-          this.state.model.endpoint_name,
+        detail: {
+          endpointUrl:
+            "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=" +
+            this.state.model.endpoint_name,
+          name: this.state.model.name,
+        },
       },
     });
   };
