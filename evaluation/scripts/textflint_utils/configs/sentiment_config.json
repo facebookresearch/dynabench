@@ -1,0 +1,13 @@
+{
+  "task": "UT",
+  "out_dir": "./tmp/sentiment",
+  "trans_methods": [
+    "Contraction",
+    "Keyboard",
+    "Ocr",
+    "Punctuation",
+    "SpellingError",
+    "Typos",
+    "WordCase"
+  ]
+}
