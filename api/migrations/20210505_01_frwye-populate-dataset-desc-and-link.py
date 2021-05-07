@@ -44,7 +44,7 @@ WHERE name='snli-dev'
     step(
         """
 UPDATE datasets SET longdesc='The Stanford Natural Language Inference (SNLI)
-dataset dev set.', source_url='https://nlp.stanford.edu/pubs/snli_paper.pdf'
+dataset test set.', source_url='https://nlp.stanford.edu/pubs/snli_paper.pdf'
 WHERE name='snli-test'
 """
     ),
@@ -150,7 +150,7 @@ WHERE name='mnli-test-mismatched'
     step(
         """
 UPDATE datasets SET longdesc='The Multi-Genre Natural Language Inference
-(MultiNLI) dataset. The "matched" genre dtest set (Goverment, Fiction,
+(MultiNLI) dataset. The "matched" genre test set (Goverment, Fiction,
 Telephone, Travel, Slate).',
 source_url='https://cims.nyu.edu/~sbowman/multinli/paper.pdf'
 WHERE name='mnli-test-matched'
@@ -210,7 +210,7 @@ WHERE name='sst3-test'
     step(
         """
 UPDATE datasets SET longdesc='Three-label version of the Stanford Sentiment
-Treebank, test set.', source_url='https://nlp.stanford.edu/~socherr/EMNLP2013_RNTN.pdf'
+Treebank, dev set.', source_url='https://nlp.stanford.edu/~socherr/EMNLP2013_RNTN.pdf'
 WHERE name='sst3-dev'
 """
     ),
