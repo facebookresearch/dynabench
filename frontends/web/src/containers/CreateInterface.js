@@ -500,11 +500,10 @@ class ResponseInfo extends React.Component {
     if (!isNaN(parseInt(curTarget))) {
       target = curTarget;
     }
-    const selectedAnswer =
-      answer && answer.length ? answer[answer.length - 1].tokens.join("") : "";
+
     this.context.api
       .inspectModel(content[idx].url, {
-        answer: selectedAnswer,
+        answer: content[idx].targetText,
         context: content[0].text,
         hypothesis: content[idx].cls === "hypothesis" ? content[idx].text : "",
         insight: true,
@@ -583,7 +582,6 @@ class ResponseInfo extends React.Component {
     }
     var classNames = this.props.obj.cls + " rounded border m-3";
     var userFeedback = null;
-    var selectedAnswer = null;
     var submissionResults = null;
     if (this.props.obj.retracted) {
       classNames += " response-warning";
@@ -601,15 +599,7 @@ class ResponseInfo extends React.Component {
           <strong>{this.props.obj.modelPredStr}</strong>.
         </span>
       );
-    } else {
-      if (this.props.taskType === "extract") {
-        selectedAnswer =
-          this.props.answer && this.props.answer.length
-            ? this.props.answer[this.props.answer.length - 1].tokens.join("")
-            : "";
-      } else if (this.props.taskType === "clf") {
-        selectedAnswer = this.props.targets[this.props.curTarget];
-      }
+    } else {     
       if (this.state.fooled === "no") {
         classNames += " response-warning";
         submissionResults = (
@@ -620,12 +610,12 @@ class ResponseInfo extends React.Component {
         );
       } else if (this.state.fooled === "yes") {
         classNames += " light-green-bg";
-        if (selectedAnswer && selectedAnswer.length > 0) {
+        if (this.props.obj.targetText && this.props.obj.targetText.length > 0) {
           submissionResults = (
             <span>
               <strong>You fooled the model!</strong> It predicted{" "}
               <strong>{this.props.obj.modelPredStr}</strong> but a person would
-              say <strong>{selectedAnswer}</strong>
+              say <strong>{this.props.obj.targetText}</strong>
             </span>
           );
         }
@@ -658,11 +648,7 @@ class ResponseInfo extends React.Component {
                     type="text"
                     style={{ width: 100 + "%", marginBottom: "1px" }}
                     placeholder={
-                      "Explain why " +
-                      (this.props.taskType == "clf"
-                        ? this.props.targets[this.props.curTarget]
-                        : selectedAnswer) +
-                      " is the correct answer"
+                      "Explain why " + this.props.obj.targetText + " is the correct answer"
                     }
                     data-index={this.props.index}
                     data-type="example"
@@ -706,7 +692,7 @@ class ResponseInfo extends React.Component {
                     type="text"
                     style={{ width: 100 + "%", marginBottom: "1px" }}
                     placeholder={
-                      "Explain why " + selectedAnswer + " is the correct answer"
+                      "Explain why " + this.props.obj.targetText + " is the correct answer"
                     }
                     data-index={this.props.index}
                     data-type="example"
@@ -1162,6 +1148,7 @@ class CreateInterface extends React.Component {
                       modelPredStr: modelPredStr,
                       fooled: modelFooled,
                       text: this.state.hypothesis,
+                      targetText: this.state.task.type == "clf" ? this.state.task.targets[this.state.target] : this.state.target,
                       url: this.state.randomTargetModel,
                       retracted: false,
                       prob: probList,
