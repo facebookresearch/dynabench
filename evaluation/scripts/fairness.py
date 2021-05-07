@@ -90,16 +90,16 @@ class FairnessPerturbation:
 
     def get_entity_set(self, text):
         if self.skip_ents:
+            doc = self.ner(text)
+            return [ent.text for ent in doc.ents]
+        else:
             return None
-        doc = self.ner(text)
-        ents = [ent.text for ent in doc.ents]
-        return ents
 
     def find_in_set(self, token, ents):
         if not ents:
             return False
         for ent in ents:
-            if ent.find(token) > 0:
+            if ent.find(token) >= 0:
                 return True
         return False
 
