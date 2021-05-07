@@ -10,8 +10,13 @@ from yoyo import step
 __depends__ = {"20210504_01_cbduZ-remove-invalid-datasets"}
 
 steps = [
-    step("ALTER TABLE datasets ADD longdesc Text"),
-    step("ALTER TABLE datasets ADD source_url Text"),
+    step(
+        "ALTER TABLE datasets ADD longdesc Text", "ALTER TABLE datasets DROP longdesc"
+    ),
+    step(
+        "ALTER TABLE datasets ADD source_url Text",
+        "ALTER TABLE datasets DROP source_url",
+    ),
     step(
         """
 UPDATE datasets SET longdesc='The Multi-Genre Natural Language Inference (MultiNLI)
@@ -177,7 +182,7 @@ WHERE name='amazon-review-test'
         """
 UPDATE datasets SET longdesc='Three-label Amazon review dataset from "Character-level
 Convolutional Networks for Text Classification", subsampled dev set.',
-ource_url='https://arxiv.org/abs/1509.01626' WHERE name='amazon-review-dev'
+source_url='https://arxiv.org/abs/1509.01626' WHERE name='amazon-review-dev'
 """
     ),
     step(
