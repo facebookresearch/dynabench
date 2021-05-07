@@ -204,6 +204,7 @@ class FairnessPerturbation:
         return postprocess(" ".join(perturb_text)), changed
 
     def perturb_ethnic_text(self, text):
+        ents = self.get_entity_set(text)
         text = preprocess(text)
         perturb_text = []
         changed = False
