@@ -4,7 +4,6 @@ import os
 import random
 
 import spacy
-
 from util import postprocess, preprocess
 
 
