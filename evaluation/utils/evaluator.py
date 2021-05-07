@@ -1,9 +1,11 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 import logging
 import pickle
+import time
 from datetime import datetime
 
 import boto3
+import botocore
 from dateutil.tz import tzlocal
 
 from models.model import ModelModel
@@ -109,6 +111,21 @@ class JobScheduler:
                 logger.debug(f"{ex}")
                 self._submitted.append(job)
                 return True
+            except botocore.exceptions.ClientError as ex:
+                if ex.response["Error"]["Code"] == "ThrottlingException":
+                    logger.exception(
+                        f"Sleep for 2s and requeuing job {job.job_name} "
+                        f"due to AWS throttling"
+                    )
+                    logger.debug(f"{ex}")
+                    self._queued.append(job)
+                    time.sleep(2)
+                else:
+                    logger.exception(
+                        f"Exception in submitting job {job.job_name}: {ex}"
+                    )
+                    self._failed.append(job)
+                return False
             except Exception as ex:
                 logger.exception(f"Exception in submitting job {job.job_name}: {ex}")
                 self._failed.append(job)
