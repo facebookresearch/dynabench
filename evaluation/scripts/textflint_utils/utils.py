@@ -5,16 +5,14 @@ import json
 import os
 import re
 
-import torch
-
 from textflint import Engine
 
 
 CONFIG_PATH = "textflint_utils/configs"
 TRANSFORM_FIELDS = {
     "nli": {"context": "premise", "hypothesis": "hypothesis"},
-    "sentiment": {"context": "x"},
-    "hs": {"context": "x"},
+    "sentiment": {"statement": "x"},
+    "hs": {"statement": "x"},
     "qa": {"context": "context", "question": "question"},
 }
 
@@ -37,7 +35,6 @@ def reformat_data_to_textflint(samples, task):
         converted = {"sample_id": i + 1}
         if task == "qa":
             answer = sample["answer"]
-            pos = sample["context"].find(answer)
             converted["answers"] = [
                 {"text": answer, "answer_start": i.start()}
                 for i in re.finditer(answer, sample["context"])
@@ -55,7 +52,7 @@ def reformat_data_to_textflint(samples, task):
 
 def load_config(config_path):
     config = None
-    with open(config_path, "rt") as f:
+    with open(config_path) as f:
         config = json.loads(f.read())
 
     return config
@@ -78,7 +75,7 @@ def get_transformed_data(config_path, data, task):
         fname = os.path.join(out_dir, fname)
         parts = fname.split("_")
         new_suffix = "_".join(parts[1:-1])
-        with open(fname, "rt") as f:
+        with open(fname) as f:
             for line in f:
                 sample = json.loads(line)
                 trans_sample = {"input_id": get_orig_value(data, sample, "uid")}
@@ -86,7 +83,7 @@ def get_transformed_data(config_path, data, task):
                 for key, value in perturb_fields.items():
                     trans_sample[key] = sample[value]
                 # create an unique uid for new examples
-                trans_sample["uid"] = trans_sample["input_id"] + "_" + new_suffix
+                trans_sample["uid"] = str(trans_sample["input_id"]) + "_" + new_suffix
                 trans_samples.append(trans_sample)
 
     return trans_samples
