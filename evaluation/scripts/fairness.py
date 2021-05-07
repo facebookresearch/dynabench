@@ -3,16 +3,23 @@
 import os
 import random
 
+import spacy
+
 from util import postprocess, preprocess
 
 
 class FairnessPerturbation:
-    def __init__(self):
+    def __init__(self, skip_ents=True):
         # initialize perturbation lists.
         self.fdir = "../data/"
         self.gender_name_list = self.load_gender_name_list()
         self.gender_word_list = self.load_gender_word_list()
         self.ethnic_name_list = self.load_ethnic_name_list()
+        if skip_ents:
+            self.ner = spacy.load("en_core_web_sm")
+            self.skip_ents = True
+        else:
+            self.skip_ents = False
         return
 
     def load_gender_name_list(self):
@@ -82,6 +89,19 @@ class FairnessPerturbation:
 
         return ethnic_name_list
 
+    def get_entity_set(self, text):
+        if self.skip_ents:
+            return None
+        doc = self.ner(text)
+        ents = [ent.text for ent in doc.ents]
+        return ents
+
+    def find_in_set(self, token, ents):
+        for ent in ents:
+            if ent.find(token) > 0:
+                return True
+        return False
+         
     def perturb(self, task, example):
         perturbed = []
         # gender perturb
@@ -159,12 +179,13 @@ class FairnessPerturbation:
         return None
 
     def perturb_gender_text(self, text):
+        ents = self.get_entity_set(text)
         text = preprocess(text)
         perturb_text = []
         changed = False
         for tok in text.split():
             new_name = self.gender_name_list.get(tok, None)
-            if new_name is not None:
+            if new_name is not None and not self.find_in_set(tok, ents):
                 perturb_text.append(new_name)
                 changed = True
                 continue
