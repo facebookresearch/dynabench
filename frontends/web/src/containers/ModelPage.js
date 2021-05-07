@@ -145,6 +145,20 @@ class ModelPage extends React.Component {
     });
   };
 
+  handleInteract = () => {
+    this.props.history.push({
+      pathname: `/tasks/${this.state.model.tid}/create`,
+      state: {
+        detail: {
+          endpointUrl:
+            "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=" +
+            this.state.model.endpoint_name,
+          name: this.state.model.name,
+        },
+      },
+    });
+  };
+
   togglePublish = () => {
     const modelName = this.state.model.name;
     if (!modelName || modelName === "") {
@@ -213,6 +227,12 @@ class ModelPage extends React.Component {
                     {"< Back"}
                   </Button>
                   <div>
+                    <Button
+                      variant="outline-primary mr-2"
+                      onClick={() => this.handleInteract()}
+                    >
+                      Interact with Model
+                    </Button>
                     {isModelOwner && (
                       <Button
                         variant="outline-primary mr-2"
