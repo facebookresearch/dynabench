@@ -60,7 +60,9 @@ const ScoreRow = ({ score }) => {
             {score.dataset_longdesc}
             <br />
             <br />
-            <Button href={score.dataset_source_url}>Paper</Button>
+            <Button href={score.dataset_source_url}>
+              <i className="fas fa-newspaper"></i> Read Paper
+            </Button>
           </Modal.Body>
         </Modal>
         <tr key={score.dataset_name}>
