@@ -52,9 +52,14 @@ def get_model_detail(credentials, mid):
         datasets = dm.getByTid(model["tid"])
         did_to_dataset_name = {}
         did_to_dataset_access_type = {}
+        did_to_dataset_longdesc = {}
+        did_to_dataset_source_url = {}
         for dataset in datasets:
+
             did_to_dataset_name[dataset.id] = dataset.name
             did_to_dataset_access_type[dataset.id] = dataset.access_type
+            did_to_dataset_longdesc[dataset.id] = dataset.longdesc
+            did_to_dataset_source_url[dataset.id] = dataset.source_url
         fields = ["accuracy", "round_id", "did", "metadata_json"]
         s_dicts = [
             dict(
@@ -62,6 +67,8 @@ def get_model_detail(credentials, mid):
                 **{
                     "dataset_name": did_to_dataset_name.get(d.did, None),
                     "dataset_access_type": did_to_dataset_access_type.get(d.did, None),
+                    "dataset_longdesc": did_to_dataset_longdesc.get(d.did, None),
+                    "dataset_source_url": did_to_dataset_source_url.get(d.did, None),
                 },
             )
             for d in scores

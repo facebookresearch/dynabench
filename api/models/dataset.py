@@ -23,6 +23,8 @@ class Dataset(Base):
     rid = db.Column(db.Integer, default=0)
 
     desc = db.Column(db.String(length=255))
+    longdesc = db.Column(db.Text)
+    source_url = db.Column(db.Text)
     access_type = db.Column(db.Enum(AccessTypeEnum), default=AccessTypeEnum.scoring)
 
     def __repr__(self):

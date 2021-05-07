@@ -14,6 +14,7 @@ import {
   Button,
   Table,
   InputGroup,
+  Modal,
 } from "react-bootstrap";
 import Moment from "react-moment";
 import Markdown from "react-markdown";
@@ -38,6 +39,7 @@ const ChevronExpandButton = ({ expanded }) => {
 
 const ScoreRow = ({ score }) => {
   const [expanded, setExpanded] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const perf_by_tag =
     score.metadata_json &&
@@ -50,14 +52,26 @@ const ScoreRow = ({ score }) => {
   return (
     <Table hover className="mb-0 hover" style={{ tableLayout: "fixed" }}>
       <tbody>
-        <tr
-          key={score.dataset_name}
-          onClick={() => (clickable ? setExpanded(!expanded) : "")}
-        >
+        <Modal show={showModal} onHide={() => setShowModal(!showModal)}>
+          <Modal.Header closeButton>
+            <Modal.Title>{score.dataset_name}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {score.dataset_longdesc}
+            <br />
+            <a href={score.dataset_source_url}>{score.dataset_source_url}</a>
+          </Modal.Body>
+        </Modal>
+        <tr key={score.dataset_name}>
           <td>
-            {expanded ? <b>{score.dataset_name}</b> : score.dataset_name}
+            <a type="button" onClick={() => setShowModal(!showModal)}>
+              {expanded ? <b>{score.dataset_name}</b> : score.dataset_name}
+            </a>
             {clickable ? (
-              <div style={{ float: "right" }}>
+              <div
+                style={{ float: "right" }}
+                onClick={() => (clickable ? setExpanded(!expanded) : "")}
+              >
                 <ChevronExpandButton expanded={expanded} />
               </div>
             ) : (
@@ -67,6 +81,7 @@ const ScoreRow = ({ score }) => {
           <td
             className="text-right t-2"
             key={`score-${score.dataset_name}-overall`}
+            onClick={() => (clickable ? setExpanded(!expanded) : "")}
           >
             <span>
               {expanded ? (
@@ -272,27 +287,13 @@ class ModelPage extends React.Component {
                         </tr>
                       </tbody>
                     </Table>
-                    <tr>
-                      <td colSpan={2}>
-                        <h6 className="blue-color">Leaderboard Datasets</h6>
-                      </td>
-                    </tr>
-                    {orderedLeaderboardScores.map((score) => (
-                      <ScoreRow score={score} />
-                    ))}
-                    <tr>
-                      <td colSpan={2}>
-                        <h6 className="blue-color">Non-Leaderboard Datasets</h6>
-                      </td>
-                    </tr>
-                    {orderedNonLeaderboardScores.map((score) => (
-                      <ScoreRow score={score} />
-                    ))}
-                    <tr style={{ border: `none` }}>
-                      <td colSpan={2}>
-                        <h6 className="blue-color">Model Information</h6>
-                      </td>
-                    </tr>
+                    <Table>
+                      <tr style={{ border: `none` }}>
+                        <td colSpan={2}>
+                          <h6 className="blue-color">Model Information</h6>
+                        </td>
+                      </tr>
+                    </Table>
                     <Table hover className="mb-0">
                       <thead />
                       <tbody>
@@ -347,6 +348,28 @@ class ModelPage extends React.Component {
                         </tr>
                       </tbody>
                     </Table>
+                    <Table>
+                      <tr>
+                        <td colSpan={2}>
+                          <h6 className="blue-color">Leaderboard Datasets</h6>
+                        </td>
+                      </tr>
+                    </Table>
+                    {orderedLeaderboardScores.map((score) => (
+                      <ScoreRow score={score} />
+                    ))}
+                    <Table>
+                      <tr>
+                        <td colSpan={2}>
+                          <h6 className="blue-color">
+                            Non-Leaderboard Datasets
+                          </h6>
+                        </td>
+                      </tr>
+                    </Table>
+                    {orderedNonLeaderboardScores.map((score) => (
+                      <ScoreRow score={score} />
+                    ))}
                   </InputGroup>
                 ) : (
                   <Container>
