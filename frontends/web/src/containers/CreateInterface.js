@@ -788,10 +788,14 @@ class ResponseInfo extends React.Component {
               </small>
             </Col>
             <Col xs={12} md={5}>
-              <PieRechart
-                data={this.props.obj.prob}
-                labels={this.props.targets}
-              />
+              {this.props.obj.prob ? (
+                <PieRechart
+                  data={this.props.obj.prob}
+                  labels={this.props.targets}
+                />
+              ) : (
+                ""
+              )}
             </Col>
           </Row>
         </Card.Body>
@@ -1051,8 +1055,10 @@ class CreateInterface extends React.Component {
         answer_text = "";
         if (this.state.answer.length > 0) {
           var last_answer = this.state.answer[this.state.answer.length - 1];
-          answer_text = last_answer.tokens.join(""); // NOTE: no spaces required as tokenising by word boundaries
-          // Update the target with the answer text since this is defined by the annotator in QA (unlike NLI)
+          answer_text = last_answer.tokens.join(""); // NOTE: no spaces
+          //required as tokenising by word boundaries update the target with
+          //the answer text since this is defined by the annotator in QA
+          //(unlike NLI)
           this.setState({ target: answer_text });
         }
       }
@@ -1065,10 +1071,17 @@ class CreateInterface extends React.Component {
       let modelInputs = {
         [contextKey]: this.state.context.context,
         [hypothesisKey]: this.state.hypothesis,
-        question: this.state.hypothesis, // TODO: if we reupload target QA models with dynalab, we can remove "hypothesis" in our message when talking to QA models. Right now dynalab QA models take "question" and target QA models take the same input in the "hypothesis" field.
+        question: this.state.hypothesis, // TODO: if we reupload target QA
+        //models with dynalab, we can remove "hypothesis" in our message when
+        //talking to QA models. Right now dynalab QA models take "question"
+        //and target QA models take the same input in the "hypothesis" field.
         answer: answer_text,
         insight: false,
-        statement: this.state.hypothesis, // TODO: if we reupload target HS and Sentiment models with dynalab, we can remove "hypothesis" in our message when talking to HS and Sentiment models. Right now dynalab HS and Sentiment models take "statement" and target HS and Sentiment models take the same input in the "hypothesis" field
+        statement: this.state.hypothesis, // TODO: if we reupload target HS and
+        //Sentiment models with dynalab, we can remove "hypothesis" in our
+        //message when talking to HS and Sentiment models. Right now dynalab
+        //HS and Sentiment models take "statement" and target HS and Sentiment
+        //models take the same input in the "hypothesis" field
       };
       this.context.api
         .getModelResponse(
@@ -1094,16 +1107,18 @@ class CreateInterface extends React.Component {
               var modelPredIdx = null;
               var modelPredStr = null;
               var modelFooled = null;
+              var probList = null;
               if (this.state.task.type == "clf") {
                 if (!this.state.selectedModel) {
                   // TODO: reupload target models via dynalab and we won't need this.
                   modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
                   modelPredStr = this.state.task.targets[modelPredIdx];
                   modelFooled = modelPredIdx !== this.state.target;
+                  probList = result.prob;
                 } else {
                   if (result.prob) {
                     // Make prob an ordered list.
-                    result.prob = this.state.task.targets.map(
+                    probList = this.state.task.targets.map(
                       (label) => result.prob[label]
                     );
                   }
@@ -1113,7 +1128,9 @@ class CreateInterface extends React.Component {
                 }
               } else {
                 // TODO: handle this more elegantly
-                result.prob = [result.prob, 1 - result.prob];
+                if (result.prob) {
+                  probList = [result.prob, 1 - result.prob];
+                }
                 this.state.task.targets = ["confidence", "uncertainty"];
                 if (!this.state.selectedModel) {
                   // TODO: reupload target models via dynalab and we won't need this.
@@ -1147,7 +1164,7 @@ class CreateInterface extends React.Component {
                       text: this.state.hypothesis,
                       url: this.state.randomTargetModel,
                       retracted: false,
-                      prob: result.prob,
+                      prob: probList,
                     },
                   ],
                 },
