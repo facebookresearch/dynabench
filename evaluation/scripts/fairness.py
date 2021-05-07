@@ -11,7 +11,7 @@ from util import postprocess, preprocess
 class FairnessPerturbation:
     def __init__(self, skip_ents=True):
         # initialize perturbation lists.
-        self.fdir = "../data/"
+        self.fdir = "./data/"
         self.gender_name_list = self.load_gender_name_list()
         self.gender_word_list = self.load_gender_word_list()
         self.ethnic_name_list = self.load_ethnic_name_list()
@@ -97,6 +97,8 @@ class FairnessPerturbation:
         return ents
 
     def find_in_set(self, token, ents):
+        if not ents:
+            return False
         for ent in ents:
             if ent.find(token) > 0:
                 return True
@@ -207,7 +209,7 @@ class FairnessPerturbation:
         changed = False
         for tok in text.split(" "):
             new_name = self.ethnic_name_list.get(tok, None)
-            if new_name is not None:
+            if new_name is not None and not self.find_in_set(tok, ents):
                 perturb_text.append(new_name)
                 changed = True
             else:
