@@ -57,12 +57,10 @@ const ScoreRow = ({ score }) => {
             <Modal.Title>{score.dataset_name}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <td>{score.dataset_longdesc}</td>
-            <td style={{ verticalAlign: "middle" }}>
-              <Button variant="outline-primary" href={score.dataset_source_url}>
-                Paper
-              </Button>
-            </td>
+            {score.dataset_longdesc}
+            <br />
+            <br />
+            <Button href={score.dataset_source_url}>Paper</Button>
           </Modal.Body>
         </Modal>
         <tr key={score.dataset_name}>
