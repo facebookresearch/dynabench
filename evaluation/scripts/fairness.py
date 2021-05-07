@@ -103,7 +103,7 @@ class FairnessPerturbation:
             if ent.find(token) > 0:
                 return True
         return False
-         
+
     def perturb(self, task, example):
         perturbed = []
         # gender perturb
