@@ -19,9 +19,13 @@ TRANSFORM_FIELDS = {
 LABEL_FIELD = {"nli": "label", "sentiment": "label", "hs": "label", "qa": "answer"}
 
 LABEL_MAP = {
-    "nli": {"n": "neutral", "c": "contradiction", "e": "entailment"},
+    "nli": {
+        "neutral": "neutral",
+        "contradictory": "contradiction",
+        "entailed": "entailment",
+    },
     "sentiment": {"positive": "positive", "negative": "negative", "neutral": "neutral"},
-    "hs": {"hate": "hate", "nothate": "nothate"},
+    "hs": {"hateful": "hateful", "not-hateful": "not-hateful"},
 }
 
 
