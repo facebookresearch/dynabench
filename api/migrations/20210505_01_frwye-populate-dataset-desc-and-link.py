@@ -1,7 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 """
-
+Populate datasets table with descriptions.
 """
 
 from yoyo import step
