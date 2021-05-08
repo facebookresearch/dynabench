@@ -316,7 +316,10 @@ const MetricWeightTableHeader = ({
               "Warning, Fairness is imperfect. A high fairness score does not necessarily make the model fair. See the paper for model details."
             }
           >
-            <i style={{ color: "red" }} className="fas fa-exclamation">
+            <i
+              style={{ color: "red", "font-size": 10 }}
+              className="fas fa-exclamation"
+            >
               &nbsp;
             </i>
           </WarningPopover>
@@ -330,7 +333,10 @@ const MetricWeightTableHeader = ({
               "Warning, Robustness is imperfect. A high robustness score does not necessarily make the model robust. See the paper for model details."
             }
           >
-            <i style={{ color: "red" }} className="fas fa-exclamation">
+            <i
+              style={{ color: "red", "font-size": 10 }}
+              className="fas fa-exclamation"
+            >
               &nbsp;
             </i>
           </WarningPopover>
@@ -434,7 +440,10 @@ const OverallModelLeaderBoard = ({
                   "Warning, this score is dynamic and will change over time."
                 }
               >
-                <i style={{ color: "red" }} className="fas fa-exclamation">
+                <i
+                  style={{ color: "red", "font-size": 10 }}
+                  className="fas fa-exclamation"
+                >
                   &nbsp;
                 </i>
               </WarningPopover>
