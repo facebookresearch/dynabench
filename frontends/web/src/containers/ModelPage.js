@@ -67,9 +67,9 @@ const ScoreRow = ({ score }) => {
         </Modal>
         <tr key={score.dataset_name}>
           <td>
-            <a type="button" onClick={() => setShowModal(!showModal)}>
+            <Link onClick={() => setShowModal(!showModal)} className="btn-link">
               {expanded ? <b>{score.dataset_name}</b> : score.dataset_name}
-            </a>
+            </Link>{" "}
             {clickable ? (
               <div
                 style={{ float: "right" }}
@@ -249,7 +249,7 @@ class ModelPage extends React.Component {
                       variant="outline-primary mr-2"
                       onClick={() => this.handleInteract()}
                     >
-                      Interact with Model
+                      Interact
                     </Button>
                     {isModelOwner && (
                       <Button
@@ -309,13 +309,6 @@ class ModelPage extends React.Component {
                           </td>
                         </tr>
                       </tbody>
-                    </Table>
-                    <Table>
-                      <tr style={{ border: `none` }}>
-                        <td colSpan={2}>
-                          <h6 className="blue-color">Model Information</h6>
-                        </td>
-                      </tr>
                     </Table>
                     <Table hover className="mb-0">
                       <thead />
