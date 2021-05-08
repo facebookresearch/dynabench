@@ -225,27 +225,39 @@ class ContextModel(BaseModel):
             (cnt_correct_val, cnt_incorrect_val, cnt_flagged_val, cnt_total_val),
         )
 
-    def getRandomValidationFailed(self, rid, num_matching_validations, n=1, tags=None):
+    def getRandomValidationFailed(
+        self, rid, num_matching_validations, n=1, tags=None, example_tags=None
+    ):
         result = self.dbs.query(Context).filter(Context.r_realid == rid)
         if tags:
             result = result.filter(Context.tag.in_(tags))  # noqa
 
-        contexts_with_example_stats, _, _, _ = self.getContextValidationResults(
-            num_matching_validations
+        (
+            contexts_with_example_stats,
+            _,
+            (
+                cnt_correct_examples,
+                cnt_failed_examples,
+                cnt_inflight_examples,
+                cnt_pre_val_examples,
+            ),
+            _,
+        ) = self.getContextValidationResults(
+            num_matching_validations, example_tags=example_tags
         )
-        contexts_with_example_stats = contexts_with_example_stats.subquery()
+        contexts_with_example_stats = contexts_with_example_stats.having(
+            db.and_(
+                cnt_inflight_examples == 0,
+                cnt_correct_examples == 0,
+                cnt_failed_examples > 0,
+                cnt_pre_val_examples == 0,
+            )
+        )
+        contexts_with_example_stats_sq = contexts_with_example_stats.subquery()
         return_result = (
             result.join(
-                contexts_with_example_stats,
-                contexts_with_example_stats.c.cid == Context.id,
-            )
-            .filter(
-                db.and_(
-                    contexts_with_example_stats.c.cnt_inflight_examples == 0,
-                    contexts_with_example_stats.c.cnt_correct_examples == 0,
-                    contexts_with_example_stats.c.cnt_failed_examples > 0,
-                    contexts_with_example_stats.c.cnt_pre_val_examples == 0,
-                )
+                contexts_with_example_stats_sq,
+                contexts_with_example_stats_sq.c.cid == Context.id,
             )
             .order_by(db.sql.func.rand())
             .limit(n)

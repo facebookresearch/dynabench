@@ -264,13 +264,17 @@ export default class ApiService {
     });
   }
 
-  getRandomContext(tid, rid, tags = [], method = "min") {
+  getRandomContext(tid, rid, tags = [], example_tags = [], method = "min") {
+    let example_tags_query =
+      example_tags.length > 0
+        ? `&example_tags=${encodeURIComponent(example_tags.join("|"))}`
+        : "";
     return this.fetch(
       `${
         this.domain
       }/contexts/${tid}/${rid}/${method}?tags=${encodeURIComponent(
         tags.join("|")
-      )}`,
+      )}${example_tags_query}`,
       {
         method: "GET",
       }

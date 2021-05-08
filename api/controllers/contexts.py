@@ -41,17 +41,20 @@ def getRandomMinLeastFooledContext(tid, rid):
 def getRandomValidationFailedContext(tid, rid):
     query_dict = parse_qs(bottle.request.query_string)
     tags = _getTags(query_dict)
-    return _getContext(tid, rid, "validation_failed", tags=tags)
+    example_tags = _getTags(query_dict, "example_tags")
+    return _getContext(
+        tid, rid, "validation_failed", tags=tags, example_tags=example_tags
+    )
 
 
-def _getTags(query_dict):
+def _getTags(query_dict, key="tags"):
     tags = None
-    if "tags" in query_dict and len(query_dict["tags"]) > 0:
-        tags = query_dict["tags"][0].split("|")
+    if key in query_dict and len(query_dict[key]) > 0:
+        tags = query_dict[key][0].split("|")
     return tags
 
 
-def _getContext(tid, rid, method="min", tags=None):
+def _getContext(tid, rid, method="min", tags=None, example_tags=None):
     rm = RoundModel()
     round = rm.getByTidAndRid(tid, rid)
 
@@ -70,7 +73,11 @@ def _getContext(tid, rid, method="min", tags=None):
             settings = json.loads(task.settings_json)
             num_matching_validations = settings["num_matching_validations"]
         context = c.getRandomValidationFailed(
-            round.id, num_matching_validations, n=1, tags=tags
+            round.id,
+            num_matching_validations,
+            n=1,
+            tags=tags,
+            example_tags=example_tags,
         )
     if not context:
         bottle.abort(500, f"No contexts available ({round.id})")
