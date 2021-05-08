@@ -121,6 +121,25 @@ const WeightPopover = ({ label, weight, children }) => {
   );
 };
 
+const WarningPopover = ({ warning, direction, children }) => {
+  const target = useRef(null);
+
+  return (
+    <OverlayTrigger
+      placement={direction}
+      delay={{ show: 250, hide: 400 }}
+      overlay={
+        <Popover>
+          <Popover.Content>{warning}</Popover.Content>
+        </Popover>
+      }
+      target={target.current}
+    >
+      {children}
+    </OverlayTrigger>
+  );
+};
+
 /**
  * Container to show and toggle current sort by.
  *
@@ -290,6 +309,40 @@ const MetricWeightTableHeader = ({
         currentSort={sort}
         className="d-flex justify-content-end align-items-center"
       >
+        {metric.label === "Fairness" ? (
+          <WarningPopover
+            direction="right"
+            warning={
+              "Warning, Fairness is imperfect. A high fairness score does not necessarily make the model fair. See the paper for model details."
+            }
+          >
+            <i
+              style={{ color: "red", "font-size": 10 }}
+              className="fas fa-exclamation"
+            >
+              &nbsp;
+            </i>
+          </WarningPopover>
+        ) : (
+          ""
+        )}
+        {metric.label === "Robustness" ? (
+          <WarningPopover
+            direction="right"
+            warning={
+              "Warning, Robustness is imperfect. A high robustness score does not necessarily make the model robust. See the paper for model details."
+            }
+          >
+            <i
+              style={{ color: "red", "font-size": 10 }}
+              className="fas fa-exclamation"
+            >
+              &nbsp;
+            </i>
+          </WarningPopover>
+        ) : (
+          ""
+        )}
         <WeightPopover label={metric.label} weight={metric.weight}>
           <span>
             {metric.label}&nbsp;
@@ -381,6 +434,19 @@ const OverallModelLeaderBoard = ({
               toggleSort={toggleSort}
               currentSort={sort}
             >
+              <WarningPopover
+                direction="left"
+                warning={
+                  "Warning, this score is dynamic and will change over time."
+                }
+              >
+                <i
+                  style={{ color: "red", "font-size": 10 }}
+                  className="fas fa-exclamation"
+                >
+                  &nbsp;
+                </i>
+              </WarningPopover>
               Dynascore
             </SortContainer>
           </th>
