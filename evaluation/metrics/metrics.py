@@ -116,7 +116,7 @@ def get_examples_per_second(job, dataset):
 def get_examples_per_second_meta(task):
     return {
         "unit": "examples/second",
-        "pretty_name": "Compute",
+        "pretty_name": "Throughput",
         "utility_direction": 1,
         "offset": 0,
     }
