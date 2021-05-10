@@ -17,15 +17,6 @@ from models.refresh_token import RefreshTokenModel
 from models.user import UserModel
 
 
-@bottle.get("/users")
-# @_auth.requires_auth
-# def users(credentials):
-def users():
-    u = UserModel()
-    users = u.list()
-    return util.json_encode(users)
-
-
 @bottle.get("/users/<id:int>")
 @_auth.requires_auth
 def get_user(credentials, id):

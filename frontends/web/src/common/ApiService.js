@@ -112,12 +112,6 @@ export default class ApiService {
     });
   }
 
-  getUsers() {
-    return this.fetch(`${this.domain}/users`, {
-      method: "GET",
-    });
-  }
-
   getAsyncBadges() {
     return this.fetch(`${this.domain}/badges/getasync`, {
       method: "GET",
