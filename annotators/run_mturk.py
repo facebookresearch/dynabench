@@ -62,9 +62,7 @@ class TestScriptConfig(RunScriptConfig):
     )
     dynabench: DynaBenchConfig = DynaBenchConfig()
     num_jobs: int = 1
-    #TODO: look at mephisto worker whitelist
-    # preselected_qualifications: List[str] = ("100_hits_approved", "english_only")
-    preselected_qualifications: List[str] = ()
+    preselected_qualifications: List[str] = ("100_hits_approved", "english_only")
     frontend_dir: str = f"{CURRENT_DIRECTORY}/../frontends"
 
 
@@ -99,6 +97,7 @@ def build_frontend(frontend_dir):
 
 @hydra.main(config_name="scriptconfig")
 def main(cfg: DictConfig) -> None:
+    print(cfg)
     num_jobs = cfg.num_jobs
     static_task_data = [{} for _ in range(num_jobs)]
     mturk_specific_qualifications = get_qualifications(cfg.preselected_qualifications)

@@ -45,7 +45,7 @@ class ContextInfo extends React.Component {
               tag: 'ANS',
             })}
           />
-          <p><small><strong>Your goal:</strong> enter a question and select an answer in the passage that the model can't answer.</small></p>
+          <p><small><strong>Your goal:</strong> enter a question and select an answer in the passage that the AI can't answer.</small></p>
         </>
         :
         <><div className='context'>{this.props.text}</div><p><small><strong>Your goal:</strong> enter a <strong>{this.props.targets[this.props.curTarget]}</strong> statement that fools the model.</small></p></>
@@ -282,16 +282,16 @@ class CreateInterface extends React.Component {
                 <small>{
                   item.retracted ?
                   <>
-                    <span><strong>Example retracted</strong> - thanks. The model predicted <strong>{item.modelPredStr}</strong>. Please try again!</span>
+                    <span><strong>Example retracted</strong> - thanks. The AI predicted <strong>{item.modelPredStr}</strong>. Please try again!</span>
                   </>
                   :
                   (item.fooled ?
                     <>
-                      <span><strong>Well done!</strong> You fooled the model. The model predicted <strong>{item.modelPredStr}</strong> instead. </span><br />
+                      <span><strong>Well done</strong>, you fooled the AI! The AI predicted <strong>{item.modelPredStr}</strong> instead. </span><br />
                     </>
                     :
                     <>
-                      <span><strong>Bad luck!</strong> The model correctly predicted <strong>{item.modelPredStr}</strong>. Try again.</span>
+                      <span><strong>Bad luck!</strong> The AI correctly predicted <strong>{item.modelPredStr}</strong>. Please try again.</span>
                     </>
                   )
                 }</small>
@@ -319,9 +319,9 @@ class CreateInterface extends React.Component {
     return (
       <Container>
         <Row>
-          <CardGroup style={{marginTop: 8, width: '100%'}}>
+          <CardGroup style={{marginTop: 4, width: '100%'}}>
             <Card border='dark'>
-              <Card.Body style={{height: 480, overflowY: 'scroll'}}>
+              <Card.Body style={{height: 400, overflowY: 'scroll'}}>
                 {content}
               </Card.Body>
             </Card>
@@ -336,7 +336,7 @@ class CreateInterface extends React.Component {
             />
           </InputGroup>
           <InputGroup>
-            <p><small className="form-text text-muted">Remember, the goal is to find an example that the model gets wrong but that another person would get right. Load time may be slow; please be patient.</small></p>
+            <p><small className="form-text text-muted">Remember, the goal is to find an example that the AI gets wrong but that another person would get right. Load time may be slow; please be patient.</small></p>
           </InputGroup>
           {errorMessage}
           <InputGroup>

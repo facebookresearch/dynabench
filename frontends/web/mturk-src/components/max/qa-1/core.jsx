@@ -219,11 +219,13 @@ class MaxQATaskMain extends React.Component {
   }
   render() {
     // console.log(this.props);
-    // if (this.props.mephistoWorkerId % 5 == 0) {
-    // TODO: do some sort of combined hash + random num generator
-    var model_id = 0;
+    var mephistoIdCode = this.props.mephistoWorkerId.toString().split('').map(x=>x.charCodeAt(0)).reduce((a,b)=>a+b);
+    var model_id = mephistoIdCode % this.model_names.length;
     var model_name = this.model_names[model_id];
     var model_url = this.model_urls[model_id];
+
+    console.log(mephistoIdCode, model_id, model_name);
+
     return <>
         <Container>
         <Row>
@@ -232,6 +234,7 @@ class MaxQATaskMain extends React.Component {
         {this.state.showInstructions && <Row> <TaskModelInstructions /> </Row>}
         <Row>
           <h4 className="mt-3">Can you ask Questions that the AI can't answer?</h4>
+          <small className="mb-3"><b>Note:</b> you will earn an <b>additional $0.50 BONUS</b> for every question that <b>beats the AI</b>, abides by the requirements specified in the instructions above, and is successfully validated by other human annotators. This means that you could potentially earn <b>an additional $2.50 per HIT!</b> Kindly note that validation is a tedious process meaning that bonuses will not be paid out immediately, and we thank you in advance for your understanding and patience with this.</small>
         </Row>
         </Container>
         <CreateInterface api={this.api} model_name={model_name} model_url={model_url} {...this.props} />
