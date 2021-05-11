@@ -521,20 +521,17 @@ class BadgeModel(BaseModel):
             scores = self.dbs.query(Score).filter(Score.mid == model.id).all()
             for score in scores:
                 round = rm.get(score.r_realid)
-                if model.id == sm.getOverallModelPerfByTask(round.tid)[0][0][0]:
-                    badges_to_add.append(
-                        self._badgeobj(user.id, "SOTA", json.dumps({"mid": model.id}))
-                    )
-                    break
-
-                if (
-                    model.id
-                    == sm.getModelPerfByTidAndRid(round.tid, round.rid)[0][0][0]
-                ):
-                    badges_to_add.append(
-                        self._badgeobj(user.id, "SOTA", json.dumps({"mid": model.id}))
-                    )
-                    break
+                if round.rid != 0:
+                    if (
+                        model.id
+                        == sm.getModelPerfByTidAndRid(round.tid, round.rid)[0][0][0]
+                    ):
+                        badges_to_add.append(
+                            self._badgeobj(
+                                user.id, "SOTA", json.dumps({"mid": model.id})
+                            )
+                        )
+                        break
 
         models_published = self.getFieldsFromMetadata(
             json.loads(user.metadata_json),
