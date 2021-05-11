@@ -10,6 +10,7 @@ import {
 } from "react-bootstrap";
 import UserContext from "../../containers/UserContext";
 import OverallModelLeaderBoard from "./OverallModelLeaderBoard";
+import { Link } from "react-router-dom";
 
 const SortDirection = {
   ASC: "asc",
@@ -200,11 +201,11 @@ const TaskLeaderboardCard = (props) => {
               <Modal.Title>Dynaboard Information</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              This is a dynamic leaderboard. It allows you, the user, to specify
-              your own utility function over a variety of metrics and datasets,
-              which determines the final ranking of models for this particular
-              task. The default initial weights are specified by the task
-              owners.
+              This is a <b>dynamic leaderboard</b>. It allows you, the user, to
+              specify your own utility function over a variety of metrics and
+              datasets, which determines the final ranking of models for this
+              particular task. The default initial weights are specified by the
+              task owners.
               <br />
               <br />
               There are a few important caveats that you should keep in mind
@@ -242,18 +243,37 @@ const TaskLeaderboardCard = (props) => {
                   the total number of examples divided by the inference time in
                   seconds. The inference time is the difference between
                   TransformEndTime and TransformStartTime from AWS’s
-                  DescribeTransformJob API. Memory is the average of all logged
-                  MemoryUtilization data points (logged as a utilization
-                  percentage every 1 minute by AWS) during inference, which is
-                  converted into GiB by multiplying with the total available
-                  memory of the instance type. Note that this is the memory
-                  utilization of the entire model’s docker container that serves
-                  the model. Both metrics are dependent on the instance type,
-                  and contain some randomness, i.e. that they are expected to
-                  change slightly every time even in exactly the same setup. In
-                  our setup, ml.m5.2xlarge is the default machine instance,
-                  which has 8 cpus and 32 GiB memory. All metrics are
-                  higher-is-better, except memory, where lower is better.
+                  <a
+                    href={
+                      "https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_DescribeTransformJob.html"
+                    }
+                  >
+                    {" "}
+                    DescribeTransformJob API
+                  </a>
+                  . Memory is the average of all logged
+                  <a
+                    href={
+                      "https://docs.aws.amazon.com/sagemaker/latest/dg/monitoring-cloudwatch.html#cloudwatch-metrics-jobs"
+                    }
+                  >
+                    {" "}
+                    MemoryUtilization
+                  </a>{" "}
+                  data points (logged as a utilization percentage every 1 minute
+                  by AWS) during inference, which is converted into GiB by
+                  multiplying with the total available memory of the instance
+                  type. Note that this is the memory utilization of the entire
+                  model’s docker container that serves the model. Both metrics
+                  are dependent on the instance type, and contain some
+                  randomness, i.e. they are expected to change slightly every
+                  time even in exactly the same setup. In our setup,{" "}
+                  <a href={"https://aws.amazon.com/sagemaker/pricing/"}>
+                    ml.m5.2xlarge
+                  </a>{" "}
+                  is the default machine instance, which has 8 cpus and 32 GiB
+                  memory. All metrics are higher-is-better, except memory, where
+                  lower is better.
                 </li>
               </ul>
               For more details, see the paper.
