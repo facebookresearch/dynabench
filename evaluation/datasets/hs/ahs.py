@@ -33,13 +33,7 @@ class AhsBase(HsBase):
                             "label": {"nothate": "not-hateful", "hate": "hateful"}[
                                 row["label"]
                             ],
-                            "tags": [
-                                "Type: " + str(row["type"]),
-                                "Target: " + str(row["target"]),
-                                "Level: " + str(row["level"]),
-                                "Label: " + str(row["label"]),
-                                "Round: " + str(row["round"]),
-                            ],
+                            "tags": [row["label"]],
                         }
                         tmp.write(json.dumps(tmp_jl) + "\n")
                 tmp.close()

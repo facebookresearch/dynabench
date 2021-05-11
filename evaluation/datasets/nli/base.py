@@ -9,9 +9,21 @@ sys.path.append("../api")
 
 
 class NliBase(BaseDataset):
-    def __init__(self, name, round_id, access_type=AccessTypeEnum.scoring):
+    def __init__(
+        self,
+        name,
+        round_id,
+        access_type=AccessTypeEnum.scoring,
+        longdesc=None,
+        source_url=None,
+    ):
         super().__init__(
-            task="nli", name=name, round_id=round_id, access_type=access_type
+            task="nli",
+            name=name,
+            round_id=round_id,
+            access_type=access_type,
+            longdesc=longdesc,
+            source_url=source_url,
         )
 
     def pred_field_converter(self, example):

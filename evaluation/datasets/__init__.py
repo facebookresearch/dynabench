@@ -7,7 +7,7 @@ sys.path.append("../api")  # noqa
 
 # TODO: find a way not to comment the follow imports to skip linter
 from datasets.hs import ahs, hatecheck  # isort:skip
-from datasets.nli import anli, hans, mnli, nli_st, snli  # isort:skip
+from datasets.nli import anli, hans, mnli, nli_st, snli, sg_winogender  # isort:skip
 from datasets.qa import aqa, mrqa_shared_dev  # isort:skip
 from datasets.sentiment import amazon_review, dynasent, sst3, yelp_review  # isort:skip
 
@@ -15,6 +15,7 @@ from datasets.sentiment import amazon_review, dynasent, sst3, yelp_review  # iso
 def load_datasets():
     # This function is used in server to initialize all datasets
     datasets = {
+        "superglue-winogender": sg_winogender.SuperglueWinogender(),
         "hans": hans.Hans(),
         "nli-stress-test": nli_st.NLIStressTest(),
         "mnli-dev-mismatched": mnli.MnliDevMismatched(),

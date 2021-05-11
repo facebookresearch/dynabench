@@ -10,13 +10,25 @@ from datasets.common import logger
 from .base import AccessTypeEnum, NliBase
 
 
-class Hans(NliBase):
+class SuperglueWinogender(NliBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
         self.local_path = os.path.join(
-            rootpath, "data", "nli/hans/heuristics_evaluation_set.jsonl"
+            rootpath, "data", "nli/superglue_winogender/AX-g.jsonl"
         )
-        super().__init__(name="hans", round_id=0, access_type=AccessTypeEnum.standard)
+        source_url = "https://www.aclweb.org/anthology/N18-2002/"
+        longdesc = (
+            'The Winogender dataset from "Gender Bias in Coreference'
+            + ' Resolution". It is the version from SuperGLUE, which has been'
+            + " converted into a binary NLI task (entailment, not entailment)."
+        )
+        super().__init__(
+            name="superglue-winogender",
+            round_id=0,
+            access_type=AccessTypeEnum.standard,
+            longdesc=longdesc,
+            source_url=source_url,
+        )
 
     def load(self):
         try:
@@ -25,18 +37,16 @@ class Hans(NliBase):
                     jl = json.loads(line)
                     # If gold_label is -, then no annotators did not reach a
                     # majority agreement.
-                    if jl["gold_label"] != "-":
-                        tmp_jl = {
-                            "uid": jl["pairID"],
-                            "context": jl["sentence1"],
-                            "hypothesis": jl["sentence2"],
-                            "label": {
-                                "entailment": "entailed",
-                                "non-entailment": ["neutral", "contradictory"],
-                            }[jl["gold_label"]],
-                            "tags": [jl["heuristic"]],
-                        }
-                        tmp.write(json.dumps(tmp_jl) + "\n")
+                    tmp_jl = {
+                        "uid": jl["pair_id"],
+                        "context": jl["premise"],
+                        "hypothesis": jl["hypothesis"],
+                        "label": {
+                            "entailment": "entailed",
+                            "not_entailment": ["neutral", "contradictory"],
+                        }[jl["label"]],
+                    }
+                    tmp.write(json.dumps(tmp_jl) + "\n")
                 tmp.close()
                 response = self.s3_client.upload_file(
                     tmp.name, self.s3_bucket, self._get_data_s3_path()

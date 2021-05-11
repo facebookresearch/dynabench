@@ -32,6 +32,8 @@ class BaseDataset(ABC):
         access_type=AccessTypeEnum.scoring,
         config=eval_config,
         ext=".jsonl",
+        longdesc=None,
+        source_url=None,
     ):
         self.task = task
         self.name = name
@@ -41,6 +43,8 @@ class BaseDataset(ABC):
         self._n_examples = {}  # will be get through API
         self.s3_bucket = config["dataset_s3_bucket"]
         self.s3_url = self._get_data_s3_url()
+        self.longdesc = longdesc
+        self.source_url = source_url
 
         self.s3_client = boto3.client(
             "s3",
@@ -98,6 +102,8 @@ class BaseDataset(ABC):
                 task_id=task_id,
                 rid=self.round_id,
                 access_type=self.access_type,
+                longdesc=self.longdesc,
+                source_url=self.source_url,
             ):
                 logger.info(f"Registered {self.name} in datasets db.")
                 send_eval_request(
