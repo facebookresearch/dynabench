@@ -31,11 +31,7 @@ class HateCheck(HsBase):
                         "label": {"nothate": "not-hateful", "hate": "hateful"}[
                             jl["answer"]
                         ],
-                        "tags": [
-                            "Functionality: " + jl["functionality"],
-                            "Target: " + jl["target"],
-                            "Label: " + jl["answer"],
-                        ],
+                        "tags": [jl["functionality"], jl["answer"]],
                     }
                     tmp.write(json.dumps(tmp_jl) + "\n")
                 tmp.close()
