@@ -11,7 +11,7 @@ from .base import Base, BaseModel
 from .example import Example
 from .notification import NotificationModel
 from .round import RoundModel
-from .score import Score, ScoreModel
+from .score import AccessTypeEnum, Score, ScoreModel
 from .user import User, UserModel
 from .validation import Validation
 
@@ -520,10 +520,11 @@ class BadgeModel(BaseModel):
             sm = ScoreModel()
             scores = self.dbs.query(Score).filter(Score.mid == model.id).all()
             for score in scores:
-                round = rm.get(score.r_realid)
-                if round.rid != 0:
+                if score.access_type == AccessTypeEnum.scoring:
+                    round = rm.get(score.r_realid)
                     if (
-                        model.id
+                        round.rid != 0
+                        and model.id
                         == sm.getModelPerfByTidAndRid(round.tid, round.rid)[0][0][0]
                     ):
                         badges_to_add.append(
