@@ -385,15 +385,14 @@ class ScoreModel(BaseModel):
     def getOneByModelIdAndDataset(self, mid, did):
         try:
             return (
-                self.dbs.query(Score)
-                .join(Model)
+                self.dbs.query(Score.id, Score.metadata_json)
                 .filter(Score.mid == mid)
                 .filter(Score.did == did)
                 .order_by(Score.perf.desc())
                 .one()
             )
         except db.orm.exc.NoResultFound:
-            return False
+            return None
 
     def getByMid(self, mid):
         return (

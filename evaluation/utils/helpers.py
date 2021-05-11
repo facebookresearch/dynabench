@@ -111,6 +111,7 @@ def get_perturbed_filename(filename, perturb_prefix=None):
 
 def get_data_s3_path(task, filename, perturb_prefix=None):
     filename = get_perturbed_filename(filename, perturb_prefix)
+    # TODO: Is this correct ? I think it will break on windows
     return os.path.join("datasets", task, filename)
 
 
