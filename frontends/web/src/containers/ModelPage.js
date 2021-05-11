@@ -249,7 +249,7 @@ class ModelPage extends React.Component {
                       variant="outline-primary mr-2"
                       onClick={() => this.handleInteract()}
                     >
-                      Interact
+                      <i className="fas fa-pen"></i> Interact
                     </Button>
                     {isModelOwner && (
                       <Button
@@ -287,9 +287,7 @@ class ModelPage extends React.Component {
                         <tr>
                           <td colSpan="2">
                             <h5 className="mx-0">
-                              <span className="blue-color">
-                                {model.name || "Unknown"}
-                              </span>
+                              <span>{model.name || "Unknown"}</span>
                               <span className="float-right">
                                 uploaded{" "}
                                 <Moment fromNow>{model.upload_datetime}</Moment>
@@ -367,7 +365,7 @@ class ModelPage extends React.Component {
                     <Table>
                       <tr>
                         <td colSpan={2}>
-                          <h6 className="blue-color">Leaderboard Datasets</h6>
+                          <h5>Leaderboard Datasets</h5>
                         </td>
                       </tr>
                     </Table>
@@ -377,9 +375,7 @@ class ModelPage extends React.Component {
                     <Table>
                       <tr>
                         <td colSpan={2}>
-                          <h6 className="blue-color">
-                            Non-Leaderboard Datasets
-                          </h6>
+                          <h5>Non-Leaderboard Datasets</h5>
                         </td>
                       </tr>
                     </Table>
