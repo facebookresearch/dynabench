@@ -74,6 +74,7 @@ class PublishInterface extends React.Component {
       params: values.params,
       languages: values.languages,
       license: values.license,
+      source_url: values.source_url,
       model_card: values.model_card,
     };
     this.context.api.publishModel(reqObj).then(
@@ -136,9 +137,10 @@ class PublishInterface extends React.Component {
                       initialValues={{
                         name: model.name || "",
                         description: model.longdesc || "",
-                        params: model.params || "",
+                        params: model.params,
                         languages: model.languages || "",
                         license: model.license || "",
+                        source_url: model.source_url || "",
                         model_card: model.model_card || modelCardTemplate,
                       }}
                       validate={this.handleValidation}
@@ -235,6 +237,18 @@ class PublishInterface extends React.Component {
                                 placeholder="e.g. Apache 2.0"
                                 onChange={handleChange}
                                 value={values.license}
+                              />
+                            </Form.Group>
+                            <Form.Group>
+                              <Form.Label>
+                                <b>Paper Link</b>
+                              </Form.Label>
+                              <Form.Control
+                                name="source_url"
+                                type="url"
+                                placeholder="e.g. https://arxiv.org/abs/1810.04805"
+                                onChange={handleChange}
+                                value={values.source_url}
                               />
                             </Form.Group>
                             <Form.Group>

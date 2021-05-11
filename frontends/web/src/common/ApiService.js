@@ -151,6 +151,7 @@ export default class ApiService {
     params,
     languages,
     license,
+    source_url,
     model_card,
   }) {
     return this.fetch(`${this.domain}/models/${modelId}/publish`, {
@@ -161,6 +162,7 @@ export default class ApiService {
         params,
         languages,
         license,
+        source_url,
         model_card,
       }),
     });

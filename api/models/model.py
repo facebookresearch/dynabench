@@ -41,6 +41,7 @@ class Model(Base):
     license = db.Column(db.Text)
     upload_datetime = db.Column(db.DateTime)
     model_card = db.Column(db.Text)
+    source_url = db.Column(db.Text)
 
     is_published = db.Column(db.BOOLEAN, default=False)
 

@@ -249,6 +249,16 @@ class ModelPage extends React.Component {
                     >
                       Interact with Model
                     </Button>
+                    {model.source_url && model.source_url !== "" ? (
+                      <Button
+                        variant="outline-primary mr-2"
+                        href={model.source_url}
+                      >
+                        <i className="fas fa-newspaper"></i> Read Paper
+                      </Button>
+                    ) : (
+                      ""
+                    )}
                     {isModelOwner && (
                       <Button
                         variant="outline-primary mr-2"

@@ -120,6 +120,7 @@ def publish_model(credentials, mid):
             params=data["params"],
             languages=data["languages"],
             license=data["license"],
+            source_url=data["source_url"],
             model_card=data["model_card"],
             is_published=True,
         )
