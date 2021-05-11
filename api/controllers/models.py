@@ -46,7 +46,8 @@ def get_model_detail(credentials, mid):
             and query_result[0].uid != credentials["id"]
         ):
             raise AssertionError()
-        model["user"] = query_result[1].to_dict()
+        model["username"] = query_result[1].username
+        model["user_id"] = query_result[1].id
         # Construct Score information based on model id
         scores = s.getByMid(mid)
         datasets = dm.getByTid(model["tid"])

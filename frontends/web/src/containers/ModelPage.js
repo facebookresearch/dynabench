@@ -129,9 +129,7 @@ class ModelPage extends React.Component {
       modelId: this.props.match.params.modelId,
       model: {
         name: "",
-        user: {
-          username: "",
-        },
+        username: "",
       },
     };
   }
@@ -210,7 +208,7 @@ class ModelPage extends React.Component {
 
   render() {
     const isModelOwner =
-      parseInt(this.state.model.user.id) === parseInt(this.state.ctxUserId);
+      parseInt(this.state.model.user_id) === parseInt(this.state.ctxUserId);
     const { model } = this.state;
     const { leaderboard_scores } = this.state.model;
     const { non_leaderboard_scores } = this.state.model;
@@ -323,8 +321,8 @@ class ModelPage extends React.Component {
                         <tr style={{ border: `none` }}>
                           <td>Owner</td>
                           <td>
-                            <Link to={`/users/${model.user.id}`}>
-                              {model.user && model.user.username}
+                            <Link to={`/users/${model.user_id}`}>
+                              {model.username}
                             </Link>
                           </td>
                         </tr>

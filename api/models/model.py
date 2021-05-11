@@ -58,6 +58,8 @@ class Model(Base):
     def to_dict(self, safe=True):
         d = {}
         for column in self.__table__.columns:
+            if safe and column.name in ["secret", "user"]:
+                continue
             d[column.name] = getattr(self, column.name)
         return d
 
