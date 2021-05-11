@@ -242,22 +242,20 @@ const TaskLeaderboardCard = (props) => {
                   Cloudwatch. Throughput in examples per second is computed as
                   the total number of examples divided by the inference time in
                   seconds. The inference time is the difference between
-                  TransformEndTime and TransformStartTime from AWS’s
+                  TransformEndTime and TransformStartTime from AWS’s{" "}
                   <a
                     href={
                       "https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_DescribeTransformJob.html"
                     }
                   >
-                    {" "}
                     DescribeTransformJob API
                   </a>
-                  . Memory is the average of all logged
+                  . Memory is the average of all logged{" "}
                   <a
                     href={
                       "https://docs.aws.amazon.com/sagemaker/latest/dg/monitoring-cloudwatch.html#cloudwatch-metrics-jobs"
                     }
                   >
-                    {" "}
                     MemoryUtilization
                   </a>{" "}
                   data points (logged as a utilization percentage every 1 minute
