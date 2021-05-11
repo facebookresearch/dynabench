@@ -6,6 +6,7 @@ import sys
 import tempfile
 
 from datasets.common import logger
+from utils import helpers
 
 from .base import MTBase
 
@@ -92,6 +93,10 @@ class Flores101Base(MTBase):
         self.languages = languages[1:10]
         super().__init__(task=task, name=name, round_id=round_id)
 
+    def _get_data_s3_path(self, perturb_prefix=None):
+        task = self.task.replace("_", "-")
+        return helpers.get_data_s3_path(task, self.filename, perturb_prefix)
+
     def load(self):
         try:
             with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
@@ -130,11 +135,14 @@ class Flores101Base(MTBase):
         else:
             return True
 
-    def field_converter(self, example):
+    def label_field_converter(self, example):
         return {
             "id": example["uid"],
             "answer": example["target_text"],
-            "tags": [example["source_language"], example["target_language"]],
+            "tags": [
+                "src:" + example["source_language"],
+                "tgt:" + example["target_language"],
+            ],
         }
 
 
@@ -143,7 +151,7 @@ class Flores101FullDev(Flores101Base):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "evaluation/data", "mt/flores101")
         super().__init__(
-            task="flores-full",
+            task="flores_full",
             name="flores101-full-dev",
             round_id=1,
             local_path=local_path,
@@ -157,7 +165,7 @@ class Flores101FullDevTest(Flores101Base):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "evaluation/data", "mt/flores101")
         super().__init__(
-            task="flores-full",
+            task="flores_full",
             name="flores101-full-devtest",
             round_id=1,
             local_path=local_path,
@@ -171,7 +179,7 @@ class Flores101FullTest(Flores101Base):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "evaluation/data", "mt/flores101")
         super().__init__(
-            task="flores-full",
+            task="flores_full",
             name="flores101-full-test",
             round_id=1,
             local_path=local_path,
@@ -185,7 +193,7 @@ class Flores101Small1Dev(Flores101Base):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "evaluation/data", "mt/flores101")
         super().__init__(
-            task="flores-small1",
+            task="flores_small1",
             name="flores101-small1-dev",
             round_id=1,
             local_path=local_path,
@@ -199,7 +207,7 @@ class Flores101Small1DevTest(Flores101Base):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "evaluation/data", "mt/flores101")
         super().__init__(
-            task="flores-small1",
+            task="flores_small1",
             name="flores101-small1-devtest",
             round_id=1,
             local_path=local_path,
@@ -213,7 +221,7 @@ class Flores101Small1Test(Flores101Base):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "evaluation/data", "mt/flores101")
         super().__init__(
-            task="flores-small1",
+            task="flores_small1",
             name="flores101-small1-test",
             round_id=1,
             local_path=local_path,
@@ -227,7 +235,7 @@ class Flores101Small2Dev(Flores101Base):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "evaluation/data", "mt/flores101")
         super().__init__(
-            task="flores-small2",
+            task="flores_small2",
             name="flores101-small2-dev",
             round_id=1,
             local_path=local_path,
@@ -241,7 +249,7 @@ class Flores101Small2DevTest(Flores101Base):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "evaluation/data", "mt/flores101")
         super().__init__(
-            task="flores-small2",
+            task="flores_small2",
             name="flores101-small2-devtest",
             round_id=1,
             local_path=local_path,
@@ -255,7 +263,7 @@ class Flores101Small2Test(Flores101Base):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "evaluation/data", "mt/flores101")
         super().__init__(
-            task="flores-small2",
+            task="flores_small2",
             name="flores101-small2-test",
             round_id=1,
             local_path=local_path,

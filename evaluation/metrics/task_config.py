@@ -12,13 +12,6 @@ _default_config = {
     "delta_metrics": ["fairness", "robustness"],
     "input_keys": ["uid", "statement"],
 }
-flores_config = {
-    "instance_config": instance_property["ml.m5.xlarge"],
-    "instance_count": 1,
-    "eval_metrics": ["bleu"],
-    "perf_metric": "bleu",
-    "input_keys": ["uid", "source_text", "source_language", "target_language"],
-}
 
 _custom_config = {
     "nli": {"input_keys": ["uid", "context", "hypothesis"]},
@@ -27,9 +20,16 @@ _custom_config = {
         "eval_metrics": ["f1"],
         "perf_metric": "f1",
     },
-    "flores-full": flores_config,
-    "flores-small1": flores_config,
-    "flores-small2": flores_config,
+    "flores": {
+        "instance_config": instance_property["ml.m5.xlarge"],
+        "eval_metrics": ["bleu"],
+        "perf_metric": "bleu",
+        # Disable input key filtering because
+        # Sagemaker can't filter on snake cased names:
+        # "input_keys": ["uid", "source_text", "source_language", "target_language"],
+        # TODO: edit the keys in the dataset
+        "input_keys": "",
+    },
 }
 
 
@@ -49,8 +49,13 @@ tasks_config = {
     "hs": _gen_config(),
     "sentiment": _gen_config(),
     "qa": _gen_config(_custom_config["qa"]),
+    "flores_full": _gen_config(_custom_config["flores"]),
+    "flores_small1": _gen_config(_custom_config["flores"]),
+    "flores_small2": _gen_config(_custom_config["flores"]),
 }
 
 
 def get_task_config_safe(task):
+    # TODO: I don't think there should be a default config.
+    # Most likely if the config isn't found it's because of a typo in the code.
     return tasks_config.get(task, tasks_config["default"])

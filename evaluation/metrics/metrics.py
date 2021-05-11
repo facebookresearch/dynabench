@@ -86,8 +86,7 @@ def get_robustness_meta(task=None):
 
 # sacrebleu evaluation
 def get_bleu(predictions: list, targets: list):
-    refs = [[ref] for ref in targets]  # embedding lists of lists
-    bleu = sacrebleu.corpus_bleu(predictions, refs)
+    bleu = sacrebleu.corpus_bleu(predictions, [targets])
     return bleu.score
 
 
