@@ -1,0 +1,79 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+ body {
+     padding-top: 0;
+ }
+
+ li {
+    list-style: disc outside none;
+    display: list-item;
+    margin-left: 1.5em;
+  }
+
+ .qa-context > span {
+    /* Fix for react-text-annote token annotator added whitespace around tokens */
+    margin-right: -4px;
+    white-space: pre-wrap;
+    letter-spacing: 0.2px;
+    line-height: 1.8;
+ }
+
+ .qa-context > mark {
+     margin-right: 2px;
+ }
+
+ .ans-good {
+    color: #008000;
+}
+
+.ans-bad {
+    color: #C00000;
+}
+
+.title-text h4 {
+    margin-top: 0;
+}
+
+.qa-form {
+    padding: 12px;
+    background: #ebf6ff;
+    border-radius: 8px;
+}
+
+.context-text {
+    display: block;
+    padding: 9.5px;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    word-break: normal;
+    font-weight: 400;
+    border: 2px solid #1994D5;
+    border-radius: 4px;
+    background-color: #fff;
+    line-height: 1.5em;
+    font-size: 1em;
+    color: #555;
+    text-align: left;
+    overflow-y: scroll;
+    min-height: 80px;
+    max-height: 320px;
+}
+
+.context-text br {
+    display: block;
+    margin-top: 12px;
+    line-height: 22px;
+    content: " ";
+}
+
+.answer-phrase {
+    background-color: rgba(25, 148, 213, 0.2);
+}
+
+.answer-phrase:hover {
+    background-color: rgba(25, 148, 213, 0.4);
+}
