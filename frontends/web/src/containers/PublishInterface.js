@@ -246,7 +246,7 @@ class PublishInterface extends React.Component {
                               <Form.Control
                                 name="source_url"
                                 type="url"
-                                placeholder="e.g. https://arxiv.org/pdf/2006.03654.pdf"
+                                placeholder="e.g. https://arxiv.org/abs/1810.04805"
                                 onChange={handleChange}
                                 value={values.source_url}
                               />
