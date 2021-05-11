@@ -8,10 +8,11 @@ import sqlalchemy as db
 from common.logging import logger
 
 from .base import Base, BaseModel
+from .dataset import AccessTypeEnum, DatasetModel
 from .example import Example
 from .notification import NotificationModel
 from .round import RoundModel
-from .score import AccessTypeEnum, Score, ScoreModel
+from .score import Score, ScoreModel
 from .user import User, UserModel
 from .validation import Validation
 
@@ -520,7 +521,8 @@ class BadgeModel(BaseModel):
             sm = ScoreModel()
             scores = self.dbs.query(Score).filter(Score.mid == model.id).all()
             for score in scores:
-                if score.access_type == AccessTypeEnum.scoring:
+                dataset = DatasetModel().get(score.did)
+                if dataset.access_type == AccessTypeEnum.scoring:
                     round = rm.get(score.r_realid)
                     if (
                         round.rid != 0
