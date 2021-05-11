@@ -598,7 +598,7 @@ class ResponseInfo extends React.Component {
           <strong>{this.props.obj.modelPredStr}</strong>.
         </span>
       );
-    } else {     
+    } else {
       if (this.state.fooled === "no") {
         classNames += " response-warning";
         submissionResults = (
@@ -647,7 +647,9 @@ class ResponseInfo extends React.Component {
                     type="text"
                     style={{ width: 100 + "%", marginBottom: "1px" }}
                     placeholder={
-                      "Explain why " + this.props.obj.targetText + " is the correct answer"
+                      "Explain why " +
+                      this.props.obj.targetText +
+                      " is the correct answer"
                     }
                     data-index={this.props.index}
                     data-type="example"
@@ -691,7 +693,9 @@ class ResponseInfo extends React.Component {
                     type="text"
                     style={{ width: 100 + "%", marginBottom: "1px" }}
                     placeholder={
-                      "Explain why " + this.props.obj.targetText + " is the correct answer"
+                      "Explain why " +
+                      this.props.obj.targetText +
+                      " is the correct answer"
                     }
                     data-index={this.props.index}
                     data-type="example"
@@ -1154,7 +1158,10 @@ class CreateInterface extends React.Component {
                       modelPredStr: modelPredStr,
                       fooled: modelFooled,
                       text: this.state.hypothesis,
-                      targetText: this.state.task.type == "clf" ? this.state.task.targets[this.state.target] : this.state.target,
+                      targetText:
+                        this.state.task.type == "clf"
+                          ? this.state.task.targets[this.state.target]
+                          : this.state.target,
                       url: this.state.randomTargetModel,
                       retracted: false,
                       prob: result.prob,
