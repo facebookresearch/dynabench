@@ -67,9 +67,9 @@ const ScoreRow = ({ score }) => {
         </Modal>
         <tr key={score.dataset_name}>
           <td>
-            <a type="button" onClick={() => setShowModal(!showModal)}>
+            <Link onClick={() => setShowModal(!showModal)} className="btn-link">
               {expanded ? <b>{score.dataset_name}</b> : score.dataset_name}
-            </a>
+            </Link>{" "}
             {clickable ? (
               <div
                 style={{ float: "right" }}
@@ -247,7 +247,7 @@ class ModelPage extends React.Component {
                       variant="outline-primary mr-2"
                       onClick={() => this.handleInteract()}
                     >
-                      Interact with Model
+                      <i className="fas fa-pen"></i> Interact
                     </Button>
                     {model.source_url && model.source_url !== "" ? (
                       <Button
@@ -295,9 +295,7 @@ class ModelPage extends React.Component {
                         <tr>
                           <td colSpan="2">
                             <h5 className="mx-0">
-                              <span className="blue-color">
-                                {model.name || "Unknown"}
-                              </span>
+                              <span>{model.name || "Unknown"}</span>
                               <span className="float-right">
                                 uploaded{" "}
                                 <Moment fromNow>{model.upload_datetime}</Moment>
@@ -317,13 +315,6 @@ class ModelPage extends React.Component {
                           </td>
                         </tr>
                       </tbody>
-                    </Table>
-                    <Table>
-                      <tr style={{ border: `none` }}>
-                        <td colSpan={2}>
-                          <h6 className="blue-color">Model Information</h6>
-                        </td>
-                      </tr>
                     </Table>
                     <Table hover className="mb-0">
                       <thead />
@@ -382,7 +373,7 @@ class ModelPage extends React.Component {
                     <Table>
                       <tr>
                         <td colSpan={2}>
-                          <h6 className="blue-color">Leaderboard Datasets</h6>
+                          <h5>Leaderboard Datasets</h5>
                         </td>
                       </tr>
                     </Table>
@@ -392,9 +383,7 @@ class ModelPage extends React.Component {
                     <Table>
                       <tr>
                         <td colSpan={2}>
-                          <h6 className="blue-color">
-                            Non-Leaderboard Datasets
-                          </h6>
+                          <h5>Non-Leaderboard Datasets</h5>
                         </td>
                       </tr>
                     </Table>
