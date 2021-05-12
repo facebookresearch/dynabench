@@ -126,9 +126,7 @@ class BaseDataset(ABC):
     ) -> bool:
         # submit an evaluation job
         task_config = get_task_config_safe(self.task)
-        logger.info(
-            "Will create transform job %s with config: %s", job_name, task_config
-        )
+        logger.debug(f"Will create transform job {job_name} with config: {task_config}")
         sagemaker_client.create_transform_job(
             ModelName=endpoint_name,
             TransformJobName=job_name,

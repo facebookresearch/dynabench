@@ -1,7 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
-import os
 import time
 from datetime import datetime, timedelta
 
@@ -111,8 +110,7 @@ def get_perturbed_filename(filename, perturb_prefix=None):
 
 def get_data_s3_path(task, filename, perturb_prefix=None):
     filename = get_perturbed_filename(filename, perturb_prefix)
-    # TODO: Is this correct ? I think it will break on windows
-    return os.path.join("datasets", task, filename)
+    return "/".join("datasets", task, filename)
 
 
 def path_available_on_s3(s3_client, s3_bucket, path, perturb_prefix=None):

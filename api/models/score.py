@@ -392,7 +392,7 @@ class ScoreModel(BaseModel):
                 .one()
             )
         except db.orm.exc.NoResultFound:
-            return None
+            return False
 
     def getByMid(self, mid):
         return (
