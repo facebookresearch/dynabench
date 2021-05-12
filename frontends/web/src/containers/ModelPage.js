@@ -298,7 +298,9 @@ class ModelPage extends React.Component {
                               <span>{model.name || "Unknown"}</span>
                               <span className="float-right">
                                 uploaded{" "}
-                                <Moment fromNow>{model.upload_datetime}</Moment>
+                                <Moment utc fromNow>
+                                  {model.upload_datetime}
+                                </Moment>
                               </span>
                               {isModelOwner && model.is_published === "True" ? (
                                 <Badge variant="success" className="ml-2">
