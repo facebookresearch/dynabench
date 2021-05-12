@@ -884,7 +884,8 @@ class TaskPage extends React.Component {
                   />
                 </Col>
               </Row>
-              {process.env.REACT_APP_ENABLE_DYNABOARD === "true" &&
+              {(process.env.REACT_APP_ENABLE_DYNABOARD === "true" ||
+                this.context.user.admin) &&
                 this.state.task &&
                 this.state.task.ordered_scoring_datasets &&
                 this.props.location.hash === "#overall" && (
@@ -911,19 +912,20 @@ class TaskPage extends React.Component {
                   xs={12}
                   md={this.props.location.hash === "#overall" ? 6 : 12}
                 >
-                  {process.env.REACT_APP_ENABLE_DYNABOARD !== "true" && (
-                    <Annotation
-                      placement="left"
-                      tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
-                    >
-                      <OldTaskLeaderboardCard
-                        {...this.props}
-                        task={this.state.task}
-                        taskId={this.state.taskId}
-                        displayRoundId={this.state.displayRoundId}
-                      />
-                    </Annotation>
-                  )}
+                  {process.env.REACT_APP_ENABLE_DYNABOARD !== "true" &&
+                    !this.context.user.admin && (
+                      <Annotation
+                        placement="left"
+                        tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
+                      >
+                        <OldTaskLeaderboardCard
+                          {...this.props}
+                          task={this.state.task}
+                          taskId={this.state.taskId}
+                          displayRoundId={this.state.displayRoundId}
+                        />
+                      </Annotation>
+                    )}
                   {/*Do not display the user leaderboard if there is no data or if it is for a pre-dynabench round.*/}
                   {this.state.userLeaderBoardData.length &&
                   !(
