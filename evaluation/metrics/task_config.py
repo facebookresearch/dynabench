@@ -56,6 +56,4 @@ tasks_config = {
 
 
 def get_task_config_safe(task):
-    # TODO: I don't think there should be a default config.
-    # Most likely if the config isn't found it's because of a typo in the code.
     return tasks_config.get(task, tasks_config["default"])

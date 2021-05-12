@@ -2,8 +2,10 @@
 
 import json
 
-from datasets.mt.flores import Flores101Small1Dev
+import datasets.mt.flores
+from datasets.mt.flores import Flores101Base, Flores101Small1Dev
 from metrics import metrics
+from metrics.task_config import tasks_config
 
 
 def test_eval():
@@ -36,3 +38,14 @@ def test_eval():
     assert hu_score["perf_dict"]["bleu"] == bleu
     et_score = next((s for s in scores["perf_by_tag"] if s["tag"] == "tgt:et_EE"), None)
     assert et_score["perf_dict"]["bleu"] == bleu
+
+
+def test_flores_dataset():
+    for name in dir(datasets.mt.flores):
+        if name == "Flores101Base":
+            continue
+        dataset_cls = getattr(datasets.mt.flores, name)
+        if not isinstance(dataset_cls, Flores101Base):
+            continue
+
+        assert dataset_cls().task in tasks_config
