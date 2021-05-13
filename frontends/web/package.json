@@ -30,8 +30,7 @@
     "react-scripts": "^3.4.0",
     "react-text-annotate": "^0.3.0",
     "recharts": "^1.8.5",
-    "style-loader": "^1.2.1",
-    "webpack": "^4.41.5"
+    "style-loader": "^1.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.10.5",
@@ -40,7 +39,6 @@
     "@babel/preset-react": "^7.10.4",
     "babel-preset-react": "^6.24.1",
     "dotenv": "^8.2.0",
-    "eslint": "^7.21.0",
     "prettier": "^2.2.1",
     "stylelint": "^13.11.0",
     "stylelint-config-prettier": "^8.0.1",
