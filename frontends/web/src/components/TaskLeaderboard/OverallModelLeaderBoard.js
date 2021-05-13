@@ -313,7 +313,7 @@ const MetricWeightTableHeader = ({
           <WarningPopover
             direction="right"
             warning={
-              "Warning, Fairness is imperfect. A high fairness score does not necessarily make the model fair. See the paper for model details."
+              "Warning: this fairness metric is still under development. A high fairness score does not necessarily mean the model is fair along all dimensions or for all definitions of fairness. See the paper for details on this metric."
             }
           >
             <i
@@ -330,7 +330,7 @@ const MetricWeightTableHeader = ({
           <WarningPopover
             direction="right"
             warning={
-              "Warning, Robustness is imperfect. A high robustness score does not necessarily make the model robust. See the paper for model details."
+              "Warning: this robustness metric is still under development. A high robustness score does not necessarily mean the model is robust along all dimensions or for all definitions of robustness. See the paper for details on this metric."
             }
           >
             <i
