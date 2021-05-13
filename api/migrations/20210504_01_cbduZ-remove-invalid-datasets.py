@@ -14,7 +14,6 @@ __depends__ = {
 }
 
 steps = [
-    step("UPDATE models SET deployment_status='failed'"),
     step(
         """
         DELETE FROM scores WHERE did in (SELECT id FROM datasets WHERE name in
