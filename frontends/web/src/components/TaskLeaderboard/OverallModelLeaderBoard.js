@@ -317,7 +317,7 @@ const MetricWeightTableHeader = ({
             }
           >
             <i
-              style={{ color: "red", "font-size": 10 }}
+              style={{ color: "red", fontSize: 10 }}
               className="fas fa-exclamation"
             >
               &nbsp;
@@ -334,7 +334,7 @@ const MetricWeightTableHeader = ({
             }
           >
             <i
-              style={{ color: "red", "font-size": 10 }}
+              style={{ color: "red", fontSize: 10 }}
               className="fas fa-exclamation"
             >
               &nbsp;
@@ -353,7 +353,7 @@ const MetricWeightTableHeader = ({
 
       {!enableWeights && (
         <>
-          <span class="font-weight-light small">{metric.unit}</span>
+          <span className="font-weight-light small">{metric.unit}</span>
         </>
       )}
       {enableWeights && (
@@ -441,7 +441,7 @@ const OverallModelLeaderBoard = ({
                 }
               >
                 <i
-                  style={{ color: "red", "font-size": 10 }}
+                  style={{ color: "red", fontSize: 10 }}
                   className="fas fa-exclamation"
                 >
                   &nbsp;

@@ -36,10 +36,10 @@ const TaskLeaderboardCard = (props) => {
   const [enableWeights, setEnableWeights] = useState(false);
   const [enableDatasetWeights, setEnableDatasetWeights] = useState(false);
   // Map task metrics to include weights for UI
-  const [metrics, setMetrics] = useState([]);
+  const [metrics, setMetrics] = useState();
 
   // Dataset Weights Array of a set of dataset id and corresponding weight.
-  const [datasetWeights, setDatasetWeights] = useState([]);
+  const [datasetWeights, setDatasetWeights] = useState();
   // Update weights on task change
   useEffect(() => {
     setMetrics(
@@ -153,25 +153,27 @@ const TaskLeaderboardCard = (props) => {
         dataSetSum === 0 ? 0.0 : entry.weight / dataSetSum
       );
 
-      api
-        .getDynaboardScores(
-          taskId,
-          pageLimit,
-          page * pageLimit,
-          sort.field,
-          sort.direction,
-          orderedMetricWeights,
-          orderedDatasetWeights
-        )
-        .then(
-          (result) => {
-            setData(result.data);
-            setTotal(result.count);
-          },
-          (error) => {
-            console.log(error);
-          }
-        );
+      if (orderedMetricWeights && orderedDatasetWeights) {
+        api
+          .getDynaboardScores(
+            taskId,
+            pageLimit,
+            page * pageLimit,
+            sort.field,
+            sort.direction,
+            orderedMetricWeights,
+            orderedDatasetWeights
+          )
+          .then(
+            (result) => {
+              setData(result.data);
+              setTotal(result.count);
+            },
+            (error) => {
+              console.log(error);
+            }
+          );
+      }
     };
 
     setIsLoading(true);
@@ -322,7 +324,7 @@ const TaskLeaderboardCard = (props) => {
               }}
             >
               <span className="text-black-50">
-                <i class="fas fa-database"></i>
+                <i className="fas fa-database"></i>
               </span>
             </Button>
           </OverlayTrigger>
