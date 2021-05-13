@@ -1,9 +1,9 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 # Convert data to textflint format and run transform functions in textflint
+import glob
 import json
 import os
-import re
 
 from textflint import Engine
 
@@ -29,6 +29,14 @@ LABEL_MAP = {
 }
 
 
+def findall(p, s):
+    # Yields all the positions of the pattern p in the string s.
+    i = s.find(p)
+    while i != -1:
+        yield i
+        i = s.find(p, i + 1)
+
+
 # This converts dynabench dataset to textflint format
 def reformat_data_to_textflint(samples, task):
     converted_samples = []
@@ -39,10 +47,16 @@ def reformat_data_to_textflint(samples, task):
         converted = {"sample_id": i + 1}
         if task == "qa":
             answer = sample["answer"]
-            converted["answers"] = [
-                {"text": answer, "answer_start": i.start()}
-                for i in re.finditer(answer, sample["context"])
-            ]
+            if type(answer) is list:
+                answers = set(answer)
+            else:
+                answers = [answer]
+            converted["answers"] = []
+            for answer in answers:
+                converted["answers"] += [
+                    {"text": answer, "answer_start": i}
+                    for i in findall(answer, sample["context"])
+                ]
             converted["title"] = ""
             converted["is_impossible"] = False
         else:
@@ -97,6 +111,11 @@ def run_textflint(data, task):
     textflint_data = reformat_data_to_textflint(data, task)
     engine = Engine()
     config_file = os.path.join(CONFIG_PATH, task + "_config.json")
+    config = load_config(config_file)
+    out_dir = config["out_dir"]
+    files = glob.glob(out_dir + "/*")
+    for f in files:
+        os.remove(f)
     engine.run(textflint_data, config_file)
     perturbed_data = get_transformed_data(config_file, data, task)
     return perturbed_data
