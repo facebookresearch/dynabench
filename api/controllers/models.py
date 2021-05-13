@@ -184,6 +184,12 @@ def upload_to_s3(credentials):
     task_id = bottle.request.forms.get("taskId")
     tarball = bottle.request.files.get("tarball")
 
+    # throttling, for now 1 per 24 hrs for that specific task
+    # TODO: make the threshold setting configurable
+    m = ModelModel()
+    if m.getCountByUidTidAndHrDiff(user_id, tid=task_id, hr_diff=24) >= 1:
+        bottle.abort(400, "Submission limit reached")
+
     session = boto3.Session(
         aws_access_key_id=config["aws_access_key_id"],
         aws_secret_access_key=config["aws_secret_access_key"],
@@ -210,7 +216,6 @@ def upload_to_s3(credentials):
         bottle.abort(400, "upload failed")
 
     # Update database entry
-    m = ModelModel()
     model = m.create(
         task_id=task_id,
         user_id=user_id,
