@@ -173,7 +173,7 @@ const TaskActionButtons = (props) => {
               className="border-0 blue-color font-weight-bold light-gray-bg"
               to={"/tasks/" + props.taskId + "/create"}
             >
-              <i class="fas fa-pen"></i> Create Examples
+              <i className="fas fa-pen"></i> Create Examples
             </Button>
           </OverlayTrigger>
         </Annotation>
@@ -193,7 +193,7 @@ const TaskActionButtons = (props) => {
               className="border-0 blue-color font-weight-bold light-gray-bg"
               to={"/tasks/" + props.taskId + "/validate"}
             >
-              <i class="fas fa-search"></i> Validate Examples
+              <i className="fas fa-search"></i> Validate Examples
             </Button>
           </OverlayTrigger>
         </Annotation>
@@ -216,7 +216,7 @@ const TaskActionButtons = (props) => {
                 className="border-0 blue-color font-weight-bold light-gray-bg"
                 href="https://github.com/facebookresearch/dynalab"
               >
-                <i class="fas fa-upload"></i> Submit Models
+                <i className="fas fa-upload"></i> Submit Models
               </Button>
             </OverlayTrigger>
           </Annotation>
@@ -878,7 +878,7 @@ class TaskPage extends React.Component {
                 <Col xs={12} md={12}>
                   <RoundDescription
                     api={this.context.api}
-                    task_id={this.state.taskId}
+                    task_id={this.state.task.id}
                     cur_round={this.state.task.cur_round}
                     round_id={this.state.displayRoundId}
                   />
