@@ -134,7 +134,10 @@ class FairnessPerturbation:
         # perturb additional fields for task "qa" and "nli"
         if task == "qa":
             question = example["question"]
-            pt_question, changed_question = self.perturb_gender_text(question)
+            ans = example["answer"]
+            if type(ans) is str:
+                ans = [ans]
+            pt_question, changed_question = self.perturb_gender_text(question, ans)
             perturb_example["question"] = pt_question
             changed = changed or changed_question
         elif task == "nli":
@@ -165,7 +168,10 @@ class FairnessPerturbation:
 
         if task == "qa":
             question = example["question"]
-            pt_question, changed_question = self.perturb_ethnic_text(question)
+            ans = example["answer"]
+            if type(ans) is str:
+                ans = [ans]
+            pt_question, changed_question = self.perturb_ethnic_text(question, ans)
             perturb_example["question"] = pt_question
             changed = changed or changed_question
         elif task == "nli":
@@ -179,14 +185,15 @@ class FairnessPerturbation:
 
         return None
 
-    def perturb_gender_text(self, text):
+    def perturb_gender_text(self, text, exclude_set=[]):
         ents = self.get_entity_set(text)
+        exclude_set.extend(ents)
         text = preprocess(text)
         perturb_text = []
         changed = False
         for tok in text.split():
             new_name = self.gender_name_list.get(tok, None)
-            if new_name is not None and not self.find_in_set(tok, ents):
+            if new_name is not None and not self.find_in_set(tok, exclude_set):
                 perturb_text.append(new_name)
                 changed = True
                 continue
@@ -202,14 +209,15 @@ class FairnessPerturbation:
 
         return postprocess(" ".join(perturb_text)), changed
 
-    def perturb_ethnic_text(self, text):
+    def perturb_ethnic_text(self, text, exclude_set=[]):
         ents = self.get_entity_set(text)
+        exclude_set.extend(ents)
         text = preprocess(text)
         perturb_text = []
         changed = False
         for tok in text.split(" "):
             new_name = self.ethnic_name_list.get(tok, None)
-            if new_name is not None and not self.find_in_set(tok, ents):
+            if new_name is not None and not self.find_in_set(tok, exclude_set):
                 perturb_text.append(new_name)
                 changed = True
             else:
