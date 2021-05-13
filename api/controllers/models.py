@@ -188,7 +188,7 @@ def upload_to_s3(credentials):
     # TODO: make the threshold setting configurable
     m = ModelModel()
     if m.getCountByUidTidAndHrDiff(user_id, tid=task_id, hr_diff=24) >= 1:
-        bottle.abort(400, "Submission limit reached")
+        bottle.abort(429, "Submission limit reached")
 
     session = boto3.Session(
         aws_access_key_id=config["aws_access_key_id"],
