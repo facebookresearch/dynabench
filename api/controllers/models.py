@@ -182,7 +182,16 @@ def upload_to_s3(credentials):
     # Upload file to S3
     model_name = bottle.request.forms.get("name")
     task_id = bottle.request.forms.get("taskId")
-    tarball = bottle.request.files.get("tarball")
+
+    # throttling, for now 1 per 24 hrs for that specific task
+    # TODO: make the threshold setting configurable
+    m = ModelModel()
+    if (
+        bottle.default_app().config["mode"] == "prod"
+        and m.getCountByUidTidAndHrDiff(user_id, tid=task_id, hr_diff=24) >= 1
+    ):
+        logger.error("Submission limit reached for user (%s)" % (user_id))
+        bottle.abort(429, "Submission limit reached")
 
     session = boto3.Session(
         aws_access_key_id=config["aws_access_key_id"],
@@ -202,6 +211,7 @@ def upload_to_s3(credentials):
 
     try:
         s3_client = session.client("s3")
+        tarball = bottle.request.files.get("tarball")
         response = s3_client.upload_fileobj(tarball.file, bucket_name, s3_path)
         if response:
             logger.info(f"Response from the mar file upload to s3 {response}")
@@ -210,7 +220,6 @@ def upload_to_s3(credentials):
         bottle.abort(400, "upload failed")
 
     # Update database entry
-    m = ModelModel()
     model = m.create(
         task_id=task_id,
         user_id=user_id,

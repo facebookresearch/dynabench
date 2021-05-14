@@ -129,3 +129,18 @@ class ModelModel(BaseModel):
             .filter(Model.deployment_status == deployment_status)
             .all()
         )
+
+    def getCountByUidTidAndHrDiff(self, uid, tid=-1, hr_diff=24):
+        """
+        Returns submissions of all time if hr_diff < 0
+        Returns submissions of all tasks if tid == 0
+        """
+        base_query = self.dbs.query(db.func.count(Model.id)).filter(Model.uid == uid)
+        if hr_diff >= 0:
+            base_query = base_query.filter(
+                db.func.timediff(db.func.now(), Model.upload_datetime)
+                < db.func.time(f"{hr_diff:02}:00:00")
+            )
+        if tid != -1:
+            base_query = base_query.filter(Model.tid == tid)
+        return base_query.scalar()
