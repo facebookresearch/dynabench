@@ -11,11 +11,7 @@ import { useState, useRef } from "react";
 import { Table } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import WeightIndicator from "./WeightIndicator";
-import Highcharts from "highcharts";
-import highchartsParallelCoordinates from "highcharts/modules/parallel-coordinates";
-import HighchartsReact from "highcharts-react-official";
-
-highchartsParallelCoordinates(Highcharts);
+import DynaboardChart from "./DynaboardChart";
 
 /**
  * Render an expanded / collapsed state chevron.
@@ -349,59 +345,6 @@ const HCOverallModelLeaderBoard = ({
   const metricColumnWidth =
     60 / ((metrics?.length ?? 0) === 0 ? 1 : metrics.length);
 
-  const yMins =
-    models.map((model) =>
-      model.averaged_scores.reduce(
-        (agg, curr) => Math.min(agg, curr),
-        Number.MAX_VALUE
-      )
-    ) ?? [];
-
-  const yMaximums =
-    models.map((model) =>
-      model.averaged_scores.reduce(
-        (agg, curr) => Math.max(agg, curr),
-        Number.MIN_VALUE
-      )
-    ) ?? [];
-
-  const options = {
-    title: "",
-    chart: {
-      type: "spline",
-      parallelCoordinates: true,
-      parallelAxes: {
-        lineWidth: 2,
-      },
-    },
-    xAxis: {
-      categories: [...metrics?.map((metric) => metric.label), "Dynascore"],
-      offset: 10,
-    },
-    yAxis: [
-      ...metrics?.map((metric, index) => {
-        return {
-          type: "linear",
-          title: metric.label,
-          // min: yMins[index] ?? 0,
-          // max: yMaximums[index] ?? 0,
-        };
-      }),
-      {
-        type: "linear",
-        title: "Dynascore",
-        // min: 0,
-        // max: 100,
-      },
-    ],
-    series: models.map((m) => {
-      return {
-        name: m.model_name,
-        data: [...m.averaged_scores, m.dynascore],
-      };
-    }),
-  };
-
   return (
     <Table hover className="mb-0">
       <thead>
@@ -497,12 +440,12 @@ const HCOverallModelLeaderBoard = ({
             totalWeight={totalDatasetsWeight}
           />
         ))}
+        <tr>
+          <td colspan={7}>
+            <DynaboardChart models={models} metrics={metrics} />
+          </td>
+        </tr>
       </tbody>
-      <tr>
-        <td colspan={7}>
-          <HighchartsReact highcharts={Highcharts} options={options} />
-        </td>
-      </tr>
     </Table>
   );
 };
