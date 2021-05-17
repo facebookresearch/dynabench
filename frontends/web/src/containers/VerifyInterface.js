@@ -80,16 +80,13 @@ class VerifyInterface extends React.Component {
     this.getActionLabel = this.getActionLabel.bind(this);
     this.updateAnswer = this.updateAnswer.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
-    this.setRangesAndGetRandomFilteredExample = this.setRangesAndGetRandomFilteredExample.bind(
-      this
-    );
+    this.setRangesAndGetRandomFilteredExample =
+      this.setRangesAndGetRandomFilteredExample.bind(this);
     this.updateUserSettings = this.updateUserSettings.bind(this);
-    this.updateOwnerValidationFlagFilter = this.updateOwnerValidationFlagFilter.bind(
-      this
-    );
-    this.updateOwnerValidationDisagreementFilter = this.updateOwnerValidationDisagreementFilter.bind(
-      this
-    );
+    this.updateOwnerValidationFlagFilter =
+      this.updateOwnerValidationFlagFilter.bind(this);
+    this.updateOwnerValidationDisagreementFilter =
+      this.updateOwnerValidationDisagreementFilter.bind(this);
   }
   componentDidMount() {
     const {
@@ -270,9 +267,8 @@ class VerifyInterface extends React.Component {
       this.state.creatorAttemptExplanation &&
       this.state.creatorAttemptExplanation.trim().length > 0
     ) {
-      metadata[
-        "model_explanation"
-      ] = this.state.creatorAttemptExplanation.trim();
+      metadata["model_explanation"] =
+        this.state.creatorAttemptExplanation.trim();
     }
 
     if (this.state.validatorHateType !== null) {

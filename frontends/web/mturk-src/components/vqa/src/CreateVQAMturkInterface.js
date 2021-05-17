@@ -54,16 +54,14 @@ class CreateVQAMturkInterface extends React.Component {
     this.handleKeyPress = this.handleKeyPress.bind(this);
     this.handleQuestionChange = this.handleQuestionChange.bind(this);
     this.handleSubmitCorrectAnswer = this.handleSubmitCorrectAnswer.bind(this);
-    this.handleCheckAnswerButtonClick = this.handleCheckAnswerButtonClick.bind(
-      this
-    );
+    this.handleCheckAnswerButtonClick =
+      this.handleCheckAnswerButtonClick.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);
     this.handleCommentsChange = this.handleCommentsChange.bind(this);
     this.submitHIT = this.submitHIT.bind(this);
     this.setModelState = this.setModelState.bind(this);
-    this.updateStateGivenUserFeedback = this.updateStateGivenUserFeedback.bind(
-      this
-    );
+    this.updateStateGivenUserFeedback =
+      this.updateStateGivenUserFeedback.bind(this);
     this.bottomAnchorRef = React.createRef();
     this.inputRef = React.createRef();
   }
