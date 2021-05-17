@@ -97,8 +97,7 @@ class ExampleValidationActions extends React.Component {
                         ))}
                     </DropdownButton>
                   ),
-                  QA:
-                    "Please select the correct answer in the context. If it is not in the context, then flag this example.",
+                  QA: "Please select the correct answer in the context. If it is not in the context, then flag this example.",
                   "Hate Speech": (
                     <div>
                       You have proposed that the correct answer is{" "}

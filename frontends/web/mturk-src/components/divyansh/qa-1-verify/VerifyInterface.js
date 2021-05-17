@@ -41,9 +41,8 @@ class VerifyInterface extends React.Component {
       .then(
         (result) => {
           if (this.state.task.type !== "extract") {
-            result.target = this.state.task.targets[
-              parseInt(result.target_pred)
-            ];
+            result.target =
+              this.state.task.targets[parseInt(result.target_pred)];
           }
           this.setState({
             example: result,

@@ -6,8 +6,7 @@ const creation_examples = {
         "https://dl.fbaipublicfiles.com/dynabench/coco/train2014/COCO_train2014_000000171966.jpg",
       modelAns: "right",
       isModelCorrect: true,
-      hint:
-        "HINT: Look at their hair and facial features. Another person is likely going to agree.",
+      hint: "HINT: Look at their hair and facial features. Another person is likely going to agree.",
       isAnswer: true,
     },
     {
@@ -16,8 +15,7 @@ const creation_examples = {
       question: "Where is the man staring?",
       modelAns: "at camera",
       isModelCorrect: true,
-      hint:
-        "HINT: You can assume that the man is aware that he is being photographed.",
+      hint: "HINT: You can assume that the man is aware that he is being photographed.",
       isAnswer: true,
     },
     {
@@ -34,8 +32,7 @@ const creation_examples = {
         "https://dl.fbaipublicfiles.com/dynabench/coco/test2015/COCO_test2015_000000037409.jpg",
       question: "Is Harley-Davidson the name of a motorcycle brand?",
       isModelCorrect: false,
-      hint:
-        "HINT: Although this can be inferred from the image there is no need to look at it to know this is true.",
+      hint: "HINT: Although this can be inferred from the image there is no need to look at it to know this is true.",
       isAnswer: false,
     },
     {
@@ -43,8 +40,7 @@ const creation_examples = {
         "https://dl.fbaipublicfiles.com/dynabench/coco/val2014/COCO_val2014_000000565797.jpg",
       question: "What is the brand of this car?",
       isModelCorrect: false,
-      hint:
-        "HINT: It is not possible to answer the question given that the image does not show enough information.",
+      hint: "HINT: It is not possible to answer the question given that the image does not show enough information.",
       isAnswer: false,
     },
     {
@@ -53,8 +49,7 @@ const creation_examples = {
         "https://dl.fbaipublicfiles.com/dynabench/coco/train2014/COCO_train2014_000000482780.jpg",
       isModelCorrect: true,
       isAnswer: false,
-      hint:
-        "HINT: To answer this question you need to look at the image and another person is likely going to say 'cloudy'.",
+      hint: "HINT: To answer this question you need to look at the image and another person is likely going to say 'cloudy'.",
     },
     {
       imageUrl:
@@ -62,8 +57,7 @@ const creation_examples = {
       question: "What direction are they going?",
       isModelCorrect: true,
       isAnswer: false,
-      hint:
-        "HINT: An answer to this question can be provided and it is likely going to be agreed by another person.",
+      hint: "HINT: An answer to this question can be provided and it is likely going to be agreed by another person.",
     },
   ],
   2: [
@@ -100,8 +94,7 @@ const creation_examples = {
         "https://dl.fbaipublicfiles.com/dynabench/coco/val2014/COCO_val2014_000000328757.jpg",
       isModelCorrect: false,
       isAnswer: false,
-      hint:
-        "HINT: The answer to this question is not affected by the situation in the image.",
+      hint: "HINT: The answer to this question is not affected by the situation in the image.",
     },
     {
       question: "What is the man doing?",
@@ -109,8 +102,7 @@ const creation_examples = {
         "https://dl.fbaipublicfiles.com/dynabench/coco/test2015/COCO_test2015_000000258900.jpg",
       isModelCorrect: true,
       isAnswer: false,
-      hint:
-        "HINT: It asks about an specific action. You must look at the image to get some context. The answer is likely unique and can be agreed by another person.",
+      hint: "HINT: It asks about an specific action. You must look at the image to get some context. The answer is likely unique and can be agreed by another person.",
     },
     {
       imageUrl:
@@ -118,8 +110,7 @@ const creation_examples = {
       question: "What are the people waiting for?",
       isModelCorrect: false,
       isAnswer: false,
-      hint:
-        "HINT: The image does not provide enough information to give a consistent answer to this question. If there is a bus stop on the image, then the question would be valid.",
+      hint: "HINT: The image does not provide enough information to give a consistent answer to this question. If there is a bus stop on the image, then the question would be valid.",
     },
     {
       imageUrl:
@@ -127,8 +118,7 @@ const creation_examples = {
       question: "What breed is the dog?",
       isAnswer: false,
       isModelCorrect: false,
-      hint:
-        "HINT: This question is not ambiguous but it is likely that not a lot of people know the answer. Try to avoid very specific questions that require some specialized knowledge on the topic. Relying on external knowledge is fine, but remember: another person should be able to answer the question.",
+      hint: "HINT: This question is not ambiguous but it is likely that not a lot of people know the answer. Try to avoid very specific questions that require some specialized knowledge on the topic. Relying on external knowledge is fine, but remember: another person should be able to answer the question.",
     },
   ],
 };
@@ -141,8 +131,7 @@ const validation_examples = {
         "https://dl.fbaipublicfiles.com/dynabench/coco/train2014/COCO_train2014_000000171966.jpg",
       modelAns: "right",
       isModelCorrect: true,
-      hint:
-        "HINT: Look at their hair and facial features. Another person is likely going to agree.",
+      hint: "HINT: Look at their hair and facial features. Another person is likely going to agree.",
       isAnswer: true,
     },
     {
@@ -151,8 +140,7 @@ const validation_examples = {
       question: "Where is the man staring?",
       modelAns: "at camera",
       isModelCorrect: true,
-      hint:
-        "HINT: You can assume that the man is aware that he is being photographed.",
+      hint: "HINT: You can assume that the man is aware that he is being photographed.",
       isAnswer: true,
     },
     {
@@ -169,8 +157,7 @@ const validation_examples = {
         "https://dl.fbaipublicfiles.com/dynabench/coco/test2015/COCO_test2015_000000037409.jpg",
       question: "Is Harley-Davidson the name of a motorcycle brand?",
       isModelCorrect: false,
-      hint:
-        "HINT: Although this can be inferred from the image there is no need to look at it to know this is true.",
+      hint: "HINT: Although this can be inferred from the image there is no need to look at it to know this is true.",
       isAnswer: false,
     },
     {
@@ -179,8 +166,7 @@ const validation_examples = {
       question:
         "What direction are the stripes of the person with pink sleeves?",
       isModelCorrect: true,
-      hint:
-        "HINT: Although this can be inferred from the image. You have to find the stripes first. It may take some work, you should use the magnifier on every image.",
+      hint: "HINT: Although this can be inferred from the image. You have to find the stripes first. It may take some work, you should use the magnifier on every image.",
       isAnswer: false,
     },
     {
@@ -196,8 +182,7 @@ const validation_examples = {
         "https://dl.fbaipublicfiles.com/dynabench/coco/val2014/COCO_val2014_000000565797.jpg",
       question: "What is the brand of this car?",
       isModelCorrect: false,
-      hint:
-        "HINT: It is not possible to answer the question given that the image does not show enough information.",
+      hint: "HINT: It is not possible to answer the question given that the image does not show enough information.",
       isAnswer: false,
     },
   ],
@@ -217,8 +202,7 @@ const validation_examples = {
       question: "What style are the shoes of the woman on the left?",
       modelAns: "sandals",
       isModelCorrect: true,
-      hint:
-        "HINT: The woman in black is on the left, she is wearing high heels sandals.",
+      hint: "HINT: The woman in black is on the left, she is wearing high heels sandals.",
       isAnswer: true,
     },
     {
@@ -227,8 +211,7 @@ const validation_examples = {
       question: "What is the name of the potatoes in the picture?",
       modelAns: "potatoes",
       isModelCorrect: false,
-      hint:
-        "HINT: It looks like those potatos is called mashed potatos. Most people are likely going to say 'mashed potatoes' as the answer.",
+      hint: "HINT: It looks like those potatos is called mashed potatos. Most people are likely going to say 'mashed potatoes' as the answer.",
       isAnswer: true,
     },
     {
@@ -237,8 +220,7 @@ const validation_examples = {
       question: "Are vegetables a healthy food?",
       isModelCorrect: false,
       isAnswer: false,
-      hint:
-        "HINT: The answer to this question is not affected by the situation in the image.",
+      hint: "HINT: The answer to this question is not affected by the situation in the image.",
     },
     {
       imageUrl:
@@ -246,8 +228,7 @@ const validation_examples = {
       question: "What is the second word above Crawfords?",
       isModelCorrect: true,
       isAnswer: false,
-      hint:
-        "HINT: The question is valid. To determine whether or not it is correct, please use magnifier to find the right answer. Remember, try to spend some time on each image based on the questions. Most questions are tricky!",
+      hint: "HINT: The question is valid. To determine whether or not it is correct, please use magnifier to find the right answer. Remember, try to spend some time on each image based on the questions. Most questions are tricky!",
     },
     {
       imageUrl:
@@ -263,8 +244,7 @@ const validation_examples = {
       question: "What are the people waiting for?",
       isModelCorrect: false,
       isAnswer: false,
-      hint:
-        "HINT: The image does not provide enough information to give a consistent answer to this question. If there is a bus stop on the image, then the question would be valid.",
+      hint: "HINT: The image does not provide enough information to give a consistent answer to this question. If there is a bus stop on the image, then the question would be valid.",
     },
   ],
 };
