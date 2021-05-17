@@ -94,8 +94,9 @@ class Flores101Base(MTBase):
         super().__init__(task=task, name=name, round_id=round_id)
 
     def _get_data_s3_path(self, perturb_prefix=None):
-        task = self.task.replace("_", "-")
-        return helpers.get_data_s3_path(task, self.filename, perturb_prefix)
+        return helpers.get_data_s3_path(
+            "flores/" + self.task, self.filename, perturb_prefix
+        )
 
     def load(self):
         try:
@@ -115,10 +116,10 @@ class Flores101Base(MTBase):
                         ):
                             tmp_jl = {
                                 "uid": f"{row}-{lang1}-{lang2}-{self.partition}",
-                                "source_language": lang1,
-                                "target_language": lang2,
-                                "source_text": line1.strip(),
-                                "target_text": line2.strip(),
+                                "sourceLanguage": lang1,
+                                "targetLanguage": lang2,
+                                "sourceText": line1.strip(),
+                                "targetText": line2.strip(),
                             }
                             row += 1
                             tmp.write(json.dumps(tmp_jl) + "\n")
@@ -138,10 +139,10 @@ class Flores101Base(MTBase):
     def label_field_converter(self, example):
         return {
             "id": example["uid"],
-            "answer": example["target_text"],
+            "answer": example["targetText"],
             "tags": [
-                "src:" + example["source_language"],
-                "tgt:" + example["target_language"],
+                "src:" + example["sourceLanguage"],
+                "tgt:" + example["targetLanguage"],
             ],
         }
 

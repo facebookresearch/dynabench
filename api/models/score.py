@@ -385,7 +385,7 @@ class ScoreModel(BaseModel):
     def getOneByModelIdAndDataset(self, mid, did):
         try:
             return (
-                self.dbs.query(Score.id, Score.metadata_json)
+                self.dbs.query(Score)
                 .filter(Score.mid == mid)
                 .filter(Score.did == did)
                 .order_by(Score.perf.desc())

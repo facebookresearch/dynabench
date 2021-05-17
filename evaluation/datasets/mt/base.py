@@ -8,4 +8,4 @@ class MTBase(BaseDataset):
         super().__init__(task=task, name=name, round_id=round_id)
 
     def pred_field_converter(self, example):
-        return {"id": example["id"], "pred": example["translated_text"]}
+        return {"id": example["id"], "pred": example["translatedText"]}

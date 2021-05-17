@@ -24,11 +24,7 @@ _custom_config = {
         "instance_config": instance_property["ml.m5.xlarge"],
         "eval_metrics": ["bleu"],
         "perf_metric": "bleu",
-        # Disable input key filtering because
-        # Sagemaker can't filter on snake cased names:
-        # "input_keys": ["uid", "source_text", "source_language", "target_language"],
-        # TODO: edit the keys in the dataset
-        "input_keys": "",
+        "input_keys": ["uid", "sourceText", "sourceLanguage", "targetLanguage"],
     },
 }
 
