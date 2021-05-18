@@ -140,10 +140,7 @@ class Flores101Base(MTBase):
         return {
             "id": example["uid"],
             "answer": example["targetText"],
-            "tags": [
-                "src:" + example["sourceLanguage"],
-                "tgt:" + example["targetLanguage"],
-            ],
+            "tags": ["-".join((example["sourceLanguage"], example["targetLanguage"]))],
         }
 
 
