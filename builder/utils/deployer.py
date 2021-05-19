@@ -11,7 +11,6 @@ import time
 
 import boto3
 import botocore
-from pydantic import NoneStr
 import sagemaker
 from sagemaker.model import Model
 from sagemaker.predictor import Predictor
