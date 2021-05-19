@@ -113,7 +113,10 @@ class Requester:
                 models = m.getByTid(tid)
                 if models:
                     for model in models:
-                        if model.deployment_status == DeploymentStatusEnum.deployed:
+                        if model.deployment_status in {
+                            DeploymentStatusEnum.deployed,
+                            DeploymentStatusEnum.created,
+                        }:
                             self._eval_model_on_dataset(model.id, dataset_name)
                 else:
                     logger.warning(f"No models are available for task {tid}")

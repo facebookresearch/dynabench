@@ -11,6 +11,7 @@ import time
 
 import boto3
 import botocore
+from pydantic import NoneStr
 import sagemaker
 from sagemaker.model import Model
 from sagemaker.predictor import Predictor
@@ -351,6 +352,7 @@ class ModelDeployer:
         )
 
         if self.task_config["create_endpoint"]:
+            logger.info(f"Creating model and endpoint for {self.name} on Sagemaker")
             torchserve_model.deploy(
                 instance_type=self.task_config["instance_type"],
                 initial_instance_count=self.task_config["instance_count"],
@@ -358,11 +360,12 @@ class ModelDeployer:
             )
             return f"{deploy_config['gateway_url']}?model={self.endpoint_name}"
         else:
+            logger.info(f"Creating model for {self.name} on Sagemaker")
             container_def = torchserve_model.prepare_container_def()
             self.env["sagemaker_session"].create_model(
                 self.unique_name, deploy_config["sagemaker_role"], container_def
             )
-            return self.unique_name
+            return None
 
     def deploy(self, s3_uri):
         deployed, delayed, ex_msg = False, False, ""
@@ -399,7 +402,7 @@ class ModelDeployer:
             if delayed:
                 status = "delayed"
             elif deployed:
-                status = "deployed"
+                status = "deployed" if self.task_config["create_endpoint"] else "created"
             else:
                 status = "failed"
             response = {"status": status, "ex_msg": ex_msg}
