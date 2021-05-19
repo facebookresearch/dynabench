@@ -362,7 +362,7 @@ class ModelDeployer:
             logger.info(f"Creating model for {self.name} on Sagemaker")
             container_def = torchserve_model.prepare_container_def()
             self.env["sagemaker_session"].create_model(
-                self.unique_name, deploy_config["sagemaker_role"], container_def
+                self.endpoint_name, deploy_config["sagemaker_role"], container_def
             )
             return None
 
