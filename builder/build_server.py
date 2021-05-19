@@ -59,6 +59,7 @@ if __name__ == "__main__":
                     # process deployment result
                     msg["name"] = model.name
                     msg["exception"] = response["ex_msg"]
+                    # TODO: BE, make this code block more elegant
                     if response["status"] == "delayed":
                         redeployment_queue.append(msg)
                         pickle.dump(
