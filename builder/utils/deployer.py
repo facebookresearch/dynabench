@@ -401,7 +401,9 @@ class ModelDeployer:
             if delayed:
                 status = "delayed"
             elif deployed:
-                status = "deployed" if self.task_config["create_endpoint"] else "created"
+                status = (
+                    "deployed" if self.task_config["create_endpoint"] else "created"
+                )
             else:
                 status = "failed"
             response = {"status": status, "ex_msg": ex_msg}

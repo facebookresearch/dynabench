@@ -75,15 +75,19 @@ if __name__ == "__main__":
                         )
                         subject = f"Model {model.name} deployment failed"
                         template = "model_deployment_fail"
-                    elif response["status"] == "deployed" or response["status"] == "created":
+                    elif (
+                        response["status"] == "deployed"
+                        or response["status"] == "created"
+                    ):
                         if response["status"] == "deployed":
                             m.update(
-                                model_id, deployment_status=DeploymentStatusEnum.deployed
+                                model_id,
+                                deployment_status=DeploymentStatusEnum.deployed,
                             )
                         else:
                             m.update(
                                 model_id, deployment_status=DeploymentStatusEnum.created
-                            )               
+                            )
                         subject = f"Model {model.name} deployment successful"
                         template = "model_deployment_successful"
                         eval_queue.send_message(

@@ -3,7 +3,7 @@
 _default_config = {
     "instance_type": "ml.m5.xlarge",
     "instance_count": 1,
-    "create_endpoint": True
+    "create_endpoint": True,
 }
 
 _custom_config = {}
