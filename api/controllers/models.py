@@ -181,10 +181,10 @@ def upload_to_s3(credentials):
 
     # Upload file to S3
     model_name = bottle.request.forms.get("name")
-    task_id = bottle.request.forms.get("taskId")
+    task_code = bottle.request.forms.get("taskCode")
 
     t = TaskModel()
-    task = t.get(task_id)
+    task = t.getByTaskCode(task_code)
     if not task or not task.submissible:
         bottle.abort(404, "Task not found or not available for model submission")
 
@@ -193,7 +193,7 @@ def upload_to_s3(credentials):
     m = ModelModel()
     if (
         bottle.default_app().config["mode"] == "prod"
-        and m.getCountByUidTidAndHrDiff(user_id, tid=task_id, hr_diff=24) >= 1
+        and m.getCountByUidTidAndHrDiff(user_id, tid=task.id, hr_diff=24) >= 1
     ):
         logger.error("Submission limit reached for user (%s)" % (user_id))
         bottle.abort(429, "Submission limit reached")
@@ -208,7 +208,7 @@ def upload_to_s3(credentials):
 
     endpoint_name = f"ts{int(time.time())}-{model_name}"[:63]
     s3_filename = f"{endpoint_name}.tar.gz"
-    s3_path = f"torchserve/models/{task.task_code}/{s3_filename}"
+    s3_path = f"torchserve/models/{task_code}/{s3_filename}"
 
     logger.info(f"Uploading {model_name} to S3 at {s3_path} for user {user_id}")
 
@@ -224,7 +224,7 @@ def upload_to_s3(credentials):
 
     # Update database entry
     model = m.create(
-        task_id=task_id,
+        task_id=task.id,
         user_id=user_id,
         name=model_name,
         shortname="",
