@@ -1,11 +1,12 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
-
 from transformers.data.metrics.squad_metrics import compute_f1
 
+import sacrebleu
 from metrics.task_config import get_task_config_safe
 
 
 # perf functions. propose to move to dynalab
+
 
 # eval_metrics, take predictions and targets as input
 def get_accuracy(predictions: list, targets: list):
@@ -81,6 +82,12 @@ def get_robustness_meta(task=None):
         "utility_direction": 1,
         "offset": 0,
     }
+
+
+# sacrebleu evaluation
+def get_bleu(predictions: list, targets: list):
+    bleu = sacrebleu.corpus_bleu(predictions, [targets])
+    return bleu.score
 
 
 # job_metrics, takes raw job and dataset as input

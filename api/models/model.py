@@ -13,6 +13,7 @@ class DeploymentStatusEnum(enum.Enum):
     uploaded = "uploaded"
     processing = "processing"
     deployed = "deployed"
+    created = "created"
     failed = "failed"
     unknown = "unknown"
     takendown = "takendown"
