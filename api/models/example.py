@@ -3,14 +3,14 @@
 import hashlib
 import json
 
-import dynalab.tasks.hs
-import dynalab.tasks.nli
-import dynalab.tasks.qa
-import dynalab.tasks.sentiment
 import numpy as np
 import sqlalchemy as db
 from sqlalchemy import JSON, case
 
+import dynalab.tasks.hs
+import dynalab.tasks.nli
+import dynalab.tasks.qa
+import dynalab.tasks.sentiment
 from common.logging import logger
 from models.context import Context
 from models.model import Model
