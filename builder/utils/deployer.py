@@ -18,6 +18,7 @@ from sagemaker.predictor import Predictor
 from deploy_config import deploy_config
 from dynalab_cli.utils import SetupConfigHandler
 from utils.logging import logger
+from utils.task_config import get_task_config_safe
 
 
 class ModelDeployer:
@@ -28,6 +29,7 @@ class ModelDeployer:
         self.endpoint_name = model.endpoint_name
         self.repository_name = self.endpoint_name.lower()
         self.archive_name = f"archive.{self.endpoint_name}"
+        self.task_config = get_task_config_safe(model.task.task_code)
 
         self.rootp = tempfile.TemporaryDirectory(prefix=self.endpoint_name)
         self.root_dir = self.rootp.name
@@ -348,12 +350,21 @@ class ModelDeployer:
             enable_network_isolation=True,
         )
 
-        torchserve_model.deploy(
-            instance_type=deploy_config["instance_type"],
-            initial_instance_count=1,
-            endpoint_name=self.endpoint_name,
-        )
-        return f"{deploy_config['gateway_url']}?model={self.endpoint_name}"
+        if self.task_config["create_endpoint"]:
+            logger.info(f"Creating model and endpoint for {self.name} on Sagemaker")
+            torchserve_model.deploy(
+                instance_type=self.task_config["instance_type"],
+                initial_instance_count=self.task_config["instance_count"],
+                endpoint_name=self.endpoint_name,
+            )
+            return f"{deploy_config['gateway_url']}?model={self.endpoint_name}"
+        else:
+            logger.info(f"Creating model for {self.name} on Sagemaker")
+            container_def = torchserve_model.prepare_container_def()
+            self.env["sagemaker_session"].create_model(
+                self.endpoint_name, deploy_config["sagemaker_role"], container_def
+            )
+            return None
 
     def deploy(self, s3_uri):
         deployed, delayed, ex_msg = False, False, ""
@@ -390,7 +401,9 @@ class ModelDeployer:
             if delayed:
                 status = "delayed"
             elif deployed:
-                status = "deployed"
+                status = (
+                    "deployed" if self.task_config["create_endpoint"] else "created"
+                )
             else:
                 status = "failed"
             response = {"status": status, "ex_msg": ex_msg}
