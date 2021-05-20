@@ -20,6 +20,12 @@ _custom_config = {
         "eval_metrics": ["f1"],
         "perf_metric": "f1",
     },
+    "flores": {
+        "instance_config": instance_property["ml.m5.xlarge"],
+        "eval_metrics": ["bleu"],
+        "perf_metric": "bleu",
+        "input_keys": ["uid", "sourceText", "sourceLanguage", "targetLanguage"],
+    },
 }
 
 
@@ -39,6 +45,9 @@ tasks_config = {
     "hs": _gen_config(),
     "sentiment": _gen_config(),
     "qa": _gen_config(_custom_config["qa"]),
+    "flores_full": _gen_config(_custom_config["flores"]),
+    "flores_small1": _gen_config(_custom_config["flores"]),
+    "flores_small2": _gen_config(_custom_config["flores"]),
 }
 
 
