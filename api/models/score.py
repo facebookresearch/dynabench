@@ -386,7 +386,6 @@ class ScoreModel(BaseModel):
         try:
             return (
                 self.dbs.query(Score)
-                .join(Model)
                 .filter(Score.mid == mid)
                 .filter(Score.did == did)
                 .order_by(Score.perf.desc())
