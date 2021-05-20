@@ -183,6 +183,11 @@ def upload_to_s3(credentials):
     model_name = bottle.request.forms.get("name")
     task_id = bottle.request.forms.get("taskId")
 
+    t = TaskModel()
+    task = t.get(task_id)
+    if not task or not task.submissible:
+        bottle.abort(404, "Task not exists or not available for model submission")
+
     # throttling, for now 1 per 24 hrs for that specific task
     # TODO: make the threshold setting configurable
     m = ModelModel()
@@ -203,9 +208,7 @@ def upload_to_s3(credentials):
 
     endpoint_name = f"ts{int(time.time())}-{model_name}"[:63]
     s3_filename = f"{endpoint_name}.tar.gz"
-    t = TaskModel()
-    task_code = t.get(task_id).task_code
-    s3_path = f"torchserve/models/{task_code}/{s3_filename}"
+    s3_path = f"torchserve/models/{task.task_code}/{s3_filename}"
 
     logger.info(f"Uploading {model_name} to S3 at {s3_path} for user {user_id}")
 
