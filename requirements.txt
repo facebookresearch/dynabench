@@ -13,3 +13,4 @@ werkzeug
 boto3
 yoyo-migrations
 pandas
+git+https://github.com/facebookresearch/dynalab.git

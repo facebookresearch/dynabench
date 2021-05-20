@@ -484,7 +484,10 @@ export default class ApiService {
     target,
     response,
     metadata,
-    tag = null
+    tag = null,
+    dynalab_model = false,
+    dynalab_model_input_data = null,
+    dynalab_model_endpoint_name = null
   ) {
     return this.fetch(`${this.domain}/examples`, {
       method: "POST",
@@ -498,6 +501,9 @@ export default class ApiService {
         response: response,
         metadata: metadata,
         tag: tag,
+        dynalab_model: dynalab_model,
+        dynalab_model_input_data: JSON.stringify(dynalab_model_input_data),
+        dynalab_model_endpoint_name: dynalab_model_endpoint_name,
       }),
     });
   }

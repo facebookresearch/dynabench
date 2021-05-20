@@ -3,12 +3,17 @@
 import hashlib
 import json
 
+import dynalab.tasks.hs
+import dynalab.tasks.nli
+import dynalab.tasks.qa
+import dynalab.tasks.sentiment
 import numpy as np
 import sqlalchemy as db
 from sqlalchemy import JSON, case
 
 from common.logging import logger
 from models.context import Context
+from models.model import Model
 from models.round import Round
 from models.validation import LabelEnum, ModeEnum, Validation
 
@@ -72,7 +77,21 @@ class ExampleModel(BaseModel):
     def __init__(self):
         super().__init__(Example)
 
-    def create(self, tid, rid, uid, cid, hypothesis, tgt, response, metadata, tag=None):
+    def create(
+        self,
+        tid,
+        rid,
+        uid,
+        cid,
+        hypothesis,
+        tgt,
+        response,
+        metadata,
+        tag=None,
+        dynalab_model=False,
+        dynalab_model_input_data=None,
+        dynalab_model_endpoint_name=None,
+    ):
         if uid == "turk" and "annotator_id" not in metadata:
             logger.error("Annotator id not specified but received Turk example")
             return False
@@ -117,10 +136,65 @@ class ExampleModel(BaseModel):
         if uid == "turk" and "model" in metadata and metadata["model"] == "no-model":
             pass  # ignore signature when we don't have a model in the loop with turkers
         else:
-            if "signed" not in response or not self.verify_signature(
-                response["signed"], c, hypothesis, pred_str
-            ):
-                return False
+            if dynalab_model:
+                if "signed" in response:
+                    if c.round.task.shortname == "Hate Speech":
+                        dynalab_task = dynalab.tasks.hs
+                    elif c.round.task.shortname == "NLI":
+                        dynalab_task = dynalab.tasks.nli
+                    elif c.round.task.shortname == "Sentiment":
+                        dynalab_task = dynalab.tasks.sentiment
+                    elif c.round.task.shortname == "QA":
+                        dynalab_task = dynalab.tasks.qa
+                    else:
+                        logger.error(
+                            "This is a Dynalab model but a Dynalab signature "
+                            + "verification method has not been included for this task."
+                        )
+                        return False
+
+                    model_secret = (
+                        self.dbs.query(Model)
+                        .filter(Model.endpoint_name == dynalab_model_endpoint_name)
+                        .one()
+                        .secret
+                    )
+                    if response[
+                        "signed"
+                    ] != dynalab_task.TaskIO().generate_response_signature(
+                        response, dynalab_model_input_data, model_secret
+                    ):
+                        logger.error(
+                            "Signature does not match (received %s, expected %s)"
+                            % (
+                                response["signed"],
+                                dynalab_task.TaskIO().generate_response_signature(
+                                    response, dynalab_model_input_data, model_secret
+                                ),
+                            )
+                        )
+                        return False
+                    else:
+                        logger.info(
+                            "Signature matches(received %s, expected %s)"
+                            % (
+                                response["signed"],
+                                dynalab_task.TaskIO().generate_response_signature(
+                                    response, dynalab_model_input_data, model_secret
+                                ),
+                            )
+                        )
+                else:
+                    return False
+
+            else:
+                # TODO: remove this old verify method when all target models are
+                # reuploaded via dynalab. We can also clean up the arguments to
+                # this create function.
+                if "signed" not in response or not self.verify_signature(
+                    response["signed"], c, hypothesis, pred_str
+                ):
+                    return False
 
         try:
             e = Example(

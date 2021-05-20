@@ -215,6 +215,16 @@ def post_example(credentials):
     if "tag" in data:
         tag = data["tag"]
 
+    dynalab_model = False
+    if "dynalab_model" in data:
+        dynalab_model = data["dynalab_model"]
+
+    dynalab_model_input_data = None
+    dynalab_model_endpoint_name = None
+    if dynalab_model:
+        dynalab_model_input_data = json.loads(data["dynalab_model_input_data"])
+        dynalab_model_endpoint_name = data["dynalab_model_endpoint_name"]
+
     em = ExampleModel()
     example = em.create(
         tid=data["tid"],
@@ -226,6 +236,9 @@ def post_example(credentials):
         response=data["response"],
         metadata=data["metadata"],
         tag=tag,
+        dynalab_model=dynalab_model,
+        dynalab_model_input_data=dynalab_model_input_data,
+        dynalab_model_endpoint_name=dynalab_model_endpoint_name,
     )
     if not example:
         bottle.abort(400, "Could not create example")
