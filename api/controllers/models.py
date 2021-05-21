@@ -185,8 +185,10 @@ def upload_to_s3(credentials):
 
     t = TaskModel()
     task = t.getByTaskCode(task_code)
-    if not task or not task.submitable:
-        bottle.abort(404, "Task not found or not available for model submission")
+    if not task:
+        bottle.abort(404, "Task not found")
+    if not task.submitable:
+        bottle.abort(403, "Task not available for model submission")
 
     # throttling, for now 1 per 24 hrs for that specific task
     # TODO: make the threshold setting configurable
