@@ -29,7 +29,7 @@ def tasks():
 @bottle.get("/tasks/submitable")
 def get_submitable_tasks():
     t = TaskModel()
-    tasks = t.listSubmissible()
+    tasks = t.listSubmitable()
     return util.json_encode(tasks)
 
 
