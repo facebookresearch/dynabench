@@ -14,3 +14,4 @@ boto3
 yoyo-migrations
 pandas
 sacrebleu
+git+https://github.com/facebookresearch/dynalab.git

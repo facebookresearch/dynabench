@@ -1106,18 +1106,25 @@ class CreateInterface extends React.Component {
               var modelPredIdx = null;
               var modelPredStr = null;
               var modelFooled = null;
-              var probList = null;
+              // TODO: this string checking is necessary because some target models are now uploaded via dynalab and some target models
+              // remain uploaded via the old torchserve directory way. This can be removed when we reupload all target models
+              // via dynalab.
+              const dynalabUploadedTarget = this.state.selectedModel
+                ? false
+                : this.state.randomTargetModel.includes("predict?model=ts");
+              const dynalabModelEndpointName = dynalabUploadedTarget
+                ? this.state.randomTargetModel.split("predict?model=")[1]
+                : null;
               if (this.state.task.type == "clf") {
-                if (!this.state.selectedModel) {
+                if (!this.state.selectedModel && !dynalabUploadedTarget) {
                   // TODO: reupload target models via dynalab and we won't need this.
                   modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
                   modelPredStr = this.state.task.targets[modelPredIdx];
                   modelFooled = modelPredIdx !== this.state.target;
-                  probList = result.prob;
                 } else {
                   if (result.prob) {
                     // Make prob an ordered list.
-                    probList = this.state.task.targets.map(
+                    result.prob = this.state.task.targets.map(
                       (label) => result.prob[label]
                     );
                   }
@@ -1128,10 +1135,10 @@ class CreateInterface extends React.Component {
               } else {
                 // TODO: handle this more elegantly
                 if (result.prob) {
-                  probList = [result.prob, 1 - result.prob];
+                  result.prob = [result.prob, 1 - result.prob];
                 }
                 this.state.task.targets = ["confidence", "uncertainty"];
-                if (!this.state.selectedModel) {
+                if (!this.state.selectedModel && !dynalabUploadedTarget) {
                   // TODO: reupload target models via dynalab and we won't need this.
                   if (this.state.task.type === "extract") {
                     modelFooled = !result.model_is_correct;
@@ -1163,7 +1170,7 @@ class CreateInterface extends React.Component {
                       text: this.state.hypothesis,
                       url: this.state.randomTargetModel,
                       retracted: false,
-                      prob: probList,
+                      prob: result.prob,
                     },
                   ],
                 },
@@ -1191,7 +1198,11 @@ class CreateInterface extends React.Component {
                       this.state.hypothesis,
                       this.state.target,
                       result,
-                      metadata
+                      metadata,
+                      null,
+                      dynalabUploadedTarget,
+                      modelInputs,
+                      dynalabModelEndpointName
                     )
                     .then(
                       (result) => {
