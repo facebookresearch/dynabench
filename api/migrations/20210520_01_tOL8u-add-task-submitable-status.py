@@ -1,7 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 """
-Add task submissible status
+Add task submitable status
 """
 
 from yoyo import step
@@ -15,19 +15,19 @@ __depends__ = {
 steps = [
     step(
         """
-        ALTER TABLE tasks ADD submissible BOOL DEFAULT false
+        ALTER TABLE tasks ADD submitable BOOL DEFAULT false
         """,
         """
-        ALTER TABLE tasks DROP submissible
+        ALTER TABLE tasks DROP submitable
         """,
     ),
     step(
         """
-        UPDATE tasks SET submissible = true WHERE task_code
+        UPDATE tasks SET submitable = true WHERE task_code
         IN ("nli", "qa", "hs", "sentiment")
         """,
         """
-        UPDATE tasks SET submissible = false WHERE task_code
+        UPDATE tasks SET submitable = false WHERE task_code
         IN ("nli", "qa", "hs", "sentiment")
         """,
     ),

@@ -44,7 +44,7 @@ class Task(Base):
     cur_round = db.Column(db.Integer, nullable=False)
 
     hidden = db.Column(db.Boolean, default=False)
-    submissible = db.Column(db.Boolean, default=False)
+    submitable = db.Column(db.Boolean, default=False)
 
     has_context = db.Column(db.Boolean, default=True)
     has_answer = db.Column(db.Boolean, default=False)
@@ -106,8 +106,8 @@ class TaskModel(BaseModel):
             tasks[ii]["round"] = r.to_dict()
         return tasks
 
-    def listSubmissible(self):
-        rows = self.dbs.query(Task).filter(Task.submissible.is_(True)).all()
+    def listSubmitable(self):
+        rows = self.dbs.query(Task).filter(Task.submitable.is_(True)).all()
         tasks = [x.to_dict() for x in rows]
         return tasks
 
