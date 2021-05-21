@@ -44,6 +44,7 @@ class Task(Base):
     cur_round = db.Column(db.Integer, nullable=False)
 
     hidden = db.Column(db.Boolean, default=False)
+    submitable = db.Column(db.Boolean, default=False)
 
     has_context = db.Column(db.Boolean, default=True)
     has_answer = db.Column(db.Boolean, default=False)
@@ -103,6 +104,11 @@ class TaskModel(BaseModel):
         tasks = [x[0].to_dict() for x in rows]
         for ii, r in enumerate([x[1] for x in rows]):
             tasks[ii]["round"] = r.to_dict()
+        return tasks
+
+    def listSubmitable(self):
+        rows = self.dbs.query(Task).filter(Task.submitable.is_(True)).all()
+        tasks = [x.to_dict() for x in rows]
         return tasks
 
     def get_default_dataset_weight(self, task, name):
