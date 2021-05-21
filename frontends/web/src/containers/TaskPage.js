@@ -205,7 +205,7 @@ const TaskActionButtons = (props) => {
         <Nav.Item className="task-action-btn">
           <Annotation
             placement="right"
-            tooltip="Click here to submit your model predictions for previous rounds."
+            tooltip="Click here to upload your models for this task."
           >
             <OverlayTrigger
               placement="bottom"
@@ -685,17 +685,17 @@ class TaskPage extends React.Component {
                         onChange={() => {
                           this.setState(
                             {
-                              validateNonFooling:
-                                !this.state.validateNonFooling,
+                              validateNonFooling: !this.state
+                                .validateNonFooling,
                             },
                             () =>
                               this.context.api.updateTaskSettings(
                                 this.state.task.id,
                                 {
-                                  validate_non_fooling:
-                                    this.state.validateNonFooling,
-                                  num_matching_validations:
-                                    this.state.numMatchingValidations,
+                                  validate_non_fooling: this.state
+                                    .validateNonFooling,
+                                  num_matching_validations: this.state
+                                    .numMatchingValidations,
                                 }
                               )
                           );
@@ -726,10 +726,10 @@ class TaskPage extends React.Component {
                                 this.context.api.updateTaskSettings(
                                   this.state.task.id,
                                   {
-                                    validate_non_fooling:
-                                      this.state.validateNonFooling,
-                                    num_matching_validations:
-                                      this.state.numMatchingValidations,
+                                    validate_non_fooling: this.state
+                                      .validateNonFooling,
+                                    num_matching_validations: this.state
+                                      .numMatchingValidations,
                                   }
                                 )
                             );
