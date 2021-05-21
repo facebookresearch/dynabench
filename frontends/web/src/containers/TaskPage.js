@@ -205,7 +205,7 @@ const TaskActionButtons = (props) => {
         <Nav.Item className="task-action-btn">
           <Annotation
             placement="right"
-            tooltip="Click here to submit your model predictions for previous rounds."
+            tooltip="Click here to upload your models for this task."
           >
             <OverlayTrigger
               placement="bottom"
