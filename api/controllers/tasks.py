@@ -26,8 +26,8 @@ def tasks():
     return util.json_encode(tasks)
 
 
-@bottle.get("/tasks/submissible")
-def get_submissible_tasks():
+@bottle.get("/tasks/submitable")
+def get_submitable_tasks():
     t = TaskModel()
     tasks = t.listSubmissible()
     return util.json_encode(tasks)
