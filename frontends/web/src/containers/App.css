@@ -235,6 +235,15 @@ table.inspectModel thead td {
     animation-fill-mode: forwards;
 }
 
+.table.floresModel {
+  font-size: small
+}
+
+.upload-time {
+  font-size: small;
+  color: #9c9a9a;
+}
+
 @keyframes pop {
     0% {
         transform: scale(0);

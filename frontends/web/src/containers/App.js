@@ -16,6 +16,7 @@ import RegisterPage from "./RegisterPage";
 import ProfilePage from "./ProfilePage";
 import AboutPage from "./AboutPage";
 import TaskPage from "./TaskPage";
+import FloresTaskPage from "./FloresTaskPage";
 import ContactPage from "./ContactPage";
 import TermsPage from "./TermsPage";
 import DataPolicyPage from "./DataPolicyPage";
@@ -23,6 +24,7 @@ import UserContext from "./UserContext";
 import TasksContext from "./TasksContext";
 import UserPage from "./UserPage";
 import ModelPage from "./ModelPage";
+import FloresModelPage from "./FloresModelPage";
 import ApiService from "../common/ApiService";
 import ScrollToTop from "./ScrollToTop.js";
 import CreateInterface from "./CreateInterface.js";
@@ -97,6 +99,7 @@ class App extends React.Component {
     }
     this.api.getTasks().then(
       (result) => {
+        console.log(result)
         this.setState({ tasks: result });
       },
       (error) => {
@@ -252,6 +255,7 @@ class App extends React.Component {
                   component={TaskPage}
                 />
                 <Route path="/tasks/:taskId" component={TaskPage} />
+                <Route path="/flores/:taskId?" component={FloresTaskPage} />
                 <Route path="/login" component={LoginPage} />
                 <Route
                   path="/generate_api_token"
@@ -267,6 +271,7 @@ class App extends React.Component {
                 <Route path="/register" component={RegisterPage} />
                 <Route path="/users/:userId" component={UserPage} />
                 <Route path="/models/:modelId" component={ModelPage} />
+                <Route path="/flores-models/:modelId" component={FloresModelPage} />
                 <Route path="/" component={HomePage} />
               </Switch>
             </div>
