@@ -234,9 +234,7 @@ class FloresTaskPage extends React.Component {
                   format="MMM Do YYYY" />
               </h6>
 
-              <ModelLeaderBoard
-                taskTitle= {this.getTitleTask()}
-              />
+              <ModelLeaderBoard taskTitle= {this.getTitleTask()}/>
             </Col>
           </Row>
         </Container>
