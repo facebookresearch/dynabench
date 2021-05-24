@@ -81,7 +81,7 @@ const FloresModelPage = (props) => {
     if (isLoading) return <Spinner animation="border"/>
 
     return (
-      <Container className="mb-5 pb-5">
+      <Container className="mb-3 pb-5 mt-4">
         <Row>
           <Col className="m-auto" lg={8}>
             <Card className="my-4">
@@ -194,7 +194,7 @@ const FloresModelPage = (props) => {
                 </div>
                
               </Card.Header>
-              <Card.Body className="p-0">
+              <Card.Body className="p-0 my-0">
                 <FloresGrid/>
               </Card.Body>
             </Card>

@@ -236,12 +236,12 @@ table.inspectModel thead td {
 }
 
 .table.floresModel {
-  font-size: small
+    font-size: small;
 }
 
 .upload-time {
-  font-size: small;
-  color: #9c9a9a;
+    font-size: small;
+    color: #9c9a9a;
 }
 
 @keyframes pop {
