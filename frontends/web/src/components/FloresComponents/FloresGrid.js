@@ -3,7 +3,7 @@ import React from 'react'
 const FloresGrid = () => {
     return (
         <div>
-            FloRes Grid
+            FloRes Grid .. In progress
         </div>
     )
 }
