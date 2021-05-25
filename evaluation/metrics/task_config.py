@@ -22,8 +22,9 @@ _custom_config = {
     },
     "flores": {
         "instance_config": instance_property["ml.m5.xlarge"],
-        "eval_metrics": ["bleu"],
+        "eval_metrics": ["bleu", "sp_bleu"],
         "perf_metric": "bleu",
+        "delta_metrics": [],
         "input_keys": ["uid", "sourceText", "sourceLanguage", "targetLanguage"],
     },
 }
