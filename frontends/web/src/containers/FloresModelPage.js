@@ -150,7 +150,7 @@ const FloresModelPage = (props) => {
                   <tr style={{ border: `none` }}>
                     <td style={{ verticalAlign: "middle" }}>Model Card</td>
                     <td className="modelCard">
-                      <Markdown>{"..."}</Markdown>
+                      <Markdown>{model.model_card}</Markdown>
                     </td>
                   </tr>
                 </tbody>
