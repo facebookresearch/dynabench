@@ -3,14 +3,14 @@
 import hashlib
 import json
 
-import numpy as np
-import sqlalchemy as db
-from sqlalchemy import JSON, case
-
 import dynalab.tasks.hs
 import dynalab.tasks.nli
 import dynalab.tasks.qa
 import dynalab.tasks.sentiment
+import numpy as np
+import sqlalchemy as db
+from sqlalchemy import JSON, case
+
 from common.logging import logger
 from models.context import Context
 from models.model import Model
@@ -313,6 +313,76 @@ class ExampleModel(BaseModel):
             return False
 
     def getRandom(
+        self,
+        rid,
+        validate_non_fooling,
+        num_matching_validations,
+        n=1,
+        my_uid=None,
+        tags=None,
+    ):
+        cnt_correct = db.sql.func.sum(
+            case([(Validation.label == LabelEnum.correct, 1)], else_=0)
+        ).label("cnt_correct")
+        cnt_flagged = db.sql.func.sum(
+            case([(Validation.label == LabelEnum.flagged, 1)], else_=0)
+        ).label("cnt_flagged")
+        cnt_incorrect = db.sql.func.sum(
+            case([(Validation.label == LabelEnum.incorrect, 1)], else_=0)
+        ).label("cnt_incorrect")
+        cnt_owner_validated = db.sql.func.sum(
+            case([(Validation.mode == ModeEnum.owner, 1)], else_=0)
+        ).label("cnt_owner_validated")
+        result = (
+            self.dbs.query(Example)
+            .join(Context, Example.cid == Context.id)
+            .filter(Context.r_realid == rid)
+            .filter(Example.retracted == False)  # noqa
+        )
+
+        if tags:
+            result = result.filter(Example.tag.in_(tags))  # noqa
+
+        if not validate_non_fooling:
+            result = result.filter(Example.model_wrong == True)  # noqa
+
+        result_partially_validated = (
+            result.join(Validation, Example.id == Validation.eid)
+            .group_by(Validation.eid)
+            .having(
+                db.and_(
+                    cnt_correct < num_matching_validations,
+                    cnt_flagged < num_matching_validations,
+                    cnt_incorrect < num_matching_validations,
+                    cnt_owner_validated == 0,
+                )
+            )
+        )
+        if my_uid is not None:
+            cnt_uid = db.sql.func.sum(
+                case([(Validation.uid == my_uid, 1)], else_=0)
+            ).label("cnt_uid")
+            result_partially_validated = result_partially_validated.group_by(
+                Validation.eid
+            ).having(cnt_uid == 0)
+        result_not_validated = result.filter(
+            db.not_(db.exists().where(Validation.eid == Example.id))
+        )
+        result = result_partially_validated.union(result_not_validated)
+        if my_uid is not None:
+            result = result.filter(Example.uid != my_uid)
+        result = (
+            result.order_by(
+                db.not_(Example.model_wrong),
+                Example.total_verified.asc(),
+                db.sql.func.rand(),
+            )
+            .limit(n)
+            .all()
+        )
+        return result
+
+    def getRandomVQA(
         self,
         rid,
         validate_non_fooling,
