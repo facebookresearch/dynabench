@@ -61,9 +61,9 @@ def get_random_filtered_example(
     return util.json_encode(example)
 
 
-@bottle.get("/examples/<tid:int>/<rid:int>")
+@bottle.get("/examples/vqa/<tid:int>/<rid:int>")
 @_auth.requires_auth_or_turk
-def get_random_example(credentials, tid, rid):
+def get_random_example_vqa(credentials, tid, rid):
     query_dict = parse_qs(bottle.request.query_string)
     tags = None
     if "tags" in query_dict and len(query_dict["tags"]) > 0:
@@ -91,7 +91,7 @@ def get_random_example(credentials, tid, rid):
 
     uid = credentials["id"] if credentials["id"] != "turk" else annotator_id
     mode = "owner" if credentials["id"] != "turk" else "user"
-    example = em.getRandom(
+    example = em.getRandomVQA(
         round.id,
         validate_non_fooling,
         num_matching_validations,
@@ -109,6 +109,44 @@ def get_random_example(credentials, tid, rid):
         example = em.dbs.merge(example)
 
     example = example.to_dict()
+    return util.json_encode(example)
+
+
+@bottle.get("/examples/<tid:int>/<rid:int>")
+@_auth.requires_auth_or_turk
+def get_random_example(credentials, tid, rid):
+    query_dict = parse_qs(bottle.request.query_string)
+    tags = None
+    if "tags" in query_dict and len(query_dict["tags"]) > 0:
+        tags = query_dict["tags"][0].split("|")
+
+    tm = TaskModel()
+    task = tm.get(tid)
+    validate_non_fooling = False
+    num_matching_validations = 3
+    if task.settings_json:
+        settings = json.loads(task.settings_json)
+        validate_non_fooling = settings["validate_non_fooling"]
+        num_matching_validations = settings["num_matching_validations"]
+    rm = RoundModel()
+    round = rm.getByTidAndRid(tid, rid)
+    em = ExampleModel()
+    if credentials["id"] != "turk":
+        example = em.getRandom(
+            round.id,
+            validate_non_fooling,
+            num_matching_validations,
+            n=1,
+            my_uid=credentials["id"],
+            tags=tags,
+        )
+    else:
+        example = em.getRandom(
+            round.id, validate_non_fooling, num_matching_validations, n=1, tags=tags
+        )
+    if not example:
+        bottle.abort(500, f"No examples available ({round.id})")
+    example = example[0].to_dict()
     return util.json_encode(example)
 
 
