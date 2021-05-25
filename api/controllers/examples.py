@@ -91,7 +91,7 @@ def get_random_example_vqa(credentials, tid, rid):
 
     uid = credentials["id"] if credentials["id"] != "turk" else annotator_id
     mode = "owner" if credentials["id"] != "turk" else "user"
-    example = em.getRandom(
+    example = em.getRandomVQA(
         round.id,
         validate_non_fooling,
         num_matching_validations,
