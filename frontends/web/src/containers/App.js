@@ -99,7 +99,6 @@ class App extends React.Component {
     }
     this.api.getTasks().then(
       (result) => {
-        console.log(result)
         this.setState({ tasks: result });
       },
       (error) => {
@@ -110,6 +109,7 @@ class App extends React.Component {
   componentDidMount() {
     this.refreshData();
   }
+
   render() {
     //href={`/tasks/${task.id}#overall`}
     const NavItems = this.state.tasks.map((task, index) => (
@@ -271,7 +271,10 @@ class App extends React.Component {
                 <Route path="/register" component={RegisterPage} />
                 <Route path="/users/:userId" component={UserPage} />
                 <Route path="/models/:modelId" component={ModelPage} />
-                <Route path="/flores-models/:modelId" component={FloresModelPage} />
+                <Route
+                  path="/flores-models/:modelId"
+                  component={FloresModelPage}
+                />
                 <Route path="/" component={HomePage} />
               </Switch>
             </div>

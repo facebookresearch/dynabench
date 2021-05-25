@@ -6,13 +6,7 @@
 
 import React from "react";
 import "./TaskPage.css";
-import {
-  Container,
-  Row,
-  Col,
-  ButtonGroup,
-  Nav
-} from "react-bootstrap";
+import { Container, Row, Col, ButtonGroup, Nav } from "react-bootstrap";
 import UserContext from "./UserContext";
 import Moment from "react-moment";
 import { OverlayProvider, Annotation, OverlayContext } from "./Overlay";
@@ -50,7 +44,7 @@ const TaskNav = (props) => {
           Large Track
         </Nav.Link>
       </Nav.Item>
-      <Nav.Item >
+      <Nav.Item>
         <Nav.Link
           href={`#${2}`}
           className={`${
@@ -85,9 +79,8 @@ class FloresTaskPage extends React.Component {
       modelLeaderBoardTags: [],
       modelLeaderBoardPage: 0,
       isEndOfModelLeaderPage: true,
-      pageLimit: 5
+      pageLimit: 5,
     };
-
   }
 
   /*componentDidMount() {
@@ -152,7 +145,7 @@ class FloresTaskPage extends React.Component {
     this.setState(
       {
         modelLeaderBoardPage: 0,
-        isEndOfModelLeaderPage: true
+        isEndOfModelLeaderPage: true,
       },
       () => {
         this.fetchOverallUserLeaderboard(this.state.userLeaderBoardPage);
@@ -165,17 +158,17 @@ class FloresTaskPage extends React.Component {
     const task = this.props.location.hash;
     switch (task) {
       case "#1":
-        return "Large Track"
+        return "Large Track";
       case "#2":
-        return "Small Track 1"
+        return "Small Track 1";
       case "#3":
-        return "Small Track 2"
+        return "Small Track 2";
       default:
-        return 'Large Track'
+        return "Large Track";
     }
-  }
+  };
 
-  render() {    
+  render() {
     return (
       <OverlayProvider initiallyHide={true} delayMs="1700">
         <Container fluid>
@@ -189,9 +182,7 @@ class FloresTaskPage extends React.Component {
               </Annotation>
             </Col>
             <Col lg={10} className="px-4 px-lg-5">
-              <h2 className="task-page-header text-reset ml-0">
-                FloRes
-              </h2>
+              <h2 className="task-page-header text-reset ml-0">FloRes</h2>
               <div style={{ float: "right", marginTop: 30 }}>
                 <ButtonGroup>
                   <Annotation
@@ -214,27 +205,30 @@ class FloresTaskPage extends React.Component {
                   </Annotation>
                 </ButtonGroup>
               </div>
-              <p> FLoRes is a benchmark dataset for machine translation between English and low-resource languages. </p>
-              <hr/>
-              <FloresActionButtons
-                api={''}
-                taskId={''}
-                user={''}
-                task={''}
-              />
               <p>
-                The training data is provided by the publicly available Opus repository, which contains data of 
-                various quality from a variety of domains. We also provide in-domain Wikipedia monolingual data for each language. 
-                nn All tracks will be fully constrained, so only the data that is provided can be used. 
-                This will enable fairer comparison across methods. Check the <a href="http://data.statmt.org/wmt21/multilingual-task/">multilingual data page</a> for a detailed view of the resources.
+                {" "}
+                FLoRes is a benchmark dataset for machine translation between
+                English and low-resource languages.{" "}
+              </p>
+              <hr />
+              <FloresActionButtons api={""} taskId={""} user={""} task={""} />
+              <p>
+                The training data is provided by the publicly available Opus
+                repository, which contains data of various quality from a
+                variety of domains. We also provide in-domain Wikipedia
+                monolingual data for each language. nn All tracks will be fully
+                constrained, so only the data that is provided can be used. This
+                will enable fairer comparison across methods. Check the{" "}
+                <a href="http://data.statmt.org/wmt21/multilingual-task/">
+                  multilingual data page
+                </a>{" "}
+                for a detailed view of the resources.
               </p>
               <h6 className="text-dark ml-0">
-                <Moment 
-                  date={Date.now()} 
-                  format="MMM Do YYYY" />
+                <Moment date={Date.now()} format="MMM Do YYYY" />
               </h6>
 
-              <ModelLeaderBoard taskTitle= {this.getTitleTask()}/>
+              <ModelLeaderBoard taskTitle={this.getTitleTask()} />
             </Col>
           </Row>
         </Container>
