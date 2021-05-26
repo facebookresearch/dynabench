@@ -25,4 +25,13 @@ instance_property = {
         "compute_cap": COMPUTE_CAP_CONSTANT,
         "aws_metrics": ["examples_per_second", "memory_utilization"],
     },
+    "ml.p2.xlarge": {
+        "instance_type": "ml.p2.xlarge",
+        "device_type": "cpu",
+        "cpu_count": 4,
+        "gpu_count": 1,
+        "memory_gb": 16,
+        "compute_cap": COMPUTE_CAP_CONSTANT,
+        "aws_metrics": ["examples_per_second", "memory_utilization"],
+    },
 }

@@ -21,7 +21,7 @@ _custom_config = {
         "perf_metric": "f1",
     },
     "flores": {
-        "instance_config": instance_property["ml.m5.xlarge"],
+        "instance_config": instance_property["ml.p2.xlarge"],
         "eval_metrics": ["bleu", "sp_bleu"],
         "perf_metric": "bleu",
         "delta_metrics": [],

@@ -6,7 +6,13 @@ _default_config = {
     "create_endpoint": True,
 }
 
-_custom_config = {}
+_custom_config = {
+    "flores": {
+        "instance_type": "ml.p2.xlarge",
+        "instance_count": 1,
+        "create_endpoint": False,
+    }
+}
 
 
 def _gen_config(config=None):
@@ -25,6 +31,9 @@ tasks_config = {
     "hs": _gen_config(),
     "sentiment": _gen_config(),
     "qa": _gen_config(),
+    "flores_full": _gen_config(_custom_config["flores"]),
+    "flores_small1": _gen_config(_custom_config["flores"]),
+    "flores_small2": _gen_config(_custom_config["flores"]),
 }
 
 
