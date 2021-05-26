@@ -23,6 +23,7 @@ job_metrics_config = {
 metrics_meta_config = {
     "accuracy": metrics.get_accuracy_meta,
     "f1": metrics.get_f1_meta,
+    "bleu": metrics.get_bleu_meta,
     "memory_utilization": metrics.get_memory_utilization_meta,
     "examples_per_second": metrics.get_examples_per_second_meta,
     "fairness": metrics.get_fairness_meta,

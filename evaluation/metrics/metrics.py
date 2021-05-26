@@ -90,6 +90,10 @@ def get_bleu(predictions: list, targets: list):
     return bleu.score
 
 
+def get_bleu_meta(task=None):
+    return {"unit": "%", "pretty_name": "Bleu", "utility_direction": 1, "offset": 0}
+
+
 # job_metrics, takes raw job and dataset as input
 def get_memory_utilization(job, dataset):
     mem = (

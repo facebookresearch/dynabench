@@ -173,6 +173,9 @@ class TaskModel(BaseModel):
                 "QA": "qa",
                 "Sentiment": "sentiment",
                 "Hate Speech": "hs",
+                "FLORES-SMALL1": "flores_small1",
+                "FLORES-SMALL2": "flores_small2",
+                "FLORES-FULL": "flores_full",
             }
             if t_dict["shortname"] in shortname_to_metrics_task_name:
                 metrics_task_name = shortname_to_metrics_task_name[t_dict["shortname"]]
