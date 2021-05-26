@@ -91,7 +91,7 @@ def get_bleu(predictions: list, targets: list):
 
 
 def get_bleu_meta(task=None):
-    return {"unit": "%", "pretty_name": "Bleu", "utility_direction": 1, "offset": 0}
+    return {"unit": "%", "pretty_name": "BLEU", "utility_direction": 1, "offset": 0}
 
 
 # job_metrics, takes raw job and dataset as input
