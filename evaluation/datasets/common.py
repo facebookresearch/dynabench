@@ -41,7 +41,10 @@ class BaseDataset(ABC):
         self.access_type = access_type
         self.filename = self.name + ext
         self._n_examples = {}  # will be get through API
-        self.s3_bucket = config["dataset_s3_bucket"]
+        self.s3_bucket = config["dataset_alternative_buckets"].get(
+            task, config["dataset_s3_bucket"]
+        )
+
         self.s3_url = self._get_data_s3_url()
         self.longdesc = longdesc
         self.source_url = source_url
@@ -129,6 +132,7 @@ class BaseDataset(ABC):
             ModelName=endpoint_name,
             TransformJobName=job_name,
             MaxConcurrentTransforms=1,
+            # BatchStrategy="MultiRecord",
             BatchStrategy="SingleRecord",
             TransformInput={
                 "DataSource": {
@@ -139,6 +143,8 @@ class BaseDataset(ABC):
                 },
                 "ContentType": "application/json",
                 "SplitType": "Line",
+                # TODO: try MultiRecord with:
+                # "SplitType": "None",
             },
             TransformOutput={
                 # change to config

@@ -27,7 +27,7 @@ if __name__ == "__main__":
         "sqs",
         aws_access_key_id=deploy_config["aws_access_key_id"],
         aws_secret_access_key=deploy_config["aws_secret_access_key"],
-        region_name=deploy_config["aws_region"],
+        region_name=deploy_config["sqs_aws_region"],
     )
     queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
     eval_queue = sqs.get_queue_by_name(QueueName=config["evaluation_sqs_queue"])
