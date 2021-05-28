@@ -15,6 +15,7 @@ import {
   Table,
   InputGroup,
   Modal,
+  Spinner,
 } from "react-bootstrap";
 import Moment from "react-moment";
 import Markdown from "react-markdown";
@@ -132,10 +133,12 @@ class ModelPage extends React.Component {
         name: "",
         username: "",
       },
+      isLoading: false,
     };
   }
 
   componentDidMount() {
+    this.setState({ isLoading: true });
     const user = this.context.api.getCredentials();
     this.setState({ ctxUserId: user.id });
     this.fetchModel();
@@ -144,10 +147,11 @@ class ModelPage extends React.Component {
   fetchModel = () => {
     this.context.api.getModel(this.state.modelId).then(
       (result) => {
-        this.setState({ model: result });
+        this.setState({ model: result, isLoading: false });
       },
       (error) => {
         console.log(error);
+        this.setState({ isLoading: false });
         if (error.status_code === 404 || error.status_code === 405) {
           this.props.history.push("/");
         }
@@ -402,7 +406,12 @@ class ModelPage extends React.Component {
                 ) : (
                   <Container>
                     <Row>
-                      <Col className="my-4 text-center">No Data Found</Col>
+                      <Col className="my-4 text-center">Loading</Col>
+                    </Row>
+                    <Row>
+                      <Col className="mb-4 text-center">
+                        {this.state.isLoading && <Spinner animation="border" />}
+                      </Col>
                     </Row>
                   </Container>
                 )}
@@ -425,33 +434,3 @@ class ModelPage extends React.Component {
 }
 
 export default ModelPage;
-
-/**
- *
- *  <hr/>
-            <Row>
-              <Col className="m-auto" lg={12}>
-                <Card className="my-4">
-                  <Card.Header className="light-gray-bg">
-                    <div className="d-flex justify-content-between">
-                      <Button
-                        className={`blue-bg border-0 font-weight-bold`}
-                        size="sm"
-                        onClick={() => {}}
-                      >
-                        <i className="fas fa-info-circle"></i>
-                      </Button>
-                      <div className="align-items">
-                        <h2 className="align-items text-uppercase m-0 text-reset">
-                          Performance Grid
-                        </h2>
-                      </div>
-                    </div>
-                  </Card.Header>
-                  <Card.Body className="p-4 my-0">
-                      <FloresGrid model={model} />
-                  </Card.Body>
-                </Card>
-              </Col>
-            </Row>
- */
