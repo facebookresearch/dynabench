@@ -1,106 +1,8 @@
-import { Card, Pagination, Row, Col } from "react-bootstrap";
-import React, { Fragment } from "react";
-import { useState, useRef } from "react";
+import React, { Fragment, useState, useEffect, useContext } from "react";
+import { Card, Pagination, Row, Col, Spinner } from "react-bootstrap";
 import { Table } from "react-bootstrap";
 import { Link } from "react-router-dom";
-
-const modelDummyData = [
-  {
-    model_id: 108,
-    bleu: 77.08946295985358,
-    model_name: "DeBERTa default params",
-    perf_by_tag: [
-      {
-        tag: "ru_RU-en_XX",
-        pretty_perf: "80.5927448867656 %",
-        perf: 80.5927448867656,
-        perf_dict: { bleu: 80.5927448867656 },
-      },
-      {
-        tag: "en_XX-ru_RU",
-        pretty_perf: "48.892302243490086 %",
-        perf: 48.892302243490086,
-        perf_dict: { bleu: 48.892302243490086 },
-      },
-    ],
-  },
-  {
-    model_id: 255,
-    bleu: 72.08946295985358,
-    model_name: "M23_dFG",
-    perf_by_tag: [
-      {
-        tag: "ru_RU-en_XX",
-        pretty_perf: "80.5927448867656 %",
-        perf: 80.5927448867656,
-        perf_dict: { bleu: 80.5927448867656 },
-      },
-      {
-        tag: "en_XX-ru_RU",
-        pretty_perf: "48.892302243490086 %",
-        perf: 48.892302243490086,
-        perf_dict: { bleu: 48.892302243490086 },
-      },
-    ],
-  },
-  {
-    model_id: 256,
-    bleu: 71.08946295985358,
-    model_name: "M24",
-    perf_by_tag: [
-      {
-        tag: "ru_RU-en_XX",
-        pretty_perf: "80.5927448867656 %",
-        perf: 80.5927448867656,
-        perf_dict: { bleu: 80.5927448867656 },
-      },
-      {
-        tag: "en_XX-ru_RU",
-        pretty_perf: "48.892302243490086 %",
-        perf: 48.892302243490086,
-        perf_dict: { bleu: 48.892302243490086 },
-      },
-    ],
-  },
-  {
-    model_id: 258,
-    bleu: 72.08946295985358,
-    model_name: "M23_sfs",
-    perf_by_tag: [
-      {
-        tag: "ru_RU-en_XX",
-        pretty_perf: "80.5927448867656 %",
-        perf: 80.5927448867656,
-        perf_dict: { bleu: 80.5927448867656 },
-      },
-      {
-        tag: "en_XX-ru_RU",
-        pretty_perf: "48.892302243490086 %",
-        perf: 48.892302243490086,
-        perf_dict: { bleu: 48.892302243490086 },
-      },
-    ],
-  },
-  {
-    model_id: 259,
-    bleu: 41.08946295985358,
-    model_name: "M_df4",
-    perf_by_tag: [
-      {
-        tag: "ru_RU-en_XX",
-        pretty_perf: "80.5927448867656 %",
-        perf: 80.5927448867656,
-        perf_dict: { bleu: 80.5927448867656 },
-      },
-      {
-        tag: "en_XX-ru_RU",
-        pretty_perf: "48.892302243490086 %",
-        perf: 48.892302243490086,
-        perf_dict: { bleu: 48.892302243490086 },
-      },
-    ],
-  },
-];
+import UserContext from "../../containers/UserContext";
 
 const SortDirection = {
   ASC: "asc",
@@ -141,10 +43,12 @@ const SortContainer = ({
 /**
  * The Overall Model Leader board component
  *
- * @param {Array} props.models the models to show
- * @param {Object} props.task the task for the leader board.
+ * @param {String} props.taskTitle title of track to show
+ * @param {String} props.taskId the flores task for the leader board.
  */
-const ModelLeaderBoard = ({ models, task, taskTitle }) => {
+const ModelLeaderBoard = ({ taskTitle, taskId, history }) => {
+  const context = useContext(UserContext);
+  const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [pageLimit, setPageLimit] = useState(10);
@@ -153,6 +57,26 @@ const ModelLeaderBoard = ({ models, task, taskTitle }) => {
     field: "bleu",
     direction: SortDirection.DESC,
   });
+
+  useEffect(() => {
+    setIsLoading(true);
+
+    context.api
+      .getDynaboardScores(taskId, 10, 0, "bleu", "desc", [1, 0, 0, 0, 0], [1]) // No weights.
+      .then(
+        (result) => {
+          setData(result.data);
+        },
+        (error) => {
+          console.log(error);
+          if (error.status_code === 404 || error.status_code === 405) {
+            history.push("/");
+          }
+        }
+      );
+    setIsLoading(false);
+    return () => {};
+  }, [taskId, context.api, history]);
 
   /**
    * Update or toggle the sort field.
@@ -175,20 +99,25 @@ const ModelLeaderBoard = ({ models, task, taskTitle }) => {
 
   const isEndOfPage = (page + 1) * pageLimit >= total;
 
-  const leadderBoardData = modelDummyData.map((i, index) => {
+  const leaderBoardData = data.map((i, index) => {
     return (
       <Fragment key={i.model_id}>
         <tr>
           <td>
-            <Link to={`/flores-models/${i.model_id}`} className="btn-link">
+            <Link to={`/models/${i.model_id}`} className="btn-link">
               {i.model_name}
+            </Link>{" "}
+            <Link to={`/users/${i.uid}#profile`} className="btn-link">
+              ({i.username})
             </Link>
           </td>
-          <td className="text-right">{i.bleu.toFixed(2)}</td>
+          <td className="text-right">{i.averaged_scores[0].toFixed(2)}</td>
         </tr>
       </Fragment>
     );
   });
+
+  if (isLoading) return <Spinner animation="border" />;
 
   return (
     <Row>
@@ -215,7 +144,7 @@ const ModelLeaderBoard = ({ models, task, taskTitle }) => {
                   </th>
                 </tr>
               </thead>
-              <tbody>{leadderBoardData}</tbody>
+              <tbody>{leaderBoardData}</tbody>
             </Table>
           </Card.Body>
           <Card.Footer className="text-center">

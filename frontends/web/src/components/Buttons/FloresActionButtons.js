@@ -8,7 +8,7 @@ import React from "react";
 import { Button, Nav, Tooltip, OverlayTrigger } from "react-bootstrap";
 import { Annotation } from "../../containers/Overlay";
 
-const FloresActionButtons = (props) => {
+const FloresActionButtons = () => {
   function renderTooltip(props, text) {
     return (
       <Tooltip id="button-tooltip" {...props}>

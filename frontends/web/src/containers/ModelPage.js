@@ -24,16 +24,17 @@ import UserContext from "./UserContext";
 import "./ModelPage.css";
 import { OverlayProvider, BadgeOverlay } from "./Overlay";
 import { useState } from "react";
+import FloresGrid from "../components/FloresComponents/FloresGrid";
 
 const ChevronExpandButton = ({ expanded }) => {
   return (
-    <a type="button" className="position-absolute start-100">
+    <span type="button" className="position-absolute start-100">
       {expanded ? (
         <i className="fas fa-chevron-down"></i>
       ) : (
         <i className="fas fa-chevron-right"></i>
       )}
-    </a>
+    </span>
   );
 };
 
@@ -96,9 +97,9 @@ const ScoreRow = ({ score }) => {
           </td>
         </tr>
         {expanded &&
-          perf_by_tag.map((perf_and_tag) => {
+          perf_by_tag.map((perf_and_tag, index) => {
             return (
-              <tr style={{ border: `none` }}>
+              <tr key={index} style={{ border: `none` }}>
                 <td className="text-right pr-4  text-nowrap">
                   <div className="d-flex justify-content-end align-items-center">
                     <span className="d-flex align-items-center">
@@ -207,9 +208,10 @@ class ModelPage extends React.Component {
   };
 
   render() {
+    const { model } = this.state;
+    const isFlores = [14, 15, 16].includes(model.tid); // Flores tasks IDs
     const isModelOwner =
       parseInt(this.state.model.user_id) === parseInt(this.state.ctxUserId);
-    const { model } = this.state;
     const { leaderboard_scores } = this.state.model;
     const { non_leaderboard_scores } = this.state.model;
     let orderedLeaderboardScores = (leaderboard_scores || []).sort(
@@ -373,21 +375,25 @@ class ModelPage extends React.Component {
                       </tbody>
                     </Table>
                     <Table>
-                      <tr>
-                        <td colSpan={2}>
-                          <h5>Leaderboard Datasets</h5>
-                        </td>
-                      </tr>
+                      <tbody>
+                        <tr>
+                          <td colSpan={2}>
+                            <h5>Leaderboard Datasets</h5>
+                          </td>
+                        </tr>
+                      </tbody>
                     </Table>
-                    {orderedLeaderboardScores.map((score) => (
-                      <ScoreRow score={score} />
+                    {orderedLeaderboardScores.map((score, index) => (
+                      <ScoreRow key={index} score={score} />
                     ))}
                     <Table>
-                      <tr>
-                        <td colSpan={2}>
-                          <h5>Non-Leaderboard Datasets</h5>
-                        </td>
-                      </tr>
+                      <tbody>
+                        <tr>
+                          <td colSpan={2}>
+                            <h5>Non-Leaderboard Datasets</h5>
+                          </td>
+                        </tr>
+                      </tbody>
                     </Table>
                     {orderedNonLeaderboardScores.map((score) => (
                       <ScoreRow score={score} />
@@ -404,9 +410,48 @@ class ModelPage extends React.Component {
             </Card>
           </Col>
         </Container>
+        {isFlores && (
+          <>
+            <Container>
+              <hr />
+              <h1 className="my-3 pt-3 text-center">FloRes Performance Grid</h1>
+            </Container>
+            <FloresGrid model={model} />
+          </>
+        )}
       </OverlayProvider>
     );
   }
 }
 
 export default ModelPage;
+
+/**
+ *
+ *  <hr/>
+            <Row>
+              <Col className="m-auto" lg={12}>
+                <Card className="my-4">
+                  <Card.Header className="light-gray-bg">
+                    <div className="d-flex justify-content-between">
+                      <Button
+                        className={`blue-bg border-0 font-weight-bold`}
+                        size="sm"
+                        onClick={() => {}}
+                      >
+                        <i className="fas fa-info-circle"></i>
+                      </Button>
+                      <div className="align-items">
+                        <h2 className="align-items text-uppercase m-0 text-reset">
+                          Performance Grid
+                        </h2>
+                      </div>
+                    </div>
+                  </Card.Header>
+                  <Card.Body className="p-4 my-0">
+                      <FloresGrid model={model} />
+                  </Card.Body>
+                </Card>
+              </Col>
+            </Row>
+ */

@@ -12,33 +12,18 @@ import Moment from "react-moment";
 import { OverlayProvider, Annotation, OverlayContext } from "./Overlay";
 import FloresActionButtons from "../components/Buttons/FloresActionButtons";
 import ModelLeaderBoard from "../components/FloresComponents/ModelLeaderboard";
+import FloresTaskDescription from "../components/FloresComponents/FloresTaskDescription";
 
 const TaskNav = (props) => {
-  const rounds = (props.taskDetail.round && props.taskDetail.cur_round) || 0;
-  const roundNavs = [];
   const currentHash = props.location.hash;
-  for (let i = 1; i <= rounds; i++) {
-    roundNavs.push(
-      <Nav.Item key={i}>
-        <Nav.Link
-          href={`#${i}`}
-          className={`${
-            currentHash === `#${i}` ? "active" : ""
-          } gray-color p-3 px-lg-5`}
-        >
-          Round {i}
-        </Nav.Link>
-      </Nav.Item>
-    );
-  }
+
   return (
     <Nav className="flex-lg-column sidebar-wrapper sticky-top">
-      {roundNavs.map((item, id) => item)}
       <Nav.Item>
         <Nav.Link
-          href={`#${1}`}
+          href={`#${16}`}
           className={`${
-            currentHash === `#${1}` ? "active" : ""
+            currentHash === `#${16}` ? "active" : ""
           } gray-color p-3 px-lg-5`}
         >
           Large Track
@@ -46,9 +31,9 @@ const TaskNav = (props) => {
       </Nav.Item>
       <Nav.Item>
         <Nav.Link
-          href={`#${2}`}
+          href={`#${14}`}
           className={`${
-            currentHash === `#${2}` ? "active" : ""
+            currentHash === `#${14}` ? "active" : ""
           } gray-color p-3 px-lg-5`}
         >
           Small Track 1
@@ -56,9 +41,9 @@ const TaskNav = (props) => {
       </Nav.Item>
       <Nav.Item>
         <Nav.Link
-          href={`#${3}`}
+          href={`#${15}`}
           className={`${
-            currentHash === `#${3}` ? "active" : ""
+            currentHash === `#${15}` ? "active" : ""
           } gray-color p-3 px-lg-5`}
         >
           Small Track 2
@@ -73,95 +58,36 @@ class FloresTaskPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      taskId: props.match.params.taskId,
+      taskId: props.location.hash === "" ? "16" : props.location.hash.slice(1),
       task: {},
-      modelLeaderBoardData: [],
-      modelLeaderBoardTags: [],
       modelLeaderBoardPage: 0,
       isEndOfModelLeaderPage: true,
       pageLimit: 5,
     };
   }
 
-  /*componentDidMount() {
-    this.setState({ taskId: this.props.match.params.taskId }, function () {
-      this.context.api.getTask(this.state.taskId).then(
-        (result) => {
-          this.setState(
-            {
-              task: result,
-              displayRoundId: result.cur_round,
-              round: result.round,
-            },
-            function () {
-              this.refreshData();
-              this.getSavedTaskSettings();
-            }
-          );
-        },
-        (error) => {
-          console.log(error);
-          if (error.status_code === 404 || error.status_code === 405) {
-            this.props.history.push("/");
-          }
-        }
-      );
-    });
+  componentDidMount() {
+    if (!this.props.location.hash || this.props.location.hash === "") {
+      this.setState({ taskId: "16" });
+    }
   }
 
   componentDidUpdate(prevProps) {
-    if (
-      prevProps.location.hash !== this.props.location.hash ||
-      this.props.match.params.taskId !== this.state.taskId
-    ) {
-      this.setState({ taskId: this.props.match.params.taskId }, function () {
-        this.context.api.getTask(this.state.taskId).then(
-          (result) => {
-            this.setState(
-              {
-                task: result,
-                displayRoundId: result.cur_round,
-                round: result.round,
-              },
-              function () {
-                this.refreshData();
-              }
-            );
-          },
-          (error) => {
-            console.log(error);
-            if (error.status_code === 404 || error.status_code === 405) {
-              this.props.history.push("/");
-            }
-          }
-        );
+    if (prevProps.location.hash !== this.props.location.hash) {
+      this.setState({
+        taskId: this.props.location.hash.slice(1),
       });
     }
-  }*/
-
-  refreshData() {
-    if (!this.props.location.hash || this.props.location.hash === "")
-      this.props.location.hash = "#overall";
-    this.setState(
-      {
-        modelLeaderBoardPage: 0,
-        isEndOfModelLeaderPage: true,
-      },
-      () => {
-        this.fetchOverallUserLeaderboard(this.state.userLeaderBoardPage);
-        if (this.props.location.hash === "#overall") this.fetchTrend();
-      }
-    );
   }
 
-  getTitleTask = () => {
-    const task = this.props.location.hash;
-    switch (task) {
-      case "#1":
+  getTitleFloresTask = () => {
+    const taskId = this.props.location.hash;
+    switch (taskId) {
+      case "#16":
         return "Large Track";
-      case "#2":
+      case "#14":
         return "Small Track 1";
-      case "#3":
+      case "#15":
         return "Small Track 2";
       default:
         return "Large Track";
@@ -211,6 +137,7 @@ class FloresTaskPage extends React.Component {
                 English and low-resource languages.{" "}
               </p>
               <hr />
+              <FloresTaskDescription taskId={this.state.taskId} />
               <FloresActionButtons api={""} taskId={""} user={""} task={""} />
               <p>
                 The training data is provided by the publicly available Opus
@@ -228,7 +155,11 @@ class FloresTaskPage extends React.Component {
                 <Moment date={Date.now()} format="MMM Do YYYY" />
               </h6>
 
-              <ModelLeaderBoard taskTitle={this.getTitleTask()} />
+              <ModelLeaderBoard
+                {...this.props}
+                taskTitle={this.getTitleFloresTask()}
+                taskId={this.state.taskId}
+              />
             </Col>
           </Row>
         </Container>

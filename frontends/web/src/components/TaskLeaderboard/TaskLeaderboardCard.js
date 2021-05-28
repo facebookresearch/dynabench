@@ -10,7 +10,6 @@ import {
 } from "react-bootstrap";
 import UserContext from "../../containers/UserContext";
 import OverallModelLeaderBoard from "./OverallModelLeaderBoard";
-import { Link } from "react-router-dom";
 
 const SortDirection = {
   ASC: "asc",

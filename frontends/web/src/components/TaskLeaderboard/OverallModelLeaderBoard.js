@@ -18,13 +18,13 @@ import WeightIndicator from "./WeightIndicator";
  */
 const ChevronExpandButton = ({ expanded }) => {
   return (
-    <a type="button" className="position-absolute start-100">
+    <span type="button" className="position-absolute start-100">
       {expanded ? (
         <i className="fas fa-chevron-down"></i>
       ) : (
         <i className="fas fa-chevron-right"></i>
       )}
-    </a>
+    </span>
   );
 };
 
