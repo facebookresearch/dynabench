@@ -71,22 +71,20 @@ class BaseDataset(ABC):
         if loaded:
             self._register_dataset_in_db_and_eval(eval_config)
 
+    def s3_path(self, *parts: str) -> str:
+        return f"s3://{self.s3_bucket}/" + "/".join(parts)
+
     def _get_data_s3_path(self, perturb_prefix=None):
         return get_data_s3_path(self.task, self.filename, perturb_prefix)
 
     def _get_data_s3_url(self, perturb_prefix=None):
-        s3_path = self._get_data_s3_path(perturb_prefix)
-        return os.path.join(f"s3://{self.s3_bucket}", s3_path)
+        return self.s3_path(self._get_data_s3_path(perturb_prefix))
 
     def _get_output_s3_url_prefix(self, endpoint_name):
-        return os.path.join(
-            f"s3://{self.s3_bucket}", "predictions", endpoint_name, self.task
-        )
+        return self.s3_path("predictions", endpoint_name, self.task)
 
     def _get_raw_output_s3_url_prefix(self, endpoint_name):
-        return os.path.join(
-            f"s3://{self.s3_bucket}", "predictions", endpoint_name, "raw", self.task
-        )
+        return self.s3_path("predictions", endpoint_name, "raw", self.task)
 
     def dataset_available_on_s3(self, perturb_prefix=None) -> bool:
         path = self._get_data_s3_path(perturb_prefix)

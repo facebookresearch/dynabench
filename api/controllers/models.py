@@ -183,7 +183,8 @@ def upload_to_s3(credentials):
     # Upload file to S3
     model_name = bottle.request.forms.get("name")
     task_code = bottle.request.forms.get("taskCode")
-
+    if not task_code:
+        bottle.abort(404, "No task requested")
     t = TaskModel()
     task = t.getByTaskCode(task_code)
     if not task:

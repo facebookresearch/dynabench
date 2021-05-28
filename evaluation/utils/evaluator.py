@@ -35,6 +35,8 @@ class Job:
         self.status = None  # will update once job is successfully submitted
         self.aws_metrics = {}  # will update once job is completed
 
+    def __repr__(self) -> str:
+        return f"<Job: {self.job_name}>"
 
 class JobScheduler:
     def __init__(self, config, datasets):
