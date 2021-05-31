@@ -23,6 +23,7 @@ from utils.helpers import (  # isort:skip
     path_available_on_s3,  # isort:skip
     send_eval_request,  # isort:skip
 )
+from metrics import get_task_config_safe  # isort:skip
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("request_evaluation")
@@ -56,7 +57,7 @@ def upload_to_S3_and_eval(args):
             aws_secret_access_key=config["aws_secret_access_key"],
             region_name=config["aws_region"],
         )
-        s3_bucket = config["dataset_s3_bucket"]
+        s3_bucket = get_task_config_safe(args.task)
         base_filename = f"{args.base_dataset_name}.{ext}"
         base_s3_path = get_data_s3_path(args.task, base_filename)
         if not path_available_on_s3(s3_client, s3_bucket, base_s3_path):
@@ -73,9 +74,7 @@ def upload_to_S3_and_eval(args):
                 return False
             else:
                 logger.info(f"Overwriting {s3_path} with {args.path}")
-        response = s3_client.upload_file(
-            args.path, config["dataset_s3_bucket"], s3_path
-        )
+        response = s3_client.upload_file(args.path, s3_bucket, s3_path)
         if response:
             logger.info(f"Response from S3 upload {response}")
         logger.info(f"Successfully uploaded {args.path} to {s3_path}")

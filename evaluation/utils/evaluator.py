@@ -38,6 +38,7 @@ class Job:
     def __repr__(self) -> str:
         return f"<Job: {self.job_name}>"
 
+
 class JobScheduler:
     def __init__(self, config, datasets):
         self._status_dump = config["scheduler_status_dump"]

@@ -2,8 +2,9 @@
 
 import json
 
-import datasets.mt.flores
 import sacrebleu
+
+import datasets.mt.flores
 from datasets.mt.flores import Flores101Base, Flores101Small1Dev
 from metrics import metrics
 from metrics.task_config import tasks_config

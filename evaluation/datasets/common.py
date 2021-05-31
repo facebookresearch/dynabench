@@ -41,10 +41,8 @@ class BaseDataset(ABC):
         self.access_type = access_type
         self.filename = self.name + ext
         self._n_examples = {}  # will be get through API
-        self.s3_bucket = config["dataset_alternative_buckets"].get(
-            task, config["dataset_s3_bucket"]
-        )
-
+        self.task_config = get_task_config_safe(self.task)
+        self.s3_bucket = self.task_config["s3_bucket"]
         self.s3_url = self._get_data_s3_url()
         self.longdesc = longdesc
         self.source_url = source_url

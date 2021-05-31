@@ -11,6 +11,9 @@ _default_config = {
     "perf_metric": "accuracy",
     "delta_metrics": ["fairness", "robustness"],
     "input_keys": ["uid", "statement"],
+    "aws_region": "us-west-1",
+    "aws_region": "evaluation-us-west-1-096166425824",
+    "gpu": False,
 }
 
 _custom_config = {
@@ -26,6 +29,10 @@ _custom_config = {
         "perf_metric": "bleu",
         "delta_metrics": [],
         "input_keys": ["uid", "sourceText", "sourceLanguage", "targetLanguage"],
+        "aws_region": "us-west-2",
+        "s3_bucket": "evaluation-us-west-2",
+        # TODO: switch to True when ready
+        "gpu": False,
     },
 }
 
