@@ -12,7 +12,7 @@ _default_config = {
     "delta_metrics": ["fairness", "robustness"],
     "input_keys": ["uid", "statement"],
     "aws_region": "us-west-1",
-    "aws_region": "evaluation-us-west-1-096166425824",
+    "s3_bucket": "evaluation-us-west-1-096166425824",
     "gpu": False,
 }
 

@@ -130,7 +130,7 @@ def get_sp_bleu(predictions: list, targets: list):
 def get_sp_bleu_meta(task=None):
     return {
         "unit": "",
-        "pretty_name": "Sentence Piece BLEU",
+        "pretty_name": "sp-BLEU",
         "utility_direction": 1,
         "offset": 0,
     }
