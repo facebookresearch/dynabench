@@ -459,7 +459,10 @@ class ModelDeployer:
         return False
         # return "flores" in config["task"]
 
-def docker_build_cmd(repository_name: str, docker_file: str = "Dockerfile", **build_args):
+
+def docker_build_cmd(
+    repository_name: str, docker_file: str = "Dockerfile", **build_args
+):
     repository_name = shlex.quote(repository_name)
     docker_file = shlex.quote(docker_file)
     docker_build_args = " ".join(

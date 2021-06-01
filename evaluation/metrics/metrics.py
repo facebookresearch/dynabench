@@ -1,5 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 import functools
+import subprocess
 from pathlib import Path
 
 import sacrebleu
