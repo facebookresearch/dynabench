@@ -251,14 +251,14 @@ const OverallTaskStats = (props) => {
         </tr>
         {props.task.round && (
           <tr>
-            <td>Correct/Validated</td>
+            <td>Verified Fooled/Colleccted (Verified Model Error Rate)</td>
             <td>
-              {props.task.round?.correct_validations}/
-              {props.task.round?.total_validations} (
-              {props.task.round?.total_validations > 0
+              {props.task.round?.total_verified_fooled}/
+              {props.task.round?.total_collected} (
+              {props.task.round?.total_collected > 0
                 ? (
-                    (100 * props.task.round?.correct_validations) /
-                    props.task.round?.total_validations
+                    (100 * props.task.round?.total_verified_fooled) /
+                    props.task.round?.total_collected
                   ).toFixed(2)
                 : "0.00"}
               % )
@@ -685,17 +685,17 @@ class TaskPage extends React.Component {
                         onChange={() => {
                           this.setState(
                             {
-                              validateNonFooling:
-                                !this.state.validateNonFooling,
+                              validateNonFooling: !this.state
+                                .validateNonFooling,
                             },
                             () =>
                               this.context.api.updateTaskSettings(
                                 this.state.task.id,
                                 {
-                                  validate_non_fooling:
-                                    this.state.validateNonFooling,
-                                  num_matching_validations:
-                                    this.state.numMatchingValidations,
+                                  validate_non_fooling: this.state
+                                    .validateNonFooling,
+                                  num_matching_validations: this.state
+                                    .numMatchingValidations,
                                 }
                               )
                           );
@@ -726,10 +726,10 @@ class TaskPage extends React.Component {
                                 this.context.api.updateTaskSettings(
                                   this.state.task.id,
                                   {
-                                    validate_non_fooling:
-                                      this.state.validateNonFooling,
-                                    num_matching_validations:
-                                      this.state.numMatchingValidations,
+                                    validate_non_fooling: this.state
+                                      .validateNonFooling,
+                                    num_matching_validations: this.state
+                                      .numMatchingValidations,
                                   }
                                 )
                             );

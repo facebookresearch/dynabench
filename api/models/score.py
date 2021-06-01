@@ -153,18 +153,35 @@ class ScoreModel(BaseModel):
         limit=5,
         offset=0,
     ):
+
         ordered_dids = [
             did_and_weight["did"] for did_and_weight in ordered_dids_with_weight
         ]
-
-        datasets = self.dbs.query(Dataset).filter(Dataset.id.in_(ordered_dids))
-        scores = (
-            self.dbs.query(Score)
+        scores_users_datasets_models = (
+            self.dbs.query(Score, User, Dataset, Model)
+            .join(Dataset, Dataset.id == Score.did)
             .join(Model, Score.mid == Model.id)
+            .join(User, User.id == Model.uid)
             .filter(Model.tid == tid)
             .filter(Model.is_published)
             .filter(Score.did.in_(ordered_dids))
         )
+        scores, users, datasets, models = zip(*scores_users_datasets_models)
+        scores, users, datasets, models = (
+            set(scores),
+            set(users),
+            set(datasets),
+            set(models),
+        )
+
+        # Order datasets as in ordered_dids, for display purposes
+        ordered_datasets = []
+        did_to_dataset = {}
+        for dataset in datasets:
+            did_to_dataset[dataset.id] = dataset
+        for dataset in datasets:
+            ordered_datasets.append(did_to_dataset[ordered_dids[len(ordered_datasets)]])
+        datasets = ordered_datasets
 
         # Filter models and scores so that we have complete sets of scores.
         # Unclear what the "null" values should be if we wanted to complete them.
@@ -191,9 +208,6 @@ class ScoreModel(BaseModel):
             if mid_to_unique_dids.get(score.mid, set()) == all_unique_dids:
                 filtered_scores.append(score)
         scores = filtered_scores
-        models = (
-            self.dbs.query(Model).filter(Model.tid == tid).filter(Model.is_published)
-        )
         filtered_models = []
         for model in models:
             if mid_to_unique_dids.get(model.id, set()) == all_unique_dids:
@@ -251,9 +265,6 @@ class ScoreModel(BaseModel):
         )
 
         # Convert the Pandas results into an output json.
-        users = self.dbs.query(User).filter(
-            User.id.in_({model.uid for model in models})
-        )
         uid_to_username = {}
         for user in users:
             uid_to_username[user.id] = user.username
