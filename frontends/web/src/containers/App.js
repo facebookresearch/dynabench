@@ -164,6 +164,14 @@ class App extends React.Component {
                   </Nav.Item>
                   <NavDropdown title="Tasks" id="basic-nav-dropdown">
                     {NavItems}
+                    <NavDropdown.Item
+                      key={"FloRes"}
+                      as={Link}
+                      to={"/flores"}
+                      className="py-3"
+                    >
+                      FloRes
+                    </NavDropdown.Item>
                   </NavDropdown>
                 </Nav>
                 <Nav className="justify-content-end">

@@ -1,5 +1,5 @@
 import React, { Fragment, useState, useEffect, useContext } from "react";
-import { Card, Pagination, Row, Col, Spinner } from "react-bootstrap";
+import { Card, Pagination, Col, Spinner } from "react-bootstrap";
 import { Table } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import UserContext from "../../containers/UserContext";
@@ -62,9 +62,18 @@ const ModelLeaderBoard = ({ taskTitle, taskId, history }) => {
     setIsLoading(true);
 
     context.api
-      .getDynaboardScores(taskId, 10, 0, "bleu", "desc", [1, 0, 0, 0, 0], [1]) // No weights.
+      .getDynaboardScores(
+        taskId,
+        pageLimit,
+        page * pageLimit,
+        sort.field,
+        sort.direction,
+        [1, 0, 0, 0, 0],
+        [1]
+      ) // No weights.
       .then(
         (result) => {
+          setTotal(result.count);
           setData(result.data);
         },
         (error) => {
@@ -76,7 +85,7 @@ const ModelLeaderBoard = ({ taskTitle, taskId, history }) => {
       );
     setIsLoading(false);
     return () => {};
-  }, [taskId, context.api, history]);
+  }, [taskId, context.api, page, pageLimit, sort, history]);
 
   /**
    * Update or toggle the sort field.
@@ -120,56 +129,54 @@ const ModelLeaderBoard = ({ taskTitle, taskId, history }) => {
   if (isLoading) return <Spinner animation="border" />;
 
   return (
-    <Row>
-      <Col className="ml-auto mr-auto" md="6">
-        <Card className="my-4">
-          <Card.Header className="light-gray-bg">
-            <h2 className="text-uppercase m-0 text-reset">
-              Model Leaderboard - {taskTitle}
-            </h2>
-          </Card.Header>
-          <Card.Body className="p-0 leaderboard-container">
-            <Table hover className="mb-0">
-              <thead>
-                <tr>
-                  <th>Model</th>
-                  <th className="text-right">
-                    <SortContainer
-                      sortKey={"bleu"}
-                      toggleSort={toggleSort}
-                      currentSort={sort}
-                    >
-                      Average BLEU
-                    </SortContainer>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>{leaderBoardData}</tbody>
-            </Table>
-          </Card.Body>
-          <Card.Footer className="text-center">
-            <Pagination className="mb-0 float-right" size="sm">
-              <Pagination.Item
-                disabled={isLoading || page === 0}
-                onClick={() => {
-                  setPage(page - 1);
-                }}
-              >
-                Previous
-              </Pagination.Item>
-              <Pagination.Item
-                disabled={isLoading || isEndOfPage}
-                onClick={() => {
-                  setPage(page + 1);
-                }}
-              >
-                Next
-              </Pagination.Item>
-            </Pagination>
-          </Card.Footer>
-        </Card>
-      </Col>
-    </Row>
+    <Col className="ml-auto mr-auto" md="6">
+      <Card className="my-4">
+        <Card.Header className="light-gray-bg">
+          <h2 className="text-uppercase m-0 text-reset">
+            Model Leaderboard - {taskTitle}
+          </h2>
+        </Card.Header>
+        <Card.Body className="p-0 leaderboard-container">
+          <Table hover className="mb-0">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th className="text-right">
+                  <SortContainer
+                    sortKey={"bleu"}
+                    toggleSort={toggleSort}
+                    currentSort={sort}
+                  >
+                    Average BLEU
+                  </SortContainer>
+                </th>
+              </tr>
+            </thead>
+            <tbody>{leaderBoardData}</tbody>
+          </Table>
+        </Card.Body>
+        <Card.Footer className="text-center">
+          <Pagination className="mb-0 float-right" size="sm">
+            <Pagination.Item
+              disabled={isLoading || page === 0}
+              onClick={() => {
+                setPage(page - 1);
+              }}
+            >
+              Previous
+            </Pagination.Item>
+            <Pagination.Item
+              disabled={isLoading || isEndOfPage}
+              onClick={() => {
+                setPage(page + 1);
+              }}
+            >
+              Next
+            </Pagination.Item>
+          </Pagination>
+        </Card.Footer>
+      </Card>
+    </Col>
   );
 };
 

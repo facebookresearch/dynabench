@@ -14,8 +14,8 @@ import FloresActionButtons from "../components/Buttons/FloresActionButtons";
 import ModelLeaderBoard from "../components/FloresComponents/ModelLeaderboard";
 import FloresTaskDescription from "../components/FloresComponents/FloresTaskDescription";
 
-const TaskNav = (props) => {
-  const currentHash = props.location.hash;
+const TaskNav = ({ location }) => {
+  const currentHash = location.hash;
 
   return (
     <Nav className="flex-lg-column sidebar-wrapper sticky-top">
@@ -80,7 +80,7 @@ class FloresTaskPage extends React.Component {
     }
   }
 
-  getTitleFloresTask = () => {
+  getFloresTaskTitle = () => {
     const taskId = this.props.location.hash;
     switch (taskId) {
       case "#16":
@@ -138,7 +138,11 @@ class FloresTaskPage extends React.Component {
               </p>
               <hr />
               <FloresTaskDescription taskId={this.state.taskId} />
-              <FloresActionButtons api={""} taskId={""} user={""} task={""} />
+              <FloresActionButtons
+                api={this.context.api}
+                taskId={this.state.taskId}
+                user={this.context.user}
+              />
               <p>
                 The training data is provided by the publicly available Opus
                 repository, which contains data of various quality from a
@@ -154,12 +158,18 @@ class FloresTaskPage extends React.Component {
               <h6 className="text-dark ml-0">
                 <Moment date={Date.now()} format="MMM Do YYYY" />
               </h6>
-
-              <ModelLeaderBoard
-                {...this.props}
-                taskTitle={this.getTitleFloresTask()}
-                taskId={this.state.taskId}
-              />
+              <Row>
+                <Annotation
+                  placement="left"
+                  tooltip="This shows how models have performed on a specific track"
+                >
+                  <ModelLeaderBoard
+                    {...this.props}
+                    taskTitle={this.getFloresTaskTitle()}
+                    taskId={this.state.taskId}
+                  />
+                </Annotation>
+              </Row>
             </Col>
           </Row>
         </Container>
