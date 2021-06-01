@@ -5,9 +5,8 @@ from pathlib import Path
 
 import sacrebleu
 import sentencepiece
-from transformers.data.metrics.squad_metrics import compute_f1
-
 from metrics.task_config import get_task_config_safe
+from transformers.data.metrics.squad_metrics import compute_f1
 
 
 # perf functions. propose to move to dynalab
