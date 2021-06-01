@@ -212,7 +212,6 @@ class TaskModel(BaseModel):
             return False
 
     def getByTaskCode(self, task_code):
-        assert task_code
         try:
             return self.dbs.query(Task).filter(Task.task_code == task_code).one()
         except db.orm.exc.NoResultFound:

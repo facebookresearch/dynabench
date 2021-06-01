@@ -123,14 +123,23 @@ class BaseDataset(ABC):
     def run_batch_transform(
         self, sagemaker_client, endpoint_name, job_name, perturb_prefix=None
     ) -> bool:
-        # submit an evaluation job
+        """Submit an evaluation job"""
         task_config = get_task_config_safe(self.task)
         logger.debug(f"Will create transform job {job_name} with config: {task_config}")
-        sagemaker_client.create_transform_job(
+        batch_transform_config = self.get_batch_transform_config(
+            sagemaker_client, endpoint_name, job_name, perturb_prefix
+        )
+        sagemaker_client.create_transform_job(**batch_transform_config)
+        return True
+
+    def get_batch_transform_config(
+        self, sagemaker_client, endpoint_name, job_name, perturb_prefix=None
+    ) -> dict:
+        task_config = get_task_config_safe(self.task)
+        return dict(
             ModelName=endpoint_name,
             TransformJobName=job_name,
             MaxConcurrentTransforms=1,
-            # BatchStrategy="MultiRecord",
             BatchStrategy="SingleRecord",
             TransformInput={
                 "DataSource": {
@@ -141,8 +150,6 @@ class BaseDataset(ABC):
                 },
                 "ContentType": "application/json",
                 "SplitType": "Line",
-                # TODO: try MultiRecord with:
-                # "SplitType": "None",
             },
             TransformOutput={
                 # change to config
@@ -156,7 +163,6 @@ class BaseDataset(ABC):
             },
             DataProcessing={"InputFilter": f"${task_config['input_keys']}"},
         )
-        return True
 
     def read_labels(self, perturb_prefix=None):
         tf = tempfile.mkstemp(prefix=self.name)[1]
