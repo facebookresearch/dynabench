@@ -23,7 +23,7 @@ steps = [
         + "`total_fooled`, `total_collected`, `total_time_spent`, `start_datetime`,"
         + "`end_datetime`, `total_verified_fooled`) VALUES (5,6,'"
         + secret
-        + "',''https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict"
+        + "','https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict"
         + "?model=ts1622482363-deberta6',NULL,'The target model is "
         + '<a target="_blank" '
         + 'href="https://arxiv.org/abs/2006.03654">DeBERTa</a> trained '
