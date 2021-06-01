@@ -251,7 +251,9 @@ class ScoreModel(BaseModel):
         )
 
         # Convert the Pandas results into an output json.
-        users = self.dbs.query(User)
+        users = self.dbs.query(User).filter(
+            User.id.in_({model.uid for model in models})
+        )
         uid_to_username = {}
         for user in users:
             uid_to_username[user.id] = user.username
