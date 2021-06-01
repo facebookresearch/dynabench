@@ -8,6 +8,7 @@ import boto3
 import botocore
 from dateutil.tz import tzlocal
 
+from metrics import get_task_config_safe
 from models.model import ModelModel
 from utils.helpers import (
     generate_job_name,
@@ -41,31 +42,38 @@ class Job:
 
 class JobScheduler:
     def __init__(self, config, datasets):
+        self.config = config
         self._status_dump = config["scheduler_status_dump"]
-        self._submitted, self._queued, self._completed, self._failed = (
-            self._load_status()
-        )
+        (
+            self._submitted,
+            self._queued,
+            self._completed,
+            self._failed,
+        ) = self._load_status()
         self.max_submission = config["max_submission"]
         self.datasets = datasets
-        self.sagemaker = boto3.client(
-            "sagemaker",
-            aws_access_key_id=config["aws_access_key_id"],
-            aws_secret_access_key=config["aws_secret_access_key"],
-            region_name=config["aws_region"],
-        )
-        self.cloudwatchlog = boto3.client(
-            "logs",
-            aws_access_key_id=config["aws_access_key_id"],
-            aws_secret_access_key=config["aws_secret_access_key"],
-            region_name=config["aws_region"],
-        )
-        self.cloudwatch = boto3.client(
-            "cloudwatch",
-            aws_access_key_id=config["aws_access_key_id"],
-            aws_secret_access_key=config["aws_secret_access_key"],
-            region_name=config["aws_region"],
-        )
+        self._clients = {"sagemaker": {}, "logs": {}, "cloudwatch": {}}
         self.cloudwatch_namespace = "/aws/sagemaker/TransformJobs"
+
+    def client(self, kind: str, dataset_name: str):
+        """Returns the corresponding client for a dataset.
+
+        There is one client per region and not all datasets are in the same region.
+        """
+        dataset = self.datasets[dataset_name]
+        assert kind in self._clients
+        task = dataset.task
+
+        if task not in self._clients[kind]:
+            region = get_task_config_safe(task)["aws_region"]
+            self._clients[kind][task] = boto3.client(
+                kind,
+                aws_access_key_id=self.config["aws_access_key_id"],
+                aws_secret_access_key=self.config["aws_secret_access_key"],
+                region_name=region,
+            )
+
+        return self._clients[kind][task]
 
     def _load_status(self):
         try:
@@ -96,18 +104,19 @@ class JobScheduler:
             """
             Return True if a job is successfully submitted
             """
+            sagemaker = self.client("sagemaker", job.dataset_name)
             try:
                 self.datasets[job.dataset_name].run_batch_transform(
-                    self.sagemaker, job.endpoint_name, job.job_name, job.perturb_prefix
+                    sagemaker, job.endpoint_name, job.job_name, job.perturb_prefix
                 )
-            except self.sagemaker.exceptions.ResourceLimitExceeded as ex:
+            except sagemaker.exceptions.ResourceLimitExceeded as ex:
                 logger.exception(
                     f"Requeueing job {job.job_name} due to AWS limit exceeds."
                 )
                 logger.debug(f"{ex}")
                 self._queued.append(job)
                 return False
-            except self.sagemaker.exceptions.ResourceInUse as ex:
+            except sagemaker.exceptions.ResourceInUse as ex:
                 logger.exception(
                     f"Job {job.job_name} already submitted. Re-computing the metrics."
                 )
@@ -148,7 +157,8 @@ class JobScheduler:
 
     def stop(self, job):
         try:
-            self.sagemaker.stop_transform_job(TransformJobName=job.job_name)
+            sagemaker = self.client("sagemaker", job.dataset_name)
+            sagemaker.stop_transform_job(TransformJobName=job.job_name)
         except Exception as ex:
             logger.exception(f"Error in stopping {job.job_name}: {ex}")
         else:
@@ -157,7 +167,8 @@ class JobScheduler:
     def update_status(self):
         def _update_job_status(job):
             try:
-                job.status = self.sagemaker.describe_transform_job(
+                sagemaker = self.client("sagemaker", job.dataset_name)
+                job.status = sagemaker.describe_transform_job(
                     TransformJobName=job.job_name
                 )
             except Exception as ex:
@@ -187,7 +198,9 @@ class JobScheduler:
         # fetch AWS metrics for completed jobs
         for job in self._completed:
             if not job.aws_metrics and not job.perturb_prefix:
-                logStreams = self.cloudwatchlog.describe_log_streams(
+                cloudwatch = self.client("cloudwatch", job.dataset_name)
+                cloudwatchlog = self.client("logs", job.dataset_name)
+                logStreams = cloudwatchlog.describe_log_streams(
                     logGroupName=self.cloudwatch_namespace,
                     logStreamNamePrefix=f"{job.job_name}/",
                 )["logStreams"]
@@ -199,13 +212,14 @@ class JobScheduler:
                                 "-".join(logStream["logStreamName"].split("-")[:-1])
                             )  # each host is a machine instance
                     for host in hosts:
-                        metrics = self.cloudwatch.list_metrics(
+
+                        metrics = cloudwatch.list_metrics(
                             Namespace=self.cloudwatch_namespace,
                             Dimensions=[{"Name": "Host", "Value": host}],
                         )
                         if metrics["Metrics"]:
                             for m in metrics["Metrics"]:
-                                r = self.cloudwatch.get_metric_statistics(
+                                r = cloudwatch.get_metric_statistics(
                                     Namespace=m["Namespace"],
                                     MetricName=m["MetricName"],
                                     Dimensions=m["Dimensions"],
