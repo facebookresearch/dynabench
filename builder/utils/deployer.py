@@ -187,8 +187,7 @@ class ModelDeployer:
             shutil.copyfile(os.path.join(docker_dir, f), os.path.join(self.root_dir, f))
 
         # build docker
-        use_gpu = self.use_gpu(setup_config)
-        docker_file = "Dockerfile.cuda" if use_gpu else "Dockerfile"
+        docker_file = "Dockerfile.cuda" if self.use_gpu() else "Dockerfile"
         docker_build_command = docker_build_cmd(
             self.repository_name,
             docker_file=docker_file,
@@ -455,9 +454,8 @@ class ModelDeployer:
                 f"Clean up on failed deployment for {self.endpoint_name} failed: {ex}"
             )
 
-    def use_gpu(self, config) -> bool:
-        return False
-        # return "flores" in config["task"]
+    def use_gpu(self) -> bool:
+        return self.task_config["gpu"]
 
 
 def docker_build_cmd(
