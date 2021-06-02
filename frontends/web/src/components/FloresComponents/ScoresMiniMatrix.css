@@ -1,0 +1,39 @@
+.contact_fill {
+    stroke: black;
+    stroke-width: 0;
+    fill: black;
+}
+
+.contact_none {
+    fill: white;
+}
+
+#axis {
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow: visible;
+    z-index: 0;
+}
+
+#scores_mini_matrix {
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 200px;
+    height: 200px;
+}
+
+#map {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#tooltip_svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow: visible;
+    z-index: 20;
+}

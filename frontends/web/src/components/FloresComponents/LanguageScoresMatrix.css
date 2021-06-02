@@ -1,0 +1,115 @@
+:root {
+    --red-crayola: hsla(342, 100%, 52%, 1);
+    --french-rose: hsla(342, 100%, 64%, 1);
+    --brink-pink: hsla(343, 100%, 68%, 1);
+    --french-pink: hsla(344, 100%, 72%, 1);
+    --pink-sherbet: hsla(346, 100%, 76%, 1);
+    --salmon-pink: hsla(349, 100%, 80%, 1);
+    --light-pink: hsla(350, 90%, 84%, 1);
+    --pink: hsla(351, 83%, 86%, 1);
+    --baby-pink: hsla(352, 74%, 88%, 1);
+    --piggy-pink: hsla(351, 72%, 93%, 1);
+    --navy-blue: hsla(239, 94%, 19%, 1);
+    --dark-cornflower-blue: hsla(214, 97%, 27%, 1);
+    --star-command-blue: hsla(201, 100%, 36%, 1);
+    --blue-green: hsla(195, 100%, 39%, 1);
+    --cerulean-crayola: hsla(190, 100%, 42%, 1);
+    --sky-blue-crayola: hsla(190, 74%, 59%, 1);
+    --sky-blue-crayola-2: hsla(189, 75%, 75%, 1);
+    --blizzard-blue: hsla(190, 76%, 82%, 1);
+    --powder-blue: hsla(190, 77%, 88%, 1);
+    --white: rgb(255, 255, 255);
+}
+
+.positive_100 {
+    fill: var(--red-crayola);
+}
+
+.positive_90 {
+    fill: var(--french-rose);
+}
+
+.positive_80 {
+    fill: var(--brink-pink);
+}
+
+.positive_70 {
+    fill: var(--french-pink);
+}
+
+.positive_60 {
+    fill: var(--pink-sherbet);
+}
+
+.positive_50 {
+    fill: var(--salmon-pink);
+}
+
+.positive_40 {
+    fill: var(--light-pink);
+}
+
+.positive_30 {
+    fill: var(--pink);
+}
+
+.positive_20 {
+    fill: var(--baby-pink);
+}
+
+.positive_10 {
+    fill: var(--piggy-pink);
+}
+
+.negative_100 {
+    fill: var(--navy-blue);
+}
+
+.negative_90 {
+    fill: var(--dark-cornflower-blue);
+}
+
+.negative_80 {
+    fill: var(--star-command-blue);
+}
+
+.negative_70 {
+    fill: var(--blue-green);
+}
+
+.negative_60 {
+    fill: var(--cerulean-crayola);
+}
+
+.negative_50 {
+    fill: var(--sky-blue-crayola);
+}
+
+.negative_40 {
+    fill: var(--sky-blue-crayola-2);
+}
+
+.negative_30 {
+    fill: var(--blizzard-blue);
+}
+
+.negative_20 {
+    fill: var(--powder-blue);
+}
+
+.negative_10 {
+    fill: var(--powder-blue);
+}
+
+.negative_00,
+.positive_00 {
+    fill: var(--white);
+}
+
+#matrix_tooltip_svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow: visible;
+    z-index: 20;
+}

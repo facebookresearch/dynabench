@@ -25,7 +25,7 @@ import UserContext from "./UserContext";
 import "./ModelPage.css";
 import { OverlayProvider, BadgeOverlay } from "./Overlay";
 import { useState } from "react";
-import FloresGrid from "../components/FloresComponents/FloresGrid";
+import FloresGridPicker from "../components/FloresComponents/FloresGridPicker";
 
 const ChevronExpandButton = ({ expanded }) => {
   return (
@@ -425,7 +425,7 @@ class ModelPage extends React.Component {
               <hr />
               <h1 className="my-3 pt-3 text-center">FloRes Performance Grid</h1>
             </Container>
-            <FloresGrid model={model} />
+            <FloresGridPicker model={model} />
           </>
         )}
       </OverlayProvider>
