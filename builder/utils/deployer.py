@@ -78,12 +78,14 @@ class ModelDeployer:
 
     def setup_sagemaker_env(self):
         env = {}
+        region = self.task_config["aws_region"]
         session = boto3.Session(
             aws_access_key_id=deploy_config["aws_access_key_id"],
             aws_secret_access_key=deploy_config["aws_secret_access_key"],
-            region_name=deploy_config["aws_region"],
+            region_name=region,
         )
-        env["region"] = session.region_name
+
+        env["region"] = region
         env["account"] = session.client("sts").get_caller_identity().get("Account")
         env["sagemaker_client"] = session.client("sagemaker")
         env["s3_client"] = session.client("s3")
@@ -92,7 +94,7 @@ class ModelDeployer:
         env["sagemaker_session"] = sagemaker.Session(boto_session=session)
         env["bucket_name"] = env["sagemaker_session"].default_bucket()
 
-        env["ecr_registry"] = f"{env['account']}.dkr.ecr.{env['region']}.amazonaws.com"
+        env["ecr_registry"] = f"{env['account']}.dkr.ecr.{region}.amazonaws.com"
 
         return env
 
@@ -187,7 +189,7 @@ class ModelDeployer:
             shutil.copyfile(os.path.join(docker_dir, f), os.path.join(self.root_dir, f))
 
         # build docker
-        docker_file = "Dockerfile.cuda" if self.use_gpu() else "Dockerfile"
+        docker_file = "gpu.Dockerfile" if self.use_gpu() else "Dockerfile"
         docker_build_command = docker_build_cmd(
             self.repository_name,
             docker_file=docker_file,

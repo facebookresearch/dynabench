@@ -4,6 +4,8 @@ _default_config = {
     "instance_type": "ml.m5.xlarge",
     "instance_count": 1,
     "create_endpoint": True,
+    "aws_region": "us-west-1",
+    "gpu": False,
 }
 
 _custom_config = {
@@ -11,6 +13,8 @@ _custom_config = {
         "instance_type": "ml.p2.xlarge",
         "instance_count": 1,
         "create_endpoint": False,
+        "aws_region": "us-west-2",
+        # "gpu": True,
     }
 }
 
