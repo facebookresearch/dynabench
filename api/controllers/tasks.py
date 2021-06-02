@@ -293,8 +293,6 @@ def get_dynaboard_info(tid):
     else:
         bottle.abort(400, "missing dataset weight data")
 
-    tm = TaskModel()
-    task_dict = tm.getWithRoundAndMetricMetadata(tid)
     ordered_metric_and_weight = [
         dict({"weight": weight}, **metric)
         for weight, metric in zip(ordered_metric_weights, ordered_metrics)
@@ -303,7 +301,7 @@ def get_dynaboard_info(tid):
         {"weight": weight, "did": did}
         for weight, did in zip(
             ordered_dataset_weights,
-            [dataset["id"] for dataset in task_dict["ordered_scoring_datasets"]],
+            [dataset["id"] for dataset in t_dict["ordered_scoring_datasets"]],
         )
     ]
 

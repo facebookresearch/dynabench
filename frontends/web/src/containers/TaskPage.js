@@ -251,14 +251,14 @@ const OverallTaskStats = (props) => {
         </tr>
         {props.task.round && (
           <tr>
-            <td>Correct/Validated</td>
+            <td>Verified Fooled/Collected (Verified Model Error Rate)</td>
             <td>
-              {props.task.round?.correct_validations}/
-              {props.task.round?.total_validations} (
-              {props.task.round?.total_validations > 0
+              {props.task.round?.total_verified_fooled}/
+              {props.task.round?.total_collected} (
+              {props.task.round?.total_collected > 0
                 ? (
-                    (100 * props.task.round?.correct_validations) /
-                    props.task.round?.total_validations
+                    (100 * props.task.round?.total_verified_fooled) /
+                    props.task.round?.total_collected
                   ).toFixed(2)
                 : "0.00"}
               % )
