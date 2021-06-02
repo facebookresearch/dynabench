@@ -121,25 +121,57 @@ const dummyLangs = [
   "zul",
 ];
 
-const d1 = dummyLangs.map((s, i) => {
-  return dummyLangs.map((t, j) => {
+const getDiagonal = (list) => {
+  let unique = [];
+  let distinct = [];
+  for (let i = 0; i < list.length; i++) {
+    if (!unique[list[i].tag.split("-")[0]]) {
+      let tag = {
+        tag: list[i].tag.split("-")[0] + "-" + list[i].tag.split("-")[0],
+      };
+      distinct.push(tag);
+      unique[list[i].tag.split("-")[0]] = 1; // Enter a key value pair when non-existent
+    }
+  }
+  return distinct;
+};
+
+const getDict = (list) => {
+  let unique = [];
+  let langDict = [];
+  let langIndex = 0;
+  for (let i = 0; i < list.length; i++) {
+    if (!unique[list[i].tag.split("-")[0]]) {
+      let lang_tag = { tag: list[i].tag.split("-")[0] };
+      langDict.push(lang_tag);
+      unique[list[i].tag.split("-")[0]] = 1; // Enter a key value pair when non-existent
+    }
+  }
+  langDict.forEach((item) => (item.langIndex = langIndex++));
+  return langDict;
+};
+
+const flatArray = (list) => {
+  const diagonal = getDiagonal(list);
+  const dict = getDict(list);
+  let newList = [...list, ...diagonal];
+  const chartData = newList.map((s, i) => {
+    const objS = dict.find((o) => o.tag === s.tag.split("-")[0]);
+    const objT = dict.find((t) => t.tag === s.tag.split("-")[1]);
     return {
-      source: s,
-      target: t,
-      score: i === j ? null : Math.floor(Math.random() * (99 - 10 + 1)) + 10,
-      sourceIndex: i,
-      targetIndex: j,
+      source: s.tag.split("-")[0],
+      target: s.tag.split("-")[1],
+      perf: Math.round(s.perf * 100) / 100 || null,
+      sourceIndex: objS.langIndex,
+      targetIndex: objT.langIndex,
     };
   });
-});
+  return chartData;
+};
 
 const FloresGrid = ({ model }) => {
-  const [dummyData, setData] = useState([]);
-  const [floresData, setFloresData] = useState([]);
-
-  useEffect(() => {
-    setData(d1);
-  }, []);
+  const [data, setChartData] = useState([]);
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     const perf_by_tag =
@@ -149,7 +181,8 @@ const FloresGrid = ({ model }) => {
       )
         ? JSON.parse(model.leaderboard_scores[0].metadata_json)["perf_by_tag"]
         : [];
-    setFloresData(perf_by_tag);
+    setChartData(flatArray(perf_by_tag));
+    setCategories(getDict(perf_by_tag).map((a) => a.tag));
   }, [model]);
 
   const getPointCategoryName = (point, dimension) => {
@@ -167,8 +200,8 @@ const FloresGrid = ({ model }) => {
     },
     chart: {
       type: "heatmap",
-      height: dummyData.length < 50 ? 600 : 1000,
-      width: dummyData.length < 50 ? 700 : 1020,
+      height: data.length < 50 ? 600 : 1000,
+      width: data.length < 50 ? 700 : 1020,
       showAxes: true,
       spacing: [0, 0, 0, 0],
       zoomType: "xy",
@@ -191,11 +224,11 @@ const FloresGrid = ({ model }) => {
     },
 
     xAxis: {
-      categories: dummyLangs,
+      categories: categories,
     },
 
     yAxis: {
-      categories: dummyLangs,
+      categories: categories,
       title: null,
       reversed: true,
     },
@@ -210,7 +243,7 @@ const FloresGrid = ({ model }) => {
       margin: 10,
       verticalAlign: "top",
       y: 75,
-      symbolHeight: dummyData.length < 50 ? 500 : 800,
+      symbolHeight: data.length < 50 ? 500 : 800,
     },
     plotOptions: {
       heatmap: {
@@ -247,11 +280,9 @@ const FloresGrid = ({ model }) => {
         turboThreshold: 100000,
         borderWidth: 0.3,
         nullColor: "#DCDCDC",
-        data: dummyData
-          .flat(1)
-          .map((a) => [a.sourceIndex, a.targetIndex, a.score]),
+        data: data.map((a) => [a.sourceIndex, a.targetIndex, a.perf]),
         dataLabels: {
-          enabled: dummyData.length < 50 ? true : false,
+          enabled: data.length < 50 ? true : false,
           color: "#000",
         },
       },

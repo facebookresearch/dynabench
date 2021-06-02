@@ -46,9 +46,10 @@ const SortContainer = ({
  * @param {String} props.taskTitle title of track to show
  * @param {String} props.taskId the flores task for the leader board.
  */
-const ModelLeaderBoard = ({ taskTitle, taskId, history }) => {
+const ModelLeaderBoard = ({ taskId, history }) => {
   const context = useContext(UserContext);
   const [data, setData] = useState([]);
+  const [task, setTask] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [pageLimit, setPageLimit] = useState(10);
@@ -86,6 +87,20 @@ const ModelLeaderBoard = ({ taskTitle, taskId, history }) => {
     setIsLoading(false);
     return () => {};
   }, [taskId, context.api, page, pageLimit, sort, history]);
+
+  useEffect(() => {
+    setIsLoading(true);
+    context.api.getTask(taskId).then(
+      (result) => {
+        setTask(result);
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
+    setIsLoading(false);
+    return () => {};
+  }, [taskId, context.api]);
 
   /**
    * Update or toggle the sort field.
@@ -133,7 +148,7 @@ const ModelLeaderBoard = ({ taskTitle, taskId, history }) => {
       <Card className="my-4">
         <Card.Header className="light-gray-bg">
           <h2 className="text-uppercase m-0 text-reset">
-            Model Leaderboard - {taskTitle}
+            Model Leaderboard - {task.shortname}
           </h2>
         </Card.Header>
         <Card.Body className="p-0 leaderboard-container">
@@ -143,7 +158,7 @@ const ModelLeaderBoard = ({ taskTitle, taskId, history }) => {
                 <th>Model</th>
                 <th className="text-right">
                   <SortContainer
-                    sortKey={"bleu"}
+                    sortKey={task.perf_metric_field_name}
                     toggleSort={toggleSort}
                     currentSort={sort}
                   >

@@ -19,7 +19,7 @@
 .highcharts-figure,
 .highcharts-data-table table {
     min-width: 360px;
-    max-width: 800px;
+    max-width: calc(80% - 100%);
     margin: 1em auto;
 }
 
@@ -30,7 +30,7 @@
     margin: 10px auto;
     text-align: center;
     width: 100%;
-    max-width: 800px;
+    max-width: calc(100% - 800px);
 }
 
 .highcharts-data-table caption {
