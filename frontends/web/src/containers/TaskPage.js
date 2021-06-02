@@ -251,7 +251,7 @@ const OverallTaskStats = (props) => {
         </tr>
         {props.task.round && (
           <tr>
-            <td>Verified Fooled/Colleccted (Verified Model Error Rate)</td>
+            <td>Verified Fooled/Collected (Verified Model Error Rate)</td>
             <td>
               {props.task.round?.total_verified_fooled}/
               {props.task.round?.total_collected} (
