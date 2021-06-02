@@ -13,7 +13,6 @@ _default_config = {
     "input_keys": ["uid", "statement"],
     "aws_region": "us-west-1",
     "s3_bucket": "evaluation-us-west-1-096166425824",
-    "gpu": False,
 }
 
 _custom_config = {
@@ -25,14 +24,12 @@ _custom_config = {
     },
     "flores": {
         "instance_config": instance_property["ml.p2.xlarge"],
-        "eval_metrics": ["bleu", "sp_bleu"],
-        "perf_metric": "bleu",
+        "eval_metrics": ["sp_bleu"],
+        "perf_metric": "sp_bleu",
         "delta_metrics": [],
         "input_keys": ["uid", "sourceText", "sourceLanguage", "targetLanguage"],
         "aws_region": "us-west-2",
         "s3_bucket": "evaluation-us-west-2",
-        # TODO: switch to True when ready
-        "gpu": False,
     },
 }
 

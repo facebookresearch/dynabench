@@ -99,7 +99,7 @@ def get_bleu_meta(task=None):
 
 
 SPM_URL = (
-    "https://dl.fbaipublicfiles.com/flores101/pretrained_models/sentencepiece.bpe.model"
+    "https://dl.fbaipublicfiles.com/fairseq/models/flores/sacrebleu_tokenizer_spm.model"
 )
 SPM_PATH = Path(__file__).parent / "sentencepiece.bpe.model"
 
