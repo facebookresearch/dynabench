@@ -23,7 +23,7 @@ const TaskNav = ({ location }) => {
         <Nav.Link
           href={`#${16}`}
           className={`${
-            currentHash === `#${16}` ? "active" : ""
+            currentHash === `#16` ? "active" : ""
           } gray-color p-3 px-lg-5`}
         >
           Large Track
@@ -79,20 +79,6 @@ class FloresTaskPage extends React.Component {
       });
     }
   }
-
-  getFloresTaskTitle = () => {
-    const taskId = this.props.location.hash;
-    switch (taskId) {
-      case "#16":
-        return "Large Track";
-      case "#14":
-        return "Small Track 1";
-      case "#15":
-        return "Small Track 2";
-      default:
-        return "Large Track";
-    }
-  };
 
   render() {
     return (
@@ -165,7 +151,6 @@ class FloresTaskPage extends React.Component {
                 >
                   <ModelLeaderBoard
                     {...this.props}
-                    taskTitle={this.getFloresTaskTitle()}
                     taskId={this.state.taskId}
                   />
                 </Annotation>
