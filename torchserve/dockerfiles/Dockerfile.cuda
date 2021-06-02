@@ -1,17 +1,6 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
-#
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
-
 FROM nvidia/cuda:10.1-cudnn7-runtime-ubuntu18.04
 
 ENV PYTHONUNBUFFERED TRUE
-
-ARG tarball
-ARG requirements
-ARG setup
-ARG my_secret
-ARG CUDA_VERSION=""
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
@@ -19,28 +8,49 @@ RUN apt-get update && \
     ca-certificates \
     dpkg-dev \
     g++ \
-    python3.6-dev \
+    python3.8-dev \
     python3-pip \
-    openjdk-11-jre-headless \
+    openjdk-11-jdk \
     curl \
     vim \
     git \
+    wget \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.6 1
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.8 1
+
 RUN cd /tmp \
     && curl -O https://bootstrap.pypa.io/get-pip.py \
-    && python3 get-pip.py
+    && python get-pip.py
 
-RUN python -m pip install --no-cache-dir torchserve
-# Install CUDA version specific binary when CUDA version is specified as a build arg
-RUN if [ "$CUDA_VERSION" ]; then \
-        pip install --no-cache-dir torch==$TORCH_VER+$CUDA_VERSION -f https://download.pytorch.org/whl/torch_stable.html; \
-    else \
-        # Install the binary with the latest CUDA version support
-        pip install --no-cache-dir torch torchvision; \
-    fi
 
+
+# See https://pytorch.org/ for other options if you use a different version of CUDA
+RUN pip install torch==1.6.0+cu101 torchvision==0.7.0+cu101 -f \
+    https://download.pytorch.org/whl/torch_stable.html
+RUN python -m pip install detectron2 -f \
+    https://dl.fbaipublicfiles.com/detectron2/wheels/cu101/torch1.6/index.html
+RUN pip install aiohttp
+RUN pip install allennlp==0.8.4
+RUN pip install zmq
+RUN pip install pytorch_transformers
+RUN pip install fairseq
+RUN pip install captum
+
+
+RUN pip install --no-cache-dir psutil
+
+RUN pip install transformers==3.4.0
+RUN pip install git+git://github.com/facebookresearch/mmf.git@079f71d8c217001fd0a88c2efd0cac51ad4b3aef
+
+# Download and unzip glove for mmf
+RUN mkdir -p /root/.cache/torch/mmf
+RUN wget http://nlp.stanford.edu/data/glove.6B.zip -P /root/.cache/torch/mmf/
+RUN unzip /root/.cache/torch/mmf/glove.6B.zip -d /root/.cache/torch/mmf/
+RUN rm /root/.cache/torch/mmf/glove.6B.zip
+
+RUN pip install torchserve torch-model-archiver
 
 COPY dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh
 RUN chmod +x /usr/local/bin/dockerd-entrypoint.sh
@@ -48,15 +58,9 @@ RUN chmod +x /usr/local/bin/dockerd-entrypoint.sh
 RUN mkdir -p /home/model-server/ && mkdir -p /home/model-server/tmp
 COPY config.properties /home/model-server/config.properties
 
+WORKDIR /home/model-server
 ENV TEMP=/home/model-server/tmp
-ADD ${tarball} /home/model-server/code
-WORKDIR /home/model-server/code
-
-RUN if [ -f requirements.txt ] && [ ${requirements} = True ]; then python -m pip install --no-cache-dir --force-reinstall -r requirements.txt; fi
-RUN if [ -f setup.py ] && [ ${setup} = True ]; then python -m pip install --no-cache-dir --force-reinstall -e code; fi
-RUN python -m pip install --force-reinstall git+git://github.com/facebookresearch/dynalab.git
-
 ENV PYTHONIOENCODING=UTF-8
-ENV MY_SECRET=${my_secret}
+
 ENTRYPOINT ["/usr/local/bin/dockerd-entrypoint.sh"]
 CMD ["serve"]
