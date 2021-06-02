@@ -178,10 +178,14 @@ const FloresGrid = ({ model }) => {
           ) || {};
         const valuePoint = self.point.value;
 
+        if (self.point.x === self.point.y) {
+          return "NA";
+        }
+
         return (
           `${
             source !== undefined ? source.LANGUAGE : null
-          } (${getPointCategoryName(this.point, "y")})<br>` +
+          } (${getPointCategoryName(this.point, "y")}) --> ` +
           `${
             target !== undefined ? target.LANGUAGE : null
           } (${getPointCategoryName(this.point, "x")})</br>` +
