@@ -20,28 +20,29 @@ const FLORES_TASK_SHORT_NAMES = [
   "FLORES-SMALL2",
 ];
 
-const TaskNav = ({ location, tasks, taskId, setTask }) => {
-  const currentHash = location.hash;
-
+const TaskNav = ({ location, taskLookup, taskId, setTask }) => {
   return (
     <Nav className="flex-lg-column sidebar-wrapper sticky-top">
-      {tasks.map((t) => (
-        <Nav.Item>
-          <Nav.Link
-            href={`#${t.id}`}
-            onClick={(e) => {
-              e.preventDefault();
-              setTask(t);
-              // location.hash = `${t.id}`;
-            }}
-            className={`${
-              taskId === t.id ? "active" : ""
-            } gray-color p-3 px-lg-5`}
-          >
-            {t.name}
-          </Nav.Link>
-        </Nav.Item>
-      ))}
+      {FLORES_TASK_SHORT_NAMES.map((name) => {
+        const task = taskLookup[name];
+        return (
+          <Nav.Item>
+            <Nav.Link
+              href={`#${task.id}`}
+              onClick={(e) => {
+                e.preventDefault();
+                setTask(task);
+                // location.hash = `${t.id}`;
+              }}
+              className={`${
+                taskId === task.id ? "active" : ""
+              } gray-color p-3 px-lg-5`}
+            >
+              {task.name}
+            </Nav.Link>
+          </Nav.Item>
+        );
+      })}
     </Nav>
   );
 };
@@ -75,6 +76,7 @@ const FloresTaskPage = (props) => {
           );
 
           setTaskLookup(taskLookup);
+
           setTask(taskLookup[FLORES_TASK_SHORT_NAMES[0]]); // set default task
           setIsLoading(false);
         },
@@ -105,7 +107,7 @@ const FloresTaskPage = (props) => {
             >
               <TaskNav
                 {...props}
-                tasks={Object.values(taskLookup)}
+                taskLookup={taskLookup}
                 taskId={task.id}
                 setTask={setTask}
               />
