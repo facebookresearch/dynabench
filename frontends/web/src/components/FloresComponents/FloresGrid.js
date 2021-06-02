@@ -117,8 +117,18 @@ const FloresGrid = ({ model }) => {
     colorAxis: {
       min: 0,
       max: 100,
-      minColor: "#FFFFFF",
-      maxColor: "#023C88",
+      stops: [
+        [0, "#ffff"],
+        [0.2, "#caf0f8"],
+        [0.3, "#ade8f4"],
+        [0.4, "#90e0ef"],
+        [0.5, "#48cae4"],
+        [0.6, "#00b4d8"],
+        [0.7, "#0096c7"],
+        [0.8, "#0077b6"],
+        [0.9, "#023e8a"],
+        [1, "#03045e"],
+      ],
     },
 
     xAxis: {
@@ -146,7 +156,7 @@ const FloresGrid = ({ model }) => {
     plotOptions: {
       heatmap: {
         color: "grey",
-        crisp: false,
+        crisp: true,
       },
     },
 
@@ -186,7 +196,7 @@ const FloresGrid = ({ model }) => {
         name: "Tags",
         boostThreshold: 100,
         turboThreshold: 100000,
-        borderWidth: 0.3,
+        borderWidth: 0,
         nullColor: "#DCDCDC",
         data: data.map((a) => [a.sourceIndex, a.targetIndex, a.perf]),
         dataLabels: {
