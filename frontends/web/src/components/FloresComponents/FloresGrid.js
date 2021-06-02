@@ -18,109 +18,6 @@ highchartsHeatmap(Highcharts);
 highchartsBoost(Highcharts);
 highchartsCluster(Highcharts);
 
-const dummyLangs = [
-  "amh",
-  "ara",
-  "hye",
-  "asm",
-  "ast",
-  "aze",
-  "bel",
-  "ben",
-  "bos",
-  "bul",
-  "mya",
-  "cat",
-  "ceb",
-  "zho",
-  "zho_trad",
-  "hrv",
-  "ces",
-  "dan",
-  "nld",
-  "est",
-  "tgl",
-  "fin",
-  "fra",
-  "ful",
-  "glg",
-  "lug",
-  "kat",
-  "deu",
-  "ell",
-  "guj",
-  "hau",
-  "heb",
-  "hin",
-  "hun",
-  "isl",
-  "ibo",
-  "ind",
-  "gle",
-  "ita",
-  "jpn",
-  "jav",
-  "kea",
-  "kam",
-  "kan",
-  "kaz",
-  "khm",
-  "kor",
-  "kir",
-  "lao",
-  "lav",
-  "lin",
-  "lit",
-  "luo",
-  "ltz",
-  "mkd",
-  "msa",
-  "mal",
-  "mlt",
-  "mri",
-  "mar",
-  "mon",
-  "nep",
-  "nso",
-  "nor",
-  "nya",
-  "oci",
-  "ory",
-  "orm",
-  "pus",
-  "fas",
-  "pol",
-  "por",
-  "pan",
-  "ron",
-  "rus",
-  "srp",
-  "sna",
-  "snd",
-  "slk",
-  "slv",
-  "som",
-  "ckb",
-  "spa",
-  "swh",
-  "swe",
-  "tgk",
-  "tam",
-  "tel",
-  "tha",
-  "tur",
-  "ukr",
-  "umb",
-  "urd",
-  "uzb",
-  "vie",
-  "cym",
-  "wol",
-  "xho",
-  "yor",
-  "zul",
-];
-
 const getDiagonal = (list) => {
   let unique = [];
   let distinct = [];
@@ -219,8 +116,9 @@ const FloresGrid = ({ model }) => {
 
     colorAxis: {
       min: 0,
+      max: 100,
       minColor: "#FFFFFF",
-      maxColor: Highcharts.getOptions().colors[0],
+      maxColor: "#023C88",
     },
 
     xAxis: {
@@ -234,7 +132,7 @@ const FloresGrid = ({ model }) => {
     },
 
     title: {
-      text: model.name || "Unknown",
+      text: "FloRes Performance Grid (BLEU Score)",
     },
     legend: {
       enabled: true,
@@ -243,7 +141,7 @@ const FloresGrid = ({ model }) => {
       margin: 10,
       verticalAlign: "top",
       y: 75,
-      symbolHeight: data.length < 50 ? 500 : 800,
+      symbolHeight: data.length < 50 ? 460 : 800,
     },
     plotOptions: {
       heatmap: {
@@ -252,22 +150,32 @@ const FloresGrid = ({ model }) => {
       },
     },
 
+    subtitle: {
+      text: "Click and drag to zoom in.",
+    },
+
     tooltip: {
       followTouchMove: false,
       formatter() {
         let self = this;
-        const source = FloresLanguages.find(
-          (i) => i.ISO === getPointCategoryName(this.point, "y")
-        );
-        const target = FloresLanguages.find(
-          (i) => i.ISO === getPointCategoryName(this.point, "x")
-        );
+        const source =
+          FloresLanguages.find(
+            (i) => i.ISO === getPointCategoryName(this.point, "y")
+          ) || {};
+        const target =
+          FloresLanguages.find(
+            (i) => i.ISO === getPointCategoryName(this.point, "x")
+          ) || {};
         const valuePoint = self.point.value;
 
         return (
-          `${source.LANGUAGE} (${getPointCategoryName(this.point, "y")})<br>` +
-          `${target.LANGUAGE} (${getPointCategoryName(this.point, "x")})</br>` +
-          "<b>Score: </b>" +
+          `${
+            source !== undefined ? source.LANGUAGE : null
+          } (${getPointCategoryName(this.point, "y")})<br>` +
+          `${
+            target !== undefined ? target.LANGUAGE : null
+          } (${getPointCategoryName(this.point, "x")})</br>` +
+          "<b>BLEU Score: </b>" +
           valuePoint
         );
       },

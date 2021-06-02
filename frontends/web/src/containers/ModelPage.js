@@ -423,7 +423,6 @@ class ModelPage extends React.Component {
           <>
             <Container>
               <hr />
-              <h1 className="my-3 pt-3 text-center">FloRes Performance Grid</h1>
             </Container>
             <FloresGrid model={model} />
           </>
