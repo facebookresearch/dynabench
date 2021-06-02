@@ -15,10 +15,9 @@ import {
   Spinner,
 } from "react-bootstrap";
 import UserContext from "./UserContext";
-import Moment from "react-moment";
 import { OverlayProvider, Annotation, OverlayContext } from "./Overlay";
 import FloresActionButtons from "../components/Buttons/FloresActionButtons";
-import ModelLeaderBoard from "../components/FloresComponents/ModelLeaderboard";
+import FloresModelLeaderBoard from "../components/FloresComponents/FloresModelLeaderboard";
 import FloresTaskDescription from "../components/FloresComponents/FloresTaskDescription";
 
 const FLORES_TASK_SHORT_NAMES = [
@@ -112,7 +111,7 @@ const FloresTaskPage = (props) => {
           <Col lg={2} className="p-0 border">
             <Annotation
               placement="bottom-start"
-              tooltip="FloRes tasks happen over multiple tracks. You can look at other FloRes tracks here"
+              tooltip="The FLoRes task has multiple tracks. You can look at other tracks here"
             >
               <TaskNav
                 {...props}
@@ -123,7 +122,7 @@ const FloresTaskPage = (props) => {
             </Annotation>
           </Col>
           <Col lg={10} className="px-4 px-lg-5">
-            <h2 className="task-page-header text-reset ml-0">FloRes</h2>
+            <h2 className="task-page-header text-reset ml-0">FLoRes</h2>
             <div style={{ float: "right", marginTop: 30 }}>
               <ButtonGroup>
                 <Annotation
@@ -170,15 +169,13 @@ const FloresTaskPage = (props) => {
               </a>{" "}
               for a detailed view of the resources.
             </p>
-            <h6 className="text-dark ml-0">
-              <Moment date={Date.now()} format="MMM Do YYYY" />
-            </h6>
+
             <Row>
               <Annotation
                 placement="left"
                 tooltip="This shows how models have performed on a specific track"
               >
-                <ModelLeaderBoard
+                <FloresModelLeaderBoard
                   {...props}
                   taskTitle={task?.name}
                   taskId={task.id}

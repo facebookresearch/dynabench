@@ -164,8 +164,9 @@ class App extends React.Component {
                   </Nav.Item>
                   <NavDropdown title="Tasks" id="basic-nav-dropdown">
                     {NavItems}
+                    <hr />
                     <NavDropdown.Item
-                      key={"FloRes"}
+                      key={"FLoRes"}
                       as={Link}
                       to={"/flores"}
                       className="py-3"

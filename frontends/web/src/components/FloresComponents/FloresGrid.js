@@ -180,9 +180,7 @@ const FloresGrid = ({ model }) => {
           ) || {};
         const valuePoint = self.point.value;
 
-        if (self.point.x === self.point.y) {
-          return "NA";
-        }
+        if (self.point.x === self.point.y) return "NA";
 
         return (
           `${
@@ -203,7 +201,7 @@ const FloresGrid = ({ model }) => {
         boostThreshold: 100,
         turboThreshold: 100000,
         borderWidth: 0,
-        nullColor: "#DCDCDC",
+        nullColor: "#FFF",
         data: data.map((a) => [a.sourceIndex, a.targetIndex, a.perf]),
         dataLabels: {
           enabled: data.length < 50 ? true : false,
