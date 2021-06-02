@@ -5,8 +5,9 @@ from pathlib import Path
 
 import sacrebleu
 import sentencepiece
-from metrics.task_config import get_task_config_safe
 from transformers.data.metrics.squad_metrics import compute_f1
+
+from metrics.task_config import get_task_config_safe
 
 
 # perf functions. propose to move to dynalab
@@ -127,12 +128,7 @@ def get_sp_bleu(predictions: list, targets: list):
 
 
 def get_sp_bleu_meta(task=None):
-    return {
-        "unit": "",
-        "pretty_name": "sp-BLEU",
-        "utility_direction": 1,
-        "offset": 0,
-    }
+    return {"unit": "", "pretty_name": "sp-BLEU", "utility_direction": 1, "offset": 0}
 
 
 # job_metrics, takes raw job and dataset as input
