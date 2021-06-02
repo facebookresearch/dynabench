@@ -81,7 +81,7 @@ const FloresTop5Page = (props) => {
         <a
           href={`/flores/${task.shortname}`}
           target="_blank"
-          style={{ width: "100%" }}
+          style={{ width: "100%", textDecorationLine: "none" }}
         >
           <FloresModelLeaderBoard
             {...props}
