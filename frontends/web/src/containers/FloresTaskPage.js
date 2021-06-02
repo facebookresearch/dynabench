@@ -4,7 +4,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import React from "react";
+import React, { useContext, useState, useEffect } from "react";
 import "./TaskPage.css";
 import { Container, Row, Col, ButtonGroup, Nav } from "react-bootstrap";
 import UserContext from "./UserContext";
@@ -14,168 +14,171 @@ import FloresActionButtons from "../components/Buttons/FloresActionButtons";
 import ModelLeaderBoard from "../components/FloresComponents/ModelLeaderboard";
 import FloresTaskDescription from "../components/FloresComponents/FloresTaskDescription";
 
-const TaskNav = ({ location }) => {
+const FLORES_TASK_SHORT_NAMES = [
+  "FLORES-FULL",
+  "FLORES-SMALL1",
+  "FLORES-SMALL2",
+];
+
+const TaskNav = ({ location, tasks, taskId, setTask }) => {
   const currentHash = location.hash;
 
   return (
     <Nav className="flex-lg-column sidebar-wrapper sticky-top">
-      <Nav.Item>
-        <Nav.Link
-          href={`#${16}`}
-          className={`${
-            currentHash === `#${16}` ? "active" : ""
-          } gray-color p-3 px-lg-5`}
-        >
-          Large Track
-        </Nav.Link>
-      </Nav.Item>
-      <Nav.Item>
-        <Nav.Link
-          href={`#${14}`}
-          className={`${
-            currentHash === `#${14}` ? "active" : ""
-          } gray-color p-3 px-lg-5`}
-        >
-          Small Track 1
-        </Nav.Link>
-      </Nav.Item>
-      <Nav.Item>
-        <Nav.Link
-          href={`#${15}`}
-          className={`${
-            currentHash === `#${15}` ? "active" : ""
-          } gray-color p-3 px-lg-5`}
-        >
-          Small Track 2
-        </Nav.Link>
-      </Nav.Item>
+      {tasks.map((t) => (
+        <Nav.Item>
+          <Nav.Link
+            href={`#${t.id}`}
+            onClick={(e) => {
+              e.preventDefault();
+              setTask(t);
+              // location.hash = `${t.id}`;
+            }}
+            className={`${
+              taskId === t.id ? "active" : ""
+            } gray-color p-3 px-lg-5`}
+          >
+            {t.name}
+          </Nav.Link>
+        </Nav.Item>
+      ))}
     </Nav>
   );
 };
 
-class FloresTaskPage extends React.Component {
-  static contextType = UserContext;
-  constructor(props) {
-    super(props);
-    this.state = {
-      taskId: props.location.hash === "" ? "16" : props.location.hash.slice(1),
-      task: {},
-      modelLeaderBoardPage: 0,
-      isEndOfModelLeaderPage: true,
-      pageLimit: 5,
+const FloresTaskPage = (props) => {
+  const context = useContext(UserContext); // for API
+  const [taskLookup, setTaskLookup] = useState({}); // All Flores Tasks
+  const [task, setTask] = useState(null); // Current Task ID
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Call api only once
+  useEffect(() => {
+    /**
+     * Invoke APIService to fetch Flores Tasks
+     *
+     * @param {*} api instance of @see APIService
+     * @param {number} page
+     */
+    const fetchFloresTasks = (api) => {
+      setIsLoading(true);
+      api.getSubmittableTasks().then(
+        (result) => {
+          console.log(result);
+
+          const floresTasks = result.filter((t) =>
+            FLORES_TASK_SHORT_NAMES.includes(t.shortname)
+          );
+          const taskLookup = floresTasks.reduce(
+            (map, obj) => ((map[obj.shortname] = obj), map),
+            {}
+          );
+
+          setTaskLookup(taskLookup);
+          setTask(taskLookup[FLORES_TASK_SHORT_NAMES[0]]); // set default task
+          setIsLoading(false);
+        },
+        (error) => {
+          console.log(error);
+          setIsLoading(false);
+        }
+      );
     };
+
+    fetchFloresTasks(context.api);
+
+    return () => {};
+  }, [context.api]);
+
+  if (isLoading || !task) {
+    return <div>loading</div>;
   }
 
-  componentDidMount() {
-    if (!this.props.location.hash || this.props.location.hash === "") {
-      this.setState({ taskId: "16" });
-    }
-  }
-
-  componentDidUpdate(prevProps) {
-    if (prevProps.location.hash !== this.props.location.hash) {
-      this.setState({
-        taskId: this.props.location.hash.slice(1),
-      });
-    }
-  }
-
-  getFloresTaskTitle = () => {
-    const taskId = this.props.location.hash;
-    switch (taskId) {
-      case "#16":
-        return "Large Track";
-      case "#14":
-        return "Small Track 1";
-      case "#15":
-        return "Small Track 2";
-      default:
-        return "Large Track";
-    }
-  };
-
-  render() {
-    return (
-      <OverlayProvider initiallyHide={true} delayMs="1700">
-        <Container fluid>
-          <Row>
-            <Col lg={2} className="p-0 border">
-              <Annotation
-                placement="bottom-start"
-                tooltip="FloRes tasks happen over multiple tracks. You can look at other FloRes tracks here"
-              >
-                <TaskNav {...this.props} taskDetail={this.state.task} />
-              </Annotation>
-            </Col>
-            <Col lg={10} className="px-4 px-lg-5">
-              <h2 className="task-page-header text-reset ml-0">FloRes</h2>
-              <div style={{ float: "right", marginTop: 30 }}>
-                <ButtonGroup>
-                  <Annotation
-                    placement="left"
-                    tooltip="Click to show help overlay"
-                  >
-                    <OverlayContext.Consumer>
-                      {({ hidden, setHidden }) => (
-                        <button
-                          type="button"
-                          className="btn btn-outline-primary btn-sm btn-help-info"
-                          onClick={() => {
-                            setHidden(!hidden);
-                          }}
-                        >
-                          <i className="fas fa-question"></i>
-                        </button>
-                      )}
-                    </OverlayContext.Consumer>
-                  </Annotation>
-                </ButtonGroup>
-              </div>
-              <p>
-                {" "}
-                FLoRes is a benchmark dataset for machine translation between
-                English and low-resource languages.{" "}
-              </p>
-              <hr />
-              <FloresTaskDescription taskId={this.state.taskId} />
-              <FloresActionButtons
-                api={this.context.api}
-                taskId={this.state.taskId}
-                user={this.context.user}
+  return (
+    <OverlayProvider initiallyHide={true} delayMs="1700">
+      <Container fluid>
+        <Row>
+          <Col lg={2} className="p-0 border">
+            <Annotation
+              placement="bottom-start"
+              tooltip="FloRes tasks happen over multiple tracks. You can look at other FloRes tracks here"
+            >
+              <TaskNav
+                {...props}
+                tasks={Object.values(taskLookup)}
+                taskId={task.id}
+                setTask={setTask}
               />
-              <p>
-                The training data is provided by the publicly available Opus
-                repository, which contains data of various quality from a
-                variety of domains. We also provide in-domain Wikipedia
-                monolingual data for each language. nn All tracks will be fully
-                constrained, so only the data that is provided can be used. This
-                will enable fairer comparison across methods. Check the{" "}
-                <a href="http://data.statmt.org/wmt21/multilingual-task/">
-                  multilingual data page
-                </a>{" "}
-                for a detailed view of the resources.
-              </p>
-              <h6 className="text-dark ml-0">
-                <Moment date={Date.now()} format="MMM Do YYYY" />
-              </h6>
-              <Row>
+            </Annotation>
+          </Col>
+          <Col lg={10} className="px-4 px-lg-5">
+            <h2 className="task-page-header text-reset ml-0">FloRes</h2>
+            <div style={{ float: "right", marginTop: 30 }}>
+              <ButtonGroup>
                 <Annotation
                   placement="left"
-                  tooltip="This shows how models have performed on a specific track"
+                  tooltip="Click to show help overlay"
                 >
-                  <ModelLeaderBoard
-                    {...this.props}
-                    taskTitle={this.getFloresTaskTitle()}
-                    taskId={this.state.taskId}
-                  />
+                  <OverlayContext.Consumer>
+                    {({ hidden, setHidden }) => (
+                      <button
+                        type="button"
+                        className="btn btn-outline-primary btn-sm btn-help-info"
+                        onClick={() => {
+                          setHidden(!hidden);
+                        }}
+                      >
+                        <i className="fas fa-question"></i>
+                      </button>
+                    )}
+                  </OverlayContext.Consumer>
                 </Annotation>
-              </Row>
-            </Col>
-          </Row>
-        </Container>
-      </OverlayProvider>
-    );
-  }
-}
+              </ButtonGroup>
+            </div>
+            <p>
+              {" "}
+              FLoRes is a benchmark dataset for machine translation between
+              English and low-resource languages.{" "}
+            </p>
+            <hr />
+            <FloresTaskDescription taskId={task.id} />
+            <FloresActionButtons
+              api={context.api}
+              taskId={task.id}
+              user={context.user}
+            />
+            <p>
+              The training data is provided by the publicly available Opus
+              repository, which contains data of various quality from a variety
+              of domains. We also provide in-domain Wikipedia monolingual data
+              for each language. nn All tracks will be fully constrained, so
+              only the data that is provided can be used. This will enable
+              fairer comparison across methods. Check the{" "}
+              <a href="http://data.statmt.org/wmt21/multilingual-task/">
+                multilingual data page
+              </a>{" "}
+              for a detailed view of the resources.
+            </p>
+            <h6 className="text-dark ml-0">
+              <Moment date={Date.now()} format="MMM Do YYYY" />
+            </h6>
+            <Row>
+              <Annotation
+                placement="left"
+                tooltip="This shows how models have performed on a specific track"
+              >
+                <ModelLeaderBoard
+                  {...props}
+                  taskTitle={task?.name}
+                  taskId={task.id}
+                />
+              </Annotation>
+            </Row>
+          </Col>
+        </Row>
+      </Container>
+    </OverlayProvider>
+  );
+};
 
 export default FloresTaskPage;

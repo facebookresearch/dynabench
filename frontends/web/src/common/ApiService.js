@@ -130,6 +130,12 @@ export default class ApiService {
     });
   }
 
+  getSubmittableTasks() {
+    return this.fetch(`${this.domain}/tasks/submitable`, {
+      method: "GET",
+    });
+  }
+
   submitContexts(data) {
     const token = this.getToken();
     const formData = new FormData();
