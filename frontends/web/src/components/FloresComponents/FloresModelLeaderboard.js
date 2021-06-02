@@ -46,7 +46,7 @@ const SortContainer = ({
  * @param {String} props.taskTitle title of track to show
  * @param {String} props.taskId the flores task for the leader board.
  */
-const ModelLeaderBoard = ({ taskId, history }) => {
+const ModelLeaderBoard = ({ taskId, history, isTop5 }) => {
   const context = useContext(UserContext);
   const [data, setData] = useState([]);
   const [task, setTask] = useState({});
@@ -65,7 +65,7 @@ const ModelLeaderBoard = ({ taskId, history }) => {
     context.api
       .getDynaboardScores(
         taskId,
-        pageLimit,
+        isTop5 ? 5 : pageLimit,
         page * pageLimit,
         sort.field,
         sort.direction,
@@ -124,20 +124,25 @@ const ModelLeaderBoard = ({ taskId, history }) => {
   const isEndOfPage = (page + 1) * pageLimit >= total;
 
   const leaderBoardData = data.map((i, index) => {
+    const modelCell = isTop5 ? (
+      <td>
+        {i.model_name} ({i.username})
+      </td>
+    ) : (
+      <td>
+        <Link to={`/models/${i.model_id}?isFlores=true`} className="btn-link">
+          {i.model_name}
+        </Link>{" "}
+        <Link to={`/users/${i.uid}#profile`} className="btn-link">
+          ({i.username})
+        </Link>
+      </td>
+    );
+
     return (
       <Fragment key={i.model_id}>
         <tr>
-          <td>
-            <Link
-              to={`/models/${i.model_id}?isFlores=true`}
-              className="btn-link"
-            >
-              {i.model_name}
-            </Link>{" "}
-            <Link to={`/users/${i.uid}#profile`} className="btn-link">
-              ({i.username})
-            </Link>
-          </td>
+          {modelCell}
           <td className="text-right">{i.averaged_scores[0].toFixed(2)}</td>
         </tr>
       </Fragment>
@@ -147,7 +152,7 @@ const ModelLeaderBoard = ({ taskId, history }) => {
   if (isLoading) return <Spinner animation="border" />;
 
   return (
-    <Col className="ml-auto mr-auto" md="6">
+    <Col className="ml-auto mr-auto" md={isTop5 ? "12" : "6"}>
       <Card className="my-4">
         <Card.Header className="light-gray-bg">
           <h2 className="text-uppercase m-0 text-reset">
@@ -173,25 +178,33 @@ const ModelLeaderBoard = ({ taskId, history }) => {
             <tbody>{leaderBoardData}</tbody>
           </Table>
         </Card.Body>
-        <Card.Footer className="text-center">
-          <Pagination className="mb-0 float-right" size="sm">
-            <Pagination.Item
-              disabled={isLoading || page === 0}
-              onClick={() => {
-                setPage(page - 1);
-              }}
-            >
-              Previous
-            </Pagination.Item>
-            <Pagination.Item
-              disabled={isLoading || isEndOfPage}
-              onClick={() => {
-                setPage(page + 1);
-              }}
-            >
-              Next
-            </Pagination.Item>
-          </Pagination>
+        <Card.Footer>
+          {isTop5 && (
+            <img
+              src="/Powered_by_Dynabench-Logo.svg"
+              style={{ height: "24px" }}
+            />
+          )}
+          {!isTop5 && (
+            <Pagination className="mb-0 float-right" size="sm">
+              <Pagination.Item
+                disabled={isLoading || page === 0}
+                onClick={() => {
+                  setPage(page - 1);
+                }}
+              >
+                Previous
+              </Pagination.Item>
+              <Pagination.Item
+                disabled={isLoading || isEndOfPage}
+                onClick={() => {
+                  setPage(page + 1);
+                }}
+              >
+                Next
+              </Pagination.Item>
+            </Pagination>
+          )}
         </Card.Footer>
       </Card>
     </Col>

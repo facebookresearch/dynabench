@@ -17,6 +17,7 @@ import ProfilePage from "./ProfilePage";
 import AboutPage from "./AboutPage";
 import TaskPage from "./TaskPage";
 import FloresTaskPage from "./FloresTaskPage";
+import FloresTop5Page from "./FloresTop5Page";
 import ContactPage from "./ContactPage";
 import TermsPage from "./TermsPage";
 import DataPolicyPage from "./DataPolicyPage";
@@ -32,6 +33,8 @@ import PublishInterface from "./PublishInterface.js";
 import GenerateAPITokenPage from "./GenerateAPITokenPage.js";
 import { Avatar } from "../components/Avatar/Avatar";
 import ReactGA from "react-ga";
+
+import qs from "qs";
 
 class RouterMonitor extends React.Component {
   constructor(props) {
@@ -111,6 +114,10 @@ class App extends React.Component {
 
   render() {
     //href={`/tasks/${task.id}#overall`}
+    var query = qs.parse(window.location.search, {
+      ignoreQueryPrefix: true,
+    });
+    const showContentOnly = query.content_only === "true";
     const NavItems = this.state.tasks.map((task, index) => (
       <NavDropdown.Item
         key={task.id}
@@ -139,104 +146,111 @@ class App extends React.Component {
             <Route
               render={(props) => <RouterMonitor {...props} api={this.api} />}
             />
-            <Navbar
-              expand="lg"
-              variant="dark"
-              className="shadow blue-bg justify-content-start"
-            >
-              <Navbar.Toggle
-                aria-controls="basic-navbar-nav"
-                className="border-0 mr-2"
-              />
-              <Navbar.Brand as={Link} to="/">
-                <img
-                  src="/logo_w.png"
-                  style={{ width: 80, marginLeft: 5, marginRight: 20 }}
-                  alt="Dynabench"
+            {!showContentOnly && (
+              <Navbar
+                expand="lg"
+                variant="dark"
+                className="shadow blue-bg justify-content-start"
+              >
+                <Navbar.Toggle
+                  aria-controls="basic-navbar-nav"
+                  className="border-0 mr-2"
                 />
-              </Navbar.Brand>
-              <Navbar.Collapse>
-                <Nav className="mr-auto">
-                  <Nav.Item>
-                    <Nav.Link as={Link} to="/about">
-                      About
-                    </Nav.Link>
-                  </Nav.Item>
-                  <NavDropdown title="Tasks" id="basic-nav-dropdown">
-                    {NavItems}
-                    <hr />
-                    <NavDropdown.Item
-                      key={"FLoRes"}
-                      as={Link}
-                      to={"/flores"}
-                      className="py-3"
-                    >
-                      FloRes
-                    </NavDropdown.Item>
-                  </NavDropdown>
-                </Nav>
-                <Nav className="justify-content-end">
-                  {this.state.user.id ? (
-                    <>
-                      <NavDropdown
-                        onToggle={this.refreshData}
-                        alignRight
-                        className="no-chevron"
-                        title={
-                          <Avatar
-                            avatar_url={this.state.user.avatar_url}
-                            username={this.state.user.username}
-                            isThumbnail={true}
-                            theme="light"
-                          />
-                        }
-                        id="collasible-nav-dropdown"
+                <Navbar.Brand as={Link} to="/">
+                  <img
+                    src="/logo_w.png"
+                    style={{ width: 80, marginLeft: 5, marginRight: 20 }}
+                    alt="Dynabench"
+                  />
+                </Navbar.Brand>
+                <Navbar.Collapse>
+                  <Nav className="mr-auto">
+                    <Nav.Item>
+                      <Nav.Link as={Link} to="/about">
+                        About
+                      </Nav.Link>
+                    </Nav.Item>
+                    <NavDropdown title="Tasks" id="basic-nav-dropdown">
+                      {NavItems}
+                      <hr />
+                      <NavDropdown.Item
+                        key={"FLoRes"}
+                        as={Link}
+                        to={"/flores"}
+                        className="py-3"
                       >
-                        <NavDropdown.Item as={Link} to="/account#profile">
-                          Profile
-                        </NavDropdown.Item>
-                        <NavDropdown.Divider />
-                        <NavDropdown.Item as={Link} to="/account#notifications">
-                          Notifications{" "}
-                          {this.state.user &&
-                          this.state.user.unseen_notifications
-                            ? "(" + this.state.user?.unseen_notifications + ")"
-                            : ""}
-                        </NavDropdown.Item>
-                        <NavDropdown.Item as={Link} to="/account#stats">
-                          Stats &amp; Badges
-                        </NavDropdown.Item>
-                        <NavDropdown.Item as={Link} to="/account#models">
-                          Models
-                        </NavDropdown.Item>
-                        <NavDropdown.Divider />
-                        <NavDropdown.Item as={Link} to="/logout">
-                          Logout
-                        </NavDropdown.Item>
-                      </NavDropdown>
-                    </>
-                  ) : (
-                    <>
-                      <Nav.Item>
-                        <Nav.Link as={Link} to="/login">
-                          Login
-                        </Nav.Link>
-                      </Nav.Item>
-                      <Nav.Item>
-                        <Nav.Link
-                          as={Link}
-                          to="/register"
-                          className="signup-nav-link"
+                        FloRes
+                      </NavDropdown.Item>
+                    </NavDropdown>
+                  </Nav>
+                  <Nav className="justify-content-end">
+                    {this.state.user.id ? (
+                      <>
+                        <NavDropdown
+                          onToggle={this.refreshData}
+                          alignRight
+                          className="no-chevron"
+                          title={
+                            <Avatar
+                              avatar_url={this.state.user.avatar_url}
+                              username={this.state.user.username}
+                              isThumbnail={true}
+                              theme="light"
+                            />
+                          }
+                          id="collasible-nav-dropdown"
                         >
-                          Sign up
-                        </Nav.Link>
-                      </Nav.Item>
-                    </>
-                  )}
-                </Nav>
-              </Navbar.Collapse>
-            </Navbar>
-            <div id="content">
+                          <NavDropdown.Item as={Link} to="/account#profile">
+                            Profile
+                          </NavDropdown.Item>
+                          <NavDropdown.Divider />
+                          <NavDropdown.Item
+                            as={Link}
+                            to="/account#notifications"
+                          >
+                            Notifications{" "}
+                            {this.state.user &&
+                            this.state.user.unseen_notifications
+                              ? "(" +
+                                this.state.user?.unseen_notifications +
+                                ")"
+                              : ""}
+                          </NavDropdown.Item>
+                          <NavDropdown.Item as={Link} to="/account#stats">
+                            Stats &amp; Badges
+                          </NavDropdown.Item>
+                          <NavDropdown.Item as={Link} to="/account#models">
+                            Models
+                          </NavDropdown.Item>
+                          <NavDropdown.Divider />
+                          <NavDropdown.Item as={Link} to="/logout">
+                            Logout
+                          </NavDropdown.Item>
+                        </NavDropdown>
+                      </>
+                    ) : (
+                      <>
+                        <Nav.Item>
+                          <Nav.Link as={Link} to="/login">
+                            Login
+                          </Nav.Link>
+                        </Nav.Item>
+                        <Nav.Item>
+                          <Nav.Link
+                            as={Link}
+                            to="/register"
+                            className="signup-nav-link"
+                          >
+                            Sign up
+                          </Nav.Link>
+                        </Nav.Item>
+                      </>
+                    )}
+                  </Nav>
+                </Navbar.Collapse>
+              </Navbar>
+            )}
+            <div id={showContentOnly ? "" : "content"}>
               <Switch>
                 <Route path="/about" component={AboutPage} />
                 <Route path="/contact" component={ContactPage} />
@@ -263,7 +277,14 @@ class App extends React.Component {
                   component={TaskPage}
                 />
                 <Route path="/tasks/:taskId" component={TaskPage} />
-                <Route path="/flores" component={FloresTaskPage} />
+                <Route
+                  path="/flores/top5/:taskShortName"
+                  component={FloresTop5Page}
+                />
+                <Route
+                  path="/flores/:taskShortName?"
+                  component={FloresTaskPage}
+                />
                 <Route path="/login" component={LoginPage} />
                 <Route
                   path="/generate_api_token"
@@ -282,30 +303,32 @@ class App extends React.Component {
                 <Route path="/" component={HomePage} />
               </Switch>
             </div>
-            <footer className="footer text-white">
-              <Container fluid>
-                <Row>
-                  <div className="footer-nav-link">
-                    Copyright © 2020 Facebook, Inc.
-                  </div>
-                  <div className="footer-nav-link">
-                    <Link to="/contact" className="text-reset">
-                      Contact
-                    </Link>
-                  </div>
-                  <div className="footer-nav-link">
-                    <Link to="/termsofuse" className="text-reset">
-                      Terms of Use
-                    </Link>
-                  </div>
-                  <div className="footer-nav-link">
-                    <Link to="/datapolicy" className="text-reset">
-                      Data Policy
-                    </Link>
-                  </div>
-                </Row>
-              </Container>
-            </footer>
+            {!showContentOnly && (
+              <footer className="footer text-white">
+                <Container fluid>
+                  <Row>
+                    <div className="footer-nav-link">
+                      Copyright © 2020 Facebook, Inc.
+                    </div>
+                    <div className="footer-nav-link">
+                      <Link to="/contact" className="text-reset">
+                        Contact
+                      </Link>
+                    </div>
+                    <div className="footer-nav-link">
+                      <Link to="/termsofuse" className="text-reset">
+                        Terms of Use
+                      </Link>
+                    </div>
+                    <div className="footer-nav-link">
+                      <Link to="/datapolicy" className="text-reset">
+                        Data Policy
+                      </Link>
+                    </div>
+                  </Row>
+                </Container>
+              </footer>
+            )}
           </BrowserRouter>
         </TasksContext.Provider>
       </UserContext.Provider>
