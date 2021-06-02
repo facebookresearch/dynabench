@@ -164,7 +164,7 @@ class App extends React.Component {
                   </Nav.Item>
                   <NavDropdown title="Tasks" id="basic-nav-dropdown">
                     {NavItems}
-                    <hr />
+                    <div className="dropdown-divider my-0"></div>
                     <NavDropdown.Item
                       key={"FLoRes"}
                       as={Link}
