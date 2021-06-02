@@ -6,7 +6,14 @@
 
 import React, { useContext, useState, useEffect } from "react";
 import "./TaskPage.css";
-import { Container, Row, Col, ButtonGroup, Nav } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  ButtonGroup,
+  Nav,
+  Spinner,
+} from "react-bootstrap";
 import UserContext from "./UserContext";
 import Moment from "react-moment";
 import { OverlayProvider, Annotation, OverlayContext } from "./Overlay";
@@ -91,7 +98,11 @@ const FloresTaskPage = (props) => {
   }, [context.api]);
 
   if (isLoading || !task) {
-    return <div>loading</div>;
+    return (
+      <div className="d-flex justify-content-center mt-5">
+        <Spinner animation="border" />
+      </div>
+    );
   }
 
   return (
