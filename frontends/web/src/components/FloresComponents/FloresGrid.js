@@ -133,12 +133,14 @@ const FloresGrid = ({ model }) => {
 
     xAxis: {
       categories: categories,
+      endOnTick: false,
     },
 
     yAxis: {
       categories: categories,
       title: null,
       reversed: true,
+      endOnTick: false,
     },
 
     title: {
