@@ -64,8 +64,6 @@ const FloresTaskPage = (props) => {
       setIsLoading(true);
       api.getSubmittableTasks().then(
         (result) => {
-          console.log(result);
-
           const floresTasks = result.filter((t) =>
             FLORES_TASK_SHORT_NAMES.includes(t.shortname)
           );
