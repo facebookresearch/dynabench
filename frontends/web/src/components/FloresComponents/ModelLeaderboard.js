@@ -128,7 +128,10 @@ const ModelLeaderBoard = ({ taskId, history }) => {
       <Fragment key={i.model_id}>
         <tr>
           <td>
-            <Link to={`/models/${i.model_id}`} className="btn-link">
+            <Link
+              to={`/models/${i.model_id}?isFlores=true`}
+              className="btn-link"
+            >
               {i.model_name}
             </Link>{" "}
             <Link to={`/users/${i.uid}#profile`} className="btn-link">

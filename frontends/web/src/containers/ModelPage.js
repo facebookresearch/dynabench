@@ -26,6 +26,7 @@ import "./ModelPage.css";
 import { OverlayProvider, BadgeOverlay } from "./Overlay";
 import { useState } from "react";
 import FloresGrid from "../components/FloresComponents/FloresGrid";
+import qs from "qs";
 
 const ChevronExpandButton = ({ expanded }) => {
   return (
@@ -212,8 +213,11 @@ class ModelPage extends React.Component {
   };
 
   render() {
+    var query = qs.parse(this.props.location.search, {
+      ignoreQueryPrefix: true,
+    });
     const { model } = this.state;
-    const isFlores = [14, 15, 16].includes(model.tid); // Flores tasks IDs
+    const isFlores = query.isFlores === "true" && model.tid;
     const isModelOwner =
       parseInt(this.state.model.user_id) === parseInt(this.state.ctxUserId);
     const { leaderboard_scores } = this.state.model;
