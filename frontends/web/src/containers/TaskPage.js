@@ -686,17 +686,17 @@ class TaskPage extends React.Component {
                         onChange={() => {
                           this.setState(
                             {
-                              validateNonFooling: !this.state
-                                .validateNonFooling,
+                              validateNonFooling:
+                                !this.state.validateNonFooling,
                             },
                             () =>
                               this.context.api.updateTaskSettings(
                                 this.state.task.id,
                                 {
-                                  validate_non_fooling: this.state
-                                    .validateNonFooling,
-                                  num_matching_validations: this.state
-                                    .numMatchingValidations,
+                                  validate_non_fooling:
+                                    this.state.validateNonFooling,
+                                  num_matching_validations:
+                                    this.state.numMatchingValidations,
                                 }
                               )
                           );
@@ -727,10 +727,10 @@ class TaskPage extends React.Component {
                                 this.context.api.updateTaskSettings(
                                   this.state.task.id,
                                   {
-                                    validate_non_fooling: this.state
-                                      .validateNonFooling,
-                                    num_matching_validations: this.state
-                                      .numMatchingValidations,
+                                    validate_non_fooling:
+                                      this.state.validateNonFooling,
+                                    num_matching_validations:
+                                      this.state.numMatchingValidations,
                                   }
                                 )
                             );
