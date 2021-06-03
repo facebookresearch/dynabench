@@ -172,7 +172,6 @@ const TaskActionButtons = (props) => {
               as={Link}
               className="border-0 blue-color font-weight-bold light-gray-bg"
               to={"/tasks/" + props.taskId + "/create"}
-              target="_blank"
             >
               <i className="fas fa-pen"></i> Create Examples
             </Button>
@@ -193,7 +192,6 @@ const TaskActionButtons = (props) => {
               as={Link}
               className="border-0 blue-color font-weight-bold light-gray-bg"
               to={"/tasks/" + props.taskId + "/validate"}
-              target="_blank"
             >
               <i className="fas fa-search"></i> Validate Examples
             </Button>

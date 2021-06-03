@@ -159,7 +159,7 @@ const FloresGrid = ({ model }) => {
     },
 
     title: {
-      text: "FLoRes Performance Grid (BLEU Score)",
+      text: "FLORES Performance Grid (BLEU Score)",
     },
     legend: {
       enabled: true,

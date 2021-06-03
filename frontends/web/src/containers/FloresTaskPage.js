@@ -156,7 +156,7 @@ const FloresTaskPage = (props) => {
             </div>
             <p>
               {" "}
-              FLoRes is a benchmark dataset for machine translation between
+              FLORES is a benchmark dataset for machine translation between
               English and low-resource languages.{" "}
             </p>
             <hr />
