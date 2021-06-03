@@ -55,7 +55,7 @@ const ModelLeaderBoard = ({ taskId, history, isTop5 }) => {
   const [pageLimit, setPageLimit] = useState(10);
   const [total, setTotal] = useState(0);
   const [sort, setSort] = useState({
-    field: "BLEU",
+    field: "sp-BLEU",
     direction: SortDirection.DESC,
   });
 

@@ -36,6 +36,7 @@ const FloresActionButtons = () => {
             <Button
               className="border-0 blue-color font-weight-bold light-gray-bg"
               href="https://github.com/facebookresearch/dynalab"
+              target="_blank"
             >
               <i className="fas fa-upload"></i> Submit Models
             </Button>
