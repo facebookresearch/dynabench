@@ -80,6 +80,10 @@ const langs = [
     LANGUAGE: "Dutch",
   },
   {
+    ISO: "eng",
+    LANGUAGE: "English",
+  },
+  {
     ISO: "est",
     LANGUAGE: "Estonian",
   },
