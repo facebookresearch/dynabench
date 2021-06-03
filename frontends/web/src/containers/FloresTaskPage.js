@@ -128,7 +128,10 @@ const FloresTaskPage = (props) => {
             </Annotation>
           </Col>
           <Col lg={10} className="px-4 px-lg-5">
-            <h2 className="task-page-header text-reset ml-0">FLoRes</h2>
+            <img
+              src="/flores_logo.png"
+              style={{ height: "60px", marginTop: "50px" }}
+            />
             <div style={{ float: "right", marginTop: 30 }}>
               <ButtonGroup>
                 <Annotation
