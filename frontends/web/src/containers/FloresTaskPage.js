@@ -170,9 +170,9 @@ const FloresTaskPage = (props) => {
               The training data is provided by the publicly available Opus
               repository, which contains data of various quality from a variety
               of domains. We also provide in-domain Wikipedia monolingual data
-              for each language. nn All tracks will be fully constrained, so
-              only the data that is provided can be used. This will enable
-              fairer comparison across methods. Check the{" "}
+              for each language. All tracks will be fully constrained, so only
+              the data that is provided can be used. This will enable fairer
+              comparison across methods. Check the{" "}
               <a
                 href="http://data.statmt.org/wmt21/multilingual-task/"
                 target="_blank"
