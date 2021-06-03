@@ -75,7 +75,10 @@ const ScoreRow = ({ score }) => {
         </Modal>
         <tr key={score.dataset_name}>
           <td>
-            <span onClick={() => setShowModal(!showModal)} className="btn-link">
+            <span
+              onClick={() => setShowModal(!showModal)}
+              className="btn-link dataset-link"
+            >
               {expanded ? <b>{score.dataset_name}</b> : score.dataset_name}
             </span>{" "}
             {clickable ? (

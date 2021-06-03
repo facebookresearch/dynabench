@@ -60,6 +60,10 @@ const langs = [
     LANGUAGE: "Chinese (Simplified)",
   },
   {
+    ISO: "zho_simp",
+    LANGUAGE: "Chinese (Simplified)",
+  },
+  {
     ISO: "zho_trad",
     LANGUAGE: "Chinese (Traditional)",
   },
