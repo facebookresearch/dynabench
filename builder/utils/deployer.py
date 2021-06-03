@@ -78,12 +78,14 @@ class ModelDeployer:
 
     def setup_sagemaker_env(self):
         env = {}
+        region = self.task_config["aws_region"]
         session = boto3.Session(
             aws_access_key_id=deploy_config["aws_access_key_id"],
             aws_secret_access_key=deploy_config["aws_secret_access_key"],
-            region_name=deploy_config["aws_region"],
+            region_name=region,
         )
-        env["region"] = session.region_name
+
+        env["region"] = region
         env["account"] = session.client("sts").get_caller_identity().get("Account")
         env["sagemaker_client"] = session.client("sagemaker")
         env["s3_client"] = session.client("s3")
@@ -92,7 +94,7 @@ class ModelDeployer:
         env["sagemaker_session"] = sagemaker.Session(boto_session=session)
         env["bucket_name"] = env["sagemaker_session"].default_bucket()
 
-        env["ecr_registry"] = f"{env['account']}.dkr.ecr.{env['region']}.amazonaws.com"
+        env["ecr_registry"] = f"{env['account']}.dkr.ecr.{region}.amazonaws.com"
 
         return env
 
@@ -187,8 +189,15 @@ class ModelDeployer:
             shutil.copyfile(os.path.join(docker_dir, f), os.path.join(self.root_dir, f))
 
         # build docker
-        docker_build_args = f"--build-arg tarball={shlex.quote(tarball)} --build-arg requirements={shlex.quote(str(setup_config['requirements']))} --build-arg setup={shlex.quote(str(setup_config['setup']))} --build-arg my_secret={self.model.secret}"
-        docker_build_command = f"docker build --network host -t {shlex.quote(self.repository_name)} -f Dockerfile {docker_build_args} ."
+        docker_file = "gpu.Dockerfile" if self.use_gpu() else "Dockerfile"
+        docker_build_command = docker_build_cmd(
+            self.repository_name,
+            docker_file=docker_file,
+            tarball=tarball,
+            requirements=setup_config["requirements"],
+            setup=setup_config["setup"],
+            my_secret=self.model.secret,
+        )
         with subprocess.Popen(
             shlex.split(docker_build_command),
             bufsize=1,
@@ -446,3 +455,17 @@ class ModelDeployer:
             logger.exception(
                 f"Clean up on failed deployment for {self.endpoint_name} failed: {ex}"
             )
+
+    def use_gpu(self) -> bool:
+        return self.task_config["gpu"]
+
+
+def docker_build_cmd(
+    repository_name: str, docker_file: str = "Dockerfile", **build_args
+):
+    repository_name = shlex.quote(repository_name)
+    docker_file = shlex.quote(docker_file)
+    docker_build_args = " ".join(
+        f"--build-arg {k}={shlex.quote(str(v))}" for k, v in build_args.items()
+    )
+    return f"docker build --network host -t {repository_name} -f {docker_file} {docker_build_args} ."

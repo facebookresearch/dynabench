@@ -41,7 +41,8 @@ class BaseDataset(ABC):
         self.access_type = access_type
         self.filename = self.name + ext
         self._n_examples = {}  # will be get through API
-        self.s3_bucket = config["dataset_s3_bucket"]
+        self.task_config = get_task_config_safe(self.task)
+        self.s3_bucket = self.task_config["s3_bucket"]
         self.s3_url = self._get_data_s3_url()
         self.longdesc = longdesc
         self.source_url = source_url
@@ -71,22 +72,20 @@ class BaseDataset(ABC):
         if loaded:
             self._register_dataset_in_db_and_eval(eval_config)
 
+    def s3_path(self, *parts: str) -> str:
+        return f"s3://{self.s3_bucket}/" + "/".join(parts)
+
     def _get_data_s3_path(self, perturb_prefix=None):
         return get_data_s3_path(self.task, self.filename, perturb_prefix)
 
     def _get_data_s3_url(self, perturb_prefix=None):
-        s3_path = self._get_data_s3_path(perturb_prefix)
-        return os.path.join(f"s3://{self.s3_bucket}", s3_path)
+        return self.s3_path(self._get_data_s3_path(perturb_prefix))
 
     def _get_output_s3_url_prefix(self, endpoint_name):
-        return os.path.join(
-            f"s3://{self.s3_bucket}", "predictions", endpoint_name, self.task
-        )
+        return self.s3_path("predictions", endpoint_name, self.task)
 
     def _get_raw_output_s3_url_prefix(self, endpoint_name):
-        return os.path.join(
-            f"s3://{self.s3_bucket}", "predictions", endpoint_name, "raw", self.task
-        )
+        return self.s3_path("predictions", endpoint_name, "raw", self.task)
 
     def dataset_available_on_s3(self, perturb_prefix=None) -> bool:
         path = self._get_data_s3_path(perturb_prefix)
@@ -124,10 +123,20 @@ class BaseDataset(ABC):
     def run_batch_transform(
         self, sagemaker_client, endpoint_name, job_name, perturb_prefix=None
     ) -> bool:
-        # submit an evaluation job
+        """Submit an evaluation job"""
         task_config = get_task_config_safe(self.task)
         logger.debug(f"Will create transform job {job_name} with config: {task_config}")
-        sagemaker_client.create_transform_job(
+        batch_transform_config = self.get_batch_transform_config(
+            sagemaker_client, endpoint_name, job_name, perturb_prefix
+        )
+        sagemaker_client.create_transform_job(**batch_transform_config)
+        return True
+
+    def get_batch_transform_config(
+        self, sagemaker_client, endpoint_name, job_name, perturb_prefix=None
+    ) -> dict:
+        task_config = get_task_config_safe(self.task)
+        return dict(
             ModelName=endpoint_name,
             TransformJobName=job_name,
             MaxConcurrentTransforms=1,
@@ -154,7 +163,6 @@ class BaseDataset(ABC):
             },
             DataProcessing={"InputFilter": f"${task_config['input_keys']}"},
         )
-        return True
 
     def read_labels(self, perturb_prefix=None):
         tf = tempfile.mkstemp(prefix=self.name)[1]

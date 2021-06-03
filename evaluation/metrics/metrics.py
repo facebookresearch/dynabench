@@ -1,7 +1,12 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
-from transformers.data.metrics.squad_metrics import compute_f1
+import functools
+import subprocess
+from pathlib import Path
 
 import sacrebleu
+import sentencepiece
+from transformers.data.metrics.squad_metrics import compute_f1
+
 from metrics.task_config import get_task_config_safe
 
 
@@ -91,7 +96,39 @@ def get_bleu(predictions: list, targets: list):
 
 
 def get_bleu_meta(task=None):
-    return {"unit": "%", "pretty_name": "BLEU", "utility_direction": 1, "offset": 0}
+    return {"unit": "", "pretty_name": "BLEU", "utility_direction": 1, "offset": 0}
+
+
+SPM_URL = (
+    "https://dl.fbaipublicfiles.com/fairseq/models/flores/sacrebleu_tokenizer_spm.model"
+)
+SPM_PATH = Path(__file__).parent / "sentencepiece.bpe.model"
+
+
+@functools.lru_cache()
+def get_spm_model():
+    if not SPM_PATH.exists():
+        subprocess.check_call(["wget", SPM_URL, "-O", str(SPM_PATH)])
+    spm = sentencepiece.SentencePieceProcessor()
+    assert spm.Load(str(SPM_PATH)), f"Couldn't load spm model from {SPM_PATH}"
+    return spm
+
+
+def sp_tokenize(spm, sentence: str) -> str:
+    words = spm.EncodeAsPieces(sentence.strip())
+    return " ".join(words)
+
+
+def get_sp_bleu(predictions: list, targets: list):
+    spm = get_spm_model()
+    spm_pred = [sp_tokenize(spm, pred) for pred in predictions]
+    spm_targets = [sp_tokenize(spm, tgt) for tgt in targets]
+    bleu = sacrebleu.corpus_bleu(spm_pred, [spm_targets], force=True)
+    return bleu.score
+
+
+def get_sp_bleu_meta(task=None):
+    return {"unit": "", "pretty_name": "sp-BLEU", "utility_direction": 1, "offset": 0}
 
 
 # job_metrics, takes raw job and dataset as input

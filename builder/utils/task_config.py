@@ -4,9 +4,19 @@ _default_config = {
     "instance_type": "ml.m5.xlarge",
     "instance_count": 1,
     "create_endpoint": True,
+    "aws_region": "us-west-1",
+    "gpu": False,
 }
 
-_custom_config = {}
+_custom_config = {
+    "flores": {
+        "instance_type": "ml.p2.xlarge",
+        "instance_count": 1,
+        "create_endpoint": False,
+        "aws_region": "us-west-2",
+        "gpu": True,
+    }
+}
 
 
 def _gen_config(config=None):
@@ -25,6 +35,9 @@ tasks_config = {
     "hs": _gen_config(),
     "sentiment": _gen_config(),
     "qa": _gen_config(),
+    "flores_full": _gen_config(_custom_config["flores"]),
+    "flores_small1": _gen_config(_custom_config["flores"]),
+    "flores_small2": _gen_config(_custom_config["flores"]),
 }
 
 

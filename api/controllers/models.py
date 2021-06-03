@@ -2,6 +2,7 @@
 
 import json
 import secrets
+import sys
 import time
 
 import boto3
@@ -19,6 +20,10 @@ from models.model import DeploymentStatusEnum, ModelModel
 from models.score import ScoreModel
 from models.task import TaskModel
 from models.user import UserModel
+
+
+sys.path.append("../evaluation")  # noqa
+import metrics  # isort:skip
 
 
 @bottle.get("/models/<mid:int>")
@@ -183,7 +188,8 @@ def upload_to_s3(credentials):
     # Upload file to S3
     model_name = bottle.request.forms.get("name")
     task_code = bottle.request.forms.get("taskCode")
-
+    if not task_code:
+        bottle.abort(404, "No task requested")
     t = TaskModel()
     task = t.getByTaskCode(task_code)
     if not task:
@@ -201,13 +207,14 @@ def upload_to_s3(credentials):
         logger.error("Submission limit reached for user (%s)" % (user_id))
         bottle.abort(429, "Submission limit reached")
 
+    task_config = metrics.get_task_config_safe(task_code)
     session = boto3.Session(
         aws_access_key_id=config["aws_access_key_id"],
         aws_secret_access_key=config["aws_secret_access_key"],
         region_name=config["aws_region"],
     )
-    sagemaker_session = sagemaker.Session(boto_session=session)
-    bucket_name = sagemaker_session.default_bucket()
+    bucket_name = task_config["s3_bucket"]
+    logger.info(f"Using AWS bucket {bucket_name} for task {task_code}")
 
     endpoint_name = f"ts{int(time.time())}-{model_name}"[:63]
     s3_filename = f"{endpoint_name}.tar.gz"

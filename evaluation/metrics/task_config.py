@@ -11,6 +11,8 @@ _default_config = {
     "perf_metric": "accuracy",
     "delta_metrics": ["fairness", "robustness"],
     "input_keys": ["uid", "statement"],
+    "aws_region": "us-west-1",
+    "s3_bucket": "evaluation-us-west-1-096166425824",
 }
 
 _custom_config = {
@@ -21,10 +23,13 @@ _custom_config = {
         "perf_metric": "f1",
     },
     "flores": {
-        "instance_config": instance_property["ml.m5.xlarge"],
-        "eval_metrics": ["bleu"],
-        "perf_metric": "bleu",
+        "instance_config": instance_property["ml.p2.xlarge"],
+        "eval_metrics": ["sp_bleu"],
+        "perf_metric": "sp_bleu",
+        "delta_metrics": [],
         "input_keys": ["uid", "sourceText", "sourceLanguage", "targetLanguage"],
+        "aws_region": "us-west-2",
+        "s3_bucket": "evaluation-us-west-2",
     },
 }
 

@@ -19,6 +19,8 @@ def get_eval_metrics(task: str, predictions: list, targets: list) -> tuple:
 
 
 def get_job_metrics(job, dataset) -> dict:
+    if not job.aws_metrics:
+        return {}
     task_config = get_task_config_safe(dataset.task)
     job_metrics = task_config["instance_config"]["aws_metrics"]
     return {key: job_metrics_config[key](job, dataset) for key in job_metrics}

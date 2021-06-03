@@ -98,6 +98,18 @@ class Flores101Base(MTBase):
             "flores/" + self.task, self.filename, perturb_prefix
         )
 
+    def get_batch_transform_config(
+        self, sagemaker_client, endpoint_name, job_name, perturb_prefix=None
+    ) -> dict:
+        """TODO: Run Flores evaluation using batching"""
+        batch_transform_config = super().get_batch_transform_config(
+            sagemaker_client, endpoint_name, job_name, perturb_prefix
+        )
+        batch_transform_config["TransformInput"]["ContentType"] = "application/json"
+        batch_transform_config["TransformInput"]["SplitType"] = "Line"
+        batch_transform_config["BatchStrategy"] = "MultiRecord"
+        return batch_transform_config
+
     def load(self):
         try:
             with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
