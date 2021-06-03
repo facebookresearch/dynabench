@@ -119,6 +119,8 @@ const FloresGrid = ({ model }) => {
         type: "x",
       },
       panKey: "shift",
+      plotBorderWidth: 1,
+      plotBorderColor: "#dddddd",
     },
 
     boost: {
