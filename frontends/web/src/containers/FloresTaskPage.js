@@ -6,6 +6,7 @@
 
 import React, { useContext, useState, useEffect } from "react";
 import "./TaskPage.css";
+import { useParams } from "react-router-dom";
 import {
   Container,
   Row,
@@ -59,6 +60,8 @@ const FloresTaskPage = (props) => {
   const [task, setTask] = useState(null); // Current Task ID
   const [isLoading, setIsLoading] = useState(false);
 
+  let { taskShortName } = useParams();
+
   // Call api only once
   useEffect(() => {
     /**
@@ -80,8 +83,11 @@ const FloresTaskPage = (props) => {
           );
 
           setTaskLookup(taskLookup);
-
-          setTask(taskLookup[FLORES_TASK_SHORT_NAMES[0]]); // set default task
+          if (FLORES_TASK_SHORT_NAMES.includes(taskShortName)) {
+            setTask(taskLookup[taskShortName]); // set the task from Arguments
+          } else {
+            setTask(taskLookup[FLORES_TASK_SHORT_NAMES[0]]); // set default task
+          }
           setIsLoading(false);
         },
         (error) => {
