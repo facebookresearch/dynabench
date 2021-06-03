@@ -70,9 +70,9 @@ const ScoreRow = ({ score }) => {
         </Modal>
         <tr key={score.dataset_name}>
           <td>
-            <Link onClick={() => setShowModal(!showModal)} className="btn-link">
+            <span onClick={() => setShowModal(!showModal)} className="btn-link">
               {expanded ? <b>{score.dataset_name}</b> : score.dataset_name}
-            </Link>{" "}
+            </span>{" "}
             {clickable ? (
               <div
                 style={{ float: "right" }}
@@ -347,18 +347,33 @@ class ModelPage extends React.Component {
                         <tr style={{ border: `none` }}>
                           <td>Task</td>
                           <td>
-                            <Link to={`/tasks/${model.tid}#overall`}>
-                              <TasksContext.Consumer>
-                                {({ tasks }) => {
-                                  const task =
-                                    model &&
-                                    tasks.filter((e) => e.id === model.tid);
-                                  return (
-                                    task && task.length && task[0].shortname
-                                  );
-                                }}
-                              </TasksContext.Consumer>
-                            </Link>
+                            {isFlores ? (
+                              <Link to={`/flores`}>
+                                <TasksContext.Consumer>
+                                  {({ tasks }) => {
+                                    const task =
+                                      model &&
+                                      tasks.filter((e) => e.id === model.tid);
+                                    return (
+                                      task && task.length && task[0].shortname
+                                    );
+                                  }}
+                                </TasksContext.Consumer>
+                              </Link>
+                            ) : (
+                              <Link to={`/tasks/${model.tid}#overall`}>
+                                <TasksContext.Consumer>
+                                  {({ tasks }) => {
+                                    const task =
+                                      model &&
+                                      tasks.filter((e) => e.id === model.tid);
+                                    return (
+                                      task && task.length && task[0].shortname
+                                    );
+                                  }}
+                                </TasksContext.Consumer>
+                              </Link>
+                            )}
                           </td>
                         </tr>
                         <tr style={{ border: `none` }}>

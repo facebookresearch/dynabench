@@ -100,7 +100,7 @@ const FloresTaskPage = (props) => {
     fetchFloresTasks(context.api);
 
     return () => {};
-  }, [context.api]);
+  }, [context.api, taskShortName]);
 
   if (isLoading || !task) {
     return (
@@ -157,7 +157,7 @@ const FloresTaskPage = (props) => {
               English and low-resource languages.{" "}
             </p>
             <hr />
-            <FloresTaskDescription taskId={task.id} />
+            <FloresTaskDescription taskName={task.name} taskDesc={task.desc} />
             <FloresActionButtons
               api={context.api}
               taskId={task.id}
