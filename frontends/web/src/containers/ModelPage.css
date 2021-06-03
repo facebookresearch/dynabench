@@ -13,6 +13,6 @@
     padding: 0;
 }
 
-.dataset-link {
+.dataset-link:hover {
     cursor: pointer;
 }
