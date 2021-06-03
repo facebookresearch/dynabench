@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-FROM nvidia/cuda:10.1-cudnn7-runtime-ubuntu18.04
+FROM nvidia/cuda:10.2-cudnn7-runtime-ubuntu18.04
 
 ENV PYTHONUNBUFFERED TRUE
 
@@ -11,7 +11,6 @@ ARG tarball
 ARG requirements
 ARG setup
 ARG my_secret
-ARG CUDA_VERSION=""
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
@@ -25,7 +24,7 @@ RUN apt-get update && \
     curl \
     vim \
     git \
-    && rm -rf /var/lib/apt/lists/* 
+    && rm -rf /var/lib/apt/lists/*
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.6 1
 RUN cd /tmp \
@@ -33,14 +32,7 @@ RUN cd /tmp \
     && python3 get-pip.py
 
 RUN python -m pip install --no-cache-dir torchserve
-# Install CUDA version specific binary when CUDA version is specified as a build arg
-RUN if [ "$CUDA_VERSION" ]; then \
-        pip install --no-cache-dir torch==$TORCH_VER+$CUDA_VERSION -f https://download.pytorch.org/whl/torch_stable.html; \
-    else \
-        # Install the binary with the latest CUDA version support
-        pip install --no-cache-dir torch torchvision; \
-    fi
-
+RUN python -m pip install --no-cache-dir torch==1.7.1
 
 COPY dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh
 RUN chmod +x /usr/local/bin/dockerd-entrypoint.sh
