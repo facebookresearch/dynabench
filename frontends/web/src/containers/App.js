@@ -179,7 +179,7 @@ class App extends React.Component {
                         to={"/flores"}
                         className="py-3"
                       >
-                        FLORES
+                        Flores
                       </NavDropdown.Item>
                     </NavDropdown>
                   </Nav>
