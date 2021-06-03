@@ -14,7 +14,7 @@ _custom_config = {
         "instance_count": 1,
         "create_endpoint": False,
         "aws_region": "us-west-2",
-        # "gpu": True,
+        "gpu": True,
     }
 }
 

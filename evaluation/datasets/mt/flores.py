@@ -105,8 +105,9 @@ class Flores101Base(MTBase):
         batch_transform_config = super().get_batch_transform_config(
             sagemaker_client, endpoint_name, job_name, perturb_prefix
         )
-        # batch_transform_config["BatchStrategy"] = "MultiRecord"
-        # batch_transform_config["TransformInput"]["SplitType"] = "None"
+        batch_transform_config["TransformInput"]["ContentType"] = "application/json"
+        batch_transform_config["TransformInput"]["SplitType"] = "Line"
+        batch_transform_config["BatchStrategy"] = "MultiRecord"
         return batch_transform_config
 
     def load(self):
