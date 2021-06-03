@@ -172,6 +172,7 @@ const TaskActionButtons = (props) => {
               as={Link}
               className="border-0 blue-color font-weight-bold light-gray-bg"
               to={"/tasks/" + props.taskId + "/create"}
+              target="_blank"
             >
               <i className="fas fa-pen"></i> Create Examples
             </Button>
@@ -192,6 +193,7 @@ const TaskActionButtons = (props) => {
               as={Link}
               className="border-0 blue-color font-weight-bold light-gray-bg"
               to={"/tasks/" + props.taskId + "/validate"}
+              target="_blank"
             >
               <i className="fas fa-search"></i> Validate Examples
             </Button>
@@ -215,6 +217,7 @@ const TaskActionButtons = (props) => {
               <Button
                 className="border-0 blue-color font-weight-bold light-gray-bg"
                 href="https://github.com/facebookresearch/dynalab"
+                target="_blank"
               >
                 <i className="fas fa-upload"></i> Submit Models
               </Button>
@@ -685,17 +688,17 @@ class TaskPage extends React.Component {
                         onChange={() => {
                           this.setState(
                             {
-                              validateNonFooling:
-                                !this.state.validateNonFooling,
+                              validateNonFooling: !this.state
+                                .validateNonFooling,
                             },
                             () =>
                               this.context.api.updateTaskSettings(
                                 this.state.task.id,
                                 {
-                                  validate_non_fooling:
-                                    this.state.validateNonFooling,
-                                  num_matching_validations:
-                                    this.state.numMatchingValidations,
+                                  validate_non_fooling: this.state
+                                    .validateNonFooling,
+                                  num_matching_validations: this.state
+                                    .numMatchingValidations,
                                 }
                               )
                           );
@@ -726,10 +729,10 @@ class TaskPage extends React.Component {
                                 this.context.api.updateTaskSettings(
                                   this.state.task.id,
                                   {
-                                    validate_non_fooling:
-                                      this.state.validateNonFooling,
-                                    num_matching_validations:
-                                      this.state.numMatchingValidations,
+                                    validate_non_fooling: this.state
+                                      .validateNonFooling,
+                                    num_matching_validations: this.state
+                                      .numMatchingValidations,
                                   }
                                 )
                             );

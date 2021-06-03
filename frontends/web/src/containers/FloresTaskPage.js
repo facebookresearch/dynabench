@@ -173,7 +173,10 @@ const FloresTaskPage = (props) => {
               for each language. nn All tracks will be fully constrained, so
               only the data that is provided can be used. This will enable
               fairer comparison across methods. Check the{" "}
-              <a href="http://data.statmt.org/wmt21/multilingual-task/">
+              <a
+                href="http://data.statmt.org/wmt21/multilingual-task/"
+                target="_blank"
+              >
                 multilingual data page
               </a>{" "}
               for a detailed view of the resources.
