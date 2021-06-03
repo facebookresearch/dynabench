@@ -86,7 +86,7 @@ const ModelLeaderBoard = ({ taskId, history, isTop5 }) => {
       );
     setIsLoading(false);
     return () => {};
-  }, [taskId, context.api, page, pageLimit, sort, history]);
+  }, [taskId, context.api, page, pageLimit, sort, history, isTop5]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -130,7 +130,7 @@ const ModelLeaderBoard = ({ taskId, history, isTop5 }) => {
       </td>
     ) : (
       <td>
-        <Link to={`/models/${i.model_id}?isFlores=true`} className="btn-link">
+        <Link to={`/models/${i.model_id}`} className="btn-link">
           {i.model_name}
         </Link>{" "}
         <Link to={`/users/${i.uid}#profile`} className="btn-link">

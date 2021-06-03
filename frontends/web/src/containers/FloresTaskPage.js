@@ -30,10 +30,10 @@ const FLORES_TASK_SHORT_NAMES = [
 const TaskNav = ({ location, taskLookup, taskId, setTask }) => {
   return (
     <Nav className="flex-lg-column sidebar-wrapper sticky-top">
-      {FLORES_TASK_SHORT_NAMES.map((name) => {
+      {FLORES_TASK_SHORT_NAMES.map((name, index) => {
         const task = taskLookup[name];
         return (
-          <Nav.Item>
+          <Nav.Item key={index}>
             <Nav.Link
               href={`#${task.id}`}
               onClick={(e) => {
