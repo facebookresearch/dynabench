@@ -26,7 +26,12 @@ import "./ModelPage.css";
 import { OverlayProvider, BadgeOverlay } from "./Overlay";
 import { useState } from "react";
 import FloresGrid from "../components/FloresComponents/FloresGrid";
-import qs from "qs";
+
+const FLORES_TASK_SHORT_NAMES = [
+  "FLORES-FULL",
+  "FLORES-SMALL1",
+  "FLORES-SMALL2",
+];
 
 const ChevronExpandButton = ({ expanded }) => {
   return (
@@ -70,9 +75,12 @@ const ScoreRow = ({ score }) => {
         </Modal>
         <tr key={score.dataset_name}>
           <td>
-            <Link onClick={() => setShowModal(!showModal)} className="btn-link">
+            <span
+              onClick={() => setShowModal(!showModal)}
+              className="btn-link dataset-link"
+            >
               {expanded ? <b>{score.dataset_name}</b> : score.dataset_name}
-            </Link>{" "}
+            </span>{" "}
             {clickable ? (
               <div
                 style={{ float: "right" }}
@@ -134,6 +142,7 @@ class ModelPage extends React.Component {
         name: "",
         username: "",
       },
+      task: {},
       isLoading: false,
     };
   }
@@ -146,18 +155,30 @@ class ModelPage extends React.Component {
   }
 
   fetchModel = () => {
-    this.context.api.getModel(this.state.modelId).then(
-      (result) => {
-        this.setState({ model: result, isLoading: false });
-      },
-      (error) => {
-        console.log(error);
-        this.setState({ isLoading: false });
-        if (error.status_code === 404 || error.status_code === 405) {
-          this.props.history.push("/");
+    this.context.api.getModel(this.state.modelId).then((result) => {
+      this.setState(
+        { model: result, isLoading: false },
+        function () {
+          this.context.api.getTask(this.state.model.tid).then(
+            (result) => {
+              this.setState({
+                task: result,
+              });
+            },
+            (error) => {
+              console.log(error);
+            }
+          );
+        },
+        (error) => {
+          console.log(error);
+          this.setState({ isLoading: false });
+          if (error.status_code === 404 || error.status_code === 405) {
+            this.props.history.push("/");
+          }
         }
-      }
-    );
+      );
+    });
   };
 
   handleEdit = () => {
@@ -213,11 +234,8 @@ class ModelPage extends React.Component {
   };
 
   render() {
-    var query = qs.parse(this.props.location.search, {
-      ignoreQueryPrefix: true,
-    });
-    const { model } = this.state;
-    const isFlores = query.isFlores === "true" && model.tid;
+    const { model, task } = this.state;
+    const isFlores = FLORES_TASK_SHORT_NAMES.includes(task.shortname);
     const isModelOwner =
       parseInt(this.state.model.user_id) === parseInt(this.state.ctxUserId);
     const { leaderboard_scores } = this.state.model;
@@ -344,23 +362,25 @@ class ModelPage extends React.Component {
                             </Link>
                           </td>
                         </tr>
-                        <tr style={{ border: `none` }}>
-                          <td>Task</td>
-                          <td>
-                            <Link to={`/tasks/${model.tid}#overall`}>
-                              <TasksContext.Consumer>
-                                {({ tasks }) => {
-                                  const task =
-                                    model &&
-                                    tasks.filter((e) => e.id === model.tid);
-                                  return (
-                                    task && task.length && task[0].shortname
-                                  );
-                                }}
-                              </TasksContext.Consumer>
-                            </Link>
-                          </td>
-                        </tr>
+                        {!isFlores && (
+                          <tr style={{ border: `none` }}>
+                            <td>Task</td>
+                            <td>
+                              <Link to={`/tasks/${model.tid}#overall`}>
+                                <TasksContext.Consumer>
+                                  {({ tasks }) => {
+                                    const task =
+                                      model &&
+                                      tasks.filter((e) => e.id === model.tid);
+                                    return (
+                                      task && task.length && task[0].shortname
+                                    );
+                                  }}
+                                </TasksContext.Consumer>
+                              </Link>
+                            </td>
+                          </tr>
+                        )}
                         <tr style={{ border: `none` }}>
                           <td>Summary</td>
                           <td>{model.longdesc}</td>
@@ -369,10 +389,12 @@ class ModelPage extends React.Component {
                           <td style={{ whiteSpace: "nowrap" }}># Parameters</td>
                           <td>{model.params}</td>
                         </tr>
-                        <tr style={{ border: `none` }}>
-                          <td>Language(s)</td>
-                          <td>{model.languages}</td>
-                        </tr>
+                        {!isFlores && (
+                          <tr style={{ border: `none` }}>
+                            <td>Language(s)</td>
+                            <td>{model.languages}</td>
+                          </tr>
+                        )}
                         <tr style={{ border: `none` }}>
                           <td>License(s)</td>
                           <td>{model.license}</td>
@@ -408,8 +430,8 @@ class ModelPage extends React.Component {
                         </tr>
                       </tbody>
                     </Table>
-                    {orderedNonLeaderboardScores.map((score) => (
-                      <ScoreRow score={score} />
+                    {orderedNonLeaderboardScores.map((score, index) => (
+                      <ScoreRow score={score} key={index} />
                     ))}
                   </InputGroup>
                 ) : (

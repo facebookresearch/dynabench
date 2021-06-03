@@ -30,10 +30,10 @@ const FLORES_TASK_SHORT_NAMES = [
 const TaskNav = ({ location, taskLookup, taskId, setTask }) => {
   return (
     <Nav className="flex-lg-column sidebar-wrapper sticky-top">
-      {FLORES_TASK_SHORT_NAMES.map((name) => {
+      {FLORES_TASK_SHORT_NAMES.map((name, index) => {
         const task = taskLookup[name];
         return (
-          <Nav.Item>
+          <Nav.Item key={index}>
             <Nav.Link
               href={`#${task.id}`}
               onClick={(e) => {
@@ -100,7 +100,7 @@ const FloresTaskPage = (props) => {
     fetchFloresTasks(context.api);
 
     return () => {};
-  }, [context.api]);
+  }, [context.api, taskShortName]);
 
   if (isLoading || !task) {
     return (
@@ -128,7 +128,10 @@ const FloresTaskPage = (props) => {
             </Annotation>
           </Col>
           <Col lg={10} className="px-4 px-lg-5">
-            <h2 className="task-page-header text-reset ml-0">FLoRes</h2>
+            <img
+              src="/flores_logo.png"
+              style={{ height: "60px", marginTop: "48px" }}
+            />
             <div style={{ float: "right", marginTop: 30 }}>
               <ButtonGroup>
                 <Annotation
@@ -157,7 +160,7 @@ const FloresTaskPage = (props) => {
               English and low-resource languages.{" "}
             </p>
             <hr />
-            <FloresTaskDescription taskId={task.id} />
+            <FloresTaskDescription taskName={task.name} taskDesc={task.desc} />
             <FloresActionButtons
               api={context.api}
               taskId={task.id}
