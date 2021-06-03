@@ -52,23 +52,31 @@ const flatArray = (list) => {
   const diagonal = getDiagonal(list);
   const dict = getDict(list);
   let newList = [...list, ...diagonal];
+  let min = 100;
+  let max = 0;
+
   const chartData = newList.map((s, i) => {
     const objS = dict.find((o) => o.tag === s.tag.split("-")[0]);
     const objT = dict.find((t) => t.tag === s.tag.split("-")[1]);
+    const score = Math.round(s.perf * 100) / 100 || null;
+    min = Math.min(min, score ?? min);
+    max = Math.max(max, score ?? max);
     return {
       source: s.tag.split("-")[0],
       target: s.tag.split("-")[1],
-      perf: Math.round(s.perf * 100) / 100 || null,
+      perf: score,
       sourceIndex: objS.langIndex,
       targetIndex: objT.langIndex,
     };
   });
-  return chartData;
+  return [chartData, min, max];
 };
 
 const FloresGrid = ({ model }) => {
   const [data, setChartData] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [minScore, setMinScore] = useState();
+  const [maxScore, setMaxScore] = useState();
 
   useEffect(() => {
     const perf_by_tag =
@@ -78,7 +86,11 @@ const FloresGrid = ({ model }) => {
       )
         ? JSON.parse(model.leaderboard_scores[0].metadata_json)["perf_by_tag"]
         : [];
-    setChartData(flatArray(perf_by_tag));
+
+    const [chartData, min, max] = flatArray(perf_by_tag);
+    setChartData(chartData);
+    setMinScore(min);
+    setMaxScore(max);
     setCategories(getDict(perf_by_tag).map((a) => a.tag));
   }, [model]);
 
@@ -115,8 +127,8 @@ const FloresGrid = ({ model }) => {
     },
 
     colorAxis: {
-      min: 0,
-      max: 100,
+      min: minScore,
+      max: maxScore,
       stops: [
         [0, "#ffff"],
         [0.2, "#caf0f8"],
