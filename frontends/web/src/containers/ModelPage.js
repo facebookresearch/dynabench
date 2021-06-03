@@ -253,12 +253,17 @@ class ModelPage extends React.Component {
                     {"< Back"}
                   </Button>
                   <div>
-                    <Button
-                      variant="outline-primary mr-2"
-                      onClick={() => this.handleInteract()}
-                    >
-                      <i className="fas fa-pen"></i> Interact
-                    </Button>
+                    {(isModelOwner || model.is_published) &&
+                    model.deployment_status === "deployed" ? (
+                      <Button
+                        variant="outline-primary mr-2"
+                        onClick={() => this.handleInteract()}
+                      >
+                        <i className="fas fa-pen"></i> Interact
+                      </Button>
+                    ) : (
+                      ""
+                    )}
                     {model.source_url && model.source_url !== "" ? (
                       <Button
                         variant="outline-primary mr-2"

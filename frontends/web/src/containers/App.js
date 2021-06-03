@@ -162,22 +162,43 @@ class App extends React.Component {
                     style={{ width: 80, marginLeft: 5, marginRight: 20 }}
                     alt="Dynabench"
                   />
-                </Navbar.Brand>
-                <Navbar.Collapse>
-                  <Nav className="mr-auto">
-                    <Nav.Item>
-                      <Nav.Link as={Link} to="/about">
-                        About
-                      </Nav.Link>
-                    </Nav.Item>
-                    <NavDropdown title="Tasks" id="basic-nav-dropdown">
-                      {NavItems}
-                      <hr />
-                      <NavDropdown.Item
-                        key={"FLoRes"}
-                        as={Link}
-                        to={"/flores"}
-                        className="py-3"
+              </Navbar.Brand>
+              <Navbar.Collapse>
+                <Nav className="mr-auto">
+                  <Nav.Item>
+                    <Nav.Link as={Link} to="/about">
+                      About
+                    </Nav.Link>
+                  </Nav.Item>
+                  <NavDropdown title="Tasks" id="basic-nav-dropdown">
+                    {NavItems}
+                    <div className="dropdown-divider my-0"></div>
+                    <NavDropdown.Item
+                      key={"FLoRes"}
+                      as={Link}
+                      to={"/flores"}
+                      className="py-3"
+                    >
+                      FLoRes
+                    </NavDropdown.Item>
+                  </NavDropdown>
+                </Nav>
+                <Nav className="justify-content-end">
+                  {this.state.user.id ? (
+                    <>
+                      <NavDropdown
+                        onToggle={this.refreshData}
+                        alignRight
+                        className="no-chevron"
+                        title={
+                          <Avatar
+                            avatar_url={this.state.user.avatar_url}
+                            username={this.state.user.username}
+                            isThumbnail={true}
+                            theme="light"
+                          />
+                        }
+                        id="collasible-nav-dropdown"
                       >
                         FloRes
                       </NavDropdown.Item>

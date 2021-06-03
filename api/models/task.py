@@ -7,7 +7,7 @@ import sqlalchemy as db
 
 from .base import Base, BaseModel
 from .dataset import AccessTypeEnum, DatasetModel
-from .round import Round, RoundModel
+from .round import Round
 from .user import User
 
 
@@ -44,6 +44,7 @@ class Task(Base):
     cur_round = db.Column(db.Integer, nullable=False)
 
     hidden = db.Column(db.Boolean, default=False)
+    submitable = db.Column(db.Boolean, default=False)
 
     has_context = db.Column(db.Boolean, default=True)
     has_answer = db.Column(db.Boolean, default=False)
@@ -105,6 +106,11 @@ class TaskModel(BaseModel):
             tasks[ii]["round"] = r.to_dict()
         return tasks
 
+    def listSubmitable(self):
+        rows = self.dbs.query(Task).filter(Task.submitable.is_(True)).all()
+        tasks = [x.to_dict() for x in rows]
+        return tasks
+
     def get_default_dataset_weight(self, task, name):
         if task.settings_json is not None:
             weight = (
@@ -159,7 +165,6 @@ class TaskModel(BaseModel):
 
             t_dict = t.to_dict()
             r_dict = r.to_dict()
-            rm = RoundModel()
             t_dict["ordered_scoring_datasets"] = scoring_dataset_list
             t_dict["ordered_datasets"] = dataset_list
             shortname_to_metrics_task_name = {
@@ -167,6 +172,9 @@ class TaskModel(BaseModel):
                 "QA": "qa",
                 "Sentiment": "sentiment",
                 "Hate Speech": "hs",
+                "FLORES-SMALL1": "flores_small1",
+                "FLORES-SMALL2": "flores_small2",
+                "FLORES-FULL": "flores_full",
             }
             if t_dict["shortname"] in shortname_to_metrics_task_name:
                 metrics_task_name = shortname_to_metrics_task_name[t_dict["shortname"]]
@@ -193,10 +201,6 @@ class TaskModel(BaseModel):
                 ordered_metrics = []
 
             t_dict["ordered_metrics"] = ordered_metrics
-
-            validation_stats = rm.getValidationStats(tid, r_dict["rid"])
-            r_dict["total_validations"] = validation_stats["total_validations"]
-            r_dict["correct_validations"] = validation_stats["correct_validations"]
             t_dict["round"] = r_dict
             return t_dict
         except db.orm.exc.NoResultFound:

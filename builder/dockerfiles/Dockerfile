@@ -1,3 +1,8 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
 FROM ubuntu:18.04
 
 ENV PYTHONUNBUFFERED TRUE
@@ -18,6 +23,7 @@ RUN apt-get update && \
     openjdk-11-jdk \
     curl \
     vim \
+    git \
     && rm -rf /var/lib/apt/lists/* 
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.6 1
@@ -38,9 +44,9 @@ ENV TEMP=/home/model-server/tmp
 ADD ${tarball} /home/model-server/code
 WORKDIR /home/model-server/code
 
-RUN python -m pip install -e dynalab  # FIXME: pull from github once dynalab is open sourced
-RUN if [ -f requirements.txt ] && [ ${requirements} = True ]; then python -m pip install --no-cache-dir -Ir requirements.txt; fi
-RUN if [ -f setup.py ] && [ ${setup} = True ]; then python -m pip install --no-cache-dir -Ie code; fi
+RUN if [ -f requirements.txt ] && [ ${requirements} = True ]; then python -m pip install --no-cache-dir --force-reinstall -r requirements.txt; fi
+RUN if [ -f setup.py ] && [ ${setup} = True ]; then python -m pip install --no-cache-dir --force-reinstall -e code; fi
+RUN python -m pip install --force-reinstall git+git://github.com/facebookresearch/dynalab.git
 
 ENV PYTHONIOENCODING=UTF-8
 ENV MY_SECRET=${my_secret}

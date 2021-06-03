@@ -499,11 +499,10 @@ class ResponseInfo extends React.Component {
     if (!isNaN(parseInt(curTarget))) {
       target = curTarget;
     }
-    const selectedAnswer =
-      answer && answer.length ? answer[answer.length - 1].tokens.join("") : "";
+
     this.context.api
       .inspectModel(content[idx].url, {
-        answer: selectedAnswer,
+        answer: content[idx].targetText,
         context: content[0].text,
         hypothesis: content[idx].cls === "hypothesis" ? content[idx].text : "",
         insight: true,
@@ -582,7 +581,6 @@ class ResponseInfo extends React.Component {
     }
     var classNames = this.props.obj.cls + " rounded border m-3";
     var userFeedback = null;
-    var selectedAnswer = null;
     var submissionResults = null;
     if (this.props.obj.retracted) {
       classNames += " response-warning";
@@ -601,14 +599,6 @@ class ResponseInfo extends React.Component {
         </span>
       );
     } else {
-      if (this.props.taskType === "extract") {
-        selectedAnswer =
-          this.props.answer && this.props.answer.length
-            ? this.props.answer[this.props.answer.length - 1].tokens.join("")
-            : "";
-      } else if (this.props.taskType === "clf") {
-        selectedAnswer = this.props.targets[this.props.curTarget];
-      }
       if (this.state.fooled === "no") {
         classNames += " response-warning";
         submissionResults = (
@@ -619,12 +609,12 @@ class ResponseInfo extends React.Component {
         );
       } else if (this.state.fooled === "yes") {
         classNames += " light-green-bg";
-        if (selectedAnswer && selectedAnswer.length > 0) {
+        if (this.props.obj.targetText && this.props.obj.targetText.length > 0) {
           submissionResults = (
             <span>
               <strong>You fooled the model!</strong> It predicted{" "}
               <strong>{this.props.obj.modelPredStr}</strong> but a person would
-              say <strong>{selectedAnswer}</strong>
+              say <strong>{this.props.obj.targetText}</strong>
             </span>
           );
         }
@@ -658,9 +648,7 @@ class ResponseInfo extends React.Component {
                     style={{ width: 100 + "%", marginBottom: "1px" }}
                     placeholder={
                       "Explain why " +
-                      (this.props.taskType == "clf"
-                        ? this.props.targets[this.props.curTarget]
-                        : selectedAnswer) +
+                      this.props.obj.targetText +
                       " is the correct answer"
                     }
                     data-index={this.props.index}
@@ -705,7 +693,9 @@ class ResponseInfo extends React.Component {
                     type="text"
                     style={{ width: 100 + "%", marginBottom: "1px" }}
                     placeholder={
-                      "Explain why " + selectedAnswer + " is the correct answer"
+                      "Explain why " +
+                      this.props.obj.targetText +
+                      " is the correct answer"
                     }
                     data-index={this.props.index}
                     data-type="example"
@@ -1106,18 +1096,25 @@ class CreateInterface extends React.Component {
               var modelPredIdx = null;
               var modelPredStr = null;
               var modelFooled = null;
-              var probList = null;
+              // TODO: this string checking is necessary because some target models are now uploaded via dynalab and some target models
+              // remain uploaded via the old torchserve directory way. This can be removed when we reupload all target models
+              // via dynalab.
+              const dynalabUploadedTarget = this.state.selectedModel
+                ? false
+                : this.state.randomTargetModel.includes("predict?model=ts");
+              const dynalabModelEndpointName = dynalabUploadedTarget
+                ? this.state.randomTargetModel.split("predict?model=")[1]
+                : null;
               if (this.state.task.type == "clf") {
-                if (!this.state.selectedModel) {
+                if (!this.state.selectedModel && !dynalabUploadedTarget) {
                   // TODO: reupload target models via dynalab and we won't need this.
                   modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
                   modelPredStr = this.state.task.targets[modelPredIdx];
                   modelFooled = modelPredIdx !== this.state.target;
-                  probList = result.prob;
                 } else {
                   if (result.prob) {
                     // Make prob an ordered list.
-                    probList = this.state.task.targets.map(
+                    result.prob = this.state.task.targets.map(
                       (label) => result.prob[label]
                     );
                   }
@@ -1128,10 +1125,10 @@ class CreateInterface extends React.Component {
               } else {
                 // TODO: handle this more elegantly
                 if (result.prob) {
-                  probList = [result.prob, 1 - result.prob];
+                  result.prob = [result.prob, 1 - result.prob];
                 }
                 this.state.task.targets = ["confidence", "uncertainty"];
-                if (!this.state.selectedModel) {
+                if (!this.state.selectedModel && !dynalabUploadedTarget) {
                   // TODO: reupload target models via dynalab and we won't need this.
                   if (this.state.task.type === "extract") {
                     modelFooled = !result.model_is_correct;
@@ -1161,9 +1158,13 @@ class CreateInterface extends React.Component {
                       modelPredStr: modelPredStr,
                       fooled: modelFooled,
                       text: this.state.hypothesis,
+                      targetText:
+                        this.state.task.type == "clf"
+                          ? this.state.task.targets[this.state.target]
+                          : this.state.target,
                       url: this.state.randomTargetModel,
                       retracted: false,
-                      prob: probList,
+                      prob: result.prob,
                     },
                   ],
                 },
@@ -1191,7 +1192,11 @@ class CreateInterface extends React.Component {
                       this.state.hypothesis,
                       this.state.target,
                       result,
-                      metadata
+                      metadata,
+                      null,
+                      dynalabUploadedTarget,
+                      modelInputs,
+                      dynalabModelEndpointName
                     )
                     .then(
                       (result) => {

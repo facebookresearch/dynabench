@@ -59,6 +59,7 @@ if __name__ == "__main__":
                     # process deployment result
                     msg["name"] = model.name
                     msg["exception"] = response["ex_msg"]
+                    # TODO: BE, make this code block more elegant
                     if response["status"] == "delayed":
                         redeployment_queue.append(msg)
                         pickle.dump(
@@ -75,10 +76,19 @@ if __name__ == "__main__":
                         )
                         subject = f"Model {model.name} deployment failed"
                         template = "model_deployment_fail"
-                    elif response["status"] == "deployed":
-                        m.update(
-                            model_id, deployment_status=DeploymentStatusEnum.deployed
-                        )
+                    elif (
+                        response["status"] == "deployed"
+                        or response["status"] == "created"
+                    ):
+                        if response["status"] == "deployed":
+                            m.update(
+                                model_id,
+                                deployment_status=DeploymentStatusEnum.deployed,
+                            )
+                        else:
+                            m.update(
+                                model_id, deployment_status=DeploymentStatusEnum.created
+                            )
                         subject = f"Model {model.name} deployment successful"
                         template = "model_deployment_successful"
                         eval_queue.send_message(

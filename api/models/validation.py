@@ -79,20 +79,3 @@ class ValidationModel(BaseModel):
             return self.dbs.query(Validation).filter(Validation.eid == eid)
         except db.orm.exc.NoResultFound:
             return False
-
-    def getByTidAndRid(self, tid, rid):
-        from models.example import Example
-        from models.context import Context
-        from models.round import Round
-
-        try:
-            return (
-                self.dbs.query(Validation)
-                .join(Example, Validation.eid == Example.id)
-                .join(Context, Example.cid == Context.id)
-                .join(Round, Context.r_realid == Round.id)
-                .filter(Round.tid == tid)
-                .filter(Round.rid == rid)
-            )
-        except db.orm.exc.NoResultFound:
-            return False

@@ -3,7 +3,6 @@
 import sqlalchemy as db
 
 from .base import Base, BaseModel
-from .validation import LabelEnum, Validation, ValidationModel
 
 
 class Round(Base):
@@ -97,15 +96,3 @@ class RoundModel(BaseModel):
         if r:
             r.task.last_updated = db.sql.func.now()
             self.dbs.commit()
-
-    def getValidationStats(self, tid, rid):
-        vm = ValidationModel()
-        validations = vm.getByTidAndRid(tid, rid)
-        total_validations = validations.count()
-        correct_validations = validations.filter(
-            Validation.label == LabelEnum.correct
-        ).count()
-        return {
-            "total_validations": total_validations,
-            "correct_validations": correct_validations,
-        }

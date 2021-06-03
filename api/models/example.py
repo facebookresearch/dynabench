@@ -7,8 +7,13 @@ import numpy as np
 import sqlalchemy as db
 from sqlalchemy import JSON, case
 
+import dynalab.tasks.hs
+import dynalab.tasks.nli
+import dynalab.tasks.qa
+import dynalab.tasks.sentiment
 from common.logging import logger
 from models.context import Context
+from models.model import Model
 from models.round import Round
 from models.validation import LabelEnum, ModeEnum, Validation
 
@@ -72,7 +77,21 @@ class ExampleModel(BaseModel):
     def __init__(self):
         super().__init__(Example)
 
-    def create(self, tid, rid, uid, cid, hypothesis, tgt, response, metadata, tag=None):
+    def create(
+        self,
+        tid,
+        rid,
+        uid,
+        cid,
+        hypothesis,
+        tgt,
+        response,
+        metadata,
+        tag=None,
+        dynalab_model=False,
+        dynalab_model_input_data=None,
+        dynalab_model_endpoint_name=None,
+    ):
         if uid == "turk" and "annotator_id" not in metadata:
             logger.error("Annotator id not specified but received Turk example")
             return False
@@ -117,10 +136,65 @@ class ExampleModel(BaseModel):
         if uid == "turk" and "model" in metadata and metadata["model"] == "no-model":
             pass  # ignore signature when we don't have a model in the loop with turkers
         else:
-            if "signed" not in response or not self.verify_signature(
-                response["signed"], c, hypothesis, pred_str
-            ):
-                return False
+            if dynalab_model:
+                if "signed" in response:
+                    if c.round.task.shortname == "Hate Speech":
+                        dynalab_task = dynalab.tasks.hs
+                    elif c.round.task.shortname == "NLI":
+                        dynalab_task = dynalab.tasks.nli
+                    elif c.round.task.shortname == "Sentiment":
+                        dynalab_task = dynalab.tasks.sentiment
+                    elif c.round.task.shortname == "QA":
+                        dynalab_task = dynalab.tasks.qa
+                    else:
+                        logger.error(
+                            "This is a Dynalab model but a Dynalab signature "
+                            + "verification method has not been included for this task."
+                        )
+                        return False
+
+                    model_secret = (
+                        self.dbs.query(Model)
+                        .filter(Model.endpoint_name == dynalab_model_endpoint_name)
+                        .one()
+                        .secret
+                    )
+                    if response[
+                        "signed"
+                    ] != dynalab_task.TaskIO().generate_response_signature(
+                        response, dynalab_model_input_data, model_secret
+                    ):
+                        logger.error(
+                            "Signature does not match (received %s, expected %s)"
+                            % (
+                                response["signed"],
+                                dynalab_task.TaskIO().generate_response_signature(
+                                    response, dynalab_model_input_data, model_secret
+                                ),
+                            )
+                        )
+                        return False
+                    else:
+                        logger.info(
+                            "Signature matches(received %s, expected %s)"
+                            % (
+                                response["signed"],
+                                dynalab_task.TaskIO().generate_response_signature(
+                                    response, dynalab_model_input_data, model_secret
+                                ),
+                            )
+                        )
+                else:
+                    return False
+
+            else:
+                # TODO: remove this old verify method when all target models are
+                # reuploaded via dynalab. We can also clean up the arguments to
+                # this create function.
+                if "signed" not in response or not self.verify_signature(
+                    response["signed"], c, hypothesis, pred_str
+                ):
+                    return False
 
         try:
             e = Example(
@@ -239,6 +313,76 @@ class ExampleModel(BaseModel):
             return False
 
     def getRandom(
+        self,
+        rid,
+        validate_non_fooling,
+        num_matching_validations,
+        n=1,
+        my_uid=None,
+        tags=None,
+    ):
+        cnt_correct = db.sql.func.sum(
+            case([(Validation.label == LabelEnum.correct, 1)], else_=0)
+        ).label("cnt_correct")
+        cnt_flagged = db.sql.func.sum(
+            case([(Validation.label == LabelEnum.flagged, 1)], else_=0)
+        ).label("cnt_flagged")
+        cnt_incorrect = db.sql.func.sum(
+            case([(Validation.label == LabelEnum.incorrect, 1)], else_=0)
+        ).label("cnt_incorrect")
+        cnt_owner_validated = db.sql.func.sum(
+            case([(Validation.mode == ModeEnum.owner, 1)], else_=0)
+        ).label("cnt_owner_validated")
+        result = (
+            self.dbs.query(Example)
+            .join(Context, Example.cid == Context.id)
+            .filter(Context.r_realid == rid)
+            .filter(Example.retracted == False)  # noqa
+        )
+
+        if tags:
+            result = result.filter(Example.tag.in_(tags))  # noqa
+
+        if not validate_non_fooling:
+            result = result.filter(Example.model_wrong == True)  # noqa
+
+        result_partially_validated = (
+            result.join(Validation, Example.id == Validation.eid)
+            .group_by(Validation.eid)
+            .having(
+                db.and_(
+                    cnt_correct < num_matching_validations,
+                    cnt_flagged < num_matching_validations,
+                    cnt_incorrect < num_matching_validations,
+                    cnt_owner_validated == 0,
+                )
+            )
+        )
+        if my_uid is not None:
+            cnt_uid = db.sql.func.sum(
+                case([(Validation.uid == my_uid, 1)], else_=0)
+            ).label("cnt_uid")
+            result_partially_validated = result_partially_validated.group_by(
+                Validation.eid
+            ).having(cnt_uid == 0)
+        result_not_validated = result.filter(
+            db.not_(db.exists().where(Validation.eid == Example.id))
+        )
+        result = result_partially_validated.union(result_not_validated)
+        if my_uid is not None:
+            result = result.filter(Example.uid != my_uid)
+        result = (
+            result.order_by(
+                db.not_(Example.model_wrong),
+                Example.total_verified.asc(),
+                db.sql.func.rand(),
+            )
+            .limit(n)
+            .all()
+        )
+        return result
+
+    def getRandomVQA(
         self,
         rid,
         validate_non_fooling,
