@@ -16,6 +16,7 @@ import RegisterPage from "./RegisterPage";
 import ProfilePage from "./ProfilePage";
 import AboutPage from "./AboutPage";
 import TaskPage from "./TaskPage";
+import FloresTaskPage from "./FloresTaskPage";
 import ContactPage from "./ContactPage";
 import TermsPage from "./TermsPage";
 import DataPolicyPage from "./DataPolicyPage";
@@ -107,6 +108,7 @@ class App extends React.Component {
   componentDidMount() {
     this.refreshData();
   }
+
   render() {
     //href={`/tasks/${task.id}#overall`}
     const NavItems = this.state.tasks.map((task, index) => (
@@ -162,6 +164,15 @@ class App extends React.Component {
                   </Nav.Item>
                   <NavDropdown title="Tasks" id="basic-nav-dropdown">
                     {NavItems}
+                    <div className="dropdown-divider my-0"></div>
+                    <NavDropdown.Item
+                      key={"FLoRes"}
+                      as={Link}
+                      to={"/flores"}
+                      className="py-3"
+                    >
+                      FLoRes
+                    </NavDropdown.Item>
                   </NavDropdown>
                 </Nav>
                 <Nav className="justify-content-end">
@@ -252,6 +263,7 @@ class App extends React.Component {
                   component={TaskPage}
                 />
                 <Route path="/tasks/:taskId" component={TaskPage} />
+                <Route path="/flores" component={FloresTaskPage} />
                 <Route path="/login" component={LoginPage} />
                 <Route
                   path="/generate_api_token"

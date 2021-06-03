@@ -11,6 +11,8 @@
     "css-loader": "^3.6.0",
     "downloadjs": "^1.4.7",
     "formik": "^2.1.4",
+    "highcharts": "^9.1.0",
+    "highcharts-react-official": "^3.0.0",
     "jwt-decode": "^2.2.0",
     "mephisto-task": "^1.0.10",
     "moment": "^2.24.0",

@@ -15,6 +15,7 @@ import {
   Table,
   InputGroup,
   Modal,
+  Spinner,
 } from "react-bootstrap";
 import Moment from "react-moment";
 import Markdown from "react-markdown";
@@ -24,16 +25,18 @@ import UserContext from "./UserContext";
 import "./ModelPage.css";
 import { OverlayProvider, BadgeOverlay } from "./Overlay";
 import { useState } from "react";
+import FloresGrid from "../components/FloresComponents/FloresGrid";
+import qs from "qs";
 
 const ChevronExpandButton = ({ expanded }) => {
   return (
-    <a type="button" className="position-absolute start-100">
+    <span type="button" className="position-absolute start-100">
       {expanded ? (
         <i className="fas fa-chevron-down"></i>
       ) : (
         <i className="fas fa-chevron-right"></i>
       )}
-    </a>
+    </span>
   );
 };
 
@@ -96,9 +99,9 @@ const ScoreRow = ({ score }) => {
           </td>
         </tr>
         {expanded &&
-          perf_by_tag.map((perf_and_tag) => {
+          perf_by_tag.map((perf_and_tag, index) => {
             return (
-              <tr style={{ border: `none` }}>
+              <tr key={index} style={{ border: `none` }}>
                 <td className="text-right pr-4  text-nowrap">
                   <div className="d-flex justify-content-end align-items-center">
                     <span className="d-flex align-items-center">
@@ -131,10 +134,12 @@ class ModelPage extends React.Component {
         name: "",
         username: "",
       },
+      isLoading: false,
     };
   }
 
   componentDidMount() {
+    this.setState({ isLoading: true });
     const user = this.context.api.getCredentials();
     this.setState({ ctxUserId: user.id });
     this.fetchModel();
@@ -143,10 +148,11 @@ class ModelPage extends React.Component {
   fetchModel = () => {
     this.context.api.getModel(this.state.modelId).then(
       (result) => {
-        this.setState({ model: result });
+        this.setState({ model: result, isLoading: false });
       },
       (error) => {
         console.log(error);
+        this.setState({ isLoading: false });
         if (error.status_code === 404 || error.status_code === 405) {
           this.props.history.push("/");
         }
@@ -207,9 +213,13 @@ class ModelPage extends React.Component {
   };
 
   render() {
+    var query = qs.parse(this.props.location.search, {
+      ignoreQueryPrefix: true,
+    });
+    const { model } = this.state;
+    const isFlores = query.isFlores === "true" && model.tid;
     const isModelOwner =
       parseInt(this.state.model.user_id) === parseInt(this.state.ctxUserId);
-    const { model } = this.state;
     const { leaderboard_scores } = this.state.model;
     const { non_leaderboard_scores } = this.state.model;
     let orderedLeaderboardScores = (leaderboard_scores || []).sort(
@@ -378,21 +388,25 @@ class ModelPage extends React.Component {
                       </tbody>
                     </Table>
                     <Table>
-                      <tr>
-                        <td colSpan={2}>
-                          <h5>Leaderboard Datasets</h5>
-                        </td>
-                      </tr>
+                      <tbody>
+                        <tr>
+                          <td colSpan={2}>
+                            <h5>Leaderboard Datasets</h5>
+                          </td>
+                        </tr>
+                      </tbody>
                     </Table>
-                    {orderedLeaderboardScores.map((score) => (
-                      <ScoreRow score={score} />
+                    {orderedLeaderboardScores.map((score, index) => (
+                      <ScoreRow key={index} score={score} />
                     ))}
                     <Table>
-                      <tr>
-                        <td colSpan={2}>
-                          <h5>Non-Leaderboard Datasets</h5>
-                        </td>
-                      </tr>
+                      <tbody>
+                        <tr>
+                          <td colSpan={2}>
+                            <h5>Non-Leaderboard Datasets</h5>
+                          </td>
+                        </tr>
+                      </tbody>
                     </Table>
                     {orderedNonLeaderboardScores.map((score) => (
                       <ScoreRow score={score} />
@@ -401,7 +415,12 @@ class ModelPage extends React.Component {
                 ) : (
                   <Container>
                     <Row>
-                      <Col className="my-4 text-center">No Data Found</Col>
+                      <Col className="my-4 text-center">Loading</Col>
+                    </Row>
+                    <Row>
+                      <Col className="mb-4 text-center">
+                        {this.state.isLoading && <Spinner animation="border" />}
+                      </Col>
                     </Row>
                   </Container>
                 )}
@@ -409,6 +428,14 @@ class ModelPage extends React.Component {
             </Card>
           </Col>
         </Container>
+        {isFlores && (
+          <>
+            <Container>
+              <hr />
+            </Container>
+            <FloresGrid model={model} />
+          </>
+        )}
       </OverlayProvider>
     );
   }
