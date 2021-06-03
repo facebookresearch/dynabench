@@ -130,7 +130,7 @@ const FloresTaskPage = (props) => {
           <Col lg={10} className="px-4 px-lg-5">
             <img
               src="/flores_logo.png"
-              style={{ height: "60px", marginTop: "50px" }}
+              style={{ height: "60px", marginTop: "48px" }}
             />
             <div style={{ float: "right", marginTop: 30 }}>
               <ButtonGroup>
