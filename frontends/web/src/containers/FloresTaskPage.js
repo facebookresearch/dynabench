@@ -117,7 +117,7 @@ const FloresTaskPage = (props) => {
           <Col lg={2} className="p-0 border">
             <Annotation
               placement="bottom-start"
-              tooltip="The FLoRes task has multiple tracks. You can look at other tracks here"
+              tooltip="The Flores task has multiple tracks. You can look at other tracks here"
             >
               <TaskNav
                 {...props}
@@ -184,7 +184,7 @@ const FloresTaskPage = (props) => {
 
             <Row>
               <Annotation
-                placement="left"
+                placement="top-start"
                 tooltip="This shows how models have performed on a specific track"
               >
                 <FloresModelLeaderBoard

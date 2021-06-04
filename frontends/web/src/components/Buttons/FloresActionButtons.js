@@ -25,7 +25,7 @@ const FloresActionButtons = () => {
     <Nav className="my-4">
       <Nav.Item className="task-action-btn">
         <Annotation
-          placement="right"
+          placement="bottom-start"
           tooltip="Click here to submit your model through Dynalab."
         >
           <OverlayTrigger
