@@ -198,12 +198,8 @@ const FloresGrid = ({ model }) => {
         if (self.point.x === self.point.y) return "NA";
 
         return (
-          `${
-            source !== undefined ? source.LANGUAGE : null
-          } (${getPointCategoryName(this.point, "y")}) --> ` +
-          `${
-            target !== undefined ? target.LANGUAGE : null
-          } (${getPointCategoryName(this.point, "x")})</br>` +
+          `${getPointCategoryName(this.point, "y")} --> ` +
+          `${getPointCategoryName(this.point, "x")}</br>` +
           "<b>BLEU Score: </b>" +
           valuePoint
         );

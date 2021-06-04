@@ -264,7 +264,7 @@ const langs = [
     LANGUAGE: "Northern Sotho",
   },
   {
-    ISO: "nor",
+    ISO: "nob",
     LANGUAGE: "Norwegian",
   },
   {
