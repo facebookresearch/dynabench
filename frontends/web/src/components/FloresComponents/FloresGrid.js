@@ -199,10 +199,10 @@ const FloresGrid = ({ model }) => {
 
         return (
           `${
-            source !== undefined ? source.LANGUAGE : null
+            source.LANGUAGE ?? getPointCategoryName(this.point, "y")
           } (${getPointCategoryName(this.point, "y")}) --> ` +
           `${
-            target !== undefined ? target.LANGUAGE : null
+            target.LANGUAGE ?? getPointCategoryName(this.point, "x")
           } (${getPointCategoryName(this.point, "x")})</br>` +
           "<b>BLEU Score: </b>" +
           valuePoint
