@@ -185,25 +185,19 @@ const FloresGrid = ({ model }) => {
       followTouchMove: false,
       formatter() {
         let self = this;
+        const langSourceCode = getPointCategoryName(this.point, "y");
+        const langTargetCode = getPointCategoryName(this.point, "x");
         const source =
-          FloresLanguages.find(
-            (i) => i.ISO === getPointCategoryName(this.point, "y")
-          ) || {};
+          FloresLanguages.find((i) => i.ISO === langSourceCode) || {};
         const target =
-          FloresLanguages.find(
-            (i) => i.ISO === getPointCategoryName(this.point, "x")
-          ) || {};
+          FloresLanguages.find((i) => i.ISO === langTargetCode) || {};
         const valuePoint = self.point.value;
 
         if (self.point.x === self.point.y) return "NA";
 
         return (
-          `${
-            source.LANGUAGE ?? getPointCategoryName(this.point, "y")
-          } (${getPointCategoryName(this.point, "y")}) --> ` +
-          `${
-            target.LANGUAGE ?? getPointCategoryName(this.point, "x")
-          } (${getPointCategoryName(this.point, "x")})</br>` +
+          `${source.LANGUAGE ?? langSourceCode} (${langSourceCode}) --> ` +
+          `${target.LANGUAGE ?? langTargetCode} (${langTargetCode})</br>` +
           "<b>BLEU Score: </b>" +
           valuePoint
         );

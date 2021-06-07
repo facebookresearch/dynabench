@@ -24,7 +24,7 @@ const langs = [
     LANGUAGE: "Asturian",
   },
   {
-    ISO: "aze",
+    ISO: "azj",
     LANGUAGE: "Azerbaijani",
   },
   {
@@ -256,7 +256,7 @@ const langs = [
     LANGUAGE: "Mongolian",
   },
   {
-    ISO: "nep",
+    ISO: "npi",
     LANGUAGE: "Nepali",
   },
   {

@@ -351,7 +351,7 @@ class ModelPage extends React.Component {
                         </tr>
                       </tbody>
                     </Table>
-                    <Table hover className="mb-0">
+                    <Table hover responsive className="mb-0">
                       <thead />
                       <tbody>
                         <tr style={{ border: `none` }}>
