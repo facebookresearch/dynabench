@@ -571,7 +571,8 @@ class MaxQATaskMain extends React.Component {
           )}
           <Row>
             <h4 className="mt-3">
-              Can you ask Questions that the AI can't answer?
+              Can you ask Questions that fool the AI into giving the wrong
+              answer?
             </h4>
             <small className="mb-3">
               <b>Note:</b> you will earn an <b>additional $0.50 BONUS</b> for

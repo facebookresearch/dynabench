@@ -8,16 +8,20 @@ import random
 import re
 import string
 import sys
+import time
 
 from aiohttp import web
 from fairseq.models.transformer import TransformerModel
 from unidecode import unidecode
 
-from common import generate_response_signature, get_cors_headers, launch_modelserver
-from settings import my_round_id, my_secret, my_task_id
 
-
-sys.path.append("..")
+sys.path.append("..")  # noqa  # isort:skip
+from common import (  # noqa  # isort:skip
+    generate_response_signature,
+    get_cors_headers,
+    launch_modelserver,
+)
+from settings import my_round_id, my_secret, my_task_id  # noqa  # isort:skip
 
 
 # Disable for deployment
@@ -95,7 +99,8 @@ class Cache:
         answer_key = self.normalize(answer)
         questions = self.cache.get(context_key, {}).get(answer_key, [])
         logging.info(
-            f"Getting from cache with answer ({answer}), min_q_index ({min_q_index}) of type {type(min_q_index)}"
+            f"Getting from cache with answer ({answer}), min_q_index ({min_q_index}) \
+            of type {type(min_q_index)}"
         )
         logging.info(f"Available questions are: {questions}")
         for i, q in enumerate(questions):
@@ -201,6 +206,8 @@ async def handle_submit_post(request):
             response["question"] = cache_result["question"]
             response["question_cache_id"] = cache_result["q_index"]
             response["question_type"] = "cache"
+            # Introduce a random delay
+            time.sleep(0.2 + random.random())
 
         else:
             # Prepare the example for querying the model

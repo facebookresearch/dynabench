@@ -52,7 +52,7 @@ class ContextInfo extends React.Component {
         <p>
           <small>
             <strong>Your goal:</strong> enter a question and select an answer in
-            the passage that the AI can't answer.
+            the passage that the AI answers incorrectly.
           </small>
         </p>
       </>
@@ -101,17 +101,18 @@ class CreateInterface extends React.Component {
     };
     this.getNewContext = this.getNewContext.bind(this);
     this.handleTaskSubmit = this.handleTaskSubmit.bind(this);
-    this.handleResponse = this.handleResponse.bind(this);
+    this.handleModelResponse = this.handleModelResponse.bind(this);
     this.handleGeneratorResponse = this.handleGeneratorResponse.bind(this);
     this.handleVerifyResponse = this.handleVerifyResponse.bind(this);
     this.handleResponseChange = this.handleResponseChange.bind(this);
+    this.storeExample = this.storeExample.bind(this);
     this.retractExample = this.retractExample.bind(this);
     this.updateAnswer = this.updateAnswer.bind(this);
     // IdleTimer
     this.idleTimer = null;
     // this.handleOnAction = this.handleOnAction.bind(this)
     // this.handleOnActive = this.handleOnActive.bind(this)
-    // this.handleOnIdle = this.handleOnIdle.bind(this)
+    this.handleOnIdle = this.handleOnIdle.bind(this);
   }
   getNewContext() {
     this.setState(
@@ -171,7 +172,7 @@ class CreateInterface extends React.Component {
   handleTaskSubmit() {
     this.props.onSubmit(this.state);
   }
-  handleResponse(e) {
+  handleModelResponse(e) {
     e.preventDefault();
 
     // MAXEDIT: to remove
@@ -238,6 +239,8 @@ class CreateInterface extends React.Component {
           answer: answer_text,
           insight: false,
         };
+        console.log("model_inputs: ");
+        console.log(modelInputs);
         // this.model_url was this.state.task.round.url
         this.api
           .getModelResponse(this.model_url, modelInputs)
@@ -256,8 +259,11 @@ class CreateInterface extends React.Component {
               result.prob = [result.prob, 1 - result.prob];
               this.state.task.targets = ["confidence", "uncertainty"];
             }
+            console.log("Got result from model:");
+            console.log(result);
             this.setState(
               {
+                progressSubmitting: false,
                 content: [
                   ...this.state.content,
                   {
@@ -269,79 +275,100 @@ class CreateInterface extends React.Component {
                     fooled: modelFooled,
                     text: this.state.hypothesis,
                     retracted: false,
+                    validated: null,
                     response: result,
                   },
                 ],
               },
               function () {
-                // var last_answer = this.state.answer[this.state.answer.length - 1];
-                // var answer_text = last_answer.tokens.join("");
-                const metadata = {
-                  annotator_id: this.props.providerWorkerId,
-                  agentId: this.props.agentId,
-                  mephisto_id: this.props.mephistoWorkerId,
-                  assignmentId: this.props.assignmentId,
-                  current_timestamp: new Date().valueOf(),
-                  timer_elapsed_time_ms: this.idleTimer.getElapsedTime(),
-                  timer_active_time_ms: this.idleTimer.getTotalActiveTime(),
-                  timer_idle_time_ms: this.idleTimer.getTotalIdleTime(),
-                  model: "no-model",
-                  model_name: this.model_name,
-                  model_url: this.model_url,
-                  current_tries: this.state.tries,
-                  exampleHistory: JSON.stringify(this.state.exampleHistory),
-                  modelInputs: modelInputs,
-                  fullresponse:
-                    this.state.task.type == "extract"
-                      ? JSON.stringify(this.state.answer)
-                      : this.state.target,
-                };
-                console.log("metadata:");
-                console.log(metadata);
-                this.api
-                  .storeExample(
-                    this.state.task.id,
-                    this.state.task.cur_round,
-                    "turk",
-                    this.state.context.id,
-                    this.state.hypothesis,
-                    this.state.task.type == "extract"
-                      ? answer_text
-                      : this.state.target,
-                    result,
-                    metadata
-                  )
-                  .then((result) => {
-                    var key = this.state.content.length - 1;
-                    this.state.tries += 1;
-                    this.setState(
-                      {
-                        hypothesis: "",
-                        progressSubmitting: false,
-                        submitDisabled: false,
-                        generateDisabled: false,
-                        refreshDisabled: false,
-                        mapKeyToExampleId: {
-                          ...this.state.mapKeyToExampleId,
-                          [key]: result.id,
-                        },
-                        answer: [],
-                        exampleHistory: [],
-                      },
-                      function () {
-                        if (this.state.tries == this.state.total_tries) {
-                          console.log("Success! You can submit the HIT");
-                          this.setState({
-                            taskCompleted: true,
-                            generateDisabled: true,
-                          });
-                        }
-                      }
-                    );
-                  })
-                  .catch((error) => {
-                    console.log(error);
+                console.log("State set");
+                if (!modelFooled) {
+                  console.log("Storing example");
+                  this.storeExample();
+                } else {
+                  this.setState({
+                    pendingExampleValidation: true,
                   });
+                }
+              }
+            );
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      }
+    );
+  }
+  storeExample() {
+    this.setState(
+      {
+        progressSubmitting: true,
+        submitDisabled: true,
+        generateDisabled: true,
+        refreshDisabled: true,
+        hypothesisNotDetected: false,
+      },
+      function () {
+        let last_example = this.state.content[this.state.content.length - 1];
+        const metadata = {
+          annotator_id: this.props.providerWorkerId,
+          agentId: this.props.agentId,
+          mephisto_id: this.props.mephistoWorkerId,
+          assignmentId: this.props.assignmentId,
+          current_timestamp: new Date().valueOf(),
+          timer_elapsed_time_ms: this.idleTimer.getElapsedTime(),
+          timer_active_time_ms: this.idleTimer.getTotalActiveTime(),
+          timer_idle_time_ms: this.idleTimer.getTotalIdleTime(),
+          model: "no-model",
+          model_name: this.model_name,
+          model_url: this.model_url,
+          current_tries: this.state.tries,
+          exampleHistory: JSON.stringify(this.state.exampleHistory),
+          modelInputs: last_example.modelInputs,
+          fullresponse:
+            this.state.task.type == "extract"
+              ? JSON.stringify(last_example.modelInputs.answer)
+              : this.state.target,
+          validated_by_annotator: last_example.validated,
+        };
+        console.log("metadata:");
+        console.log(metadata);
+        this.api
+          .storeExample(
+            this.state.task.id,
+            this.state.task.cur_round,
+            "turk",
+            this.state.context.id,
+            this.state.hypothesis,
+            this.state.target,
+            last_example.response,
+            metadata
+          )
+          .then((result) => {
+            var key = this.state.content.length - 1;
+            this.state.tries += 1;
+            this.setState(
+              {
+                hypothesis: "",
+                progressSubmitting: false,
+                submitDisabled: false,
+                generateDisabled: false,
+                refreshDisabled: false,
+                mapKeyToExampleId: {
+                  ...this.state.mapKeyToExampleId,
+                  [key]: result.id,
+                },
+                answer: [],
+                exampleHistory: [],
+              },
+              function () {
+                if (this.state.tries == this.state.total_tries) {
+                  console.log("Success! You can submit the HIT");
+                  this.setState({
+                    taskCompleted: true,
+                    generateDisabled: true,
+                  });
+                }
               }
             );
           })
@@ -407,9 +434,9 @@ class CreateInterface extends React.Component {
           answer: answer_text,
           hypothesis: question_cache_id,
         };
+
         console.log("model inputs:");
         console.log(modelInputs);
-        console.log("example history:");
 
         let generator_url =
           "http://0.0.0.0:8097/cce63f4d8238fc8061a2e3a268afe1c14c0e2135580bc1680aec62dc20f68e81";
@@ -437,6 +464,7 @@ class CreateInterface extends React.Component {
               ],
               numQuestionsGenerated: this.state.numQuestionsGenerated + 1,
             });
+            console.log("example history:");
             console.log(this.state.exampleHistory);
           })
           .catch((error) => {
@@ -445,31 +473,30 @@ class CreateInterface extends React.Component {
       }
     );
   }
-  handleVerifyResponse(action) {
+
+  handleVerifyResponse(item_index, action) {
     var action_label = null;
     switch (action) {
-      case "yes":
-        action_label = "yes";
+      case "valid":
+        action_label = "valid";
         break;
-      case "no":
-        action_label = "no";
+      case "invalid":
+        action_label = "invalid";
         break;
     }
-    if (action_label !== null) {
-      this.setState({ label: action_label });
-      var metadata = { annotator_id: this.props.providerWorkerId };
-      this.api
-        .validateExample(this.state.example.id, action, "user", metadata)
-        .then(
-          (result) => {
-            this.props.onSubmit(this.state);
-          },
-          (error) => {
-            console.log(error);
-          }
-        );
-    }
+
+    console.log("Verifying Response");
+    console.log(action_label);
+
+    const newContent = this.state.content.slice();
+    newContent[item_index].validated = action_label;
+    this.setState({
+      content: newContent,
+      pendingExampleValidation: false,
+    });
+    this.storeExample();
   }
+
   handleResponseChange(e) {
     this.setState({
       hypothesis: e.target.value,
@@ -493,10 +520,13 @@ class CreateInterface extends React.Component {
   //   console.log('user is active', event)
   //   console.log('time remaining', this.idleTimer.getRemainingTime())
   // }
-  // handleOnIdle (event) {
-  //   console.log('user is idle', event)
-  //   console.log('last active', this.idleTimer.getLastActiveTime())
-  // }
+  handleOnIdle(event) {
+    window.alert(
+      'The system has not detected any activity in the past 60 seconds. Please click "OK" if you are still here.'
+    );
+    // console.log('user is idle', event)
+    // console.log('last active', this.idleTimer.getLastActiveTime())
+  }
   componentDidMount() {
     this.api
       .getTask(this.state.taskId)
@@ -585,47 +615,96 @@ class CreateInterface extends React.Component {
                 ) : item.fooled ? (
                   <>
                     <span>
-                      <strong>Well done</strong>, you fooled the AI! The AI
-                      predicted <strong>{item.modelPredStr}</strong> instead.{" "}
+                      {/* <strong>Congratulations</strong>, you fooled the AI!  */}
+                      The AI predicted <strong>{item.modelPredStr}</strong>{" "}
+                      instead.
                     </span>
                     <br />
                     <hr />
                     <div>
-                      <OverlayTrigger
-                        placement="top"
-                        delay={{ show: 250, hide: 400 }}
-                        overlay={
-                          <Tooltip id={`tooltip-confirm`}>
-                            This helps us speed up validation and pay bonuses
-                            out quicker!
-                          </Tooltip>
-                        }
-                      >
-                        <FaInfoCircle />
-                      </OverlayTrigger>
-                      &nbsp; Can you please confirm that "
-                      <strong>{item.modelInputs.answer}</strong>" is the correct
-                      answer to the question and that the model's prediction "
-                      <strong>{item.modelPredStr}</strong>" is wrong? &nbsp;
-                      <InputGroup className="mt-1">
-                        <Button
-                          className="btn btn-success mr-1"
-                          style={{ padding: "0.2rem 0.5rem" }}
-                          onClick={this.handleVerifyResponse("yes")}
-                          disabled={this.state.verifyDisabled}
-                        >
-                          <FaThumbsUp style={{ marginTop: "-0.25em" }} />
-                        </Button>
+                      {item.validated === null ? (
+                        <>
+                          <OverlayTrigger
+                            placement="top"
+                            delay={{ show: 250, hide: 400 }}
+                            overlay={
+                              <Tooltip id={`tooltip-confirm`}>
+                                This helps us speed up validation and pay
+                                bonuses out quicker!
+                              </Tooltip>
+                            }
+                          >
+                            <FaInfoCircle />
+                          </OverlayTrigger>
+                          &nbsp; Can you please confirm that "
+                          <strong>{item.modelInputs.answer}</strong>" is the
+                          correct answer to the question and that the model's
+                          prediction "<strong>{item.modelPredStr}</strong>" is
+                          wrong? &nbsp;
+                          <InputGroup className="mt-1">
+                            <OverlayTrigger
+                              placement="bottom"
+                              delay={{ show: 50, hide: 150 }}
+                              overlay={
+                                <Tooltip id={`tooltip-valid`}>
+                                  My answer is correct and the AI is wrong!
+                                </Tooltip>
+                              }
+                            >
+                              <Button
+                                className="btn btn-success mr-1"
+                                style={{ padding: "0.2rem 0.5rem" }}
+                                onClick={() =>
+                                  this.handleVerifyResponse(item.index, "valid")
+                                }
+                                disabled={this.state.verifyDisabled}
+                              >
+                                <FaThumbsUp style={{ marginTop: "-0.25em" }} />{" "}
+                                Valid
+                              </Button>
+                            </OverlayTrigger>
 
-                        <Button
-                          className="btn btn-danger mr-1"
-                          style={{ padding: "0.2rem 0.5rem" }}
-                          onClick={this.handleVerifyResponse("no")}
-                          disabled={this.state.verifyDisabled}
-                        >
-                          <FaThumbsDown style={{ marginTop: "-0.25em" }} />
-                        </Button>
-                      </InputGroup>
+                            <OverlayTrigger
+                              placement="bottom"
+                              delay={{ show: 50, hide: 150 }}
+                              overlay={
+                                <Tooltip id={`tooltip-invalid`}>
+                                  The AI also managed to predict a correct
+                                  answer (or my original answer was not valid).
+                                </Tooltip>
+                              }
+                            >
+                              <Button
+                                className="btn btn-danger mr-1"
+                                style={{ padding: "0.2rem 0.5rem" }}
+                                onClick={() =>
+                                  this.handleVerifyResponse(
+                                    item.index,
+                                    "invalid"
+                                  )
+                                }
+                                disabled={this.state.verifyDisabled}
+                              >
+                                <FaThumbsDown
+                                  style={{ marginTop: "-0.25em" }}
+                                />{" "}
+                                Invalid
+                              </Button>
+                            </OverlayTrigger>
+                          </InputGroup>
+                        </>
+                      ) : (
+                        <>
+                          <span>
+                            Thank you for validating your example as:{" "}
+                            <strong>{item.validated}</strong>. You may now
+                            {this.state.taskCompleted
+                              ? " submit the HIT!"
+                              : " ask another question."}
+                          </span>
+                          <br />
+                        </>
+                      )}
                     </div>
                   </>
                 ) : (
@@ -690,6 +769,16 @@ class CreateInterface extends React.Component {
         </div>
       );
     }
+    if (this.state.pendingExampleValidation === true) {
+      var errorMessage = (
+        <div>
+          <small style={{ color: "red" }}>
+            * Please validate the example above by clicking the green button for
+            a valid example or the red button for an invalid one.
+          </small>
+        </div>
+      );
+    }
     return (
       <Container>
         <IdleTimer
@@ -705,13 +794,14 @@ class CreateInterface extends React.Component {
         <Row>
           <CardGroup style={{ marginTop: 4, width: "100%" }}>
             <Card border="dark">
-              <Card.Body style={{ height: 400, overflowY: "scroll" }}>
+              <Card.Body style={{ height: 540, overflowY: "scroll" }}>
                 {content}
               </Card.Body>
             </Card>
           </CardGroup>
           <InputGroup className="mt-3">
             <FormControl
+              autoFocus
               placeholder={
                 this.state.task.type == "extract"
                   ? "Ask a question.."
@@ -753,7 +843,7 @@ class CreateInterface extends React.Component {
             {this.state.taskCompleted ? null : (
               <Button
                 className="btn btn-primary mt-2 mr-1"
-                onClick={this.handleResponse}
+                onClick={this.handleModelResponse}
                 disabled={this.state.submitDisabled}
               >
                 Submit Question
