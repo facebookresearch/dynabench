@@ -197,7 +197,7 @@ const FloresGrid = ({ model }) => {
 
         return (
           `${source.LANGUAGE ?? langSourceCode} (${langSourceCode}) --> ` +
-          `${target.LANGUAGE ?? langTargetCode} (${langTargetCode})</br>` +
+          `${target.LANGUAGE ?? langTargetCode} (${langTargetCode}) </br>` +
           "<b>BLEU Score: </b>" +
           valuePoint
         );
@@ -211,7 +211,7 @@ const FloresGrid = ({ model }) => {
         turboThreshold: 100000,
         borderWidth: 0,
         nullColor: "#FFF",
-        data: data.map((a) => [a.sourceIndex, a.targetIndex, a.perf]),
+        data: data.map((a) => [a.targetIndex, a.sourceIndex, a.perf]),
         dataLabels: {
           enabled: data.length < 50 ? true : false,
           color: "#000",
