@@ -66,12 +66,20 @@ class MetricsComputer:
             # download raw predictions and parse
             fd, raw_pred_file = tempfile.mkstemp(suffix="raw", prefix=job.job_name)
             self.s3_client.download_file(raw_s3_bucket, raw_s3_path, raw_pred_file)
+            json_lines = True
             with open(raw_pred_file) as f:
                 tmp = ""
                 predictions = []
-                line = f.readline()
                 lb = 0
-                while line:
+                for line in f:
+                    if not (line.startswith("{") and line.endswith("}\n")):
+                        json_lines = False
+                    if json_lines:
+                        # One json per line
+                        predictions.append(json.loads(line))
+                        continue
+                    # This code is overly complicated because we are letting torchserve
+                    # serialize the json object and they do pretty printing by default.
                     line = line.strip()
                     if line.startswith("{") or line.endswith("{"):
                         lb += 1
@@ -83,7 +91,6 @@ class MetricsComputer:
                         tmp = ""
                     elif line:
                         tmp += line
-                    line = f.readline()
             os.close(fd)
             os.remove(raw_pred_file)
 
@@ -105,7 +112,7 @@ class MetricsComputer:
             logger.exception(
                 f"Exception in parsing output file for {job.job_name}: {e}"
             )
-            return False
+            raise e
         return predictions
 
     def read_predictions(self, job, original=False):
