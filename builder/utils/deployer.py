@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from pathlib import Path
 
 import boto3
 import botocore
@@ -29,7 +30,8 @@ class ModelDeployer:
         self.endpoint_name = model.endpoint_name
         self.repository_name = self.endpoint_name.lower()
         self.archive_name = f"archive.{self.endpoint_name}"
-        self.task_config = get_task_config_safe(model.task.task_code)
+        self.task_code = model.task.task_code
+        self.task_config = get_task_config_safe(self.task_code)
 
         self.rootp = tempfile.TemporaryDirectory(prefix=self.endpoint_name)
         self.root_dir = self.rootp.name
@@ -188,6 +190,12 @@ class ModelDeployer:
         for f in os.listdir(docker_dir):
             shutil.copyfile(os.path.join(docker_dir, f), os.path.join(self.root_dir, f))
 
+        torchserve_config_file = os.path.join(self.root_dir, "config.properties")
+        config = get_torchserve_config(
+            torchserve_config_file, self.task_code, self.task_config
+        )
+        torchserve_config_file.write_text(config)
+
         # build docker
         docker_file = "gpu.Dockerfile" if self.use_gpu() else "Dockerfile"
         docker_build_command = docker_build_cmd(
@@ -275,7 +283,7 @@ class ModelDeployer:
         # push docker
         logger.info(f"Pushing docker instance {image_ecr_path} for model {self.name}")
         process = subprocess.run(
-            shlex.split(f"docker push {shlex.quote(image_ecr_path)}"),
+            ["docker", "push", image_ecr_path],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True,
@@ -449,7 +457,7 @@ class ModelDeployer:
             else:  # if no s3_uri is specified, use the default path, may not really find it
                 self.env["s3_client"].delete_object(
                     Bucket=self.env["bucket_name"],
-                    Key=f"torchserve/models/{self.model.task.task_code}/{self.archive_name}.tar.gz",
+                    Key=f"torchserve/models/{self.task_code}/{self.archive_name}.tar.gz",
                 )
         except Exception as ex:
             logger.exception(
@@ -469,3 +477,20 @@ def docker_build_cmd(
         f"--build-arg {k}={shlex.quote(str(v))}" for k, v in build_args.items()
     )
     return f"docker build --network host -t {repository_name} -f {docker_file} {docker_build_args} ."
+
+
+def get_torchserve_config(base_file: Path, task_code: str, task_config: dict) -> str:
+    base_content = Path(base_file).read_text()
+    config = task_config["torchserve_config"]
+    if not config:
+        return base_content
+
+    extra_lines = [f"# extra settings from task {task_code}"]
+    for k, v in config.items():
+        assert isinstance(v, (str, bool, int)), "Invalid config file"
+        if isinstance(v, bool):
+            v = str(v).lower()
+        extra_lines.append(f"{k}={v}")
+
+    extra_content = "\n".join(extra_lines)
+    return "\n\n".join((base_content, extra_content, ""))

@@ -108,6 +108,7 @@ class Flores101Base(MTBase):
         batch_transform_config["TransformInput"]["ContentType"] = "application/json"
         batch_transform_config["TransformInput"]["SplitType"] = "Line"
         batch_transform_config["BatchStrategy"] = "MultiRecord"
+        batch_transform_config["MaxPayloadInMB"] = 1
         return batch_transform_config
 
     def load(self):

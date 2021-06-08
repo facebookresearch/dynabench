@@ -6,6 +6,7 @@ _default_config = {
     "create_endpoint": True,
     "aws_region": "us-west-1",
     "gpu": False,
+    "torchserve_config": {},
 }
 
 _custom_config = {
@@ -15,6 +16,13 @@ _custom_config = {
         "create_endpoint": False,
         "aws_region": "us-west-2",
         "gpu": True,
+        # Since we are using batching we need to increase the timeout and request sizes
+        "torchserve_config": {
+            "default_response_timeout": 1200,
+            "decode_input_request": False,
+            "max_request_size": 12853500,
+            "max_response_size": 12853500,
+        },
     }
 }
 
