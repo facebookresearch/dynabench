@@ -556,7 +556,13 @@ export default class ApiService {
   }
 
   getToken() {
-    return localStorage.getItem("id_token");
+    // handle access not allowed to localStorage if disabled in browser.
+    // https://stackoverflow.com/questions/16427636/check-if-localstorage-is-available
+    try {
+      return localStorage.getItem("id_token");
+    } catch (e) {
+      return null;
+    }
   }
 
   logout() {
