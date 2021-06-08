@@ -197,7 +197,7 @@ const FloresGrid = ({ model }) => {
 
         return (
           `${source.LANGUAGE ?? langSourceCode} (${langSourceCode}) --> ` +
-          `${target.LANGUAGE ?? langTargetCode} (${langTargetCode})</br>` +
+          `${target.LANGUAGE ?? langTargetCode} (${langTargetCode}) </br>` +
           "<b>BLEU Score: </b>" +
           valuePoint
         );
