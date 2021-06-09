@@ -194,7 +194,7 @@ class ModelDeployer:
         config = get_torchserve_config(
             torchserve_config_file, self.task_code, self.task_config
         )
-        torchserve_config_file.write_text(config)
+        Path(torchserve_config_file).write_text(config)
 
         # build docker
         docker_file = "gpu.Dockerfile" if self.use_gpu() else "Dockerfile"
