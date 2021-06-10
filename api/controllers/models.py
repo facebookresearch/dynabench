@@ -7,7 +7,6 @@ import time
 
 import boto3
 import bottle
-import sagemaker
 import sqlalchemy as db
 
 import common.auth as _auth
@@ -42,14 +41,19 @@ def get_model_detail(credentials, mid):
     m = ModelModel()
     s = ScoreModel()
     dm = DatasetModel()
+    um = UserModel()
     try:
         query_result = m.getModelUserByMid(mid)
         model = query_result[0].to_dict()
+        user = um.get(credentials["id"])
+        is_admin = False
+        if user:
+            is_admin = user.admin
         # Secure to read unpublished model detail for only owner
         if (
             not query_result[0].is_published
             and query_result[0].uid != credentials["id"]
-        ):
+        ) and not is_admin:
             raise AssertionError()
         model["username"] = query_result[1].username
         model["user_id"] = query_result[1].id
