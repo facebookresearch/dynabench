@@ -10,6 +10,7 @@ import highchartsHeatmap from "highcharts/modules/heatmap";
 import HighchartsReact from "highcharts-react-official";
 import highchartsBoost from "highcharts/modules/boost";
 import highchartsCluster from "highcharts/modules/marker-clusters";
+import { Alert } from "react-bootstrap";
 
 import FloresLanguages from "./FloresLanguages";
 import "./FloresGrid.css";
@@ -80,7 +81,7 @@ const FloresGrid = ({ model }) => {
 
   useEffect(() => {
     const perf_by_tag =
-      model.leaderboard_scores[0].metadata_json &&
+      model.leaderboard_scores[0] &&
       JSON.parse(model.leaderboard_scores[0].metadata_json).hasOwnProperty(
         "perf_by_tag"
       )
@@ -223,7 +224,13 @@ const FloresGrid = ({ model }) => {
   return (
     <div className="scroll-wrapper">
       <div className="mr-auto ml-auto my-4 pb-1">
-        <HighchartsReact highcharts={Highcharts} options={chartOptions} />
+        {data.length > 0 ? (
+          <HighchartsReact highcharts={Highcharts} options={chartOptions} />
+        ) : (
+          <Alert variant={"info"}>
+            No data available, the model is still evaluating.
+          </Alert>
+        )}
       </div>
     </div>
   );
