@@ -3,17 +3,14 @@
 import sys
 
 
+sys.path.append("../api")  # noqa
 # TODO: find a way not to comment the follow imports to skip linter
 from datasets.hs import (  # isort:skip
-    adversarial_hatemoji,
-    ahs,
-    hatecheck,
-    hatemoji_check,
-)
-
-
-sys.path.append("../api")  # noqa
-
+    adversarial_hatemoji,  # isort:skip
+    ahs,  # isort:skip
+    hatecheck,  # isort:skip
+    hatemoji_check,  # isort:skip
+)  # isort:skip
 from datasets.mt import flores  # isort:skip
 from datasets.nli import anli, hans, mnli, nli_st, snli, sg_winogender  # isort:skip
 from datasets.qa import aqa, mrqa_shared_dev  # isort:skip
