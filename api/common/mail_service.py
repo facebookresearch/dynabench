@@ -61,7 +61,13 @@ def close_mail_session(server):
 
 
 def send(
-    server=None, config=None, contacts=[], template_name="", msg_dict={}, subject=""
+    server=None,
+    config=None,
+    contacts=[],
+    cc_contact=None,
+    template_name="",
+    msg_dict={},
+    subject="",
 ):
     """
     Mail handler to send email to specific contacts through smtp service
@@ -91,6 +97,8 @@ def send(
                 (config["email_sender_name"], config["smtp_from_email_address"])
             )
             msg["To"] = contact
+            if cc_contact is not None:
+                msg["Cc"] = cc_contact
             msg["Subject"] = subject
             # add in the message body
             msg.attach(MIMEText(message, "plain"))
