@@ -23,6 +23,7 @@ import { Link } from "react-router-dom";
 import TasksContext from "./TasksContext";
 import UserContext from "./UserContext";
 import "./ModelPage.css";
+import DeploymentStatus from "./ModelStatus";
 import { OverlayProvider, BadgeOverlay } from "./Overlay";
 import { useState } from "react";
 import FloresGrid from "../components/FloresComponents/FloresGrid";
@@ -354,6 +355,14 @@ class ModelPage extends React.Component {
                     <Table hover responsive className="mb-0">
                       <thead />
                       <tbody>
+                        <tr style={{ border: `none` }}>
+                          <td>Status</td>
+                          <td>
+                            <DeploymentStatus
+                              deploymentStatus={model.deployment_status}
+                            />
+                          </td>
+                        </tr>
                         <tr style={{ border: `none` }}>
                           <td>Owner</td>
                           <td>

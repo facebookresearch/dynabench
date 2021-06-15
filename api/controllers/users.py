@@ -244,6 +244,8 @@ def get_user_models(uid):
         )
         dicts = [model_obj.to_dict() for model_obj in results]
         if dicts:
+            for model_dict in dicts:
+                model_dict["deployment_status"] = model_dict["deployment_status"].name
             return util.json_encode({"count": total_count, "data": dicts})
         return util.json_encode({"count": 0, "data": []})
     except Exception as e:
