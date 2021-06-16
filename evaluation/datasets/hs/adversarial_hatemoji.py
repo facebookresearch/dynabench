@@ -28,9 +28,11 @@ class AdversarialHatemojiBase(HsBase):
                         "statement": row["sentence"],
                         "label": {0: "not-hateful", 1: "hateful"}[row["label"]],
                         "tags": [row["label"]]
-                        + list(filter(lambda tag: tag != "none", row["tags"])),
+                        + list(
+                            filter(lambda tag: tag != "none", json.loads(row["tags"]))
+                        ),
                     }
-                    tmp.write(json.dumps(tmp_jl) + "\n")
+                    tmp.write(json.dumps(tmp_jl, ensure_ascii=False) + "\n")
                 tmp.close()
                 response = self.s3_client.upload_file(
                     tmp.name, self.s3_bucket, self._get_data_s3_path()
@@ -55,52 +57,52 @@ class AdversarialHatemojiBase(HsBase):
 class AhsRound5Test(AdversarialHatemojiBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
-        self.local_path = os.path.join(
+        local_path = os.path.join(
             rootpath, "data", "hs/adversarial_hatemoji/r5_test.csv"
         )
-        super().__init__(name="ahs-r5-test", round_id=5)
+        super().__init__(name="ahs-r5-test", local_path=local_path, round_id=5)
 
 
 class AhsRound6Test(AdversarialHatemojiBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
-        self.local_path = os.path.join(
+        local_path = os.path.join(
             rootpath, "data", "hs/adversarial_hatemoji/r6_test.csv"
         )
-        super().__init__(name="ahs-r6-test", round_id=6)
+        super().__init__(name="ahs-r6-test", local_path=local_path, round_id=6)
 
 
 class AhsRound7Test(AdversarialHatemojiBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
-        self.local_path = os.path.join(
+        local_path = os.path.join(
             rootpath, "data", "hs/adversarial_hatemoji/r7_test.csv"
         )
-        super().__init__(name="ahs-r7-test", round_id=7)
+        super().__init__(name="ahs-r7-test", local_path=local_path, round_id=7)
 
 
 class AhsRound5Dev(AdversarialHatemojiBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
-        self.local_path = os.path.join(
+        local_path = os.path.join(
             rootpath, "data", "hs/adversarial_hatemoji/r5_dev.csv"
         )
-        super().__init__(name="ahs-r5-dev", round_id=5)
+        super().__init__(name="ahs-r5-dev", local_path=local_path, round_id=5)
 
 
 class AhsRound6Dev(AdversarialHatemojiBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
-        self.local_path = os.path.join(
+        local_path = os.path.join(
             rootpath, "data", "hs/adversarial_hatemoji/r6_dev.csv"
         )
-        super().__init__(name="ahs-r6-dev", round_id=6)
+        super().__init__(name="ahs-r6-dev", local_path=local_path, round_id=6)
 
 
 class AhsRound7Dev(AdversarialHatemojiBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
-        self.local_path = os.path.join(
+        local_path = os.path.join(
             rootpath, "data", "hs/adversarial_hatemoji/r7_dev.csv"
         )
-        super().__init__(name="ahs-r7-dev", round_id=7)
+        super().__init__(name="ahs-r7-dev", local_path=local_path, round_id=7)

@@ -31,9 +31,11 @@ class HatemojiCheck(HsBase):
                         "statement": row["sentence"],
                         "label": {0: "not-hateful", 1: "hateful"}[row["label"]],
                         "tags": [row["label"]]
-                        + list(filter(lambda tag: tag != "none", row["tags"])),
+                        + list(
+                            filter(lambda tag: tag != "none", json.loads(row["tags"]))
+                        ),
                     }
-                    tmp.write(json.dumps(tmp_jl) + "\n")
+                    tmp.write(json.dumps(tmp_jl, ensure_ascii=False) + "\n")
                 tmp.close()
                 response = self.s3_client.upload_file(
                     tmp.name, self.s3_bucket, self._get_data_s3_path()
