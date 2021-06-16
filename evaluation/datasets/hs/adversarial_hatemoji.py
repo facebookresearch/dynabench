@@ -70,6 +70,15 @@ class AhsRound6Test(AdversarialHatemojiBase):
         super().__init__(name="ahs-r6-test", round_id=6)
 
 
+class AhsRound7Test(AdversarialHatemojiBase):
+    def __init__(self):
+        rootpath = os.path.dirname(sys.path[0])
+        self.local_path = os.path.join(
+            rootpath, "data", "hs/adversarial_hatemoji/r7_test.csv"
+        )
+        super().__init__(name="ahs-r7-test", round_id=7)
+
+
 class AhsRound5Dev(AdversarialHatemojiBase):
     def __init__(self):
         rootpath = os.path.dirname(sys.path[0])
@@ -86,3 +95,12 @@ class AhsRound6Dev(AdversarialHatemojiBase):
             rootpath, "data", "hs/adversarial_hatemoji/r6_dev.csv"
         )
         super().__init__(name="ahs-r6-dev", round_id=6)
+
+
+class AhsRound7Dev(AdversarialHatemojiBase):
+    def __init__(self):
+        rootpath = os.path.dirname(sys.path[0])
+        self.local_path = os.path.join(
+            rootpath, "data", "hs/adversarial_hatemoji/r7_dev.csv"
+        )
+        super().__init__(name="ahs-r7-dev", round_id=7)
