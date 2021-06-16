@@ -1,5 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+import ast
 import json
 import os
 import sys
@@ -27,9 +28,11 @@ class AdversarialHatemojiBase(HsBase):
                         "uid": row["eid"],
                         "statement": row["sentence"],
                         "label": {0: "not-hateful", 1: "hateful"}[row["label"]],
-                        "tags": [row["label"]]
+                        "tags": [{0: "not-hateful", 1: "hateful"}[row["label"]]]
                         + list(
-                            filter(lambda tag: tag != "none", json.loads(row["tags"]))
+                            filter(
+                                lambda tag: tag != "none", ast.literal_eval(row["tags"])
+                            )
                         ),
                     }
                     tmp.write(json.dumps(tmp_jl, ensure_ascii=False) + "\n")
