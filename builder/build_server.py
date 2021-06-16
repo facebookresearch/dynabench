@@ -107,7 +107,8 @@ if __name__ == "__main__":
                         mail.send(
                             server=mail_session,
                             config=config,
-                            contacts=[user.email, "dynabench@fb.com"],
+                            contacts=[user.email],
+                            cc_contact="dynabench@fb.com",
                             template_name=f"templates/{template}.txt",
                             msg_dict=msg,
                             subject=subject,
