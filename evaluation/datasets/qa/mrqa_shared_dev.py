@@ -19,7 +19,9 @@ class MrqaSharedDev(QaBase):
 
     def load(self):
         try:
-            with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
+            with tempfile.NamedTemporaryFile(
+                mode="w+", delete=False, encoding="utf-8"
+            ) as tmp:
                 # First line is the header; disregard it.
                 for line in open(self.local_path).readlines()[1:]:
                     jl = json.loads(line)
@@ -36,7 +38,7 @@ class MrqaSharedDev(QaBase):
                             .replace("[PAR]", "\n\n"),
                             "answer": qas["answers"],
                         }
-                        tmp.write(json.dumps(tmp_jl) + "\n")
+                        tmp.write(json.dumps(tmp_jl, ensure_ascii=False) + "\n")
                 tmp.close()
                 response = self.s3_client.upload_file(
                     tmp.name, self.s3_bucket, self._get_data_s3_path()
