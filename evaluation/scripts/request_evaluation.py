@@ -11,7 +11,6 @@ import os
 import sys
 
 import boto3
-
 from dynalab_cli.utils import get_tasks
 
 
@@ -57,7 +56,7 @@ def upload_to_S3_and_eval(args):
             aws_secret_access_key=config["aws_secret_access_key"],
             region_name=config["aws_region"],
         )
-        s3_bucket = get_task_config_safe(args.task)
+        s3_bucket = get_task_config_safe(args.task)["s3_bucket"]
         base_filename = f"{args.base_dataset_name}.{ext}"
         base_s3_path = get_data_s3_path(args.task, base_filename)
         if not path_available_on_s3(s3_client, s3_bucket, base_s3_path):
