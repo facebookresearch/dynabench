@@ -7,7 +7,6 @@ import sys
 import tempfile
 
 import pandas as pd
-
 from datasets.common import logger
 
 from .base import AccessTypeEnum, HsBase
@@ -90,7 +89,12 @@ class AhsRound5Dev(AdversarialHatemojiBase):
         local_path = os.path.join(
             rootpath, "data", "hs/adversarial_hatemoji/r5_dev.csv"
         )
-        super().__init__(name="ahs-r5-dev", local_path=local_path, round_id=5)
+        super().__init__(
+            name="ahs-r5-dev",
+            local_path=local_path,
+            round_id=5,
+            access_type=AccessTypeEnum.standard,
+        )
 
 
 class AhsRound6Dev(AdversarialHatemojiBase):
@@ -99,7 +103,12 @@ class AhsRound6Dev(AdversarialHatemojiBase):
         local_path = os.path.join(
             rootpath, "data", "hs/adversarial_hatemoji/r6_dev.csv"
         )
-        super().__init__(name="ahs-r6-dev", local_path=local_path, round_id=6)
+        super().__init__(
+            name="ahs-r6-dev",
+            local_path=local_path,
+            round_id=6,
+            access_type=AccessTypeEnum.standard,
+        )
 
 
 class AhsRound7Dev(AdversarialHatemojiBase):
@@ -108,4 +117,9 @@ class AhsRound7Dev(AdversarialHatemojiBase):
         local_path = os.path.join(
             rootpath, "data", "hs/adversarial_hatemoji/r7_dev.csv"
         )
-        super().__init__(name="ahs-r7-dev", local_path=local_path, round_id=7)
+        super().__init__(
+            name="ahs-r7-dev",
+            local_path=local_path,
+            round_id=7,
+            access_type=AccessTypeEnum.standard,
+        )
