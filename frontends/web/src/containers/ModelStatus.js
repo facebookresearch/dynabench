@@ -23,7 +23,7 @@ const DeploymentStatus = ({ deploymentStatus }) => {
       description = "The model is in the process of deploying.";
       break;
     case "created":
-      buttonVariant = "warning";
+      buttonVariant = "success";
       description =
         "The model can be evaluated on uploaded datasets, but it is not availiable for user interaction.";
       break;
