@@ -6,7 +6,6 @@ import sys
 import tempfile
 
 import pandas as pd
-
 from datasets.common import logger
 
 from .base import AccessTypeEnum, HsBase
@@ -21,9 +20,7 @@ class AhsBase(HsBase):
 
     def load(self):
         try:
-            with tempfile.NamedTemporaryFile(
-                mode="w+", delete=False, encoding="utf-8"
-            ) as tmp:
+            with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
                 for _, row in pd.read_csv(self.local_path).iterrows():
                     if (
                         row["round.base"] == self.round_id
@@ -37,7 +34,7 @@ class AhsBase(HsBase):
                             ],
                             "tags": [row["label"]],
                         }
-                        tmp.write(json.dumps(tmp_jl, ensure_ascii=False) + "\n")
+                        tmp.write(json.dumps(tmp_jl) + "\n")
                 tmp.close()
                 response = self.s3_client.upload_file(
                     tmp.name, self.s3_bucket, self._get_data_s3_path()

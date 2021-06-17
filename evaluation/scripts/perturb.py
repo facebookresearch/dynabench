@@ -12,8 +12,8 @@ import os
 import sys
 
 import boto3
-
 from dynalab_cli.utils import get_tasks
+
 from fairness import FairnessPerturbation
 from textflint_utils.utils import run_textflint
 
@@ -110,9 +110,9 @@ def perturb(path, task, perturb_prefix):
     outpath = os.path.join(
         os.path.dirname(local_path), f"{perturb_prefix}-{os.path.basename(local_path)}"
     )
-    with open(outpath, "w", encoding="utf-8") as f:
+    with open(outpath, "w") as f:
         for example in perturb_examples:
-            f.write(json.dumps(example, ensure_ascii=False) + "\n")
+            f.write(json.dumps(example) + "\n")
     logger.info(f"Wrote perturbed dataset to {outpath}")
 
     return outpath

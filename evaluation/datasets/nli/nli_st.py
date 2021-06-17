@@ -103,9 +103,7 @@ class NLIStressTest(NliBase):
 
     def load(self):
         try:
-            with tempfile.NamedTemporaryFile(
-                mode="w+", delete=False, encoding="utf-8"
-            ) as tmp:
+            with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
                 index = 0
                 for local_path, tag_name in self.local_paths_and_tag_names:
                     for line in open(local_path).readlines():
@@ -122,7 +120,7 @@ class NLIStressTest(NliBase):
                             }[jl["gold_label"]],
                             "tags": [tag_name],
                         }
-                        tmp.write(json.dumps(tmp_jl, ensure_ascii=False) + "\n")
+                        tmp.write(json.dumps(tmp_jl) + "\n")
                         index += 1
                 tmp.close()
                 response = self.s3_client.upload_file(

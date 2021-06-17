@@ -6,6 +6,7 @@ import sys
 import tempfile
 
 from datasets.common import logger
+
 from utils import helpers
 
 from .base import MTBase
@@ -113,9 +114,7 @@ class Flores101Base(MTBase):
 
     def load(self):
         try:
-            with tempfile.NamedTemporaryFile(
-                mode="w+", delete=False, encoding="utf-8"
-            ) as tmp:
+            with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
                 for lang1 in self.languages:
                     for lang2 in self.languages:
                         if lang1 == lang2:
@@ -137,7 +136,7 @@ class Flores101Base(MTBase):
                                 "targetText": line2.strip(),
                             }
                             row += 1
-                            tmp.write(json.dumps(tmp_jl, ensure_ascii=False) + "\n")
+                            tmp.write(json.dumps(tmp_jl) + "\n")
                 tmp.close()
                 response = self.s3_client.upload_file(
                     tmp.name, self.s3_bucket, self._get_data_s3_path()
