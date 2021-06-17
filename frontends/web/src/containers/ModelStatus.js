@@ -14,22 +14,35 @@ const DeploymentStatus = ({ deploymentStatus }) => {
   var buttonVariant;
   var description;
   switch (deploymentStatus) {
+    case "uploaded":
+      buttonVariant = "warning";
+      description = "The model is not deployed yet. Check back later.";
+      break;
+    case "processing":
+      buttonVariant = "warning";
+      description = "The model is in the process of deploying.";
+      break;
+    case "created":
+      buttonVariant = "warning";
+      description =
+        "The model can be evaluated on uploaded datasets, but it is not availiable for user interaction.";
+      break;
     case "deployed":
       buttonVariant = "success";
       description = "You can interact with the model.";
       break;
     case "takendown":
       buttonVariant = "danger";
-      description = "An admin took the model down.";
-      break;
-    case "failed":
-      buttonVariant = "danger";
       description =
         "The model could not be evaluated on all of the datasets. The model could have bugs.";
       break;
+    case "failed":
+      buttonVariant = "danger";
+      description = "The model could not be deployed.";
+      break;
     default:
       buttonVariant = "warning";
-      description = "The status of the model.";
+      description = "The status of the model is unknown.";
   }
   return (
     <>
