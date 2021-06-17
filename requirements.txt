@@ -7,7 +7,6 @@ pymysql
 sagemaker
 six
 SQLAlchemy==1.3.23
-textflint
 torch
 transformers
 werkzeug
@@ -15,6 +14,5 @@ boto3
 yoyo-migrations
 pandas
 sacrebleu
-spacy
 git+https://github.com/facebookresearch/dynalab.git
 sentencepiece
