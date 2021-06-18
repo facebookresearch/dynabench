@@ -4,9 +4,13 @@ import sys
 
 
 sys.path.append("../api")  # noqa
-
 # TODO: find a way not to comment the follow imports to skip linter
-from datasets.hs import ahs, hatecheck  # isort:skip
+from datasets.hs import (  # isort:skip
+    adversarial_hatemoji,  # isort:skip
+    ahs,  # isort:skip
+    hatecheck,  # isort:skip
+    hatemoji_check,  # isort:skip
+)  # isort:skip
 from datasets.mt import flores  # isort:skip
 from datasets.nli import anli, hans, mnli, nli_st, snli, sg_winogender  # isort:skip
 from datasets.qa import aqa, mrqa_shared_dev  # isort:skip
@@ -59,11 +63,18 @@ def load_datasets():
         "ahs-r2-test": ahs.AhsRound2Test(),
         "ahs-r3-test": ahs.AhsRound3Test(),
         "ahs-r4-test": ahs.AhsRound4Test(),
+        "ahs-r5-test": adversarial_hatemoji.AhsRound5Test(),
+        "ahs-r6-test": adversarial_hatemoji.AhsRound6Test(),
+        "ahs-r7-test": adversarial_hatemoji.AhsRound7Test(),
         "ahs-r1-dev": ahs.AhsRound1Dev(),
         "ahs-r2-dev": ahs.AhsRound2Dev(),
         "ahs-r3-dev": ahs.AhsRound3Dev(),
         "ahs-r4-dev": ahs.AhsRound4Dev(),
+        "ahs-r5-dev": adversarial_hatemoji.AhsRound5Dev(),
+        "ahs-r6-dev": adversarial_hatemoji.AhsRound6Dev(),
+        "ahs-r7-dev": adversarial_hatemoji.AhsRound7Dev(),
         "hatecheck": hatecheck.HateCheck(),
+        "hatemoji-check": hatemoji_check.HatemojiCheck(),
         "flores101-full-dev": flores.Flores101FullDev(),
         "flores101-full-devtest": flores.Flores101FullDevTest(),
         "flores101-full-test": flores.Flores101FullTest(),
