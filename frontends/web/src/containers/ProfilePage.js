@@ -25,6 +25,7 @@ import { Avatar } from "../components/Avatar/Avatar";
 import Moment from "react-moment";
 import "./Sidebar-Layout.css";
 import "./ProfilePage.css";
+import "./ModelStatus.css";
 import BadgeGrid from "./BadgeGrid";
 import Badge from "./Badge";
 import {
@@ -254,7 +255,7 @@ const ModelSubPage = (props) => {
                     <b>Task</b>
                   </td>
                   <td className="text-center" width="200px">
-                    <b>Status</b>
+                    <b>Publication Status</b>
                   </td>
                 </tr>
               </thead>
@@ -285,11 +286,11 @@ const ModelSubPage = (props) => {
                       </td>
                       <td className="text-center" width="200px">
                         {model.is_published === true ? (
-                          <BBadge variant="success" className="publishStatus">
+                          <BBadge variant="success" className="modelStatus">
                             Published
                           </BBadge>
                         ) : (
-                          <BBadge variant="danger" className="publishStatus">
+                          <BBadge variant="danger" className="modelStatus">
                             Unpublished
                           </BBadge>
                         )}
