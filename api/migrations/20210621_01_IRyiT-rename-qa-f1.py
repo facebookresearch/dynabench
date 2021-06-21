@@ -1,7 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 """
-
+Rename F1 to SQuAD F1 for clarity.
 """
 
 from yoyo import step
