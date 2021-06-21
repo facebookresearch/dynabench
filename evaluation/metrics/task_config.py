@@ -7,8 +7,8 @@ from metrics.instance_property import instance_property
 _default_config = {
     "instance_config": instance_property["ml.m5.2xlarge"],
     "instance_count": 1,
-    "eval_metrics": ["accuracy"],
-    "perf_metric": "accuracy",
+    "eval_metrics": ["macro_f1"],
+    "perf_metric": "macro_f1",
     "delta_metrics": ["fairness", "robustness"],
     "input_keys": ["uid", "statement"],
     "aws_region": "us-west-1",
@@ -16,11 +16,15 @@ _default_config = {
 }
 
 _custom_config = {
-    "nli": {"input_keys": ["uid", "context", "hypothesis"]},
+    "nli": {
+        "input_keys": ["uid", "context", "hypothesis"],
+        "eval_metrics": ["accuracy"],
+        "perf_metric": "accuracy",
+    },
     "qa": {
         "input_keys": ["uid", "context", "question"],
-        "eval_metrics": ["f1"],
-        "perf_metric": "f1",
+        "eval_metrics": ["squad_f1"],
+        "perf_metric": "squad_f1",
     },
     "flores": {
         "instance_config": instance_property["ml.p2.xlarge"],

@@ -5,6 +5,7 @@ from pathlib import Path
 
 import sacrebleu
 import sentencepiece
+from sklearn.metrics import f1_score
 from transformers.data.metrics.squad_metrics import compute_f1
 
 from metrics.task_config import get_task_config_safe
@@ -38,7 +39,16 @@ def get_accuracy_meta(task=None):
     return {"unit": "%", "pretty_name": "Accuracy", "utility_direction": 1, "offset": 0}
 
 
-def get_f1(predictions: list, targets: list):
+def get_macro_f1(predictions: list, targets: list):
+    macro_f1 = f1_score(targets, predictions, average="macro")
+    return round(macro_f1 * 100, 2)
+
+
+def get_macro_f1_meta(task=None):
+    return {"unit": "%", "pretty_name": "Macro F1", "utility_direction": 1, "offset": 0}
+
+
+def get_squad_f1(predictions: list, targets: list):
     """
     Here, t can be a list of acceptable answers, instead of just one answer. There
     are often multiple acceptable answers to questions, as evidenced in the squad
@@ -62,8 +72,8 @@ def get_f1(predictions: list, targets: list):
     return round(f1 * 100, 2)
 
 
-def get_f1_meta(task=None):
-    return {"unit": "%", "pretty_name": "F1", "utility_direction": 1, "offset": 0}
+def get_squad_f1_meta(task=None):
+    return {"unit": "%", "pretty_name": "SQuAD F1", "utility_direction": 1, "offset": 0}
 
 
 # TODO: split into different functions for fairness and robustness.
