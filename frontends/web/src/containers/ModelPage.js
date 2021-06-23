@@ -238,6 +238,40 @@ class ModelPage extends React.Component {
     }
   };
 
+  processScoresArray = (csvRows, scoresArr, datasetType) => {
+    csvRows.push([""]);
+    csvRows.push([datasetType]);
+
+    scoresArr = (scoresArr || []).sort((a, b) => b.accuracy - a.accuracy);
+    scoresArr.forEach((score) => {
+      csvRows.push([score.dataset_name, score.accuracy]);
+    });
+  }
+
+  downloadCsv = () => {
+    const { leaderboard_scores, non_leaderboard_scores, name } = this.state.model;
+    const taskName = this.state.task.name;
+
+    const rows = [];
+    rows.push(["Dataset Name", "Accuracy"]);
+    this.processScoresArray(rows, leaderboard_scores, "Leaderboard Datasets");
+    this.processScoresArray(rows, non_leaderboard_scores, "Non-leaderboard Datasets");
+
+    let csvContent = "data:text/csv;charset=utf-8,";
+
+    rows.forEach((rowArray) => {
+      csvContent += rowArray.join(",") + "\n";
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const csvLink = document.createElement("a");
+    csvLink.setAttribute("href", encodedUri);
+    csvLink.setAttribute("download", name + "-" + taskName + ".csv");
+    document.body.appendChild(csvLink);
+    csvLink.click();
+    document.body.removeChild(csvLink);
+  }
+
   render() {
     const { model, task } = this.state;
     const isFlores = FLORES_TASK_SHORT_NAMES.includes(task.shortname);
@@ -297,6 +331,12 @@ class ModelPage extends React.Component {
                     ) : (
                       ""
                     )}
+                    <Button
+                        className={"blue-bg border-0"}
+                        aria-label="Export as CSV"
+                        onClick={this.downloadCsv}>
+                      {"Export as CSV"}
+                    </Button>
                     {isModelOwner && (
                       <Button
                         variant="outline-primary mr-2"
