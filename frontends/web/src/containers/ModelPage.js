@@ -16,6 +16,8 @@ import {
   InputGroup,
   Modal,
   Spinner,
+  DropdownButton,
+  Dropdown,
 } from "react-bootstrap";
 import Moment from "react-moment";
 import Markdown from "react-markdown";
@@ -334,13 +336,6 @@ class ModelPage extends React.Component {
                     ) : (
                       ""
                     )}
-                    <Button
-                        className={"blue-bg border-0"}
-                        aria-label="Export as CSV"
-                        onClick={this.downloadCsv}
-                    >
-                      {"Export as CSV"}
-                    </Button>
                     {isModelOwner && (
                       <Button
                         variant="outline-primary mr-2"
@@ -466,6 +461,17 @@ class ModelPage extends React.Component {
                         </tr>
                       </tbody>
                     </Table>
+                    <center className={"w-100"}>
+                      <DropdownButton
+                          variant="outline-primary"
+                          className="p-1 mt-5"
+                          title={"Export"}
+                      >
+                        <Dropdown.Item onClick={this.downloadCsv}>
+                          {"CSV"}
+                        </Dropdown.Item>
+                      </DropdownButton>
+                    </center>
                     <Table>
                       <tbody>
                         <tr>
