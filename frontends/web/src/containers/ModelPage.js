@@ -238,24 +238,27 @@ class ModelPage extends React.Component {
     }
   };
 
-  processScoresArray = (csvRows, scoresArr, datasetType) => {
+  processScoresArray = (csvRows, scoresArr, perfMetricFieldName, datasetType) => {
     csvRows.push([""]);
     csvRows.push([datasetType]);
 
-    scoresArr = (scoresArr || []).sort((a, b) => b.accuracy - a.accuracy);
+    scoresArr = (scoresArr || []).sort((a, b) =>
+        JSON.parse(b.metadata_json)[perfMetricFieldName]
+        - JSON.parse(a.metadata_json)[perfMetricFieldName]);
     scoresArr.forEach((score) => {
-      csvRows.push([score.dataset_name, score.accuracy]);
+      csvRows.push([score.dataset_name, JSON.parse(score.metadata_json)[perfMetricFieldName]]);
     });
   }
 
   downloadCsv = () => {
     const { leaderboard_scores, non_leaderboard_scores, name } = this.state.model;
     const taskName = this.state.task.name;
+    const perfMetricFieldName = this.state.task.perf_metric_field_name;
 
     const rows = [];
-    rows.push(["Dataset Name", "Accuracy"]);
-    this.processScoresArray(rows, leaderboard_scores, "Leaderboard Datasets");
-    this.processScoresArray(rows, non_leaderboard_scores, "Non-leaderboard Datasets");
+    rows.push(["Dataset Name", perfMetricFieldName.charAt(0).toUpperCase() + perfMetricFieldName.slice(1)]);
+    this.processScoresArray(rows, leaderboard_scores, perfMetricFieldName, "Leaderboard Datasets",);
+    this.processScoresArray(rows, non_leaderboard_scores, perfMetricFieldName, "Non-leaderboard Datasets");
 
     let csvContent = "data:text/csv;charset=utf-8,";
 
@@ -334,7 +337,8 @@ class ModelPage extends React.Component {
                     <Button
                         className={"blue-bg border-0"}
                         aria-label="Export as CSV"
-                        onClick={this.downloadCsv}>
+                        onClick={this.downloadCsv}
+                    >
                       {"Export as CSV"}
                     </Button>
                     {isModelOwner && (
