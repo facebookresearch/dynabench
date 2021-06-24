@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useContext, useMemo } from "react";
 import { Card, Col, Spinner, Table } from "react-bootstrap";
+import { useTable, useFilters, useSortBy } from "react-table";
 import { Link } from "react-router-dom";
 import UserContext from "../../containers/UserContext";
-import { useTable, useFilters, useSortBy } from "react-table";
 import FloresLanguages from "./FloresLanguages";
 import "./FloresGrid.css";
 
