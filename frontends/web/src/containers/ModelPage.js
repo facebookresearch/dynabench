@@ -240,27 +240,33 @@ class ModelPage extends React.Component {
     }
   };
 
-  processScoresArray = (csvRows, scoresArr, perfMetricFieldName, datasetType) => {
+  processScoresArray = (csvRows, scoresArr, datasetType) => {
     csvRows.push([""]);
     csvRows.push([datasetType]);
 
-    scoresArr = (scoresArr || []).sort((a, b) =>
-        JSON.parse(b.metadata_json)[perfMetricFieldName]
-        - JSON.parse(a.metadata_json)[perfMetricFieldName]);
+    scoresArr = (scoresArr || []).sort((a, b) => b.accuracy - a.accuracy);
     scoresArr.forEach((score) => {
-      csvRows.push([score.dataset_name, JSON.parse(score.metadata_json)[perfMetricFieldName]]);
+      csvRows.push([score.dataset_name, score.accuracy]);
     });
-  }
+  };
 
   downloadCsv = () => {
-    const { leaderboard_scores, non_leaderboard_scores, name } = this.state.model;
-    const taskName = this.state.task.name;
-    const perfMetricFieldName = this.state.task.perf_metric_field_name;
+    const {
+      leaderboard_scores,
+      non_leaderboard_scores,
+      name,
+    } = this.state.model;
+    const { task } = this.state;
+    const taskName = task.name;
 
     const rows = [];
-    rows.push(["Dataset Name", perfMetricFieldName.charAt(0).toUpperCase() + perfMetricFieldName.slice(1)]);
-    this.processScoresArray(rows, leaderboard_scores, perfMetricFieldName, "Leaderboard Datasets",);
-    this.processScoresArray(rows, non_leaderboard_scores, perfMetricFieldName, "Non-leaderboard Datasets");
+    rows.push(["Dataset", task.perf_metric_field_name]);
+    this.processScoresArray(rows, leaderboard_scores, "Leaderboard Datasets");
+    this.processScoresArray(
+      rows,
+      non_leaderboard_scores,
+      "Non-leaderboard Datasets"
+    );
 
     let csvContent = "data:text/csv;charset=utf-8,";
 
@@ -275,7 +281,7 @@ class ModelPage extends React.Component {
     document.body.appendChild(csvLink);
     csvLink.click();
     document.body.removeChild(csvLink);
-  }
+  };
 
   render() {
     const { model, task } = this.state;
@@ -461,17 +467,18 @@ class ModelPage extends React.Component {
                         </tr>
                       </tbody>
                     </Table>
-                    <center className={"w-100"}>
+                    <span className={"w-100 mt-5 mx-4"}>
                       <DropdownButton
-                          variant="outline-primary"
-                          className="p-1 mt-5"
-                          title={"Export"}
+                        alignRight={true}
+                        variant="outline-primary"
+                        className="mr-2 float-right"
+                        title={"Export"}
                       >
                         <Dropdown.Item onClick={this.downloadCsv}>
                           {"CSV"}
                         </Dropdown.Item>
                       </DropdownButton>
-                    </center>
+                    </span>
                     <Table>
                       <tbody>
                         <tr>
