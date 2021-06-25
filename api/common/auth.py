@@ -156,9 +156,6 @@ def get_expired_token_payload():
         token,
         app.config["jwtsecret"],
         algorithms=[app.config["jwtalgo"]],
-        options={
-            "verify_signature": False,
-            "verify_exp": False,
-        }
+        options={"verify_signature": False, "verify_exp": False},
     )
     return payload
