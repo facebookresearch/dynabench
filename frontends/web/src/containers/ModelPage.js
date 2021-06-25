@@ -251,11 +251,8 @@ class ModelPage extends React.Component {
   };
 
   downloadCsv = () => {
-    const {
-      leaderboard_scores,
-      non_leaderboard_scores,
-      name,
-    } = this.state.model;
+    const { leaderboard_scores, non_leaderboard_scores, name } =
+      this.state.model;
     const { task } = this.state;
     const taskName = task.name;
 
