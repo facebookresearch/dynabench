@@ -16,6 +16,8 @@ import {
   InputGroup,
   Modal,
   Spinner,
+  DropdownButton,
+  Dropdown,
 } from "react-bootstrap";
 import Moment from "react-moment";
 import Markdown from "react-markdown";
@@ -238,6 +240,46 @@ class ModelPage extends React.Component {
     }
   };
 
+  processScoresArray = (csvRows, scoresArr, datasetType) => {
+    csvRows.push([""]);
+    csvRows.push([datasetType]);
+
+    scoresArr = (scoresArr || []).sort((a, b) => b.accuracy - a.accuracy);
+    scoresArr.forEach((score) => {
+      csvRows.push([score.dataset_name, score.accuracy]);
+    });
+  };
+
+  downloadCsv = () => {
+    const { leaderboard_scores, non_leaderboard_scores, name } =
+      this.state.model;
+    const { task } = this.state;
+    const taskName = task.name;
+
+    const rows = [];
+    rows.push(["Dataset", task.perf_metric_field_name]);
+    this.processScoresArray(rows, leaderboard_scores, "Leaderboard Datasets");
+    this.processScoresArray(
+      rows,
+      non_leaderboard_scores,
+      "Non-leaderboard Datasets"
+    );
+
+    let csvContent = "data:text/csv;charset=utf-8,";
+
+    rows.forEach((rowArray) => {
+      csvContent += rowArray.join(",") + "\n";
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const csvLink = document.createElement("a");
+    csvLink.setAttribute("href", encodedUri);
+    csvLink.setAttribute("download", name + "-" + taskName + ".csv");
+    document.body.appendChild(csvLink);
+    csvLink.click();
+    document.body.removeChild(csvLink);
+  };
+
   render() {
     const { model, task } = this.state;
     const isFlores = FLORES_TASK_SHORT_NAMES.includes(task.shortname);
@@ -422,6 +464,18 @@ class ModelPage extends React.Component {
                         </tr>
                       </tbody>
                     </Table>
+                    <span className={"w-100 mt-5 mx-4"}>
+                      <DropdownButton
+                        alignRight={true}
+                        variant="outline-primary"
+                        className="mr-2 float-right"
+                        title={"Export"}
+                      >
+                        <Dropdown.Item onClick={this.downloadCsv}>
+                          {"CSV"}
+                        </Dropdown.Item>
+                      </DropdownButton>
+                    </span>
                     <Table>
                       <tbody>
                         <tr>
