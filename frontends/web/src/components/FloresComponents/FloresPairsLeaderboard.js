@@ -24,6 +24,13 @@ import UserContext from "../../containers/UserContext";
 import FloresLanguages from "./FloresLanguages";
 import "./FloresGrid.css";
 
+/**
+ * Prepare list of results to display table, takes model and perf_tags as parameters
+ *
+ * @param {*} model The model object
+ * @param {*} perf_tags The array of performance tags (language-pairs)
+ * @returns
+ */
 const preList = (model, perf_tags) => {
   const modelData =
     perf_tags &&
@@ -43,6 +50,14 @@ const preList = (model, perf_tags) => {
   return [modelData];
 };
 
+/**
+ * Get unique values to populate dropdown language options.
+ *
+ * @param {[]} data Prefilterd data
+ * @param {String} values Value property in the data
+ * @param {String} propertyName The property name to be filtered (source_lang or target_lang)
+ * @returns
+ */
 const unique = (data, values, propertyName) => {
   return data.filter(
     (e, i) =>
@@ -61,7 +76,7 @@ const CustomToggle = forwardRef(({ children, onClick }, ref) => (
     }}
   >
     {children}
-    <i className="fas fa-sort-down ml-1"></i>
+    <i className="fas fa-list ml-1"></i>
   </span>
 ));
 
@@ -324,7 +339,6 @@ const FloresPairsLeaderBoard = ({ taskId, history, ...props }) => {
           : [],
     }));
 
-    //const [modelsData] = preList(simplifiedData[0] && simplifiedData[0].model, simplifiedData[0] && simplifiedData[0].perf_by_tag);
     const [modelsData] = simplifiedData
       .map((o) => preList(o.model, o.perf_by_tag))
       .flat(); // Flat array containing results from all models.
