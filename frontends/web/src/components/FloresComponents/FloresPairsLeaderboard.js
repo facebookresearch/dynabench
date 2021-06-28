@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useContext, useMemo } from "react";
 import { Card, Col, Spinner, Table } from "react-bootstrap";
-import { useTable, useFilters, useSortBy } from "react-table";
-import { Link } from "react-router-dom";
+import {
+  useTable,
+  useFilters,
+  useSortBy,
+  useFlexLayout,
+  useBlockLayout,
+} from "react-table";
 import UserContext from "../../containers/UserContext";
 import FloresLanguages from "./FloresLanguages";
 import "./FloresGrid.css";
@@ -35,7 +40,7 @@ const DefaultColumnFilter = ({
       onChange={(e) => {
         setFilter(e.target.value || undefined); // Set undefined to remove the filter entirely
       }}
-      placeholder={`Search...`}
+      placeholder={``}
     />
   );
 };
@@ -49,8 +54,18 @@ const LangPairsTable = ({ data, pageLimit }) => {
         disableSortBy: true,
       },
       {
+        Header: "Source Code",
+        accessor: "source_tag",
+        disableSortBy: true,
+      },
+      {
         Header: "Target Language",
         accessor: "target_lang",
+        disableSortBy: true,
+      },
+      {
+        Header: "Target Code",
+        accessor: "target_tag",
         disableSortBy: true,
       },
       {
@@ -58,10 +73,12 @@ const LangPairsTable = ({ data, pageLimit }) => {
         id: "model",
         disableSortBy: true,
         disableFilters: true,
+        minWidth: 100,
+        width: 108,
         accessor: (data) => (
-          <Link to={`/models/${data.model.id}`} className="btn-link">
+          <a href={`/models/${data.model.id}`} className="btn-link">
             {data.model.name}
-          </Link>
+          </a>
         ),
       },
       {
@@ -101,7 +118,9 @@ const LangPairsTable = ({ data, pageLimit }) => {
       },
     },
     useFilters,
-    useSortBy
+    useSortBy,
+    useFlexLayout,
+    useBlockLayout
   );
 
   const firstPageRows = rows.slice(0, pageLimit);
@@ -154,7 +173,12 @@ const LangPairsTable = ({ data, pageLimit }) => {
                 return (
                   <td
                     className={cell.column.canSort ? "text-right" : ""}
-                    {...cell.getCellProps()}
+                    {...cell.getCellProps({
+                      style: {
+                        width: cell.column.width,
+                        minWidth: cell.column.minWidth,
+                      },
+                    })}
                   >
                     {cell.render("Cell")}
                   </td>

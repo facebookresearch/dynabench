@@ -183,9 +183,9 @@ const FloresTaskPage = (props) => {
               for a detailed view of the resources.
             </p>
 
-            <Row>
+            <Row className="mt-2">
               <Annotation
-                placement="top-start"
+                placement="top-end"
                 tooltip="This shows how models have performed on a specific track"
               >
                 <FloresModelLeaderBoard
@@ -194,14 +194,16 @@ const FloresTaskPage = (props) => {
                   taskId={task.id}
                 />
               </Annotation>
-            </Row>
-
-            <Row>
-              <FloresPairsLeaderBoard
-                {...props}
-                taskTitle={task?.name}
-                taskId={task.id}
-              />
+              <Annotation
+                placement="top-end"
+                tooltip="Best BLEU scores on specific language pairs. Filter by source and target language language"
+              >
+                <FloresPairsLeaderBoard
+                  {...props}
+                  taskTitle={task?.name}
+                  taskId={task.id}
+                />
+              </Annotation>
             </Row>
           </Col>
         </Row>
