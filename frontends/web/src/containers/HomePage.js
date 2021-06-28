@@ -62,9 +62,7 @@ class HomePage extends React.Component {
             <Card
               key={task.id}
               className="task-card"
-              onClick={() =>
-                this.props.history.push(`/tasks/${task.id}#overall`)
-              }
+              onClick={() => this.props.history.push(`/tasks/${task.id}`)}
             >
               <h2 className="task-header blue-color text-uppercase text-center">
                 {task.name}

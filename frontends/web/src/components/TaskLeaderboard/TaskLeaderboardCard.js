@@ -187,11 +187,7 @@ const TaskLeaderboardCard = (props) => {
   return (
     <Card className="my-4">
       <Card.Header className="light-gray-bg d-flex align-items-center">
-        <h2 className="text-uppercase m-0 text-reset">
-          {props && props.location && props.location.hash === "#overall"
-            ? "Overall Model Leaderboard"
-            : "Round " + props.displayRoundId + " Model Leaderboard"}
-        </h2>
+        <h2 className="text-uppercase m-0 text-reset">Model Leaderboard</h2>
         <div className="d-flex justify-content-end flex-fill">
           <Modal
             size="lg"
