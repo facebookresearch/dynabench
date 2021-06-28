@@ -1,5 +1,18 @@
-import React, { useState, useEffect, useContext, useMemo } from "react";
-import { Card, Col, Spinner, Table } from "react-bootstrap";
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  useMemo,
+  forwardRef,
+} from "react";
+import {
+  Card,
+  Col,
+  Spinner,
+  Table,
+  Dropdown,
+  FormControl,
+} from "react-bootstrap";
 import {
   useTable,
   useFilters,
@@ -30,18 +43,94 @@ const preList = (model, perf_tags) => {
   return [modelData];
 };
 
+const unique = (data, values, propertyName) => {
+  return data.filter(
+    (e, i) =>
+      data.findIndex(
+        (a) => a[values][propertyName] === e[values][propertyName]
+      ) === i
+  );
+};
+
+const CustomToggle = forwardRef(({ children, onClick }, ref) => (
+  <span
+    ref={ref}
+    onClick={(e) => {
+      e.preventDefault();
+      onClick(e);
+    }}
+  >
+    {children}
+    <i className="fas fa-sort-down ml-1"></i>
+  </span>
+));
+
+const LanguageMenu = forwardRef(
+  ({ children, style, "aria-labelledby": labeledBy }, ref) => {
+    const [value, setValue] = useState("");
+    return (
+      <div
+        ref={ref}
+        style={style}
+        className="lang-dropdown"
+        aria-labelledby={labeledBy}
+      >
+        <FormControl
+          autoFocus
+          className="mx-3 my-2 w-auto"
+          size="sm"
+          placeholder="Select a language"
+          onChange={(e) => setValue(e.target.value)}
+          value={value || ""}
+        />
+        <ul className="list-unstyled">
+          {React.Children.toArray(children).filter(
+            (child) =>
+              !value || child.props.children.toLowerCase().startsWith(value)
+          )}
+        </ul>
+      </div>
+    );
+  }
+);
+
 const DefaultColumnFilter = ({
-  column: { filterValue, preFilteredRows, setFilter },
+  column: { filterValue, preFilteredRows, setFilter, id },
 }) => {
+  const [selected, setSelected] = useState(null);
+  const handleSelection = (e) => {
+    setFilter(e || undefined);
+    setSelected(e);
+  };
+
   return (
-    <input
-      className="table-input"
-      value={filterValue || ""}
-      onChange={(e) => {
-        setFilter(e.target.value || undefined); // Set undefined to remove the filter entirely
-      }}
-      placeholder={``}
-    />
+    <span className="search-line">
+      <Dropdown onSelect={handleSelection}>
+        <Dropdown.Toggle
+          as={CustomToggle}
+          id="dropdown-custom-components"
+        ></Dropdown.Toggle>
+        <Dropdown.Menu as={LanguageMenu}>
+          <Dropdown.Item
+            key={"0"}
+            eventKey={""}
+            active={selected === "* All" ? true : false}
+          >
+            * All
+          </Dropdown.Item>
+          {preFilteredRows &&
+            unique(preFilteredRows, "values", id).map((i, index) => (
+              <Dropdown.Item
+                key={i.id}
+                eventKey={i.values[id]}
+                active={selected === i.values[id] ? true : false}
+              >
+                {i.values[id]}
+              </Dropdown.Item>
+            ))}
+        </Dropdown.Menu>
+      </Dropdown>
+    </span>
   );
 };
 
@@ -50,31 +139,24 @@ const LangPairsTable = ({ data, pageLimit }) => {
     () => [
       {
         Header: "Source Language",
-        accessor: "source_lang",
+        id: "source_lang",
+        accessor: (data) => `${data.source_lang} (${data.source_tag})`,
         disableSortBy: true,
-      },
-      {
-        Header: "Source Code",
-        accessor: "source_tag",
-        disableSortBy: true,
+        minWidth: 220,
       },
       {
         Header: "Target Language",
-        accessor: "target_lang",
+        id: "target_lang",
+        accessor: (data) => `${data.target_lang} (${data.target_tag})`,
         disableSortBy: true,
-      },
-      {
-        Header: "Target Code",
-        accessor: "target_tag",
-        disableSortBy: true,
+        minWidth: 220,
       },
       {
         Header: "Model",
         id: "model",
         disableSortBy: true,
         disableFilters: true,
-        minWidth: 100,
-        width: 108,
+        minWidth: 110,
         accessor: (data) => (
           <a href={`/models/${data.model.id}`} className="btn-link">
             {data.model.name}
@@ -154,11 +236,8 @@ const LangPairsTable = ({ data, pageLimit }) => {
                     ""
                   )}{" "}
                   {column.render("Header")}
-                </span>
-
-                <div>
-                  {!column.disableFilters ? column.render("Filter") : null}
-                </div>
+                </span>{" "}
+                {!column.disableFilters ? column.render("Filter") : null}
               </th>
             ))}
           </tr>
@@ -259,11 +338,11 @@ const FloresPairsLeaderBoard = ({ taskId, history, ...props }) => {
   if (isLoading) return <Spinner animation="border" />;
 
   return (
-    <Col className="ml-auto mr-auto" md={"8"}>
+    <Col className="ml-auto mr-auto" md={"7"}>
       <Card className="my-4">
         <Card.Header className="light-gray-bg">
           <h2 className="text-uppercase m-0 text-reset">
-            Language-Pair Leaderboard Top 10
+            Language-Pair Leaderboard
           </h2>
         </Card.Header>
         <Card.Body className="p-0 leaderboard-container">

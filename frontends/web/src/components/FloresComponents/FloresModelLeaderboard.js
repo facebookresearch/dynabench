@@ -152,7 +152,7 @@ const ModelLeaderBoard = ({ taskId, history, isTop5 }) => {
   if (isLoading) return <Spinner animation="border" />;
 
   return (
-    <Col className="ml-auto mr-auto" md={isTop5 ? "12" : "4"}>
+    <Col className="ml-auto mr-auto" md={isTop5 ? "12" : "5"}>
       <Card className="my-4">
         <Card.Header className="light-gray-bg">
           <h2 className="text-uppercase m-0 text-reset">
