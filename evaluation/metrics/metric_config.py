@@ -6,7 +6,8 @@ from metrics import metrics
 # all eval_metrics takes predictions and targets as input, and output a metric number
 eval_metrics_config = {
     "accuracy": metrics.get_accuracy,
-    "f1": metrics.get_f1,
+    "macro_f1": metrics.get_macro_f1,
+    "squad_f1": metrics.get_squad_f1,
     "bleu": metrics.get_bleu,
     "sp_bleu": metrics.get_sp_bleu,
 }
@@ -23,7 +24,8 @@ job_metrics_config = {
 
 metrics_meta_config = {
     "accuracy": metrics.get_accuracy_meta,
-    "f1": metrics.get_f1_meta,
+    "macro_f1": metrics.get_macro_f1_meta,
+    "squad_f1": metrics.get_squad_f1_meta,
     "bleu": metrics.get_bleu_meta,
     "sp_bleu": metrics.get_sp_bleu_meta,
     "memory_utilization": metrics.get_memory_utilization_meta,

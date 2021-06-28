@@ -438,7 +438,6 @@ class TaskPage extends React.Component {
             },
             function () {
               this.refreshData();
-              this.getSavedTaskSettings();
             }
           );
         },
@@ -482,16 +481,23 @@ class TaskPage extends React.Component {
   getSavedTaskSettings() {
     if (this.state.task.settings_json) {
       const settings_json = JSON.parse(this.state.task.settings_json);
-      if (settings_json.hasOwnProperty("validate_non_fooling")) {
-        this.setState({
-          validateNonFooling: settings_json["validate_non_fooling"],
-        });
-      }
-      if (settings_json.hasOwnProperty("num_matching_validations")) {
-        this.setState({
-          numMatchingValidations: settings_json["num_matching_validations"],
-        });
-      }
+      this.setState({
+        validateNonFooling: settings_json.hasOwnProperty("validate_non_fooling")
+          ? settings_json["validate_non_fooling"]
+          : false,
+      });
+      this.setState({
+        numMatchingValidations: settings_json.hasOwnProperty(
+          "num_matching_validations"
+        )
+          ? settings_json["num_matching_validations"]
+          : 3,
+      });
+    } else {
+      this.setState({
+        validateNonFooling: false,
+        numMatchingValidations: 3,
+      });
     }
   }
 
@@ -509,6 +515,7 @@ class TaskPage extends React.Component {
           this.state.userLeaderBoardPage,
           this.state.displayRound
         );
+        this.getSavedTaskSettings();
         this.fetchTrend();
       }
     );

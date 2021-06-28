@@ -14,5 +14,6 @@ boto3
 yoyo-migrations
 pandas
 sacrebleu
+sklearn
 git+https://github.com/facebookresearch/dynalab.git
 sentencepiece
