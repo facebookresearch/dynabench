@@ -358,23 +358,19 @@ export default class ApiService {
     { context, hypothesis, answer, image_url, question, insight, statement }
   ) {
     const uid = "0"; //A requied field for dynalab uploaded models
-    return this.doFetch(
-      modelUrl,
-      {
-        method: "POST",
-        body: JSON.stringify({
-          uid,
-          context,
-          hypothesis,
-          answer,
-          image_url,
-          question,
-          insight,
-          statement,
-        }),
-      },
-      false
-    );
+    return this.fetch(modelUrl, {
+      method: "POST",
+      body: JSON.stringify({
+        uid,
+        context,
+        hypothesis,
+        answer,
+        image_url,
+        question,
+        insight,
+        statement,
+      }),
+    });
   }
 
   exportData(tid, rid = null) {
