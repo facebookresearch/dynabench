@@ -68,7 +68,7 @@ const TaskTrend = ({ data }) => {
     <>
       <Card className="my-4">
         <Card.Header className="p-3 light-gray-bg">
-          <h2 className="text-uppercase m-0 text-reset">Model Trends</h2>
+          <h2 className="text-uppercase m-0 text-reset">Model Performance vs. Round </h2>
         </Card.Header>
         <Card.Body className="px-1 py-5">
           {/* Mobile / Tablet / Desktop charts */}
