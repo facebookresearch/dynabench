@@ -269,7 +269,7 @@ const UserLeaderBoard = (props) => {
   return (
     <Annotation
       placement="left"
-      tooltip="This shows how well our users did on this task. This does not include Mechanical Turkers."
+      tooltip="This shows how well our users did on this task. This does not include data collected from non-Dynabench users such as Mechanical Turkers."
     >
       <Card className="my-4">
         <Card.Header className="light-gray-bg d-flex align-items-center">
@@ -338,15 +338,13 @@ const UserLeaderBoard = (props) => {
           <Pagination className="mb-0 float-right" size="sm">
             <Pagination.Item
               disabled={!props.userLeaderBoardPage}
-              onClick={() =>
-                props.paginate("user", "previous", props.displayRound)
-              }
+              onClick={() => props.paginate("previous", props.displayRound)}
             >
               Previous
             </Pagination.Item>
             <Pagination.Item
               disabled={props.isEndOfUserLeaderPage}
-              onClick={() => props.paginate("user", "next", props.displayRound)}
+              onClick={() => props.paginate("next", props.displayRound)}
             >
               Next
             </Pagination.Item>
@@ -412,8 +410,6 @@ class TaskPage extends React.Component {
       modelLeaderBoardData: [],
       modelLeaderBoardTags: [],
       userLeaderBoardData: [],
-      modelLeaderBoardPage: 0,
-      isEndOfModelLeaderPage: true,
       userLeaderBoardPage: 0,
       isEndOfUserLeaderPage: true,
       pageLimit: 7,
@@ -504,8 +500,6 @@ class TaskPage extends React.Component {
   refreshData() {
     this.setState(
       {
-        modelLeaderBoardPage: 0,
-        isEndOfModelLeaderPage: true,
         userLeaderBoardPage: 0,
         isEndOfUserLeaderPage: true,
         displayRound: "overall",
@@ -613,13 +607,11 @@ class TaskPage extends React.Component {
     );
   };
 
-  paginate = (component, state, round) => {
-    const componentPageState =
-      component === "model" ? "modelLeaderBoardPage" : "userLeaderBoardPage";
+  userLeaderBoardPaginate = (state, round) => {
     const page =
       state === "next"
-        ? this.state[componentPageState] + 1
-        : this.state[componentPageState] - 1;
+        ? this.state.userLeaderBoardPage + 1
+        : this.state.userLeaderBoardPage - 1;
     this.fetchOverallUserLeaderboard(page, round);
   };
 
@@ -920,27 +912,24 @@ class TaskPage extends React.Component {
               />
             </Col>
           </Row>
-          {(process.env.REACT_APP_ENABLE_DYNABOARD === "true" ||
-            this.context.user.admin) &&
-            this.state.task &&
-            this.state.task.ordered_scoring_datasets && (
-              <Row className="justify-content-center">
-                <Col xs={12} md={12}>
-                  <Annotation
-                    placement="left"
-                    tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
-                  >
-                    <TaskLeaderboardCard
-                      {...this.props}
-                      modelLeaderBoardData={this.state.modelLeaderBoardData}
-                      modelLeaderBoardTags={this.state.modelLeaderBoardTags}
-                      task={this.state.task}
-                      taskId={this.state.taskId}
-                    />
-                  </Annotation>
-                </Col>
-              </Row>
-            )}
+          {this.state.task && this.state.task.ordered_scoring_datasets && (
+            <Row className="justify-content-center">
+              <Col xs={12} md={12}>
+                <Annotation
+                  placement="left"
+                  tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
+                >
+                  <TaskLeaderboardCard
+                    {...this.props}
+                    modelLeaderBoardData={this.state.modelLeaderBoardData}
+                    modelLeaderBoardTags={this.state.modelLeaderBoardTags}
+                    task={this.state.task}
+                    taskId={this.state.taskId}
+                  />
+                </Annotation>
+              </Col>
+            </Row>
+          )}
           <Row>
             <Col xs={12} md={6}>
               <UserLeaderBoard
@@ -948,7 +937,7 @@ class TaskPage extends React.Component {
                 round={this.state.task.round}
                 cur_round={this.state.task.cur_round}
                 data={this.state.userLeaderBoardData}
-                paginate={this.paginate}
+                paginate={this.userLeaderBoardPaginate}
                 displayRound={this.state.displayRound}
                 isEndOfUserLeaderPage={this.state.isEndOfUserLeaderPage}
                 userLeaderBoardPage={this.state.userLeaderBoardPage}
