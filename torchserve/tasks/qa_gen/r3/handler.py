@@ -5,13 +5,18 @@ import os
 import random
 import time
 
-import torch
-from fairseq.models.transformer import TransformerModel
-from ts.torch_handler.base_handler import BaseHandler
 
-from cache import Cache
-from settings import my_secret
-from shared import check_fields, generate_response_signature, handler_initialize
+import torch  # noqa  # isort:skip
+from fairseq.models.transformer import TransformerModel  # noqa  # isort:skip
+from ts.torch_handler.base_handler import BaseHandler  # noqa  # isort:skip
+
+from cache import Cache  # noqa  # isort:skip
+from settings import my_secret  # noqa  # isort:skip
+from shared import (  # noqa  # isort:skip
+    check_fields,  # noqa  # isort:skip
+    generate_response_signature,  # noqa  # isort:skip
+    handler_initialize,  # noqa  # isort:skip
+)  # noqa  # isort:skip
 
 
 logger = logging.getLogger(__name__)

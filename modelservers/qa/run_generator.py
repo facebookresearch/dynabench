@@ -10,9 +10,10 @@ import string
 import sys
 import time
 
-from aiohttp import web
-from fairseq.models.transformer import TransformerModel
-from unidecode import unidecode
+
+from aiohttp import web  # noqa  # isort:skip
+from fairseq.models.transformer import TransformerModel  # noqa  # isort:skip
+from unidecode import unidecode  # noqa  # isort:skip
 
 
 sys.path.append("..")  # noqa  # isort:skip
