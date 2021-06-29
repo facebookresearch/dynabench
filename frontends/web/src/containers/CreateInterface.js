@@ -62,7 +62,7 @@ function ContextInfo({ taskType, taskName, text, answer, updateAnswer }) {
   return taskType === "extract" ? (
     <TokenAnnotator
       className="mb-1 p-3 light-gray-bg qa-context"
-      tokens={text.split(/\b/)}
+      tokens={text.split(/\b|(?<=[\s\(\)])|(?=[\s\(\)])/)}
       value={answer}
       onChange={updateAnswer}
       getSpan={(span) => ({
@@ -359,8 +359,9 @@ class ResponseInfo extends React.Component {
     this.flagExample = this.flagExample.bind(this);
     this.explainExample = this.explainExample.bind(this);
     this.setModelState = this.setModelState.bind(this);
-    this.updateHateSpeechTargetMetadata =
-      this.updateHateSpeechTargetMetadata.bind(this);
+    this.updateHateSpeechTargetMetadata = this.updateHateSpeechTargetMetadata.bind(
+      this
+    );
     this.updateExample = this.updateExample.bind(this);
     this.state = {
       loader: true,
@@ -900,8 +901,9 @@ class CreateInterface extends React.Component {
       mapKeyToExampleId: {},
     };
     this.getNewContext = this.getNewContext.bind(this);
-    this.handleGoalMessageTargetChange =
-      this.handleGoalMessageTargetChange.bind(this);
+    this.handleGoalMessageTargetChange = this.handleGoalMessageTargetChange.bind(
+      this
+    );
     this.handleResponse = this.handleResponse.bind(this);
     this.handleResponseChange = this.handleResponseChange.bind(this);
     this.switchLiveMode = this.switchLiveMode.bind(this);
@@ -999,8 +1001,7 @@ class CreateInterface extends React.Component {
   instantlyScrollToBottom() {
     setTimeout(() => {
       if (this.chatContainerRef.current)
-        this.chatContainerRef.current.scrollTop =
-          this.chatContainerRef.current.scrollHeight;
+        this.chatContainerRef.current.scrollTop = this.chatContainerRef.current.scrollHeight;
     }, 0);
   }
 

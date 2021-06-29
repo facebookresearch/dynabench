@@ -80,6 +80,25 @@ if __name__ == "__main__":
                     }
                 }
             ]
+        elif config["task"] in ["qa_gen"]:
+            data = [
+                {
+                    "body": {
+                        "answer": "Manchester",
+                        "context": "Old Trafford is a football stadium "
+                        + " in Old Trafford, "
+                        + "Greater Manchester, England, and the home of "
+                        + "Manchester United. "
+                        + "With a capacity of 75,643, it is the largest club football "
+                        + "stadium in the United Kingdom, the second-largest football "
+                        + "stadium, and the eleventh-largest in Europe. "
+                        + "It is about 0.5 mi from Old Trafford Cricket Ground"
+                        + " and the adjacent tram stop.",
+                        "hypothesis": -1,
+                        "statement": "adversarial",
+                    }
+                }
+            ]
         elif config["task"] == "nli":
             data = [
                 {

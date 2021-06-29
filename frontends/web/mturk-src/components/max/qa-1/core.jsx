@@ -509,22 +509,10 @@ class TaskModelInstructions extends React.Component {
   }
 }
 
-class MaxQATaskMain extends React.Component {
+class ExperimentInstructions extends React.Component {
   constructor(props) {
     super(props);
-    this.api = props.api;
-    this.model_names = [
-      "roberta_r1",
-      "roberta_r2",
-      "roberta_r2_synthq",
-      "roberta_r2_synthq_ext",
-    ];
-    this.model_urls = [
-      "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=qa-r1-2",
-      "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=qa-r2-1",
-      "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=qa-r2-2",
-      "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=qa-r2-3",
-    ];
+    this.experiment_mode_id = props.experiment_mode_id;
     this.state = { showInstructions: false };
     this.showInstructions = this.showInstructions.bind(this);
   }
@@ -532,64 +520,110 @@ class MaxQATaskMain extends React.Component {
     this.setState({ showInstructions: !this.state.showInstructions });
   }
   render() {
+    return (
+      <Container>
+        <Row>
+          <div
+            className="card-header text-white py-2"
+            style={{
+              backgroundColor: "#007bff",
+              borderColor: "#007bff",
+              width: "100%",
+              borderRadius: "0 0 4px 4px",
+              cursor: "pointer",
+            }}
+            onClick={this.showInstructions}
+          >
+            <span style={{ fontWeight: "bold" }}>Instructions</span>&nbsp;
+            (Click to expand)
+          </div>
+        </Row>
+        {this.state.showInstructions && (
+          <Row>
+            <TaskModelInstructions />
+          </Row>
+        )}
+        <Row>
+          <h4 className="mt-3">
+            Can you ask Questions that fool the AI into giving the wrong answer?
+          </h4>
+          <small className="mb-3">
+            <b>Note:</b> you will earn an <b>additional $0.50 BONUS</b> for
+            every question that <b>beats the AI</b>, abides by the requirements
+            specified in the instructions above, and is successfully validated
+            by other human annotators. This means that you could potentially
+            earn <b>an additional $2.50 per HIT!</b> Kindly note that validation
+            is a manual process meaning that bonuses will not be paid out
+            immediately, and we thank you in advance for your understanding and
+            patience with this.
+          </small>
+        </Row>
+      </Container>
+    );
+  }
+}
+
+class MaxQATaskMain extends React.Component {
+  constructor(props) {
+    super(props);
+    this.api = props.api;
+    this.model_names = ["electra-synqa"];
+    this.model_urls = [
+      "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=ts1624132576-electra-synqa",
+    ];
+    this.generator_names = [
+      "qgen_dcombined",
+      "qgen_squad1",
+      "qgen_dcombined_plus_squad_10k",
+    ];
+    this.generator_urls = [
+      "http://0.0.0.0:8097/cce63f4d8238fc8061a2e3a268afe1c14c0e2135580bc1680aec62dc20f68e81",
+      "http://0.0.0.0:8097/cce63f4d8238fc8061a2e3a268afe1c14c0e2135580bc1680aec62dc20f68e81",
+      "http://0.0.0.0:8097/cce63f4d8238fc8061a2e3a268afe1c14c0e2135580bc1680aec62dc20f68e81",
+      // "http://0.0.0.0:8097/cce63f4d8238fc8061a2e3a268afe1c14c0e2135580bc1680aec62dc20f68e81",
+    ];
+  }
+
+  render() {
     // console.log(this.props);
     var mephistoIdCode = this.props.mephistoWorkerId
       .toString()
       .split("")
       .map((x) => x.charCodeAt(0))
       .reduce((a, b) => a + b);
-    var model_id = mephistoIdCode % this.model_names.length;
+
+    var num_experiments = 9;
+    var experiment_mode_id = mephistoIdCode % num_experiments;
+
+    var model_id = 0;
     var model_name = this.model_names[model_id];
     var model_url = this.model_urls[model_id];
 
-    console.log(mephistoIdCode, model_id, model_name);
+    var generator_id = 0;
+    var generator_name = this.generator_names[generator_id];
+    var generator_url = this.generator_urls[generator_id];
+
+    var filter_mode = "adversarial";
+
+    console.log(
+      mephistoIdCode,
+      model_id,
+      model_name,
+      generator_id,
+      generator_name,
+      filter_mode
+    );
 
     return (
       <>
-        <Container>
-          <Row>
-            <div
-              className="card-header text-white py-2"
-              style={{
-                backgroundColor: "#007bff",
-                borderColor: "#007bff",
-                width: "100%",
-                borderRadius: "0 0 4px 4px",
-                cursor: "pointer",
-              }}
-              onClick={this.showInstructions}
-            >
-              <span style={{ fontWeight: "bold" }}>Instructions</span>&nbsp;
-              (Click to expand)
-            </div>
-          </Row>
-          {this.state.showInstructions && (
-            <Row>
-              {" "}
-              <TaskModelInstructions />{" "}
-            </Row>
-          )}
-          <Row>
-            <h4 className="mt-3">
-              Can you ask Questions that fool the AI into giving the wrong
-              answer?
-            </h4>
-            <small className="mb-3">
-              <b>Note:</b> you will earn an <b>additional $0.50 BONUS</b> for
-              every question that <b>beats the AI</b>, abides by the
-              requirements specified in the instructions above, and is
-              successfully validated by other human annotators. This means that
-              you could potentially earn <b>an additional $2.50 per HIT!</b>{" "}
-              Kindly note that validation is a manual process meaning that
-              bonuses will not be paid out immediately, and we thank you in
-              advance for your understanding and patience with this.
-            </small>
-          </Row>
-        </Container>
+        <ExperimentInstructions experiment_mode_id={experiment_mode_id} />
         <CreateInterface
           api={this.api}
           model_name={model_name}
           model_url={model_url}
+          generator_name={generator_name}
+          generator_url={generator_url}
+          filter_mode={filter_mode}
           {...this.props}
         />
       </>

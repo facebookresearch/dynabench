@@ -37,11 +37,8 @@ class ContextInfo extends React.Component {
     return this.props.taskType == "extract" ? (
       <>
         <TokenAnnotator
-          style={{
-            lineHeight: 1.5,
-          }}
-          className="context"
-          tokens={this.props.text.split(/\b/)}
+          className="mb-1 p-3 light-gray-bg qa-context"
+          tokens={this.props.text.split(/\b|(?<=[\s\(\)])|(?=[\s\(\)])/)}
           value={this.props.answer}
           onChange={this.props.updateAnswer}
           getSpan={(span) => ({
@@ -77,6 +74,9 @@ class CreateInterface extends React.Component {
     this.api = props.api;
     this.model_name = props.model_name;
     this.model_url = props.model_url;
+    this.generator_name = props.generator_name;
+    this.generator_url = props.generator_url;
+    this.filter_mode = props.filter_mode;
     this.state = {
       answer: [],
       taskId: props.taskConfig.task_id,
@@ -322,6 +322,9 @@ class CreateInterface extends React.Component {
           model: "no-model",
           model_name: this.model_name,
           model_url: this.model_url,
+          generator_name: this.generator_name,
+          generator_url: this.generator_url,
+          filter_mode: this.filter_mode,
           current_tries: this.state.tries,
           exampleHistory: JSON.stringify(this.state.exampleHistory),
           modelInputs: last_example.modelInputs,
@@ -433,20 +436,26 @@ class CreateInterface extends React.Component {
           context: this.state.context.context,
           answer: answer_text,
           hypothesis: question_cache_id,
+          statement: this.filter_mode,
+          insight: "5|0.4|0.4",
         };
 
         console.log("model inputs:");
         console.log(modelInputs);
 
-        let generator_url =
-          "http://0.0.0.0:8097/cce63f4d8238fc8061a2e3a268afe1c14c0e2135580bc1680aec62dc20f68e81";
-        // this.model_url was this.state.task.round.url
         this.api
-          .getModelResponse(generator_url, modelInputs)
+          .getModelResponse(this.generator_url, modelInputs)
           .then((result) => {
             // console.log(result);
+            // if we have generated questions, we need to sort appropriately
+            if (result["question_type"] == "generated") {
+              var question = result["questions"][0];
+            } else {
+              var question = result["questions"][0];
+            }
+
             this.setState({
-              hypothesis: result["question"],
+              hypothesis: question,
               progressGenerating: false,
               submitDisabled: false,
               generateDisabled: false,
@@ -456,7 +465,7 @@ class CreateInterface extends React.Component {
                 {
                   timestamp: new Date().valueOf(),
                   answer: answer_text,
-                  question: result["question"],
+                  question: question,
                   questionType: result["question_type"], // cache or generated or manual
                   questionCacheId: result["question_cache_id"],
                   activityType: "Generated a question",
@@ -572,7 +581,7 @@ class CreateInterface extends React.Component {
     const content = content_list.map((item, index) =>
       item.cls == "context" ? (
         <ContextInfo
-          key={item.index}
+          key={index}
           index={item.index}
           text={item.text}
           targets={this.state.task.targets}
@@ -583,7 +592,7 @@ class CreateInterface extends React.Component {
         />
       ) : (
         <div
-          key={item.index}
+          key={index}
           className={
             item.cls +
             " rounded border " +

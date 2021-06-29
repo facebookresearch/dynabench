@@ -1,37 +1,41 @@
 /*
- * Copyright (c) Facebook, Inc. and its affiliates.
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
+* Copyright (c) Facebook, Inc. and its affiliates.
+* This source code is licensed under the MIT license found in the
+* LICENSE file in the root directory of this source tree.
+*/
 
- body {
-     padding-top: 0;
- }
+body {
+    padding-top: 0;
+}
 
- li {
+li {
     list-style: disc outside none;
     display: list-item;
     margin-left: 1.5em;
-  }
+}
 
- .qa-context > span {
+.light-gray-bg {
+    background-color: rgba(108, 117, 125, 0.1);
+}
+
+.qa-context > span {
     /* Fix for react-text-annote token annotator added whitespace around tokens */
     margin-right: -4px;
     white-space: pre-wrap;
     letter-spacing: 0.2px;
     line-height: 1.8;
- }
+}
 
- .qa-context > mark {
-     margin-right: 2px;
- }
+.qa-context > mark {
+    margin-right: 2px;
+}
 
- .ans-good {
+.ans-good {
     color: #008000;
 }
 
 .ans-bad {
-    color: #C00000;
+    color: #c00000;
 }
 
 .title-text h4 {
@@ -51,7 +55,7 @@
     white-space: pre-wrap;
     word-break: normal;
     font-weight: 400;
-    border: 2px solid #1994D5;
+    border: 2px solid #1994d5;
     border-radius: 4px;
     background-color: #fff;
     line-height: 1.5em;

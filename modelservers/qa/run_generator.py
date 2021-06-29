@@ -24,6 +24,20 @@ from common import (  # noqa  # isort:skip
 from settings import my_round_id, my_secret, my_task_id  # noqa  # isort:skip
 
 
+device = "cpu"
+# ROOT_DIR = '/checkpoint/maxbartolo/qgen/qa_gen/'
+ROOT_DIR = os.path.expanduser("~/Desktop/qgen/")
+MODEL_PATHS = {
+    "train_dcombined_plus_squad10k": {
+        "model": os.path.join(ROOT_DIR, "train_dcombined_plus_squad_10k/"),
+        "cache": os.path.join(ROOT_DIR, "train_dcombined_plus_squad_10k/cache.json"),
+    }
+}
+MODEL_KEY = "train_dcombined_plus_squad10k"
+SPECIAL_TOKENS = {"bos_token": "<s>", "eos_token": "</s>", "sep_token": "</s>"}
+DEFAULT_BEAM_SIZE = 5
+
+
 # Disable for deployment
 logging.basicConfig(level=logging.DEBUG)
 
@@ -89,28 +103,42 @@ class Cache:
         self,
         context: str,
         answer: str,
-        is_adversarial: bool = False,
-        is_uncertain: bool = False,
         min_q_index=-1,
+        filter_mode="",
+        threshold_adversarial=0.4,
+        threshold_uncertain=0.4,
     ) -> str:
         context_key = self.hash(
             self.normalize(context, is_answer=False, remove_punctuation=False)
         )
         answer_key = self.normalize(answer)
+        if answer == "":
+            answer_key = random.choice(self.cache.get(context_key, {}).keys())
         questions = self.cache.get(context_key, {}).get(answer_key, [])
         logging.info(
             f"Getting from cache with answer ({answer}), min_q_index ({min_q_index}) \
             of type {type(min_q_index)}"
         )
-        logging.info(f"Available questions are: {questions}")
+        # logging.info(f"Available questions are: {questions}")
+        logging.info(f"There are {len(questions)} questions available.")
+
+        if filter_mode == "adversarial":
+            questions = sorted(questions, key=lambda q: q["metadata_pred"]["f1_to_ans"])
+            questions = [
+                q
+                for q in questions
+                if q["metadata_pred"]["f1_to_ans"] <= threshold_adversarial
+            ]
+        elif filter_mode == "uncertain":
+            questions = sorted(questions, key=lambda q: q["metadata_pred"]["conf"])
+            questions = [
+                q
+                for q in questions
+                if q["metadata_pred"]["conf"] <= threshold_uncertain
+            ]
+
         for i, q in enumerate(questions):
             if i <= min_q_index:
-                continue
-
-            if is_adversarial and not q["is_adversarial"]:
-                continue
-
-            if is_uncertain and not q["is_uncertain"]:
                 continue
 
             q["q_index"] = i
@@ -119,27 +147,9 @@ class Cache:
         return False
 
 
-device = "cpu"
-# ROOT_DIR = '/checkpoint/maxbartolo/qgen/qa_gen/'
-ROOT_DIR = os.path.expanduser("~/Desktop/qgen/")
-model_paths = {
-    "train_dcombined": os.path.join(ROOT_DIR, "train_dcombined_plus_squad_10k/")
-}
-cache_paths = {
-    "train_dcombined": os.path.join(
-        ROOT_DIR, "train_dcombined_plus_squad_10k/cache.json"
-    )
-}
-
-model_key = "train_dcombined"
-task = "qa"
-
-SPECIAL_TOKENS = {"bos_token": "<s>", "eos_token": "</s>", "sep_token": "</s>"}
-
-
 # Load the model
-model_path = model_paths[model_key]
-cache_path = cache_paths[model_key]
+model_path = MODEL_PATHS[MODEL_KEY]["model"]
+cache_path = MODEL_PATHS[MODEL_KEY]["cache"]
 logging.info(f"Loading model from: {model_path}")
 
 model = TransformerModel.from_pretrained(
@@ -147,7 +157,7 @@ model = TransformerModel.from_pretrained(
     checkpoint_file="checkpoint_best.pt",
     bpe="gpt2",
     fp16=True,
-    beam=5,
+    beam=DEFAULT_BEAM_SIZE,
     sampling=True,
     sampling_topp=0.75,
 )
@@ -191,19 +201,41 @@ async def handle_submit_post(request):
         context = post_data["context"].strip()
         answer = post_data["answer"].strip()
         min_q_index = int(post_data.get("hypothesis", -1))
+        filter_mode = post_data.get("statement", "")
+
+        generate_batch_size = 5
+        threshold_adversarial = 0.4
+        threshold_uncertain = 0.4
+        additional_args = post_data.get("insight", "").split("|")
+        if len(additional_args) > 0:
+            generate_batch_size = int(additional_args[0])
+        if len(additional_args) > 1:
+            threshold_adversarial = float(additional_args[1])
+        if len(additional_args) > 2:
+            threshold_uncertain = float(additional_args[2])
+
         logging.info(f"post_data: {post_data}")
 
         # logging.info("Passage: {}".format(context))
         logging.info(f"Answer: {answer}")
         logging.info(f"min_q_index: {min_q_index}")
+        logging.info(f"filter_mode: {filter_mode}")
+        logging.info(f"generate_batch_size: {generate_batch_size}")
+        logging.info(f"threshold_adversarial: {threshold_adversarial}")
+        logging.info(f"threshold_uncertain: {threshold_uncertain}")
 
         # Check if we have example in cache
         cache_result = cache.get(
-            context=context, answer=answer, min_q_index=min_q_index
+            context=context,
+            answer=answer,
+            min_q_index=min_q_index,
+            filter_mode=filter_mode,
+            threshold_adversarial=threshold_adversarial,
+            threshold_uncertain=threshold_uncertain,
         )
         logging.info(f"Cache result: {cache_result}")
         if cache_result:
-            response["question"] = cache_result["question"]
+            response["questions"] = [cache_result["q"]]
             response["question_cache_id"] = cache_result["q_index"]
             response["question_type"] = "cache"
             # Introduce a random delay
@@ -213,13 +245,24 @@ async def handle_submit_post(request):
             # Prepare the example for querying the model
             example = [answer, context]
             ex_input = convert_example_to_input(example)
-            logging.info(f"Example Input: {ex_input}")
+            ex_inputs = [ex_input]
+            if filter_mode != "":
+                ex_inputs *= generate_batch_size
 
-            output = model.translate(ex_input)
-            clean_output = clean_special_tokens(output)
+            logging.info(
+                f"Example Input: {ex_input} generating {len(ex_inputs)} examples."
+            )
+
+            output = model.translate(
+                ex_inputs, beam=max(DEFAULT_BEAM_SIZE, generate_batch_size)
+            )
+            if isinstance(output, str):
+                clean_output = clean_special_tokens(output)
+            else:
+                clean_output = [clean_special_tokens(q) for q in output]
             logging.info(f"Example Output: {clean_output}")
 
-            response["question"] = clean_output
+            response["questions"] = clean_output
             response["question_cache_id"] = -1
             response["question_type"] = "generated"
 
@@ -231,7 +274,12 @@ async def handle_submit_post(request):
         my_task_id,
         my_round_id,
         my_secret,
-        [str(response["question"]), post_data["context"], post_data["answer"]],
+        [
+            "|".join(response["questions"]),
+            str(post_data["context"]),
+            str(post_data["answer"]),
+            str(response["question_cache_id"]),
+        ],
     )
 
     cors_url = request.headers.get("origin")
