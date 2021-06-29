@@ -22,10 +22,10 @@ import {
   DivyanshQATaskMain,
 } from "./divyansh/qa-1/core.jsx";
 import {
-  MaxQATaskPreview, 
-  MaxQATaskOnboarder, 
-  MaxQATaskMain 
-} from './max/qa-1/core.jsx';
+  MaxQATaskPreview,
+  MaxQATaskOnboarder,
+  MaxQATaskMain,
+} from "./max/qa-1/core.jsx";
 import {
   NLITaskPreview,
   NLITaskOnboarder,
@@ -77,7 +77,7 @@ const TaskComponents = {
   "nli-1": [NLITaskPreview, NLITaskOnboarder, NLITaskMain],
   "nli-4-mturk": [NLIR4TaskPreview, NLIR4TaskOnboarder, NLIR4TaskMain],
   "sa-zen": [SentimentTaskPreview, SentimentTaskOnboarder, SentimentTaskMain],
-  'max-qa-1': [MaxQATaskPreview, MaxQATaskOnboarder, MaxQATaskMain],
+  "max-qa-1": [MaxQATaskPreview, MaxQATaskOnboarder, MaxQATaskMain],
   "vqa-1": [VQATaskPreview, VQATaskOnboarder, VQATaskMain],
   "vqa-val-1": [VQAValPreview, VQAValOnboarding, VQAValMain],
   // TODO: New tasks are added here
