@@ -41,6 +41,7 @@ class Context:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Dynabench Model Deployment")
     parser.add_argument("--inspect", action="store_true", default=False)
+    parser.add_argument("--skip_redownload", action="store_true", default=False)
     parser.add_argument("configs", nargs="+")
     args, remaining_args = parser.parse_known_args()
     assert remaining_args == [], remaining_args
@@ -51,7 +52,10 @@ if __name__ == "__main__":
             quit()
 
         config = load_config(config_path)
-        setup_model(config)
+        if args.skip_redownload:
+            print(f"Skipping re-download of the model due to args.skip_redownload")
+        else:
+            setup_model(config)
         generate_settings_file(config)
         print(config)
         sys.path.append(config["round_path"])
