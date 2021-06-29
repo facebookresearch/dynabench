@@ -269,7 +269,7 @@ const UserLeaderBoard = (props) => {
   return (
     <Annotation
       placement="left"
-      tooltip="This shows how well our users did on this task. This does not include data collected from non-Dynabench users such as Mechanical Turkers."
+      tooltip="This shows how well our users did on this task. This does not include non-Dynabench users such as Mechanical Turkers."
     >
       <Card className="my-4">
         <Card.Header className="light-gray-bg d-flex align-items-center">
