@@ -84,7 +84,7 @@ if __name__ == "__main__":
                     }
                 }
             ]
-        elif config["task"] in ["qa_gen"]:
+        elif config["task"] in ["qagen"]:
             data = [
                 {
                     "body": {
