@@ -33,7 +33,7 @@ import "./FloresPairsLeaderboard.css";
 /**
  * Prepare list of results to display table, takes model and perf_tags as parameters
  *
- * @param {*} model The model object
+ * @param {*} model The model object.
  * @param {*} perf_tags The array of performance tags (language-pairs)
  * @returns
  */
@@ -202,31 +202,26 @@ const LangPairsTable = ({ data, pageLimit }) => {
     []
   );
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-  } = useTable(
-    {
-      columns,
-      data,
-      defaultColumn,
-      initialState: {
-        sortBy: [
-          {
-            id: "perf",
-            desc: true,
-          },
-        ],
+  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
+    useTable(
+      {
+        columns,
+        data,
+        defaultColumn,
+        initialState: {
+          sortBy: [
+            {
+              id: "perf",
+              desc: true,
+            },
+          ],
+        },
       },
-    },
-    useFilters,
-    useSortBy,
-    useFlexLayout,
-    useBlockLayout
-  );
+      useFilters,
+      useSortBy,
+      useFlexLayout,
+      useBlockLayout
+    );
 
   const firstPageRows = rows.slice(0, pageLimit);
 
