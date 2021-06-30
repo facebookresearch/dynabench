@@ -1231,6 +1231,9 @@ class CreateInterface extends React.Component {
           },
           (error) => {
             console.log(error);
+            if (error && error.message && error.message === "Unauthorized") {
+              alert("You need to login to use this feature!");
+            }
             this.setState({
               submitDisabled: false,
               refreshDisabled: false,
