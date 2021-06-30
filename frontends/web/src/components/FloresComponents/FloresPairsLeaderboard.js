@@ -33,8 +33,8 @@ import "./FloresPairsLeaderboard.css";
 /**
  * Prepare list of results to display table, takes model and perf_tags as parameters
  *
- * @param {*} model The model object.
- * @param {*} perf_tags The array of performance tags (language-pairs)
+ * @param {Object} model The model object.
+ * @param {Array} perf_tags The array of performance tags (language-pairs)
  * @returns
  */
 const preList = (model, perf_tags) => {
@@ -59,7 +59,7 @@ const preList = (model, perf_tags) => {
 /**
  * Get unique values to populate dropdown language options.
  *
- * @param {[]} data Prefilterd data
+ * @param {Array} data Prefilterd data
  * @param {String} values Value property in the data
  * @param {String} propertyName The property name to be filtered (source_lang or target_lang)
  * @returns
