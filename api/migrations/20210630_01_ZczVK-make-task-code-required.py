@@ -10,10 +10,6 @@ from yoyo import step
 __depends__ = {"20210623_01_nG0YL-add-new-round-for-qa-task"}
 
 
-def get_task_code(shortname):
-    return "_".join(shortname.lower().split())
-
-
 steps = [
     # First apply customized task codes to match existing folders on S3
     step(
