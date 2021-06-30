@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import React, {
   useState,
   useEffect,
@@ -22,7 +28,7 @@ import {
 } from "react-table";
 import UserContext from "../../containers/UserContext";
 import FloresLanguages from "./FloresLanguages";
-import "./FloresGrid.css";
+import "./FloresPairsLeaderboard.css";
 
 /**
  * Prepare list of results to display table, takes model and perf_tags as parameters
@@ -90,15 +96,17 @@ const LanguageMenu = forwardRef(
         className="lang-dropdown"
         aria-labelledby={labeledBy}
       >
-        <FormControl
-          autoFocus
-          className="mx-3 my-2 w-auto"
-          size="sm"
-          placeholder="Select a language"
-          onChange={(e) => setValue(e.target.value)}
-          value={value || ""}
-        />
-        <ul className="list-unstyled">
+        <div className="search-bar">
+          <FormControl
+            autoFocus
+            className="mx-2"
+            size="sm"
+            placeholder="Select a language"
+            onChange={(e) => setValue(e.target.value)}
+            value={value || ""}
+          />
+        </div>
+        <ul className="my-4 px-0">
           {React.Children.toArray(children).filter(
             (child) =>
               !value || child.props.children.toLowerCase().startsWith(value)
@@ -119,7 +127,7 @@ const DefaultColumnFilter = ({
   };
 
   return (
-    <span className="search-line">
+    <span className="filter-wrapper">
       <Dropdown onSelect={handleSelection}>
         <Dropdown.Toggle
           as={CustomToggle}
@@ -223,7 +231,7 @@ const LangPairsTable = ({ data, pageLimit }) => {
   const firstPageRows = rows.slice(0, pageLimit);
 
   return (
-    <Table hover {...getTableProps()}>
+    <Table hover {...getTableProps()} className="pairs-leaderboard">
       <thead>
         {headerGroups.map((headerGroup) => (
           <tr {...headerGroup.getHeaderGroupProps()}>

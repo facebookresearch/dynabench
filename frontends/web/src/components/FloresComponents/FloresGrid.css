@@ -57,20 +57,3 @@
 .highcharts-data-table tr:hover {
     background: #f1f7ff;
 }
-
-.table-input {
-    border: 0;
-    outline: 0;
-    border-bottom: 1px solid grey;
-}
-
-.lang-dropdown {
-    background-color: #f8f8f8;
-    height: 28vh;
-    overflow: auto;
-    border-radius: 5%;
-}
-
-.search-line {
-    display: inline-block;
-}

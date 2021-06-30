@@ -1,0 +1,24 @@
+.pairs-leaderboard {
+    min-height: 24vh;
+}
+
+.filter-wrapper {
+    display: inline-block;
+    position: relative;
+}
+
+.lang-dropdown {
+    background-color: #f8f8f8;
+    width: 20vh;
+    height: 28vh;
+    overflow: auto;
+    border-radius: 5%;
+}
+
+.search-bar {
+    position: sticky;
+    text-align: center;
+    top: 5%;
+    width: 18vh;
+    z-index: 3;
+}
