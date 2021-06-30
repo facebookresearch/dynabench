@@ -13,6 +13,9 @@ _default_config = {
     "input_keys": ["uid", "statement"],
     "aws_region": "us-west-1",
     "s3_bucket": "evaluation-us-west-1-096166425824",
+    # This need to be the same value from builder/utils/task_config
+    # So that sagemaker and torchserve timeout at the same time
+    "invocations_timeout": 600,  # Sagemaker default
 }
 
 _custom_config = {
@@ -34,6 +37,7 @@ _custom_config = {
         "input_keys": ["uid", "sourceText", "sourceLanguage", "targetLanguage"],
         "aws_region": "us-west-2",
         "s3_bucket": "evaluation-us-west-2",
+        "invocations_timeout": 1200,
     },
 }
 

@@ -162,6 +162,9 @@ class BaseDataset(ABC):
                 "InstanceCount": task_config["instance_count"],
             },
             DataProcessing={"InputFilter": f"${task_config['input_keys']}"},
+            ModelClientConfig={
+                "InvocationsTimeoutInSeconds": task_config["invocations_timeout"]
+            },
         )
 
     def read_labels(self, perturb_prefix=None):
