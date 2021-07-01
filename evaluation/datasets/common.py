@@ -163,7 +163,8 @@ class BaseDataset(ABC):
             },
             DataProcessing={"InputFilter": f"${task_config['input_keys']}"},
             ModelClientConfig={
-                "InvocationsTimeoutInSeconds": task_config["invocations_timeout"]
+                # Max value for sagemaker, we rely on the timeout of torchserve
+                "InvocationsTimeoutInSeconds": 3600
             },
         )
 

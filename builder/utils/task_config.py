@@ -18,8 +18,6 @@ _custom_config = {
         "gpu": True,
         # Since we are using batching we need to increase the timeout and request sizes
         "torchserve_config": {
-            # This need to be the same value from evaluation/metrics/task_config
-            # So that sagemaker and torchserve timeout at the same time
             "default_response_timeout": 1200,
             "decode_input_request": False,
             "max_request_size": 12853500,
