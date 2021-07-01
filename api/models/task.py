@@ -23,7 +23,7 @@ class Task(Base):
 
     name = db.Column(db.String(length=255), nullable=False, unique=True)
     shortname = db.Column(db.String(length=255), nullable=False, unique=True)
-    task_code = db.Column(db.String(length=255), unique=True)
+    task_code = db.Column(db.String(length=255), unique=True, nullable=False)
 
     # Task type is either 'clf' or 'extract' for now
     type = db.Column(db.String(length=255), nullable=False, default="clf")
