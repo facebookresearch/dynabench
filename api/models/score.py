@@ -7,7 +7,7 @@ import pandas as pd
 import sqlalchemy as db
 
 from common import helpers as util
-from models.dataset import Dataset
+from models.dataset import AccessTypeEnum, Dataset
 from models.round import Round
 from models.user import User
 
@@ -87,6 +87,74 @@ class ScoreModel(BaseModel):
             ]
         )
         return self.dbs.commit()
+
+    def getLeaderboardTopPerformingTags(self, tid, limit=5, offset=0):
+        scores_users_datasets_models = (
+            self.dbs.query(Score, User, Dataset, Model)
+            .join(Dataset, Dataset.id == Score.did)
+            .join(Model, Score.mid == Model.id)
+            .join(User, User.id == Model.uid)
+            .filter(Model.tid == tid)
+            .filter(Model.is_published)
+            .filter(Dataset.access_type == AccessTypeEnum.scoring)
+        )
+        dataset_name_to_tag_performances = {}
+        for score, user, dataset, model in scores_users_datasets_models:
+            if dataset.name not in dataset_name_to_tag_performances:
+                dataset_name_to_tag_performances[dataset.name] = {}
+            if score.metadata_json is not None:
+                metadata = json.loads(score.metadata_json)
+                for tag_perf_dict in metadata.get("perf_by_tag", []):
+                    if (
+                        tag_perf_dict["tag"]
+                        not in dataset_name_to_tag_performances[dataset.name]
+                    ):
+                        dataset_name_to_tag_performances[dataset.name][
+                            tag_perf_dict["tag"]
+                        ] = []
+                    dataset_name_to_tag_performances[dataset.name][
+                        tag_perf_dict["tag"]
+                    ].append(
+                        {
+                            "model_id": model.id,
+                            "model_name": model.name,
+                            "uid": user.id,
+                            "username": user.username,
+                            "perf": tag_perf_dict["perf"],
+                        }
+                    )
+        dataset_name_to_top_tag_performances = {}
+        for (
+            dataset_name,
+            all_tag_performances,
+        ) in dataset_name_to_tag_performances.items():
+            if dataset_name not in dataset_name_to_top_tag_performances:
+                dataset_name_to_top_tag_performances[dataset_name] = []
+            for tag, tag_performances in all_tag_performances.items():
+                dataset_name_to_top_tag_performances[dataset_name].append(
+                    {
+                        "tag": tag,
+                        "top_perf_info": sorted(
+                            tag_performances,
+                            key=lambda tag_perf_info: tag_perf_info["perf"],
+                            reverse=True,
+                        )[0],
+                    }
+                )
+        dataset_name_to_top_tag_performances_cutoff = {}
+        for (
+            dataset_name,
+            top_tag_performances,
+        ) in dataset_name_to_top_tag_performances.items():
+            dataset_name_to_top_tag_performances_cutoff[dataset_name] = {
+                "count": len(top_tag_performances),
+                "data": sorted(
+                    top_tag_performances,
+                    key=lambda tag_info: tag_info["top_perf_info"]["perf"],
+                    reverse=True,
+                )[offset : offset + limit],
+            }
+        return util.json_encode(dataset_name_to_top_tag_performances_cutoff)
 
     # calculate the dynascore
     # normalization is automatically done via AMRS
