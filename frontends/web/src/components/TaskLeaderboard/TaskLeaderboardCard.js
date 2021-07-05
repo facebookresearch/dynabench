@@ -118,28 +118,35 @@ const TaskLeaderboardCard = (props) => {
   const [pageLimit, setPageLimit] = useState(10);
   const [total, setTotal] = useState(0);
   const [showForkModal, setShowForkModal] = useState(false);
-  const [forkName, setForkName] = useState("");
+  const [leaderboardName, setLeaderboardName] = useState("");
 
   const taskId = props.taskId;
 
   const createLeaderboardConfiguration = () => {
-    if (forkName.trim().length === 0) {
+    if (leaderboardName.trim().length === 0) {
       alert("Fork name cannot be empty.");
       return;
     }
+    const uriEncodedLeaderboardName = encodeURIComponent(
+      leaderboardName.trim()
+    );
     const configuration_json = JSON.stringify({
       metricWeights: metrics,
       datasetWeights: datasetWeights,
     });
 
     context.api
-      .createLeaderboardConfiguration(taskId, forkName, configuration_json)
+      .createLeaderboardConfiguration(
+        taskId,
+        uriEncodedLeaderboardName,
+        configuration_json
+      )
       .then(
         () => {
           setShowForkModal(!showForkModal);
           const forkUrl = new URL(window.location.href);
-          forkUrl.pathname = `/tasks/${taskId}/${forkName}`;
-          setForkName("");
+          forkUrl.pathname = `/tasks/${taskId}/${uriEncodedLeaderboardName}`;
+          setLeaderboardName("");
           props.history.replace({
             pathname: forkUrl.pathname,
             hash: forkUrl.hash,
@@ -282,7 +289,7 @@ const TaskLeaderboardCard = (props) => {
           <Modal
             show={showForkModal}
             onHide={() => {
-              setForkName("");
+              setLeaderboardName("");
               setShowForkModal(!showForkModal);
             }}
           >
@@ -321,13 +328,16 @@ const TaskLeaderboardCard = (props) => {
                     ))}
                 </tbody>
               </Table>
-              <p className="mt-4">Choose a name for your fork:</p>
+              <p className="mt-4">
+                Choose a name for your fork. The name will be URI encoded upon
+                saving.
+              </p>
               <InputGroup>
                 <FormControl
                   className="m-3 p-3 rounded-1 thick-border h-auto"
                   placeholder={"Enter a name.."}
-                  value={forkName}
-                  onChange={(e) => setForkName(e.target.value)}
+                  value={leaderboardName}
+                  onChange={(e) => setLeaderboardName(e.target.value)}
                   required={true}
                 />
               </InputGroup>
@@ -336,7 +346,7 @@ const TaskLeaderboardCard = (props) => {
               <Button
                 variant="secondary"
                 onClick={() => {
-                  setForkName("");
+                  setLeaderboardName("");
                   setShowForkModal(!showForkModal);
                 }}
               >
