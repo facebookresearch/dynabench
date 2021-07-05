@@ -7,6 +7,9 @@ import {
   Tooltip,
   OverlayTrigger,
   Modal,
+  FormControl,
+  InputGroup,
+  Table,
 } from "react-bootstrap";
 import UserContext from "../../containers/UserContext";
 import OverallModelLeaderBoard from "./OverallModelLeaderBoard";
@@ -39,24 +42,69 @@ const TaskLeaderboardCard = (props) => {
 
   // Dataset Weights Array of a set of dataset id and corresponding weight.
   const [datasetWeights, setDatasetWeights] = useState();
+
   // Update weights on task change
   useEffect(() => {
-    setMetrics(
-      task?.ordered_metrics?.map((m) => {
-        return {
-          id: m.name,
-          label: m.name,
-          weight: m.default_weight,
-          unit: m.unit,
-        };
-      })
-    );
+    // Used to load default weights for metrics. When a new metric is found which was not saved in a leaderboard
+    // configuration, the default weight is used.
+    const metricIdToDataObj = {};
+    task.ordered_metrics.forEach((m) => {
+      metricIdToDataObj[m.name] = {
+        id: m.name,
+        label: m.name,
+        weight: m.default_weight,
+        unit: m.unit,
+      };
+    });
 
-    setDatasetWeights(
-      task.ordered_scoring_datasets?.map((ds) => {
-        return { id: ds.id, weight: ds.default_weight, name: ds.name };
-      })
-    );
+    // Used to load default weights for datasets. When a new dataset is found which was not saved in a leaderboard
+    // configuration, the default weight is used.
+    const datasetIdToDataObj = {};
+    task.ordered_scoring_datasets.forEach((ds) => {
+      datasetIdToDataObj[ds.id] = {
+        id: ds.id,
+        weight: ds.default_weight,
+        name: ds.name,
+      };
+    });
+
+    const setMetricsAndDatasetsWeights = () => {
+      setMetrics(Object.values(metricIdToDataObj));
+      setDatasetWeights(Object.values(datasetIdToDataObj));
+    };
+
+    const leaderboardName = props.match.params.leaderboardName;
+    if (leaderboardName != null) {
+      context.api.getLeaderboardConfiguration(task.id, leaderboardName).then(
+        (result) => {
+          const configuration_json = JSON.parse(result.configuration_json);
+          configuration_json.metricWeights.forEach((m) => {
+            if (m.id in metricIdToDataObj) {
+              metricIdToDataObj[m.id].weight = m.weight;
+            }
+          });
+          configuration_json.datasetWeights.forEach((d) => {
+            if (d.id in datasetIdToDataObj) {
+              datasetIdToDataObj[d.id].weight = d.weight;
+            }
+          });
+          setMetricsAndDatasetsWeights();
+        },
+        (error) => {
+          console.log(error);
+          if (error && error.status_code === 404) {
+            props.history.replace({
+              pathname: `/tasks/${taskId}`,
+              hash: props.location.hash,
+            });
+          }
+          setMetricsAndDatasetsWeights();
+        }
+      );
+    } else {
+      setMetricsAndDatasetsWeights();
+    }
+
     return () => {};
   }, [task]);
 
@@ -69,8 +117,46 @@ const TaskLeaderboardCard = (props) => {
   const [page, setPage] = useState(0);
   const [pageLimit, setPageLimit] = useState(10);
   const [total, setTotal] = useState(0);
+  const [showForkModal, setShowForkModal] = useState(false);
+  const [forkName, setForkName] = useState("");
 
   const taskId = props.taskId;
+
+  const createLeaderboardConfiguration = () => {
+    if (forkName.trim().length === 0) {
+      alert("Fork name cannot be empty.");
+      return;
+    }
+    const configuration_json = JSON.stringify({
+      metricWeights: metrics,
+      datasetWeights: datasetWeights,
+    });
+
+    context.api
+      .createLeaderboardConfiguration(taskId, forkName, configuration_json)
+      .then(
+        () => {
+          setShowForkModal(!showForkModal);
+          const forkUrl = new URL(window.location.href);
+          forkUrl.pathname = `/tasks/${taskId}/${forkName}`;
+          setForkName("");
+          props.history.replace({
+            pathname: forkUrl.pathname,
+            hash: forkUrl.hash,
+          });
+          alert(
+            "Your fork is ready. Permanent link to your fork is: " + forkUrl
+          );
+        },
+        (error) => {
+          if (error && error.status_code === 409) {
+            alert("A fork with the same name already exists.");
+          } else {
+            alert("There was an error in creating your fork: " + error);
+          }
+        }
+      );
+  };
 
   /**
    * Update weight state for the appropriate metric
@@ -194,6 +280,77 @@ const TaskLeaderboardCard = (props) => {
         </h2>
         <div className="d-flex justify-content-end flex-fill">
           <Modal
+            show={showForkModal}
+            onHide={() => {
+              setForkName("");
+              setShowForkModal(!showForkModal);
+            }}
+          >
+            <Modal.Header closeButton>
+              <Modal.Title>Fork</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <p>Below are the weights you have chosen:</p>
+              <Table>
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Name</th>
+                    <th>Weight</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {metrics &&
+                    metrics.map((metricWeightDatum) => (
+                      <tr>
+                        <td>Metric</td>
+                        <td>{metricWeightDatum.label}</td>
+                        <td>{metricWeightDatum.weight}</td>
+                      </tr>
+                    ))}
+                  <tr>
+                    <td></td>
+                  </tr>
+                  {datasetWeights &&
+                    datasetWeights.map((datasetWeightDatum) => (
+                      <tr>
+                        <td>Dataset</td>
+                        <td>{datasetWeightDatum.name}</td>
+                        <td>{datasetWeightDatum.weight}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </Table>
+              <p className="mt-4">Choose a name for your fork:</p>
+              <InputGroup>
+                <FormControl
+                  className="m-3 p-3 rounded-1 thick-border h-auto"
+                  placeholder={"Enter a name.."}
+                  value={forkName}
+                  onChange={(e) => setForkName(e.target.value)}
+                  required={true}
+                />
+              </InputGroup>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setForkName("");
+                  setShowForkModal(!showForkModal);
+                }}
+              >
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                onClick={createLeaderboardConfiguration}
+              >
+                Save
+              </Button>
+            </Modal.Footer>
+          </Modal>
+          <Modal
             size="lg"
             show={enableHelp}
             onHide={() => setEnableHelp(!enableHelp)}
@@ -278,6 +435,19 @@ const TaskLeaderboardCard = (props) => {
               For more details, see the paper.
             </Modal.Body>
           </Modal>
+          <OverlayTrigger
+            placement="top"
+            overlay={<Tooltip id="tip-metric-weights">Fork</Tooltip>}
+          >
+            <Button
+              className="btn bg-transparent border-0"
+              onClick={() => setShowForkModal(!showForkModal)}
+            >
+              <span className="text-black-50">
+                <i className="fas fa-code-branch"></i>
+              </span>
+            </Button>
+          </OverlayTrigger>
           <OverlayTrigger
             placement="top"
             overlay={<Tooltip id="tip-metric-weights">Help</Tooltip>}

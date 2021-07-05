@@ -276,7 +276,10 @@ class App extends React.Component {
                   path="/tasks/:taskId/round/:roundId"
                   component={TaskPage}
                 />
-                <Route path="/tasks/:taskId" component={TaskPage} />
+                <Route
+                  path="/tasks/:taskId/:leaderboardName?"
+                  component={TaskPage}
+                />
                 <Route
                   path="/flores/top5/:taskShortName"
                   component={FloresTop5Page}
