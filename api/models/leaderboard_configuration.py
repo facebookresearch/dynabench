@@ -1,7 +1,8 @@
-from .base import Base, BaseModel
-
 import datetime
+
 import sqlalchemy as db
+
+from .base import Base, BaseModel
 
 
 class LeaderboardConfiguration(Base):

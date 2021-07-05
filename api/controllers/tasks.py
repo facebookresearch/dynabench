@@ -10,6 +10,7 @@ import common.helpers as util
 from common.logging import logger
 from models.dataset import Dataset
 from models.example import ExampleModel
+from models.leaderboard_configuration import LeaderboardConfigurationModel
 from models.model import Model
 from models.round import RoundModel
 from models.round_user_example_info import RoundUserExampleInfoModel
@@ -17,7 +18,6 @@ from models.score import ScoreModel
 from models.task import TaskModel
 from models.user import UserModel
 from models.validation import Validation, ValidationModel
-from models.leaderboard_configuration import LeaderboardConfigurationModel
 
 
 @bottle.get("/tasks")

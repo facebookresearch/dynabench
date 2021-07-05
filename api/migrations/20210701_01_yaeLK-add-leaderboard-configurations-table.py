@@ -4,6 +4,7 @@ add-leaderboard-configurations-table
 
 from yoyo import step
 
+
 __depends__ = {"20210630_01_ZczVK-make-task-code-required"}
 
 steps = [
