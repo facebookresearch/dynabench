@@ -157,7 +157,9 @@ const TaskLeaderboardCard = (props) => {
         },
         (error) => {
           if (error && error.status_code === 409) {
-            alert("A fork with the same name already exists.");
+            alert("A fork with the same name already exists!");
+          } else if (error && error.status_code === 403) {
+            alert("You need to login to use this feature!");
           } else {
             alert("There was an error in creating your fork: " + error);
           }
@@ -451,7 +453,13 @@ const TaskLeaderboardCard = (props) => {
           >
             <Button
               className="btn bg-transparent border-0"
-              onClick={() => setShowForkModal(!showForkModal)}
+              onClick={() => {
+                if (context.api.loggedIn()) {
+                  setShowForkModal(!showForkModal);
+                } else {
+                  alert("You need to login to use this feature!");
+                }
+              }}
             >
               <span className="text-black-50">
                 <i className="fas fa-code-branch"></i>
