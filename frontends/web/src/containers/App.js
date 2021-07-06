@@ -113,7 +113,7 @@ class App extends React.Component {
   }
 
   render() {
-    //href={`/tasks/${task.id}#overall`}
+    //href={`/tasks/${task.id}`}
     var query = qs.parse(window.location.search, {
       ignoreQueryPrefix: true,
     });
@@ -122,7 +122,7 @@ class App extends React.Component {
       <NavDropdown.Item
         key={task.id}
         as={Link}
-        to={`/tasks/${task.id}#overall`}
+        to={`/tasks/${task.id}`}
         className="py-3"
       >
         {task.name}
