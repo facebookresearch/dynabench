@@ -224,6 +224,14 @@ export default class ApiService {
     });
   }
 
+  getLeaderboardTopPerformingTags(taskId, limit, offset) {
+    const pageQuery = `limit=${limit || 10}&offset=${offset || 0}`;
+    const url = `/models/topleaderboardtags?${pageQuery}`;
+    return this.fetch(`${this.domain}/tasks/${taskId}${url}`, {
+      method: "GET",
+    });
+  }
+
   getOverallModelLeaderboard(taskId, round, limit, offset) {
     const url =
       round === "overall"
