@@ -14,7 +14,7 @@ steps = [
             tid INT NOT NULL,
             name VARCHAR(255) NOT NULL,
             uid INT NOT NULL,
-            created DATETIME DEFAULT NULL,
+            create_datetime DATETIME DEFAULT NULL,
             configuration_json TEXT NOT NULL,
             PRIMARY KEY (name, tid),
             CONSTRAINT leaderboard_configurations_tid FOREIGN KEY (tid) REFERENCES tasks (id),

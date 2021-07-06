@@ -13,7 +13,7 @@ class LeaderboardConfiguration(Base):
     name = db.Column(db.String(length=255), primary_key=True)
     uid = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
-    created = db.Column(db.DateTime)
+    create_datetime = db.Column(db.DateTime)
     configuration_json = db.Column(db.Text, nullable=False)
 
     def __repr__(self):
@@ -35,7 +35,7 @@ class LeaderboardConfigurationModel(BaseModel):
             tid=tid,
             name=name,
             uid=user_id,
-            created=datetime.datetime.utcnow(),
+            create_datetime=datetime.datetime.utcnow(),
             configuration_json=configuration_json,
         )
         self.dbs.add(lc)
