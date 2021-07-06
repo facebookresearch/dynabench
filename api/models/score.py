@@ -88,7 +88,9 @@ class ScoreModel(BaseModel):
         )
         return self.dbs.commit()
 
-    def getLeaderboardTopPerformingTags(self, tid, limit=5, offset=0):
+    def getLeaderboardTopPerformingTags(
+        self, tid, limit=5, offset=0, specific_tag=None
+    ):
         scores_users_datasets_models = (
             self.dbs.query(Score, User, Dataset, Model)
             .join(Dataset, Dataset.id == Score.did)
@@ -105,6 +107,13 @@ class ScoreModel(BaseModel):
             if score.metadata_json is not None:
                 metadata = json.loads(score.metadata_json)
                 for tag_perf_dict in metadata.get("perf_by_tag", []):
+
+                    # if we want only the top performance for a specific tag,
+                    # don't include other tags.
+                    if specific_tag is not None:
+                        if tag_perf_dict["tag"] != specific_tag:
+                            continue
+
                     if (
                         tag_perf_dict["tag"]
                         not in dataset_name_to_tag_performances[dataset.name]
@@ -123,6 +132,12 @@ class ScoreModel(BaseModel):
                             "perf": tag_perf_dict["perf"],
                         }
                     )
+
+                    # if we want only the top performance for a specific tag
+                    # and we have already found this tag, don't loop anymore.
+                    if specific_tag is not None:
+                        if tag_perf_dict["tag"] == specific_tag:
+                            break
         dataset_name_to_top_tag_performances = {}
         for (
             dataset_name,

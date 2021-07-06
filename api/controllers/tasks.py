@@ -249,13 +249,16 @@ def construct_user_board_response_json(query_result, total_count=0):
 def get_top_leaderboard_tags(tid):
     offset = 0
     limit = 5
+    specific_tag = None
     query_dict = parse_qs(bottle.request.query_string)
     if "offset" in query_dict:
         offset = int(query_dict["offset"][0])
     if "limit" in query_dict:
         limit = int(query_dict["limit"][0])
+    if "specific_tag" in query_dict:
+        specific_tag = query_dict["specific_tag"][0]
     sm = ScoreModel()
-    return sm.getLeaderboardTopPerformingTags(tid, limit, offset)
+    return sm.getLeaderboardTopPerformingTags(tid, limit, offset, specific_tag)
 
 
 @bottle.get("/tasks/<tid:int>/models/dynaboard")

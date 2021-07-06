@@ -224,9 +224,11 @@ export default class ApiService {
     });
   }
 
-  getLeaderboardTopPerformingTags(taskId, limit, offset) {
+  getLeaderboardTopPerformingTags(taskId, limit, offset, specific_tag = null) {
     const pageQuery = `limit=${limit || 10}&offset=${offset || 0}`;
-    const url = `/models/topleaderboardtags?${pageQuery}`;
+    const specificTagQuery =
+      specific_tag === null ? `` : `&specific_tag=${specific_tag}`;
+    const url = `/models/topleaderboardtags?${pageQuery}${specificTagQuery}`;
     return this.fetch(`${this.domain}/tasks/${taskId}${url}`, {
       method: "GET",
     });
