@@ -7,12 +7,10 @@ import {
   Tooltip,
   OverlayTrigger,
   Modal,
-  FormControl,
-  InputGroup,
-  Table,
 } from "react-bootstrap";
 import UserContext from "../../containers/UserContext";
 import OverallModelLeaderBoard from "./OverallModelLeaderBoard";
+import ForkModal from "./ForkModal";
 
 const SortDirection = {
   ASC: "asc",
@@ -118,54 +116,8 @@ const TaskLeaderboardCard = (props) => {
   const [pageLimit, setPageLimit] = useState(10);
   const [total, setTotal] = useState(0);
   const [showForkModal, setShowForkModal] = useState(false);
-  const [leaderboardName, setLeaderboardName] = useState("");
 
   const taskId = props.taskId;
-
-  const createLeaderboardConfiguration = () => {
-    if (leaderboardName.trim().length === 0) {
-      alert("Fork name cannot be empty.");
-      return;
-    }
-    const uriEncodedLeaderboardName = encodeURIComponent(
-      leaderboardName.trim()
-    );
-    const configuration_json = JSON.stringify({
-      metricWeights: metrics,
-      datasetWeights: datasetWeights,
-    });
-
-    context.api
-      .createLeaderboardConfiguration(
-        taskId,
-        uriEncodedLeaderboardName,
-        configuration_json
-      )
-      .then(
-        () => {
-          setShowForkModal(!showForkModal);
-          const forkUrl = new URL(window.location.href);
-          forkUrl.pathname = `/tasks/${taskId}/${uriEncodedLeaderboardName}`;
-          setLeaderboardName("");
-          props.history.replace({
-            pathname: forkUrl.pathname,
-            hash: forkUrl.hash,
-          });
-          alert(
-            "Your fork is ready. Permanent link to your fork is: " + forkUrl
-          );
-        },
-        (error) => {
-          if (error && error.status_code === 409) {
-            alert("A fork with the same name already exists!");
-          } else if (error && error.status_code === 403) {
-            alert("You need to login to use this feature!");
-          } else {
-            alert("There was an error in creating your fork: " + error);
-          }
-        }
-      );
-  };
 
   /**
    * Update weight state for the appropriate metric
@@ -284,80 +236,14 @@ const TaskLeaderboardCard = (props) => {
       <Card.Header className="light-gray-bg d-flex align-items-center">
         <h2 className="text-uppercase m-0 text-reset">Model Leaderboard</h2>
         <div className="d-flex justify-content-end flex-fill">
-          <Modal
-            show={showForkModal}
-            onHide={() => {
-              setLeaderboardName("");
-              setShowForkModal(!showForkModal);
-            }}
-          >
-            <Modal.Header closeButton>
-              <Modal.Title>Fork</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <p>Below are the weights you have chosen:</p>
-              <Table>
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th>Name</th>
-                    <th>Weight</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {metrics &&
-                    metrics.map((metricWeightDatum) => (
-                      <tr>
-                        <td>Metric</td>
-                        <td>{metricWeightDatum.label}</td>
-                        <td>{metricWeightDatum.weight}</td>
-                      </tr>
-                    ))}
-                  <tr>
-                    <td></td>
-                  </tr>
-                  {datasetWeights &&
-                    datasetWeights.map((datasetWeightDatum) => (
-                      <tr>
-                        <td>Dataset</td>
-                        <td>{datasetWeightDatum.name}</td>
-                        <td>{datasetWeightDatum.weight}</td>
-                      </tr>
-                    ))}
-                </tbody>
-              </Table>
-              <p className="mt-4">
-                Choose a name for your fork. The name will be URI encoded upon
-                saving.
-              </p>
-              <InputGroup>
-                <FormControl
-                  className="m-3 p-3 rounded-1 thick-border h-auto"
-                  placeholder={"Enter a name.."}
-                  value={leaderboardName}
-                  onChange={(e) => setLeaderboardName(e.target.value)}
-                  required={true}
-                />
-              </InputGroup>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setLeaderboardName("");
-                  setShowForkModal(!showForkModal);
-                }}
-              >
-                Close
-              </Button>
-              <Button
-                variant="primary"
-                onClick={createLeaderboardConfiguration}
-              >
-                Save
-              </Button>
-            </Modal.Footer>
-          </Modal>
+          <ForkModal
+            metricWeights={metrics}
+            datasetWeights={datasetWeights}
+            taskId={taskId}
+            showForkModal={showForkModal}
+            setShowForkModal={setShowForkModal}
+            history={props.history}
+          />
           <Modal
             size="lg"
             show={enableHelp}
@@ -453,7 +339,13 @@ const TaskLeaderboardCard = (props) => {
                 if (context.api.loggedIn()) {
                   setShowForkModal(!showForkModal);
                 } else {
-                  alert("You need to login to use this feature!");
+                  props.history.push(
+                    "/login?msg=" +
+                      encodeURIComponent(
+                        "You need to login to fork a leaderboard."
+                      ) +
+                      `&src=/tasks/${taskId}`
+                  );
                 }
               }}
             >
