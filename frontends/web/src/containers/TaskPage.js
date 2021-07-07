@@ -33,7 +33,6 @@ import Moment from "react-moment";
 import DragAndDrop from "../components/DragAndDrop/DragAndDrop";
 import { OverlayProvider, Annotation, OverlayContext } from "./Overlay";
 import TaskLeaderboardCard from "../components/TaskLeaderboard/TaskLeaderboardCard";
-import OldTaskLeaderboardCard from "../components/TaskLeaderboard/OldTaskLeaderboardCard";
 
 const chartSizes = {
   xs: { fontSize: 10 },
@@ -64,47 +63,14 @@ const chartSizes = {
   },
 };
 
-const TaskNav = (props) => {
-  const rounds = (props.taskDetail.round && props.taskDetail.cur_round) || 0;
-  const roundNavs = [];
-  const currentHash = props.location.hash;
-  for (let i = 1; i <= rounds; i++) {
-    roundNavs.push(
-      <Nav.Item key={i}>
-        <Nav.Link
-          href={`#${i}`}
-          className={`${
-            currentHash === `#${i}` ? "active" : ""
-          } gray-color p-3 px-lg-5`}
-        >
-          Round {i}
-        </Nav.Link>
-      </Nav.Item>
-    );
-  }
-  return (
-    <Nav className="flex-lg-column sidebar-wrapper sticky-top">
-      <Nav.Item>
-        <Nav.Link
-          href="#overall"
-          className={`${
-            currentHash === "#overall" ? "active" : ""
-          } gray-color p-3 px-lg-5`}
-        >
-          Overall
-        </Nav.Link>
-      </Nav.Item>
-      {roundNavs.map((item, id) => item)}
-    </Nav>
-  );
-};
-
 const TaskTrend = ({ data }) => {
   return (
     <>
       <Card className="my-4">
         <Card.Header className="p-3 light-gray-bg">
-          <h2 className="text-uppercase m-0 text-reset">Trend</h2>
+          <h2 className="text-uppercase m-0 text-reset">
+            Model Performance vs. Round{" "}
+          </h2>
         </Card.Header>
         <Card.Body className="px-1 py-5">
           {/* Mobile / Tablet / Desktop charts */}
@@ -127,11 +93,6 @@ const TaskTrend = ({ data }) => {
       </Card>
     </>
   );
-};
-
-const RoundActionButtons = (props) => {
-  // TODO: Display "Download data" button
-  return null;
 };
 
 const TaskActionButtons = (props) => {
@@ -234,11 +195,11 @@ const OverallTaskStats = (props) => {
       <tbody>
         <tr>
           <td>Current round:</td>
-          <td>{props.task.cur_round}</td>
+          <td className="text-right">{props.task.cur_round}</td>
         </tr>
         <tr>
           <td>Fooled/Collected (Model Error rate)</td>
-          <td>
+          <td className="text-right">
             {props.task.round?.total_fooled}/{props.task.round?.total_collected}{" "}
             (
             {props.task.round?.total_collected > 0
@@ -253,7 +214,7 @@ const OverallTaskStats = (props) => {
         {props.task.round && (
           <tr>
             <td>Verified Fooled/Collected (Verified Model Error Rate)</td>
-            <td>
+            <td className="text-right">
               {props.task.round?.total_verified_fooled}/
               {props.task.round?.total_collected} (
               {props.task.round?.total_collected > 0
@@ -268,7 +229,7 @@ const OverallTaskStats = (props) => {
         )}
         <tr>
           <td>Last activity:</td>
-          <td>
+          <td className="text-right">
             <Moment utc fromNow>
               {props.task.last_updated}
             </Moment>
@@ -279,38 +240,120 @@ const OverallTaskStats = (props) => {
   );
 };
 
-const OverallUserLeaderBoard = (props) => {
+const UserLeaderBoard = (props) => {
+  const rounds = (props.round && props.cur_round) || 0;
+  const roundNavs = [];
+  for (let i = rounds; i >= 0; i--) {
+    let cur = "";
+    let active = false;
+    if (i === props.cur_round) {
+      cur = " (active)";
+    }
+    const dropDownRound = i === 0 ? "overall" : i;
+    if (dropDownRound === props.displayRound) {
+      active = true;
+    }
+    roundNavs.push(
+      <Dropdown.Item
+        key={dropDownRound}
+        index={dropDownRound}
+        onClick={() => props.fetchOverallUserLeaderboard(0, dropDownRound)}
+        active={active}
+      >
+        {dropDownRound === "overall" ? "Overall" : "Round " + dropDownRound}
+        {cur}
+      </Dropdown.Item>
+    );
+    if (i === props.cur_round) {
+      roundNavs.push(<Dropdown.Divider key={"div" + i} />);
+    }
+  }
   return (
-    <Table hover className="mb-0">
-      <thead>
-        <tr>
-          <th>User</th>
-          <th className="text-right">Verified MER</th>
-          <th className="text-right pr-4">Totals</th>
-        </tr>
-      </thead>
-      <tbody>
-        {props.data.map((data) => {
-          return (
-            <tr key={data.uid}>
-              <td>
-                <Avatar
-                  avatar_url={data.avatar_url}
-                  username={data.username}
-                  isThumbnail={true}
-                  theme="blue"
-                />
-                <Link to={`/users/${data.uid}#profile`} className="btn-link">
-                  {data.username}
-                </Link>
-              </td>
-              <td className="text-right">{data.MER}%</td>
-              <td className="text-right pr-4">{data.total}</td>
+    <Annotation
+      placement="left"
+      tooltip="This shows how well our users did on this task. This does not include non-Dynabench users such as Mechanical Turkers."
+    >
+      <Card className="my-4">
+        <Card.Header className="light-gray-bg d-flex align-items-center">
+          <h2 className="text-uppercase m-0 text-reset">User Leaderboard</h2>
+          <div className="d-flex justify-content-end flex-fill">
+            <OverlayTrigger
+              placement="top"
+              overlay={
+                <Tooltip id="tip-user-round-selection">Switch Round</Tooltip>
+              }
+            >
+              <DropdownButton
+                variant="light"
+                className="border-0 blue-color font-weight-bold light-gray-bg"
+                style={{ marginRight: 10 }}
+                id="dropdown-basic-button"
+                title={
+                  props.displayRound === "overall"
+                    ? "Overall"
+                    : "Round " +
+                      props.displayRound +
+                      (props.cur_round === props.displayRound
+                        ? " (active)"
+                        : "")
+                }
+              >
+                {roundNavs}
+              </DropdownButton>
+            </OverlayTrigger>
+          </div>
+        </Card.Header>
+        <Table hover className="mb-0">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th className="text-right">Verified MER</th>
+              <th className="text-right pr-4">Totals</th>
             </tr>
-          );
-        })}
-      </tbody>
-    </Table>
+          </thead>
+          <tbody>
+            {props.data.map((data) => {
+              return (
+                <tr key={data.uid}>
+                  <td>
+                    <Avatar
+                      avatar_url={data.avatar_url}
+                      username={data.username}
+                      isThumbnail={true}
+                      theme="blue"
+                    />
+                    <Link
+                      to={`/users/${data.uid}#profile`}
+                      className="btn-link"
+                    >
+                      {data.username}
+                    </Link>
+                  </td>
+                  <td className="text-right">{data.MER}%</td>
+                  <td className="text-right pr-4">{data.total}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </Table>
+        <Card.Footer className="text-center">
+          <Pagination className="mb-0 float-right" size="sm">
+            <Pagination.Item
+              disabled={!props.userLeaderBoardPage}
+              onClick={() => props.paginate("previous", props.displayRound)}
+            >
+              Previous
+            </Pagination.Item>
+            <Pagination.Item
+              disabled={props.isEndOfUserLeaderPage}
+              onClick={() => props.paginate("next", props.displayRound)}
+            >
+              Next
+            </Pagination.Item>
+          </Pagination>
+        </Card.Footer>
+      </Card>
+    </Annotation>
   );
 };
 
@@ -369,11 +412,9 @@ class TaskPage extends React.Component {
       modelLeaderBoardData: [],
       modelLeaderBoardTags: [],
       userLeaderBoardData: [],
-      modelLeaderBoardPage: 0,
-      isEndOfModelLeaderPage: true,
       userLeaderBoardPage: 0,
       isEndOfUserLeaderPage: true,
-      pageLimit: 5,
+      pageLimit: 7,
       validateNonFooling: false,
       numMatchingValidations: 3,
     };
@@ -390,7 +431,7 @@ class TaskPage extends React.Component {
           this.setState(
             {
               task: result,
-              displayRoundId: result.cur_round,
+              displayRound: "overall",
               round: result.round,
             },
             function () {
@@ -409,17 +450,14 @@ class TaskPage extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (
-      prevProps.location.hash !== this.props.location.hash ||
-      this.props.match.params.taskId !== this.state.taskId
-    ) {
+    if (this.props.match.params.taskId !== this.state.taskId) {
       this.setState({ taskId: this.props.match.params.taskId }, function () {
         this.context.api.getTask(this.state.taskId).then(
           (result) => {
             this.setState(
               {
                 task: result,
-                displayRoundId: result.cur_round,
+                displayRound: "overall",
                 round: result.round,
               },
               function () {
@@ -462,23 +500,19 @@ class TaskPage extends React.Component {
   }
 
   refreshData() {
-    if (!this.props.location.hash || this.props.location.hash === "")
-      this.props.location.hash = "#overall";
     this.setState(
       {
-        modelLeaderBoardPage: 0,
-        isEndOfModelLeaderPage: true,
         userLeaderBoardPage: 0,
         isEndOfUserLeaderPage: true,
-        displayRoundId:
-          this.props.location.hash !== "#overall"
-            ? this.props.location.hash.slice(1)
-            : this.state.task.cur_round,
+        displayRound: "overall",
       },
       () => {
-        this.fetchOverallUserLeaderboard(this.state.userLeaderBoardPage);
+        this.fetchOverallUserLeaderboard(
+          this.state.userLeaderBoardPage,
+          this.state.displayRound
+        );
         this.getSavedTaskSettings();
-        if (this.props.location.hash === "#overall") this.fetchTrend();
+        this.fetchTrend();
       }
     );
   }
@@ -507,11 +541,11 @@ class TaskPage extends React.Component {
     );
   }
 
-  fetchOverallUserLeaderboard(page) {
+  fetchOverallUserLeaderboard = (page, displayRound) => {
     this.context.api
       .getOverallUserLeaderboard(
         this.state.taskId,
-        this.props.location.hash.replace("#", ""),
+        displayRound,
         this.state.pageLimit,
         page
       )
@@ -521,13 +555,15 @@ class TaskPage extends React.Component {
           this.setState({
             isEndOfUserLeaderPage: isEndOfPage,
             userLeaderBoardData: result.data,
+            displayRound: displayRound,
+            userLeaderBoardPage: page,
           });
         },
         (error) => {
           console.log(error);
         }
       );
-  }
+  };
 
   escapeRegExp = (string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -573,20 +609,12 @@ class TaskPage extends React.Component {
     );
   };
 
-  paginate = (component, state) => {
-    const componentPageState =
-      component === "model" ? "modelLeaderBoardPage" : "userLeaderBoardPage";
-    this.setState(
-      {
-        [componentPageState]:
-          state === "next"
-            ? ++this.state[componentPageState]
-            : --this.state[componentPageState],
-      },
-      () => {
-        this.fetchOverallUserLeaderboard(this.state[componentPageState]);
-      }
-    );
+  userLeaderBoardPaginate = (state, round) => {
+    const page =
+      state === "next"
+        ? this.state.userLeaderBoardPage + 1
+        : this.state.userLeaderBoardPage - 1;
+    this.fetchOverallUserLeaderboard(page, round);
   };
 
   render() {
@@ -611,27 +639,24 @@ class TaskPage extends React.Component {
     };
     return (
       <OverlayProvider initiallyHide={true} delayMs="1700">
-        <Container fluid>
+        <Container>
           <Row>
-            <Col lg={2} className="p-0 border">
-              <Annotation
-                placement="bottom-start"
-                tooltip="Dynabench tasks happen over multiple rounds. You can look at previous rounds here."
-              >
-                <TaskNav {...this.props} taskDetail={this.state.task} />
-              </Annotation>
-            </Col>
-            <Col lg={10} className="px-4 px-lg-5">
-              <h2 className="task-page-header text-reset ml-0">
-                {this.state.task.name}{" "}
-                {this.state.task.shortname in shortname_to_pwc_links ? (
-                  <a href={shortname_to_pwc_links[this.state.task.shortname]}>
-                    {pwc_logo}
-                  </a>
-                ) : (
-                  ""
-                )}
+            <Col />
+            <Col className="text-center">
+              <h2 className="task-page-header text-reset">
+                <nobr>
+                  {this.state.task.name}{" "}
+                  {this.state.task.shortname in shortname_to_pwc_links ? (
+                    <a href={shortname_to_pwc_links[this.state.task.shortname]}>
+                      {pwc_logo}
+                    </a>
+                  ) : (
+                    ""
+                  )}
+                </nobr>
               </h2>
+            </Col>
+            <Col>
               <div style={{ float: "right", marginTop: 30 }}>
                 <ButtonGroup>
                   <Annotation
@@ -858,150 +883,77 @@ class TaskPage extends React.Component {
                   </Modal.Body>
                 </Modal>
               </div>
-              <p>{this.state.task.desc}</p>
-              {this.props.location.hash === "#overall" ? (
-                <>
-                  <Annotation
-                    placement="right"
-                    tooltip="This shows the statistics of the currently active round."
-                  >
-                    <OverallTaskStats task={this.state.task} />
-                  </Annotation>
-                  <hr />
-                  <TaskActionButtons
-                    api={this.context.api}
-                    taskId={this.state.taskId}
-                    user={this.context.user}
-                    task={this.state.task}
-                  />
-                </>
-              ) : (
-                <>
-                  <hr />
-                  <RoundActionButtons taskId={this.state.taskId} />
-                </>
-              )}
-
-              <Row>
-                <Col xs={12} md={12}>
-                  <RoundDescription
-                    api={this.context.api}
-                    task_id={this.state.task.id}
-                    cur_round={this.state.task.cur_round}
-                    round_id={this.state.displayRoundId}
-                  />
-                </Col>
-              </Row>
-              {(process.env.REACT_APP_ENABLE_DYNABOARD === "true" ||
-                this.context.user.admin) &&
-                this.state.task &&
-                this.state.task.ordered_scoring_datasets &&
-                this.props.location.hash === "#overall" && (
-                  <Row>
-                    <Col xs={12} md={12}>
-                      <Annotation
-                        placement="left"
-                        tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
-                      >
-                        <TaskLeaderboardCard
-                          {...this.props}
-                          modelLeaderBoardData={this.state.modelLeaderBoardData}
-                          modelLeaderBoardTags={this.state.modelLeaderBoardTags}
-                          task={this.state.task}
-                          taskId={this.state.taskId}
-                          displayRoundId={this.state.displayRoundId}
-                        />
-                      </Annotation>
-                    </Col>
-                  </Row>
-                )}
-              <Row>
-                <Col
-                  xs={12}
-                  md={this.props.location.hash === "#overall" ? 6 : 12}
+            </Col>
+          </Row>
+          <Row className="justify-content-center">
+            <p>{this.state.task.desc}</p>
+          </Row>
+          <Row className="justify-content-center">
+            <Annotation
+              placement="right"
+              tooltip="This shows the statistics of the currently active round."
+            >
+              <OverallTaskStats task={this.state.task} />
+            </Annotation>
+          </Row>
+          <Row className="justify-content-center">
+            <TaskActionButtons
+              api={this.context.api}
+              taskId={this.state.taskId}
+              user={this.context.user}
+              task={this.state.task}
+            />
+          </Row>
+          <Row className="justify-content-center">
+            <Col xs={12} md={12}>
+              <RoundDescription
+                api={this.context.api}
+                task_id={this.state.task.id}
+                cur_round={this.state.task.cur_round}
+                round_id={this.state.task.cur_round}
+              />
+            </Col>
+          </Row>
+          {this.state.task && this.state.task.ordered_scoring_datasets && (
+            <Row className="justify-content-center">
+              <Col xs={12} md={12}>
+                <Annotation
+                  placement="left"
+                  tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
                 >
-                  {process.env.REACT_APP_ENABLE_DYNABOARD !== "true" &&
-                    !this.context.user.admin && (
-                      <Annotation
-                        placement="left"
-                        tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
-                      >
-                        <OldTaskLeaderboardCard
-                          {...this.props}
-                          task={this.state.task}
-                          taskId={this.state.taskId}
-                          displayRoundId={this.state.displayRoundId}
-                        />
-                      </Annotation>
-                    )}
-                  {/*Do not display the user leaderboard if there is no data or if it is for a pre-dynabench round.*/}
-                  {this.state.userLeaderBoardData.length &&
-                  !(
-                    ["1", "2", "3"].includes(this.state.displayRoundId) &&
-                    this.state.task.shortname === "NLI"
-                  ) &&
-                  !(
-                    "1" === this.state.displayRoundId &&
-                    this.state.task.shortname === "QA"
-                  ) &&
-                  !(
-                    "1" === this.state.displayRoundId &&
-                    this.state.task.shortname === "Sentiment"
-                  ) ? (
-                    <Annotation
-                      placement="left"
-                      tooltip="This shows how well our users did on this task"
-                    >
-                      <Card className="my-4">
-                        <Card.Header className="p-3 light-gray-bg">
-                          <h2 className="text-uppercase m-0 text-reset">
-                            {this.props.location.hash === "#overall"
-                              ? "Overall User Leaderboard"
-                              : "Round " +
-                                this.state.displayRoundId +
-                                " User Leaderboard"}
-                          </h2>
-                        </Card.Header>
-                        <Card.Body className="p-0 leaderboard-container">
-                          <OverallUserLeaderBoard
-                            data={this.state.userLeaderBoardData}
-                          />
-                        </Card.Body>
-                        <Card.Footer className="text-center">
-                          <Pagination className="mb-0 float-right" size="sm">
-                            <Pagination.Item
-                              disabled={!this.state.userLeaderBoardPage}
-                              onClick={() => this.paginate("user", "previous")}
-                            >
-                              Previous
-                            </Pagination.Item>
-                            <Pagination.Item
-                              disabled={this.state.isEndOfUserLeaderPage}
-                              onClick={() => this.paginate("user", "next")}
-                            >
-                              Next
-                            </Pagination.Item>
-                          </Pagination>
-                        </Card.Footer>
-                      </Card>
-                    </Annotation>
-                  ) : null}
-                </Col>
-
-                {this.props.location.hash === "#overall" ? (
-                  <Col xs={12} md={6}>
-                    {this.props.location.hash === "#overall" &&
-                    this.state.trendScore.length ? (
-                      <Annotation
-                        placement="top-end"
-                        tooltip="As tasks progress over time, we can follow their trend, which is shown here"
-                      >
-                        <TaskTrend data={this.state.trendScore} />
-                      </Annotation>
-                    ) : null}
-                  </Col>
-                ) : null}
-              </Row>
+                  <TaskLeaderboardCard
+                    {...this.props}
+                    modelLeaderBoardData={this.state.modelLeaderBoardData}
+                    modelLeaderBoardTags={this.state.modelLeaderBoardTags}
+                    task={this.state.task}
+                    taskId={this.state.taskId}
+                  />
+                </Annotation>
+              </Col>
+            </Row>
+          )}
+          <Row>
+            <Col xs={12} md={6}>
+              <UserLeaderBoard
+                fetchOverallUserLeaderboard={this.fetchOverallUserLeaderboard}
+                round={this.state.task.round}
+                cur_round={this.state.task.cur_round}
+                data={this.state.userLeaderBoardData}
+                paginate={this.userLeaderBoardPaginate}
+                displayRound={this.state.displayRound}
+                isEndOfUserLeaderPage={this.state.isEndOfUserLeaderPage}
+                userLeaderBoardPage={this.state.userLeaderBoardPage}
+              />
+            </Col>
+            <Col xs={12} md={6}>
+              {this.state.trendScore.length ? (
+                <Annotation
+                  placement="top-end"
+                  tooltip="As tasks progress over time, we can follow their trend, which is shown here"
+                >
+                  <TaskTrend data={this.state.trendScore} />
+                </Annotation>
+              ) : null}
             </Col>
           </Row>
         </Container>

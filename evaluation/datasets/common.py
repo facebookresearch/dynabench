@@ -162,6 +162,10 @@ class BaseDataset(ABC):
                 "InstanceCount": task_config["instance_count"],
             },
             DataProcessing={"InputFilter": f"${task_config['input_keys']}"},
+            ModelClientConfig={
+                # Max value for sagemaker, we rely on the timeout of torchserve
+                "InvocationsTimeoutInSeconds": 3600
+            },
         )
 
     def read_labels(self, perturb_prefix=None):
