@@ -515,10 +515,9 @@ export default class ApiService {
   }
 
   createLeaderboardConfiguration(tid, name, configuration_json) {
-    return this.fetch(`${this.domain}/tasks/create_leaderboard_configuration`, {
-      method: "POST",
+    return this.fetch(`${this.domain}/tasks/${tid}/leaderboard_configuration`, {
+      method: "PUT",
       body: JSON.stringify({
-        tid: tid,
         name: name,
         configuration_json: configuration_json,
       }),
@@ -526,9 +525,12 @@ export default class ApiService {
   }
 
   getLeaderboardConfiguration(tid, name) {
-    return this.fetch(`${this.domain}/tasks/${tid}/${name}`, {
-      method: "GET",
-    });
+    return this.fetch(
+      `${this.domain}/tasks/${tid}/leaderboard_configuration/${name}`,
+      {
+        method: "GET",
+      }
+    );
   }
 
   loggedIn() {

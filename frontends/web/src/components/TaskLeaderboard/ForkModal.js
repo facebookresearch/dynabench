@@ -44,7 +44,7 @@ const ForkModal = (props) => {
       .then(
         () => {
           const forkUrl = new URL(window.location.href);
-          forkUrl.pathname = `/tasks/${taskId}/${uriEncodedLeaderboardName}`;
+          forkUrl.pathname = `/tasks/${taskId}/leaderboard_configuration/${uriEncodedLeaderboardName}`;
           props.history.replace({
             pathname: forkUrl.pathname,
             hash: forkUrl.hash,
@@ -159,7 +159,9 @@ const ForkModal = (props) => {
           {forkCreatedSuccessfully ? (
             <div>
               <p>Your fork is ready. Permanent link to your fork is:</p>
-              <p id="forkLink">{window.location.href}</p>
+              <p className="text-break" id="forkLink">
+                {window.location.href}
+              </p>
               <div className="flex text-center flex-column">
                 <Button variant="primary" onClick={copyToClipboard}>
                   Copy

@@ -72,6 +72,7 @@ const TaskLeaderboardCard = (props) => {
     };
 
     const leaderboardName = props.match.params.leaderboardName;
+    console.log(props.match.params);
     if (leaderboardName != null) {
       context.api.getLeaderboardConfiguration(task.id, leaderboardName).then(
         (result) => {

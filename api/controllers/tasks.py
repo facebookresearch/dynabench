@@ -459,7 +459,7 @@ def get_task_trends(tid):
         bottle.abort(400, "Invalid task detail")
 
 
-@bottle.get("/tasks/<tid:int>/<name>")
+@bottle.get("/tasks/<tid:int>/leaderboard_configuration/<name>")
 def get_leaderboard_configuration(tid, name):
     lcm = LeaderboardConfigurationModel()
     leaderboard_configuration = lcm.getByTaskIdAndLeaderboardName(tid, name)
@@ -471,19 +471,18 @@ def get_leaderboard_configuration(tid, name):
     return util.json_encode(leaderboard_configuration)
 
 
-@bottle.post("/tasks/create_leaderboard_configuration")
+@bottle.put("/tasks/<tid:int>/leaderboard_configuration")
 @_auth.requires_auth
-def create_leaderboard_configuration(credentials):
+def create_leaderboard_configuration(credentials, tid):
     data = bottle.request.json
-    if not util.check_fields(data, ["tid", "name", "configuration_json"]):
+    if not util.check_fields(data, ["name", "configuration_json"]):
         bottle.abort(400, "Missing data")
 
     lcm = LeaderboardConfigurationModel()
 
-    tid = data["tid"]
     name = data["name"]
     if lcm.exists(tid=tid, name=name):
-        bottle.abort(409, "A fork already exists with the same name for this task.")
+        bottle.abort(409, "A fork with the same name already exists for this task.")
 
     leaderboard_configuration = lcm.create(
         tid, name, credentials["id"], data["configuration_json"]
