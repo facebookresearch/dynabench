@@ -60,9 +60,9 @@ const preList = (perf_tags) => {
 /**
  * Get unique values to populate dropdown language options.
  *
- * @param {Array} data Prefilterd data
- * @param {String} values Value property in the data
- * @param {String} propertyName The property name to be filtered (source_lang or target_lang)
+ * @param {Array} data Prefilterd data.
+ * @param {String} values Value property in the data.
+ * @param {String} propertyName The property name to be filtered (source_lang or target_lang).
  * @returns
  */
 const unique = (data, values, propertyName) => {
