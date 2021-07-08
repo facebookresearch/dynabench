@@ -196,7 +196,7 @@ const FloresTaskPage = (props) => {
               </Annotation>
               <Annotation
                 placement="top-end"
-                tooltip="Best BLEU scores on specific language pairs. Filter by source and target language language"
+                tooltip="Best BLEU scores on specific language pairs. Filter by source and target language"
               >
                 <FloresPairsLeaderBoard
                   {...props}
