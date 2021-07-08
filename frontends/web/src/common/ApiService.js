@@ -524,6 +524,25 @@ export default class ApiService {
     });
   }
 
+  createLeaderboardConfiguration(tid, name, configuration_json) {
+    return this.fetch(`${this.domain}/tasks/${tid}/leaderboard_configuration`, {
+      method: "PUT",
+      body: JSON.stringify({
+        name: name,
+        configuration_json: configuration_json,
+      }),
+    });
+  }
+
+  getLeaderboardConfiguration(tid, name) {
+    return this.fetch(
+      `${this.domain}/tasks/${tid}/leaderboard_configuration/${name}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
   loggedIn() {
     const token = this.getToken();
     if (!token) {
