@@ -72,7 +72,6 @@ const TaskLeaderboardCard = (props) => {
     };
 
     const leaderboardName = props.match.params.leaderboardName;
-    console.log(props.match.params);
     if (leaderboardName != null) {
       context.api.getLeaderboardConfiguration(task.id, leaderboardName).then(
         (result) => {
@@ -330,31 +329,34 @@ const TaskLeaderboardCard = (props) => {
               For more details, see the paper.
             </Modal.Body>
           </Modal>
-          <OverlayTrigger
-            placement="top"
-            overlay={<Tooltip id="tip-metric-weights">Fork</Tooltip>}
-          >
-            <Button
-              className="btn bg-transparent border-0"
-              onClick={() => {
-                if (context.api.loggedIn()) {
-                  setShowForkModal(!showForkModal);
-                } else {
-                  props.history.push(
-                    "/login?msg=" +
-                      encodeURIComponent(
-                        "You need to login to fork a leaderboard."
-                      ) +
-                      `&src=/tasks/${taskId}`
-                  );
-                }
-              }}
+          {(process.env.REACT_APP_ENABLE_LEADERBOARD_FORK === "true" ||
+            context.user.admin) && (
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip id="tip-leaderboard-fork">Fork</Tooltip>}
             >
-              <span className="text-black-50">
-                <i className="fas fa-code-branch"></i>
-              </span>
-            </Button>
-          </OverlayTrigger>
+              <Button
+                className="btn bg-transparent border-0"
+                onClick={() => {
+                  if (context.api.loggedIn()) {
+                    setShowForkModal(!showForkModal);
+                  } else {
+                    props.history.push(
+                      "/login?msg=" +
+                        encodeURIComponent(
+                          "You need to login to fork a leaderboard."
+                        ) +
+                        `&src=/tasks/${taskId}`
+                    );
+                  }
+                }}
+              >
+                <span className="text-black-50">
+                  <i className="fas fa-code-branch"></i>
+                </span>
+              </Button>
+            </OverlayTrigger>
+          )}
           <OverlayTrigger
             placement="top"
             overlay={<Tooltip id="tip-metric-weights">Help</Tooltip>}
