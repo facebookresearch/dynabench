@@ -17,11 +17,14 @@ import {
   Spinner,
   Table,
   Dropdown,
+  DropdownButton,
+  Pagination,
   FormControl,
 } from "react-bootstrap";
 import {
   useTable,
   useFilters,
+  usePagination,
   useSortBy,
   useFlexLayout,
   useBlockLayout,
@@ -31,29 +34,27 @@ import FloresLanguages from "./FloresLanguages";
 import "./FloresPairsLeaderboard.css";
 
 /**
- * Prepare list of results to display table, takes model and perf_tags as parameters
+ * Prepare list of results to display table, takes an array of perf_tags as parameters
  *
- * @param {Object} model The model object.
  * @param {Array} perf_tags The array of performance tags (language-pairs)
  * @returns
  */
-const preList = (model, perf_tags) => {
-  const modelData =
+const preList = (perf_tags) => {
+  const tableData =
     perf_tags &&
     perf_tags.map((s, i) => {
       const source = FloresLanguages.find((o) => o.ISO === s.tag.split("-")[0]);
       const target = FloresLanguages.find((o) => o.ISO === s.tag.split("-")[1]);
-      const score = Math.round(s.perf * 100) / 100 || null;
       return {
-        model: model,
+        model: s.top_perf_info,
         source_tag: s.tag.split("-")[0],
         target_tag: s.tag.split("-")[1],
-        perf: score,
+        perf: s.top_perf_info.perf,
         source_lang: source.LANGUAGE,
         target_lang: target.LANGUAGE,
       };
     });
-  return [modelData];
+  return tableData;
 };
 
 /**
@@ -82,7 +83,7 @@ const CustomToggle = forwardRef(({ children, onClick }, ref) => (
     }}
   >
     {children}
-    <i className="fas fa-list ml-1"></i>
+    <i className="fas fa-list fa-sm ml-1 list-icon"></i>
   </span>
 ));
 
@@ -157,7 +158,166 @@ const DefaultColumnFilter = ({
   );
 };
 
-const LangPairsTable = ({ data, pageLimit }) => {
+const LangPairsTable = ({ columns, data }) => {
+  const defaultColumn = useMemo(
+    () => ({
+      Filter: DefaultColumnFilter,
+    }),
+    []
+  );
+
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    prepareRow,
+    page,
+    canPreviousPage,
+    canNextPage,
+    pageOptions,
+    nextPage,
+    previousPage,
+    state: { pageIndex },
+  } = useTable(
+    {
+      columns,
+      data,
+      defaultColumn,
+      initialState: {
+        pageIndex: 0,
+        pageSize: 10,
+        sortBy: [
+          {
+            id: "perf",
+            desc: true,
+          },
+        ],
+      },
+    },
+    useFilters,
+    useSortBy,
+    usePagination,
+    useFlexLayout,
+    useBlockLayout
+  );
+
+  return (
+    <>
+      <Card.Body className="p-0 leaderboard-container">
+        <Table hover {...getTableProps()} className="pairs-leaderboard">
+          <thead>
+            {headerGroups.map((headerGroup) => (
+              <tr {...headerGroup.getHeaderGroupProps()}>
+                {headerGroup.headers.map((column) => (
+                  <th
+                    className={column.canSort ? "text-right" : ""}
+                    {...column.getHeaderProps()}
+                  >
+                    <span
+                      onClick={() => {
+                        if (!column.disableSortBy) {
+                          column.isSortedDesc
+                            ? column.toggleSortBy(false, false)
+                            : column.toggleSortBy(true, false);
+                        }
+                      }}
+                    >
+                      {column.isSorted ? (
+                        column.isSortedDesc ? (
+                          <i className="fas fa-sort-up">&nbsp;</i>
+                        ) : (
+                          <i className="fas fa-sort-down">&nbsp;</i>
+                        )
+                      ) : (
+                        ""
+                      )}{" "}
+                      {column.render("Header")}
+                    </span>{" "}
+                    {!column.disableFilters ? column.render("Filter") : null}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody {...getTableBodyProps()}>
+            {page.map((row, i) => {
+              prepareRow(row);
+              return (
+                <tr {...row.getRowProps()}>
+                  {row.cells.map((cell) => {
+                    return (
+                      <td
+                        className={cell.column.canSort ? "text-right" : ""}
+                        {...cell.getCellProps({
+                          style: {
+                            width: cell.column.width,
+                            minWidth: cell.column.minWidth,
+                          },
+                        })}
+                      >
+                        {cell.render("Cell")}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </Table>
+      </Card.Body>
+      <Card.Footer>
+        <span className="page-info">
+          Page{" "}
+          <strong>
+            {pageIndex + 1} of {pageOptions.length}
+          </strong>{" "}
+        </span>
+        <Pagination className="mb-0 float-right" size="sm">
+          <Pagination.Item
+            disabled={!canPreviousPage}
+            onClick={() => previousPage()}
+          >
+            Previous
+          </Pagination.Item>
+          <Pagination.Item disabled={!canNextPage} onClick={() => nextPage()}>
+            Next
+          </Pagination.Item>
+        </Pagination>
+      </Card.Footer>
+    </>
+  );
+};
+
+const FloresPairsLeaderBoard = ({ taskId, history, ...props }) => {
+  const context = useContext(UserContext);
+  const [data, setData] = useState([]);
+  const [tableData, setTableData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [datasetIndex, setDatasetIndex] = useState(0);
+
+  useEffect(() => {
+    setIsLoading(true);
+    context.api
+      .getLeaderboardTopPerformingTags(taskId, 10100)
+      .then((result) => {
+        let output = Object.entries(result).map(([dataset, results]) => ({
+          dataset,
+          results,
+        }));
+        setData(output);
+        setTableData(preList(output[0].results.data));
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.log(error);
+        if (error.status_code === 404 || error.status_code === 405) {
+          history.push("/");
+        }
+      });
+
+    return () => {};
+  }, [taskId, context.api, history]);
+
   const columns = useMemo(
     () => [
       {
@@ -181,8 +341,8 @@ const LangPairsTable = ({ data, pageLimit }) => {
         disableFilters: true,
         minWidth: 110,
         accessor: (data) => (
-          <a href={`/models/${data.model.id}`} className="btn-link">
-            {data.model.name}
+          <a href={`/models/${data.model.model_id}`} className="btn-link">
+            {data.model.model_name || null}
           </a>
         ),
       },
@@ -195,164 +355,25 @@ const LangPairsTable = ({ data, pageLimit }) => {
     []
   );
 
-  const defaultColumn = useMemo(
-    () => ({
-      Filter: DefaultColumnFilter,
-    }),
-    []
-  );
+  const selectDataset = (index) => {
+    setDatasetIndex(index);
+    setTableData(preList(data[index].results.data));
+  };
 
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
-    useTable(
-      {
-        columns,
-        data,
-        defaultColumn,
-        initialState: {
-          sortBy: [
-            {
-              id: "perf",
-              desc: true,
-            },
-          ],
-        },
-      },
-      useFilters,
-      useSortBy,
-      useFlexLayout,
-      useBlockLayout
-    );
-
-  const firstPageRows = rows.slice(0, pageLimit);
-
-  return (
-    <Table hover {...getTableProps()} className="pairs-leaderboard">
-      <thead>
-        {headerGroups.map((headerGroup) => (
-          <tr {...headerGroup.getHeaderGroupProps()}>
-            {headerGroup.headers.map((column) => (
-              <th
-                className={column.canSort ? "text-right" : ""}
-                {...column.getHeaderProps()}
-              >
-                <span
-                  onClick={() => {
-                    if (!column.disableSortBy) {
-                      column.isSortedDesc
-                        ? column.toggleSortBy(false, false)
-                        : column.toggleSortBy(true, false);
-                    }
-                  }}
-                >
-                  {column.isSorted ? (
-                    column.isSortedDesc ? (
-                      <i className="fas fa-sort-up">&nbsp;</i>
-                    ) : (
-                      <i className="fas fa-sort-down">&nbsp;</i>
-                    )
-                  ) : (
-                    ""
-                  )}{" "}
-                  {column.render("Header")}
-                </span>{" "}
-                {!column.disableFilters ? column.render("Filter") : null}
-              </th>
-            ))}
-          </tr>
-        ))}
-      </thead>
-      <tbody {...getTableBodyProps()}>
-        {firstPageRows.map((row) => {
-          prepareRow(row);
-          return (
-            <tr {...row.getRowProps()}>
-              {row.cells.map((cell) => {
-                return (
-                  <td
-                    className={cell.column.canSort ? "text-right" : ""}
-                    {...cell.getCellProps({
-                      style: {
-                        width: cell.column.width,
-                        minWidth: cell.column.minWidth,
-                      },
-                    })}
-                  >
-                    {cell.render("Cell")}
-                  </td>
-                );
-              })}
-            </tr>
-          );
-        })}
-      </tbody>
-    </Table>
-  );
-};
-
-const FloresPairsLeaderBoard = ({ taskId, history, ...props }) => {
-  const context = useContext(UserContext);
-  const [allModelsData, setAllModelsData] = useState([]);
-  const [tableData, setTableData] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [pageLimit, setPageLimit] = useState(10);
-
-  useEffect(() => {
-    setIsLoading(true);
-
-    context.api
-      .getDynaboardScores(
-        taskId,
-        10, // Get info for the best 10 models
-        0, // No offset required
-        "sp-BLEU",
-        "desc",
-        [1, 0, 0, 0, 0],
-        [1]
-      ) // No weights.
-      .then((result) => {
-        const models = Promise.all(
-          result.data.map((i) => context.api.getModel(i.model_id))
-        );
-        models.then((res) => {
-          setAllModelsData(res);
-          setIsLoading(false);
-        });
-      })
-      .catch((error) => {
-        console.log(error);
-        if (error.status_code === 404 || error.status_code === 405) {
-          history.push("/");
-        }
-      });
-
-    setIsLoading(false);
-    return () => {};
-  }, [context.api, taskId, history]);
-
-  useEffect(() => {
-    setIsLoading(true);
-    const simplifiedData = allModelsData.map((i) => ({
-      model: { name: i.name, id: i.id },
-      perf_by_tag:
-        i.leaderboard_scores[0] &&
-        JSON.parse(i.leaderboard_scores[0].metadata_json).hasOwnProperty(
-          "perf_by_tag"
-        )
-          ? JSON.parse(i.leaderboard_scores[0].metadata_json)["perf_by_tag"]
-          : [],
-    }));
-
-    const [modelsData] = simplifiedData
-      .map((o) => preList(o.model, o.perf_by_tag))
-      .flat(); // Flat array containing results from all models.
-
-    setTableData(modelsData);
-    setIsLoading(false);
-
-    return () => {};
-  }, [allModelsData]);
-
-  if (isLoading) return <Spinner animation="border" />;
+  const datasetsOptions =
+    data &&
+    data.map((i, index) => {
+      return (
+        <Dropdown.Item
+          key={index}
+          className="dataset-info"
+          active={index === datasetIndex ? true : false}
+          onClick={() => selectDataset(index)}
+        >
+          {i.dataset}
+        </Dropdown.Item>
+      );
+    });
 
   return (
     <Col className="ml-auto mr-auto" md={"7"}>
@@ -361,13 +382,22 @@ const FloresPairsLeaderBoard = ({ taskId, history, ...props }) => {
           <h2 className="text-uppercase m-0 text-reset">
             Language-Pair Leaderboard
           </h2>
+          <DropdownButton
+            variant="light"
+            size="sm"
+            className="float-right"
+            title="Dataset"
+          >
+            {datasetsOptions}
+          </DropdownButton>
         </Card.Header>
-        <Card.Body className="p-0 leaderboard-container">
-          {tableData && (
-            <LangPairsTable data={tableData} pageLimit={pageLimit} />
-          )}
-        </Card.Body>
-        <Card.Footer></Card.Footer>
+        {isLoading ? (
+          <div className="mx-auto my-3">
+            <Spinner animation="border" />{" "}
+          </div>
+        ) : (
+          <LangPairsTable columns={columns} data={tableData} />
+        )}
       </Card>
     </Col>
   );

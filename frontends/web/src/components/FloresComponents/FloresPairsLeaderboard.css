@@ -15,10 +15,23 @@
     border-radius: 5%;
 }
 
+.list-icon {
+    color: var(--primary);
+    cursor: pointer;
+}
+
 .search-bar {
     position: sticky;
     text-align: center;
     top: 5%;
     width: 18vh;
     z-index: 3;
+}
+
+.dataset-info {
+    font-size: small;
+}
+
+.page-info {
+    font-size: x-small;
 }
