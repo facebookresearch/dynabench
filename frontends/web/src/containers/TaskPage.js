@@ -132,7 +132,7 @@ const TaskActionButtons = (props) => {
             <Button
               as={Link}
               className="border-0 blue-color font-weight-bold light-gray-bg"
-              to={"/tasks/" + props.taskId + "/create"}
+              to={"/tasks/" + props.taskCode + "/create"}
             >
               <i className="fas fa-pen"></i> Create Examples
             </Button>
@@ -152,7 +152,7 @@ const TaskActionButtons = (props) => {
             <Button
               as={Link}
               className="border-0 blue-color font-weight-bold light-gray-bg"
-              to={"/tasks/" + props.taskId + "/validate"}
+              to={"/tasks/" + props.taskCode + "/validate"}
             >
               <i className="fas fa-search"></i> Validate Examples
             </Button>
@@ -406,7 +406,7 @@ class TaskPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      taskId: props.match.params.taskId,
+      taskCode: props.match.params.taskCode,
       task: {},
       trendScore: [],
       modelLeaderBoardData: [],
@@ -425,8 +425,8 @@ class TaskPage extends React.Component {
   }
 
   componentDidMount() {
-    this.setState({ taskId: this.props.match.params.taskId }, function () {
-      this.context.api.getTask(this.state.taskId).then(
+    this.setState({ taskCode: this.props.match.params.taskCode }, function () {
+      this.context.api.getTaskByCode(this.state.taskCode).then(
         (result) => {
           this.setState(
             {
@@ -450,29 +450,32 @@ class TaskPage extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.match.params.taskId !== this.state.taskId) {
-      this.setState({ taskId: this.props.match.params.taskId }, function () {
-        this.context.api.getTask(this.state.taskId).then(
-          (result) => {
-            this.setState(
-              {
-                task: result,
-                displayRound: "overall",
-                round: result.round,
-              },
-              function () {
-                this.refreshData();
+    if (this.props.match.params.taskCode !== this.state.taskCode) {
+      this.setState(
+        { taskCode: this.props.match.params.taskCode },
+        function () {
+          this.context.api.getTaskByCode(this.state.taskCode).then(
+            (result) => {
+              this.setState(
+                {
+                  task: result,
+                  displayRound: "overall",
+                  round: result.round,
+                },
+                function () {
+                  this.refreshData();
+                }
+              );
+            },
+            (error) => {
+              console.log(error);
+              if (error.status_code === 404 || error.status_code === 405) {
+                this.props.history.push("/");
               }
-            );
-          },
-          (error) => {
-            console.log(error);
-            if (error.status_code === 404 || error.status_code === 405) {
-              this.props.history.push("/");
             }
-          }
-        );
-      });
+          );
+        }
+      );
     }
   }
 
@@ -529,7 +532,7 @@ class TaskPage extends React.Component {
   }
 
   fetchTrend() {
-    this.context.api.getTrends(this.state.taskId).then(
+    this.context.api.getTrends(this.state.task.id).then(
       (result) => {
         this.setState({
           trendScore: result,
@@ -544,7 +547,7 @@ class TaskPage extends React.Component {
   fetchOverallUserLeaderboard = (page, displayRound) => {
     this.context.api
       .getOverallUserLeaderboard(
-        this.state.taskId,
+        this.state.task.id,
         displayRound,
         this.state.pageLimit,
         page
@@ -592,7 +595,7 @@ class TaskPage extends React.Component {
 
   handleSubmit = (values, { setFieldValue, setSubmitting }) => {
     const reqObj = {
-      taskId: this.state.taskId,
+      taskId: this.state.task.id,
       file: values.file,
     };
     this.context.api.submitContexts(reqObj).then(
@@ -899,7 +902,7 @@ class TaskPage extends React.Component {
           <Row className="justify-content-center">
             <TaskActionButtons
               api={this.context.api}
-              taskId={this.state.taskId}
+              taskCode={this.state.task.task_code}
               user={this.context.user}
               task={this.state.task}
             />
@@ -926,7 +929,7 @@ class TaskPage extends React.Component {
                     modelLeaderBoardData={this.state.modelLeaderBoardData}
                     modelLeaderBoardTags={this.state.modelLeaderBoardTags}
                     task={this.state.task}
-                    taskId={this.state.taskId}
+                    taskCode={this.state.taskCode}
                   />
                 </Annotation>
               </Col>

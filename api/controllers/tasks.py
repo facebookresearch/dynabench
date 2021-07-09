@@ -44,6 +44,17 @@ def get_task(tid):
     return util.json_encode(task)
 
 
+@bottle.get("/tasks/taskcode/<task_code>")
+def get_task_by_code(task_code):
+    t = TaskModel()
+    task = t.getByTaskCodeWithRoundAndMetricMetadata(task_code)
+
+    if not task:
+        bottle.abort(404, "Not found")
+
+    return util.json_encode(task)
+
+
 @bottle.get("/tasks/<tid:int>/<rid:int>")
 def get_task_round(tid, rid):
     rm = RoundModel()

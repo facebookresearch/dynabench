@@ -190,14 +190,14 @@ class ModelPage extends React.Component {
 
   handleEdit = () => {
     this.props.history.push({
-      pathname: `/tasks/${this.state.model.tid}/models/${this.state.model.id}/publish`,
+      pathname: `/tasks/${this.state.task.task_code}/models/${this.state.model.id}/publish`,
       state: { detail: this.state.model },
     });
   };
 
   handleInteract = () => {
     this.props.history.push({
-      pathname: `/tasks/${this.state.model.tid}/create`,
+      pathname: `/tasks/${this.state.task.task_code}/create`,
       state: {
         detail: {
           endpointUrl:
@@ -213,7 +213,7 @@ class ModelPage extends React.Component {
     const modelName = this.state.model.name;
     if (!modelName || modelName === "") {
       this.props.history.push({
-        pathname: `/tasks/${this.state.model.tid}/models/${this.state.model.id}/publish`,
+        pathname: `/tasks/${this.state.task.task_code}/models/${this.state.model.id}/publish`,
         state: { detail: this.state.model },
       });
       return;
@@ -421,7 +421,7 @@ class ModelPage extends React.Component {
                           <tr style={{ border: `none` }}>
                             <td>Task</td>
                             <td>
-                              <Link to={`/tasks/${model.tid}#overall`}>
+                              <Link to={`/tasks/${task.task_code}`}>
                                 <TasksContext.Consumer>
                                   {({ tasks }) => {
                                     const task =

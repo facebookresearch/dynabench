@@ -567,7 +567,9 @@ class ResponseInfo extends React.Component {
                     "Please sign up or log in so that you can get credit for your generated examples."
                   ) +
                   "&src=" +
-                  encodeURIComponent("/tasks/" + this.props.taskId + "/create")
+                  encodeURIComponent(
+                    "/tasks/" + this.props.taskCode + "/create"
+                  )
                 }
               >
                 Sign up now
@@ -885,7 +887,7 @@ class CreateInterface extends React.Component {
     super(props);
     this.state = {
       answer: [],
-      taskId: null,
+      taskCode: null,
       task: {},
       context: null,
       target: 0,
@@ -918,7 +920,7 @@ class CreateInterface extends React.Component {
       { answer: [], submitDisabled: true, refreshDisabled: true },
       () => {
         this.context.api
-          .getRandomContext(this.state.taskId, this.state.task.selected_round)
+          .getRandomContext(this.state.task.id, this.state.task.selected_round)
           .then(
             (result) => {
               var randomTarget = Math.floor(
@@ -1252,7 +1254,7 @@ class CreateInterface extends React.Component {
             "Please sign up or log in so that you can get credit for your generated examples."
           ) +
           "&src=" +
-          encodeURIComponent("/tasks/" + this.props.taskId + "/create")
+          encodeURIComponent("/tasks/" + this.state.taskCode + "/create")
       );
     }
     this.setState({ livemode: checked });
@@ -1285,8 +1287,8 @@ class CreateInterface extends React.Component {
       );
     }
 
-    this.setState({ taskId: params.taskId }, function () {
-      this.context.api.getTask(this.state.taskId).then(
+    this.setState({ taskCode: params.taskCode }, function () {
+      this.context.api.getTaskByCode(this.state.taskCode).then(
         (result) => {
           result.targets = result.targets.split("|"); // split targets
           this.setState({ task: result }, function () {
@@ -1356,6 +1358,7 @@ class CreateInterface extends React.Component {
             obj={item}
             content={this.state.content}
             getNewContext={this.getNewContext}
+            taskCode={this.state.taskCode}
           />
         )
       )

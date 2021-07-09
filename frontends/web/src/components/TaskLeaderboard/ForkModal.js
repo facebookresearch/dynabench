@@ -15,10 +15,11 @@ const ForkModal = (props) => {
   const {
     metricWeights,
     datasetWeights,
-    taskId,
+    task,
     showForkModal,
     setShowForkModal,
   } = props;
+  console.log(task);
   const [leaderboardName, setLeaderboardName] = useState("");
   const [forkFormValidationMessage, setForkFormValidationMessage] = useState(
     "Fork name cannot be empty."
@@ -37,17 +38,16 @@ const ForkModal = (props) => {
 
     context.api
       .createLeaderboardConfiguration(
-        taskId,
+        task.id,
         uriEncodedLeaderboardName,
         configuration_json
       )
       .then(
         () => {
           const forkUrl = new URL(window.location.href);
-          forkUrl.pathname = `/tasks/${taskId}/leaderboard_configuration/${uriEncodedLeaderboardName}`;
+          forkUrl.pathname = `/tasks/${task.task_code}/leaderboard_configuration/${uriEncodedLeaderboardName}`;
           props.history.replace({
             pathname: forkUrl.pathname,
-            hash: forkUrl.hash,
           });
           setLeaderboardName("");
           setForkCreatedSuccessfully(true);
@@ -62,7 +62,7 @@ const ForkModal = (props) => {
             props.history.push(
               "/login?msg=" +
                 encodeURIComponent("You need to login to fork a leaderboard.") +
-                `&src=/tasks/${taskId}`
+                `&src=/tasks/${task.task_code}`
             );
           } else {
             setForkCreatedSuccessfully(false);

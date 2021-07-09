@@ -60,7 +60,7 @@ class VerifyInterface extends React.Component {
       UNKNOWN: "unknown",
     };
     this.state = {
-      taskId: null,
+      taskCode: null,
       task: {},
 
       owner_mode: false,
@@ -99,7 +99,7 @@ class VerifyInterface extends React.Component {
             "Please log in or sign up so that you can get credit for your generated examples."
           ) +
           "&src=" +
-          encodeURIComponent("/tasks/" + params.taskId + "/create")
+          encodeURIComponent("/tasks/" + params.taskCode + "/create")
       );
     }
 
@@ -121,8 +121,8 @@ class VerifyInterface extends React.Component {
       }
     }
 
-    this.setState({ taskId: params.taskId }, function () {
-      this.context.api.getTask(this.state.taskId).then(
+    this.setState({ taskCode: params.taskCode }, function () {
+      this.context.api.getTaskByCode(this.state.taskCode).then(
         (result) => {
           result.targets = result.targets.split("|"); // split targets
           this.setState({ task: result }, function () {
@@ -162,7 +162,7 @@ class VerifyInterface extends React.Component {
     (this.state.owner_mode
       ? this.setRangesAndGetRandomFilteredExample()
       : this.context.api.getRandomExample(
-          this.state.taskId,
+          this.state.task.id,
           this.state.task.selected_round
         )
     ).then(
@@ -312,7 +312,7 @@ class VerifyInterface extends React.Component {
     }
 
     return this.context.api.getRandomFilteredExample(
-      this.state.taskId,
+      this.state.task.id,
       this.state.task.selected_round,
       minNumFlags,
       maxNumFlags,

@@ -270,6 +270,12 @@ export default class ApiService {
     });
   }
 
+  getTaskByCode(taskCode) {
+    return this.fetch(`${this.domain}/tasks/taskcode/${taskCode}`, {
+      method: "GET",
+    });
+  }
+
   getTaskRound(id, rid) {
     return this.fetch(`${this.domain}/tasks/${id}/${rid}`, {
       method: "GET",
