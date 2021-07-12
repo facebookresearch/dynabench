@@ -7,6 +7,7 @@ import time
 
 import boto3
 import bottle
+import sagemaker
 import sqlalchemy as db
 
 import common.auth as _auth
@@ -224,7 +225,7 @@ def upload_to_s3(credentials):
         aws_secret_access_key=config["aws_secret_access_key"],
         region_name=config["aws_region"],
     )
-    bucket_name = task_config["s3_bucket"]
+    bucket_name = get_sagemaker_bucket(session, config, task_config)
     logger.info(f"Using AWS bucket {bucket_name} for task {task_code}")
 
     endpoint_name = f"ts{int(time.time())}-{model_name}"[:63]
@@ -269,3 +270,20 @@ def upload_to_s3(credentials):
             {"model_id": model.id, "s3_uri": f"s3://{bucket_name}/{s3_path}"}
         )
     )
+
+
+def get_sagemaker_bucket(session: boto3.Session, config: dict, task_config: dict):
+    """Returns the Sagemaker S3 bucket for the given task.
+
+    Try to reuse the existing session object.
+    """
+    task_region = task_config["aws_region"]
+    if config["aws_region"] != task_region:
+        session = boto3.Session(
+            aws_access_key_id=config["aws_access_key_id"],
+            aws_secret_access_key=config["aws_secret_access_key"],
+            region_name=task_region,
+        )
+
+    sagemaker_session = sagemaker.Session(boto_session=session)
+    return sagemaker_session.default_bucket()

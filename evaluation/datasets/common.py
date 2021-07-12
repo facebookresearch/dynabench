@@ -89,7 +89,7 @@ class BaseDataset(ABC):
 
     def dataset_available_on_s3(self, perturb_prefix=None) -> bool:
         path = self._get_data_s3_path(perturb_prefix)
-        return path_available_on_s3(self.s3_client, self.s3_bucket, path, path)
+        return path_available_on_s3(self.s3_client, self.s3_bucket, path)
 
     def _register_dataset_in_db_and_eval(self, eval_config) -> bool:
         t = TaskModel()
