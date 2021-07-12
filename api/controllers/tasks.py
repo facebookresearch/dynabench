@@ -10,6 +10,7 @@ import common.helpers as util
 from common.logging import logger
 from models.dataset import Dataset
 from models.example import ExampleModel
+from models.leaderboard_configuration import LeaderboardConfigurationModel
 from models.model import Model
 from models.round import RoundModel
 from models.round_user_example_info import RoundUserExampleInfoModel
@@ -472,6 +473,37 @@ def get_task_trends(tid):
     except Exception as ex:
         logger.exception("User trends data loading failed: (%s)" % (ex))
         bottle.abort(400, "Invalid task detail")
+
+
+@bottle.get("/tasks/<tid:int>/leaderboard_configuration/<name>")
+def get_leaderboard_configuration(tid, name):
+    lcm = LeaderboardConfigurationModel()
+    leaderboard_configuration = lcm.getByTaskIdAndLeaderboardName(tid, name)
+
+    if not leaderboard_configuration:
+        bottle.abort(404, "Not found")
+
+    leaderboard_configuration = leaderboard_configuration.to_dict()
+    return util.json_encode(leaderboard_configuration)
+
+
+@bottle.put("/tasks/<tid:int>/leaderboard_configuration")
+@_auth.requires_auth
+def create_leaderboard_configuration(credentials, tid):
+    data = bottle.request.json
+    if not util.check_fields(data, ["name", "configuration_json"]):
+        bottle.abort(400, "Missing data")
+
+    lcm = LeaderboardConfigurationModel()
+
+    name = data["name"]
+    if lcm.exists(tid=tid, name=name):
+        bottle.abort(409, "A fork with the same name already exists for this task.")
+
+    leaderboard_configuration = lcm.create(
+        tid, name, credentials["id"], data["configuration_json"]
+    )
+    return util.json_encode(leaderboard_configuration)
 
 
 def construct_model_board_response_json(query_result, total_count):

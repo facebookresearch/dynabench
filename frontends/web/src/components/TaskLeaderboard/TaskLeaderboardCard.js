@@ -10,6 +10,7 @@ import {
 } from "react-bootstrap";
 import UserContext from "../../containers/UserContext";
 import OverallModelLeaderBoard from "./OverallModelLeaderBoard";
+import ForkModal from "./ForkModal";
 
 const SortDirection = {
   ASC: "asc",
@@ -39,24 +40,69 @@ const TaskLeaderboardCard = (props) => {
 
   // Dataset Weights Array of a set of dataset id and corresponding weight.
   const [datasetWeights, setDatasetWeights] = useState();
+
   // Update weights on task change
   useEffect(() => {
-    setMetrics(
-      task?.ordered_metrics?.map((m) => {
-        return {
-          id: m.name,
-          label: m.name,
-          weight: m.default_weight,
-          unit: m.unit,
-        };
-      })
-    );
+    // Used to load default weights for metrics. When a new metric is found which was not saved in a leaderboard
+    // configuration, the default weight is used.
+    const metricIdToDataObj = {};
+    task.ordered_metrics.forEach((m) => {
+      metricIdToDataObj[m.name] = {
+        id: m.name,
+        label: m.name,
+        weight: m.default_weight,
+        unit: m.unit,
+      };
+    });
 
-    setDatasetWeights(
-      task.ordered_scoring_datasets?.map((ds) => {
-        return { id: ds.id, weight: ds.default_weight, name: ds.name };
-      })
-    );
+    // Used to load default weights for datasets. When a new dataset is found which was not saved in a leaderboard
+    // configuration, the default weight is used.
+    const datasetIdToDataObj = {};
+    task.ordered_scoring_datasets.forEach((ds) => {
+      datasetIdToDataObj[ds.id] = {
+        id: ds.id,
+        weight: ds.default_weight,
+        name: ds.name,
+      };
+    });
+
+    const setMetricsAndDatasetsWeights = () => {
+      setMetrics(Object.values(metricIdToDataObj));
+      setDatasetWeights(Object.values(datasetIdToDataObj));
+    };
+
+    const leaderboardName = props.match.params.leaderboardName;
+    if (leaderboardName != null) {
+      context.api.getLeaderboardConfiguration(task.id, leaderboardName).then(
+        (result) => {
+          const configuration_json = JSON.parse(result.configuration_json);
+          configuration_json.metricWeights.forEach((m) => {
+            if (m.id in metricIdToDataObj) {
+              metricIdToDataObj[m.id].weight = m.weight;
+            }
+          });
+          configuration_json.datasetWeights.forEach((d) => {
+            if (d.id in datasetIdToDataObj) {
+              datasetIdToDataObj[d.id].weight = d.weight;
+            }
+          });
+          setMetricsAndDatasetsWeights();
+        },
+        (error) => {
+          console.log(error);
+          if (error && error.status_code === 404) {
+            props.history.replace({
+              pathname: `/tasks/${taskId}`,
+              hash: props.location.hash,
+            });
+          }
+          setMetricsAndDatasetsWeights();
+        }
+      );
+    } else {
+      setMetricsAndDatasetsWeights();
+    }
+
     return () => {};
   }, [task]);
 
@@ -69,6 +115,7 @@ const TaskLeaderboardCard = (props) => {
   const [page, setPage] = useState(0);
   const [pageLimit, setPageLimit] = useState(10);
   const [total, setTotal] = useState(0);
+  const [showForkModal, setShowForkModal] = useState(false);
 
   const taskId = props.taskId;
 
@@ -189,6 +236,14 @@ const TaskLeaderboardCard = (props) => {
       <Card.Header className="light-gray-bg d-flex align-items-center">
         <h2 className="text-uppercase m-0 text-reset">Model Leaderboard</h2>
         <div className="d-flex justify-content-end flex-fill">
+          <ForkModal
+            metricWeights={metrics}
+            datasetWeights={datasetWeights}
+            taskId={taskId}
+            showForkModal={showForkModal}
+            setShowForkModal={setShowForkModal}
+            history={props.history}
+          />
           <Modal
             size="lg"
             show={enableHelp}
@@ -274,6 +329,34 @@ const TaskLeaderboardCard = (props) => {
               For more details, see the paper.
             </Modal.Body>
           </Modal>
+          {(process.env.REACT_APP_ENABLE_LEADERBOARD_FORK === "true" ||
+            context.user.admin) && (
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip id="tip-leaderboard-fork">Fork</Tooltip>}
+            >
+              <Button
+                className="btn bg-transparent border-0"
+                onClick={() => {
+                  if (context.api.loggedIn()) {
+                    setShowForkModal(!showForkModal);
+                  } else {
+                    props.history.push(
+                      "/login?msg=" +
+                        encodeURIComponent(
+                          "You need to login to fork a leaderboard."
+                        ) +
+                        `&src=/tasks/${taskId}`
+                    );
+                  }
+                }}
+              >
+                <span className="text-black-50">
+                  <i className="fas fa-code-branch"></i>
+                </span>
+              </Button>
+            </OverlayTrigger>
+          )}
           <OverlayTrigger
             placement="top"
             overlay={<Tooltip id="tip-metric-weights">Help</Tooltip>}
