@@ -54,7 +54,7 @@ tasks_config = {
     "hs": _gen_config(),
     "sentiment": _gen_config(),
     "qa": _gen_config(_custom_config["qa"]),
-    "flores_full": _gen_config(_custom_config["flores"]),
+    "flores_full": _gen_config(_custom_config["flores"]) | {"instance_count": 16},
     "flores_small1": _gen_config(_custom_config["flores"]),
     "flores_small2": _gen_config(_custom_config["flores"]),
 }

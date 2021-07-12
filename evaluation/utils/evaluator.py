@@ -7,7 +7,6 @@ from datetime import datetime
 import boto3
 import botocore
 from dateutil.tz import tzlocal
-
 from metrics import get_task_config_safe
 from models.model import ModelModel
 from utils.helpers import (
@@ -110,10 +109,9 @@ class JobScheduler:
                     sagemaker, job.endpoint_name, job.job_name, job.perturb_prefix
                 )
             except sagemaker.exceptions.ResourceLimitExceeded as ex:
-                logger.exception(
-                    f"Requeueing job {job.job_name} due to AWS limit exceeds."
+                logger.warning(
+                    f"Requeueing job {job.job_name} due to AWS limit exceeds: {ex}"
                 )
-                logger.debug(f"{ex}")
                 self._queued.append(job)
                 return False
             except sagemaker.exceptions.ResourceInUse as ex:

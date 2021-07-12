@@ -1,102 +1,78 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+import functools
+import itertools
 import json
+import logging
 import os
+import subprocess
 import sys
 import tempfile
+from pathlib import Path
+from typing import Dict, List, TextIO, Tuple
 
 from datasets.common import logger
 from utils import helpers
+from utils.helpers import path_available_on_s3
 
 from .base import MTBase
 
 
-FLORES101_SMALL1_LANGS = [
-    "hr_HR",
-    "hu_HU",
-    "et_EE",  # "sr_SR",   not complete yet
-    "mk_MK",
-    "en_XX",
-]
+logger = logging.getLogger(__name__)
 
-FLORES101_SMALL2_LANGS = ["su_ID", "jv_ID", "id_ID", "ms_MY", "tl_XX", "ta_IN", "en_XX"]
-# incomplete
-FLORES101_FULL_LANGS = [
-    "af_ZA",
-    "am_ET",
-    "as_IN",
-    "bg_BG",
-    "bn_IN",
-    "bs_BA",
-    "cs_CZ",
-    "cx_PH",
-    "da_DK",
-    "de_DE",
-    "en_XX",
-    "et_EE",
-    "fa_IR",
-    "ff_NG",
-    "fr_FR",
-    "gu_IN",
-    "ha_NG",
-    "he_IL",
-    "hi_IN",
-    "hr_HR",
-    "hu_HU",
-    "hy_AM",
-    "id_ID",
-    "ig_NG",
-    "it_IT",
-    "jv_ID",
-    "km_KH",
-    "kn_IN",
-    "ko_KR",
-    "ku_KR",
-    "lg_UG",
-    "lo_LA",
-    "lt_LT",
-    "mg_MG",
-    "mk_MK",
-    "ml_IN",
-    "mn_MN",
-    "mr_IN",
-    "ms_MY",
-    "my_MM",
-    "ne_NP",
-    "nl_XX",
-    "om_KE",
-    "or_IN",
-    "pa_IN",
-    "ps_AF",
-    "si_LK",
-    "so_SO",
-    "su_ID",
-    "sv_SE",
-    "sw_KE",
-    "ta_IN",
-    "te_IN",
-    "tl_XX",
-    "tn_BW",
-    "tr_TR",
-    "ur_PK",
-    "wo_SN",
-    "xh_ZA",
-    "yo_NG",
-    "zu_ZA",
-]
+FLORES101_SMALL1_LANGS = ["eng", "est", "hrv", "hun", "mkd", "srp"]
+FLORES101_SMALL2_LANGS = ["eng", "ind", "jav", "msa", "tam", "tgl"]
+FLORES101_FULL_LANGS = (
+    "afr,amh,ara,asm,ast,azj,bel,ben,bos,bul,cat,ceb,ces,ckb,cym,dan,deu,ell,"
+    "eng,est,fas,fin,fra,ful,gle,glg,guj,hau,heb,hin,hrv,hun,hye,ibo,ind,isl,"
+    "ita,jav,jpn,kam,kan,kat,kaz,kea,khm,kir,kor,lao,lav,lin,lit,ltz,lug,luo,"
+    "mal,mar,mkd,mlt,mon,mri,msa,mya,npi,nld,nob,nso,nya,oci,orm,ory,pan,pol,"
+    "por,pus,ron,rus,slk,slv,sna,snd,som,spa,srp,swe,swh,tam,tel,tgk,tgl,tha,"
+    "tur,ukr,umb,urd,uzb,vie,wol,xho,yor,zho_simp,zho_trad,zul"
+).split(",")
 
 
 class Flores101Base(MTBase):
-    def __init__(self, task, name, round_id, local_path, partition, languages):
+    def __init__(
+        self,
+        task: str,
+        name: str,
+        round_id: int,
+        local_path: str,
+        partition: str,
+        languages: list,
+        shard_by_lang: bool = False,
+    ):
         self.local_path = local_path
         self.partition = partition
-        self.languages = languages[1:10]
+        self.shard_by_lang = shard_by_lang
+        self.languages = languages
         super().__init__(task=task, name=name, round_id=round_id)
 
     def _get_data_s3_path(self, perturb_prefix=None):
-        return helpers.get_data_s3_path(
-            "flores/" + self.task, self.filename, perturb_prefix
+        # filename has the .jsonl extension.
+        # When the dataset is sharded we don't put the extension
+        # because AWS will match files by prefix.
+        name = self.name + "-" if self.shard_by_lang else self.filename
+        return helpers.get_data_s3_path("flores/" + self.task, name, perturb_prefix)
+
+    def dataset_available_on_s3(self, perturb_prefix=None) -> bool:
+        if not self.shard_by_lang:
+            return super().dataset_available_on_s3(perturb_prefix)
+        basepath = self._get_data_s3_path()
+        required_paths = {basepath + f"{lang}.jsonl" for lang in self.languages}
+        response = self.s3_client.list_objects_v2(
+            Bucket=self.s3_bucket, Prefix=basepath
         )
+        available_paths = {obj["Key"] for obj in response.get("Contents", [])}
+        missing_paths = required_paths - available_paths
+        if missing_paths and missing_paths != required_paths:
+            logging.warning(
+                "Sharded dataset is missing some parts."
+                f"Bucket {self.s3_bucket}/{basepath}. Missing parts: {missing_paths}"
+            )
+
+        return not missing_paths
 
     def get_batch_transform_config(
         self, sagemaker_client, endpoint_name, job_name, perturb_prefix=None
@@ -113,41 +89,19 @@ class Flores101Base(MTBase):
 
     def load(self):
         try:
-            with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
-                for lang1 in self.languages:
-                    for lang2 in self.languages:
-                        if lang1 == lang2:
-                            continue
-                        row = 0
-                        for line1, line2 in zip(
-                            open(
-                                f"{self.local_path}/{lang1}.{self.partition}"
-                            ).readlines(),
-                            open(
-                                f"{self.local_path}/{lang2}.{self.partition}"
-                            ).readlines(),
-                        ):
-                            tmp_jl = {
-                                "uid": f"{row}-{lang1}-{lang2}-{self.partition}",
-                                "sourceLanguage": lang1,
-                                "targetLanguage": lang2,
-                                "sourceText": line1.strip(),
-                                "targetText": line2.strip(),
-                            }
-                            row += 1
-                            tmp.write(json.dumps(tmp_jl) + "\n")
-                tmp.close()
-                response = self.s3_client.upload_file(
-                    tmp.name, self.s3_bucket, self._get_data_s3_path()
+            with tempfile.TemporaryDirectory(prefix="flores101", delete=True) as tmp:
+                prepare(
+                    folder=Path(self.local_path),
+                    outdir=Path(tmp.name),
+                    task=self.task,
+                    langs=self.languages,
+                    split=self.partition,
+                    shard=self.shard_by_lang,
                 )
-                os.remove(tmp.name)
-                if response:
-                    logger.info(response)
+                return True
         except Exception as ex:
             logger.exception(f"Failed to load {self.name} to S3 due to {ex}.")
             return False
-        else:
-            return True
 
     def label_field_converter(self, example):
         return {
@@ -168,6 +122,7 @@ class Flores101FullDev(Flores101Base):
             local_path=local_path,
             partition="dev",
             languages=FLORES101_FULL_LANGS,
+            shard_by_lang=True,
         )
 
 
@@ -182,6 +137,7 @@ class Flores101FullDevTest(Flores101Base):
             local_path=local_path,
             partition="devtest",
             languages=FLORES101_FULL_LANGS,
+            shard_by_lang=True,
         )
 
 
@@ -196,6 +152,7 @@ class Flores101FullTest(Flores101Base):
             local_path=local_path,
             partition="test",
             languages=FLORES101_FULL_LANGS,
+            shard_by_lang=True,
         )
 
 
@@ -281,3 +238,117 @@ class Flores101Small2Test(Flores101Base):
             partition="test",
             languages=FLORES101_SMALL2_LANGS,
         )
+
+
+@functools.lru_cache(maxsize=256)
+def read_raw_data(folder: Path, split: str, lang: str) -> list[str]:
+    """Makes sure we are reading each file at most once.
+
+    There is 1000 sentences per file, one file per lang so the memory footprint is ok.
+    """
+    file = folder / f"{lang}.{split}"
+    assert file.exists(), file
+    return file.read_text().splitlines()
+
+
+def write_json(sample: Dict[str, str], o: TextIO) -> None:
+    print(json.dumps(sample, ensure_ascii=False), file=o)
+
+
+def output_file(task: str, partition: str, outdir: Path, lang: str = None) -> Path:
+    filename = f"flores101-{task}-{partition}"
+    if lang:
+        filename += f"-{lang}"
+    return outdir / f"{filename}.jsonl"
+
+
+def prepare(
+    folder: Path,
+    outdir: Path,
+    task: str,
+    langs: List[str],
+    partition: str,
+    shard: bool = False,
+):
+    assert folder.exists()
+    outdir.mkdir(exist_ok=True)
+
+    if shard:
+        writers: Dict[str, Tuple[Path, TextIO]] = {}
+    else:
+        # We only have one file
+        outfile = output_file(task, partition, outdir)
+        shared_writer = open(outfile, "w", encoding="utf-8")
+
+    def _get_writer(lang: str) -> TextIO:
+        if not shard:
+            return shared_writer
+        if lang not in writers:
+            outfile = output_file(task, partition, outdir, lang)
+            writers[lang] = (outfile, open(outfile, "w", encoding="utf-8"))
+
+        outfile, writer = writers[lang]
+        return writer
+
+    lines = 0
+    for src, tgt in itertools.product(langs, langs):
+        if src >= tgt:
+            continue
+
+        src_lines = read_raw_data(folder, partition, src)
+        tgt_lines = read_raw_data(folder, partition, tgt)
+
+        o_src = _get_writer(src)
+        for i, (src_line, tgt_line) in enumerate(zip(src_lines, tgt_lines)):
+            src_tgt_id_suffix = f"-{src}-{tgt}-{partition}"
+            src_tgt = {
+                "uid": str(i) + src_tgt_id_suffix,
+                "sourceLanguage": src,
+                "targetLanguage": tgt,
+                "sourceText": src_line,
+                "targetText": tgt_line,
+            }
+            write_json(src_tgt, o_src)
+            lines += 1
+
+        o_tgt = _get_writer(tgt)
+        for i, (src_line, tgt_line) in enumerate(zip(src_lines, tgt_lines)):
+            tgt_src_id_suffix = f"-{tgt}-{src}-{partition}"
+
+            tgt_src = {
+                "uid": str(i) + tgt_src_id_suffix,
+                "sourceLanguage": tgt,
+                "targetLanguage": src,
+                "sourceText": tgt_line,
+                "targetText": src_line,
+            }
+            write_json(tgt_src, o_tgt)
+            lines += 1
+
+    # Free memory
+    read_raw_data.cache_clear()
+    if shard:
+        files = len(writers)
+        logger.info(f"Wrote dataset. {lines:_d} lines, {files:_d} files.")
+        for outfile, o in writers.values():
+            o.close()
+            _upload_file(task, partition, outfile)
+    else:
+        logger.info(
+            f"Wrote dataset {outfile}. {lines:_d} lines. Total size: {outfile.stat().st_size / 1024 / 1024:.1f}Mb"
+        )
+        o.close()
+        _upload_file(task, partition, outfile)
+
+
+def _upload_file(task: str, partition: str, outfile: Path) -> None:
+    s3_buckets = [
+        "s3://evaluation-us-west-2/datasets",
+        "s3://evaluation-us-west-1-096166425824/datasets",
+    ]
+    for s3_bucket in s3_buckets:
+        s3_path = "/".join([s3_bucket, "flores", f"flores_{task}", outfile.name])
+        logger.info(f"Copying {outfile} to {s3_path}")
+        cmd = ["s3cmd", "put", "--force", str(outfile), s3_path]
+        logger.info(" ".join(cmd))
+        logger.info(subprocess.check_output(cmd, text=True))
