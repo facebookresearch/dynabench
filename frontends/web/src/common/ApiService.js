@@ -124,11 +124,11 @@ export default class ApiService {
     });
   }
 
-  getTempAuthToken() {
-    return this.fetch(`${this.domain}/authenticate/get_temp_token`, {
+  getTrialAuthToken() {
+    return this.fetch(`${this.domain}/authenticate/get_trial_token`, {
       method: "GET",
     }).then((res) => {
-      localStorage.setItem("temp_auth_token", res.token);
+      localStorage.setItem("trial_auth_token", res.token);
       return res;
     });
   }
@@ -377,13 +377,13 @@ export default class ApiService {
     { context, hypothesis, answer, image_url, question, insight, statement }
   ) {
     const uid = "0"; //A requied field for dynalab uploaded models
-    const tempAuthToken = localStorage.getItem("temp_auth_token");
+    const trialAuthToken = localStorage.getItem("trial_auth_token");
     const customHeader =
-      this.loggedIn() || this.mode === "mturk" || tempAuthToken == null
+      this.loggedIn() || this.mode === "mturk" || trialAuthToken == null
         ? null
         : {
             Accept: "application/json",
-            Authorization: "Bearer " + tempAuthToken,
+            Authorization: "Bearer " + trialAuthToken,
             "Content-Type": "application/json",
           };
     return this.fetch(modelUrl, {
@@ -597,7 +597,7 @@ export default class ApiService {
 
   setToken(idToken) {
     localStorage.setItem("id_token", idToken);
-    localStorage.removeItem("temp_auth_token");
+    localStorage.removeItem("trial_auth_token");
   }
 
   getToken() {

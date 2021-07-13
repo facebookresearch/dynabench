@@ -1236,7 +1236,7 @@ class CreateInterface extends React.Component {
                 "/login?msg=" +
                   encodeURIComponent("You need to login to use this feature.") +
                   "&src=" +
-                  encodeURIComponent("/tasks/" + this.props.taskId + "/create")
+                  encodeURIComponent("/tasks/" + this.state.taskId + "/create")
               );
             }
             this.setState({
@@ -1260,7 +1260,7 @@ class CreateInterface extends React.Component {
             "Please sign up or log in so that you can get credit for your generated examples."
           ) +
           "&src=" +
-          encodeURIComponent("/tasks/" + this.props.taskId + "/create")
+          encodeURIComponent("/tasks/" + this.state.taskId + "/create")
       );
     }
     this.setState({ livemode: checked });
@@ -1275,7 +1275,7 @@ class CreateInterface extends React.Component {
       match: { params },
     } = this.props;
     if (!this.context.api.loggedIn()) {
-      this.context.api.getTempAuthToken();
+      this.context.api.getTrialAuthToken();
     }
     if (!this.context.api.loggedIn() || propState?.detail) {
       this.setState({ livemode: false });

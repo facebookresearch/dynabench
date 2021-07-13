@@ -37,9 +37,9 @@ def authenticate():
     return util.json_encode({"user": user.to_dict(), "token": token})
 
 
-@bottle.get("/authenticate/get_temp_token")
-def get_temp_auth_token():
-    token = _auth.get_token({"username": "temp_user"}, 15 * 60)
+@bottle.get("/authenticate/get_trial_token")
+def get_trial_auth_token():
+    token = _auth.get_token({"username": "temp_user"}, "trial_jwtexp")
     return util.json_encode({"token": token})
 
 

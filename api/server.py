@@ -44,6 +44,7 @@ app = bottle.default_app()
 for k in [
     "jwtsecret",
     "jwtexp",
+    "trial_jwtexp",
     "jwtalgo",
     "cookie_secret",
     "refreshexp",
