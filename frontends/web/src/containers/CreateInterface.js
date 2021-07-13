@@ -1232,7 +1232,12 @@ class CreateInterface extends React.Component {
           (error) => {
             console.log(error);
             if (error && error.message && error.message === "Unauthorized") {
-              alert("You need to login to use this feature!");
+              this.props.history.push(
+                "/login?msg=" +
+                  encodeURIComponent("You need to login to use this feature.") +
+                  "&src=" +
+                  encodeURIComponent("/tasks/" + this.props.taskId + "/create")
+              );
             }
             this.setState({
               submitDisabled: false,
@@ -1269,6 +1274,9 @@ class CreateInterface extends React.Component {
     const {
       match: { params },
     } = this.props;
+    if (!this.context.api.loggedIn()) {
+      this.context.api.getTempAuthToken();
+    }
     if (!this.context.api.loggedIn() || propState?.detail) {
       this.setState({ livemode: false });
     } else {

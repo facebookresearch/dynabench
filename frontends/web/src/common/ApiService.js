@@ -124,6 +124,15 @@ export default class ApiService {
     });
   }
 
+  getTempAuthToken() {
+    return this.fetch(`${this.domain}/authenticate/get_temp_token`, {
+      method: "GET",
+    }).then((res) => {
+      localStorage.setItem("temp_auth_token", res.token);
+      return res;
+    });
+  }
+
   getTasks() {
     return this.fetch(`${this.domain}/tasks`, {
       method: "GET",
@@ -368,6 +377,13 @@ export default class ApiService {
     { context, hypothesis, answer, image_url, question, insight, statement }
   ) {
     const uid = "0"; //A requied field for dynalab uploaded models
+    const tempAuthToken = localStorage.getItem("temp_auth_token");
+    const customHeader =
+      this.loggedIn() || this.mode === "mturk" || tempAuthToken == null
+        ? null
+        : {
+            Authorization: "Bearer " + tempAuthToken,
+          };
     return this.fetch(modelUrl, {
       method: "POST",
       body: JSON.stringify({
@@ -380,6 +396,7 @@ export default class ApiService {
         insight,
         statement,
       }),
+      ...(customHeader == null ? {} : { headers: customHeader }),
     });
   }
 
@@ -578,6 +595,7 @@ export default class ApiService {
 
   setToken(idToken) {
     localStorage.setItem("id_token", idToken);
+    localStorage.removeItem("temp_auth_token");
   }
 
   getToken() {
