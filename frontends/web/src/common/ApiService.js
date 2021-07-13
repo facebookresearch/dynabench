@@ -382,7 +382,9 @@ export default class ApiService {
       this.loggedIn() || this.mode === "mturk" || tempAuthToken == null
         ? null
         : {
+            Accept: "application/json",
             Authorization: "Bearer " + tempAuthToken,
+            "Content-Type": "application/json",
           };
     return this.fetch(modelUrl, {
       method: "POST",
