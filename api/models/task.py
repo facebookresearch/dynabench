@@ -135,88 +135,81 @@ class TaskModel(BaseModel):
             return 4
         return 1
 
-    def getRoundAndMetricMetadata(self, t, r):
-        dm = DatasetModel()
-        datasets = dm.getByTid(t.id)
-        dataset_list = []
-        scoring_dataset_list = []
-        for dataset in datasets:
-            dataset_list.append({"id": dataset.id, "name": dataset.name})
-            if dataset.access_type == AccessTypeEnum.scoring:
-                scoring_dataset_list.append(
-                    {
-                        "id": dataset.id,
-                        "name": dataset.name,
-                        "default_weight": self.get_default_dataset_weight(
-                            t, dataset.name
-                        ),
-                    }
-                )
-        dataset_list.sort(key=lambda dataset: dataset["id"])
-        scoring_dataset_list.sort(key=lambda dataset: dataset["id"])
-
-        t_dict = t.to_dict()
-        r_dict = r.to_dict()
-        t_dict["ordered_scoring_datasets"] = scoring_dataset_list
-        t_dict["ordered_datasets"] = dataset_list
-        shortname_to_metrics_task_name = {
-            "NLI": "nli",
-            "QA": "qa",
-            "Sentiment": "sentiment",
-            "Hate Speech": "hs",
-            "FLORES-SMALL1": "flores_small1",
-            "FLORES-SMALL2": "flores_small2",
-            "FLORES-FULL": "flores_full",
-        }
-        if t_dict["shortname"] in shortname_to_metrics_task_name:
-            metrics_task_name = shortname_to_metrics_task_name[t_dict["shortname"]]
-            t_dict["perf_metric_field_name"] = metrics.get_task_config_safe(
-                metrics_task_name
-            )["perf_metric"]
-            metrics_meta, ordered_field_names = metrics.get_task_metrics_meta(
-                metrics_task_name
-            )
-            ordered_metrics = [
-                dict(
-                    {
-                        "name": metrics_meta[field_name]["pretty_name"],
-                        "field_name": field_name,
-                        "default_weight": self.get_default_metric_weight(
-                            t, field_name, t_dict["perf_metric_field_name"]
-                        ),
-                    },
-                    **metrics_meta[field_name],
-                )
-                for field_name in ordered_field_names
-            ]
-        else:
-            ordered_metrics = []
-
-        t_dict["ordered_metrics"] = ordered_metrics
-        t_dict["round"] = r_dict
-        return t_dict
-
-    def getWithRoundAndMetricMetadata(self, tid):
+    def getWithRoundAndMetricMetadata(self, task_id_or_code):
         try:
-            t, r = (
-                self.dbs.query(Task, Round)
-                .filter(Task.id == tid)
-                .join(Round, (Round.tid == Task.id) & (Round.rid == Task.cur_round))
-                .one()
-            )
-            return self.getRoundAndMetricMetadata(t, r)
-        except db.orm.exc.NoResultFound:
-            return False
+            if isinstance(task_id_or_code, int) or task_id_or_code.isdigit():
+                t, r = (
+                    self.dbs.query(Task, Round)
+                    .filter(Task.id == task_id_or_code)
+                    .join(Round, (Round.tid == Task.id) & (Round.rid == Task.cur_round))
+                    .one()
+                )
+            else:
+                t, r = (
+                    self.dbs.query(Task, Round)
+                    .filter(Task.task_code == task_id_or_code)
+                    .join(Round, (Round.tid == Task.id) & (Round.rid == Task.cur_round))
+                    .one()
+                )
+            dm = DatasetModel()
+            datasets = dm.getByTid(t.id)
+            dataset_list = []
+            scoring_dataset_list = []
+            for dataset in datasets:
+                dataset_list.append({"id": dataset.id, "name": dataset.name})
+                if dataset.access_type == AccessTypeEnum.scoring:
+                    scoring_dataset_list.append(
+                        {
+                            "id": dataset.id,
+                            "name": dataset.name,
+                            "default_weight": self.get_default_dataset_weight(
+                                t, dataset.name
+                            ),
+                        }
+                    )
+            dataset_list.sort(key=lambda dataset: dataset["id"])
+            scoring_dataset_list.sort(key=lambda dataset: dataset["id"])
 
-    def getByTaskCodeWithRoundAndMetricMetadata(self, task_code):
-        try:
-            t, r = (
-                self.dbs.query(Task, Round)
-                .filter(Task.task_code == task_code)
-                .join(Round, (Round.tid == Task.id) & (Round.rid == Task.cur_round))
-                .one()
-            )
-            return self.getRoundAndMetricMetadata(t, r)
+            t_dict = t.to_dict()
+            r_dict = r.to_dict()
+            t_dict["ordered_scoring_datasets"] = scoring_dataset_list
+            t_dict["ordered_datasets"] = dataset_list
+            shortname_to_metrics_task_name = {
+                "NLI": "nli",
+                "QA": "qa",
+                "Sentiment": "sentiment",
+                "Hate Speech": "hs",
+                "FLORES-SMALL1": "flores_small1",
+                "FLORES-SMALL2": "flores_small2",
+                "FLORES-FULL": "flores_full",
+            }
+            if t_dict["shortname"] in shortname_to_metrics_task_name:
+                metrics_task_name = shortname_to_metrics_task_name[t_dict["shortname"]]
+                t_dict["perf_metric_field_name"] = metrics.get_task_config_safe(
+                    metrics_task_name
+                )["perf_metric"]
+                metrics_meta, ordered_field_names = metrics.get_task_metrics_meta(
+                    metrics_task_name
+                )
+                ordered_metrics = [
+                    dict(
+                        {
+                            "name": metrics_meta[field_name]["pretty_name"],
+                            "field_name": field_name,
+                            "default_weight": self.get_default_metric_weight(
+                                t, field_name, t_dict["perf_metric_field_name"]
+                            ),
+                        },
+                        **metrics_meta[field_name],
+                    )
+                    for field_name in ordered_field_names
+                ]
+            else:
+                ordered_metrics = []
+
+            t_dict["ordered_metrics"] = ordered_metrics
+            t_dict["round"] = r_dict
+            return t_dict
         except db.orm.exc.NoResultFound:
             return False
 

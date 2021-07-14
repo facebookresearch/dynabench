@@ -132,7 +132,7 @@ const TaskActionButtons = (props) => {
             <Button
               as={Link}
               className="border-0 blue-color font-weight-bold light-gray-bg"
-              to={"/tasks/" + props.taskCode + "/create"}
+              to={"/tasks/" + props.taskIdOrCode + "/create"}
             >
               <i className="fas fa-pen"></i> Create Examples
             </Button>
@@ -152,7 +152,7 @@ const TaskActionButtons = (props) => {
             <Button
               as={Link}
               className="border-0 blue-color font-weight-bold light-gray-bg"
-              to={"/tasks/" + props.taskCode + "/validate"}
+              to={"/tasks/" + props.taskIdOrCode + "/validate"}
             >
               <i className="fas fa-search"></i> Validate Examples
             </Button>
@@ -406,7 +406,7 @@ class TaskPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      taskCode: props.match.params.taskCode,
+      taskIdOrCode: props.match.params.taskIdOrCode,
       task: {},
       trendScore: [],
       modelLeaderBoardData: [],
@@ -422,61 +422,45 @@ class TaskPage extends React.Component {
     this.exportAllTaskData = this.exportAllTaskData.bind(this);
     this.getSavedTaskSettings = this.getSavedTaskSettings.bind(this);
     this.exportCurrentRoundData = this.exportCurrentRoundData.bind(this);
+    this.updateTaskData = this.updateTaskData.bind(this);
   }
 
   componentDidMount() {
-    this.setState({ taskCode: this.props.match.params.taskCode }, function () {
-      this.context.api.getTaskByCode(this.state.taskCode).then(
-        (result) => {
-          this.setState(
-            {
-              task: result,
-              displayRound: "overall",
-              round: result.round,
-            },
-            function () {
-              this.refreshData();
-            }
-          );
-        },
-        (error) => {
-          console.log(error);
-          if (error.status_code === 404 || error.status_code === 405) {
-            this.props.history.push("/");
-          }
-        }
-      );
-    });
+    this.updateTaskData();
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.match.params.taskCode !== this.state.taskCode) {
-      this.setState(
-        { taskCode: this.props.match.params.taskCode },
-        function () {
-          this.context.api.getTaskByCode(this.state.taskCode).then(
-            (result) => {
-              this.setState(
-                {
-                  task: result,
-                  displayRound: "overall",
-                  round: result.round,
-                },
-                function () {
-                  this.refreshData();
-                }
-              );
-            },
-            (error) => {
-              console.log(error);
-              if (error.status_code === 404 || error.status_code === 405) {
-                this.props.history.push("/");
-              }
-            }
-          );
-        }
-      );
+    if (this.props.match.params.taskIdOrCode !== this.state.taskIdOrCode) {
+      this.updateTaskData();
     }
+  }
+
+  updateTaskData() {
+    this.setState(
+      { taskIdOrCode: this.props.match.params.taskIdOrCode },
+      function () {
+        this.context.api.getTask(this.state.taskIdOrCode).then(
+          (result) => {
+            this.setState(
+              {
+                task: result,
+                displayRound: "overall",
+                round: result.round,
+              },
+              function () {
+                this.refreshData();
+              }
+            );
+          },
+          (error) => {
+            console.log(error);
+            if (error.status_code === 404 || error.status_code === 405) {
+              this.props.history.push("/");
+            }
+          }
+        );
+      }
+    );
   }
 
   getSavedTaskSettings() {
@@ -902,7 +886,7 @@ class TaskPage extends React.Component {
           <Row className="justify-content-center">
             <TaskActionButtons
               api={this.context.api}
-              taskCode={this.state.task.task_code}
+              taskIdOrCode={this.state.taskIdOrCode}
               user={this.context.user}
               task={this.state.task}
             />
@@ -929,7 +913,7 @@ class TaskPage extends React.Component {
                     modelLeaderBoardData={this.state.modelLeaderBoardData}
                     modelLeaderBoardTags={this.state.modelLeaderBoardTags}
                     task={this.state.task}
-                    taskCode={this.state.taskCode}
+                    taskIdOrCode={this.state.taskIdOrCode}
                   />
                 </Annotation>
               </Col>

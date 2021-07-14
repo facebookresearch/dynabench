@@ -92,7 +92,7 @@ const TaskLeaderboardCard = (props) => {
           console.log(error);
           if (error && error.status_code === 404) {
             props.history.replace({
-              pathname: `/tasks/${taskCode}`,
+              pathname: `/tasks/${taskIdOrCode}`,
             });
           }
           setMetricsAndDatasetsWeights();
@@ -117,7 +117,7 @@ const TaskLeaderboardCard = (props) => {
   const [showForkModal, setShowForkModal] = useState(false);
 
   const taskId = props.task.id;
-  const taskCode = props.taskCode;
+  const taskIdOrCode = props.taskIdOrCode;
 
   /**
    * Update weight state for the appropriate metric
@@ -227,7 +227,15 @@ const TaskLeaderboardCard = (props) => {
     fetchOverallModelLeaderboard(context.api, page);
     setIsLoading(false);
     return () => {};
-  }, [page, sort, metrics, datasetWeights, context.api, taskCode, pageLimit]);
+  }, [
+    page,
+    sort,
+    metrics,
+    datasetWeights,
+    context.api,
+    taskIdOrCode,
+    pageLimit,
+  ]);
 
   const isEndOfPage = (page + 1) * pageLimit >= total;
 
@@ -239,7 +247,8 @@ const TaskLeaderboardCard = (props) => {
           <ForkModal
             metricWeights={metrics}
             datasetWeights={datasetWeights}
-            task={task}
+            taskId={taskId}
+            taskIdOrCode={taskIdOrCode}
             showForkModal={showForkModal}
             setShowForkModal={setShowForkModal}
             history={props.history}
@@ -346,7 +355,7 @@ const TaskLeaderboardCard = (props) => {
                         encodeURIComponent(
                           "You need to login to fork a leaderboard."
                         ) +
-                        `&src=/tasks/${taskCode}`
+                        `&src=/tasks/${taskIdOrCode}`
                     );
                   }
                 }}

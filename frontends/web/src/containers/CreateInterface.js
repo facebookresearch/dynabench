@@ -568,7 +568,7 @@ class ResponseInfo extends React.Component {
                   ) +
                   "&src=" +
                   encodeURIComponent(
-                    "/tasks/" + this.props.taskCode + "/create"
+                    "/tasks/" + this.props.taskIdOrCode + "/create"
                   )
                 }
               >
@@ -887,7 +887,7 @@ class CreateInterface extends React.Component {
     super(props);
     this.state = {
       answer: [],
-      taskCode: null,
+      taskIdOrCode: null,
       task: {},
       context: null,
       target: 0,
@@ -1254,7 +1254,7 @@ class CreateInterface extends React.Component {
             "Please sign up or log in so that you can get credit for your generated examples."
           ) +
           "&src=" +
-          encodeURIComponent("/tasks/" + this.state.taskCode + "/create")
+          encodeURIComponent("/tasks/" + this.state.taskIdOrCode + "/create")
       );
     }
     this.setState({ livemode: checked });
@@ -1287,8 +1287,8 @@ class CreateInterface extends React.Component {
       );
     }
 
-    this.setState({ taskCode: params.taskCode }, function () {
-      this.context.api.getTaskByCode(this.state.taskCode).then(
+    this.setState({ taskIdOrCode: params.taskIdOrCode }, function () {
+      this.context.api.getTask(this.state.taskIdOrCode).then(
         (result) => {
           result.targets = result.targets.split("|"); // split targets
           this.setState({ task: result }, function () {
@@ -1358,7 +1358,7 @@ class CreateInterface extends React.Component {
             obj={item}
             content={this.state.content}
             getNewContext={this.getNewContext}
-            taskCode={this.state.taskCode}
+            taskIdOrCode={this.state.taskIdOrCode}
           />
         )
       )

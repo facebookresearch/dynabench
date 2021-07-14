@@ -16,7 +16,7 @@ class PublishInterface extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      taskCode: props.match.params.taskCode,
+      taskIdOrCode: props.match.params.taskIdOrCode,
       modelId: props.match.params.modelId,
       model: {},
       isPublished: false,
@@ -27,7 +27,7 @@ class PublishInterface extends React.Component {
       this.props.history.push(
         "/login?&src=" +
           encodeURIComponent(
-            `/tasks/${this.state.taskCode}/models/${this.state.modelId}/publish`
+            `/tasks/${this.state.taskIdOrCode}/models/${this.state.modelId}/publish`
           )
       );
     }

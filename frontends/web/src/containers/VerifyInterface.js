@@ -60,7 +60,7 @@ class VerifyInterface extends React.Component {
       UNKNOWN: "unknown",
     };
     this.state = {
-      taskCode: null,
+      taskIdOrCode: null,
       task: {},
 
       owner_mode: false,
@@ -99,7 +99,7 @@ class VerifyInterface extends React.Component {
             "Please log in or sign up so that you can get credit for your generated examples."
           ) +
           "&src=" +
-          encodeURIComponent("/tasks/" + params.taskCode + "/create")
+          encodeURIComponent("/tasks/" + params.taskIdOrCode + "/create")
       );
     }
 
@@ -121,8 +121,8 @@ class VerifyInterface extends React.Component {
       }
     }
 
-    this.setState({ taskCode: params.taskCode }, function () {
-      this.context.api.getTaskByCode(this.state.taskCode).then(
+    this.setState({ taskIdOrCode: params.taskIdOrCode }, function () {
+      this.context.api.getTask(this.state.taskIdOrCode).then(
         (result) => {
           result.targets = result.targets.split("|"); // split targets
           this.setState({ task: result }, function () {
