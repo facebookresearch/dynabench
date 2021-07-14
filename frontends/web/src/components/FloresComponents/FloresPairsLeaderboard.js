@@ -49,7 +49,7 @@ const preList = (perf_tags) => {
         model: s.top_perf_info,
         source_tag: s.tag.split("-")[0],
         target_tag: s.tag.split("-")[1],
-        perf: s.top_perf_info.perf,
+        perf: s.top_perf_info.perf.toFixed(2),
         source_lang: source.LANGUAGE,
         target_lang: target.LANGUAGE,
       };

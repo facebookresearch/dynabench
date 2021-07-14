@@ -16,8 +16,8 @@ steps = [
         `total_fooled`, `total_collected`, `total_time_spent`, `start_datetime`,
         `end_datetime`, `total_verified_fooled`) VALUES (2,3,
         \'4a199a7301bad96836a5e5285952761a8fcdd64eab48e7f7db38897d19f49198\',
-        \'https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=
-        ts1624132576-electra-synqa\',NULL,
+        \'https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=ts1624132576-electra-synqa\',
+        NULL,
         \'Contexts in this round come from
         <a target="_blank" href="https://arxiv.org/abs/2009.02252">KILT</a>
         Wikipedia articles used by at least 5 of the KILT tasks. The target model
@@ -31,7 +31,7 @@ steps = [
         (UCL); <a href="http://www.riedelcastro.org/">Sebastian Riedel</a> (UCL).\',
         0,0,NULL,NULL,NULL,0)
         """,
-        "DELETE FROM rounds WHERE tid=2 and rid=3",
+        "DELETE FROM rounds WHERE tid=2 AND rid=3",
     ),
     step(
         "UPDATE tasks SET cur_round=3 WHERE id=2 LIMIT 1",
