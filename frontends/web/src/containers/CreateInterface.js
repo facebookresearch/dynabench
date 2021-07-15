@@ -528,6 +528,14 @@ class CreateInterface extends React.Component {
           },
           (error) => {
             console.log(error);
+            if (error && error.message && error.message === "Unauthorized") {
+              this.props.history.push(
+                "/login?msg=" +
+                  encodeURIComponent("You need to login to use this feature.") +
+                  "&src=" +
+                  encodeURIComponent("/tasks/" + this.state.taskId + "/create")
+              );
+            }
             this.setState({
               submitDisabled: false,
               refreshDisabled: false,
@@ -545,7 +553,7 @@ class CreateInterface extends React.Component {
             "Please sign up or log in so that you can get credit for your generated examples."
           ) +
           "&src=" +
-          encodeURIComponent("/tasks/" + this.props.taskId + "/create")
+          encodeURIComponent("/tasks/" + this.state.taskId + "/create")
       );
     }
     this.setState({ livemode: checked });
@@ -559,6 +567,9 @@ class CreateInterface extends React.Component {
     const {
       match: { params },
     } = this.props;
+    if (!this.context.api.loggedIn()) {
+      this.context.api.getTrialAuthToken();
+    }
     if (!this.context.api.loggedIn() || propState?.detail) {
       this.setState({ livemode: false });
     } else {

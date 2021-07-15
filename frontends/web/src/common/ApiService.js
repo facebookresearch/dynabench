@@ -124,6 +124,15 @@ export default class ApiService {
     });
   }
 
+  getTrialAuthToken() {
+    return this.fetch(`${this.domain}/authenticate/get_trial_token`, {
+      method: "GET",
+    }).then((res) => {
+      localStorage.setItem("trial_auth_token", res.token);
+      return res;
+    });
+  }
+
   getTasks() {
     return this.fetch(`${this.domain}/tasks`, {
       method: "GET",
@@ -372,14 +381,20 @@ export default class ApiService {
 
   getModelResponse(modelUrl, example_io) {
     example_io["uid"] = "0"; //A requied field for dynalab uploaded models. TODO: fix
-    return this.doFetch(
-      modelUrl,
-      {
-        method: "POST",
-        body: JSON.stringify(example_io),
-      },
-      false
-    );
+    const trialAuthToken = localStorage.getItem("trial_auth_token");
+    const customHeader =
+      this.loggedIn() || this.mode === "mturk" || trialAuthToken == null
+        ? null
+        : {
+            Accept: "application/json",
+            Authorization: "Bearer " + trialAuthToken,
+            "Content-Type": "application/json",
+          };
+    return this.fetch(modelUrl, {
+      method: "POST",
+      body: JSON.stringify({ example_io }),
+      ...(customHeader == null ? {} : { headers: customHeader }),
+    });
   }
 
   exportData(tid, rid = null) {
@@ -513,6 +528,25 @@ export default class ApiService {
     });
   }
 
+  createLeaderboardConfiguration(tid, name, configuration_json) {
+    return this.fetch(`${this.domain}/tasks/${tid}/leaderboard_configuration`, {
+      method: "PUT",
+      body: JSON.stringify({
+        name: name,
+        configuration_json: configuration_json,
+      }),
+    });
+  }
+
+  getLeaderboardConfiguration(tid, name) {
+    return this.fetch(
+      `${this.domain}/tasks/${tid}/leaderboard_configuration/${name}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
   loggedIn() {
     const token = this.getToken();
     if (!token) {
@@ -552,6 +586,7 @@ export default class ApiService {
 
   setToken(idToken) {
     localStorage.setItem("id_token", idToken);
+    localStorage.removeItem("trial_auth_token");
   }
 
   getToken() {

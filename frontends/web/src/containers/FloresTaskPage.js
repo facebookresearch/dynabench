@@ -20,6 +20,7 @@ import { OverlayProvider, Annotation, OverlayContext } from "./Overlay";
 import FloresActionButtons from "../components/Buttons/FloresActionButtons";
 import FloresModelLeaderBoard from "../components/FloresComponents/FloresModelLeaderboard";
 import FloresTaskDescription from "../components/FloresComponents/FloresTaskDescription";
+import FloresPairsLeaderBoard from "../components/FloresComponents/FloresPairsLeaderboard";
 
 const FLORES_TASK_SHORT_NAMES = [
   "FLORES-FULL",
@@ -29,7 +30,7 @@ const FLORES_TASK_SHORT_NAMES = [
 
 const TaskNav = ({ location, taskLookup, taskId, setTask }) => {
   return (
-    <Nav className="flex-lg-column sidebar-wrapper sticky-top">
+    <Nav className="sidebar-wrapper sticky-top">
       {FLORES_TASK_SHORT_NAMES.map((name, index) => {
         const task = taskLookup[name];
         return (
@@ -43,7 +44,7 @@ const TaskNav = ({ location, taskLookup, taskId, setTask }) => {
               }}
               className={`${
                 taskId === task.id ? "active" : ""
-              } gray-color p-3 px-lg-5`}
+              } gray-color p-3 px-lg-5 flores-nav-item`}
             >
               {task.name}
             </Nav.Link>
@@ -182,12 +183,22 @@ const FloresTaskPage = (props) => {
               for a detailed view of the resources.
             </p>
 
-            <Row>
+            <Row className="mt-2">
               <Annotation
-                placement="top-start"
+                placement="top-end"
                 tooltip="This shows how models have performed on a specific track"
               >
                 <FloresModelLeaderBoard
+                  {...props}
+                  taskTitle={task?.name}
+                  taskId={task.id}
+                />
+              </Annotation>
+              <Annotation
+                placement="top-end"
+                tooltip="Best BLEU scores on specific language pairs. Filter by source and target language"
+              >
+                <FloresPairsLeaderBoard
                   {...props}
                   taskTitle={task?.name}
                   taskId={task.id}

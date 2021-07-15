@@ -7,3 +7,11 @@
 .leaderboard-container {
     overflow-x: scroll;
 }
+
+@media (max-width: 480px) {
+    .flores-nav-item {
+        width: 33vw;
+        font-size: 12px;
+        text-align: center;
+    }
+}
