@@ -201,7 +201,7 @@ class ModelPage extends React.Component {
       state: {
         detail: {
           endpointUrl:
-            "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=" +
+            "https://obws766r82.execute-api.us-west-1.amazonaws.com/predict?model=" +
             this.state.model.endpoint_name,
           name: this.state.model.name,
         },
