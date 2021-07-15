@@ -150,7 +150,7 @@ export default class ApiService {
     });
   }
 
-  publishModel({
+  updateModel({
     modelId,
     name,
     description,
@@ -160,7 +160,7 @@ export default class ApiService {
     source_url,
     model_card,
   }) {
-    return this.fetch(`${this.domain}/models/${modelId}/publish`, {
+    return this.fetch(`${this.domain}/models/${modelId}/update`, {
       method: "PUT",
       body: JSON.stringify({
         name,
@@ -177,13 +177,6 @@ export default class ApiService {
   toggleModelStatus(modelId) {
     return this.fetch(`${this.domain}/models/${modelId}/revertstatus`, {
       method: "PUT",
-    });
-  }
-
-  updateModel(modelId, data) {
-    return this.fetch(`${this.domain}/models/${modelId}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
     });
   }
 

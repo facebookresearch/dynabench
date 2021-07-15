@@ -92,15 +92,27 @@ class ScoreModel(BaseModel):
     def getLeaderboardTopPerformingTags(
         self, tid, limit=5, offset=0, specific_tag=None
     ):
+        tm = TaskModel()
+        task = tm.get(tid)
+        include_unpublished_models = False
+        if task.settings_json is not None:
+            include_unpublished_models = json.loads(task.settings_json).get(
+                "include_unpublished_models_in_dynaboard", False
+            )
+
         scores_users_datasets_models = (
             self.dbs.query(Score, User, Dataset, Model)
             .join(Dataset, Dataset.id == Score.did)
             .join(Model, Score.mid == Model.id)
             .join(User, User.id == Model.uid)
             .filter(Model.tid == tid)
-            .filter(Model.is_published)
             .filter(Dataset.access_type == AccessTypeEnum.scoring)
         )
+        if not include_unpublished_models:
+            scores_users_datasets_models = scores_users_datasets_models.filter(
+                Model.is_published
+            )
+
         dataset_name_to_tag_performances = {}
         for score, user, dataset, model in scores_users_datasets_models:
             if dataset.name not in dataset_name_to_tag_performances:
@@ -127,9 +139,9 @@ class ScoreModel(BaseModel):
                     ].append(
                         {
                             "model_id": model.id,
-                            "model_name": model.name,
-                            "uid": user.id,
-                            "username": user.username,
+                            "model_name": model.name if model.is_published else None,
+                            "uid": user.id if model.is_published else None,
+                            "username": user.username if model.is_published else None,
                             "perf": tag_perf_dict["perf"],
                         }
                     )

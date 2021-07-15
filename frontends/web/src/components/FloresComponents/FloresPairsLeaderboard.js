@@ -340,11 +340,14 @@ const FloresPairsLeaderBoard = ({ taskId, history, ...props }) => {
         disableSortBy: true,
         disableFilters: true,
         minWidth: 110,
-        accessor: (data) => (
-          <a href={`/models/${data.model.model_id}`} className="btn-link">
-            {data.model.model_name || null}
-          </a>
-        ),
+        accessor: (data) =>
+          data.model.model_name ? (
+            <a href={`/models/${data.model.model_id}`} className="btn-link">
+              {data.model.model_name || null}
+            </a>
+          ) : (
+            "Anonymous Model " + data.model.model_id
+          ),
       },
       {
         Header: "BLEU Score",

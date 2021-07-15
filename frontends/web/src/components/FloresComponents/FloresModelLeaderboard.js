@@ -136,7 +136,7 @@ const ModelLeaderBoard = ({ taskId, history, isTop5 }) => {
             {i.model_name}
           </Link>
         ) : (
-          "Model " + i.model_id
+          "Anonymous Model " + i.model_id
         )}{" "}
         {i.username ? (
           <Link to={`/users/${i.uid}#profile`} className="btn-link">

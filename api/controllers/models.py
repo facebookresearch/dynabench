@@ -105,9 +105,9 @@ def get_model_detail(credentials, mid):
         bottle.abort(404, "Not found")
 
 
-@bottle.put("/models/<mid:int>/publish")
+@bottle.put("/models/<mid:int>/update")
 @_auth.requires_auth
-def publish_model(credentials, mid):
+def update_model(credentials, mid):
     m = ModelModel()
     data = bottle.request.json
     if not util.check_fields(data, ["name", "description"]):
@@ -132,14 +132,9 @@ def publish_model(credentials, mid):
             license=data["license"],
             source_url=data["source_url"],
             model_card=data["model_card"],
-            is_published=True,
+            is_published=False,
         )
-        model = m.get(mid)
-        um = UserModel()
-        user = um.get(model.uid)
-        bm = BadgeModel()
-        badge_names = bm.handlePublishModel(user, model)
-        return {"status": "success", "badges": "|".join(badge_names)}
+        return {"status": "success"}
     except db.orm.exc.NoResultFound:
         bottle.abort(404, "Model Not found")
     except Exception as e:
