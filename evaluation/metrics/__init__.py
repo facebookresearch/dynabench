@@ -1,5 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+from metrics.instance_property import instance_property
 from metrics.metric_config import (
     delta_metrics_config,
     eval_metrics_config,
@@ -44,11 +45,10 @@ def get_delta_metrics(
 
 
 def get_task_metrics_meta(task):
-    task_config = get_task_config_safe(task)
-    instance_config = task_config["instance_config"]
-    perf_metric = task_config["perf_metric"]
+    instance_config = instance_property[task.instance]
+    perf_metric = task.perf_metric
     ordered_metric_field_names = (
-        [perf_metric] + instance_config["aws_metrics"] + task_config["delta_metrics"]
+        [perf_metric] + instance_config["aws_metrics"] + task.delta_metrics.split("|")
     )
     metrics_meta = {
         metric: metrics_meta_config.get(metric, metrics_meta_config[perf_metric])(task)

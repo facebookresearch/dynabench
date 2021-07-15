@@ -239,7 +239,16 @@ def post_example(credentials):
 
     if not util.check_fields(
         data,
-        ["tid", "rid", "uid", "cid", "hypothesis", "target", "response", "metadata"],
+        [
+            "tid",
+            "rid",
+            "uid",
+            "cid",
+            "example_io",
+            "model_response_io",
+            "metadata",
+            "model_endpoint_name",
+        ],
     ):
         bottle.abort(400, "Missing data")
 
@@ -253,30 +262,17 @@ def post_example(credentials):
     if "tag" in data:
         tag = data["tag"]
 
-    dynalab_model = False
-    if "dynalab_model" in data:
-        dynalab_model = data["dynalab_model"]
-
-    dynalab_model_input_data = None
-    dynalab_model_endpoint_name = None
-    if dynalab_model:
-        dynalab_model_input_data = json.loads(data["dynalab_model_input_data"])
-        dynalab_model_endpoint_name = data["dynalab_model_endpoint_name"]
-
     em = ExampleModel()
     example = em.create(
         tid=data["tid"],
         rid=data["rid"],
         uid=data["uid"] if credentials["id"] != "turk" else "turk",
         cid=data["cid"],
-        hypothesis=data["hypothesis"],
-        tgt=data["target"],
-        response=data["response"],
+        example_io=data["example_io"],
+        model_response_io=data["model_response_io"],
         metadata=data["metadata"],
         tag=tag,
-        dynalab_model=dynalab_model,
-        dynalab_model_input_data=dynalab_model_input_data,
-        dynalab_model_endpoint_name=dynalab_model_endpoint_name,
+        model_endpoint_name=data["model_endpoint_name"],
     )
     if not example:
         bottle.abort(400, "Could not create example")
@@ -305,6 +301,7 @@ def post_example(credentials):
     return util.json_encode(
         {
             "success": "ok",
+            "model_correct": not example.model_wrong,
             "id": example.id,
             "badges": "|".join(badge_names) if (credentials["id"] != "turk") else None,
         }

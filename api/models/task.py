@@ -3,6 +3,7 @@
 import json
 import sys
 
+import enum
 import sqlalchemy as db
 
 from .base import Base, BaseModel
@@ -15,6 +16,128 @@ sys.path.append("../evaluation")  # noqa
 import metrics  # isort:skip
 
 
+class ModelCorrectMetricEnum(enum.Enum):
+    exact_match = "exact_match"
+
+
+def is_model_correct_exact_match(model_output, human_output):
+    return model_output == human_output
+
+
+class PerfMetricEnum(enum.Enum):
+    macro_f1 = "macro_f1"
+    squad_f1 = "squad_f1"
+    accuracy = "accuracy"
+    sp_bleu = "sp_bleu"
+    bleu = "bleu"
+
+
+class AggregationMetricEnum(enum.Enum):
+    dynascore = "dynascore"
+
+
+class IOTypeEnum(enum.Enum):
+    image_url = "image_url"
+    string = "string"
+    multiple_choice = "multiple_choice"
+    string_selection = "string_selection"
+    multinomial_distribution = "multinomial_distribution"
+
+
+class LocationEnum(enum.Enum):
+    context = "context"
+    input = "input"
+    output = "output"
+    info = "model_response_info"
+
+
+class IO:
+    def __init__(self, io_definition, key):
+        assert key in io_definition
+        assert "constructor_args" in io_definition[key]
+        assert "type" in io_definition[key]
+        assert io_definition[key]["type"] in map(lambda e: e.name, IOTypeEnum)
+        assert "location" in io_definition[key]
+        assert io_definition[key]["location"] in map(lambda e: e.name, LocationEnum)
+        self.key = key
+
+    def verify_example_io(self, example_io):
+        raise NotImplementedError
+
+
+class StringIO(IO):
+    def __init__(self, io_definition, key):
+        IO.__init__(self, io_definition, key)
+
+    def verify_example_io(self, example_io):
+        assert self.key in example_io
+        assert isinstance(example_io[self.key], str)
+
+
+class MultipleChoiceProbsIO(IO):
+    def __init__(self, io_definition, key):
+        IO.__init__(self, io_definition, key)
+        self.reference_key = io_definition[key]["constructor_args"]["reference_key"]
+        assert self.reference_key in io_definition
+
+    def verify_example_io(self, example_io):
+        assert self.key in example_io
+        assert sum(example_io[self.key].values()) == 1
+        assert set(example_io[self.reference_key]) == set(example_io[self.key].keys())
+
+
+class ConfIO(IO):
+    def __init__(self, io_definition, key):
+        IO.__init__(self, io_definition, key)
+
+    def verify_example_io(self, example_io):
+        assert self.key in example_io
+        assert example_io[self.key] <= 1
+        assert example_io[self.key] >= 0
+
+
+class ImageUrlIO(IO):
+    def __init__(self, io_definition, key):
+        IO.__init__(self, io_definition, key)
+
+    def verify_example_io(self, example_io):
+        assert self.key in example_io
+        assert isinstance(example_io[self.key], str)
+
+
+class MultipleChoiceIO(IO):
+    def __init__(self, io_definition, key):
+        IO.__init__(self, io_definition, key)
+        self.labels = io_definition[key]["constructor_args"]["labels"]
+
+    def verify_example_io(self, example_io):
+        assert self.key in example_io
+        assert example_io[self.key] in self.labels
+
+
+class StringSelectionIO(IO):
+    def __init__(self, io_definition, key):
+        IO.__init__(self, io_definition, key)
+        self.reference_key = io_definition[key]["constructor_args"]["reference_key"]
+        assert self.reference_key in io_definition
+
+    def verify_example_io(self, example_io):
+        assert self.key in example_io
+        assert self.reference_key in example_io
+        assert example_io[self.key] in example_io[self.reference_key]
+
+
+io_types = {
+    IOTypeEnum.image_url.name: ImageUrlIO,
+    IOTypeEnum.string.name: StringIO,
+    IOTypeEnum.multiple_choice.name: MultipleChoiceIO,
+    IOTypeEnum.string_selection.name: StringSelectionIO,
+}
+perf_metrics = set(PerfMetricEnum)
+aggregation_metrics = set(AggregationMetricEnum)
+model_correct_metrics = {"exact_match": is_model_correct_exact_match}
+
+
 class Task(Base):
     __tablename__ = "tasks"
     __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_general_ci"}
@@ -22,22 +145,35 @@ class Task(Base):
     id = db.Column(db.Integer, primary_key=True)
 
     name = db.Column(db.String(length=255), nullable=False, unique=True)
-    shortname = db.Column(db.String(length=255), nullable=False, unique=True)
-    task_code = db.Column(db.String(length=255), unique=True, nullable=False)
+    io_definition = db.Column(db.Text, nullable=False)
+    perf_metric = db.Column(db.Enum(PerfMetricEnum), nullable=False)
+    aggregation_metric = db.Column(
+        db.Enum(AggregationMetricEnum),
+        default=AggregationMetricEnum.dynascore,
+        nullable=False,
+    )
+    model_correct_metric = db.Column(
+        db.Enum(ModelCorrectMetricEnum),
+        default=ModelCorrectMetricEnum.exact_match,
+        nullable=False,
+    )
+
+    # shortname = db.Column(db.String(length=255), nullable=False, unique=True)
+    # task_code = db.Column(db.String(length=255), unique=True, nullable=False)
 
     # Task type is either 'clf' or 'extract' for now
-    type = db.Column(db.String(length=255), nullable=False, default="clf")
+    # type = db.Column(db.String(length=255), nullable=False, default="clf")
 
-    owner_str = db.Column(db.Text)
+    # owner_str = db.Column(db.Text)
 
     desc = db.Column(db.String(length=255))
-    longdesc = db.Column(db.Text)
-    targets = db.Column(db.Text)  # ordered list of target labels
+    # longdesc = db.Column(db.Text)
+    # targets = db.Column(db.Text)  # ordered list of target labels
     # ordered list of max scores per round
-    score_progression = db.Column(db.Text)
+    # score_progression = db.Column(db.Text)
 
-    total_verified = db.Column(db.Integer, default=0)
-    total_collected = db.Column(db.Integer, default=0)
+    # total_verified = db.Column(db.Integer, default=0)
+    # total_collected = db.Column(db.Integer, default=0)
     last_updated = db.Column(db.DateTime)
 
     # cur_round = db.Column(db.Integer, db.ForeignKey("rounds.id"), nullable=False)
@@ -46,10 +182,20 @@ class Task(Base):
     hidden = db.Column(db.Boolean, default=False)
     submitable = db.Column(db.Boolean, default=False)
 
-    has_context = db.Column(db.Boolean, default=True)
-    has_answer = db.Column(db.Boolean, default=False)
+    # has_context = db.Column(db.Boolean, default=True)
+    # has_answer = db.Column(db.Boolean, default=False)
 
     settings_json = db.Column(db.Text)
+
+    instance = db.Column(db.Text, default="ml.m5.2xlarge", nullable=False)
+    instance_count = db.Column(db.Integer, default=1, nullable=False)
+    eval_metrics = db.Column(db.Text, default="macro_f1", nullable=False)
+    perf_metric = db.Column(db.Text, default="macro_f1", nullable=False)
+    delta_metrics = db.Column(db.Text, default="fairness|robustness", nullable=False)
+    aws_region = db.Column(db.Text, default="us-west-1", nullable=False)
+    s3_bucket = db.Column(
+        db.Text, default="evaluation-us-west-1-096166425824", nullable=False
+    )
 
     def __repr__(self):
         return f"<Task {self.name}>"
@@ -167,38 +313,21 @@ class TaskModel(BaseModel):
             r_dict = r.to_dict()
             t_dict["ordered_scoring_datasets"] = scoring_dataset_list
             t_dict["ordered_datasets"] = dataset_list
-            shortname_to_metrics_task_name = {
-                "NLI": "nli",
-                "QA": "qa",
-                "Sentiment": "sentiment",
-                "Hate Speech": "hs",
-                "FLORES-SMALL1": "flores_small1",
-                "FLORES-SMALL2": "flores_small2",
-                "FLORES-FULL": "flores_full",
-            }
-            if t_dict["shortname"] in shortname_to_metrics_task_name:
-                metrics_task_name = shortname_to_metrics_task_name[t_dict["shortname"]]
-                t_dict["perf_metric_field_name"] = metrics.get_task_config_safe(
-                    metrics_task_name
-                )["perf_metric"]
-                metrics_meta, ordered_field_names = metrics.get_task_metrics_meta(
-                    metrics_task_name
+            t_dict["perf_metric_field_name"] = t_dict["perf_metric"]
+            metrics_meta, ordered_field_names = metrics.get_task_metrics_meta(t)
+            ordered_metrics = [
+                dict(
+                    {
+                        "name": metrics_meta[field_name]["pretty_name"],
+                        "field_name": field_name,
+                        "default_weight": self.get_default_metric_weight(
+                            t, field_name, t_dict["perf_metric_field_name"]
+                        ),
+                    },
+                    **metrics_meta[field_name],
                 )
-                ordered_metrics = [
-                    dict(
-                        {
-                            "name": metrics_meta[field_name]["pretty_name"],
-                            "field_name": field_name,
-                            "default_weight": self.get_default_metric_weight(
-                                t, field_name, t_dict["perf_metric_field_name"]
-                            ),
-                        },
-                        **metrics_meta[field_name],
-                    )
-                    for field_name in ordered_field_names
-                ]
-            else:
-                ordered_metrics = []
+                for field_name in ordered_field_names
+            ]
 
             t_dict["ordered_metrics"] = ordered_metrics
             t_dict["round"] = r_dict

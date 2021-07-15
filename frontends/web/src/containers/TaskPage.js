@@ -159,31 +159,26 @@ const TaskActionButtons = (props) => {
           </OverlayTrigger>
         </Annotation>
       </Nav.Item>
-      {props.task.shortname === "NLI" ||
-      props.task.shortname === "QA" ||
-      props.task.shortname === "Hate Speech" ||
-      props.task.shortname === "Sentiment" ? (
-        <Nav.Item className="task-action-btn">
-          <Annotation
-            placement="right"
-            tooltip="Click here to upload your models for this task."
+      <Nav.Item className="task-action-btn">
+        <Annotation
+          placement="right"
+          tooltip="Click here to upload your models for this task."
+        >
+          <OverlayTrigger
+            placement="bottom"
+            delay={{ show: 250, hide: 400 }}
+            overlay={renderSubmitTooltip}
           >
-            <OverlayTrigger
-              placement="bottom"
-              delay={{ show: 250, hide: 400 }}
-              overlay={renderSubmitTooltip}
+            <Button
+              className="border-0 blue-color font-weight-bold light-gray-bg"
+              href="https://github.com/facebookresearch/dynalab"
+              target="_blank"
             >
-              <Button
-                className="border-0 blue-color font-weight-bold light-gray-bg"
-                href="https://github.com/facebookresearch/dynalab"
-                target="_blank"
-              >
-                <i className="fas fa-upload"></i> Submit Models
-              </Button>
-            </OverlayTrigger>
-          </Annotation>
-        </Nav.Item>
-      ) : null}
+              <i className="fas fa-upload"></i> Submit Models
+            </Button>
+          </OverlayTrigger>
+        </Annotation>
+      </Nav.Item>
     </Nav>
   );
 };
@@ -630,12 +625,15 @@ class TaskPage extends React.Component {
         ></path>
       </svg>
     );
-    const shortname_to_pwc_links = {
-      QA: "https://paperswithcode.com/task/question-answering/latest",
-      NLI: "https://paperswithcode.com/task/natural-language-inference/latest",
+    const name_to_pwc_links = {
+      "Question Answering":
+        "https://paperswithcode.com/task/question-answering/latest",
+      "Natural Language Inference":
+        "https://paperswithcode.com/task/natural-language-inference/latest",
       "Hate Speech":
         "https://paperswithcode.com/task/hate-speech-detection/latest",
-      Sentiment: "https://paperswithcode.com/task/sentiment-analysis/latest",
+      "Sentiment Analysis":
+        "https://paperswithcode.com/task/sentiment-analysis/latest",
     };
     return (
       <OverlayProvider initiallyHide={true} delayMs="1700">
@@ -646,8 +644,8 @@ class TaskPage extends React.Component {
               <h2 className="task-page-header text-reset">
                 <nobr>
                   {this.state.task.name}{" "}
-                  {this.state.task.shortname in shortname_to_pwc_links ? (
-                    <a href={shortname_to_pwc_links[this.state.task.shortname]}>
+                  {this.state.task.name in name_to_pwc_links ? (
+                    <a href={name_to_pwc_links[this.state.task.name]}>
                       {pwc_logo}
                     </a>
                   ) : (
@@ -690,6 +688,29 @@ class TaskPage extends React.Component {
                         className="btn btn-outline-primary btn-sm btn-help-info"
                         onClick={() => {
                           this.setState({ showTaskOwnerSettingsModal: true });
+                          this.context.api.createTask({
+                            name: "Visual Question Answering Test 2",
+                            desc: "Visual Question Answering is bla bla",
+                            perf_metric: "squad_f1",
+                            aggregation_metric: "dynascore",
+                            io_definition: {
+                              image: {
+                                type: "image_url",
+                                location: "context",
+                                constructor_args: {},
+                              },
+                              question: {
+                                type: "string",
+                                location: "input",
+                                constructor_args: {},
+                              },
+                              answer: {
+                                type: "string",
+                                location: "output",
+                                constructor_args: {},
+                              },
+                            },
+                          });
                         }}
                       >
                         <i className="fa fa-cog"></i>
@@ -718,17 +739,17 @@ class TaskPage extends React.Component {
                         onChange={() => {
                           this.setState(
                             {
-                              validateNonFooling:
-                                !this.state.validateNonFooling,
+                              validateNonFooling: !this.state
+                                .validateNonFooling,
                             },
                             () =>
                               this.context.api.updateTaskSettings(
                                 this.state.task.id,
                                 {
-                                  validate_non_fooling:
-                                    this.state.validateNonFooling,
-                                  num_matching_validations:
-                                    this.state.numMatchingValidations,
+                                  validate_non_fooling: this.state
+                                    .validateNonFooling,
+                                  num_matching_validations: this.state
+                                    .numMatchingValidations,
                                 }
                               )
                           );
@@ -759,10 +780,10 @@ class TaskPage extends React.Component {
                                 this.context.api.updateTaskSettings(
                                   this.state.task.id,
                                   {
-                                    validate_non_fooling:
-                                      this.state.validateNonFooling,
-                                    num_matching_validations:
-                                      this.state.numMatchingValidations,
+                                    validate_non_fooling: this.state
+                                      .validateNonFooling,
+                                    num_matching_validations: this.state
+                                      .numMatchingValidations,
                                   }
                                 )
                             );

@@ -187,6 +187,13 @@ export default class ApiService {
     });
   }
 
+  createTask(data) {
+    return this.fetch(`${this.domain}/tasks/create`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
   getTrends(taskId) {
     return this.fetch(`${this.domain}/tasks/${taskId}/trends`, {
       method: "GET",
@@ -363,25 +370,13 @@ export default class ApiService {
     );
   }
 
-  getModelResponse(
-    modelUrl,
-    { context, hypothesis, answer, image_url, question, insight, statement }
-  ) {
-    const uid = "0"; //A requied field for dynalab uploaded models
+  getModelResponse(modelUrl, example_io) {
+    example_io["uid"] = "0"; //A requied field for dynalab uploaded models. TODO: fix
     return this.doFetch(
       modelUrl,
       {
         method: "POST",
-        body: JSON.stringify({
-          uid,
-          context,
-          hypothesis,
-          answer,
-          image_url,
-          question,
-          insight,
-          statement,
-        }),
+        body: JSON.stringify(example_io),
       },
       false
     );
@@ -496,30 +491,24 @@ export default class ApiService {
     rid,
     uid,
     cid,
-    hypothesis,
-    target,
-    response,
+    example_io,
+    model_response_io,
     metadata,
     tag = null,
-    dynalab_model = false,
-    dynalab_model_input_data = null,
-    dynalab_model_endpoint_name = null
+    model_endpoint_name = null
   ) {
     return this.fetch(`${this.domain}/examples`, {
       method: "POST",
       body: JSON.stringify({
-        hypothesis: hypothesis,
+        example_io: example_io,
         tid: tid,
         rid: rid,
         cid: cid,
         uid: uid,
-        target: target,
-        response: response,
+        model_response_io: model_response_io,
         metadata: metadata,
         tag: tag,
-        dynalab_model: dynalab_model,
-        dynalab_model_input_data: JSON.stringify(dynalab_model_input_data),
-        dynalab_model_endpoint_name: dynalab_model_endpoint_name,
+        model_endpoint_name: model_endpoint_name,
       }),
     });
   }

@@ -3,7 +3,6 @@
 import hashlib
 import json
 
-import numpy as np
 import sqlalchemy as db
 from sqlalchemy import JSON, case
 
@@ -19,6 +18,7 @@ from models.validation import LabelEnum, ModeEnum, Validation
 
 from .base import Base, BaseModel
 from .context import ContextModel
+from .task import TaskModel, model_correct_metrics
 from .user import UserModel
 
 
@@ -35,7 +35,7 @@ class Example(Base):
     user = db.orm.relationship("User", foreign_keys="Example.uid")
     tag = db.Column(db.Text)
 
-    text = db.Column(db.Text)
+    io = db.Column(db.Text)
     # why is X the label for this example
     example_explanation = db.Column(db.Text)
     # why do you think the model got it wrong
@@ -43,9 +43,8 @@ class Example(Base):
 
     metadata_json = db.Column(db.Text)
 
-    target_pred = db.Column(db.Text)
-    model_preds = db.Column(db.Text)
-    target_model = db.Column(db.Text)
+    model_response_io = db.Column(db.Text)
+    model_endpoint_name = db.Column(db.Text)
 
     split = db.Column(db.String(length=255), default="undecided")
 
@@ -83,14 +82,11 @@ class ExampleModel(BaseModel):
         rid,
         uid,
         cid,
-        hypothesis,
-        tgt,
-        response,
+        example_io,
+        model_response_io,
         metadata,
         tag=None,
-        dynalab_model=False,
-        dynalab_model_input_data=None,
-        dynalab_model_endpoint_name=None,
+        model_endpoint_name=None,
     ):
         if uid == "turk" and "annotator_id" not in metadata:
             logger.error("Annotator id not specified but received Turk example")
@@ -105,104 +101,88 @@ class ExampleModel(BaseModel):
             )
             return False
 
-        # If task has_answer, handle here (specifically target_pred and
-        # model_wrong)
-        if c.round.task.has_answer:
-            if (
-                c.round.task.shortname == "VQA"
-                and "answer" in response
-                and "prob" in response
-            ):
-                model_wrong = False
-                pred = str(response["answer"]) + "|" + str(float(response["prob"][0]))
-            elif "model_is_correct" in response and "text" in response:
-                pred = str(response["model_is_correct"]) + "|" + str(response["text"])
-                model_wrong = not response["model_is_correct"]
-            else:
-                return False
-            if "model_id" in response:
-                pred += "|" + str(response["model_id"])
-        else:
-            if "prob" not in response:
-                return False
-            pred = response["prob"]
-            model_wrong = tgt != np.argmax(pred)
+        tm = TaskModel()
+        task = tm.get(tid)
+        model_correct_metric = model_correct_metrics[task.model_correct_metric.name]
+        output_keys = set(
+            map(
+                lambda item: item[0],
+                filter(
+                    lambda item: item[1]["location"] == "output",
+                    json.loads(task.io_definition).items(),
+                ),
+            )
+        )
+        model_output = {}
+        human_output = {}
+        for key, value in example_io.items():
+            if key in output_keys:
+                human_output[key] = value
+        for key, value in model_response_io.items():
+            if key in output_keys:
+                model_output[key] = value
 
-        if isinstance(pred, list):
-            pred_str = "|".join([str(x) for x in pred])
-        else:
-            pred_str = pred
+        model_wrong = not model_correct_metric(model_output, human_output)
 
         if uid == "turk" and "model" in metadata and metadata["model"] == "no-model":
             pass  # ignore signature when we don't have a model in the loop with turkers
         else:
-            if dynalab_model:
-                if "signed" in response:
-                    if c.round.task.shortname == "Hate Speech":
-                        dynalab_task = dynalab.tasks.hs
-                    elif c.round.task.shortname == "NLI":
-                        dynalab_task = dynalab.tasks.nli
-                    elif c.round.task.shortname == "Sentiment":
-                        dynalab_task = dynalab.tasks.sentiment
-                    elif c.round.task.shortname == "QA":
-                        dynalab_task = dynalab.tasks.qa
-                    else:
-                        logger.error(
-                            "This is a Dynalab model but a Dynalab signature "
-                            + "verification method has not been included for this task."
-                        )
-                        return False
-
-                    model_secret = (
-                        self.dbs.query(Model)
-                        .filter(Model.endpoint_name == dynalab_model_endpoint_name)
-                        .one()
-                        .secret
-                    )
-                    if response[
-                        "signed"
-                    ] != dynalab_task.TaskIO().generate_response_signature(
-                        response, dynalab_model_input_data, model_secret
-                    ):
-                        logger.error(
-                            "Signature does not match (received %s, expected %s)"
-                            % (
-                                response["signed"],
-                                dynalab_task.TaskIO().generate_response_signature(
-                                    response, dynalab_model_input_data, model_secret
-                                ),
-                            )
-                        )
-                        return False
-                    else:
-                        logger.info(
-                            "Signature matches(received %s, expected %s)"
-                            % (
-                                response["signed"],
-                                dynalab_task.TaskIO().generate_response_signature(
-                                    response, dynalab_model_input_data, model_secret
-                                ),
-                            )
-                        )
+            if "signed" in model_response_io:
+                if c.round.task.name == "Hate Speech":
+                    dynalab_task = dynalab.tasks.hs
+                elif c.round.task.name == "Natural Language Inference":
+                    dynalab_task = dynalab.tasks.nli
+                elif c.round.task.name == "Sentiment Analysis":
+                    dynalab_task = dynalab.tasks.sentiment
+                elif c.round.task.name == "Question Answering":
+                    dynalab_task = dynalab.tasks.qa
                 else:
+                    logger.error(
+                        "This is a Dynalab model but a Dynalab signature "
+                        + "verification method has not been included for this task."
+                    )
                     return False
 
-            else:
-                # TODO: remove this old verify method when all target models are
-                # reuploaded via dynalab. We can also clean up the arguments to
-                # this create function.
-                if "signed" not in response or not self.verify_signature(
-                    response["signed"], c, hypothesis, pred_str
+                model_secret = (
+                    self.dbs.query(Model)
+                    .filter(Model.endpoint_name == model_endpoint_name)
+                    .one()
+                    .secret
+                )
+                if model_response_io[
+                    "signed"
+                ] != dynalab_task.TaskIO().generate_response_signature(
+                    model_response_io, example_io, model_secret
                 ):
+                    logger.error(
+                        "Signature does not match (received %s, expected %s)"
+                        % (
+                            model_response_io["signed"],
+                            dynalab_task.TaskIO().generate_response_signature(
+                                model_response_io, example_io, model_secret
+                            ),
+                        )
+                    )
                     return False
+                else:
+                    logger.info(
+                        "Signature matches(received %s, expected %s)"
+                        % (
+                            model_response_io["signed"],
+                            dynalab_task.TaskIO().generate_response_signature(
+                                model_response_io, example_io, model_secret
+                            ),
+                        )
+                    )
+            else:
+                return False
 
         try:
             e = Example(
                 context=c,
-                text=hypothesis,
-                target_pred=tgt,
-                model_preds=pred_str,
+                io=json.dumps(example_io),
                 model_wrong=model_wrong,
+                model_response_io=json.dumps(model_response_io),
                 generated_datetime=db.sql.func.now(),
                 metadata_json=json.dumps(metadata),
                 tag=tag,
@@ -222,40 +202,6 @@ class ExampleModel(BaseModel):
             logger.error("Could not create example (%s)" % error_message)
             return False
         return e
-
-    def verify_signature(self, signature, context, hypothesis, pred_str):
-        tid = context.round.task.id
-        rid = context.round.rid
-        secret = context.round.secret
-        context_str = context.context
-
-        fields_to_sign = []
-        fields_to_sign.append(pred_str.encode("utf-8"))
-        if (
-            context.round.task.has_context
-            and context.round.task.shortname != "Sentiment"
-        ):
-            fields_to_sign.append(context_str.encode("utf-8"))
-        fields_to_sign.append(hypothesis.encode("utf-8"))
-        fields_to_sign.append(f"{tid}{rid}{secret}".encode("utf-8"))
-
-        h = hashlib.sha1()
-        for f in fields_to_sign:
-            h.update(f)
-
-        if h.hexdigest() != signature:
-            logger.error(
-                "Signature does not match (received %s, expected %s [%s])"
-                % (h.hexdigest(), signature, "".join([str(x) for x in fields_to_sign]))
-            )
-            return False
-        else:
-            logger.info(
-                "Signature matched (received %s, expected %s [%s])"
-                % (h.hexdigest(), signature, "".join([str(x) for x in fields_to_sign]))
-            )
-
-        return True
 
     def get_anon_uid(self, secret, uid):
         anon_uid = hashlib.sha1()

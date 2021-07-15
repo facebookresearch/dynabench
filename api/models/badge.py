@@ -94,11 +94,11 @@ class Badge(Base):
 class BadgeModel(BaseModel):
     def __init__(self):
         super().__init__(Badge)
-        self.task_shortname_to_badge_name = {
-            "NLI": "NLI",
+        self.task_name_to_badge_name = {
+            "Natural Language Inference": "NLI",
             "Hate Speech": "HS",
-            "QA": "QA",
-            "Sentiment": "SENT",
+            "Question Answering": "QA",
+            "Sentiment Analysis": "SENT",
         }
         self.task_contributor_type_and_num_required_creations = [
             ("BRONZE", 50),
@@ -375,7 +375,7 @@ class BadgeModel(BaseModel):
                         0,
                         [
                             task_name + "_fooling_no_verified_incorrect_or_flagged"
-                            for task_name in self.task_shortname_to_badge_name
+                            for task_name in self.task_name_to_badge_name
                         ],
                     )
 
@@ -391,7 +391,7 @@ class BadgeModel(BaseModel):
                     if badge.name == "ALL_TASKS_COVERED" and 0 in num_created_by_task:
                         badges_to_remove.append(badge)
 
-                    for task_name in self.task_shortname_to_badge_name:
+                    for task_name in self.task_name_to_badge_name:
                         for (
                             contributor_type,
                             num_required_creations,
@@ -399,7 +399,7 @@ class BadgeModel(BaseModel):
                             if (
                                 badge.name
                                 == "DYNABENCH_"
-                                + self.task_shortname_to_badge_name[task_name]
+                                + self.task_name_to_badge_name[task_name]
                                 + "_"
                                 + contributor_type
                             ):
@@ -471,9 +471,7 @@ class BadgeModel(BaseModel):
         print("Completed job")
 
     def handleUnpublishModel(self, user, model):
-        self.incrementUserMetadataField(
-            user, model.task.shortname + "_models_published", -1
-        )
+        self.incrementUserMetadataField(user, model.task.name + "_models_published", -1)
 
         badges_to_remove = []
         existing_badges = self.getByUid(user.id)
@@ -482,7 +480,7 @@ class BadgeModel(BaseModel):
             0,
             [
                 task_name + "_models_published"
-                for task_name in self.task_shortname_to_badge_name
+                for task_name in self.task_name_to_badge_name
             ],
         )
         models_published_sum = sum(models_published)
@@ -501,9 +499,7 @@ class BadgeModel(BaseModel):
         self.createNotificationsAndRemoveBadges(badges_to_remove, "BADGE_REMOVED_MODEL")
 
     def handlePublishModel(self, user, model):
-        self.incrementUserMetadataField(
-            user, model.task.shortname + "_models_published"
-        )
+        self.incrementUserMetadataField(user, model.task.name + "_models_published")
 
         badges_to_add = []
         existing_badges = self.getByUid(user.id)
@@ -541,7 +537,7 @@ class BadgeModel(BaseModel):
             0,
             [
                 task_name + "_models_published"
-                for task_name in self.task_shortname_to_badge_name
+                for task_name in self.task_name_to_badge_name
             ],
         )
         models_published_sum = sum(models_published)
@@ -600,7 +596,7 @@ class BadgeModel(BaseModel):
         if example.model_wrong:
             self.incrementUserMetadataField(
                 user,
-                example.context.round.task.shortname
+                example.context.round.task.name
                 + "_fooling_no_verified_incorrect_or_flagged",
             )
             user.streak_examples += 1
@@ -635,7 +631,7 @@ class BadgeModel(BaseModel):
         existing_badges = self.getByUid(user.id)
         if user.metadata_json:
             metadata = json.loads(user.metadata_json)
-            for task_name in self.task_shortname_to_badge_name:
+            for task_name in self.task_name_to_badge_name:
                 if task_name + "_fooling_no_verified_incorrect_or_flagged" in metadata:
                     for (
                         contributor_type,
@@ -649,7 +645,7 @@ class BadgeModel(BaseModel):
                             and self.lengthOfFilteredList(
                                 lambda badge: badge.name
                                 == "DYNABENCH_"
-                                + self.task_shortname_to_badge_name[task_name]
+                                + self.task_name_to_badge_name[task_name]
                                 + "_"
                                 + contributor_type,
                                 existing_badges,
@@ -658,7 +654,7 @@ class BadgeModel(BaseModel):
                         ):
                             badge_names_to_add.append(
                                 "DYNABENCH_"
-                                + self.task_shortname_to_badge_name[task_name]
+                                + self.task_name_to_badge_name[task_name]
                                 + "_"
                                 + contributor_type
                             )
@@ -668,7 +664,7 @@ class BadgeModel(BaseModel):
                 0,
                 [
                     task_name + "_fooling_no_verified_incorrect_or_flagged"
-                    for task_name in self.task_shortname_to_badge_name
+                    for task_name in self.task_name_to_badge_name
                 ],
             )
             num_validated_by_task = self.getFieldsFromMetadata(
@@ -676,7 +672,7 @@ class BadgeModel(BaseModel):
                 0,
                 [
                     task_name + "_validated"
-                    for task_name in self.task_shortname_to_badge_name
+                    for task_name in self.task_name_to_badge_name
                 ],
             )
 
@@ -722,7 +718,7 @@ class BadgeModel(BaseModel):
 
     def handleValidateInterface(self, user, example):
         self.incrementUserMetadataField(
-            user, example.context.round.task.shortname + "_validated"
+            user, example.context.round.task.name + "_validated"
         )
         badge_names_to_add = []
         existing_badges = self.getByUid(user.id)
@@ -739,7 +735,7 @@ class BadgeModel(BaseModel):
                 0,
                 [
                     task_name + "_fooling_no_verified_incorrect_or_flagged"
-                    for task_name in self.task_shortname_to_badge_name
+                    for task_name in self.task_name_to_badge_name
                 ],
             )
             num_validated_by_task = self.getFieldsFromMetadata(
@@ -747,7 +743,7 @@ class BadgeModel(BaseModel):
                 0,
                 [
                     task_name + "_validated"
-                    for task_name in self.task_shortname_to_badge_name
+                    for task_name in self.task_name_to_badge_name
                 ],
             )
             if (
