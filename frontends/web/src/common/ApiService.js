@@ -392,7 +392,7 @@ export default class ApiService {
           };
     return this.fetch(modelUrl, {
       method: "POST",
-      body: JSON.stringify({ example_io }),
+      body: JSON.stringify(example_io),
       ...(customHeader == null ? {} : { headers: customHeader }),
     });
   }
