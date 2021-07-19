@@ -46,6 +46,7 @@ tasks_config = {
     "flores_full": _gen_config(_custom_config["flores"]),
     "flores_small1": _gen_config(_custom_config["flores"]),
     "flores_small2": _gen_config(_custom_config["flores"]),
+    "vqa": _gen_config(),
 }
 
 

@@ -35,6 +35,12 @@ _custom_config = {
         "aws_region": "us-west-2",
         "s3_bucket": "evaluation-us-west-2",
     },
+    "vqa": {
+        "instance_config": instance_property["ml.p2.xlarge"],
+        "eval_metrics": ["vqa_accuracy"],
+        "perf_metric": "vqa_accuracy",
+        "input_keys": ["uid", "question", "image_id", "image_name", "answers"],
+    },
 }
 
 
@@ -57,6 +63,7 @@ tasks_config = {
     "flores_full": _gen_config(_custom_config["flores"]),
     "flores_small1": _gen_config(_custom_config["flores"]),
     "flores_small2": _gen_config(_custom_config["flores"]),
+    "vqa": _gen_config(_custom_config["vqa"]),
 }
 
 

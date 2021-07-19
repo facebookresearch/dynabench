@@ -99,6 +99,14 @@ class JobScheduler:
         if dump:
             self.dump()
 
+    def enqueue_completed(self, model_id, dataset_name, dump=True):
+        # create a prediction file job
+        job = Job(model_id=model_id, dataset_name=dataset_name)
+        self._completed.append(job)
+        logger.info(f"Queueed {job.job_name} for completion")
+        if dump:
+            self.dump()
+
     def submit(self):
         def _create_batch_transform(job):
             """

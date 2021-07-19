@@ -2,6 +2,8 @@
 
 import sys
 
+from datasets.vqa import adversarial_vqa
+
 
 sys.path.append("../api")  # noqa
 # TODO: find a way not to comment the follow imports to skip linter
@@ -47,6 +49,7 @@ def load_datasets():
         "sst3-dev": sst3.Sst3Dev(),
         "aqa-r1-test": aqa.AqaRound1Test(),
         "aqa-r1-dev": aqa.AqaRound1Dev(),
+        "vqa-r1-test-advqa": adversarial_vqa.AdVQARound1Test(),
         "bio-asq-dev": mrqa_shared_dev.BioAsq(),
         "drop-dev": mrqa_shared_dev.Drop(),
         "duo-rc-paraphrase-rc-dev": mrqa_shared_dev.DuoRcParaphraseRc(),

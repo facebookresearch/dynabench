@@ -1,13 +1,14 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
+import os
 import time
 from datetime import datetime, timedelta
 
 import boto3
 
 
-def send_eval_request(model_id, dataset_name, config, logger=None):
+def send_eval_request(model_id, dataset_name, config, mode="model", logger=None):
     """
     If dataset name is a perturbed dataset with prefix, will evaluate this
     perturbed dataset only;
@@ -35,7 +36,7 @@ def send_eval_request(model_id, dataset_name, config, logger=None):
         )
         sqs = session.resource("sqs")
         queue = sqs.get_queue_by_name(QueueName=config["evaluation_sqs_queue"])
-        msg = {"model_id": model_id, "dataset_name": dataset_name}
+        msg = {"model_id": model_id, "dataset_name": dataset_name, "mode": mode}
         queue.send_message(MessageBody=json.dumps(msg))
         if logger:
             logger.info(f"Sent message to {config['evaluation_sqs_queue']}: {msg}")
@@ -111,6 +112,12 @@ def get_perturbed_filename(filename, perturb_prefix=None):
 def get_data_s3_path(task, filename, perturb_prefix=None):
     filename = get_perturbed_filename(filename, perturb_prefix)
     return "/".join(("datasets", task, filename))
+
+
+def get_prediction_s3_path(model_id, task_name, dataset_name):
+    return os.path.join(
+        "predictions", model_id, "raw", task_name, f"{dataset_name}.jsonl.out"
+    )
 
 
 def path_available_on_s3(s3_client, s3_bucket, path, perturb_prefix=None):

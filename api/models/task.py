@@ -135,6 +135,16 @@ class TaskModel(BaseModel):
             return 4
         return 1
 
+    def get_datasets(self, tid):
+        from .dataset import Dataset
+
+        return (
+            self.dbs.query(Task, Dataset)
+            .filter(Task.id == tid)
+            .join(Dataset, (Dataset.tid == Task.id))
+            .all()
+        )
+
     def getWithRoundAndMetricMetadata(self, tid):
 
         try:
@@ -170,6 +180,7 @@ class TaskModel(BaseModel):
             shortname_to_metrics_task_name = {
                 "NLI": "nli",
                 "QA": "qa",
+                "VQA": "vqa",
                 "Sentiment": "sentiment",
                 "Hate Speech": "hs",
                 "FLORES-SMALL1": "flores_small1",

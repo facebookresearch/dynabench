@@ -22,6 +22,25 @@ class Requester:
         self.datasets = datasets
 
     def request(self, msg):
+        mode = msg.get("mode", "model")
+        if mode == "model":
+            self._handle_request_model(msg)
+        elif mode == "file":
+            self._handle_request_file(msg)
+        else:
+            logger.exception(f"Evaluation mode {mode} not found")
+            return False
+
+    def _handle_request_file(self, msg):
+        model_id = msg.get("model_id", None)
+        dataset_name = msg.get("dataset_name", None)
+        if dataset_name is None:
+            logger.exception(f"Request failed. Dataset name is not specified.")
+        self._eval_file(model_id=model_id, dataset_name=dataset_name)
+        self.scheduler.dump()
+        return True
+
+    def _handle_request_model(self, msg):
         model_ids = msg.get("model_id", None)
         dataset_names = msg.get("dataset_name", None)
         if model_ids == "*":
@@ -36,6 +55,7 @@ class Requester:
             return False
         if model_ids and not isinstance(model_ids, list):
             model_ids = [model_ids]
+
         if dataset_names and not isinstance(dataset_names, list):
             dataset_names = [dataset_names]
 
@@ -51,6 +71,7 @@ class Requester:
             for model_id in model_ids:
                 for dataset_name in dataset_names:
                     self._eval_model_on_dataset(model_id, dataset_name)
+
         self.scheduler.dump()
         return True
 
@@ -122,6 +143,11 @@ class Requester:
                     logger.warning(f"No models are available for task {tid}")
             else:
                 logger.exception(f"Task not found for dataset {dataset_name}")
+
+    def _eval_file(self, model_id, dataset_name):
+        self.scheduler.enqueue_completed(
+            model_id=model_id, dataset_name=dataset_name, dump=False
+        )
 
     def update_status(self):
         self.scheduler.update_status()

@@ -105,6 +105,134 @@ def get_model_detail(credentials, mid):
         bottle.abort(404, "Not found")
 
 
+@bottle.post("/models/upload_via_predictions")
+@_auth.requires_auth
+def do_upload_via_predictions(credentials):
+    """
+    Upload the result file fpr overall round or specified round like 1,2,3
+    and kick off an evaluation server run
+    :param credentials:
+    :return: whether or not the evaluation server run is kicked off successfully.
+    """
+    u = UserModel()
+    user_id = credentials["id"]
+    user = u.get(user_id)
+    if not user:
+        logger.error("Invalid user detail for id (%s)" % (user_id))
+        bottle.abort(404, "User information not found")
+
+    upload = bottle.request.files.get("file")
+    task_id = bottle.request.forms.get("task_id")
+    filename = upload.raw_filename
+    dataset_names = bottle.request.forms.get("dataset_names").split(",")
+
+    try:
+        predictions = json.loads(upload.file.read().decode("utf-8"))
+    except Exception as ex:
+        logger.exception(ex)
+        bottle.abort(400, "Upload valid model result file")
+
+    tm = TaskModel()
+    task = tm.get(task_id)
+
+    # throttling; default is 10 per 24 hrs for a specific task.
+    dynalab_hr_diff = 24
+    dynalab_threshold = 10
+    if task.settings_json is not None:
+        task_settings = json.loads(task.settings_json)
+        dynalab_hr_diff = task_settings.get("dynalab_hr_diff", dynalab_hr_diff)
+        dynalab_threshold = task_settings.get("dynalab_threshold", dynalab_threshold)
+
+    m = ModelModel()
+    if (
+        bottle.default_app().config["mode"] == "prod"
+        and m.getCountByUidTidAndHrDiff(user_id, tid=task.id, hr_diff=dynalab_hr_diff)
+        >= dynalab_threshold
+    ):
+        logger.error("Submission limit reached for user (%s)" % (user_id))
+        bottle.abort(429, "Submission limit reached")
+
+    if len(predictions) > 0:
+        import tempfile
+
+        status_dict = {}
+        # Create local model db object
+        endpoint_name = f"{user_id}-{filename}"
+        model = m.create(
+            task_id=task_id,
+            user_id=user_id,
+            name=filename,
+            shortname="",
+            longdesc="",
+            desc="",
+            upload_datetime=db.sql.func.now(),
+            endpoint_name=endpoint_name,
+            deployment_status=DeploymentStatusEnum.uploaded,
+            secret=secrets.token_hex(),
+        )
+        with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
+            for jl in predictions:
+                tmp_jl = {"uid": jl["question_id"], "answer": jl["answer"]}
+                tmp.write(json.dumps(tmp_jl) + "\n")
+            tmp.close()
+            for dataset in dataset_names:
+                ret = _eval_dataset(dataset, endpoint_name, model, task, tmp.name)
+                status_dict.update(ret)
+        return json.dumps(
+            util.json_encode({"success": status_dict, "model": model.to_dict()})
+        )
+    else:
+        bottle.abort(400, "Invalid file submitted")
+
+
+def _eval_dataset(dataset_name, endpoint_name, model, task, afile):
+    from utils.helpers import send_eval_request
+    from eval_config import eval_config
+
+    task_name = task.shortname.lower()
+    try:
+        _upload_prediction_file(
+            afile=afile,
+            task_name=task_name,
+            filename=endpoint_name,
+            dataset_name=dataset_name,
+        )
+        ret = send_eval_request(
+            mode="file",
+            model_id=model.id,
+            dataset_name=dataset_name,
+            config=eval_config,
+            logger=logger,
+        )
+    except Exception as e:
+        logger.exception(e)
+        bottle.abort(400, "Could not upload file: %s" % (e))
+    return {dataset_name: {"success": ret}}
+
+
+def _upload_prediction_file(afile, task_name, filename, dataset_name):
+    from eval_config import eval_config
+    from utils.helpers import get_prediction_s3_path
+
+    # upload prediction file onto s3
+    client = boto3.client(
+        "s3",
+        aws_access_key_id=eval_config["aws_access_key_id"],
+        aws_secret_access_key=eval_config["aws_secret_access_key"],
+        region_name=eval_config["aws_region"],
+    )
+    path = get_prediction_s3_path(
+        model_id=filename, task_name=task_name, dataset_name=dataset_name
+    )
+    response = client.upload_file(
+        afile, metrics.get_task_config_safe(task_name)["s3_bucket"], path
+    )
+    if response:
+        logger.info(response)
+
+    return path
+
+
 @bottle.put("/models/<mid:int>/update")
 @_auth.requires_auth
 def update_model(credentials, mid):

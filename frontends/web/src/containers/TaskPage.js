@@ -184,6 +184,32 @@ const TaskActionButtons = (props) => {
           </Annotation>
         </Nav.Item>
       ) : null}
+      {props.task.has_file_eval ? (
+        <Nav.Item className="task-action-btn">
+          <Annotation
+            placement="top"
+            tooltip={
+              "Click here to submit your model generated prediction file to evaluate on " +
+              props.task.shortname +
+              "'s dataset"
+            }
+          >
+            <OverlayTrigger
+              placement="bottom"
+              delay={{ show: 250, hide: 400 }}
+              overlay={renderVerifyTooltip}
+            >
+              <Button
+                as={Link}
+                className="border-0 blue-color font-weight-bold light-gray-bg"
+                to={"/tasks/" + props.taskId + "/submit"}
+              >
+                <i className="fa fa-upload"></i> Submit Prediction File
+              </Button>
+            </OverlayTrigger>
+          </Annotation>
+        </Nav.Item>
+      ) : null}
     </Nav>
   );
 };
@@ -718,17 +744,17 @@ class TaskPage extends React.Component {
                         onChange={() => {
                           this.setState(
                             {
-                              validateNonFooling:
-                                !this.state.validateNonFooling,
+                              validateNonFooling: !this.state
+                                .validateNonFooling,
                             },
                             () =>
                               this.context.api.updateTaskSettings(
                                 this.state.task.id,
                                 {
-                                  validate_non_fooling:
-                                    this.state.validateNonFooling,
-                                  num_matching_validations:
-                                    this.state.numMatchingValidations,
+                                  validate_non_fooling: this.state
+                                    .validateNonFooling,
+                                  num_matching_validations: this.state
+                                    .numMatchingValidations,
                                 }
                               )
                           );
@@ -759,10 +785,10 @@ class TaskPage extends React.Component {
                                 this.context.api.updateTaskSettings(
                                   this.state.task.id,
                                   {
-                                    validate_non_fooling:
-                                      this.state.validateNonFooling,
-                                    num_matching_validations:
-                                      this.state.numMatchingValidations,
+                                    validate_non_fooling: this.state
+                                      .validateNonFooling,
+                                    num_matching_validations: this.state
+                                      .numMatchingValidations,
                                   }
                                 )
                             );

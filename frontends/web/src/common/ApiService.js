@@ -159,6 +159,21 @@ export default class ApiService {
     });
   }
 
+  submitModelViaPredictions(data) {
+    const formData = new FormData();
+    formData.append("dataset_names", data.dataset_names);
+    formData.append("file", data.file);
+    formData.append("task_id", data.task_id);
+    const token = this.getToken();
+    return this.fetch(`${this.domain}/models/upload_via_predictions`, {
+      method: "POST",
+      body: formData,
+      headers: {
+        Authorization: token ? "Bearer " + token : "None",
+      },
+    });
+  }
+
   updateModel({
     modelId,
     name,
@@ -191,6 +206,12 @@ export default class ApiService {
 
   getTrends(taskId) {
     return this.fetch(`${this.domain}/tasks/${taskId}/trends`, {
+      method: "GET",
+    });
+  }
+
+  getDatasets(taskId) {
+    return this.fetch(`${this.domain}/tasks/${taskId}/datasets`, {
       method: "GET",
     });
   }

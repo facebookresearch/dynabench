@@ -33,6 +33,7 @@ import UpdateModelInfoInterface from "./UpdateModelInfoInterface.js";
 import GenerateAPITokenPage from "./GenerateAPITokenPage.js";
 import { Avatar } from "../components/Avatar/Avatar";
 import ReactGA from "react-ga";
+import SubmitInterface from "./SubmitInterface.js";
 
 import qs from "qs";
 
@@ -267,6 +268,10 @@ class App extends React.Component {
                 <Route
                   path="/tasks/:taskId/models/:modelId/updateModelInfo"
                   component={UpdateModelInfoInterface}
+                />
+                <Route
+                  path="/tasks/:taskId/submit"
+                  component={SubmitInterface}
                 />
                 <Route
                   path="/tasks/:taskId/models/:modelId"

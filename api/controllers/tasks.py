@@ -335,6 +335,14 @@ def get_dynaboard_info(tid):
     )
 
 
+@bottle.get("/tasks/<tid:int>/datasets")
+def get_datasets(tid):
+    tm = TaskModel()
+    datasets = tm.get_datasets(tid)
+    datasets = [dataset[1].to_dict() for dataset in datasets]
+    return util.json_encode(datasets)
+
+
 @bottle.get("/tasks/<tid:int>/models")
 def get_model_leaderboard(tid):
     """
