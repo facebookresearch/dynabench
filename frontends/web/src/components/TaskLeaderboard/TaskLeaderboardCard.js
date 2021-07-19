@@ -41,6 +41,10 @@ const TaskLeaderboardCard = (props) => {
   // Dataset Weights Array of a set of dataset id and corresponding weight.
   const [datasetWeights, setDatasetWeights] = useState();
 
+  const [snapshotName, setSnapshotName] = useState(
+    props.match.params.snapshotName
+  );
+
   // Update weights on task change
   useEffect(() => {
     // Used to load default weights for metrics. When a new metric is found which was not saved in a leaderboard
@@ -67,38 +71,60 @@ const TaskLeaderboardCard = (props) => {
     });
 
     const setMetricsAndDatasetsWeights = () => {
-      setMetrics(Object.values(metricIdToDataObj));
-      setDatasetWeights(Object.values(datasetIdToDataObj));
+      const orderedMetricWeights = task.ordered_metrics.map(
+        (m) => metricIdToDataObj[m.name]
+      );
+      const orderedDatasetWeights = task.ordered_scoring_datasets.map(
+        (ds) => datasetIdToDataObj[ds.id]
+      );
+      setMetrics(orderedMetricWeights);
+      setDatasetWeights(orderedDatasetWeights);
     };
 
     const leaderboardName = props.match.params.leaderboardName;
-    if (leaderboardName != null) {
-      context.api.getLeaderboardConfiguration(task.id, leaderboardName).then(
-        (result) => {
-          const configuration_json = JSON.parse(result.configuration_json);
-          configuration_json.metricWeights.forEach((m) => {
-            if (m.id in metricIdToDataObj) {
-              metricIdToDataObj[m.id].weight = m.weight;
-            }
-          });
-          configuration_json.datasetWeights.forEach((d) => {
-            if (d.id in datasetIdToDataObj) {
-              datasetIdToDataObj[d.id].weight = d.weight;
-            }
-          });
-          setMetricsAndDatasetsWeights();
-        },
-        (error) => {
-          console.log(error);
-          if (error && error.status_code === 404) {
-            props.history.replace({
-              pathname: `/tasks/${taskId}`,
-              hash: props.location.hash,
-            });
-          }
-          setMetricsAndDatasetsWeights();
+
+    const updateMetricAndDatasetWeightFromJson = (configurationJson) => {
+      configurationJson.metricWeights.forEach((m) => {
+        if (m.id in metricIdToDataObj) {
+          metricIdToDataObj[m.id].weight = m.weight;
         }
-      );
+      });
+      configurationJson.datasetWeights.forEach((d) => {
+        if (d.id in datasetIdToDataObj) {
+          datasetIdToDataObj[d.id].weight = d.weight;
+        }
+      });
+      setMetricsAndDatasetsWeights();
+    };
+
+    const forkOrSnapshotErrorCallback = (error) => {
+      console.log(error);
+      if (error?.status_code === 404) {
+        props.history.replace({
+          pathname: `/tasks/${taskId}`,
+        });
+      }
+      setMetricsAndDatasetsWeights();
+      setSnapshotName(null);
+    };
+
+    if (leaderboardName != null) {
+      context.api
+        .getLeaderboardConfiguration(task.id, leaderboardName)
+        .then((result) => {
+          const configuration_json = JSON.parse(result.configuration_json);
+          updateMetricAndDatasetWeightFromJson(configuration_json);
+        }, forkOrSnapshotErrorCallback);
+    } else if (snapshotName != null) {
+      context.api
+        .getLeaderboardSnapshot(task.id, snapshotName)
+        .then((result) => {
+          const dataJson = JSON.parse(result.data_json);
+          updateMetricAndDatasetWeightFromJson(dataJson.configuration_json);
+          setData(dataJson.data);
+          setTotal(dataJson.count);
+          setSort(dataJson.misc_info_json.sort);
+        }, forkOrSnapshotErrorCallback);
     } else {
       setMetricsAndDatasetsWeights();
     }
@@ -163,8 +189,11 @@ const TaskLeaderboardCard = (props) => {
    * @param {string} field
    */
   const toggleSort = (field) => {
-    const currentDirection = sort.direction;
+    if (snapshotName) {
+      return;
+    }
 
+    const currentDirection = sort.direction;
     const newDirection =
       field !== sort.field
         ? SortDirection.DESC
@@ -178,6 +207,24 @@ const TaskLeaderboardCard = (props) => {
 
   const context = useContext(UserContext);
 
+  const getOrderedWeights = () => {
+    const metricSum = metrics?.reduce((acc, entry) => acc + entry.weight, 0);
+    const orderedMetricWeights = metrics?.map((entry) =>
+      metricSum === 0 ? 0.0 : entry.weight / metricSum
+    );
+    const dataSetSum = datasetWeights?.reduce(
+      (acc, entry) => acc + entry.weight,
+      0
+    );
+    const orderedDatasetWeights = datasetWeights?.map((entry) =>
+      dataSetSum === 0 ? 0.0 : entry.weight / dataSetSum
+    );
+    return {
+      orderedMetricWeights,
+      orderedDatasetWeights,
+    };
+  };
+
   // Call api on sort, page and weights changed.
   useEffect(() => {
     /**
@@ -187,19 +234,9 @@ const TaskLeaderboardCard = (props) => {
      * @param {number} page
      */
     const fetchOverallModelLeaderboard = (api, page) => {
-      const metricSum = metrics?.reduce((acc, entry) => acc + entry.weight, 0);
-      const orderedMetricWeights = metrics?.map((entry) =>
-        metricSum === 0 ? 0.0 : entry.weight / metricSum
-      );
-      const dataSetSum = datasetWeights?.reduce(
-        (acc, entry) => acc + entry.weight,
-        0
-      );
-      const orderedDatasetWeights = datasetWeights?.map((entry) =>
-        dataSetSum === 0 ? 0.0 : entry.weight / dataSetSum
-      );
-
-      if (orderedMetricWeights && orderedDatasetWeights) {
+      const { orderedMetricWeights, orderedDatasetWeights } =
+        getOrderedWeights();
+      if (!snapshotName && orderedMetricWeights && orderedDatasetWeights) {
         api
           .getDynaboardScores(
             taskId,
@@ -227,7 +264,16 @@ const TaskLeaderboardCard = (props) => {
     fetchOverallModelLeaderboard(context.api, page);
     setIsLoading(false);
     return () => {};
-  }, [page, sort, metrics, datasetWeights, context.api, taskId, pageLimit]);
+  }, [
+    page,
+    sort,
+    metrics,
+    datasetWeights,
+    context.api,
+    taskId,
+    pageLimit,
+    snapshotName,
+  ]);
 
   const isEndOfPage = (page + 1) * pageLimit >= total;
 
@@ -330,33 +376,80 @@ const TaskLeaderboardCard = (props) => {
             </Modal.Body>
           </Modal>
           {(process.env.REACT_APP_ENABLE_LEADERBOARD_FORK === "true" ||
-            context.user.admin) && (
-            <OverlayTrigger
-              placement="top"
-              overlay={<Tooltip id="tip-leaderboard-fork">Fork</Tooltip>}
-            >
-              <Button
-                className="btn bg-transparent border-0"
-                onClick={() => {
-                  if (context.api.loggedIn()) {
-                    setShowForkModal(!showForkModal);
-                  } else {
-                    props.history.push(
-                      "/login?msg=" +
-                        encodeURIComponent(
-                          "You need to login to fork a leaderboard."
-                        ) +
-                        `&src=/tasks/${taskId}`
-                    );
-                  }
-                }}
+            context.user.admin) &&
+            !snapshotName && (
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip id="tip-leaderboard-fork">Snapshot</Tooltip>}
               >
-                <span className="text-black-50">
-                  <i className="fas fa-code-branch"></i>
-                </span>
-              </Button>
-            </OverlayTrigger>
-          )}
+                <Button
+                  className="btn bg-transparent border-0"
+                  onClick={() => {
+                    if (context.api.loggedIn()) {
+                      // setShowForkModal(!showForkModal);
+                      const { orderedMetricWeights, orderedDatasetWeights } =
+                        getOrderedWeights();
+                      context.api
+                        .createLeaderboardSnapshot(
+                          taskId,
+                          "test_name",
+                          sort,
+                          metrics,
+                          datasetWeights,
+                          orderedMetricWeights,
+                          orderedDatasetWeights,
+                          total
+                        )
+                        .then(
+                          (result) => console.log(result),
+                          (error) => console.log(error)
+                        );
+                    } else {
+                      props.history.push(
+                        "/login?msg=" +
+                          encodeURIComponent(
+                            "You need to login to snapshot a leaderboard."
+                          ) +
+                          `&src=/tasks/${taskId}`
+                      );
+                    }
+                  }}
+                >
+                  <span className="text-black-50">
+                    <i className="fas fa-camera"></i>
+                  </span>
+                </Button>
+              </OverlayTrigger>
+            )}
+          {(process.env.REACT_APP_ENABLE_LEADERBOARD_FORK === "true" ||
+            context.user.admin) &&
+            !snapshotName && (
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip id="tip-leaderboard-fork">Fork</Tooltip>}
+              >
+                <Button
+                  className="btn bg-transparent border-0"
+                  onClick={() => {
+                    if (context.api.loggedIn()) {
+                      setShowForkModal(!showForkModal);
+                    } else {
+                      props.history.push(
+                        "/login?msg=" +
+                          encodeURIComponent(
+                            "You need to login to fork a leaderboard."
+                          ) +
+                          `&src=/tasks/${taskId}`
+                      );
+                    }
+                  }}
+                >
+                  <span className="text-black-50">
+                    <i className="fas fa-code-branch"></i>
+                  </span>
+                </Button>
+              </OverlayTrigger>
+            )}
           <OverlayTrigger
             placement="top"
             overlay={<Tooltip id="tip-metric-weights">Help</Tooltip>}
@@ -372,40 +465,46 @@ const TaskLeaderboardCard = (props) => {
               </span>
             </Button>
           </OverlayTrigger>
-          <OverlayTrigger
-            placement="top"
-            overlay={<Tooltip id="tip-metric-weights">Metric Weights</Tooltip>}
-          >
-            <Button
-              className="btn bg-transparent border-0"
-              onClick={() => {
-                setEnableWeights(!enableWeights);
-                setEnableDatasetWeights(false);
-              }}
-            >
-              <span className="text-black-50">
-                <i className="fas fa-sliders-h"></i>
-              </span>
-            </Button>
-          </OverlayTrigger>
-          <OverlayTrigger
-            placement="top"
-            overlay={
-              <Tooltip id="tip-dataset-weights">Dataset Weights</Tooltip>
-            }
-          >
-            <Button
-              className="btn bg-transparent border-0"
-              onClick={() => {
-                setEnableDatasetWeights(!enableDatasetWeights);
-                setEnableWeights(false);
-              }}
-            >
-              <span className="text-black-50">
-                <i className="fas fa-database"></i>
-              </span>
-            </Button>
-          </OverlayTrigger>
+          {!snapshotName && (
+            <>
+              <OverlayTrigger
+                placement="top"
+                overlay={
+                  <Tooltip id="tip-metric-weights">Metric Weights</Tooltip>
+                }
+              >
+                <Button
+                  className="btn bg-transparent border-0"
+                  onClick={() => {
+                    setEnableWeights(!enableWeights);
+                    setEnableDatasetWeights(false);
+                  }}
+                >
+                  <span className="text-black-50">
+                    <i className="fas fa-sliders-h"></i>
+                  </span>
+                </Button>
+              </OverlayTrigger>
+              <OverlayTrigger
+                placement="top"
+                overlay={
+                  <Tooltip id="tip-dataset-weights">Dataset Weights</Tooltip>
+                }
+              >
+                <Button
+                  className="btn bg-transparent border-0"
+                  onClick={() => {
+                    setEnableDatasetWeights(!enableDatasetWeights);
+                    setEnableWeights(false);
+                  }}
+                >
+                  <span className="text-black-50">
+                    <i className="fas fa-database"></i>
+                  </span>
+                </Button>
+              </OverlayTrigger>
+            </>
+          )}
         </div>
       </Card.Header>
       <Card.Body className="p-0 leaderboard-container">

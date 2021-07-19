@@ -409,8 +409,6 @@ class TaskPage extends React.Component {
       taskId: props.match.params.taskId,
       task: {},
       trendScore: [],
-      modelLeaderBoardData: [],
-      modelLeaderBoardTags: [],
       userLeaderBoardData: [],
       userLeaderBoardPage: 0,
       isEndOfUserLeaderPage: true,
@@ -422,9 +420,10 @@ class TaskPage extends React.Component {
     this.exportAllTaskData = this.exportAllTaskData.bind(this);
     this.getSavedTaskSettings = this.getSavedTaskSettings.bind(this);
     this.exportCurrentRoundData = this.exportCurrentRoundData.bind(this);
+    this.getCurrentTaskData = this.getCurrentTaskData.bind(this);
   }
 
-  componentDidMount() {
+  getCurrentTaskData() {
     this.setState({ taskId: this.props.match.params.taskId }, function () {
       this.context.api.getTask(this.state.taskId).then(
         (result) => {
@@ -449,30 +448,13 @@ class TaskPage extends React.Component {
     });
   }
 
+  componentDidMount() {
+    this.getCurrentTaskData();
+  }
+
   componentDidUpdate(prevProps) {
     if (this.props.match.params.taskId !== this.state.taskId) {
-      this.setState({ taskId: this.props.match.params.taskId }, function () {
-        this.context.api.getTask(this.state.taskId).then(
-          (result) => {
-            this.setState(
-              {
-                task: result,
-                displayRound: "overall",
-                round: result.round,
-              },
-              function () {
-                this.refreshData();
-              }
-            );
-          },
-          (error) => {
-            console.log(error);
-            if (error.status_code === 404 || error.status_code === 405) {
-              this.props.history.push("/");
-            }
-          }
-        );
-      });
+      this.getCurrentTaskData();
     }
   }
 
@@ -923,8 +905,6 @@ class TaskPage extends React.Component {
                 >
                   <TaskLeaderboardCard
                     {...this.props}
-                    modelLeaderBoardData={this.state.modelLeaderBoardData}
-                    modelLeaderBoardTags={this.state.modelLeaderBoardTags}
                     task={this.state.task}
                     taskId={this.state.taskId}
                   />

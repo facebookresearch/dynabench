@@ -558,6 +558,39 @@ export default class ApiService {
     );
   }
 
+  createLeaderboardSnapshot(
+    tid,
+    name,
+    sort,
+    metricWeights,
+    datasetWeights,
+    orderedMetricWeights,
+    orderedDatasetWeights,
+    totalCount
+  ) {
+    return this.fetch(`${this.domain}/tasks/${tid}/leaderboard_snapshot`, {
+      method: "PUT",
+      body: JSON.stringify({
+        name: name,
+        sort: sort,
+        metricWeights: metricWeights,
+        datasetWeights: datasetWeights,
+        orderedMetricWeights: orderedMetricWeights,
+        orderedDatasetWeights: orderedDatasetWeights,
+        totalCount: totalCount,
+      }),
+    });
+  }
+
+  getLeaderboardSnapshot(tid, name) {
+    return this.fetch(
+      `${this.domain}/tasks/${tid}/leaderboard_snapshot/${name}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
   loggedIn() {
     const token = this.getToken();
     if (!token) {

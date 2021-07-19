@@ -11,6 +11,7 @@ from common.logging import logger
 from models.dataset import Dataset
 from models.example import ExampleModel
 from models.leaderboard_configuration import LeaderboardConfigurationModel
+from models.leaderboard_snapshot import LeaderboardSnapshotModel
 from models.model import Model
 from models.round import RoundModel
 from models.round_user_example_info import RoundUserExampleInfoModel
@@ -265,11 +266,6 @@ def get_top_leaderboard_tags(tid):
 @bottle.get("/tasks/<tid:int>/models/dynaboard")
 def get_dynaboard_info(tid):
 
-    tm = TaskModel()
-    t_dict = tm.getWithRoundAndMetricMetadata(tid)
-    ordered_metrics = t_dict["ordered_metrics"]
-    perf_metric_field_name = t_dict["perf_metric_field_name"]
-
     # defaults
     sort_by = "dynascore"
     sort_direction = "asc"
@@ -282,11 +278,7 @@ def get_dynaboard_info(tid):
     if "sort_direction" in query_dict:
         sort_direction = query_dict["sort_direction"][0]
 
-    if sort_direction == "asc":
-        reverse_sort = False
-    elif sort_direction == "desc":
-        reverse_sort = True
-    else:
+    if sort_direction != "asc" and sort_direction != "desc":
         bottle.abort(400, "unrecognized sort direction")
 
     if "offset" in query_dict:
@@ -309,6 +301,36 @@ def get_dynaboard_info(tid):
         ]
     else:
         bottle.abort(400, "missing dataset weight data")
+
+    return get_dynaboard_info_for_params(
+        tid,
+        ordered_metric_weights,
+        ordered_dataset_weights,
+        sort_by,
+        sort_direction,
+        limit,
+        offset,
+    )
+
+
+def get_dynaboard_info_for_params(
+    tid,
+    ordered_metric_weights,
+    ordered_dataset_weights,
+    sort_by,
+    sort_direction,
+    limit,
+    offset,
+):
+    if sort_direction == "asc":
+        reverse_sort = False
+    elif sort_direction == "desc":
+        reverse_sort = True
+
+    tm = TaskModel()
+    t_dict = tm.getWithRoundAndMetricMetadata(tid)
+    ordered_metrics = t_dict["ordered_metrics"]
+    perf_metric_field_name = t_dict["perf_metric_field_name"]
 
     ordered_metric_and_weight = [
         dict({"weight": weight}, **metric)
@@ -504,6 +526,66 @@ def create_leaderboard_configuration(credentials, tid):
         tid, name, credentials["id"], data["configuration_json"]
     )
     return util.json_encode(leaderboard_configuration)
+
+
+@bottle.get("/tasks/<tid:int>/leaderboard_snapshot/<name>")
+def get_leaderboard_configuration(tid, name):
+
+    lsm = LeaderboardSnapshotModel()
+    leaderboard_snapshot = lsm.getByTaskIdAndLeaderboardName(tid, name)
+
+    if not leaderboard_snapshot:
+        bottle.abort(404, "Not found")
+
+    leaderboard_snapshot = leaderboard_snapshot.to_dict()
+    return util.json_encode(leaderboard_snapshot)
+
+
+@bottle.put("/tasks/<tid:int>/leaderboard_snapshot")
+@_auth.requires_auth
+def create_leaderboard_configuration(credentials, tid):
+    data = bottle.request.json
+    if not util.check_fields(
+        data,
+        [
+            "name",
+            "sort",
+            "metricWeights",
+            "datasetWeights",
+            "orderedMetricWeights",
+            "orderedDatasetWeights",
+            "totalCount",
+        ],
+    ):
+        bottle.abort(400, "Missing data")
+
+    lsm = LeaderboardSnapshotModel()
+    name = data["name"]
+
+    if lsm.exists(tid=tid, name=name):
+        bottle.abort(409, "A snapshot with the same name already exists for this task.")
+
+    dynaboard_info = get_dynaboard_info_for_params(
+        tid,
+        data["orderedMetricWeights"],
+        data["orderedDatasetWeights"],
+        data["sort"]["field"],
+        data["sort"]["direction"],
+        data["totalCount"],
+        0,
+    )
+    dynaboard_info = json.loads(dynaboard_info)
+    dynaboard_info["configuration_json"] = dict()
+    dynaboard_info["configuration_json"]["metricWeights"] = data["metricWeights"]
+    dynaboard_info["configuration_json"]["datasetWeights"] = data["datasetWeights"]
+    dynaboard_info["misc_info_json"] = dict()
+    dynaboard_info["misc_info_json"]["sort"] = data["sort"]
+
+    dynaboard_info = util.json_encode(dynaboard_info)
+
+    leaderboard_snapshot = lsm.create(tid, name, credentials["id"], dynaboard_info)
+
+    return util.json_encode(leaderboard_snapshot.to_dict())
 
 
 def construct_model_board_response_json(query_result, total_count):
