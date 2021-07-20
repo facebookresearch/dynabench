@@ -422,6 +422,8 @@ class TaskPage extends React.Component {
     this.exportAllTaskData = this.exportAllTaskData.bind(this);
     this.getSavedTaskSettings = this.getSavedTaskSettings.bind(this);
     this.exportCurrentRoundData = this.exportCurrentRoundData.bind(this);
+    this.initializeTaskLeaderboardWeights =
+      this.initializeTaskLeaderboardWeights.bind(this);
   }
 
   componentDidMount() {
@@ -615,6 +617,90 @@ class TaskPage extends React.Component {
         ? this.state.userLeaderBoardPage + 1
         : this.state.userLeaderBoardPage - 1;
     this.fetchOverallUserLeaderboard(page, round);
+  };
+
+  initializeTaskLeaderboardWeights = (
+    metricIdToDataObj,
+    datasetIdToDataObj,
+    updateWeightsCallback
+  ) => {
+    const leaderboardName = this.props.match.params.leaderboardName;
+    if (leaderboardName != null) {
+      this.context.api
+        .getLeaderboardConfiguration(this.state.task.id, leaderboardName)
+        .then(
+          (result) => {
+            const configuration_json = JSON.parse(result.configuration_json);
+            configuration_json.metricWeights.forEach((m) => {
+              if (m.id in metricIdToDataObj) {
+                metricIdToDataObj[m.id].weight = m.weight;
+              }
+            });
+            configuration_json.datasetWeights.forEach((d) => {
+              if (d.id in datasetIdToDataObj) {
+                datasetIdToDataObj[d.id].weight = d.weight;
+              }
+            });
+            updateWeightsCallback();
+          },
+          (error) => {
+            console.log(error);
+            if (error && error.status_code === 404) {
+              this.props.history.replace({
+                pathname: `/tasks/${this.state.taskId}`,
+              });
+            }
+            updateWeightsCallback();
+          }
+        );
+    } else {
+      updateWeightsCallback();
+    }
+  };
+
+  fetchOverallModelLeaderboard = (
+    api,
+    pageLimit,
+    page,
+    sort,
+    metrics,
+    datasetWeights,
+    updateResultCallback
+  ) => {
+    const metricSum = metrics?.reduce((acc, entry) => acc + entry.weight, 0);
+    const orderedMetricWeights = metrics?.map((entry) =>
+      metricSum === 0 ? 0.0 : entry.weight / metricSum
+    );
+    const dataSetSum = datasetWeights?.reduce(
+      (acc, entry) => acc + entry.weight,
+      0
+    );
+    const orderedDatasetWeights = datasetWeights?.map((entry) =>
+      dataSetSum === 0 ? 0.0 : entry.weight / dataSetSum
+    );
+
+    if (orderedMetricWeights && orderedDatasetWeights) {
+      api
+        .getDynaboardScores(
+          this.state.taskId,
+          pageLimit,
+          page * pageLimit,
+          sort.field,
+          sort.direction,
+          orderedMetricWeights,
+          orderedDatasetWeights
+        )
+        .then(
+          (result) => updateResultCallback(result),
+          (error) => {
+            console.log(error);
+            updateResultCallback({
+              data: [],
+              count: 0,
+            });
+          }
+        );
+    }
   };
 
   render() {
@@ -927,6 +1013,14 @@ class TaskPage extends React.Component {
                     modelLeaderBoardTags={this.state.modelLeaderBoardTags}
                     task={this.state.task}
                     taskId={this.state.taskId}
+                    loadDefaultWeights={true}
+                    canToggleSort={true}
+                    canAdjustWeights={true}
+                    canForkAndSnapshot={true}
+                    initializeWeights={this.initializeTaskLeaderboardWeights}
+                    fetchOverallModelLeaderboard={
+                      this.fetchOverallModelLeaderboard
+                    }
                   />
                 </Annotation>
               </Col>
