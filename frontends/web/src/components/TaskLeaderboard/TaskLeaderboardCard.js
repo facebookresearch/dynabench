@@ -510,7 +510,6 @@ const TaskLeaderboardCard = (props) => {
       <Card.Body className="p-0 leaderboard-container">
         <OverallModelLeaderBoard
           models={data}
-          task={task}
           enableWeights={enableWeights}
           metrics={metrics}
           setMetricWeight={setMetricWeight}
