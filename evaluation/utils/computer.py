@@ -13,6 +13,7 @@ from metrics import get_job_metrics
 from models.dataset import DatasetModel
 from models.round import RoundModel
 from models.score import ScoreModel
+from utils import helpers
 from utils.helpers import parse_s3_uri, update_metadata_json_string
 
 
@@ -52,90 +53,6 @@ class MetricsComputer:
             )
             return [], []
 
-    def parse_outfile(self, job, original=False):
-        """
-        Parse batch transform output by balancing brackets, since AWS output
-        pretty prints json by default
-        """
-        perturb_prefix = None if original else job.perturb_prefix
-        try:
-            raw_output_s3_uri = self.datasets[job.dataset_name].get_output_s3_url(
-                job.endpoint_name, raw=True, perturb_prefix=perturb_prefix
-            )
-            raw_s3_bucket, raw_s3_path = parse_s3_uri(raw_output_s3_uri)
-            # download raw predictions and parse
-            fd, raw_pred_file = tempfile.mkstemp(suffix="raw", prefix=job.job_name)
-            self.s3_client.download_file(raw_s3_bucket, raw_s3_path, raw_pred_file)
-            json_lines = True
-            with open(raw_pred_file) as f:
-                tmp = ""
-                predictions = []
-                lb = 0
-                for line in f:
-                    if not (line.startswith("{") and line.endswith("}\n")):
-                        json_lines = False
-                    if json_lines:
-                        # One json per line
-                        predictions.append(json.loads(line))
-                        continue
-                    # This code is overly complicated because we are letting torchserve
-                    # serialize the json object and they do pretty printing by default.
-                    line = line.strip()
-                    if line.startswith("{") or line.endswith("{"):
-                        lb += 1
-                    elif line.startswith("}") or line.endswith("}"):
-                        lb -= 1
-                    if lb == 0 and tmp:
-                        tmp += line
-                        predictions.append(json.loads(tmp))
-                        tmp = ""
-                    elif line:
-                        tmp += line
-            os.close(fd)
-            os.remove(raw_pred_file)
-
-            # upload parsed file
-            output_s3_uri = self.datasets[job.dataset_name].get_output_s3_url(
-                job.endpoint_name, raw=False, perturb_prefix=perturb_prefix
-            )
-            s3_bucket, s3_path = parse_s3_uri(output_s3_uri)
-            fd, parsed_pred_file = tempfile.mkstemp(
-                suffix="parsed", prefix=job.job_name
-            )
-            with open(parsed_pred_file, "w") as f:
-                for pred in predictions:
-                    f.write(json.dumps(pred) + "\n")
-            self.s3_client.upload_file(parsed_pred_file, s3_bucket, s3_path)
-            os.close(fd)
-            os.remove(parsed_pred_file)
-        except Exception as e:
-            logger.exception(
-                f"Exception in parsing output file for {job.job_name}: {e}"
-            )
-            raise e
-        return predictions
-
-    def read_predictions(self, job, original=False):
-        try:
-            perturb_prefix = None if original else job.perturb_prefix
-            output_s3_uri = self.datasets[job.dataset_name].get_output_s3_url(
-                job.endpoint_name, raw=False, perturb_prefix=perturb_prefix
-            )
-            s3_bucket, s3_path = parse_s3_uri(output_s3_uri)
-            tf = tempfile.mkstemp(prefix=self.name)[1]
-            self.s3_client.download_file(s3_bucket, s3_path, tf)
-            predictions = [json.loads(l) for l in open(tf).readlines()]
-            os.remove(tf)
-        except Exception:
-            predictions = self.parse_outfile(job, original=original)
-        finally:
-            if not predictions:
-                raise RuntimeError(
-                    f"Error fetch predictions for job {job.name}, "
-                    f"where request original output is {original}"
-                )
-            return predictions
-
     def update_database(self, job):
         logger.info(f"Evaluating {job.job_name}")
         try:
@@ -153,24 +70,9 @@ class MetricsComputer:
             # TODO: avoid explictly pass perturb prefix at multiple places
             # - take full job information at one interface instead
             dataset = self.datasets[job.dataset_name]
-            predictions = self.parse_outfile(job)
-            eval_metrics_dict = dataset.eval(
-                predictions, perturb_prefix=job.perturb_prefix
-            )
+            eval_metrics_dict, delta_metrics_dict = dataset.eval_job(job)
 
             if job.perturb_prefix:
-                targets = self.read_predictions(job, original=True)
-                targets = [
-                    dataset.pred_to_target_converter(
-                        dataset.pred_field_converter(prediction)
-                    )
-                    for prediction in targets
-                ]
-
-                delta_metrics_dict = dataset.eval(
-                    predictions, targets, perturb_prefix=job.perturb_prefix
-                )
-
                 eval_metadata_json = json.loads(eval_metrics_dict["metadata_json"])
                 eval_metadata_json = {
                     f"{job.perturb_prefix}-{metric}": eval_metadata_json[metric]
