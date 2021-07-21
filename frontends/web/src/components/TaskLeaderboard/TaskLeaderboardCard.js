@@ -26,9 +26,9 @@ const SortDirection = {
  * @param {Object} props React props de-structured.
  * @param {Object} props.task The task
  * @param {number} props.taskId The taskID
- * @param {boolean} props.canToggleSort Whether or not changing sort field/direction is allowed
- * @param {boolean} props.canAdjustWeights Whether or not changing metric/dataset weights is allowed
- * @param {boolean} props.canForkAndSnapshot Whether or not forking and snapshotting is allowed
+ * @param {boolean} props.disableToggleSort Whether or not changing sort field/direction is allowed
+ * @param {boolean} props.disableAdjustWeights Whether or not changing metric/dataset weights is allowed
+ * @param {boolean} props.disableForkAndSnapshot Whether or not forking and snapshotting is allowed
  * @param {function} props.getInitialWeights Fn to initialize weights for metrics and datasets
  * @param {function} props.fetchLeaderboardData Fn to load leaderboard data
  * @param {string} props.history navigation API
@@ -113,7 +113,7 @@ const TaskLeaderboardCard = (props) => {
    * @param {string} field
    */
   const toggleSort = (field) => {
-    if (!props.canToggleSort) {
+    if (props.disableToggleSort) {
       return;
     }
 
@@ -151,16 +151,7 @@ const TaskLeaderboardCard = (props) => {
     );
 
     return () => {};
-  }, [
-    page,
-    sort,
-    metrics,
-    datasetWeights,
-    context.api,
-    taskId,
-    pageLimit,
-    props,
-  ]);
+  }, [page, sort, metrics, datasetWeights, context.api, taskId, pageLimit]);
 
   const isEndOfPage = (page + 1) * pageLimit >= total;
 
@@ -264,7 +255,7 @@ const TaskLeaderboardCard = (props) => {
           </Modal>
           {(process.env.REACT_APP_ENABLE_LEADERBOARD_FORK === "true" ||
             context.user.admin) &&
-            props.canForkAndSnapshot && (
+            !props.disableForkAndSnapshot && (
               <OverlayTrigger
                 placement="top"
                 overlay={<Tooltip id="tip-leaderboard-fork">Fork</Tooltip>}
@@ -306,7 +297,7 @@ const TaskLeaderboardCard = (props) => {
               </span>
             </Button>
           </OverlayTrigger>
-          {props.canAdjustWeights && (
+          {!props.disableAdjustWeights && (
             <>
               <OverlayTrigger
                 placement="top"

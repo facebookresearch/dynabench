@@ -1,6 +1,17 @@
 import React from "react";
 import TaskLeaderboardCard from "./TaskLeaderboardCard";
 
+/**
+ *
+ * This is a wrapper around TaskLeaderboardCard.js which allows to extract out the logic for initializing weights
+ * and fetching leaderboard data. A custom task leaderboard can be created simply by passing in custom functions for
+ * initializing weights and fetching data.
+ *
+ * @param getInitialWeights Function that defines how weights for metrics and datasets are to be initialized
+ * @param fetchLeaderboardData Function that defines how the leaderboard data is to be fetched
+ * @returns {function(*)} A functional component that uses the custom function passed to TaskLeaderboardCardWrapper
+ * and renders the TaskLeaderboardCard.
+ */
 const TaskLeaderboardCardWrapper = (
   getInitialWeights,
   fetchLeaderboardData
@@ -13,9 +24,6 @@ const TaskLeaderboardCardWrapper = (
 
     return (
       <TaskLeaderboardCard
-        canToggleSort={true}
-        canAdjustWeights={true}
-        canForkAndSnapshot={true}
         {...props}
         getInitialWeights={(task, api, setWeightsCallback) => {
           getInitialWeights(task, api, setWeightsCallback, extraData);
