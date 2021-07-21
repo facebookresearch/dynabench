@@ -54,7 +54,7 @@ const TaskLeaderboardCard = (props) => {
       setMetrics(result.orderedMetricWeights);
       setDatasetWeights(result.orderedDatasetWeights);
     });
-  }, [context.api, props, task]);
+  }, [task]);
 
   const [sort, setSort] = useState({
     field: "dynascore",
