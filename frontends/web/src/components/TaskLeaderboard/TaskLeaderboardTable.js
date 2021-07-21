@@ -174,17 +174,10 @@ const SortContainer = ({
  *
  * @param {*} model The model data
  * @param {*} metrics Metrics metadata use for labels and weights.
+ * @param {*} datasetWeights Datasets metadata use for labels and weights.
  *
  */
-const OverallModelLeaderboardRow = ({
-  model,
-  ordered_scoring_datasets,
-  metrics,
-  enableWeights,
-  datasetWeights,
-  setDatasetWeight,
-  totalWeight,
-}) => {
+const TaskLeaderboardRow = ({ model, metrics, datasetWeights }) => {
   const [expanded, setExpanded] = useState(false);
 
   const dynascore = parseFloat(model.dynascore).toFixed(2);
@@ -370,11 +363,9 @@ const MetricWeightTableHeader = ({
  * The Overall Model Leader board component
  *
  * @param {Array} props.models the models to show
- * @param {Object} props.task the task for the leader board.
  */
-const OverallModelLeaderBoard = ({
+const TaskLeaderboardTable = ({
   models,
-  task,
   enableWeights,
   metrics,
   setMetricWeight,
@@ -385,11 +376,6 @@ const OverallModelLeaderBoard = ({
   toggleSort,
 }) => {
   const total = metrics?.reduce((sum, metric) => sum + metric.weight, 0);
-
-  const totalDatasetsWeight = datasetWeights?.reduce(
-    (acc, dataset_weight) => acc + dataset_weight.weight,
-    0
-  );
 
   const metricColumnWidth =
     60 / ((metrics?.length ?? 0) === 0 ? 1 : metrics.length);
@@ -491,15 +477,11 @@ const OverallModelLeaderBoard = ({
       </thead>
       <tbody>
         {models?.map((model) => (
-          <OverallModelLeaderboardRow
+          <TaskLeaderboardRow
             model={model}
-            ordered_scoring_datasets={task.datasets}
             metrics={metrics}
             key={`model-${model.model_id}`}
-            enableWeights={enableWeights}
             datasetWeights={datasetWeights}
-            setDatasetWeight={setDatasetWeight}
-            totalWeight={totalDatasetsWeight}
           />
         ))}
       </tbody>
@@ -507,4 +489,4 @@ const OverallModelLeaderBoard = ({
   );
 };
 
-export default OverallModelLeaderBoard;
+export default TaskLeaderboardTable;

@@ -9,7 +9,7 @@ import {
   Modal,
 } from "react-bootstrap";
 import UserContext from "../../containers/UserContext";
-import OverallModelLeaderBoard from "./OverallModelLeaderBoard";
+import TaskLeaderboardTable from "./TaskLeaderboardTable";
 import ForkModal from "./ForkModal";
 
 const SortDirection = {
@@ -26,12 +26,11 @@ const SortDirection = {
  * @param {Object} props React props de-structured.
  * @param {Object} props.task The task
  * @param {number} props.taskId The taskID
- * @param {boolean} props.loadDefaultWeights Whether or not to load default weights for metrics and datasets
  * @param {boolean} props.canToggleSort Whether or not changing sort field/direction is allowed
  * @param {boolean} props.canAdjustWeights Whether or not changing metric/dataset weights is allowed
  * @param {boolean} props.canForkAndSnapshot Whether or not forking and snapshotting is allowed
- * @param {function} props.initializeWeights Fn to initialize/overwrite weights for metrics and datasets
- * @param {function} props.fetchOverallModelLeaderboard Fn to load leaderboard data
+ * @param {function} props.getInitialWeights Fn to initialize weights for metrics and datasets
+ * @param {function} props.fetchLeaderboardData Fn to load leaderboard data
  * @param {string} props.history navigation API
  * @param {string} props.location navigation location
  */
@@ -42,6 +41,7 @@ const TaskLeaderboardCard = (props) => {
   const [enableHelp, setEnableHelp] = useState(false);
   const [enableWeights, setEnableWeights] = useState(false);
   const [enableDatasetWeights, setEnableDatasetWeights] = useState(false);
+
   // Map task metrics to include weights for UI
   const [metrics, setMetrics] = useState();
 
@@ -50,52 +50,11 @@ const TaskLeaderboardCard = (props) => {
 
   // Update weights on task change
   useEffect(() => {
-    const metricIdToDataObj = {};
-    const datasetIdToDataObj = {};
-
-    // Used to load default weights for metrics and datasets.
-    if (props.loadDefaultWeights) {
-      task.ordered_metrics.forEach((m) => {
-        metricIdToDataObj[m.name] = {
-          id: m.name,
-          label: m.name,
-          weight: m.default_weight,
-          unit: m.unit,
-        };
-      });
-
-      task.ordered_scoring_datasets.forEach((ds) => {
-        datasetIdToDataObj[ds.id] = {
-          id: ds.id,
-          weight: ds.default_weight,
-          name: ds.name,
-        };
-      });
-    }
-
-    const setMetricsAndDatasetsWeights = () => {
-      const orderedMetricWeights = task.ordered_metrics.map(
-        (m) => metricIdToDataObj[m.name]
-      );
-      const orderedDatasetWeights = task.ordered_scoring_datasets.map(
-        (ds) => datasetIdToDataObj[ds.id]
-      );
-      setMetrics(orderedMetricWeights);
-      setDatasetWeights(orderedDatasetWeights);
-    };
-
-    if (props.initializeWeights != null) {
-      props.initializeWeights(
-        metricIdToDataObj,
-        datasetIdToDataObj,
-        setMetricsAndDatasetsWeights
-      );
-    } else {
-      setMetricsAndDatasetsWeights();
-    }
-
-    return () => {};
-  }, [task]);
+    props.getInitialWeights(task, context.api, (result) => {
+      setMetrics(result.orderedMetricWeights);
+      setDatasetWeights(result.orderedDatasetWeights);
+    });
+  }, [context.api, props, task]);
 
   const [sort, setSort] = useState({
     field: "dynascore",
@@ -176,21 +135,32 @@ const TaskLeaderboardCard = (props) => {
   // Call api on sort, page and weights changed.
   useEffect(() => {
     setIsLoading(true);
-    props.fetchOverallModelLeaderboard(
+    props.fetchLeaderboardData(
       context.api,
+      taskId,
       pageLimit,
       page,
       sort,
       metrics,
       datasetWeights,
       (result) => {
-        setData(result.data);
-        setTotal(result.count);
+        setData(result ? result.data : []);
+        setTotal(result ? result.count : 0);
         setIsLoading(false);
       }
     );
+
     return () => {};
-  }, [page, sort, metrics, datasetWeights, context.api, taskId, pageLimit]);
+  }, [
+    page,
+    sort,
+    metrics,
+    datasetWeights,
+    context.api,
+    taskId,
+    pageLimit,
+    props,
+  ]);
 
   const isEndOfPage = (page + 1) * pageLimit >= total;
 
@@ -379,9 +349,8 @@ const TaskLeaderboardCard = (props) => {
         </div>
       </Card.Header>
       <Card.Body className="p-0 leaderboard-container">
-        <OverallModelLeaderBoard
+        <TaskLeaderboardTable
           models={data}
-          task={task}
           enableWeights={enableWeights}
           metrics={metrics}
           setMetricWeight={setMetricWeight}
