@@ -47,11 +47,16 @@ def get_delta_metrics(
 def get_task_metrics_meta(task):
     instance_config = instance_property[task.instance]
     perf_metric = task.perf_metric
+    delta_metrics = []
+    if task.delta_metrics is not None:
+        delta_metrics = task.delta_metrics.split("|")
     ordered_metric_field_names = (
-        [perf_metric] + instance_config["aws_metrics"] + task.delta_metrics.split("|")
+        [perf_metric] + instance_config["aws_metrics"] + delta_metrics
     )
     metrics_meta = {
         metric: metrics_meta_config.get(metric, metrics_meta_config[perf_metric])(task)
         for metric in ordered_metric_field_names
     }
+    print(metrics_meta)
+    print(ordered_metric_field_names)
     return metrics_meta, ordered_metric_field_names

@@ -3,13 +3,13 @@
 import hashlib
 import json
 
-import sqlalchemy as db
-from sqlalchemy import JSON, case
-
 import dynalab.tasks.hs
 import dynalab.tasks.nli
 import dynalab.tasks.qa
 import dynalab.tasks.sentiment
+import sqlalchemy as db
+from sqlalchemy import JSON, case
+
 from common.logging import logger
 from models.context import Context
 from models.model import Model
@@ -123,6 +123,8 @@ class ExampleModel(BaseModel):
                 model_output[key] = value
 
         model_wrong = not model_correct_metric(model_output, human_output)
+        example_io_with_context = json.loads(c.context)
+        example_io_with_context.update(example_io)
 
         if uid == "turk" and "model" in metadata and metadata["model"] == "no-model":
             pass  # ignore signature when we don't have a model in the loop with turkers
@@ -152,14 +154,14 @@ class ExampleModel(BaseModel):
                 if model_response_io[
                     "signed"
                 ] != dynalab_task.TaskIO().generate_response_signature(
-                    model_response_io, example_io, model_secret
+                    model_response_io, example_io_with_context, model_secret
                 ):
                     logger.error(
                         "Signature does not match (received %s, expected %s)"
                         % (
                             model_response_io["signed"],
                             dynalab_task.TaskIO().generate_response_signature(
-                                model_response_io, example_io, model_secret
+                                model_response_io, example_io_with_context, model_secret
                             ),
                         )
                     )
@@ -170,7 +172,7 @@ class ExampleModel(BaseModel):
                         % (
                             model_response_io["signed"],
                             dynalab_task.TaskIO().generate_response_signature(
-                                model_response_io, example_io, model_secret
+                                model_response_io, example_io_with_context, model_secret
                             ),
                         )
                     )

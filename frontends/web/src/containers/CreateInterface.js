@@ -169,6 +169,7 @@ class ResponseInfo extends React.Component {
             )
             .map((key, _) => (
               <IO
+                key={key}
                 create={false}
                 io_key={key}
                 example_io={this.props.obj.example_io}
@@ -195,6 +196,7 @@ class ResponseInfo extends React.Component {
                 )
                 .map((key, _) => (
                   <IO
+                    key={key}
                     create={false}
                     io_key={key}
                     example_io={this.props.obj.example_io}
@@ -224,6 +226,7 @@ class ResponseInfo extends React.Component {
                 )
                 .map((key, _) => (
                   <IO
+                    key={key}
                     create={false}
                     io_key={key}
                     example_io={this.props.obj.model_response_io}
@@ -328,13 +331,11 @@ class CreateInterface extends React.Component {
     this.getNewContext = this.getNewContext.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
     this.switchLiveMode = this.switchLiveMode.bind(this);
-    this.setExampleIO = this.setExampleIO.bind(this);
     this.updateRetainInput = this.updateRetainInput.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
     this.chatContainerRef = React.createRef();
     this.bottomAnchorRef = React.createRef();
     this.inputRef = React.createRef();
-    this.setHideByKey = this.setHideByKey.bind(this);
   }
 
   getNewContext() {
@@ -344,6 +345,7 @@ class CreateInterface extends React.Component {
         .then(
           (result) => {
             const randomTargetModel = this.pickModel(this.state.task.round.url);
+            console.log(this.state.task.io_definition);
             const io_definition = JSON.parse(this.state.task.io_definition);
             const context_io = JSON.parse(result.context);
             const example_io = {};
@@ -353,6 +355,7 @@ class CreateInterface extends React.Component {
             for (const key in context_io) {
               example_io[key] = context_io[key];
             }
+            console.log(example_io);
             this.setState({
               randomTargetModel: randomTargetModel,
               context: result,
@@ -472,6 +475,16 @@ class CreateInterface extends React.Component {
                 });
                 return;
               }
+              const example_io_inputs_and_outputs = Object.assign(
+                {},
+                ...Object.keys(this.state.io_definition)
+                  .filter(
+                    (key, _) =>
+                      this.state.io_definition[key].location === "input" ||
+                      this.state.io_definition[key].location === "output"
+                  )
+                  .map((key, _) => ({ [key]: this.state.example_io[key] }))
+              );
               const metadata = { model: this.state.randomTargetModel };
               this.context.api
                 .storeExample(
@@ -479,7 +492,7 @@ class CreateInterface extends React.Component {
                   this.state.task.selected_round,
                   this.context.user.id,
                   this.state.context.id,
-                  this.state.example_io,
+                  example_io_inputs_and_outputs,
                   model_response_result,
                   metadata,
                   null,
@@ -514,6 +527,19 @@ class CreateInterface extends React.Component {
                       this.setState({
                         showBadges: store_example_result.badges,
                       });
+                    }
+                    if (!this.state.retainInput) {
+                      const example_io = JSON.parse(
+                        JSON.stringify(this.state.example_io)
+                      );
+                      for (const key in this.state.io_definition) {
+                        if (
+                          this.state.io_definition[key].location !== "context"
+                        ) {
+                          example_io[key] = null;
+                        }
+                      }
+                      this.setState({ example_io: example_io });
                     }
                   },
                   (error) => {
@@ -605,26 +631,6 @@ class CreateInterface extends React.Component {
         }
       );
     });
-  }
-
-  updateAnswer(value) {
-    // Only keep the last answer annotated
-    if (value.length > 0) {
-      this.setState({
-        answer: [value[value.length - 1]],
-        answerNotSelected: false,
-      });
-    } else {
-      this.setState({ answer: value, answerNotSelected: false });
-    }
-  }
-
-  setExampleIO(example_io) {
-    this.setState({ example_io: example_io });
-  }
-
-  setHideByKey(hide_by_key) {
-    this.setState({ hide_by_key: hide_by_key });
   }
 
   render() {
@@ -779,10 +785,7 @@ class CreateInterface extends React.Component {
               selectedModel={this.state.selectedModel}
             />
             <Card>
-              <Card.Body
-                style={{ height: "auto", width: "auto" }}
-                ref={this.chatContainerRef}
-              >
+              <Card.Body>
                 {this.state.io_definition && this.state.example_io
                   ? Object.keys(this.state.io_definition)
                       .filter(
@@ -791,17 +794,19 @@ class CreateInterface extends React.Component {
                           this.state.io_definition[key].location !==
                             "model_response_info"
                       )
-                      .map((key, _) => (
-                        <Row>
+                      .map((key, index) => (
+                        <Row key={index}>
                           <IO
+                            key={key}
                             create={true}
                             io_key={key}
                             example_io={this.state.example_io}
-                            set_example_io={this.setExampleIO}
+                            set_example_io={(example_io) => {
+                              this.setState({ example_io: example_io });
+                            }}
                             hide_by_key={this.state.hide_by_key}
                             set_hide_by_key={(hide_by_key) => {
                               this.setState({ hide_by_key: hide_by_key });
-                              console.log(this.state.hide_by_key);
                             }}
                             type={this.state.io_definition[key].type}
                             location={this.state.io_definition[key].location}
@@ -962,28 +967,6 @@ class CreateInterface extends React.Component {
               </div>
             </Card>
           </Col>
-          {this.state.task.type === "VQA" && (
-            <KeyboardShortcuts
-              allowedShortcutsInText={["escape"]}
-              mapKeyToCallback={{
-                i: {
-                  callback: (action) => this.manageTextInput(action),
-                  params: "focus",
-                },
-                escape: {
-                  callback: (action) => this.manageTextInput(action),
-                  params: "blur",
-                },
-                d: {
-                  callback: () => {
-                    if (!this.state.refreshDisabled) {
-                      this.getNewContext();
-                    }
-                  },
-                },
-              }}
-            />
-          )}
         </Container>
       </OverlayProvider>
     );

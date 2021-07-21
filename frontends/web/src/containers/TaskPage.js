@@ -688,29 +688,6 @@ class TaskPage extends React.Component {
                         className="btn btn-outline-primary btn-sm btn-help-info"
                         onClick={() => {
                           this.setState({ showTaskOwnerSettingsModal: true });
-                          this.context.api.createTask({
-                            name: "Visual Question Answering Test 2",
-                            desc: "Visual Question Answering is bla bla",
-                            perf_metric: "squad_f1",
-                            aggregation_metric: "dynascore",
-                            io_definition: {
-                              image: {
-                                type: "image_url",
-                                location: "context",
-                                constructor_args: {},
-                              },
-                              question: {
-                                type: "string",
-                                location: "input",
-                                constructor_args: {},
-                              },
-                              answer: {
-                                type: "string",
-                                location: "output",
-                                constructor_args: {},
-                              },
-                            },
-                          });
                         }}
                       >
                         <i className="fa fa-cog"></i>

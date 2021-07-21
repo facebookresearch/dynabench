@@ -3,6 +3,7 @@ import { FormControl, DropdownButton, Dropdown, Badge } from "react-bootstrap";
 import { PieRechart } from "../components/Rechart";
 import { useState } from "react";
 import { TokenAnnotator } from "react-text-annotate";
+import AtomicImage from "./AtomicImage";
 
 const MultipleChoiceIO = ({
   create,
@@ -16,6 +17,10 @@ const MultipleChoiceIO = ({
 }) => {
   const [choice, setChoice] = useState("Select Choice");
   const labels = constructor_args["labels"];
+  // This ensures that the UI resets when the value goes back to null
+  if (example_io[io_key] === null && choice !== "Select Choice") {
+    setChoice("Select Choice");
+  }
   return (
     <div>
       <Badge variant="primary"> {io_key} </Badge>
@@ -65,7 +70,7 @@ const StringIO = ({
         <FormControl
           className="m-3 p-3 rounded-1 thick-border light-gray-bg"
           placeholder={"Enter..."}
-          value={example_io[io_key]}
+          value={example_io[io_key] ? example_io[io_key] : ""}
           onChange={(event) => {
             example_io[io_key] = event.target.value;
             set_example_io(example_io);
@@ -92,6 +97,11 @@ const StringSelectionIO = ({
     hide_by_key.add(constructor_args["reference_key"]);
     set_hide_by_key(hide_by_key);
   }
+  const [selection_info, setSelectionInfo] = useState("");
+  // This ensures that the UI resets when the value goes back to null
+  if (example_io[io_key] === null && selection_info !== "") {
+    setSelectionInfo("");
+  }
   return (
     <div>
       <Badge variant="primary">
@@ -105,10 +115,13 @@ const StringSelectionIO = ({
         <TokenAnnotator
           className="mb-1 p-3 light-gray-bg qa-context"
           tokens={example_io[constructor_args["reference_key"]].split(/\b/)}
-          value={example_io[io_key] ? example_io[io_key] : ""}
+          value={selection_info}
           onChange={(value) => {
-            example_io[io_key] = [value[value.length - 1]];
-            set_example_io(example_io);
+            if (value.length > 0) {
+              setSelectionInfo([value[value.length - 1]]);
+              example_io[io_key] = value[value.length - 1].tokens.join("");
+              set_example_io(example_io);
+            }
           }}
           getSpan={(span) => ({
             ...span,
@@ -135,10 +148,6 @@ const MultipleChoiceProbsIO = ({
     const probs = labels.map((key, _) => example_io[io_key][key]);
     return <PieRechart data={probs} labels={labels} />;
   }
-  console.log(example_io);
-  console.log(io_key);
-  console.log(example_io[io_key]);
-  console.log("WHYYYY");
   return null;
 };
 
@@ -160,6 +169,25 @@ const ConfIO = ({
   return null;
 };
 
+const ImageUrlIO = ({
+  create,
+  example_io,
+  set_example_io,
+  hide_by_key,
+  set_hide_by_key,
+  io_key,
+  location,
+  constructor_args,
+}) => {
+  return (
+    <div>
+      <Badge variant="primary"> {io_key} </Badge>
+      <br />
+      <AtomicImage src={example_io[io_key]} />
+    </div>
+  );
+};
+
 const IO = ({
   create,
   example_io,
@@ -172,6 +200,19 @@ const IO = ({
   constructor_args,
 }) => {
   switch (type) {
+    case "image_url":
+      return (
+        <ImageUrlIO
+          create={create}
+          io_key={io_key}
+          example_io={example_io}
+          set_example_io={set_example_io}
+          hide_by_key={hide_by_key}
+          set_hide_by_key={set_hide_by_key}
+          location={location}
+          constructor_args={constructor_args}
+        />
+      );
     case "string":
       return (
         <StringIO

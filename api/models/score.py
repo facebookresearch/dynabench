@@ -233,7 +233,6 @@ class ScoreModel(BaseModel):
         limit=5,
         offset=0,
     ):
-
         ordered_dids = [
             did_and_weight["did"] for did_and_weight in ordered_dids_with_weight
         ]

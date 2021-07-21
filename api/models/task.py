@@ -146,7 +146,6 @@ class Task(Base):
 
     name = db.Column(db.String(length=255), nullable=False, unique=True)
     io_definition = db.Column(db.Text, nullable=False)
-    perf_metric = db.Column(db.Enum(PerfMetricEnum), nullable=False)
     aggregation_metric = db.Column(
         db.Enum(AggregationMetricEnum),
         default=AggregationMetricEnum.dynascore,
@@ -158,7 +157,7 @@ class Task(Base):
         nullable=False,
     )
 
-    # shortname = db.Column(db.String(length=255), nullable=False, unique=True)
+    shortname = db.Column(db.String(length=255), nullable=False, unique=True)
     # task_code = db.Column(db.String(length=255), unique=True, nullable=False)
 
     # Task type is either 'clf' or 'extract' for now
@@ -191,7 +190,7 @@ class Task(Base):
     instance_count = db.Column(db.Integer, default=1, nullable=False)
     eval_metrics = db.Column(db.Text, default="macro_f1", nullable=False)
     perf_metric = db.Column(db.Text, default="macro_f1", nullable=False)
-    delta_metrics = db.Column(db.Text, default="fairness|robustness", nullable=False)
+    delta_metrics = db.Column(db.Text, default="fairness|robustness", nullable=True)
     aws_region = db.Column(db.Text, default="us-west-1", nullable=False)
     s3_bucket = db.Column(
         db.Text, default="evaluation-us-west-1-096166425824", nullable=False

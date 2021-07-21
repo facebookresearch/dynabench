@@ -311,6 +311,8 @@ def get_dynaboard_info(tid):
     t_dict = tm.getWithRoundAndMetricMetadata(tid)
     ordered_metrics = t_dict["ordered_metrics"]
     perf_metric_field_name = t_dict["perf_metric_field_name"]
+    print(ordered_metrics)
+    print(perf_metric_field_name)
 
     # defaults
     sort_by = "dynascore"
