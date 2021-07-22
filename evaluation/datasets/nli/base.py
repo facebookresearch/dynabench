@@ -18,7 +18,7 @@ class NliBase(BaseDataset):
         source_url=None,
     ):
         super().__init__(
-            task="nli",
+            task="Natural Language Inference",
             name=name,
             round_id=round_id,
             access_type=access_type,

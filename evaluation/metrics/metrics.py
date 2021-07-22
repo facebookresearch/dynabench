@@ -5,10 +5,8 @@ from pathlib import Path
 
 import sacrebleu
 import sentencepiece
-from transformers.data.metrics.squad_metrics import compute_f1
-
-from metrics.task_config import get_task_config_safe
 from sklearn.metrics import f1_score
+from transformers.data.metrics.squad_metrics import compute_f1
 
 
 # perf functions. propose to move to dynalab
@@ -142,22 +140,28 @@ def get_sp_bleu_meta(task=None):
 
 
 # job_metrics, takes raw job and dataset as input
-def get_memory_utilization(job, dataset):
-    mem = (
-        sum(job.aws_metrics["MemoryUtilization"])
-        / 100
-        * get_task_config_safe(dataset.task)["instance_config"]["memory_gb"]
-    )
-    return round(mem, 2)
+def get_memory_utilization_constructor(instance_property):
+    def get_memory_utilization(job, dataset):
+        mem = (
+            sum(job.aws_metrics["MemoryUtilization"])
+            / 100
+            * instance_property[dataset.task.instance_type]["memory_gb"]
+        )
+        return round(mem, 2)
+
+    return get_memory_utilization
 
 
-def get_memory_utilization_meta(task):
-    return {
-        "unit": "GiB",
-        "pretty_name": "Memory",
-        "utility_direction": -1,
-        "offset": get_task_config_safe(task)["instance_config"]["memory_gb"],
-    }
+def get_memory_utilization_meta_constructor(instance_property):
+    def get_memory_utilization_meta(task):
+        return {
+            "unit": "GiB",
+            "pretty_name": "Memory",
+            "utility_direction": -1,
+            "offset": instance_property[task.instance_type]["memory_gb"],
+        }
+
+    return get_memory_utilization_meta
 
 
 def get_examples_per_second(job, dataset):

@@ -6,7 +6,10 @@ from datasets.common import AccessTypeEnum, BaseDataset
 class SentimentBase(BaseDataset):
     def __init__(self, name, round_id, access_type=AccessTypeEnum.scoring):
         super().__init__(
-            task="sentiment", name=name, round_id=round_id, access_type=access_type
+            task="Sentiment Analysis",
+            name=name,
+            round_id=round_id,
+            access_type=access_type,
         )
 
     def pred_field_converter(self, example):

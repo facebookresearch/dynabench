@@ -1,12 +1,10 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 """
-
+Steps to push task specific info into the db
 """
 
 from yoyo import step
-
-from winoground_data_to_sql import sql_statement
 
 
 __depends__ = {"20210630_01_ZczVK-make-task-code-required"}
@@ -143,10 +141,10 @@ steps = [
         }
         }' WHERE shortname in ('FLORES-FULL','FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
-    step("ALTER TABLE tasks ADD COLUMN instance TEXT"),
-    step("UPDATE tasks SET instance='ml.m5.2xlarge'"),
+    step("ALTER TABLE tasks ADD COLUMN instance_type TEXT"),
+    step("UPDATE tasks SET instance_type='ml.m5.2xlarge'"),
     step(
-        """UPDATE tasks SET instance='ml.p2.xlarge' where shortname IN
+        """UPDATE tasks SET instance_type='ml.p2.xlarge' where shortname IN
         ('FLORES-FULL','FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
     step("ALTER TABLE tasks ADD COLUMN instance_count INT(11) DEFAULT 1"),
@@ -220,42 +218,19 @@ steps = [
     step(
         """UPDATE examples SET io=JSON_OBJECT("statement", io, "label", "neutral") WHERE target_pred=2 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
     ),
-    # step("ALTER TABLE tasks DROP shortname"),
-    # step("ALTER TABLE tasks DROP task_code"),
-    # step("ALTER TABLE tasks DROP type"),
-    # step("ALTER TABLE tasks DROP owner_str"),
-    # step("ALTER TABLE tasks DROP longdesc"),
-    # step("ALTER TABLE tasks DROP targets"),
-    # step("ALTER TABLE tasks DROP score_progression"),
-    # step("ALTER TABLE tasks DROP total_verified"),
-    # step("ALTER TABLE tasks DROP total_collected"),
-    # step("ALTER TABLE tasks DROP has_context"),
-    # step("ALTER TABLE tasks DROP has_answer"),
+    step("ALTER TABLE tasks DROP shortname"),
+    step("ALTER TABLE tasks DROP task_code"),
+    step("ALTER TABLE tasks DROP type"),
+    step("ALTER TABLE tasks DROP owner_str"),
+    step("ALTER TABLE tasks DROP longdesc"),
+    step("ALTER TABLE tasks DROP targets"),
+    step("ALTER TABLE tasks DROP score_progression"),
+    step("ALTER TABLE tasks DROP total_verified"),
+    step("ALTER TABLE tasks DROP total_collected"),
+    step("ALTER TABLE tasks DROP has_context"),
+    step("ALTER TABLE tasks DROP has_answer"),
     step("ALTER TABLE examples ADD COLUMN model_response_io TEXT"),
     step("ALTER TABLE examples CHANGE target_model model_endpoint_name TEXT"),
     step("ALTER TABLE examples DROP target_pred"),
     step("ALTER TABLE examples DROP model_preds"),
-    '''
-    step("""INSERT INTO tasks(`name`, `desc`, `io_definition`, `perf_metric`, `aggregation_metric`, `cur_round`, `model_correct_metric`, `instance`, `instance_count`, `eval_metrics`, `delta_metrics`, `aws_region`, `s3_bucket`)
-            VALUES ('Winoground Image Captioning', 'Image Captioning is describing an image with language',
-                    '{
-                    "image": {
-                    "type": "image_url",
-                    "location": "context",
-                    "constructor_args": {}
-                    },
-                    "caption": {
-                    "type": "string",
-                    "location": "context",
-                    "constructor_args": {}
-                    }
-                    }',
-                    'squad_f1', 'dynascore', 0, "exact_match", "ml.m5.2xlarge", 1, "squad_f1", "robustness|fairness", "us-west-1", "evaluation-us-west-1-096166425824")
-            """),
-    step("""
-    INSERT INTO rounds (`tid`, `rid`, `secret`, `url`, `desc`, `longdesc`,
-    `total_fooled`, `total_collected`, `total_time_spent`, `start_datetime`,
-    `end_datetime`, `total_verified_fooled`) VALUES ((SELECT id FROM tasks WHERE name="Winoground Image Captioning"),0,"secret",'https://TODO',NULL,'Winoground',0,0,NULL,NULL,NULL,0)
-    """),
-    ''',
 ]

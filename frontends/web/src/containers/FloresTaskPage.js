@@ -22,16 +22,16 @@ import FloresModelLeaderBoard from "../components/FloresComponents/FloresModelLe
 import FloresTaskDescription from "../components/FloresComponents/FloresTaskDescription";
 import FloresPairsLeaderBoard from "../components/FloresComponents/FloresPairsLeaderboard";
 
-const FLORES_TASK_SHORT_NAMES = [
-  "FLORES-FULL",
-  "FLORES-SMALL1",
-  "FLORES-SMALL2",
+const FLORES_TASK_NAMES = [
+  "Flores MT Evaluation (FULL)",
+  "Flores MT Evaluation (Small task 1)",
+  "Flores MT Evaluation (Small task 2)",
 ];
 
 const TaskNav = ({ location, taskLookup, taskId, setTask }) => {
   return (
     <Nav className="sidebar-wrapper sticky-top">
-      {FLORES_TASK_SHORT_NAMES.map((name, index) => {
+      {FLORES_TASK_NAMES.map((name, index) => {
         const task = taskLookup[name];
         return (
           <Nav.Item key={index}>
@@ -61,7 +61,7 @@ const FloresTaskPage = (props) => {
   const [task, setTask] = useState(null); // Current Task ID
   const [isLoading, setIsLoading] = useState(false);
 
-  let { taskShortName } = useParams();
+  let { taskName } = useParams();
 
   // Call api only once
   useEffect(() => {
@@ -73,23 +73,27 @@ const FloresTaskPage = (props) => {
      */
     const fetchFloresTasks = (api) => {
       setIsLoading(true);
+      console.log("yo");
       api.getSubmittableTasks().then(
         (result) => {
           const floresTasks = result.filter((t) =>
-            FLORES_TASK_SHORT_NAMES.includes(t.shortname)
+            FLORES_TASK_NAMES.includes(t.name)
           );
           const taskLookup = floresTasks.reduce(
-            (map, obj) => ((map[obj.shortname] = obj), map),
+            (map, obj) => ((map[obj.name] = obj), map),
             {}
           );
-
+          console.log("yo");
           setTaskLookup(taskLookup);
-          if (FLORES_TASK_SHORT_NAMES.includes(taskShortName)) {
-            setTask(taskLookup[taskShortName]); // set the task from Arguments
+          console.log("yo");
+          if (FLORES_TASK_NAMES.includes(taskName)) {
+            setTask(taskLookup[taskName]); // set the task from Arguments
           } else {
-            setTask(taskLookup[FLORES_TASK_SHORT_NAMES[0]]); // set default task
+            setTask(taskLookup[FLORES_TASK_NAMES[0]]); // set default task
           }
+          console.log("yo");
           setIsLoading(false);
+          console.log("yo");
         },
         (error) => {
           console.log(error);
@@ -101,7 +105,7 @@ const FloresTaskPage = (props) => {
     fetchFloresTasks(context.api);
 
     return () => {};
-  }, [context.api, taskShortName]);
+  }, [context.api, taskName]);
 
   if (isLoading || !task) {
     return (

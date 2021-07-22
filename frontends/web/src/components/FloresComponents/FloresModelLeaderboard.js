@@ -61,7 +61,6 @@ const ModelLeaderBoard = ({ taskId, history, isTop5 }) => {
 
   useEffect(() => {
     setIsLoading(true);
-
     context.api
       .getDynaboardScores(
         taskId,
@@ -158,7 +157,7 @@ const ModelLeaderBoard = ({ taskId, history, isTop5 }) => {
       <Card className="my-4">
         <Card.Header className="light-gray-bg">
           <h2 className="text-uppercase m-0 text-reset">
-            Model Leaderboard - {task.shortname}
+            Model Leaderboard - {task.name}
           </h2>
         </Card.Header>
         <Card.Body className="p-0 leaderboard-container">

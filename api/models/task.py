@@ -6,6 +6,9 @@ import sys
 import enum
 import sqlalchemy as db
 
+import metrics.metrics as metrics
+from metrics.instance_property import instance_property
+
 from .base import Base, BaseModel
 from .dataset import AccessTypeEnum, DatasetModel
 from .round import Round
@@ -13,7 +16,6 @@ from .user import User
 
 
 sys.path.append("../evaluation")  # noqa
-import metrics  # isort:skip
 
 
 class ModelCorrectMetricEnum(enum.Enum):
@@ -157,36 +159,18 @@ class Task(Base):
         nullable=False,
     )
 
-    shortname = db.Column(db.String(length=255), nullable=False, unique=True)
-    # task_code = db.Column(db.String(length=255), unique=True, nullable=False)
-
-    # Task type is either 'clf' or 'extract' for now
-    # type = db.Column(db.String(length=255), nullable=False, default="clf")
-
-    # owner_str = db.Column(db.Text)
-
     desc = db.Column(db.String(length=255))
-    # longdesc = db.Column(db.Text)
-    # targets = db.Column(db.Text)  # ordered list of target labels
-    # ordered list of max scores per round
-    # score_progression = db.Column(db.Text)
 
-    # total_verified = db.Column(db.Integer, default=0)
-    # total_collected = db.Column(db.Integer, default=0)
     last_updated = db.Column(db.DateTime)
 
-    # cur_round = db.Column(db.Integer, db.ForeignKey("rounds.id"), nullable=False)
     cur_round = db.Column(db.Integer, nullable=False)
 
     hidden = db.Column(db.Boolean, default=False)
     submitable = db.Column(db.Boolean, default=False)
 
-    # has_context = db.Column(db.Boolean, default=True)
-    # has_answer = db.Column(db.Boolean, default=False)
-
     settings_json = db.Column(db.Text)
 
-    instance = db.Column(db.Text, default="ml.m5.2xlarge", nullable=False)
+    instance_type = db.Column(db.Text, default="ml.m5.2xlarge", nullable=False)
     instance_count = db.Column(db.Integer, default=1, nullable=False)
     eval_metrics = db.Column(db.Text, default="macro_f1", nullable=False)
     perf_metric = db.Column(db.Text, default="macro_f1", nullable=False)
@@ -233,9 +217,9 @@ class TaskModel(BaseModel):
     def __init__(self):
         super().__init__(Task)
 
-    def getByShortName(self, shortname):
+    def getByName(self, name):
         try:
-            return self.dbs.query(Task).filter(Task.shortname == shortname).one()
+            return self.dbs.query(Task).filter(Task.name == name).one()
         except db.orm.exc.NoResultFound:
             return False
 
@@ -313,7 +297,7 @@ class TaskModel(BaseModel):
             t_dict["ordered_scoring_datasets"] = scoring_dataset_list
             t_dict["ordered_datasets"] = dataset_list
             t_dict["perf_metric_field_name"] = t_dict["perf_metric"]
-            metrics_meta, ordered_field_names = metrics.get_task_metrics_meta(t)
+            metrics_meta, ordered_field_names = get_task_metrics_meta(t)
             ordered_metrics = [
                 dict(
                     {
@@ -334,8 +318,86 @@ class TaskModel(BaseModel):
         except db.orm.exc.NoResultFound:
             return False
 
-    def getByTaskCode(self, task_code):
-        try:
-            return self.dbs.query(Task).filter(Task.task_code == task_code).one()
-        except db.orm.exc.NoResultFound:
-            return False
+
+# all eval_metrics takes predictions and targets as input, and output a metric number
+eval_metrics_config = {
+    "accuracy": metrics.get_accuracy,
+    "macro_f1": metrics.get_macro_f1,
+    "squad_f1": metrics.get_squad_f1,
+    "bleu": metrics.get_bleu,
+    "sp_bleu": metrics.get_sp_bleu,
+}
+
+delta_metrics_config = {
+    "fairness": metrics.get_unperturbed_percent,
+    "robustness": metrics.get_unperturbed_percent,
+}
+
+job_metrics_config = {
+    "memory_utilization": metrics.get_memory_utilization_constructor(instance_property),
+    "examples_per_second": metrics.get_examples_per_second,
+}
+
+metrics_meta_config = {
+    "accuracy": metrics.get_accuracy_meta,
+    "macro_f1": metrics.get_macro_f1_meta,
+    "squad_f1": metrics.get_squad_f1_meta,
+    "bleu": metrics.get_bleu_meta,
+    "sp_bleu": metrics.get_sp_bleu_meta,
+    "memory_utilization": metrics.get_memory_utilization_meta_constructor(
+        instance_property
+    ),
+    "examples_per_second": metrics.get_examples_per_second_meta,
+    "fairness": metrics.get_fairness_meta,
+    "robustness": metrics.get_robustness_meta,
+}
+
+
+def get_eval_metrics(task: str, predictions: list, targets: list) -> tuple:
+    task = TaskModel().getByName(task)
+    eval_metrics = task.eval_metrics.split("|")
+    eval_metrics_dict = {
+        key: eval_metrics_config[key](predictions, targets) for key in eval_metrics
+    }
+    return eval_metrics_dict[task.perf_metric], eval_metrics_dict
+
+
+def get_job_metrics(job, dataset) -> dict:
+    if not job.aws_metrics:
+        return {}
+    instance_config = instance_property[dataset.task.instance_type]
+    job_metrics = instance_config["aws_metrics"]
+    return {key: job_metrics_config[key](job, dataset) for key in job_metrics}
+
+
+def get_delta_metrics(
+    task: str, predictions: list, targets: list, perturb_prefix: str
+) -> dict:
+    """
+    predictions: a list of list of predictions
+    targets: a list of labels
+    """
+    task = TaskModel().getByName(task)
+    perf_metric = eval_metrics_config[task.perf_metric]
+    delta_metrics_dict = {
+        perturb_prefix: delta_metrics_config[perturb_prefix](
+            predictions, targets, perf_metric
+        )
+    }
+    return delta_metrics_dict
+
+
+def get_task_metrics_meta(task):
+    instance_config = instance_property[task.instance_type]
+    perf_metric = task.perf_metric
+    delta_metrics = []
+    if task.delta_metrics is not None:
+        delta_metrics = task.delta_metrics.split("|")
+    ordered_metric_field_names = (
+        [perf_metric] + instance_config["aws_metrics"] + delta_metrics
+    )
+    metrics_meta = {
+        metric: metrics_meta_config.get(metric, metrics_meta_config[perf_metric])(task)
+        for metric in ordered_metric_field_names
+    }
+    return metrics_meta, ordered_metric_field_names
