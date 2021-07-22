@@ -179,7 +179,9 @@ class TransformerGeneratorHandler(BaseHandler):
                 # De-duplicate
                 seen = set()
                 seen_add = seen.add
-                clean_output = [q for q in clean_output if q not in seen or seen_add(q)]
+                clean_output = [
+                    q for q in clean_output if not (q in seen or seen_add(q))
+                ]
 
             logging.info(f"Example Output: {clean_output}")
 
