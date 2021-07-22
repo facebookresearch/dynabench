@@ -1,5 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 import logging
+import math
 import pickle
 import time
 from datetime import datetime
@@ -7,6 +8,7 @@ from datetime import datetime
 import boto3
 import botocore
 from dateutil.tz import tzlocal
+
 from metrics import get_task_config_safe
 from models.model import ModelModel
 from utils.helpers import (
@@ -216,18 +218,23 @@ class JobScheduler:
                             Dimensions=[{"Name": "Host", "Value": host}],
                         )
                         if metrics["Metrics"]:
+                            round_start = round_start_dt(
+                                job.status["TransformStartTime"]
+                            )
+                            round_end = round_end_dt(job.status["TransformEndTime"])
+                            # Make sure to not ask more than 1440 points (API limit)
+                            period = (round_end - round_start).total_seconds() / 1440
+                            # Period must be a multiple of 60
+                            period = int(math.ceil(period / 60) * 60)
+                            period = max(60, period)
                             for m in metrics["Metrics"]:
                                 r = cloudwatch.get_metric_statistics(
                                     Namespace=m["Namespace"],
                                     MetricName=m["MetricName"],
                                     Dimensions=m["Dimensions"],
-                                    StartTime=round_start_dt(
-                                        job.status["TransformStartTime"]
-                                    ),
-                                    EndTime=round_end_dt(
-                                        job.status["TransformEndTime"]
-                                    ),
-                                    Period=60,
+                                    StartTime=round_start,
+                                    EndTime=round_end,
+                                    Period=period,
                                     Statistics=["Average"],
                                 )
                                 if r["Datapoints"]:
