@@ -80,7 +80,7 @@ class Cache:
         )
         answer_key = self.normalize(answer)
         if answer == "":
-            answer_key = random.choice(self.cache.get(context_key, {}).keys())
+            answer_key = random.choice(list(self.cache.get(context_key, {}).keys()))
         questions = self.cache.get(context_key, {}).get(answer_key, [])
 
         if filter_mode == "adversarial":

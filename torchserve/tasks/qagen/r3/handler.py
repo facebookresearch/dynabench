@@ -85,7 +85,7 @@ class TransformerGeneratorHandler(BaseHandler):
         if not example:
             raise AttributeError("No body found in the request")
         # Checks if the request contains the necessary attributes
-        attribute_list = ["answer", "context"]
+        attribute_list = ["context"]
         check_fields(example, attribute_list)
 
         context = example["context"].strip()
@@ -152,6 +152,7 @@ class TransformerGeneratorHandler(BaseHandler):
         if cache_result:
             result["questions"] = [cache_result["q"]]
             result["question_cache_id"] = cache_result["q_index"]
+            result["question_metadata"] = cache_result
             result["question_type"] = "cache"
             # Introduce a random delay
             time.sleep(0.2 + random.random())
@@ -175,10 +176,16 @@ class TransformerGeneratorHandler(BaseHandler):
                 clean_output = clean_special_tokens(output)
             else:
                 clean_output = [clean_special_tokens(q) for q in output]
+                # De-duplicate
+                seen = set()
+                seen_add = seen.add
+                clean_output = [q for q in clean_output if q not in seen or seen_add(q)]
+
             logging.info(f"Example Output: {clean_output}")
 
             result["questions"] = clean_output
             result["question_cache_id"] = -1
+            result["question_metadata"] = None
             result["question_type"] = "generated"
 
         return result

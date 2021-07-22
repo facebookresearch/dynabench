@@ -22,10 +22,11 @@ class MaxQATaskPreview extends React.Component {
   render() {
     return (
       <>
-        <h1>Generate Questions for Reading Comprehension</h1>
+        <h1>Ask Questions and Select Answers for Reading Comprehension</h1>
         <p>
-          In this task, you will be asked to generate Question-Answer pairs for
-          reading comprehension tasks.
+          In this task, you will be tasked with asking questions about a passage
+          and selecting the correct answer from the passage for a Reading
+          Comprehension task.
         </p>
       </>
     );
@@ -302,9 +303,8 @@ class TaskOnboardingCompletedInstructions extends React.Component {
           </li>
         </ul>
         <p>
-          We appreciate your work and are eagerly looking forward to seeing how
-          you manage to <b>beat the AI</b> by asking questions that it cannot
-          answer.
+          We appreciate your work and are eagerly looking forward to reviewing
+          it!
         </p>
       </>
     );
@@ -312,6 +312,10 @@ class TaskOnboardingCompletedInstructions extends React.Component {
 }
 
 class TaskModelInstructions extends React.Component {
+  constructor(props) {
+    super(props);
+    this.experiment_mode = props.experiment_mode;
+  }
   render() {
     return (
       <>
@@ -320,23 +324,24 @@ class TaskModelInstructions extends React.Component {
           style={{ backgroundColor: "#f5f5f5", borderRadius: "0 0 4px 4px" }}
         >
           <div className="text-left" style={{ marginBottom: "16px" }}>
-            <h4>Can you Beat the AI?</h4>
+            <h4>Ask Questions and select the Answer from the Passage</h4>
             <p>
               You will be given a <em>passage</em> from Wikipedia. You will need
-              to ask hard <em>questions</em> and highlight the correct{" "}
+              to ask <em>questions</em> and highlight the correct{" "}
               <em>answers</em> from the passage.
             </p>
-            <p>
-              An AI will then try to answer your question. If it answers
-              correctly, the AI wins, you lose - and you have to try again. If
-              it gets the answer wrong, you've <strong>beaten the AI</strong>{" "}
-              and will receive a bonus for each question that the AI{" "}
-              <strong>
-                fails to answer correctly and another human validator manages to
-                answer correctly
-              </strong>
-              .
-            </p>
+            {this.experiment_mode["adversary"] === "none" ? null : (
+              <p>
+                An AI will then try to answer your question. If it answers
+                correctly, the AI wins, you lose - and you have to try again. If
+                it gets the answer wrong, you've <strong>beaten the AI</strong>{" "}
+                and will receive a bonus for each question that the AI{" "}
+                <strong>
+                  fails to answer correctly and another human validator manages
+                  to answer correctly
+                </strong>
+              </p>
+            )}
 
             <strong>You MUST ensure that:</strong>
             <ol>
@@ -355,8 +360,8 @@ class TaskModelInstructions extends React.Component {
                 <b>the shortest span which answers the question is selected</b>
               </li>
               <li key="4">
-                <b>DO NOT</b> ask questions about text structure such as "What
-                is the title?"
+                <b>DO NOT</b> ask questions about passage structure such as
+                "What is the title?"
               </li>
               <li key="5">
                 <b>DO NOT</b> use the same answer for more than two questions.
@@ -383,19 +388,23 @@ class TaskModelInstructions extends React.Component {
             <br />
             <b>Answer:</b>{" "}
             <em>
-              [select the answer from the text as shown above] = Thomas Edison
+              [select the answer from the passage as shown above] = Thomas
+              Edison
             </em>
+            {this.experiment_mode["adversary"] === "none" ? null : (
+              <>
+                <b>AI Answer:</b> <em>George Westinghouse</em>
+                <br />
+                <b>Outcome:</b> <em>YOU WIN!</em>
+              </>
+            )}
             <br />
-            <b>AI Answer:</b> <em>George Westinghouse</em>
-            <br />
-            <b>Outcome:</b> <em>YOU WIN!</em>
           </p>
 
           <p className="block-text">
-            Select the answer from the paragraph by highlighting{" "}
-            <b>the shortest span of the paragraph that answers the question.</b>
+            Select the answer from the passage by highlighting{" "}
+            <b>the shortest span of the passage that answers the question.</b>
           </p>
-
           <hr />
 
           <strong>
@@ -512,9 +521,66 @@ class TaskModelInstructions extends React.Component {
 class ExperimentInstructions extends React.Component {
   constructor(props) {
     super(props);
-    this.experiment_mode_id = props.experiment_mode_id;
+    this.experiment_mode = props.experiment_mode;
     this.state = { showInstructions: false };
     this.showInstructions = this.showInstructions.bind(this);
+
+    if (this.experiment_mode["answerSelect"] === "none") {
+      if (this.experiment_mode["adversary"] === "none") {
+        this.task_instructions = (
+          <>
+            Read the passage below carefully, then ask a question and select the
+            correct answer from within the passage by highlighting it, then
+            click the <i>"Submit Question"</i> button.
+          </>
+        );
+      } else {
+        if (this.experiment_mode["generator"] === "none") {
+          this.task_instructions = (
+            <>
+              Read the passage below carefully, then ask a question and select
+              the correct answer from within the passage by highlighting it.
+              When you click the <i>"Submit Question"</i> button, an AI will try
+              to answer your question. Your challenge is to try to ask questions
+              that the AI fails to answer correctly, but another human would
+              answer correctly.
+            </>
+          );
+        } else {
+          this.task_instructions = (
+            <>
+              Read the passage below carefully, then select a span of text from
+              the passage that you think could be a good answer, and click the{" "}
+              <b>
+                <i>"Generate Question"</i>
+              </b>{" "}
+              button. A{" "}
+              <b>generative AI assistant will write a question to help you</b>.
+              The task is to modify the question and/or answer to ensure that
+              they are correct. You can also modify the question to make it more
+              difficult for the AI to answer. If you don't like the generated
+              example, just click <i>"Generate Question"</i> again to get a new
+              suggestion. When you click the <i>"Submit Question"</i> button,
+              the question-answering AI will provide an answer. Your challenge
+              is to generate questions that this AI fails to answer correctly,
+              but that another human would answer correctly.
+            </>
+          );
+        }
+      }
+    } else {
+      this.task_instructions = (
+        <>
+          You will be provided with a passage, and a question and answer about
+          the passage. The task is to modify the question and/or answer to
+          ensure that they are correct. You can also modify the question to make
+          it more difficult for the AI to answer. When you click "Submit
+          Question", the question-answering AI will provide an answer. Your
+          challenge is to generate questions that this AI fails to answer
+          correctly, but that another human would answer correctly.
+        </>
+      );
+    }
   }
   showInstructions() {
     this.setState({ showInstructions: !this.state.showInstructions });
@@ -540,23 +606,38 @@ class ExperimentInstructions extends React.Component {
         </Row>
         {this.state.showInstructions && (
           <Row>
-            <TaskModelInstructions />
+            <TaskModelInstructions experiment_mode={this.experiment_mode} />
           </Row>
         )}
         <Row>
           <h4 className="mt-3">
-            Can you ask Questions that fool the AI into giving the wrong answer?
+            {this.experiment_mode["adversary"] === "none" ? (
+              <>Ask Questions and select the Answer from the Passage</>
+            ) : (
+              <>
+                Can you ask Questions that fool the AI into giving the wrong
+                answer?
+              </>
+            )}
           </h4>
-          <small className="mb-3">
-            <b>Note:</b> you will earn an <b>additional $0.50 BONUS</b> for
-            every question that <b>beats the AI</b>, abides by the requirements
-            specified in the instructions above, and is successfully validated
-            by other human annotators. This means that you could potentially
-            earn <b>an additional $2.50 per HIT!</b> Kindly note that validation
-            is a manual process meaning that bonuses will not be paid out
-            immediately, and we thank you in advance for your understanding and
-            patience with this.
-          </small>
+
+          <p>
+            {this.task_instructions} Kindly refer to{" "}
+            <a href="#" onClick={this.showInstructions}>
+              the instructions
+            </a>
+            .
+          </p>
+
+          {this.experiment_mode["adversary"] === "none" ? null : (
+            <small className="mb-3">
+              <b>Note:</b> you will earn an <b>additional $0.50 BONUS*</b> for
+              every question that <b>beats the AI</b>, abides by the
+              requirements specified in the instructions above, and is
+              successfully validated by other human annotators. This means that
+              you could potentially earn <b>an additional $2.50 per HIT!</b>
+            </small>
+          )}
         </Row>
       </Container>
     );
@@ -567,9 +648,10 @@ class MaxQATaskMain extends React.Component {
   constructor(props) {
     super(props);
     this.api = props.api;
-    this.model_names = ["electra-synqa"];
+    this.model_names = ["none", "electra-synqa"];
     this.model_urls = [
-      "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=ts1624132576-electra-synqa",
+      "https://obws766r82.execute-api.us-west-1.amazonaws.com/predict?model=ts1626399549-electra-synqa",
+      "https://obws766r82.execute-api.us-west-1.amazonaws.com/predict?model=ts1626399549-electra-synqa",
     ];
     this.generator_names = [
       "qgen_dcombined",
@@ -577,10 +659,108 @@ class MaxQATaskMain extends React.Component {
       "qgen_dcombined_plus_squad_10k",
     ];
     this.generator_urls = [
-      "http://0.0.0.0:8097/cce63f4d8238fc8061a2e3a268afe1c14c0e2135580bc1680aec62dc20f68e81",
-      "http://0.0.0.0:8097/cce63f4d8238fc8061a2e3a268afe1c14c0e2135580bc1680aec62dc20f68e81",
-      "http://0.0.0.0:8097/cce63f4d8238fc8061a2e3a268afe1c14c0e2135580bc1680aec62dc20f68e81",
+      "https://obws766r82.execute-api.us-west-1.amazonaws.com/predict?model=qagen-r3-1",
+      "https://obws766r82.execute-api.us-west-1.amazonaws.com/predict?model=qagen-r3-2",
+      "https://obws766r82.execute-api.us-west-1.amazonaws.com/predict?model=qagen-r3-3",
       // "http://0.0.0.0:8097/cce63f4d8238fc8061a2e3a268afe1c14c0e2135580bc1680aec62dc20f68e81",
+    ];
+    this.experiment_modes = [
+      // 0: no adversary and no generator (standard SQuAD)
+      {
+        id: 0,
+        adversary: "none",
+        generator: "none",
+        filterMode: "",
+        answerSelect: "none",
+      },
+      // 1: no generator (standard adversarial annoation)
+      {
+        id: 1,
+        adversary: "electra-synqa",
+        generator: "none",
+        filterMode: "",
+        answerSelect: "none",
+      },
+      // 2: squad generator + no filter
+      {
+        id: 2,
+        adversary: "electra-synqa",
+        generator: "qgen_squad1",
+        filterMode: "",
+        answerSelect: "none",
+      },
+      // 3: adversarial generator + no filter
+      {
+        id: 3,
+        adversary: "electra-synqa",
+        generator: "qgen_dcombined",
+        filterMode: "",
+        answerSelect: "none",
+      },
+      // 4: combined generator + no filter
+      {
+        id: 4,
+        adversary: "electra-synqa",
+        generator: "qgen_dcombined_plus_squad_10k",
+        filterMode: "",
+        answerSelect: "none",
+      },
+      // 5: squad generator + adversarial sampler
+      {
+        id: 5,
+        adversary: "electra-synqa",
+        generator: "qgen_squad1",
+        filterMode: "adversarial",
+        answerSelect: "none",
+      },
+      // 6: adversarial generator + adversarial sampler
+      {
+        id: 6,
+        adversary: "electra-synqa",
+        generator: "qgen_dcombined",
+        filterMode: "adversarial",
+        answerSelect: "none",
+      },
+      // 7: combined generator + adversarial sampler
+      {
+        id: 7,
+        adversary: "electra-synqa",
+        generator: "qgen_dcombined_plus_squad_10k",
+        filterMode: "adversarial",
+        answerSelect: "none",
+      },
+      // 8: squad generator + uncertainty sampler
+      {
+        id: 8,
+        adversary: "electra-synqa",
+        generator: "qgen_squad1",
+        filterMode: "uncertain",
+        answerSelect: "none",
+      },
+      // 9: adversarial generator + uncertainty sampler
+      {
+        id: 9,
+        adversary: "electra-synqa",
+        generator: "qgen_dcombined",
+        filterMode: "uncertain",
+        answerSelect: "none",
+      },
+      // 10: combined generator + uncertainty sampler
+      {
+        id: 10,
+        dversary: "electra-synqa",
+        generator: "qgen_dcombined_plus_squad_10k",
+        filterMode: "uncertain",
+        answerSelect: "none",
+      },
+      // 11: validation only (generate answer and question)
+      {
+        id: 11,
+        adversary: "electra-synqa",
+        generator: "qgen_dcombined_plus_squad_10k",
+        filterMode: "",
+        answerSelect: "enabled",
+      },
     ];
   }
 
@@ -592,38 +772,58 @@ class MaxQATaskMain extends React.Component {
       .map((x) => x.charCodeAt(0))
       .reduce((a, b) => a + b);
 
-    var num_experiments = 9;
+    var num_experiments = this.experiment_modes.length; // 12
     var experiment_mode_id = mephistoIdCode % num_experiments;
+    // ======================================================================================
+    var experiment_mode_id = 11; // TODO: DISABLE BEFORE LAUNCH
+    // ======================================================================================
 
-    var model_id = 0;
-    var model_name = this.model_names[model_id];
-    var model_url = this.model_urls[model_id];
-
-    var generator_id = 0;
-    var generator_name = this.generator_names[generator_id];
-    var generator_url = this.generator_urls[generator_id];
-
-    var filter_mode = "adversarial";
-
+    var experiment_mode = this.experiment_modes[experiment_mode_id];
     console.log(
-      mephistoIdCode,
-      model_id,
-      model_name,
-      generator_id,
-      generator_name,
-      filter_mode
+      "You are running experiment mode ID: " +
+        experiment_mode_id +
+        " of " +
+        num_experiments
+    );
+    console.log(experiment_mode);
+
+    var model_name = experiment_mode["adversary"];
+    var model_id = this.model_names.indexOf(model_name);
+    if (model_id >= 0) {
+      var model_url = this.model_urls[model_id];
+    } else {
+      var model_url = "";
+    }
+    console.log(
+      "QA model: " + model_name + " (" + model_id + ") at URL " + model_url
+    );
+
+    var generator_name = experiment_mode["generator"];
+    var generator_id = this.generator_names.indexOf(generator_name);
+    if (generator_id >= 0) {
+      var generator_url = this.generator_urls[generator_id];
+    } else {
+      var generator_url = "";
+    }
+    console.log(
+      "Generator: " +
+        generator_name +
+        " (" +
+        generator_id +
+        ") at URL " +
+        generator_url
     );
 
     return (
       <>
-        <ExperimentInstructions experiment_mode_id={experiment_mode_id} />
+        <ExperimentInstructions experiment_mode={experiment_mode} />
         <CreateInterface
           api={this.api}
           model_name={model_name}
           model_url={model_url}
           generator_name={generator_name}
           generator_url={generator_url}
-          filter_mode={filter_mode}
+          experiment_mode={experiment_mode}
           {...this.props}
         />
       </>

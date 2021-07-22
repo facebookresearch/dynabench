@@ -114,7 +114,7 @@ class Cache:
         )
         answer_key = self.normalize(answer)
         if answer == "":
-            answer_key = random.choice(self.cache.get(context_key, {}).keys())
+            answer_key = random.choice(list(self.cache.get(context_key, {}).keys()))
         questions = self.cache.get(context_key, {}).get(answer_key, [])
         logging.info(
             f"Getting from cache with answer ({answer}), min_q_index ({min_q_index}) \
@@ -191,7 +191,7 @@ async def handle_submit_post(request):
 
     post_data = await request.json()
     response = {}
-    required_fields = ["context", "answer"]
+    required_fields = ["context"]  # no more "answer" due to answer generaiton
     if any(
         field not in post_data or len(post_data[field]) <= 0
         for field in required_fields
@@ -238,6 +238,7 @@ async def handle_submit_post(request):
         if cache_result:
             response["questions"] = [cache_result["q"]]
             response["question_cache_id"] = cache_result["q_index"]
+            response["question_metadata"] = cache_result
             response["question_type"] = "cache"
             # Introduce a random delay
             time.sleep(0.2 + random.random())
@@ -265,6 +266,7 @@ async def handle_submit_post(request):
 
             response["questions"] = clean_output
             response["question_cache_id"] = -1
+            response["question_metadata"] = None
             response["question_type"] = "generated"
 
     except Exception as e:

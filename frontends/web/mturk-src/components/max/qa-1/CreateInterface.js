@@ -24,7 +24,7 @@ import {
 import { FaInfoCircle, FaThumbsUp, FaThumbsDown } from "react-icons/fa";
 
 // import UserContext from './UserContext';
-import { TokenAnnotator, TextAnnotator } from "react-text-annotate";
+import { TokenAnnotator } from "react-text-annotate";
 import IdleTimer from "react-idle-timer";
 
 import "./CreateInterface.css";
@@ -37,6 +37,7 @@ class ContextInfo extends React.Component {
     return this.props.taskType == "extract" ? (
       <>
         <TokenAnnotator
+          id="tokenAnnotator"
           className="mb-1 p-3 light-gray-bg qa-context"
           tokens={this.props.text.split(/\b|(?<=[\s\(\)])|(?=[\s\(\)])/)}
           value={this.props.answer}
@@ -48,8 +49,8 @@ class ContextInfo extends React.Component {
         />
         <p>
           <small>
-            <strong>Your goal:</strong> enter a question and select an answer in
-            the passage that the AI answers incorrectly.
+            <strong>Your goal:</strong> enter a question below and select an
+            answer from the passage above.
           </small>
         </p>
       </>
@@ -76,7 +77,7 @@ class CreateInterface extends React.Component {
     this.model_url = props.model_url;
     this.generator_name = props.generator_name;
     this.generator_url = props.generator_url;
-    this.filter_mode = props.filter_mode;
+    this.experiment_mode = props.experiment_mode;
     this.state = {
       answer: [],
       taskId: props.taskConfig.task_id,
@@ -87,6 +88,7 @@ class CreateInterface extends React.Component {
       modelPredStr: "",
       hypothesis: "",
       content: [],
+      generatedAnswer: null,
       submitDisabled: true,
       generateDisabled: true,
       refreshDisabled: true,
@@ -137,12 +139,19 @@ class CreateInterface extends React.Component {
                   timestamp: new Date().valueOf(),
                   answer: "",
                   question: "",
-                  questionType: "",
                   questionCacheId: null,
+                  questionMetadata: null,
+                  questionType: "",
                   activityType: "Context loaded",
                 },
               ],
             });
+          })
+          .then(() => {
+            // If answerSelect mode, generate
+            if (this.experiment_mode["answerSelect"] !== "none") {
+              this.handleGeneratorResponse();
+            }
           })
           .catch((error) => {
             console.log(error);
@@ -178,10 +187,13 @@ class CreateInterface extends React.Component {
     // MAXEDIT: to remove
     console.log(this.state.exampleHistory);
 
-    if (this.state.numQuestionsGenerated <= 0) {
+    if (
+      this.experiment_mode["generator"] !== "none" &&
+      this.state.numQuestionsGenerated <= 0
+    ) {
       if (
         !window.confirm(
-          "The question generator is there to assist you. Are you sure you want to continue without any question suggestions?"
+          'The question generator is there to assist you. Are you sure you want to continue without any question suggestions? If you would like a suggestion, click the "Generate Question" button.'
         )
       ) {
         return;
@@ -209,7 +221,8 @@ class CreateInterface extends React.Component {
         }
         if (
           this.state.task.type == "extract" &&
-          this.state.answer.length == 0
+          this.state.answer.length == 0 &&
+          !this.state.generatedAnswer
         ) {
           this.setState({
             progressSubmitting: false,
@@ -221,14 +234,18 @@ class CreateInterface extends React.Component {
           return;
         }
         if (this.state.task.type == "extract") {
-          var answer_text = "";
-          if (this.state.answer.length > 0) {
-            var last_answer = this.state.answer[this.state.answer.length - 1];
-            var answer_text = last_answer.tokens.join(""); // NOTE: no spaces required as tokenising by word boundaries
-            // Update the target with the answer text since this is defined by the annotator in QA (unlike NLI)
-            this.setState({
-              target: answer_text,
-            });
+          if (this.state.generatedAnswer) {
+            var answer_text = this.state.generatedAnswer;
+          } else {
+            var answer_text = "";
+            if (this.state.answer.length > 0) {
+              var last_answer = this.state.answer[this.state.answer.length - 1];
+              var answer_text = last_answer.tokens.join(""); // NOTE: no spaces required as tokenising by word boundaries
+              // Update the target with the answer text since this is defined by the annotator in QA (unlike NLI)
+              this.setState({
+                target: answer_text,
+              });
+            }
           }
         } else {
           var answer_text = null;
@@ -236,6 +253,7 @@ class CreateInterface extends React.Component {
         let modelInputs = {
           context: this.state.context.context,
           hypothesis: this.state.hypothesis,
+          question: this.state.hypothesis,
           answer: answer_text,
           insight: false,
         };
@@ -253,10 +271,11 @@ class CreateInterface extends React.Component {
                 this.state.target;
             } else {
               var modelPredIdx = null;
-              var modelPredStr = result.text;
-              var modelFooled = !result.model_is_correct;
+              var modelPredStr = result.answer;
+              var modelFooled = result.eval_f1 < 0.4;
+              var exactMatch = result.eval_exact >= 1;
               // TODO: Handle this more elegantly:
-              result.prob = [result.prob, 1 - result.prob];
+              result.prob = [result.conf, 1 - result.conf];
               this.state.task.targets = ["confidence", "uncertainty"];
             }
             console.log("Got result from model:");
@@ -275,19 +294,24 @@ class CreateInterface extends React.Component {
                     fooled: modelFooled,
                     text: this.state.hypothesis,
                     retracted: false,
+                    exactMatch: exactMatch,
                     validated: null,
                     response: result,
                   },
                 ],
               },
               function () {
-                console.log("State set");
-                if (!modelFooled) {
+                console.log("Setting state");
+                if (
+                  this.experiment_mode["adversary"] !== "none" &&
+                  exactMatch
+                ) {
                   console.log("Storing example");
                   this.storeExample();
                 } else {
                   this.setState({
                     pendingExampleValidation: true,
+                    generatedAnswer: null,
                   });
                 }
               }
@@ -310,6 +334,15 @@ class CreateInterface extends React.Component {
       },
       function () {
         let last_example = this.state.content[this.state.content.length - 1];
+        const old_model_version_response = {
+          id: last_example.response.id,
+          text: last_example.response.answer,
+          prob: last_example.response.conf,
+          model_is_correct: !last_example.response.fooled,
+          eval_f1: last_example.response.eval_f1,
+          eval_exact: last_example.response.eval_exact,
+          signed: last_example.response.signed,
+        };
         const metadata = {
           annotator_id: this.props.providerWorkerId,
           agentId: this.props.agentId,
@@ -324,14 +357,11 @@ class CreateInterface extends React.Component {
           model_url: this.model_url,
           generator_name: this.generator_name,
           generator_url: this.generator_url,
-          filter_mode: this.filter_mode,
+          experiment_mode: this.experiment_mode,
           current_tries: this.state.tries,
           exampleHistory: JSON.stringify(this.state.exampleHistory),
           modelInputs: last_example.modelInputs,
-          fullresponse:
-            this.state.task.type == "extract"
-              ? JSON.stringify(last_example.modelInputs.answer)
-              : this.state.target,
+          fullresponse: JSON.stringify(last_example.response),
           validated_by_annotator: last_example.validated,
         };
         console.log("metadata:");
@@ -344,7 +374,7 @@ class CreateInterface extends React.Component {
             this.state.context.id,
             this.state.hypothesis,
             this.state.target,
-            last_example.response,
+            old_model_version_response,
             metadata
           )
           .then((result) => {
@@ -353,6 +383,7 @@ class CreateInterface extends React.Component {
             this.setState(
               {
                 hypothesis: "",
+                generatedAnswer: null,
                 progressSubmitting: false,
                 submitDisabled: false,
                 generateDisabled: false,
@@ -362,6 +393,7 @@ class CreateInterface extends React.Component {
                   [key]: result.id,
                 },
                 answer: [],
+                answerNotSelected: true,
                 exampleHistory: [],
               },
               function () {
@@ -382,7 +414,10 @@ class CreateInterface extends React.Component {
     );
   }
   handleGeneratorResponse(e) {
-    e.preventDefault();
+    if (e) {
+      e.preventDefault();
+    }
+
     this.setState(
       {
         progressGenerating: true,
@@ -394,6 +429,7 @@ class CreateInterface extends React.Component {
       function () {
         if (
           this.state.task.type == "extract" &&
+          this.experiment_mode["answerSelect"] === "none" &&
           this.state.answer.length == 0
         ) {
           this.setState({
@@ -405,7 +441,10 @@ class CreateInterface extends React.Component {
           });
           return;
         }
-        if (this.state.task.type == "extract") {
+        if (
+          this.state.task.type == "extract" &&
+          this.experiment_mode["answerSelect"] === "none"
+        ) {
           var answer_text = "";
           if (this.state.answer.length > 0) {
             var last_answer = this.state.answer[this.state.answer.length - 1];
@@ -416,7 +455,7 @@ class CreateInterface extends React.Component {
             });
           }
         } else {
-          var answer_text = null;
+          var answer_text = "";
         }
 
         // Get last questionCacheId for a cached example for this answer
@@ -432,12 +471,15 @@ class CreateInterface extends React.Component {
           }
         }
 
+        let curContext = this.state.context.context;
+        let filterMode = this.experiment_mode["filterMode"];
         let modelInputs = {
-          context: this.state.context.context,
+          context: curContext,
           answer: answer_text,
           hypothesis: question_cache_id,
-          statement: this.filter_mode,
-          insight: "5|0.4|0.4",
+          question: question_cache_id,
+          statement: this.experiment_mode["filterMode"],
+          insight: "3|0.4|0.4", // generate 3 questions per request
         };
 
         console.log("model inputs:");
@@ -446,33 +488,109 @@ class CreateInterface extends React.Component {
         this.api
           .getModelResponse(this.generator_url, modelInputs)
           .then((result) => {
-            // console.log(result);
             // if we have generated questions, we need to sort appropriately
-            if (result["question_type"] == "generated") {
-              var question = result["questions"][0];
+            if (
+              result["question_type"] === "generated" &&
+              filterMode !== "" &&
+              this.experiment_mode["answerSelect"] === "none"
+            ) {
+              // We need to get info from the QA model on how to filter
+              let allModelInputs = result["questions"].map(function (q) {
+                return {
+                  context: curContext,
+                  hypothesis: q,
+                  question: q,
+                  answer: answer_text,
+                  insight: false,
+                };
+              });
+
+              let outerContext = this;
+              Promise.all(
+                allModelInputs.map((x) =>
+                  this.api.getModelResponse(this.model_url, x)
+                )
+              )
+                .then(function (responses) {
+                  // Get a JSON object from each of the responses
+                  let merged = allModelInputs.map(function (el, i) {
+                    return { ...el, ...responses[i] };
+                  });
+                  if (filterMode === "adversarial") {
+                    merged.sort((a, b) => (a.eval_f1 > b.eval_f1 && 1) || -1);
+                  } else if (filterMode === "uncertain") {
+                    merged.sort((a, b) => (a.conf > b.conf && 1) || -1);
+                  }
+
+                  var question = merged[0].question;
+                  outerContext.setState({
+                    hypothesis: question,
+                    progressGenerating: false,
+                    submitDisabled: false,
+                    generateDisabled: false,
+                    refreshDisabled: false,
+                    exampleHistory: [
+                      ...outerContext.state.exampleHistory,
+                      {
+                        timestamp: new Date().valueOf(),
+                        answer: answer_text,
+                        question: question,
+                        questionCacheId: result["question_cache_id"],
+                        questionMetadata: merged,
+                        questionType: result["question_type"], // cache or generated or manual
+                        activityType: "Generated a question",
+                      },
+                    ],
+                    numQuestionsGenerated:
+                      outerContext.state.numQuestionsGenerated + 1,
+                  });
+                  return;
+                })
+                .catch(function (error) {
+                  console.log(error);
+                });
             } else {
+              // Question comes from cache
               var question = result["questions"][0];
+              var questionMetadata =
+                "question_metadata" in result
+                  ? result["question_metadata"]
+                  : null;
+              if (this.experiment_mode["answerSelect"] === "none") {
+                var activityType = "Generated a question";
+              } else {
+                var activityType = "Generated a QA pair";
+                answer_text = questionMetadata.ans;
+                this.setState({
+                  answer: [],
+                  generatedAnswer: answer_text,
+                  target: answer_text,
+                  answerNotSelected: false,
+                });
+              }
+
+              this.setState({
+                hypothesis: question,
+                progressGenerating: false,
+                submitDisabled: false,
+                generateDisabled: false,
+                refreshDisabled: false,
+                exampleHistory: [
+                  ...this.state.exampleHistory,
+                  {
+                    timestamp: new Date().valueOf(),
+                    answer: answer_text,
+                    question: question,
+                    questionCacheId: result["question_cache_id"],
+                    questionMetadata: questionMetadata,
+                    questionType: result["question_type"], // cache or generated or manual
+                    activityType: activityType,
+                  },
+                ],
+                numQuestionsGenerated: this.state.numQuestionsGenerated + 1,
+              });
             }
 
-            this.setState({
-              hypothesis: question,
-              progressGenerating: false,
-              submitDisabled: false,
-              generateDisabled: false,
-              refreshDisabled: false,
-              exampleHistory: [
-                ...this.state.exampleHistory,
-                {
-                  timestamp: new Date().valueOf(),
-                  answer: answer_text,
-                  question: question,
-                  questionType: result["question_type"], // cache or generated or manual
-                  questionCacheId: result["question_cache_id"],
-                  activityType: "Generated a question",
-                },
-              ],
-              numQuestionsGenerated: this.state.numQuestionsGenerated + 1,
-            });
             console.log("example history:");
             console.log(this.state.exampleHistory);
           })
@@ -484,21 +602,11 @@ class CreateInterface extends React.Component {
   }
 
   handleVerifyResponse(item_index, action) {
-    var action_label = null;
-    switch (action) {
-      case "valid":
-        action_label = "valid";
-        break;
-      case "invalid":
-        action_label = "invalid";
-        break;
-    }
-
     console.log("Verifying Response");
-    console.log(action_label);
+    console.log(action);
 
     const newContent = this.state.content.slice();
-    newContent[item_index].validated = action_label;
+    newContent[item_index].validated = action;
     this.setState({
       content: newContent,
       pendingExampleValidation: false,
@@ -515,8 +623,9 @@ class CreateInterface extends React.Component {
           timestamp: new Date().valueOf(),
           answer: "",
           question: e.target.value,
-          questionType: "manual",
           questionCacheId: null,
+          questionMetadata: null,
+          questionType: "manual",
           activityType: "Question modified manually",
         },
       ],
@@ -549,20 +658,23 @@ class CreateInterface extends React.Component {
         console.log(error);
       });
   }
+
   updateAnswer(value) {
     // Only keep the last answer annotated
     if (value.length > 0) {
       this.setState({
         answer: [value[value.length - 1]],
         answerNotSelected: false,
+        generatedAnswer: null,
         exampleHistory: [
           ...this.state.exampleHistory,
           {
             timestamp: new Date().valueOf(),
             answer: [value[value.length - 1]],
             question: "",
-            questionType: "",
             questionCacheId: null,
+            questionMetadata: null,
+            questionType: "",
             activityType: "Answer changed",
           },
         ],
@@ -598,7 +710,7 @@ class CreateInterface extends React.Component {
             " rounded border " +
             (item.retracted
               ? "border-warning"
-              : item.fooled
+              : item.fooled || this.experiment_mode["adversary"] === "none"
               ? "border-success"
               : "border-danger")
           }
@@ -613,18 +725,95 @@ class CreateInterface extends React.Component {
                 A{item.index}: <strong>{item.modelInputs.answer}</strong>
               </div>
               <small>
-                {item.retracted ? (
+                {this.experiment_mode["adversary"] === "none" ? (
                   <>
-                    <span>
-                      <strong>Example retracted</strong> - thanks. The AI
-                      predicted <strong>{item.modelPredStr}</strong>. Please try
-                      again!
-                    </span>
+                    <div>
+                      {item.validated === null ? (
+                        <>
+                          <OverlayTrigger
+                            placement="top"
+                            delay={{ show: 250, hide: 400 }}
+                            overlay={
+                              <Tooltip id={`tooltip-confirm`}>
+                                This helps us speed up validation and pay
+                                bonuses out quicker!
+                              </Tooltip>
+                            }
+                          >
+                            <FaInfoCircle />
+                          </OverlayTrigger>
+                          &nbsp; Can you please confirm that "
+                          <strong>{item.modelInputs.answer}</strong>" is the
+                          correct answer to the question and that it is in line
+                          with the instructions? &nbsp;
+                          <InputGroup className="mt-1">
+                            <OverlayTrigger
+                              placement="bottom"
+                              delay={{ show: 50, hide: 150 }}
+                              overlay={
+                                <Tooltip id={`tooltip-valid`}>
+                                  My answer is correct!
+                                </Tooltip>
+                              }
+                            >
+                              <Button
+                                className="btn btn-success mr-1"
+                                style={{ padding: "0.2rem 0.5rem" }}
+                                onClick={() =>
+                                  this.handleVerifyResponse(item.index, "valid")
+                                }
+                                disabled={this.state.verifyDisabled}
+                              >
+                                <FaThumbsUp style={{ marginTop: "-0.25em" }} />{" "}
+                                Valid
+                              </Button>
+                            </OverlayTrigger>
+
+                            <OverlayTrigger
+                              placement="bottom"
+                              delay={{ show: 50, hide: 150 }}
+                              overlay={
+                                <Tooltip id={`tooltip-invalid`}>
+                                  My answer is not valid.
+                                </Tooltip>
+                              }
+                            >
+                              <Button
+                                className="btn btn-danger mr-1"
+                                style={{ padding: "0.2rem 0.5rem" }}
+                                onClick={() =>
+                                  this.handleVerifyResponse(
+                                    item.index,
+                                    "invalid"
+                                  )
+                                }
+                                disabled={this.state.verifyDisabled}
+                              >
+                                <FaThumbsDown
+                                  style={{ marginTop: "-0.25em" }}
+                                />{" "}
+                                Invalid
+                              </Button>
+                            </OverlayTrigger>
+                          </InputGroup>
+                        </>
+                      ) : (
+                        <>
+                          <span>
+                            Thank you for validating your example as:{" "}
+                            <strong>{item.validated}</strong>. You may now
+                            {item.index == this.state.total_tries
+                              ? " submit the HIT!"
+                              : " ask another question."}
+                          </span>
+                          <br />
+                        </>
+                      )}
+                    </div>
                   </>
                 ) : item.fooled ? (
                   <>
                     <span>
-                      {/* <strong>Congratulations</strong>, you fooled the AI!  */}
                       The AI predicted <strong>{item.modelPredStr}</strong>{" "}
                       instead.
                     </span>
@@ -678,7 +867,7 @@ class CreateInterface extends React.Component {
                               delay={{ show: 50, hide: 150 }}
                               overlay={
                                 <Tooltip id={`tooltip-invalid`}>
-                                  The AI also managed to predict a correct
+                                  The AI also managed to predict the correct
                                   answer (or my original answer was not valid).
                                 </Tooltip>
                               }
@@ -707,7 +896,7 @@ class CreateInterface extends React.Component {
                           <span>
                             Thank you for validating your example as:{" "}
                             <strong>{item.validated}</strong>. You may now
-                            {this.state.taskCompleted
+                            {item.index == this.state.total_tries
                               ? " submit the HIT!"
                               : " ask another question."}
                           </span>
@@ -722,21 +911,167 @@ class CreateInterface extends React.Component {
                       <strong>Bad luck!</strong> The AI correctly predicted{" "}
                       <strong>{item.modelPredStr}</strong>. Please try again.
                     </span>
+                    {item.exactMatch ? (
+                      <>
+                        {" "}
+                        You may now
+                        {item.index == this.state.total_tries
+                          ? " submit the HIT!"
+                          : " ask another question."}
+                      </>
+                    ) : (
+                      <>
+                        <br />
+                        <hr />
+                        <div>
+                          {item.validated === null ? (
+                            <>
+                              <OverlayTrigger
+                                placement="top"
+                                delay={{ show: 250, hide: 400 }}
+                                overlay={
+                                  <Tooltip id={`tooltip-confirm`}>
+                                    This helps us speed up validation and pay
+                                    bonuses out quicker!
+                                  </Tooltip>
+                                }
+                              >
+                                <FaInfoCircle />
+                              </OverlayTrigger>
+                              <>
+                                &nbsp; Our automated evaluation isn't always
+                                perfect. If you think that your answer (
+                                <strong>{item.modelInputs.answer}</strong>) is
+                                correct <b>AND</b> that the AI's prediction (
+                                <strong>{item.modelPredStr}</strong>) is wrong,
+                                please click the <i>"No, I Beat the AI!"</i>{" "}
+                                button below. &nbsp;
+                              </>
+                              <InputGroup className="mt-1">
+                                <OverlayTrigger
+                                  placement="bottom"
+                                  delay={{ show: 50, hide: 150 }}
+                                  overlay={
+                                    <Tooltip id={`tooltip-valid`}>
+                                      Yes, the AI also managed to predict the
+                                      correct answer.
+                                    </Tooltip>
+                                  }
+                                >
+                                  <Button
+                                    className="btn btn-success mr-1"
+                                    style={{ padding: "0.2rem 0.5rem" }}
+                                    onClick={() =>
+                                      this.handleVerifyResponse(
+                                        item.index,
+                                        "modelfooled_validation_correct"
+                                      )
+                                    }
+                                    disabled={this.state.verifyDisabled}
+                                  >
+                                    <FaThumbsUp
+                                      style={{ marginTop: "-0.25em" }}
+                                    />{" "}
+                                    Yes, the AI is correct
+                                  </Button>
+                                </OverlayTrigger>
+
+                                <OverlayTrigger
+                                  placement="bottom"
+                                  delay={{ show: 50, hide: 150 }}
+                                  overlay={
+                                    <Tooltip id={`tooltip-invalid`}>
+                                      No, my answer is correct and the AI is
+                                      wrong!
+                                    </Tooltip>
+                                  }
+                                >
+                                  <Button
+                                    className="btn btn-danger mr-1"
+                                    style={{ padding: "0.2rem 0.5rem" }}
+                                    onClick={() =>
+                                      this.handleVerifyResponse(
+                                        item.index,
+                                        "modelfooled_validation_wrong"
+                                      )
+                                    }
+                                    disabled={this.state.verifyDisabled}
+                                  >
+                                    <FaThumbsDown
+                                      style={{ marginTop: "-0.25em" }}
+                                    />{" "}
+                                    No, I Beat the AI!
+                                  </Button>
+                                </OverlayTrigger>
+
+                                <OverlayTrigger
+                                  placement="bottom"
+                                  delay={{ show: 50, hide: 150 }}
+                                  overlay={
+                                    <Tooltip id={`tooltip-invalid`}>
+                                      I made a mistake, this example is invalid.
+                                    </Tooltip>
+                                  }
+                                >
+                                  <Button
+                                    className="btn btn-light mr-1"
+                                    style={{ padding: "0.2rem 0.5rem" }}
+                                    onClick={() =>
+                                      this.handleVerifyResponse(
+                                        item.index,
+                                        "modelfooled_invalid"
+                                      )
+                                    }
+                                    disabled={this.state.verifyDisabled}
+                                  >
+                                    <FaThumbsDown
+                                      style={{ marginTop: "-0.25em" }}
+                                    />{" "}
+                                    Invalid Example
+                                  </Button>
+                                </OverlayTrigger>
+                              </InputGroup>
+                            </>
+                          ) : (
+                            <>
+                              <span>
+                                {item.validated ===
+                                "modelfooled_validation_correct"
+                                  ? "Thank you for validating that the AI answer is correct. "
+                                  : item.validated ===
+                                    "modelfooled_validation_wrong"
+                                  ? "Thank you for validating that the AI answer is wrong and that yours is correct. "
+                                  : item.validated === "modelfooled_invalid"
+                                  ? "Thank you for notifying us that this example is invalid. "
+                                  : null}
+                                You may now
+                                {item.index == this.state.total_tries
+                                  ? " submit the HIT!"
+                                  : " ask another question."}
+                              </span>
+                              <br />
+                            </>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </>
                 )}
               </small>
             </div>
-            <div className="col-sm-3" style={{ textAlign: "right" }}>
-              <small>
-                <em>AI Confidence:</em>
-              </small>
-              <ProgressBar
-                striped
-                variant="success"
-                now={(item.response.prob[0] * 100).toFixed(1)}
-                label={`${(item.response.prob[0] * 100).toFixed(1)}%`}
-              />
-            </div>
+            {this.experiment_mode["adversary"] === "none" ? null : (
+              <div className="col-sm-3" style={{ textAlign: "right" }}>
+                <small>
+                  <em>AI Confidence:</em>
+                </small>
+                <ProgressBar
+                  striped
+                  variant="success"
+                  now={(item.response.prob[0] * 100).toFixed(1)}
+                  label={`${(item.response.prob[0] * 100).toFixed(1)}%`}
+                />
+              </div>
+            )}
           </Row>
         </div>
       )
@@ -769,7 +1104,10 @@ class CreateInterface extends React.Component {
         </div>
       );
     }
-    if (this.state.answerNotSelected === true) {
+    if (
+      this.state.answerNotSelected === true &&
+      this.experiment_mode["answerSelect"] === "none"
+    ) {
       var errorMessage = (
         <div>
           <small style={{ color: "red" }}>
@@ -818,35 +1156,59 @@ class CreateInterface extends React.Component {
               }
               value={this.state.hypothesis}
               onChange={this.handleResponseChange}
+              disabled={this.state.taskCompleted}
               required
             />
-            <InputGroup.Append>
-              <Button
-                className="btn btn-info mr-1"
-                onClick={this.handleGeneratorResponse}
-                disabled={this.state.generateDisabled}
-              >
-                Generate Question
-                {this.state.progressGenerating ? (
-                  <Spinner
-                    className="ml-2"
-                    animation="border"
-                    role="status"
-                    size="sm"
-                  />
-                ) : null}
-              </Button>
-            </InputGroup.Append>
+
+            {this.experiment_mode["generator"] === "none" ? null : (
+              <InputGroup.Append>
+                <Button
+                  id="generate"
+                  className="btn btn-info mr-1"
+                  onClick={this.handleGeneratorResponse}
+                  disabled={this.state.generateDisabled}
+                >
+                  {this.experiment_mode["answerSelect"] === "none"
+                    ? "Generate Question"
+                    : "Generate Question & Answer"}
+                  {this.state.progressGenerating ? (
+                    <Spinner
+                      className="ml-2"
+                      animation="border"
+                      role="status"
+                      size="sm"
+                    />
+                  ) : null}
+                </Button>
+              </InputGroup.Append>
+            )}
           </InputGroup>
-          <InputGroup>
-            <p>
-              <small className="form-text text-muted">
-                Remember, the goal is to find an example that the AI gets wrong
-                but that another person would get right. Load time may be slow;
-                please be patient.
-              </small>
-            </p>
-          </InputGroup>
+
+          {this.experiment_mode["adversary"] === "none" ? null : (
+            <div>
+              {this.experiment_mode["answerSelect"] !== "none" &&
+              this.state.generatedAnswer ? (
+                <p>
+                  <i>Answer:</i> <b>{this.state.generatedAnswer}</b>
+                  <br />
+                  <small className="form-text" style={{ color: "red" }}>
+                    <b>
+                      If the suggested answer is wrong, please select the
+                      correct answer by highlighting it in the passage above.
+                    </b>
+                  </small>
+                </p>
+              ) : null}
+              <p>
+                <small className="form-text text-muted">
+                  Remember, the goal is to find an example that the AI gets
+                  wrong but that another person would get right. Load time may
+                  be slow; please be patient.
+                </small>
+              </p>
+            </div>
+          )}
+
           {errorMessage}
           <InputGroup>
             {this.state.taskCompleted ? null : (
@@ -867,6 +1229,13 @@ class CreateInterface extends React.Component {
               </Button>
             )}
             {taskTracker}
+            {this.experiment_mode["adversary"] === "none" ? null : (
+              <small className="mt-1 mb-1">
+                *Kindly note that validation is a manual process meaning that
+                bonuses will take a few days to be processed. We thank you in
+                advance for your understanding and patience.
+              </small>
+            )}
           </InputGroup>
         </Row>
       </Container>
