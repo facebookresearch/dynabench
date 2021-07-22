@@ -8,12 +8,14 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import Dict, List, TextIO, Tuple
 
 from datasets.common import logger
+from metrics.task_config import get_task_config_safe
 from utils import helpers
-from utils.helpers import path_available_on_s3
+from utils.evaluator import Job
 
 from .base import MTBase
 
@@ -77,7 +79,6 @@ class Flores101Base(MTBase):
     def get_batch_transform_config(
         self, sagemaker_client, endpoint_name, job_name, perturb_prefix=None
     ) -> dict:
-        """TODO: Run Flores evaluation using batching"""
         batch_transform_config = super().get_batch_transform_config(
             sagemaker_client, endpoint_name, job_name, perturb_prefix
         )
@@ -109,6 +110,59 @@ class Flores101Base(MTBase):
             "answer": example["targetText"],
             "tags": ["-".join((example["sourceLanguage"], example["targetLanguage"]))],
         }
+
+    def eval_job(self, job: Job) -> Tuple[dict, dict]:
+        """Custom evaluation for full Flores track.
+
+        The output files are splitted by source language, and we are only interested
+        in per direction results.
+        So we evaluate each direction independently.
+
+        Note: this implementation doesn't support pertubation
+        """
+        if not self.shard_by_lang:
+            return super().eval_job(job)
+
+        assert not job.perturb_prefix, "FloresFull task doesn't support pertubation"
+
+        perf_by_tag: List[dict] = []
+        # TODO: parallelize this
+        # Multiprocessing doesn't work out of the box because of how eval server is launched.
+        for src in self.languages[:3]:
+            src_perfs = self.eval_src_lang(job, src)
+            perf_by_tag.extend(src_perfs)
+
+        perf_metric = get_task_config_safe(self.task)["perf_metric"]
+        return compute_averages(perf_metric, perf_by_tag), {}
+
+    def eval_src_lang(self, job: Job, src: str) -> dict:
+        # Flores out file are correct .jsonl format,
+        # so we don't need to call `parse_outfile_and_upload`
+        start = time.time()
+        predictions = helpers.parse_s3_outfile(
+            self.s3_client,
+            self.s3_path(
+                f"predictions/{job.endpoint_name}/raw/{self.task}/{self.name}-{src}.jsonl.out"
+            ),
+        )
+        targets = helpers.parse_s3_outfile(
+            self.s3_client,
+            self.s3_path(f"datasets/flores/{self.task}/{self.name}-{src}.jsonl"),
+        )
+        duration = (time.time() - start) / 60
+        logger.debug(f"downloaded {src}-xx predictions, took {duration:.1f} minutes")
+        targets = [self.label_field_converter(target) for target in targets]
+        # Reuse the base eval method,
+        # but we are only interested in the per-directions results
+        raw_src_perfs = self.eval(predictions, targets)
+        src_perfs = json.loads(raw_src_perfs["metadata_json"])["perf_by_tag"]
+        directions = [m["tag"] for m in src_perfs]
+        expected_directions = [f"{src}-{tgt}" for tgt in self.languages if src != tgt]
+        assert sorted(directions) == sorted(expected_directions)
+
+        duration = (time.time() - start) / 60
+        logger.debug(f"evaluated {src}-xx directions, took {duration:.1f} minutes")
+        return src_perfs
 
 
 class Flores101FullDev(Flores101Base):
@@ -352,3 +406,25 @@ def _upload_file(task: str, partition: str, outfile: Path) -> None:
         cmd = ["s3cmd", "put", "--force", str(outfile), s3_path]
         logger.info(" ".join(cmd))
         logger.info(subprocess.check_output(cmd, text=True))
+
+
+def compute_averages(perf_metric: str, perf_by_tag: List[dict]) -> dict:
+    """
+    Computes the average metrics from the per direction metrics.
+
+    The output format match the one from vanilla `eval` method,
+    and is ready to be put into the sql database.
+    """
+    avg_metrics = {}
+    metric_names = {key for perf in perf_by_tag for key in perf["perf_dict"]}
+    for key in metric_names:
+        scores = [perf["perf_dict"][key] for perf in perf_by_tag]
+        avg_metrics[key] = sum(scores) / len(scores)
+
+    perf = avg_metrics[perf_metric]
+    score_obj = {
+        "perf": perf,
+        "pretty_perf": f"{perf:.2f}",  # this is a BLEU score
+        "metadata_json": json.dumps({**avg_metrics, "perf_by_tag": perf_by_tag}),
+    }
+    return score_obj
