@@ -177,7 +177,7 @@ const SortContainer = ({
  * @param {*} datasetWeights Datasets metadata use for labels and weights.
  *
  */
-const OverallModelLeaderboardRow = ({ model, metrics, datasetWeights }) => {
+const TaskModelLeaderboardRow = ({ model, metrics, datasetWeights }) => {
   const [expanded, setExpanded] = useState(false);
 
   const dynascore = parseFloat(model.dynascore).toFixed(2);
@@ -364,7 +364,7 @@ const MetricWeightTableHeader = ({
  *
  * @param {Array} props.models the models to show
  */
-const OverallModelLeaderBoard = ({
+const TaskModelLeaderboardTable = ({
   models,
   enableWeights,
   metrics,
@@ -477,7 +477,7 @@ const OverallModelLeaderBoard = ({
       </thead>
       <tbody>
         {models?.map((model) => (
-          <OverallModelLeaderboardRow
+          <TaskModelLeaderboardRow
             model={model}
             metrics={metrics}
             key={`model-${model.model_id}`}
@@ -489,4 +489,4 @@ const OverallModelLeaderBoard = ({
   );
 };
 
-export default OverallModelLeaderBoard;
+export default TaskModelLeaderboardTable;

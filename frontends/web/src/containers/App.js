@@ -29,7 +29,7 @@ import ApiService from "../common/ApiService";
 import ScrollToTop from "./ScrollToTop.js";
 import CreateInterface from "./CreateInterface.js";
 import VerifyInterface from "./VerifyInterface.js";
-import PublishInterface from "./PublishInterface.js";
+import UpdateModelInfoInterface from "./UpdateModelInfoInterface.js";
 import GenerateAPITokenPage from "./GenerateAPITokenPage.js";
 import { Avatar } from "../components/Avatar/Avatar";
 import ReactGA from "react-ga";
@@ -265,8 +265,8 @@ class App extends React.Component {
                   component={VerifyInterface}
                 />
                 <Route
-                  path="/tasks/:taskId/models/:modelId/publish"
-                  component={PublishInterface}
+                  path="/tasks/:taskId/models/:modelId/updateModelInfo"
+                  component={UpdateModelInfoInterface}
                 />
                 <Route
                   path="/tasks/:taskId/models/:modelId"

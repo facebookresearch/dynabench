@@ -190,7 +190,7 @@ class ModelPage extends React.Component {
 
   handleEdit = () => {
     this.props.history.push({
-      pathname: `/tasks/${this.state.model.tid}/models/${this.state.model.id}/publish`,
+      pathname: `/tasks/${this.state.model.tid}/models/${this.state.model.id}/updateModelInfo`,
       state: { detail: this.state.model },
     });
   };
@@ -213,7 +213,7 @@ class ModelPage extends React.Component {
     const modelName = this.state.model.name;
     if (!modelName || modelName === "") {
       this.props.history.push({
-        pathname: `/tasks/${this.state.model.tid}/models/${this.state.model.id}/publish`,
+        pathname: `/tasks/${this.state.model.tid}/models/${this.state.model.id}/updateModelInfo`,
         state: { detail: this.state.model },
       });
       return;
@@ -233,7 +233,7 @@ class ModelPage extends React.Component {
 
   handleBack = () => {
     const propState = this.props.location.state;
-    if (propState && propState.src === "publish") {
+    if (propState && propState.src === "updateModelInfo") {
       this.props.history.push("/account#models");
     } else {
       this.props.history.goBack();
