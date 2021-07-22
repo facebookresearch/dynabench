@@ -10,7 +10,7 @@ import {
 } from "react-bootstrap";
 import UserContext from "../../containers/UserContext";
 import OverallModelLeaderBoard from "./OverallModelLeaderBoard";
-import ForkModal from "./ForkModal";
+import { ForkModal, SnapshotModal } from "./ForkAndSnapshotModalWrapper";
 
 const SortDirection = {
   ASC: "asc",
@@ -130,7 +130,14 @@ const TaskLeaderboardCard = (props) => {
     }
 
     return () => {};
-  }, [task]);
+  }, [
+    context.api,
+    props.history,
+    props.match.params.leaderboardName,
+    snapshotName,
+    task,
+    taskId,
+  ]);
 
   const [sort, setSort] = useState({
     field: "dynascore",
@@ -142,6 +149,7 @@ const TaskLeaderboardCard = (props) => {
   const [pageLimit, setPageLimit] = useState(10);
   const [total, setTotal] = useState(0);
   const [showForkModal, setShowForkModal] = useState(false);
+  const [showSnapshotModal, setShowSnapshotModal] = useState(false);
 
   const taskId = props.taskId;
 
@@ -273,6 +281,7 @@ const TaskLeaderboardCard = (props) => {
     taskId,
     pageLimit,
     snapshotName,
+    getOrderedWeights,
   ]);
 
   const isEndOfPage = (page + 1) * pageLimit >= total;
@@ -286,9 +295,19 @@ const TaskLeaderboardCard = (props) => {
             metricWeights={metrics}
             datasetWeights={datasetWeights}
             taskId={taskId}
-            showForkModal={showForkModal}
-            setShowForkModal={setShowForkModal}
+            showModal={showForkModal}
+            setShowModal={setShowForkModal}
             history={props.history}
+          />
+          <SnapshotModal
+            metricWeights={metrics}
+            datasetWeights={datasetWeights}
+            taskId={taskId}
+            showModal={showSnapshotModal}
+            setShowModal={setShowSnapshotModal}
+            history={props.history}
+            sort={sort}
+            total={total}
           />
           <Modal
             size="lg"
@@ -386,24 +405,7 @@ const TaskLeaderboardCard = (props) => {
                   className="btn bg-transparent border-0"
                   onClick={() => {
                     if (context.api.loggedIn()) {
-                      // setShowForkModal(!showForkModal);
-                      const { orderedMetricWeights, orderedDatasetWeights } =
-                        getOrderedWeights();
-                      context.api
-                        .createLeaderboardSnapshot(
-                          taskId,
-                          "test_name",
-                          sort,
-                          metrics,
-                          datasetWeights,
-                          orderedMetricWeights,
-                          orderedDatasetWeights,
-                          total
-                        )
-                        .then(
-                          (result) => console.log(result),
-                          (error) => console.log(error)
-                        );
+                      setShowSnapshotModal(true);
                     } else {
                       props.history.push(
                         "/login?msg=" +
@@ -432,7 +434,7 @@ const TaskLeaderboardCard = (props) => {
                   className="btn bg-transparent border-0"
                   onClick={() => {
                     if (context.api.loggedIn()) {
-                      setShowForkModal(!showForkModal);
+                      setShowForkModal(true);
                     } else {
                       props.history.push(
                         "/login?msg=" +
