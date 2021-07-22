@@ -32,7 +32,10 @@ import { Avatar } from "../components/Avatar/Avatar";
 import Moment from "react-moment";
 import DragAndDrop from "../components/DragAndDrop/DragAndDrop";
 import { OverlayProvider, Annotation, OverlayContext } from "./Overlay";
-import TaskLeaderboardCard from "../components/TaskLeaderboard/TaskLeaderboardCard";
+import {
+  TaskModelDefaultLeaderboard,
+  TaskModelForkLeaderboard,
+} from "../components/TaskLeaderboard/TaskModelLeaderboardCardWrapper";
 
 const chartSizes = {
   xs: { fontSize: 10 },
@@ -409,8 +412,6 @@ class TaskPage extends React.Component {
       taskId: props.match.params.taskId,
       task: {},
       trendScore: [],
-      modelLeaderBoardData: [],
-      modelLeaderBoardTags: [],
       userLeaderBoardData: [],
       userLeaderBoardPage: 0,
       isEndOfUserLeaderPage: true,
@@ -921,13 +922,19 @@ class TaskPage extends React.Component {
                   placement="left"
                   tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
                 >
-                  <TaskLeaderboardCard
-                    {...this.props}
-                    modelLeaderBoardData={this.state.modelLeaderBoardData}
-                    modelLeaderBoardTags={this.state.modelLeaderBoardTags}
-                    task={this.state.task}
-                    taskId={this.state.taskId}
-                  />
+                  {this.props.match.params.leaderboardName ? (
+                    <TaskModelForkLeaderboard
+                      {...this.props}
+                      task={this.state.task}
+                      taskId={this.state.taskId}
+                    />
+                  ) : (
+                    <TaskModelDefaultLeaderboard
+                      {...this.props}
+                      task={this.state.task}
+                      taskId={this.state.taskId}
+                    />
+                  )}
                 </Annotation>
               </Col>
             </Row>
