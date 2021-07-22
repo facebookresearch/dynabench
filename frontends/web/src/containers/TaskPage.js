@@ -33,9 +33,9 @@ import Moment from "react-moment";
 import DragAndDrop from "../components/DragAndDrop/DragAndDrop";
 import { OverlayProvider, Annotation, OverlayContext } from "./Overlay";
 import {
-  DefaultTaskLeaderboard,
-  ForkedTaskLeaderboard,
-} from "../components/TaskLeaderboard/TaskLeaderboardCardWrapper";
+  TaskModelDefaultLeaderboard,
+  TaskModelForkLeaderboard,
+} from "../components/TaskLeaderboard/TaskModelLeaderboardCardWrapper";
 
 const chartSizes = {
   xs: { fontSize: 10 },
@@ -923,13 +923,13 @@ class TaskPage extends React.Component {
                   tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
                 >
                   {this.props.match.params.leaderboardName ? (
-                    <ForkedTaskLeaderboard
+                    <TaskModelForkLeaderboard
                       {...this.props}
                       task={this.state.task}
                       taskId={this.state.taskId}
                     />
                   ) : (
-                    <DefaultTaskLeaderboard
+                    <TaskModelDefaultLeaderboard
                       {...this.props}
                       task={this.state.task}
                       taskId={this.state.taskId}

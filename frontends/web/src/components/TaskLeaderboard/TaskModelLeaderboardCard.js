@@ -9,7 +9,7 @@ import {
   Modal,
 } from "react-bootstrap";
 import UserContext from "../../containers/UserContext";
-import TaskLeaderboardTable from "./TaskLeaderboardTable";
+import TaskModelLeaderboardTable from "./TaskModelLeaderboardTable";
 import ForkModal from "./ForkModal";
 
 const SortDirection = {
@@ -34,7 +34,7 @@ const SortDirection = {
  * @param {string} props.history navigation API
  * @param {string} props.location navigation location
  */
-const TaskLeaderboardCard = (props) => {
+const TaskModelLeaderboardCard = (props) => {
   const task = props.task;
 
   const [data, setData] = useState([]);
@@ -340,7 +340,7 @@ const TaskLeaderboardCard = (props) => {
         </div>
       </Card.Header>
       <Card.Body className="p-0 leaderboard-container">
-        <TaskLeaderboardTable
+        <TaskModelLeaderboardTable
           models={data}
           enableWeights={enableWeights}
           metrics={metrics}
@@ -376,4 +376,4 @@ const TaskLeaderboardCard = (props) => {
     </Card>
   );
 };
-export default TaskLeaderboardCard;
+export default TaskModelLeaderboardCard;

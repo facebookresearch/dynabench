@@ -1,18 +1,18 @@
 import React from "react";
-import TaskLeaderboardCard from "./TaskLeaderboardCard";
+import TaskModelLeaderboardCard from "./TaskModelLeaderboardCard";
 
 /**
  *
- * This is a wrapper around TaskLeaderboardCard.js which allows to extract out the logic for initializing weights
+ * This is a wrapper around TaskModelLeaderboardCard.js which allows to extract out the logic for initializing weights
  * and fetching leaderboard data. A custom task leaderboard can be created simply by passing in custom functions for
  * initializing weights and fetching data.
  *
  * @param getInitialWeights Function that defines how weights for metrics and datasets are to be initialized
  * @param fetchLeaderboardData Function that defines how the leaderboard data is to be fetched
- * @returns {function(*)} A functional component that uses the custom function passed to TaskLeaderboardCardWrapper
- * and renders the TaskLeaderboardCard.
+ * @returns {function(*)} A functional component that uses the custom function passed to TaskModelLeaderboardCardWrapper
+ * and renders the TaskModelLeaderboardCard.
  */
-const TaskLeaderboardCardWrapper = (
+const TaskModelLeaderboardCardWrapper = (
   getInitialWeights,
   fetchLeaderboardData
 ) => {
@@ -23,7 +23,7 @@ const TaskLeaderboardCardWrapper = (
     };
 
     return (
-      <TaskLeaderboardCard
+      <TaskModelLeaderboardCard
         {...props}
         getInitialWeights={(task, api, setWeightsCallback) => {
           getInitialWeights(task, api, setWeightsCallback, extraData);
@@ -122,7 +122,7 @@ const getOrderedWeightObjects = (
   return { orderedMetricWeights, orderedDatasetWeights };
 };
 
-export const DefaultTaskLeaderboard = TaskLeaderboardCardWrapper(
+export const TaskModelDefaultLeaderboard = TaskModelLeaderboardCardWrapper(
   (task, api, setWeightsCallback) => {
     const metricIdToDataObj = {};
     const datasetIdToDataObj = {};
@@ -135,7 +135,7 @@ export const DefaultTaskLeaderboard = TaskLeaderboardCardWrapper(
   loadDefaultData
 );
 
-export const ForkedTaskLeaderboard = TaskLeaderboardCardWrapper(
+export const TaskModelForkLeaderboard = TaskModelLeaderboardCardWrapper(
   (task, api, setWeightsCallback, extraData) => {
     const metricIdToDataObj = {};
     const datasetIdToDataObj = {};
