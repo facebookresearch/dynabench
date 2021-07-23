@@ -31,6 +31,7 @@ import CreateInterface from "./CreateInterface.js";
 import VerifyInterface from "./VerifyInterface.js";
 import UpdateModelInfoInterface from "./UpdateModelInfoInterface.js";
 import GenerateAPITokenPage from "./GenerateAPITokenPage.js";
+import TaskModelLeaderboardPage from "./TaskModelLeaderboardPage.js";
 import { Avatar } from "../components/Avatar/Avatar";
 import ReactGA from "react-ga";
 
@@ -256,6 +257,10 @@ class App extends React.Component {
                 <Route path="/contact" component={ContactPage} />
                 <Route path="/termsofuse" component={TermsPage} />
                 <Route path="/datapolicy" component={DataPolicyPage} />
+                <Route
+                  path="/tasks/top/:taskId"
+                  component={TaskModelLeaderboardPage}
+                />
                 <Route
                   path="/tasks/:taskId/create"
                   component={CreateInterface}
