@@ -52,6 +52,9 @@ const TaskOwnerConsole = (props) => {
   };
 
   const updateTaskSettings = () => {
+    if (!props.task.id) {
+      return;
+    }
     context.api.updateTaskSettings(props.task.id, {
       validate_non_fooling: validateNonFooling,
       num_matching_validations: numMatchingValidations,
