@@ -245,6 +245,7 @@ class ScoreModel(BaseModel):
         reverse_sort=False,
         limit=5,
         offset=0,
+        specific_deployment_status=None,
     ):
         tm = TaskModel()
         task = tm.get(tid)
@@ -268,6 +269,10 @@ class ScoreModel(BaseModel):
         if not include_unpublished_models:
             scores_users_datasets_models = scores_users_datasets_models.filter(
                 Model.is_published
+            )
+        if specific_deployment_status is not None:
+            scores_users_datasets_models = scores_users_datasets_models.filter(
+                Model.deployment_status == specific_deployment_status
             )
 
         scores, users, datasets, models = zip(*scores_users_datasets_models)

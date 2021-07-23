@@ -202,13 +202,17 @@ export default class ApiService {
     sort,
     sortDirection,
     metricWeights,
-    datasetWeights
+    datasetWeights,
+    specificDeploymentStatus
   ) {
     const pageQuery = `limit=${limit || 10}&offset=${offset || 0}`;
     const sortQuery =
       sort && sortDirection
         ? `&sort_by=${sort}&sort_direction=${sortDirection}`
         : "";
+    const specificDeploymentStatusQuery = specificDeploymentStatus
+      ? `&specific_deployment_status=${specificDeploymentStatus}`
+      : "";
 
     const metricWeightsQuery = metricWeights
       ? `&ordered_metric_weights=${encodeURIComponent(metricWeights.join("|"))}`
@@ -220,7 +224,7 @@ export default class ApiService {
         )}`
       : "";
 
-    const url = `/models/dynaboard?${pageQuery}${sortQuery}${metricWeightsQuery}${datasetWeightsQuery}`;
+    const url = `/models/dynaboard?${pageQuery}${sortQuery}${specificDeploymentStatusQuery}${metricWeightsQuery}${datasetWeightsQuery}`;
     return this.fetch(`${this.domain}/tasks/${taskId}${url}`, {
       method: "GET",
     });

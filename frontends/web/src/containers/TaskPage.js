@@ -638,6 +638,13 @@ class TaskPage extends React.Component {
         "https://paperswithcode.com/task/hate-speech-detection/latest",
       Sentiment: "https://paperswithcode.com/task/sentiment-analysis/latest",
     };
+    const taskForPerfOnlyLeaderboard = JSON.parse(
+      JSON.stringify(this.state.task)
+    );
+    taskForPerfOnlyLeaderboard.ordered_metrics = taskForPerfOnlyLeaderboard.ordered_metrics?.filter(
+      (metric) =>
+        metric.field_name === taskForPerfOnlyLeaderboard.perf_metric_field_name
+    );
     return (
       <OverlayProvider initiallyHide={true} delayMs="1700">
         <Container>
@@ -719,17 +726,17 @@ class TaskPage extends React.Component {
                         onChange={() => {
                           this.setState(
                             {
-                              validateNonFooling:
-                                !this.state.validateNonFooling,
+                              validateNonFooling: !this.state
+                                .validateNonFooling,
                             },
                             () =>
                               this.context.api.updateTaskSettings(
                                 this.state.task.id,
                                 {
-                                  validate_non_fooling:
-                                    this.state.validateNonFooling,
-                                  num_matching_validations:
-                                    this.state.numMatchingValidations,
+                                  validate_non_fooling: this.state
+                                    .validateNonFooling,
+                                  num_matching_validations: this.state
+                                    .numMatchingValidations,
                                 }
                               )
                           );
@@ -760,10 +767,10 @@ class TaskPage extends React.Component {
                                 this.context.api.updateTaskSettings(
                                   this.state.task.id,
                                   {
-                                    validate_non_fooling:
-                                      this.state.validateNonFooling,
-                                    num_matching_validations:
-                                      this.state.numMatchingValidations,
+                                    validate_non_fooling: this.state
+                                      .validateNonFooling,
+                                    num_matching_validations: this.state
+                                      .numMatchingValidations,
                                   }
                                 )
                             );
@@ -925,14 +932,16 @@ class TaskPage extends React.Component {
                   {this.props.match.params.leaderboardName ? (
                     <TaskModelForkLeaderboard
                       {...this.props}
-                      task={this.state.task}
+                      task={taskForPerfOnlyLeaderboard}
                       taskId={this.state.taskId}
+                      specificDeploymentStatus={"deployed"}
                     />
                   ) : (
                     <TaskModelDefaultLeaderboard
                       {...this.props}
-                      task={this.state.task}
+                      task={taskForPerfOnlyLeaderboard}
                       taskId={this.state.taskId}
+                      specificDeploymentStatus={"deployed"}
                     />
                   )}
                 </Annotation>

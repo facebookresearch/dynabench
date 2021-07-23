@@ -80,6 +80,7 @@ const loadDefaultData = (
   sort,
   metrics,
   datasetWeights,
+  specificDeploymentStatus,
   updateResultCallback
 ) => {
   const { orderedMetricWeights, orderedDatasetWeights } = getOrderedWeights(
@@ -96,7 +97,8 @@ const loadDefaultData = (
         sort.field,
         sort.direction,
         orderedMetricWeights,
-        orderedDatasetWeights
+        orderedDatasetWeights,
+        specificDeploymentStatus
       )
       .then(
         (result) => updateResultCallback(result),

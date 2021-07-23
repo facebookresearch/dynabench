@@ -275,12 +275,16 @@ def get_dynaboard_info(tid):
     sort_direction = "asc"
     offset = 0
     limit = 5
+    specific_deployment_status = None
 
     query_dict = parse_qs(bottle.request.query_string)
     if "sort_by" in query_dict:
         sort_by = query_dict["sort_by"][0]
     if "sort_direction" in query_dict:
         sort_direction = query_dict["sort_direction"][0]
+
+    if "specific_deployment_status" in query_dict:
+        specific_deployment_status = query_dict["specific_deployment_status"][0]
 
     if sort_direction == "asc":
         reverse_sort = False
@@ -332,6 +336,7 @@ def get_dynaboard_info(tid):
         reverse_sort,
         limit,
         offset,
+        specific_deployment_status,
     )
 
 
