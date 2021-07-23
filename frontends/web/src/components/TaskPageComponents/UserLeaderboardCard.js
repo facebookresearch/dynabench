@@ -40,9 +40,7 @@ const UserLeaderboardCard = (props) => {
 
   const paginate = (state, round) => {
     const page =
-      state === "next"
-        ? userLeaderBoardPage + 1
-        : userLeaderBoardPage - 1;
+      state === "next" ? userLeaderBoardPage + 1 : userLeaderBoardPage - 1;
     fetchOverallUserLeaderboard(page, round);
   };
 
