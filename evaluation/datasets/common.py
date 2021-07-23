@@ -48,13 +48,8 @@ class BaseDataset(ABC):
         self.s3_url = self._get_data_s3_url()
         self.longdesc = longdesc
         self.source_url = source_url
-
-        self.s3_client = boto3.client(
-            "s3",
-            aws_access_key_id=config["aws_access_key_id"],
-            aws_secret_access_key=config["aws_secret_access_key"],
-            region_name=config["aws_region"],
-        )
+        self._config = config
+        self._s3_client = None
 
         # Load dataset to S3 and register in db if not yet
         loaded = self.dataset_available_on_s3()
@@ -73,6 +68,22 @@ class BaseDataset(ABC):
 
         if loaded:
             self._register_dataset_in_db_and_eval(eval_config)
+
+    @property
+    def s3_client(self):
+        if self._s3_client is None:
+            self._s3_client = boto3.client(
+                "s3",
+                aws_access_key_id=self._config["aws_access_key_id"],
+                aws_secret_access_key=self._config["aws_secret_access_key"],
+                region_name=self._config["aws_region"],
+            )
+        return self._s3_client
+
+    def __getstate__(self):
+        """Custom pickling method: doesn't try to serialize the S3 client"""
+        self._s3_client = None
+        return self.__dict__
 
     def s3_path(self, *parts: str) -> str:
         return f"s3://{self.s3_bucket}/" + "/".join(parts)
