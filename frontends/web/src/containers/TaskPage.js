@@ -35,6 +35,7 @@ import { OverlayProvider, Annotation, OverlayContext } from "./Overlay";
 import {
   TaskModelDefaultLeaderboard,
   TaskModelForkLeaderboard,
+  TaskModelSnapshotLeaderboard,
 } from "../components/TaskLeaderboard/TaskModelLeaderboardCardWrapper";
 
 const chartSizes = {
@@ -911,6 +912,15 @@ class TaskPage extends React.Component {
                       {...this.props}
                       task={this.state.task}
                       taskId={this.state.taskId}
+                    />
+                  ) : this.props.match.params.snapshotName ? (
+                    <TaskModelSnapshotLeaderboard
+                      {...this.props}
+                      task={this.state.task}
+                      taskId={this.state.taskId}
+                      disableToggleSort={true}
+                      disableAdjustWeights={true}
+                      disableForkAndSnapshot={true}
                     />
                   ) : (
                     <TaskModelDefaultLeaderboard

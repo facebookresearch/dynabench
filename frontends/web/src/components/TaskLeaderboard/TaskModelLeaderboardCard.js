@@ -54,7 +54,7 @@ const TaskModelLeaderboardCard = (props) => {
       setMetrics(result.orderedMetricWeights);
       setDatasetWeights(result.orderedDatasetWeights);
     });
-  }, [task]);
+  }, [context.api, props, task]);
 
   const [sort, setSort] = useState({
     field: "dynascore",
@@ -146,12 +146,29 @@ const TaskModelLeaderboardCard = (props) => {
       (result) => {
         setData(result ? result.data : []);
         setTotal(result ? result.count : 0);
+        if (
+          result &&
+          result.sort &&
+          (result.sort.direction !== sort.direction ||
+            result.sort.field !== sort.field)
+        ) {
+          setSort(result.sort);
+        }
         setIsLoading(false);
       }
     );
 
     return () => {};
-  }, [page, sort, metrics, datasetWeights, context.api, taskId, pageLimit]);
+  }, [
+    page,
+    sort,
+    metrics,
+    datasetWeights,
+    context.api,
+    taskId,
+    pageLimit,
+    props,
+  ]);
 
   const isEndOfPage = (page + 1) * pageLimit >= total;
 

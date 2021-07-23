@@ -575,11 +575,10 @@ def create_leaderboard_configuration(credentials, tid):
         0,
     )
     dynaboard_info = json.loads(dynaboard_info)
-    dynaboard_info["configuration_json"] = dict()
-    dynaboard_info["configuration_json"]["metricWeights"] = data["metricWeights"]
-    dynaboard_info["configuration_json"]["datasetWeights"] = data["datasetWeights"]
-    dynaboard_info["misc_info_json"] = dict()
-    dynaboard_info["misc_info_json"]["sort"] = data["sort"]
+    dynaboard_info["metricWeights"] = data["metricWeights"]
+    dynaboard_info["datasetWeights"] = data["datasetWeights"]
+    dynaboard_info["miscInfoJson"] = dict()
+    dynaboard_info["miscInfoJson"]["sort"] = data["sort"]
 
     dynaboard_info = util.json_encode(dynaboard_info)
 

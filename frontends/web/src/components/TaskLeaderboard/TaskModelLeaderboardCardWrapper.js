@@ -17,7 +17,8 @@ const TaskModelLeaderboardCardWrapper = (
   fetchLeaderboardData
 ) => {
   return (props) => {
-    const extraData = {
+    const dataFromProps = {
+      snapshotName: props.match.params.snapshotName,
       leaderboardName: props.match.params.leaderboardName,
       history: props.history,
     };
@@ -25,10 +26,12 @@ const TaskModelLeaderboardCardWrapper = (
     return (
       <TaskModelLeaderboardCard
         {...props}
-        getInitialWeights={(task, api, setWeightsCallback) => {
-          getInitialWeights(task, api, setWeightsCallback, extraData);
-        }}
-        fetchLeaderboardData={fetchLeaderboardData}
+        getInitialWeights={(...args) =>
+          getInitialWeights(...args, dataFromProps)
+        }
+        fetchLeaderboardData={(...args) =>
+          fetchLeaderboardData(...args, dataFromProps)
+        }
       />
     );
   };
@@ -136,7 +139,7 @@ export const TaskModelDefaultLeaderboard = TaskModelLeaderboardCardWrapper(
 );
 
 export const TaskModelForkLeaderboard = TaskModelLeaderboardCardWrapper(
-  (task, api, setWeightsCallback, extraData) => {
+  (task, api, setWeightsCallback, dataFromProps) => {
     const metricIdToDataObj = {};
     const datasetIdToDataObj = {};
 
@@ -145,7 +148,7 @@ export const TaskModelForkLeaderboard = TaskModelLeaderboardCardWrapper(
      */
     loadDefaultWeights(metricIdToDataObj, datasetIdToDataObj, task);
 
-    const { leaderboardName, history } = extraData;
+    const { leaderboardName, history } = dataFromProps;
 
     /* Through this API, the default weights for metrics and datasets get overwritten by the weights saved during
      * creation of the fork.
@@ -181,4 +184,65 @@ export const TaskModelForkLeaderboard = TaskModelLeaderboardCardWrapper(
     );
   },
   loadDefaultData
+);
+
+export const TaskModelSnapshotLeaderboard = TaskModelLeaderboardCardWrapper(
+  (task, api, setWeightsCallback, dataFromProps) => {
+    const metricIdToDataObj = {};
+    const datasetIdToDataObj = {};
+
+    const { snapshotName, history } = dataFromProps;
+
+    api.getLeaderboardSnapshot(task.id, snapshotName).then(
+      (result) => {
+        const dataJson = JSON.parse(result.data_json);
+        const { metricWeights, datasetWeights } = dataJson;
+        setWeightsCallback({
+          orderedMetricWeights: metricWeights,
+          orderedDatasetWeights: datasetWeights,
+        });
+      },
+      (error) => {
+        console.log(error);
+        if (error && error.status_code === 404) {
+          history.replace({
+            pathname: `/tasks/${task.id}`,
+          });
+        }
+
+        loadDefaultWeights(metricIdToDataObj, datasetIdToDataObj, task);
+        setWeightsCallback(
+          getOrderedWeightObjects(metricIdToDataObj, datasetIdToDataObj, task)
+        );
+      }
+    );
+  },
+  (
+    api,
+    taskId,
+    pageLimit,
+    page,
+    sort,
+    metrics,
+    datasetWeights,
+    updateResultCallback,
+    dataFromProps
+  ) => {
+    const { snapshotName } = dataFromProps;
+
+    api.getLeaderboardSnapshot(taskId, snapshotName).then(
+      (result) => {
+        const dataJson = JSON.parse(result.data_json);
+        updateResultCallback({
+          data: dataJson.data,
+          count: dataJson.count,
+          sort: dataJson.miscInfoJson.sort,
+        });
+      },
+      (error) => {
+        console.log(error);
+        updateResultCallback(null);
+      }
+    );
+  }
 );
