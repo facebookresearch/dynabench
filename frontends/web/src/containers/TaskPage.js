@@ -922,7 +922,7 @@ class TaskPage extends React.Component {
               />
             </Col>
           </Row>
-          {this.state.task && this.state.task.ordered_scoring_datasets && (
+          {taskForPerfOnlyLeaderboard && this.state.task.ordered_scoring_datasets && (
             <Row className="justify-content-center">
               <Col xs={12} md={12}>
                 <Annotation
