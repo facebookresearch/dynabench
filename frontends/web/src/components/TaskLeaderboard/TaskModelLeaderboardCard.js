@@ -271,7 +271,7 @@ const TaskModelLeaderboardCard = (props) => {
               For more details, see the paper.
             </Modal.Body>
           </Modal>
-          {(process.env.REACT_APP_ENABLE_LEADERBOARD_FORK === "true" ||
+          {(process.env.REACT_APP_ENABLE_LEADERBOARD_SNAPSHOT === "true" ||
             context.user.admin) &&
             !props.disableForkAndSnapshot && (
               <OverlayTrigger

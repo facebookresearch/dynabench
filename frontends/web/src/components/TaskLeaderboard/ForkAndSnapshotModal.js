@@ -78,7 +78,7 @@ const ForkAndSnapshotModal = (props) => {
                   <tbody>
                     {metricWeights &&
                       metricWeights.map((metricWeightDatum) => (
-                        <tr>
+                        <tr key={metricWeightDatum.label}>
                           <td>Metric</td>
                           <td>{metricWeightDatum.label}</td>
                           <td>{metricWeightDatum.weight}</td>
@@ -89,7 +89,7 @@ const ForkAndSnapshotModal = (props) => {
                     </tr>
                     {datasetWeights &&
                       datasetWeights.map((datasetWeightDatum) => (
-                        <tr>
+                        <tr key={datasetWeightDatum.name}>
                           <td>Dataset</td>
                           <td>{datasetWeightDatum.name}</td>
                           <td>{datasetWeightDatum.weight}</td>
