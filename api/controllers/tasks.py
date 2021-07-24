@@ -4,6 +4,7 @@ import json
 from urllib.parse import parse_qs
 
 import bottle
+import uuid
 
 import common.auth as _auth
 import common.helpers as util
@@ -548,7 +549,6 @@ def create_leaderboard_configuration(credentials, tid):
     if not util.check_fields(
         data,
         [
-            "name",
             "sort",
             "metricWeights",
             "datasetWeights",
@@ -560,7 +560,7 @@ def create_leaderboard_configuration(credentials, tid):
         bottle.abort(400, "Missing data")
 
     lsm = LeaderboardSnapshotModel()
-    name = data["name"]
+    name = data["name"] or uuid.uuid4()
 
     if lsm.exists(tid=tid, name=name):
         bottle.abort(409, "A snapshot with the same name already exists for this task.")

@@ -1,5 +1,6 @@
 import ForkAndSnapshotModal from "./ForkAndSnapshotModal";
 import React from "react";
+import { getOrderedWeights } from "./TaskModelLeaderboardCardWrapper";
 
 const ForkAndSnapshotModalWrapper = (
   title,
@@ -94,25 +95,15 @@ export const SnapshotModal = ForkAndSnapshotModalWrapper(
     onErrorCallback,
     dataFromProps
   ) => {
-    if (snapshotName.length === 0) {
-      snapshotName = Math.random().toString(36).substring(5); // TODO: use proper random hash
+    let uriEncodedSnapshotName = null;
+    if (snapshotName.length !== 0) {
+      uriEncodedSnapshotName = encodeURIComponent(snapshotName.trim());
     }
-    const uriEncodedSnapshotName = encodeURIComponent(snapshotName.trim());
-    const { sort, total, metricWeights, datasetWeights } = dataFromProps;
 
-    const metricSum = metricWeights?.reduce(
-      (acc, entry) => acc + entry.weight,
-      0
-    );
-    const orderedMetricWeights = metricWeights?.map((entry) =>
-      metricSum === 0 ? 0.0 : entry.weight / metricSum
-    );
-    const dataSetSum = datasetWeights?.reduce(
-      (acc, entry) => acc + entry.weight,
-      0
-    );
-    const orderedDatasetWeights = datasetWeights?.map((entry) =>
-      dataSetSum === 0 ? 0.0 : entry.weight / dataSetSum
+    const { sort, total, metricWeights, datasetWeights } = dataFromProps;
+    const { orderedMetricWeights, orderedDatasetWeights } = getOrderedWeights(
+      metricWeights,
+      datasetWeights
     );
 
     context.api
@@ -127,9 +118,9 @@ export const SnapshotModal = ForkAndSnapshotModalWrapper(
         total
       )
       .then(
-        () => {
+        (result) => {
           onSuccessCallback(
-            `/tasks/${taskId}/leaderboard_snapshot/${uriEncodedSnapshotName}`
+            `/tasks/${taskId}/leaderboard_snapshot/${result.name}`
           );
         },
         (error) => {

@@ -9,10 +9,10 @@ import TaskModelLeaderboardCard from "./TaskModelLeaderboardCard";
  *
  * @param getInitialWeights Function that defines how weights for metrics and datasets are to be initialized
  * @param fetchLeaderboardData Function that defines how the leaderboard data is to be fetched
- * @returns {function(*)} A functional component that uses the custom function passed to TaskModelLeaderboardCardWrapper
+ * @returns {function(*)} A functional component that uses the custom function passed to taskModelLeaderboardCardWrapper
  * and renders the TaskModelLeaderboardCard.
  */
-const TaskModelLeaderboardCardWrapper = (
+const taskModelLeaderboardCardWrapper = (
   getInitialWeights,
   fetchLeaderboardData
 ) => {
@@ -56,7 +56,7 @@ const loadDefaultWeights = (metricIdToDataObj, datasetIdToDataObj, task) => {
   });
 };
 
-const getOrderedWeights = (metricWeights, datasetWeights) => {
+export const getOrderedWeights = (metricWeights, datasetWeights) => {
   const metricSum = metricWeights?.reduce(
     (acc, entry) => acc + entry.weight,
     0
@@ -125,7 +125,7 @@ const getOrderedWeightObjects = (
   return { orderedMetricWeights, orderedDatasetWeights };
 };
 
-export const TaskModelDefaultLeaderboard = TaskModelLeaderboardCardWrapper(
+export const TaskModelDefaultLeaderboard = taskModelLeaderboardCardWrapper(
   (task, api, setWeightsCallback) => {
     const metricIdToDataObj = {};
     const datasetIdToDataObj = {};
@@ -138,7 +138,7 @@ export const TaskModelDefaultLeaderboard = TaskModelLeaderboardCardWrapper(
   loadDefaultData
 );
 
-export const TaskModelForkLeaderboard = TaskModelLeaderboardCardWrapper(
+export const TaskModelForkLeaderboard = taskModelLeaderboardCardWrapper(
   (task, api, setWeightsCallback, dataFromProps) => {
     const metricIdToDataObj = {};
     const datasetIdToDataObj = {};
@@ -186,36 +186,51 @@ export const TaskModelForkLeaderboard = TaskModelLeaderboardCardWrapper(
   loadDefaultData
 );
 
-export const TaskModelSnapshotLeaderboard = TaskModelLeaderboardCardWrapper(
+const getSnapshotData = (
+  taskId,
+  snapshotName,
+  api,
+  history,
+  resultCallback
+) => {
+  api.getLeaderboardSnapshot(taskId, snapshotName).then(
+    (result) => {
+      const dataJson = JSON.parse(result.data_json);
+      resultCallback(dataJson);
+    },
+    (error) => {
+      console.log(error);
+      if (error && error.status_code === 404) {
+        history.replace({
+          pathname: `/tasks/${taskId}`,
+        });
+      }
+      resultCallback(null);
+    }
+  );
+};
+
+export const TaskModelSnapshotLeaderboard = taskModelLeaderboardCardWrapper(
   (task, api, setWeightsCallback, dataFromProps) => {
     const metricIdToDataObj = {};
     const datasetIdToDataObj = {};
 
     const { snapshotName, history } = dataFromProps;
 
-    api.getLeaderboardSnapshot(task.id, snapshotName).then(
-      (result) => {
-        const dataJson = JSON.parse(result.data_json);
-        const { metricWeights, datasetWeights } = dataJson;
+    getSnapshotData(task.id, snapshotName, api, history, (result) => {
+      if (result != null) {
+        const { metricWeights, datasetWeights } = result;
         setWeightsCallback({
           orderedMetricWeights: metricWeights,
           orderedDatasetWeights: datasetWeights,
         });
-      },
-      (error) => {
-        console.log(error);
-        if (error && error.status_code === 404) {
-          history.replace({
-            pathname: `/tasks/${task.id}`,
-          });
-        }
-
+      } else {
         loadDefaultWeights(metricIdToDataObj, datasetIdToDataObj, task);
         setWeightsCallback(
           getOrderedWeightObjects(metricIdToDataObj, datasetIdToDataObj, task)
         );
       }
-    );
+    });
   },
   (
     api,
@@ -228,21 +243,18 @@ export const TaskModelSnapshotLeaderboard = TaskModelLeaderboardCardWrapper(
     updateResultCallback,
     dataFromProps
   ) => {
-    const { snapshotName } = dataFromProps;
+    const { snapshotName, history } = dataFromProps;
 
-    api.getLeaderboardSnapshot(taskId, snapshotName).then(
-      (result) => {
-        const dataJson = JSON.parse(result.data_json);
+    getSnapshotData(taskId, snapshotName, api, history, (result) => {
+      if (result != null) {
         updateResultCallback({
-          data: dataJson.data,
-          count: dataJson.count,
-          sort: dataJson.miscInfoJson.sort,
+          data: result.data.slice(page * pageLimit, (page + 1) * pageLimit),
+          count: result.count,
+          sort: result.miscInfoJson.sort,
         });
-      },
-      (error) => {
-        console.log(error);
+      } else {
         updateResultCallback(null);
       }
-    );
+    });
   }
 );

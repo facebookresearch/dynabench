@@ -42,7 +42,7 @@ const ForkAndSnapshotModal = (props) => {
     setFormValidationMessage(emptyNameValidationMsg);
     setCreatedSuccessfully(null);
     setCopySuccess("");
-  }, [emptyNameValidationMsg, showModal]);
+  }, [showModal]);
 
   const copyToClipboard = () => {
     const from = document.getElementById("forkOrSnapshotLink");
@@ -133,7 +133,7 @@ const ForkAndSnapshotModal = (props) => {
               <div>
                 <p>{`Your ${nameForTextsInLowerCase} is ready. Permanent link to your ${nameForTextsInLowerCase} is:`}</p>
                 <p className="text-break" id="forkOrSnapshotLink">
-                  {window.location.href}
+                  {name}
                 </p>
                 <div className="flex text-center flex-column">
                   <Button variant="primary" onClick={copyToClipboard}>
@@ -165,10 +165,9 @@ const ForkAndSnapshotModal = (props) => {
                 taskId,
                 context,
                 (newPathname) => {
-                  props.history.replace({
-                    pathname: newPathname,
-                  });
-                  setName("");
+                  const currentUrl = new URL(window.location.href);
+                  currentUrl.pathname = newPathname;
+                  setName(currentUrl.toString());
                   setCreatedSuccessfully(true);
                 },
                 (error, alreadyExistsValidationMsg, redirectToLoginMsg) => {
