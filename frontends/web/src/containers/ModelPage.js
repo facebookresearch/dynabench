@@ -240,7 +240,62 @@ class ModelPage extends React.Component {
     }
   };
 
-  processScoresArray = (csvRows, scoresArr, datasetType) => {
+  processScoresArrayForLatex = (scoresArr, datasetType) => {
+    let tableContentForScores = "";
+    scoresArr = (scoresArr || []).sort((a, b) => b.accuracy - a.accuracy);
+    scoresArr.forEach((data) => {
+      tableContentForScores += `        ${data.dataset_name} & ${datasetType} & ${data.accuracy} \\\\\n`;
+    });
+    return tableContentForScores;
+  };
+
+  downloadLatex = () => {
+
+    let { leaderboard_scores, non_leaderboard_scores, name } =
+        this.state.model;
+    const { task } = this.state;
+    const taskName = task.name;
+
+    let latexTableContent = "";
+
+    latexTableContent += this.processScoresArrayForLatex(leaderboard_scores, "leaderboard", latexTableContent);
+    latexTableContent += this.processScoresArrayForLatex(non_leaderboard_scores, "non-leaderboard", latexTableContent);
+
+    const modelUrl = window.location.href;
+
+    let latexDocStr = `\\documentclass{article}
+\\usepackage{hyperref}
+\\usepackage{booktabs}
+
+\\begin{document}
+
+\\begin{table}[]
+    \\centering
+    \\begin{tabular}{l|l|r}
+        \\toprule
+        \\textbf{Dataset} & \\textbf{Dataset Type} & \\textbf{${task.perf_metric_field_name}} \\\\
+        \\midrule
+${latexTableContent}
+        \\bottomrule
+    \\end{tabular}
+    \\caption{${taskName} results: \\url{${modelUrl}}}
+    \\label{tab:results}
+\\end{table}
+
+\\end{document}`;
+
+    const latexContent = "data:application/x-latex;charset=utf-8," + latexDocStr;
+
+    const encodedUri = encodeURI(latexContent);
+    const csvLink = document.createElement("a");
+    csvLink.setAttribute("href", encodedUri);
+    csvLink.setAttribute("download", name + "-" + taskName + ".tex");
+    document.body.appendChild(csvLink);
+    csvLink.click();
+    document.body.removeChild(csvLink);
+  };
+
+  processScoresArrayForCsv = (csvRows, scoresArr, datasetType) => {
     csvRows.push([""]);
     csvRows.push([datasetType]);
 
@@ -258,8 +313,8 @@ class ModelPage extends React.Component {
 
     const rows = [];
     rows.push(["Dataset", task.perf_metric_field_name]);
-    this.processScoresArray(rows, leaderboard_scores, "Leaderboard Datasets");
-    this.processScoresArray(
+    this.processScoresArrayForCsv(rows, leaderboard_scores, "Leaderboard Datasets");
+    this.processScoresArrayForCsv(
       rows,
       non_leaderboard_scores,
       "Non-leaderboard Datasets"
@@ -473,6 +528,9 @@ class ModelPage extends React.Component {
                       >
                         <Dropdown.Item onClick={this.downloadCsv}>
                           {"CSV"}
+                        </Dropdown.Item>
+                        <Dropdown.Item onClick={this.downloadLatex}>
+                          {"LaTeX"}
                         </Dropdown.Item>
                       </DropdownButton>
                     </span>
