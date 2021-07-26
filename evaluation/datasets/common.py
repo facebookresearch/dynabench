@@ -16,8 +16,10 @@ from utils import helpers
 from utils.helpers import (
     get_data_s3_path,
     get_perturbed_filename,
+    parse_s3_outfile,
     path_available_on_s3,
     send_eval_request,
+    upload_predictions,
 )
 
 
@@ -310,11 +312,11 @@ class BaseDataset(ABC):
             raw_output_s3_uri = self.get_output_s3_url(
                 job.endpoint_name, raw=True, perturb_prefix=perturb_prefix
             )
-            predictions = helpers.parse_s3_outfile(self.s3_client, raw_output_s3_uri)
+            predictions = parse_s3_outfile(self.s3_client, raw_output_s3_uri)
             output_s3_uri = self.get_output_s3_url(
                 job.endpoint_name, raw=False, perturb_prefix=perturb_prefix
             )
-            helpers.upload_predictions(self.s3_client, output_s3_uri, predictions)
+            upload_predictions(self.s3_client, output_s3_uri, predictions)
         except Exception as e:
             logger.exception(
                 f"Exception in parsing output file for {job.job_name}: {e}"
@@ -328,7 +330,7 @@ class BaseDataset(ABC):
             output_s3_uri = self.datasets[job.dataset_name].get_output_s3_url(
                 job.endpoint_name, raw=False, perturb_prefix=perturb_prefix
             )
-            predictions = helpers.parse_s3_outfile(self.s3_client, output_s3_uri)
+            predictions = parse_s3_outfile(self.s3_client, output_s3_uri)
         except Exception:
             predictions = self.parse_outfile_and_upload(job, original=original)
         finally:

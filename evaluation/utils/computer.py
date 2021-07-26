@@ -13,7 +13,6 @@ from metrics import get_job_metrics
 from models.dataset import DatasetModel
 from models.round import RoundModel
 from models.score import ScoreModel
-from utils import helpers
 from utils.helpers import parse_s3_uri, update_metadata_json_string
 
 

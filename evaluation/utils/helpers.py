@@ -141,23 +141,16 @@ def update_metadata_json_string(original_json_string, new_json_string_list):
 
 
 def parse_s3_outfile(s3_client, s3_uri: str) -> List[dict]:
-    """Download raw predictions file from S3 and parse it."""
+    """Download raw predictions file from S3 and parse it.
+
+    We parse batch transform output by balancing brackets,
+    since torchserve outputs pretty printed json by default
+    """
     raw_s3_bucket, raw_s3_path = parse_s3_uri(s3_uri)
     fd, local_file = tempfile.mkstemp(suffix=raw_s3_path.split("/")[-1])
     s3_client.download_file(raw_s3_bucket, raw_s3_path, local_file)
     os.close(fd)
 
-    predictions = _parse_outfile(local_file)
-    os.remove(local_file)
-
-    return predictions
-
-
-def _parse_outfile(local_file: str) -> list:
-    """
-    Parse batch transform output by balancing brackets, since torchserve output
-    pretty prints json by default
-    """
     predictions = []
     json_lines = True
     with open(local_file) as f:
@@ -181,6 +174,7 @@ def _parse_outfile(local_file: str) -> list:
                 tmp = ""
             elif line:
                 tmp += line
+    os.remove(local_file)
     return predictions
 
 
