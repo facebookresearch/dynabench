@@ -191,10 +191,10 @@ class BaseDataset(ABC):
             self.read_labels(perturb_prefix)
         return self._n_examples[perturb_prefix]
 
-    def eval_job(self, job) -> tuple:
-        """Fetches the predictions for the given job, and run the evaluation.
+    def compute_job_metrics(self, job) -> tuple:
+        """Fetches the predictions for the given job, and compute the metrics (accuracy, ...).
 
-        This can be used by tasks to have a better control on how the evaluation is run.
+        This can be used by tasks to have a better control on how the metrics are computed.
         """
         raw_output_s3_uri = self.get_output_s3_url(
             job.endpoint_name, raw=True, perturb_prefix=job.perturb_prefix
@@ -327,7 +327,7 @@ class BaseDataset(ABC):
     def read_predictions(self, job, original=False):
         perturb_prefix = None if original else job.perturb_prefix
         try:
-            output_s3_uri = self.datasets[job.dataset_name].get_output_s3_url(
+            output_s3_uri = self.get_output_s3_url(
                 job.endpoint_name, raw=False, perturb_prefix=perturb_prefix
             )
             predictions = parse_s3_outfile(self.s3_client, output_s3_uri)

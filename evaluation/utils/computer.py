@@ -69,7 +69,7 @@ class MetricsComputer:
             # TODO: avoid explictly pass perturb prefix at multiple places
             # - take full job information at one interface instead
             dataset = self.datasets[job.dataset_name]
-            eval_metrics_dict, delta_metrics_dict = dataset.eval_job(job)
+            eval_metrics_dict, delta_metrics_dict = dataset.compute_job_metrics(job)
 
             if job.perturb_prefix:
                 eval_metadata_json = json.loads(eval_metrics_dict["metadata_json"])
