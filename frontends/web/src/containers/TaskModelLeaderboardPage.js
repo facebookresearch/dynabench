@@ -22,31 +22,15 @@ const TaskModelLeaderboardPage = (props) => {
   // Call api only once
   useEffect(() => {
     /**
-     * Invoke APIService to fetch Flores Tasks
+     * Invoke APIService to fetch  Task
      *
      * @param {*} api instance of @see APIService
      * @param {number} page
      */
-    const fetchFloresTasks = (api) => {
+    const fetchTask = (api) => {
       setIsLoading(true);
       api.getTask(taskId).then(
         (result) => {
-          // const floresTasks = result.filter((t) =>
-          //   FLORES_TASK_SHORT_NAMES.includes(t.shortname)
-          // );
-          // const taskLookup = floresTasks.reduce(
-          //   (map, obj) => ((map[obj.shortname] = obj), map),
-          //   {}
-          // );
-
-          // setTaskLookup(taskLookup);
-
-          // if (FLORES_TASK_SHORT_NAMES.includes(taskShortName)) {
-          //   setTask(taskLookup[taskShortName]); // set the task from Arguments
-          // } else {
-          //   setTask(taskLookup[FLORES_TASK_SHORT_NAMES[0]]); // set default task
-          // }
-
           setTask(result);
 
           setIsLoading(false);
@@ -58,7 +42,7 @@ const TaskModelLeaderboardPage = (props) => {
       );
     };
 
-    fetchFloresTasks(context.api);
+    fetchTask(context.api);
 
     return () => {};
   }, [context.api, taskId]);
