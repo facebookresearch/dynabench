@@ -8,21 +8,21 @@ mephisto:
     task_name: max-qa-1
     task_title: Beat the AI at Reading Comprehension
     task_description: >
-      You will be asked to write questions and select answers for a given question. An AI will then try to answer your question - if it answers incorrectly, you win, but if it gets the answer right, you lose and will have to try again. Good luck!
+      You will be presented with a short passage of text from Wikipedia. You will then be asked to write questions and select answers for a given question.
     task_reward: 1.00
     assignment_duration_in_seconds: 3600
     maximum_units_per_worker: 10
     max_num_concurrent_units: 250  # how much it launches at a given time (how many HITs running at any given time)
-    task_tags: "question answering, question, beat the AI, reading comprehension, AI"
+    task_tags: "question answering, question, reading comprehension, AI"
 dynabench:
   task_name: max-qa-1
   task_id: 2
-  round_id: 2
+  round_id: 3
   block_mobile: True
   # fetching_tags: "val2017"
   # tag_to_store_with_examples is required
-  extra_logging: "tag_to_store_with_examples:max_test_v2"
+  extra_logging: "tag_to_store_with_examples:max_test_v3"
 # num_jobs: 10
 # preselected_qualifications: ["1000_hits_approved", "98_percent_approved", "english_only"]
-num_jobs: 1
+num_jobs: 10
 preselected_qualifications: []

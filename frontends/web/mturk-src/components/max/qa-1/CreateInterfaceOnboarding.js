@@ -14,23 +14,23 @@ import {
 
 import { TokenAnnotator, TextAnnotator } from "react-text-annotate";
 
+import "./CreateInterface.css";
+
 class ContextInfoAns extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       text:
-        'The national enquirer ( also commonly known as the enquirer ) is an american supermarket tabloid published by american media inc ( ami ) . founded in 1926 , the tabloid has gone through a number of changes over the years . the " enquirer " openly acknowledges that it will pay sources for tips , a practice generally disapproved of by the mainstream press . the tabloid has struggled with declining circulation figures because of competition from glossy tabloid publications . in may 2014 , american media announced a decision to shift the headquarters of the " national enquirer " from florida , where it had been located since 1971',
+        'The National Enquirer (also commonly known as the Enquirer) is an American supermarket tabloid published by American Media Inc (AMI). Founded in 1926, the tabloid has gone through a number of changes over the years. The "Enquirer" openly acknowledges that it will pay sources for tips, a practice generally disapproved of by the mainstream press. The tabloid has struggled with declining circulation figures because of competition from glossy tabloid publications. In May 2014, American Media announced a decision to shift the headquarters of the "National Enquirer" from Florida, where it had been located since 1971.',
     };
   }
   render() {
     return (
       <>
         <TokenAnnotator
-          style={{
-            lineHeight: 1.5,
-          }}
-          className="context"
-          tokens={this.state.text.split(" ")}
+          id="tokenAnnotator"
+          className="mb-1 p-3 light-gray-bg qa-context"
+          tokens={this.state.text.split(/\b|(?<=[\s\(\)])|(?=[\s\(\)])/)}
           value={this.props.answer}
           onChange={this.props.updateAnswer}
           getSpan={(span) => ({
@@ -52,20 +52,19 @@ class ContextInfoQues extends React.Component {
     super(props);
     this.state = {
       text:
-        'The national enquirer ( also commonly known as the enquirer ) is an american supermarket tabloid published by american media inc ( ami ) . founded in 1926 , the tabloid has gone through a number of changes over the years . the " enquirer " openly acknowledges that it will pay sources for tips , a practice generally disapproved of by the mainstream press . the tabloid has struggled with declining circulation figures because of competition from glossy tabloid publications . in may 2014 , american media announced a decision to shift the headquarters of the " national enquirer " from florida , where it had been located since 1971',
+      'The National Enquirer (also commonly known as the Enquirer) is an American supermarket tabloid published by American Media Inc (AMI). Founded in 1926, the tabloid has gone through a number of changes over the years. The "Enquirer" openly acknowledges that it will pay sources for tips, a practice generally disapproved of by the mainstream press. The tabloid has struggled with declining circulation figures because of competition from glossy tabloid publications. In May 2014, American Media announced a decision to shift the headquarters of the "National Enquirer" from Florida, where it had been located since 1971.',
     };
   }
   render() {
     return (
       <>
         <TokenAnnotator
-          style={{
-            lineHeight: 1.5,
-          }}
-          className="context"
-          tokens={this.state.text.split(" ")}
+          id="tokenAnnotator"
+          className="mb-1 p-3 light-gray-bg qa-context"
+          tokens={this.state.text.split(/\b|(?<=[\s\(\)])|(?=[\s\(\)])/)}
           value={this.props.answer}
         />
+
         <small>
           <b>Your goal:</b> enter a question for which the highlighted span of
           text in the passage is the correct answer.
@@ -107,8 +106,8 @@ class CreateInterfaceOnboardingAns extends React.Component {
     const answers = {
       1: ["mainstream press", "the mainstream press"],
       2: ["1971"],
-      3: ["american media inc ( ami )", "american media inc"],
-      4: ["american supermarket tabloid", "an american supermarket tabloid"],
+      3: ["American Media Inc (AMI)", "American Media Inc"],
+      4: ["American supermarket tabloid", "an American supermarket tabloid"],
       5: [
         "declining circulation figures because of competition from glossy tabloid publications",
         "declining circulation figures",
@@ -130,7 +129,7 @@ class CreateInterfaceOnboardingAns extends React.Component {
     var answer_correct = <></>;
     if (this.state.answer.length > 0) {
       var last_answer = this.state.answer[this.state.answer.length - 1];
-      var answer_text = last_answer.tokens.join(" ");
+      var answer_text = last_answer.tokens.join("");
       if (answers[this.props.step].includes(answer_text)) {
         answer_correct = (
           <Row>
@@ -247,10 +246,10 @@ class CreateInterfaceOnboardingQues extends React.Component {
   }
   render() {
     const answers = {
-      6: [{ start: 0, end: 3, tag: "ANS" }],
-      7: [{ start: 86, end: 87, tag: "ANS" }],
-      8: [{ start: 76, end: 81, tag: "ANS" }],
-      9: [{ start: 83, end: 84, tag: "ANS" }],
+      6: [{ start: 0, end: 5, tag: "ANS" }],
+      7: [{ start: 64, end: 75, tag: "ANS" }],
+      8: [{ start: 49, end: 50, tag: "ANS" }],
+      9: [{ start: 154, end: 157, tag: "ANS" }],
     };
     const content = <ContextInfoQues answer={answers[this.props.step]} />;
     return (

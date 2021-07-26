@@ -908,7 +908,7 @@ class CreateInterface extends React.Component {
                 ) : (
                   <>
                     <span>
-                      <strong>Bad luck!</strong> The AI correctly predicted{" "}
+                      The AI correctly predicted{" "}
                       <strong>{item.modelPredStr}</strong>. Please try again.
                     </span>
                     {item.exactMatch ? (

@@ -574,8 +574,8 @@ class ExperimentInstructions extends React.Component {
           You will be provided with a passage, and a question and answer about
           the passage. The task is to modify the question and/or answer to
           ensure that they are correct. You can also modify the question to make
-          it more difficult for the AI to answer. When you click "Submit
-          Question", the question-answering AI will provide an answer. Your
+          it more difficult for the AI to answer. When you click <i>"Submit
+          Question"</i>, the question-answering AI will provide an answer. Your
           challenge is to generate questions that this AI fails to answer
           correctly, but that another human would answer correctly.
         </>
@@ -775,7 +775,7 @@ class MaxQATaskMain extends React.Component {
     var num_experiments = this.experiment_modes.length; // 12
     var experiment_mode_id = mephistoIdCode % num_experiments;
     // ======================================================================================
-    var experiment_mode_id = 11; // TODO: DISABLE BEFORE LAUNCH
+    // var experiment_mode_id = 9; // TODO: DISABLE BEFORE LAUNCH
     // ======================================================================================
 
     var experiment_mode = this.experiment_modes[experiment_mode_id];
