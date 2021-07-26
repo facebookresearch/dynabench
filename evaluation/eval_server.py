@@ -1,5 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+import contextlib
 import json
 import logging
 import multiprocessing
@@ -37,8 +38,11 @@ def main():
         logger.info("Haven't got dataset_dict. Sleep.")
         time.sleep(sleep_interval)
 
-    # TODO: we should read the config to know the number of CPU available
-    with multiprocessing.pool.Pool() as pool:
+    with contextlib.ExitStack() as stack:
+        # 3 so that we can handle dev/test/devtest at once for one model
+        flores_pool = stack.enter_context(multiprocessing.pool.Pool(3))
+        pool = stack.enter_context(multiprocessing.pool.Pool(1))
+
         requester = Requester(eval_config, dataset_dict)
         timer = scheduler_update_interval
         while True:
@@ -62,7 +66,11 @@ def main():
                 requester.update_status()
                 timer = 0
             # Evaluate one job
-            requester.computer.compute_async(pool, N=1)
+            job = requester.computer.find_next_ready_job()
+            if job:
+                requester.computer.compute_one_async(
+                    flores_pool if "flores101" in job.dataset_name else pool, job
+                )
             time.sleep(sleep_interval)
             timer += sleep_interval
 

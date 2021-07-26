@@ -6,6 +6,7 @@ import logging
 import os
 import pickle
 import tempfile
+from typing import Optional
 
 import boto3
 from enum import Enum
@@ -14,6 +15,7 @@ from metrics import get_job_metrics
 from models.dataset import DatasetModel
 from models.round import RoundModel
 from models.score import Score, ScoreModel
+from utils.evaluator import Job
 from utils.helpers import parse_s3_uri, update_metadata_json_string
 
 
@@ -68,31 +70,6 @@ class MetricsComputer:
             )
             return [], []
 
-    def update_database(self, job) -> ComputeStatusEnum:
-        # TODO: remove this ?
-        logger.info(f"Evaluating {job.job_name}")
-        try:
-            dm = DatasetModel()
-            d_entry = dm.getByName(job.dataset_name)
-            sm = ScoreModel()
-            s = sm.getOneByModelIdAndDataset(job.model_id, d_entry.id)
-            if job.perturb_prefix and not s:
-                logger.info(
-                    f"Haven't received original evaluation for {job.job_name}. "
-                    f"Postpone computation."
-                )
-                return ComputeStatusEnum.postponed
-
-            dataset = self.datasets[job.dataset_name]
-            eval_metrics_dict, delta_metrics_dict = dataset.compute_job_metrics(job)
-            self.update_database_with_metrics(
-                job, eval_metrics_dict, delta_metrics_dict
-            )
-            return ComputeStatusEnum.successful
-        except Exception as ex:
-            self.log_job_error(job, ex)
-            return ComputeStatusEnum.failed
-
     def update_database_with_metrics(
         self, job, eval_metrics_dict: dict, delta_metrics_dict: dict
     ) -> None:
@@ -111,12 +88,8 @@ class MetricsComputer:
             }
             metadata_json = update_metadata_json_string(
                 s.metadata_json,
-                [
-                    json.dumps(eval_metadata_json),
-                    delta_metrics_dict["metadata_json"],
-                ],
+                [json.dumps(eval_metadata_json), delta_metrics_dict["metadata_json"]],
             )
-
             score_obj = {**delta_metrics_dict, "metadata_json": metadata_json}
             sm.update(s.id, **score_obj)
         else:
@@ -143,7 +116,8 @@ class MetricsComputer:
                     score_obj["r_realid"] = 0
                 sm.create(**score_obj)
 
-        self._computing.remove(job)
+        if job in self._computing:
+            self._computing.remove(job)
         self.dump()
         logger.info(f"Successfully evaluated {job.job_name}")
 
@@ -152,33 +126,28 @@ class MetricsComputer:
             self._waiting.extend(jobs)
             self.dump()
 
-    def compute(self, N=1):
-        # TODO: remove this ? or keep it as a fallback for non-pickable tasks ?
-        n = len(self._waiting)
-        if N == -1:
-            N = n
-        computed, traversed = 0, 0
-        while self._waiting and computed < N and traversed < n:
-            job = self._waiting.pop(0)
-            traversed += 1
-            status = self.update_database(job)
-            if status == ComputeStatusEnum.postponed:
-                self._waiting.append(job)
-            else:
-                computed += 1
-                if status == ComputeStatusEnum.failed:
-                    self._failed.append(job)
-            self.dump()
-
     def log_job_error(self, job, ex):
         logger.exception(f"Exception in computing metrics {ex}")
+        if job in self._computing:
+            self._computing.remove(job)
         self._failed.append(job)
 
-    def compute_one_async(self, process_pool, job):
+    def compute_one_blocking(self, job) -> None:
+        try:
+            logger.info(f"Evaluating {job.job_name}")
+            self._computing.append(job)
+            dataset = self.datasets[job.dataset_name]
+            eval_metrics, delta_metrics = dataset.compute_job_metrics(job)
+            self.update_database_with_metrics(job, eval_metrics, delta_metrics)
+        except Exception as e:
+            self.log_job_error(job, e)
+            return
+
+    def compute_one_async(self, process_pool, job) -> None:
         try:
             dataset = self.datasets[job.dataset_name]
             process_pool.apply_async(
-                dataset.eval_job,
+                dataset.compute_job_metrics,
                 args=(job,),
                 callback=functools.partial(self.update_database_with_metrics, job),
                 error_callback=functools.partial(self.log_job_error, job),
@@ -194,17 +163,20 @@ class MetricsComputer:
 
         self._computing.append(job)
 
-    def compute_async(self, process_pool, N: int = 1) -> None:
-        """Schedules up to N job evaluations on the give process pool"""
+    def find_next_ready_job(self) -> Optional[Job]:
+        """Finds the next job ready to start evaluating.
+
+        Returns None if none of the job are ready.
+
+        Note: the job returned doesn't belong anymore to any of the internal lists
+        and need to be added back (eg by passing it to `compute_one_async`)
+        """
         dm = DatasetModel()
         sm = ScoreModel()
 
         n = len(self._waiting)
-        if N == -1:
-            N = n
-        computed, traversed = 0, 0
-
-        while self._waiting and computed < N and traversed < n:
+        traversed = 0
+        while self._waiting and traversed < n:
             job = self._waiting.pop(0)
             traversed += 1
 
@@ -217,9 +189,9 @@ class MetricsComputer:
                 )
                 self._waiting.append(job)
             else:
-                self.compute_one_async(process_pool, job)
-                computed += 1
-            self.dump()
+                self.dump()
+                return job
+        return None
 
     def get_jobs(self, status="Failed"):
         if status == "Failed":
