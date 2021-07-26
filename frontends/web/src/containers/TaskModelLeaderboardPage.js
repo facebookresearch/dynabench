@@ -13,7 +13,6 @@ import { TaskModelDefaultLeaderboard } from "../components/TaskLeaderboard/TaskM
 
 const TaskModelLeaderboardPage = (props) => {
   const context = useContext(UserContext); // for API
-  const [taskLookup, setTaskLookup] = useState({}); // All Flores Tasks
   const [task, setTask] = useState(null); // Current Task ID
   const [isLoading, setIsLoading] = useState(false);
 
