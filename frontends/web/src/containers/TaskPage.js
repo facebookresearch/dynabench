@@ -426,18 +426,44 @@ class TaskPage extends React.Component {
   }
 
   componentDidMount() {
-    this.setState({ taskCode: this.props.match.params.taskCode }, function () {
-      this.context.api.getTaskByCode(this.state.taskCode).then(
+    this.setState({ taskId: this.props.match.params.taskId }, function () {
+      this.context.api.getTask(this.state.taskId).then(
+        (result) => {
+          this.setState(
+            {
+              task: result,
+              displayRound: "overall",
+              round: result.round,
+            },
+            function () {
+              this.refreshData();
+            }
+          );
+        },
+        (error) => {
+          console.log(error);
+          if (error.status_code === 404 || error.status_code === 405) {
+            this.props.history.push("/");
+          }
+        }
+      );
+    });
+  }
+
+  componentDidUpdate(prevProps) {
+    if (this.props.match.params.taskId !== this.state.taskId) {
+      this.setState({ taskId: this.props.match.params.taskId }, function () {
+        this.context.api.getTask(this.state.taskId).then(
           (result) => {
             this.setState(
-                {
-                  task: result,
-                  displayRound: "overall",
-                  round: result.round,
-                },
-                function () {
-                  this.refreshData();
-                }
+              {
+                task: result,
+                displayRound: "overall",
+                round: result.round,
+              },
+              function () {
+                this.refreshData();
+              }
             );
           },
           (error) => {
@@ -446,37 +472,8 @@ class TaskPage extends React.Component {
               this.props.history.push("/");
             }
           }
-      );
-    });
-  }
-
-  componentDidUpdate(prevProps) {
-    if (this.props.match.params.taskCode !== this.state.taskCode) {
-      this.setState(
-          { taskCode: this.props.match.params.taskCode },
-          function () {
-            this.context.api.getTaskByCode(this.state.taskCode).then(
-                (result) => {
-                  this.setState(
-                      {
-                        task: result,
-                        displayRound: "overall",
-                        round: result.round,
-                      },
-                      function () {
-                        this.refreshData();
-                      }
-                  );
-                },
-                (error) => {
-                  console.log(error);
-                  if (error.status_code === 404 || error.status_code === 405) {
-                    this.props.history.push("/");
-                  }
-                }
-            );
-          }
-      );
+        );
+      });
     }
   }
 
