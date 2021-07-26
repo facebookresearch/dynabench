@@ -6,9 +6,6 @@ import sys
 import enum
 import sqlalchemy as db
 
-import metrics.metrics as metrics
-from metrics.instance_property import instance_property
-
 from .base import Base, BaseModel
 from .dataset import AccessTypeEnum, DatasetModel
 from .round import Round
@@ -16,6 +13,8 @@ from .user import User
 
 
 sys.path.append("../evaluation")  # noqa
+import metrics.metrics as metrics
+from metrics.instance_property import instance_property
 
 
 class ModelCorrectMetricEnum(enum.Enum):
