@@ -152,16 +152,7 @@ const TaskModelLeaderboardCard = (props) => {
     );
 
     return () => {};
-  }, [
-    page,
-    sort,
-    metrics,
-    datasetWeights,
-    context.api,
-    taskId,
-    pageLimit,
-    props,
-  ]);
+  }, [page, sort, metrics, datasetWeights, context.api, taskId, pageLimit]);
 
   const isEndOfPage = (page + 1) * pageLimit >= total;
 
