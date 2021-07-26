@@ -60,7 +60,7 @@ class VerifyInterface extends React.Component {
       UNKNOWN: "unknown",
     };
     this.state = {
-      taskIdOrCode: null,
+      taskCode: null,
       task: {},
 
       owner_mode: false,
@@ -99,7 +99,7 @@ class VerifyInterface extends React.Component {
             "Please log in or sign up so that you can get credit for your generated examples."
           ) +
           "&src=" +
-          encodeURIComponent("/tasks/" + params.taskIdOrCode + "/create")
+          encodeURIComponent(`/tasks/${params.taskCode}/create`)
       );
     }
 
@@ -121,14 +121,20 @@ class VerifyInterface extends React.Component {
       }
     }
 
-    this.setState({ taskIdOrCode: params.taskIdOrCode }, function () {
-      this.context.api.getTask(this.state.taskIdOrCode).then(
+    this.setState({ taskCode: params.taskCode }, function () {
+      this.context.api.getTask(this.state.taskCode).then(
         (result) => {
           result.targets = result.targets.split("|"); // split targets
-          this.setState({ task: result }, function () {
-            this.state.task.selected_round = this.state.task.cur_round;
-            this.getNewExample();
-          });
+          this.setState(
+            { task: result, taskCode: result.task_code },
+            function () {
+              this.state.task.selected_round = this.state.task.cur_round;
+              this.getNewExample();
+              if (params.taskCode !== this.state.taskCode) {
+                // TODO: replace history
+              }
+            }
+          );
         },
         (error) => {
           console.log(error);

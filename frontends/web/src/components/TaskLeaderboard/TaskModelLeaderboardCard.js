@@ -25,7 +25,7 @@ const SortDirection = {
  *
  * @param {Object} props React props de-structured.
  * @param {Object} props.task The task
- * @param {number} props.taskId The taskID
+ * @param {string} props.taskCode The task code
  * @param {boolean} props.disableToggleSort Whether or not changing sort field/direction is allowed
  * @param {boolean} props.disableAdjustWeights Whether or not changing metric/dataset weights is allowed
  * @param {boolean} props.disableForkAndSnapshot Whether or not forking and snapshotting is allowed
@@ -35,7 +35,8 @@ const SortDirection = {
  * @param {string} props.location navigation location
  */
 const TaskModelLeaderboardCard = (props) => {
-  const task = props.task;
+  const { task, taskCode } = props;
+  const taskId = task.id;
 
   const [data, setData] = useState([]);
   const [enableHelp, setEnableHelp] = useState(false);
@@ -66,9 +67,6 @@ const TaskModelLeaderboardCard = (props) => {
   const [pageLimit, setPageLimit] = useState(10);
   const [total, setTotal] = useState(0);
   const [showForkModal, setShowForkModal] = useState(false);
-
-  const taskId = props.task.id;
-  const taskIdOrCode = props.taskIdOrCode;
 
   /**
    * Update weight state for the appropriate metric
@@ -152,16 +150,7 @@ const TaskModelLeaderboardCard = (props) => {
     );
 
     return () => {};
-  }, [
-    page,
-    sort,
-    metrics,
-    datasetWeights,
-    context.api,
-    taskIdOrCode,
-    pageLimit,
-    taskId,
-  ]);
+  }, [page, sort, metrics, datasetWeights, context.api, taskCode, pageLimit]);
 
   const isEndOfPage = (page + 1) * pageLimit >= total;
 
@@ -174,7 +163,7 @@ const TaskModelLeaderboardCard = (props) => {
             metricWeights={metrics}
             datasetWeights={datasetWeights}
             taskId={taskId}
-            taskIdOrCode={taskIdOrCode}
+            taskCode={taskCode}
             showForkModal={showForkModal}
             setShowForkModal={setShowForkModal}
             history={props.history}
@@ -282,7 +271,7 @@ const TaskModelLeaderboardCard = (props) => {
                           encodeURIComponent(
                             "You need to login to fork a leaderboard."
                           ) +
-                          `&src=/tasks/${taskId}`
+                          `&src=/tasks/${taskCode}`
                       );
                     }
                   }}

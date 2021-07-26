@@ -567,9 +567,7 @@ class ResponseInfo extends React.Component {
                     "Please sign up or log in so that you can get credit for your generated examples."
                   ) +
                   "&src=" +
-                  encodeURIComponent(
-                    "/tasks/" + this.props.taskIdOrCode + "/create"
-                  )
+                  encodeURIComponent(`/tasks/${this.props.taskCode}/create`)
                 }
               >
                 Sign up now
@@ -887,7 +885,7 @@ class CreateInterface extends React.Component {
     super(props);
     this.state = {
       answer: [],
-      taskIdOrCode: null,
+      taskCode: null,
       task: {},
       context: null,
       target: 0,
@@ -1238,7 +1236,7 @@ class CreateInterface extends React.Component {
                 "/login?msg=" +
                   encodeURIComponent("You need to login to use this feature.") +
                   "&src=" +
-                  encodeURIComponent("/tasks/" + this.state.taskId + "/create")
+                  encodeURIComponent(`/tasks/${this.state.taskCode}/create`)
               );
             }
             this.setState({
@@ -1262,7 +1260,7 @@ class CreateInterface extends React.Component {
             "Please sign up or log in so that you can get credit for your generated examples."
           ) +
           "&src=" +
-          encodeURIComponent("/tasks/" + this.state.taskIdOrCode + "/create")
+          encodeURIComponent(`/tasks/${this.state.taskCode}/create`)
       );
     }
     this.setState({ livemode: checked });
@@ -1298,14 +1296,20 @@ class CreateInterface extends React.Component {
       );
     }
 
-    this.setState({ taskIdOrCode: params.taskIdOrCode }, function () {
-      this.context.api.getTask(this.state.taskIdOrCode).then(
+    this.setState({ taskCode: params.taskCode }, function () {
+      this.context.api.getTask(this.state.taskCode).then(
         (result) => {
           result.targets = result.targets.split("|"); // split targets
-          this.setState({ task: result }, function () {
-            this.state.task.selected_round = this.state.task.cur_round;
-            this.getNewContext();
-          });
+          this.setState(
+            { task: result, taskCode: result.task_code },
+            function () {
+              this.state.task.selected_round = this.state.task.cur_round;
+              this.getNewContext();
+              if (params.taskCode !== this.state.taskCode) {
+                // TODO: replace history
+              }
+            }
+          );
         },
         (error) => {
           console.log(error);
@@ -1369,7 +1373,7 @@ class CreateInterface extends React.Component {
             obj={item}
             content={this.state.content}
             getNewContext={this.getNewContext}
-            taskIdOrCode={this.state.taskIdOrCode}
+            taskCode={this.state.taskCode}
           />
         )
       )

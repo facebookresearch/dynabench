@@ -149,7 +149,7 @@ class ModelPage extends React.Component {
         name: "",
         username: "",
       },
-      taskIdOrCode: null,
+      taskCode: null,
       task: {},
       isLoading: false,
     };
@@ -170,8 +170,7 @@ class ModelPage extends React.Component {
           this.context.api.getTask(this.state.model.tid).then(
             (result) => {
               this.setState({
-                taskIdOrCode:
-                  this.props.match.params.taskIdOrCode || result.task_code,
+                taskCode: result.task_code,
                 task: result,
               });
             },
@@ -193,14 +192,14 @@ class ModelPage extends React.Component {
 
   handleEdit = () => {
     this.props.history.push({
-      pathname: `/tasks/${this.state.taskIdOrCode}/models/${this.state.model.id}/updateModelInfo`,
+      pathname: `/tasks/${this.state.taskCode}/models/${this.state.model.id}/updateModelInfo`,
       state: { detail: this.state.model },
     });
   };
 
   handleInteract = () => {
     this.props.history.push({
-      pathname: `/tasks/${this.state.taskIdOrCode}/create`,
+      pathname: `/tasks/${this.state.taskCode}/create`,
       state: {
         detail: {
           endpointUrl:
@@ -216,7 +215,7 @@ class ModelPage extends React.Component {
     const modelName = this.state.model.name;
     if (!modelName || modelName === "") {
       this.props.history.push({
-        pathname: `/tasks/${this.state.taskIdOrCode}/models/${this.state.model.id}/updateModelInfo`,
+        pathname: `/tasks/${this.state.taskCode}/models/${this.state.model.id}/updateModelInfo`,
         state: { detail: this.state.model },
       });
       return;
@@ -284,7 +283,7 @@ class ModelPage extends React.Component {
   };
 
   render() {
-    const { model, task, taskIdOrCode } = this.state;
+    const { model, task, taskCode } = this.state;
     const isFlores = FLORES_TASK_SHORT_NAMES.includes(task.shortname);
     const isModelOwner =
       parseInt(this.state.model.user_id) === parseInt(this.state.ctxUserId);
@@ -424,7 +423,7 @@ class ModelPage extends React.Component {
                           <tr style={{ border: `none` }}>
                             <td>Task</td>
                             <td>
-                              <Link to={`/tasks/${taskIdOrCode}`}>
+                              <Link to={`/tasks/${taskCode}`}>
                                 <TasksContext.Consumer>
                                   {({ tasks }) => {
                                     const task =

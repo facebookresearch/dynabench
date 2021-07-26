@@ -5,15 +5,7 @@
  */
 
 import React from "react";
-import {
-  Container,
-  Row,
-  Col,
-  Card,
-  CardGroup,
-  Button,
-  Form,
-} from "react-bootstrap";
+import { Container, Row, Card, CardGroup, Button, Form } from "react-bootstrap";
 import Markdown from "react-markdown";
 import { Formik } from "formik";
 import UserContext from "./UserContext";
@@ -23,7 +15,7 @@ class PublishInterface extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      taskId: props.match.params.taskId,
+      taskCode: props.match.params.taskCode,
       modelId: props.match.params.modelId,
       model: {},
     };
@@ -32,7 +24,7 @@ class PublishInterface extends React.Component {
     if (!this.context.api.loggedIn()) {
       this.props.history.push(
         "/login?&src=" +
-          encodeURIComponent("/tasks/" + this.state.taskId + "/submit")
+          encodeURIComponent(`/tasks/${this.state.taskCode}/submit`)
       );
     }
     const propState = this.props.location.state;

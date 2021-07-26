@@ -113,7 +113,7 @@ class App extends React.Component {
   }
 
   render() {
-    //href={`/tasks/${taskIdOrCode}`}
+    //href={`/tasks/${taskCode}`}
     var query = qs.parse(window.location.search, {
       ignoreQueryPrefix: true,
     });
@@ -257,26 +257,30 @@ class App extends React.Component {
                 <Route path="/termsofuse" component={TermsPage} />
                 <Route path="/datapolicy" component={DataPolicyPage} />
                 <Route
-                  path="/tasks/:taskIdOrCode/create"
+                  path="/tasks/:taskCode/create"
                   component={CreateInterface}
                 />
                 <Route
-                  path="/tasks/:taskIdOrCode/validate"
+                  path="/tasks/:taskCode/validate"
                   component={VerifyInterface}
                 />
                 <Route
-                  path="/tasks/:taskIdOrCode/models/:modelId/updateModelInfo"
+                  path="/tasks/:taskCode/models/:modelId/updateModelInfo"
                   component={UpdateModelInfoInterface}
                 />
                 <Route
-                  path="/tasks/:taskIdOrCode/models/:modelId"
+                  path="/tasks/:taskCode/models/:modelId"
                   component={ModelPage}
                 />
                 <Route
-                  path="/tasks/:taskIdOrCode/leaderboard_configuration/:leaderboardName"
+                  path="/tasks/:taskCode/round/:roundId"
                   component={TaskPage}
                 />
-                <Route path="/tasks/:taskIdOrCode" component={TaskPage} />
+                <Route
+                  path="/tasks/:taskCode/leaderboard_configuration/:leaderboardName"
+                  component={TaskPage}
+                />
+                <Route path="/tasks/:taskCode" component={TaskPage} />
                 <Route
                   path="/flores/top5/:taskShortName"
                   component={FloresTop5Page}

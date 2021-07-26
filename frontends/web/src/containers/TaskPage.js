@@ -135,7 +135,7 @@ const TaskActionButtons = (props) => {
             <Button
               as={Link}
               className="border-0 blue-color font-weight-bold light-gray-bg"
-              to={"/tasks/" + props.taskIdOrCode + "/create"}
+              to={`/tasks/${props.taskCode}/create`}
             >
               <i className="fas fa-pen"></i> Create Examples
             </Button>
@@ -155,7 +155,7 @@ const TaskActionButtons = (props) => {
             <Button
               as={Link}
               className="border-0 blue-color font-weight-bold light-gray-bg"
-              to={"/tasks/" + props.taskIdOrCode + "/validate"}
+              to={`/tasks/${props.taskCode}/validate`}
             >
               <i className="fas fa-search"></i> Validate Examples
             </Button>
@@ -409,7 +409,7 @@ class TaskPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      taskIdOrCode: props.match.params.taskIdOrCode,
+      taskCode: props.match.params.taskCode,
       task: {},
       trendScore: [],
       userLeaderBoardData: [],
@@ -426,16 +426,20 @@ class TaskPage extends React.Component {
   }
 
   componentDidMount() {
-    this.setState({ taskId: this.props.match.params.taskId }, function () {
-      this.context.api.getTask(this.state.taskId).then(
+    this.setState({ taskCode: this.props.match.params.taskCode }, function () {
+      this.context.api.getTask(this.state.taskCode).then(
         (result) => {
           this.setState(
             {
+              taskCode: result.task_code,
               task: result,
               displayRound: "overall",
               round: result.round,
             },
             function () {
+              if (this.props.match.params.taskCode !== this.state.taskCode) {
+                // TODO: replace history
+              }
               this.refreshData();
             }
           );
@@ -451,29 +455,33 @@ class TaskPage extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.match.params.taskId !== this.state.taskId) {
-      this.setState({ taskId: this.props.match.params.taskId }, function () {
-        this.context.api.getTask(this.state.taskId).then(
-          (result) => {
-            this.setState(
-              {
-                task: result,
-                displayRound: "overall",
-                round: result.round,
-              },
-              function () {
-                this.refreshData();
+    if (this.props.match.params.taskCode !== this.state.taskCode) {
+      this.setState(
+        { taskCode: this.props.match.params.taskCode },
+        function () {
+          this.context.api.getTask(this.state.taskCode).then(
+            (result) => {
+              this.setState(
+                {
+                  taskCode: result.task_code,
+                  task: result,
+                  displayRound: "overall",
+                  round: result.round,
+                },
+                function () {
+                  this.refreshData();
+                }
+              );
+            },
+            (error) => {
+              console.log(error);
+              if (error.status_code === 404 || error.status_code === 405) {
+                this.props.history.push("/");
               }
-            );
-          },
-          (error) => {
-            console.log(error);
-            if (error.status_code === 404 || error.status_code === 405) {
-              this.props.history.push("/");
             }
-          }
-        );
-      });
+          );
+        }
+      );
     }
   }
 
@@ -900,7 +908,7 @@ class TaskPage extends React.Component {
           <Row className="justify-content-center">
             <TaskActionButtons
               api={this.context.api}
-              taskIdOrCode={this.state.taskIdOrCode}
+              taskCode={this.state.taskCode}
               user={this.context.user}
               task={this.state.task}
             />
@@ -926,13 +934,13 @@ class TaskPage extends React.Component {
                     <TaskModelForkLeaderboard
                       {...this.props}
                       task={this.state.task}
-                      taskIdOrCode={this.state.taskIdOrCode}
+                      taskCode={this.state.taskCode}
                     />
                   ) : (
                     <TaskModelDefaultLeaderboard
                       {...this.props}
                       task={this.state.task}
-                      taskIdOrCode={this.state.taskIdOrCode}
+                      taskCode={this.state.taskCode}
                     />
                   )}
                 </Annotation>
