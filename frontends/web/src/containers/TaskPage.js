@@ -638,13 +638,6 @@ class TaskPage extends React.Component {
         "https://paperswithcode.com/task/hate-speech-detection/latest",
       Sentiment: "https://paperswithcode.com/task/sentiment-analysis/latest",
     };
-    const taskForPerfOnlyLeaderboard = JSON.parse(
-      JSON.stringify(this.state.task)
-    );
-    taskForPerfOnlyLeaderboard.ordered_metrics = taskForPerfOnlyLeaderboard.ordered_metrics?.filter(
-      (metric) =>
-        metric.field_name === taskForPerfOnlyLeaderboard.perf_metric_field_name
-    );
     return (
       <OverlayProvider initiallyHide={true} delayMs="1700">
         <Container>
@@ -922,7 +915,7 @@ class TaskPage extends React.Component {
               />
             </Col>
           </Row>
-          {taskForPerfOnlyLeaderboard && this.state.task.ordered_scoring_datasets && (
+          {this.state.task && this.state.task.ordered_scoring_datasets && (
             <Row className="justify-content-center">
               <Col xs={12} md={12}>
                 <Annotation
@@ -932,16 +925,14 @@ class TaskPage extends React.Component {
                   {this.props.match.params.leaderboardName ? (
                     <TaskModelForkLeaderboard
                       {...this.props}
-                      task={taskForPerfOnlyLeaderboard}
+                      task={this.state.task}
                       taskId={this.state.taskId}
-                      specificDeploymentStatus={"deployed"}
                     />
                   ) : (
                     <TaskModelDefaultLeaderboard
                       {...this.props}
-                      task={taskForPerfOnlyLeaderboard}
+                      task={this.state.task}
                       taskId={this.state.taskId}
-                      specificDeploymentStatus={"deployed"}
                     />
                   )}
                 </Annotation>
