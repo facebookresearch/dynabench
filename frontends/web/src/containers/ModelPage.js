@@ -193,7 +193,7 @@ class ModelPage extends React.Component {
 
   handleEdit = () => {
     this.props.history.push({
-      pathname: `/tasks/${this.state.taskIdOrCode}/models/${this.state.model.id}/publish`,
+      pathname: `/tasks/${this.state.taskIdOrCode}/models/${this.state.model.id}/updateModelInfo`,
       state: { detail: this.state.model },
     });
   };
@@ -204,7 +204,7 @@ class ModelPage extends React.Component {
       state: {
         detail: {
           endpointUrl:
-            "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict?model=" +
+            "https://obws766r82.execute-api.us-west-1.amazonaws.com/predict?model=" +
             this.state.model.endpoint_name,
           name: this.state.model.name,
         },
@@ -216,7 +216,7 @@ class ModelPage extends React.Component {
     const modelName = this.state.model.name;
     if (!modelName || modelName === "") {
       this.props.history.push({
-        pathname: `/tasks/${this.state.taskIdOrCode}/models/${this.state.model.id}/publish`,
+        pathname: `/tasks/${this.state.taskIdOrCode}/models/${this.state.model.id}/updateModelInfo`,
         state: { detail: this.state.model },
       });
       return;
@@ -236,7 +236,7 @@ class ModelPage extends React.Component {
 
   handleBack = () => {
     const propState = this.props.location.state;
-    if (propState && propState.src === "publish") {
+    if (propState && propState.src === "updateModelInfo") {
       this.props.history.push("/account#models");
     } else {
       this.props.history.goBack();

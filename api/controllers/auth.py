@@ -37,6 +37,12 @@ def authenticate():
     return util.json_encode({"user": user.to_dict(), "token": token})
 
 
+@bottle.get("/authenticate/get_trial_token")
+def get_trial_auth_token():
+    token = _auth.get_token({"username": "temp_user"}, "trial_jwtexp")
+    return util.json_encode({"token": token})
+
+
 @bottle.get("/authenticate/refresh")
 def refresh_auth():
     payload = _auth.get_expired_token_payload()

@@ -108,11 +108,10 @@ def auth_optional(f):
     return decorated
 
 
-def get_token(payload):
+def get_token(payload, exp_key_name="jwtexp"):
     app = bottle.default_app()
-    payload["exp"] = datetime.datetime.utcnow() + datetime.timedelta(
-        seconds=app.config["jwtexp"]
-    )
+    jwt_exp = app.config[exp_key_name]
+    payload["exp"] = datetime.datetime.utcnow() + datetime.timedelta(seconds=jwt_exp)
     encoded = jwt.encode(
         payload, app.config["jwtsecret"], algorithm=app.config["jwtalgo"]
     )

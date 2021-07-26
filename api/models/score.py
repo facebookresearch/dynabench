@@ -9,6 +9,7 @@ import sqlalchemy as db
 from common import helpers as util
 from models.dataset import AccessTypeEnum, Dataset
 from models.round import Round
+from models.task import TaskModel
 from models.user import User
 
 from .base import Base, BaseModel
@@ -91,15 +92,27 @@ class ScoreModel(BaseModel):
     def getLeaderboardTopPerformingTags(
         self, tid, limit=5, offset=0, specific_tag=None
     ):
+        tm = TaskModel()
+        task = tm.get(tid)
+        include_unpublished_models = False
+        if task.settings_json is not None:
+            include_unpublished_models = json.loads(task.settings_json).get(
+                "include_unpublished_models_in_dynaboard", False
+            )
+
         scores_users_datasets_models = (
             self.dbs.query(Score, User, Dataset, Model)
             .join(Dataset, Dataset.id == Score.did)
             .join(Model, Score.mid == Model.id)
             .join(User, User.id == Model.uid)
             .filter(Model.tid == tid)
-            .filter(Model.is_published)
             .filter(Dataset.access_type == AccessTypeEnum.scoring)
         )
+        if not include_unpublished_models:
+            scores_users_datasets_models = scores_users_datasets_models.filter(
+                Model.is_published
+            )
+
         dataset_name_to_tag_performances = {}
         for score, user, dataset, model in scores_users_datasets_models:
             if dataset.name not in dataset_name_to_tag_performances:
@@ -126,9 +139,9 @@ class ScoreModel(BaseModel):
                     ].append(
                         {
                             "model_id": model.id,
-                            "model_name": model.name,
-                            "uid": user.id,
-                            "username": user.username,
+                            "model_name": model.name if model.is_published else None,
+                            "uid": user.id if model.is_published else None,
+                            "username": user.username if model.is_published else None,
                             "perf": tag_perf_dict["perf"],
                         }
                     )
@@ -233,6 +246,13 @@ class ScoreModel(BaseModel):
         limit=5,
         offset=0,
     ):
+        tm = TaskModel()
+        task = tm.get(tid)
+        include_unpublished_models = False
+        if task.settings_json is not None:
+            include_unpublished_models = json.loads(task.settings_json).get(
+                "include_unpublished_models_in_dynaboard", False
+            )
 
         ordered_dids = [
             did_and_weight["did"] for did_and_weight in ordered_dids_with_weight
@@ -243,9 +263,13 @@ class ScoreModel(BaseModel):
             .join(Model, Score.mid == Model.id)
             .join(User, User.id == Model.uid)
             .filter(Model.tid == tid)
-            .filter(Model.is_published)
             .filter(Score.did.in_(ordered_dids))
         )
+        if not include_unpublished_models:
+            scores_users_datasets_models = scores_users_datasets_models.filter(
+                Model.is_published
+            )
+
         scores, users, datasets, models = zip(*scores_users_datasets_models)
         scores, users, datasets, models = (
             set(scores),
@@ -381,9 +405,12 @@ class ScoreModel(BaseModel):
             data_list.append(
                 {
                     "model_id": model.id,
-                    "model_name": model.name,
-                    "uid": model.uid,
-                    "username": uid_to_username[model.uid],
+                    "model_name": model.name if model.is_published else None,  # Don't
+                    # give away the users for unpublished models.
+                    "uid": model.uid if model.is_published else None,
+                    "username": uid_to_username[model.uid]
+                    if model.is_published
+                    else None,
                     "averaged_scores": averaged_scores,
                     "averaged_variances": averaged_variances,
                     "dynascore": dynascore
