@@ -423,34 +423,21 @@ class TaskPage extends React.Component {
     this.exportAllTaskData = this.exportAllTaskData.bind(this);
     this.getSavedTaskSettings = this.getSavedTaskSettings.bind(this);
     this.exportCurrentRoundData = this.exportCurrentRoundData.bind(this);
-    this.updateTaskData = this.updateTaskData.bind(this);
   }
 
   componentDidMount() {
-    this.updateTaskData();
-  }
-
-  componentDidUpdate(prevProps) {
-    if (this.props.match.params.taskIdOrCode !== this.state.taskIdOrCode) {
-      this.updateTaskData();
-    }
-  }
-
-  updateTaskData() {
-    this.setState(
-      { taskIdOrCode: this.props.match.params.taskIdOrCode },
-      function () {
-        this.context.api.getTask(this.state.taskIdOrCode).then(
+    this.setState({ taskCode: this.props.match.params.taskCode }, function () {
+      this.context.api.getTaskByCode(this.state.taskCode).then(
           (result) => {
             this.setState(
-              {
-                task: result,
-                displayRound: "overall",
-                round: result.round,
-              },
-              function () {
-                this.refreshData();
-              }
+                {
+                  task: result,
+                  displayRound: "overall",
+                  round: result.round,
+                },
+                function () {
+                  this.refreshData();
+                }
             );
           },
           (error) => {
@@ -459,9 +446,38 @@ class TaskPage extends React.Component {
               this.props.history.push("/");
             }
           }
-        );
-      }
-    );
+      );
+    });
+  }
+
+  componentDidUpdate(prevProps) {
+    if (this.props.match.params.taskCode !== this.state.taskCode) {
+      this.setState(
+          { taskCode: this.props.match.params.taskCode },
+          function () {
+            this.context.api.getTaskByCode(this.state.taskCode).then(
+                (result) => {
+                  this.setState(
+                      {
+                        task: result,
+                        displayRound: "overall",
+                        round: result.round,
+                      },
+                      function () {
+                        this.refreshData();
+                      }
+                  );
+                },
+                (error) => {
+                  console.log(error);
+                  if (error.status_code === 404 || error.status_code === 405) {
+                    this.props.history.push("/");
+                  }
+                }
+            );
+          }
+      );
+    }
   }
 
   getSavedTaskSettings() {
