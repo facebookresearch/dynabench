@@ -18,7 +18,7 @@ const TaskModelLeaderboardCardWrapper = (
 ) => {
   return (props) => {
     const extraData = {
-      leaderboardName: props.match.params.leaderboardName,
+      leaderboardName: props.match?.params.leaderboardName,
       history: props.history,
     };
 
