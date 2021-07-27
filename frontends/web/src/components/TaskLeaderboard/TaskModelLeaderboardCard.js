@@ -33,7 +33,7 @@ const SortDirection = {
  * @param {function} props.fetchLeaderboardData Fn to load leaderboard data
  * @param {string} props.history navigation API
  * @param {string} props.location navigation location
- * @param {string} props.isStandalone is in Stand alone mode
+ * @param {boolean} props.isStandalone is in Stand alone mode
  */
 const TaskModelLeaderboardCard = (props) => {
   const task = props.task;
