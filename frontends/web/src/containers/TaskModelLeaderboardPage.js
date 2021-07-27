@@ -36,6 +36,7 @@ const TaskModelLeaderboardPage = (props) => {
                 `/tasks/top/${taskCode}`,
                 `/tasks/top/${result.task_code}`
               ),
+              search: props.location.search
             });
           }
 
