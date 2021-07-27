@@ -163,31 +163,42 @@ class ModelPage extends React.Component {
   }
 
   fetchModel = () => {
-    this.context.api.getModel(this.state.modelId).then((result) => {
-      this.setState(
-        { model: result, isLoading: false },
-        function () {
+    this.context.api.getModel(this.state.modelId).then(
+      (result) => {
+        this.setState({ model: result, isLoading: false }, function () {
           this.context.api.getTask(this.state.model.tid).then(
             (result) => {
               this.setState({
                 taskCode: result.task_code,
                 task: result,
               });
+              const taskCodeFromParams = this.props.match.params.taskCode;
+              if (
+                taskCodeFromParams &&
+                taskCodeFromParams !== result.task_code
+              ) {
+                this.props.history.replace({
+                  pathname: this.props.location.pathname.replace(
+                    `/tasks/${taskCodeFromParams}`,
+                    `/tasks/${result.task_code}`
+                  ),
+                });
+              }
             },
             (error) => {
               console.log(error);
             }
           );
-        },
-        (error) => {
-          console.log(error);
-          this.setState({ isLoading: false });
-          if (error.status_code === 404 || error.status_code === 405) {
-            this.props.history.push("/");
-          }
+        });
+      },
+      (error) => {
+        console.log(error);
+        this.setState({ isLoading: false });
+        if (error.status_code === 404 || error.status_code === 405) {
+          this.props.history.push("/");
         }
-      );
-    });
+      }
+    );
   };
 
   handleEdit = () => {

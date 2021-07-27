@@ -258,7 +258,7 @@ class App extends React.Component {
                 <Route path="/termsofuse" component={TermsPage} />
                 <Route path="/datapolicy" component={DataPolicyPage} />
                 <Route
-                  path="/tasks/top/:taskId"
+                  path="/tasks/top/:taskCode"
                   component={TaskModelLeaderboardPage}
                 />
                 <Route
