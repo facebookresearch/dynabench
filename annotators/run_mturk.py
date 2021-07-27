@@ -40,6 +40,7 @@ class DynaBenchConfig:
     task_id: int = 0
     round_id: int = 0
     block_mobile: Optional[bool] = True
+    frame_height: Optional[int] = 650
     fetching_tags: Optional[str] = None
     fetching_method: Optional[str] = None
     # ; separating dictionary keys;
