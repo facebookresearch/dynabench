@@ -241,12 +241,9 @@ class ModelPage extends React.Component {
   };
 
   processScoresArray = (csvRows, scoresArr, datasetType) => {
-    csvRows.push([""]);
-    csvRows.push([datasetType]);
-
     scoresArr = (scoresArr || []).sort((a, b) => b.accuracy - a.accuracy);
     scoresArr.forEach((score) => {
-      csvRows.push([score.dataset_name, score.accuracy]);
+      csvRows.push([score.dataset_name, datasetType, score.accuracy]);
     });
   };
 
@@ -257,12 +254,12 @@ class ModelPage extends React.Component {
     const taskName = task.name;
 
     const rows = [];
-    rows.push(["Dataset", task.perf_metric_field_name]);
-    this.processScoresArray(rows, leaderboard_scores, "Leaderboard Datasets");
+    rows.push(["dataset-name", "dataset-type", task.perf_metric_field_name]);
+    this.processScoresArray(rows, leaderboard_scores, "leaderboard");
     this.processScoresArray(
       rows,
       non_leaderboard_scores,
-      "Non-leaderboard Datasets"
+      "non-leaderboard"
     );
 
     let csvContent = "data:text/csv;charset=utf-8,";
