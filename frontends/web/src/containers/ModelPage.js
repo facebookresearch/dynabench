@@ -240,11 +240,30 @@ class ModelPage extends React.Component {
     }
   };
 
-  processScoresArrayForLatex = (scoresArr, datasetType) => {
+  escapeLatexCharacters = (strToEscape) => {
+    const escapes = {
+      "{": "\\{",
+      "}": "\\}",
+      "#": "\\#",
+      $: "\\$",
+      "%": "\\%",
+      "&": "\\&",
+      "^": "\\textasciicircum{}",
+      _: "\\_",
+      "~": "\\textasciitilde{}",
+      "\\": "\\textbackslash{}",
+    };
+    const regex = new RegExp(`[${Object.keys(escapes).join("")}\\]`);
+    return strToEscape.replace(regex, (match) => escapes[match]);
+  };
+
+  processScoresArrayForLatex = (scoresArr) => {
     let tableContentForScores = "";
     scoresArr = (scoresArr || []).sort((a, b) => b.accuracy - a.accuracy);
-    scoresArr.forEach((data) => {
-      tableContentForScores += `        ${data.dataset_name} & ${datasetType} & ${data.accuracy} \\\\\n`;
+    scoresArr.forEach((score) => {
+      tableContentForScores += `        ${this.escapeLatexCharacters(
+        score.dataset_name
+      )} & ${score.accuracy} \\\\\n`;
     });
     return tableContentForScores;
   };
@@ -256,15 +275,9 @@ class ModelPage extends React.Component {
 
     let latexTableContent = "";
 
+    latexTableContent += this.processScoresArrayForLatex(leaderboard_scores);
     latexTableContent += this.processScoresArrayForLatex(
-      leaderboard_scores,
-      "leaderboard",
-      latexTableContent
-    );
-    latexTableContent += this.processScoresArrayForLatex(
-      non_leaderboard_scores,
-      "non-leaderboard",
-      latexTableContent
+      non_leaderboard_scores
     );
 
     const modelUrl = window.location.href;
@@ -277,14 +290,18 @@ class ModelPage extends React.Component {
 
 \\begin{table}[]
     \\centering
-    \\begin{tabular}{l|l|r}
+    \\begin{tabular}{l|r}
         \\toprule
-        \\textbf{Dataset} & \\textbf{Dataset Type} & \\textbf{${task.perf_metric_field_name}} \\\\
+        \\textbf{Dataset} & \\textbf{${this.escapeLatexCharacters(
+          task.perf_metric_field_name
+        )}} \\\\
         \\midrule
 ${latexTableContent}
         \\bottomrule
     \\end{tabular}
-    \\caption{${taskName} results: \\url{${modelUrl}}}
+    \\caption{${this.escapeLatexCharacters(
+      taskName
+    )} results: \\url{${modelUrl}}}
     \\label{tab:results}
 \\end{table}
 
