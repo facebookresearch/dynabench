@@ -73,7 +73,6 @@ class MaxQATaskOnboarder extends React.Component {
   }
 
   render() {
-    console.log(this.state);
     return (
       <>
         <Container>
@@ -775,7 +774,7 @@ class MaxQATaskMain extends React.Component {
     var num_experiments = this.experiment_modes.length; // 12
     var experiment_mode_id = mephistoIdCode % num_experiments;
     // ======================================================================================
-    // var experiment_mode_id = 9; // TODO: DISABLE BEFORE LAUNCH
+    var experiment_mode_id = 6; // TODO: DISABLE BEFORE LAUNCH
     // ======================================================================================
 
     var experiment_mode = this.experiment_modes[experiment_mode_id];
