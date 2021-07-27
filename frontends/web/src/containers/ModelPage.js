@@ -256,11 +256,7 @@ class ModelPage extends React.Component {
     const rows = [];
     rows.push(["dataset-name", "dataset-type", task.perf_metric_field_name]);
     this.processScoresArray(rows, leaderboard_scores, "leaderboard");
-    this.processScoresArray(
-      rows,
-      non_leaderboard_scores,
-      "non-leaderboard"
-    );
+    this.processScoresArray(rows, non_leaderboard_scores, "non-leaderboard");
 
     let csvContent = "data:text/csv;charset=utf-8,";
 
