@@ -438,7 +438,12 @@ class TaskPage extends React.Component {
             },
             function () {
               if (this.props.match.params.taskCode !== this.state.taskCode) {
-                // TODO: replace history
+                this.props.history.replace({
+                  pathname: this.props.location.pathname.replace(
+                    `/tasks/${this.props.match.params.taskCode}`,
+                    `/tasks/${this.state.taskCode}`
+                  ),
+                });
               }
               this.refreshData();
             }

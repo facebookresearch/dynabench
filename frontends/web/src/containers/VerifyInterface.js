@@ -131,7 +131,12 @@ class VerifyInterface extends React.Component {
               this.state.task.selected_round = this.state.task.cur_round;
               this.getNewExample();
               if (params.taskCode !== this.state.taskCode) {
-                // TODO: replace history
+                this.props.history.replace({
+                  pathname: this.props.location.pathname.replace(
+                    `/tasks/${params.taskCode}`,
+                    `/tasks/${this.state.taskCode}`
+                  ),
+                });
               }
             }
           );
