@@ -190,7 +190,14 @@ const TaskModelLeaderboardRow = ({ model, metrics, datasetWeights }) => {
   }, {});
   return (
     <>
-      <tr key={model.model_id} onClick={() => setExpanded(!expanded)}>
+      <tr
+        key={model.model_id}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          setExpanded(!expanded);
+        }}
+      >
         <td>
           <Link to={`/models/${model.model_id}`} className="btn-link">
             {model.model_name}

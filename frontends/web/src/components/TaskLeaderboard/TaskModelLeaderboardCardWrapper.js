@@ -18,8 +18,8 @@ const taskModelLeaderboardCardWrapper = (
 ) => {
   return (props) => {
     const dataFromProps = {
-      snapshotName: props.match.params.snapshotName,
-      leaderboardName: props.match.params.leaderboardName,
+      snapshotName: props.match?.params.snapshotName,
+      leaderboardName: props.match?.params.leaderboardName,
       history: props.history,
     };
 

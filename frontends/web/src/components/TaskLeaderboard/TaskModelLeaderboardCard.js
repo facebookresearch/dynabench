@@ -33,6 +33,7 @@ const SortDirection = {
  * @param {function} props.fetchLeaderboardData Fn to load leaderboard data
  * @param {string} props.history navigation API
  * @param {string} props.location navigation location
+ * @param {boolean} props.isStandalone is in Stand alone mode
  */
 const TaskModelLeaderboardCard = (props) => {
   const task = props.task;
@@ -54,7 +55,7 @@ const TaskModelLeaderboardCard = (props) => {
       setMetrics(result.orderedMetricWeights);
       setDatasetWeights(result.orderedDatasetWeights);
     });
-  }, [task]);
+  }, [context.api, props, task]);
 
   const [sort, setSort] = useState({
     field: "dynascore",
@@ -114,7 +115,7 @@ const TaskModelLeaderboardCard = (props) => {
    * @param {string} field
    */
   const toggleSort = (field) => {
-    if (props.disableToggleSort) {
+    if (props.disableToggleSort || props.isStandalone) {
       return;
     }
 
@@ -159,14 +160,25 @@ const TaskModelLeaderboardCard = (props) => {
     );
 
     return () => {};
-  }, [page, sort, metrics, datasetWeights, context.api, taskId, pageLimit]);
+  }, [
+    page,
+    sort,
+    metrics,
+    datasetWeights,
+    context.api,
+    taskId,
+    pageLimit,
+    props,
+  ]);
 
   const isEndOfPage = (page + 1) * pageLimit >= total;
 
   return (
     <Card className="my-4">
       <Card.Header className="light-gray-bg d-flex align-items-center">
-        <h2 className="text-uppercase m-0 text-reset">Model Leaderboard</h2>
+        <h2 className="text-uppercase m-0 text-reset">
+          Model Leaderboard {props.isStandalone ? " - " + task.name : ""}
+        </h2>
         <div className="d-flex justify-content-end flex-fill">
           <ForkModal
             metricWeights={metrics}
@@ -302,7 +314,8 @@ const TaskModelLeaderboardCard = (props) => {
             )}
           {(process.env.REACT_APP_ENABLE_LEADERBOARD_FORK === "true" ||
             context.user.admin) &&
-            !props.disableForkAndSnapshot && (
+            !props.disableForkAndSnapshot &&
+            !props.isStandalone && (
               <OverlayTrigger
                 placement="top"
                 overlay={<Tooltip id="tip-leaderboard-fork">Fork</Tooltip>}
@@ -335,7 +348,9 @@ const TaskModelLeaderboardCard = (props) => {
           >
             <Button
               className="btn bg-transparent border-0"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
                 setEnableHelp(!enableHelp);
               }}
             >
@@ -344,7 +359,7 @@ const TaskModelLeaderboardCard = (props) => {
               </span>
             </Button>
           </OverlayTrigger>
-          {!props.disableAdjustWeights && (
+          {!props.disableAdjustWeights && !props.isStandalone && (
             <>
               <OverlayTrigger
                 placement="top"
@@ -402,22 +417,32 @@ const TaskModelLeaderboardCard = (props) => {
       </Card.Body>
       <Card.Footer className="text-center">
         <Pagination className="mb-0 float-right" size="sm">
-          <Pagination.Item
-            disabled={isLoading || page === 0}
-            onClick={() => {
-              setPage(page - 1);
-            }}
-          >
-            Previous
-          </Pagination.Item>
-          <Pagination.Item
-            disabled={isLoading || isEndOfPage}
-            onClick={() => {
-              setPage(page + 1);
-            }}
-          >
-            Next
-          </Pagination.Item>
+          {props.isStandalone && (
+            <img
+              src="/Powered_by_Dynabench-Logo.svg"
+              style={{ height: "24px" }}
+            />
+          )}
+          {!props.isStandalone && (
+            <>
+              <Pagination.Item
+                disabled={isLoading || page === 0}
+                onClick={() => {
+                  setPage(page - 1);
+                }}
+              >
+                Previous
+              </Pagination.Item>
+              <Pagination.Item
+                disabled={isLoading || isEndOfPage}
+                onClick={() => {
+                  setPage(page + 1);
+                }}
+              >
+                Next
+              </Pagination.Item>
+            </>
+          )}
         </Pagination>
       </Card.Footer>
     </Card>

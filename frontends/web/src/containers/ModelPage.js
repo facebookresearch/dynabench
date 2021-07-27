@@ -240,13 +240,89 @@ class ModelPage extends React.Component {
     }
   };
 
-  processScoresArray = (csvRows, scoresArr, datasetType) => {
-    csvRows.push([""]);
-    csvRows.push([datasetType]);
+  escapeLatexCharacters = (strToEscape) => {
+    const escapes = {
+      "{": "\\{",
+      "}": "\\}",
+      "#": "\\#",
+      $: "\\$",
+      "%": "\\%",
+      "&": "\\&",
+      "^": "\\textasciicircum{}",
+      _: "\\_",
+      "~": "\\textasciitilde{}",
+      "\\": "\\textbackslash{}",
+    };
+    const regex = new RegExp(`[${Object.keys(escapes).join("")}\\]`);
+    return strToEscape.replace(regex, (match) => escapes[match]);
+  };
 
+  processScoresArrayForLatex = (scoresArr) => {
+    let tableContentForScores = "";
     scoresArr = (scoresArr || []).sort((a, b) => b.accuracy - a.accuracy);
     scoresArr.forEach((score) => {
-      csvRows.push([score.dataset_name, score.accuracy]);
+      tableContentForScores += `        ${this.escapeLatexCharacters(
+        score.dataset_name
+      )} & ${score.accuracy} \\\\\n`;
+    });
+    return tableContentForScores;
+  };
+
+  downloadLatex = () => {
+    let { leaderboard_scores, non_leaderboard_scores, name } = this.state.model;
+    const { task } = this.state;
+    const taskName = task.name;
+
+    let latexTableContent = "";
+
+    latexTableContent += this.processScoresArrayForLatex(leaderboard_scores);
+    latexTableContent += this.processScoresArrayForLatex(
+      non_leaderboard_scores
+    );
+
+    const modelUrl = window.location.href;
+
+    let latexDocStr = `\\documentclass{article}
+\\usepackage{hyperref}
+\\usepackage{booktabs}
+
+\\begin{document}
+
+\\begin{table}[]
+    \\centering
+    \\begin{tabular}{l|r}
+        \\toprule
+        \\textbf{Dataset} & \\textbf{${this.escapeLatexCharacters(
+          task.perf_metric_field_name
+        )}} \\\\
+        \\midrule
+${latexTableContent}
+        \\bottomrule
+    \\end{tabular}
+    \\caption{${this.escapeLatexCharacters(
+      taskName
+    )} results: \\url{${modelUrl}}}
+    \\label{tab:results}
+\\end{table}
+
+\\end{document}`;
+
+    const latexContent =
+      "data:application/x-latex;charset=utf-8," + latexDocStr;
+
+    const encodedUri = encodeURI(latexContent);
+    const csvLink = document.createElement("a");
+    csvLink.setAttribute("href", encodedUri);
+    csvLink.setAttribute("download", name + "-" + taskName + ".tex");
+    document.body.appendChild(csvLink);
+    csvLink.click();
+    document.body.removeChild(csvLink);
+  };
+
+  processScoresArrayForCsv = (csvRows, scoresArr, datasetType) => {
+    scoresArr = (scoresArr || []).sort((a, b) => b.accuracy - a.accuracy);
+    scoresArr.forEach((score) => {
+      csvRows.push([score.dataset_name, datasetType, score.accuracy]);
     });
   };
 
@@ -257,12 +333,12 @@ class ModelPage extends React.Component {
     const taskName = task.name;
 
     const rows = [];
-    rows.push(["Dataset", task.perf_metric_field_name]);
-    this.processScoresArray(rows, leaderboard_scores, "Leaderboard Datasets");
-    this.processScoresArray(
+    rows.push(["dataset-name", "dataset-type", task.perf_metric_field_name]);
+    this.processScoresArrayForCsv(rows, leaderboard_scores, "leaderboard");
+    this.processScoresArrayForCsv(
       rows,
       non_leaderboard_scores,
-      "Non-leaderboard Datasets"
+      "non-leaderboard"
     );
 
     let csvContent = "data:text/csv;charset=utf-8,";
@@ -473,6 +549,9 @@ class ModelPage extends React.Component {
                       >
                         <Dropdown.Item onClick={this.downloadCsv}>
                           {"CSV"}
+                        </Dropdown.Item>
+                        <Dropdown.Item onClick={this.downloadLatex}>
+                          {"LaTeX"}
                         </Dropdown.Item>
                       </DropdownButton>
                     </span>
