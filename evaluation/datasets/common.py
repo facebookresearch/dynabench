@@ -205,7 +205,7 @@ class BaseDataset(ABC):
         if job.perturb_prefix:
             targets = [
                 self.pred_to_target_converter(self.pred_field_converter(prediction))
-                for prediction in self.read_predictions(job, original=True)
+                for prediction in self.parse_outfile_and_upload(job, original=True)
             ]
             delta_metrics_dict = self.eval(
                 predictions, targets, perturb_prefix=job.perturb_prefix
@@ -323,23 +323,6 @@ class BaseDataset(ABC):
             )
             raise e
         return predictions
-
-    def read_predictions(self, job, original=False):
-        perturb_prefix = None if original else job.perturb_prefix
-        try:
-            output_s3_uri = self.get_output_s3_url(
-                job.endpoint_name, raw=False, perturb_prefix=perturb_prefix
-            )
-            predictions = parse_s3_outfile(self.s3_client, output_s3_uri)
-        except Exception:
-            predictions = self.parse_outfile_and_upload(job, original=original)
-        finally:
-            if not predictions:
-                raise RuntimeError(
-                    f"Error fetch predictions for job {job.name}, "
-                    f"where request original output is {original}"
-                )
-            return predictions
 
     def perturb_label_field_converter(self, example):
         return {"input_id": example["input_id"], **self.label_field_converter(example)}
