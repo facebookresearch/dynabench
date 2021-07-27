@@ -19,6 +19,7 @@ dynabench:
   task_id: 2
   round_id: 3
   block_mobile: True
+  frame_height: 0
   # fetching_tags: "val2017"
   # tag_to_store_with_examples is required
   extra_logging: "tag_to_store_with_examples:max_test_v3"
