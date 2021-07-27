@@ -48,6 +48,7 @@ const ForkModal = (props) => {
           forkUrl.pathname = `/tasks/${taskCode}/leaderboard_configuration/${uriEncodedLeaderboardName}`;
           props.history.replace({
             pathname: forkUrl.pathname,
+            search: forkUrl.search,
           });
           setLeaderboardName("");
           setForkCreatedSuccessfully(true);

@@ -36,7 +36,7 @@ const TaskModelLeaderboardPage = (props) => {
                 `/tasks/top/${taskCode}`,
                 `/tasks/top/${result.task_code}`
               ),
-              search: props.location.search
+              search: props.location.search,
             });
           }
 
@@ -52,7 +52,13 @@ const TaskModelLeaderboardPage = (props) => {
     fetchTask(context.api);
 
     return () => {};
-  }, [context.api, taskCode]);
+  }, [
+    context.api,
+    props.history,
+    props.location.pathname,
+    props.location.search,
+    taskCode,
+  ]);
 
   if (isLoading || !task) {
     return (

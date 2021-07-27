@@ -182,6 +182,7 @@ class ModelPage extends React.Component {
                     `/tasks/${taskCodeFromParams}`,
                     `/tasks/${result.task_code}`
                   ),
+                  search: this.props.location.search,
                 });
               }
             },

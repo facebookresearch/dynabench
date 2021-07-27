@@ -136,6 +136,7 @@ class VerifyInterface extends React.Component {
                     `/tasks/${params.taskCode}`,
                     `/tasks/${this.state.taskCode}`
                   ),
+                  search: this.props.location.search,
                 });
               }
             }

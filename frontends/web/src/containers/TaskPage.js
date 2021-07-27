@@ -443,6 +443,7 @@ class TaskPage extends React.Component {
                     `/tasks/${this.props.match.params.taskCode}`,
                     `/tasks/${this.state.taskCode}`
                   ),
+                  search: this.props.location.search,
                 });
               }
               this.refreshData();
