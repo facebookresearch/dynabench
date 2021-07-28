@@ -44,7 +44,7 @@ def main():
     logger.info("Start evaluation server")
 
     requester, queue = make_requester(eval_config)
-    this_server_id = eval_config["eval_server_id"]
+    server_id = eval_config["eval_server_id"]
     cpus = eval_config.get("compute_metric_processes", 2)
     with multiprocessing.pool.Pool(cpus) as pool:
         timer = scheduler_update_interval
@@ -52,15 +52,11 @@ def main():
             # On each iteration, submit all requested jobs
             for message in queue.receive_messages():
                 msg = json.loads(message.body)
-                if msg.get("eval_server_id", "default") != this_server_id:
-                    logger.info(
-                        f"Evaluation server {this_server_id} ignored message {msg}"
-                    )
+                if msg.get("eval_server_id", "default") != server_id:
+                    logger.info(f"Evaluation server {server_id} ignored message {msg}")
                     continue
 
-                logger.info(
-                    f"Evaluation server {this_server_id} received SQS message {msg}"
-                )
+                logger.info(f"Evaluation server {server_id} received SQS message {msg}")
                 requester.request(msg)
                 queue.delete_messages(
                     Entries=[

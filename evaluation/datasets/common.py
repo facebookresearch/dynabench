@@ -122,6 +122,7 @@ class BaseDataset(ABC):
                     model_id="*",
                     dataset_name=self.name,
                     config=eval_config,
+                    eval_server_id=self.task_config["eval_server_id"],
                     logger=logger,
                 )
 
