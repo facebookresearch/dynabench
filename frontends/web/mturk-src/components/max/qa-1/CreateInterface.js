@@ -207,6 +207,7 @@ class CreateInterface extends React.Component {
         generateDisabled: true,
         refreshDisabled: true,
         hypothesisNotDetected: false,
+        answerNotSelected: false,
       },
       function () {
         if (this.state.hypothesis.length == 0) {
@@ -240,7 +241,7 @@ class CreateInterface extends React.Component {
             var answer_text = "";
             if (this.state.answer.length > 0) {
               var last_answer = this.state.answer[this.state.answer.length - 1];
-              var answer_text = last_answer.tokens.join(""); // NOTE: no spaces required as tokenising by word boundaries
+              var answer_text = last_answer.tokens.join("").trim(); // NOTE: no spaces required as tokenising by word boundaries
               // Update the target with the answer text since this is defined by the annotator in QA (unlike NLI)
               this.setState({
                 target: answer_text,
@@ -331,6 +332,7 @@ class CreateInterface extends React.Component {
         generateDisabled: true,
         refreshDisabled: true,
         hypothesisNotDetected: false,
+        answerNotSelected: false,
       },
       function () {
         let last_example = this.state.content[this.state.content.length - 1];
@@ -393,7 +395,6 @@ class CreateInterface extends React.Component {
                   [key]: result.id,
                 },
                 answer: [],
-                answerNotSelected: true,
                 exampleHistory: [],
               },
               function () {
@@ -425,6 +426,7 @@ class CreateInterface extends React.Component {
         generateDisabled: true,
         refreshDisabled: true,
         hypothesisNotDetected: false,
+        answerNotSelected: false,
       },
       function () {
         if (
@@ -448,7 +450,7 @@ class CreateInterface extends React.Component {
           var answer_text = "";
           if (this.state.answer.length > 0) {
             var last_answer = this.state.answer[this.state.answer.length - 1];
-            var answer_text = last_answer.tokens.join(""); // NOTE: no spaces required as tokenising by word boundaries
+            var answer_text = last_answer.tokens.join("").trim(); // NOTE: no spaces required as tokenising by word boundaries
             // Update the target with the answer text since this is defined by the annotator in QA (unlike NLI)
             this.setState({
               target: answer_text,
@@ -664,7 +666,6 @@ class CreateInterface extends React.Component {
     if (value.length > 0) {
       this.setState({
         answer: [value[value.length - 1]],
-        answerNotSelected: false,
         generatedAnswer: null,
         exampleHistory: [
           ...this.state.exampleHistory,
@@ -680,7 +681,7 @@ class CreateInterface extends React.Component {
         ],
       });
     } else {
-      this.setState({ answer: value, answerNotSelected: false });
+      this.setState({ answer: value });
     }
   }
 
@@ -735,8 +736,7 @@ class CreateInterface extends React.Component {
                             delay={{ show: 250, hide: 400 }}
                             overlay={
                               <Tooltip id={`tooltip-confirm`}>
-                                This helps us speed up validation and pay
-                                bonuses out quicker!
+                                Thanks, this helps us speed up validation!
                               </Tooltip>
                             }
                           >
@@ -811,11 +811,24 @@ class CreateInterface extends React.Component {
                       )}
                     </div>
                   </>
-                ) : item.fooled ? (
+                ) : item.exactMatch ? (
                   <>
                     <span>
-                      The AI predicted <strong>{item.modelPredStr}</strong>{" "}
-                      instead.
+                      <strong>Bad luck!</strong> The AI correctly predicted{" "}
+                      <strong>{item.modelPredStr}</strong>. Please try to beat it again.
+                    </span>
+                    <>
+                      {" "}
+                      You may now
+                      {item.index == this.state.total_tries
+                        ? " submit the HIT!"
+                        : " ask another question."}
+                    </>
+                  </>
+                ) : (
+                  <>
+                    <span>
+                      The AI predicted "<strong>{item.modelPredStr}</strong>".
                     </span>
                     <br />
                     <hr />
@@ -834,18 +847,17 @@ class CreateInterface extends React.Component {
                           >
                             <FaInfoCircle />
                           </OverlayTrigger>
-                          &nbsp; Can you please confirm that "
-                          <strong>{item.modelInputs.answer}</strong>" is the
-                          correct answer to the question and that the model's
-                          prediction "<strong>{item.modelPredStr}</strong>" is
-                          wrong? &nbsp;
+                          &nbsp; You answered "
+                          <strong>{item.modelInputs.answer}</strong>" and the
+                          AI predicted "<strong>{item.modelPredStr}</strong>".
+                          Please help us validate this example: &nbsp;
                           <InputGroup className="mt-1">
                             <OverlayTrigger
                               placement="bottom"
                               delay={{ show: 50, hide: 150 }}
                               overlay={
                                 <Tooltip id={`tooltip-valid`}>
-                                  My answer is correct and the AI is wrong!
+                                  My answer is correct and the AI's answer is incorrect.
                                 </Tooltip>
                               }
                             >
@@ -858,7 +870,7 @@ class CreateInterface extends React.Component {
                                 disabled={this.state.verifyDisabled}
                               >
                                 <FaThumbsUp style={{ marginTop: "-0.25em" }} />{" "}
-                                Valid
+                                I beat the AI!
                               </Button>
                             </OverlayTrigger>
 
@@ -867,18 +879,17 @@ class CreateInterface extends React.Component {
                               delay={{ show: 50, hide: 150 }}
                               overlay={
                                 <Tooltip id={`tooltip-invalid`}>
-                                  The AI also managed to predict the correct
-                                  answer (or my original answer was not valid).
+                                  My answer is correct but the AI also managed to predict a valid answer.
                                 </Tooltip>
                               }
                             >
                               <Button
-                                className="btn btn-danger mr-1"
+                                className="btn btn-warning mr-1"
                                 style={{ padding: "0.2rem 0.5rem" }}
                                 onClick={() =>
                                   this.handleVerifyResponse(
                                     item.index,
-                                    "invalid"
+                                    "model_ans_correct"
                                   )
                                 }
                                 disabled={this.state.verifyDisabled}
@@ -886,125 +897,11 @@ class CreateInterface extends React.Component {
                                 <FaThumbsDown
                                   style={{ marginTop: "-0.25em" }}
                                 />{" "}
-                                Invalid
+                                The AI’s answer is also valid
                               </Button>
                             </OverlayTrigger>
-                          </InputGroup>
-                        </>
-                      ) : (
-                        <>
-                          <span>
-                            Thank you for validating your example as:{" "}
-                            <strong>{item.validated}</strong>. You may now
-                            {item.index == this.state.total_tries
-                              ? " submit the HIT!"
-                              : " ask another question."}
-                          </span>
-                          <br />
-                        </>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <span>
-                      The AI correctly predicted{" "}
-                      <strong>{item.modelPredStr}</strong>. Please try again.
-                    </span>
-                    {item.exactMatch ? (
-                      <>
-                        {" "}
-                        You may now
-                        {item.index == this.state.total_tries
-                          ? " submit the HIT!"
-                          : " ask another question."}
-                      </>
-                    ) : (
-                      <>
-                        <br />
-                        <hr />
-                        <div>
-                          {item.validated === null ? (
-                            <>
-                              <OverlayTrigger
-                                placement="top"
-                                delay={{ show: 250, hide: 400 }}
-                                overlay={
-                                  <Tooltip id={`tooltip-confirm`}>
-                                    This helps us speed up validation and pay
-                                    bonuses out quicker!
-                                  </Tooltip>
-                                }
-                              >
-                                <FaInfoCircle />
-                              </OverlayTrigger>
-                              <>
-                                &nbsp; Our automated evaluation isn't always
-                                perfect. If you think that your answer (
-                                <strong>{item.modelInputs.answer}</strong>) is
-                                correct <b>AND</b> that the AI's prediction (
-                                <strong>{item.modelPredStr}</strong>) is wrong,
-                                please click the <i>"No, I Beat the AI!"</i>{" "}
-                                button below. &nbsp;
-                              </>
-                              <InputGroup className="mt-1">
-                                <OverlayTrigger
-                                  placement="bottom"
-                                  delay={{ show: 50, hide: 150 }}
-                                  overlay={
-                                    <Tooltip id={`tooltip-valid`}>
-                                      Yes, the AI also managed to predict the
-                                      correct answer.
-                                    </Tooltip>
-                                  }
-                                >
-                                  <Button
-                                    className="btn btn-success mr-1"
-                                    style={{ padding: "0.2rem 0.5rem" }}
-                                    onClick={() =>
-                                      this.handleVerifyResponse(
-                                        item.index,
-                                        "modelfooled_validation_correct"
-                                      )
-                                    }
-                                    disabled={this.state.verifyDisabled}
-                                  >
-                                    <FaThumbsUp
-                                      style={{ marginTop: "-0.25em" }}
-                                    />{" "}
-                                    Yes, the AI is correct
-                                  </Button>
-                                </OverlayTrigger>
 
-                                <OverlayTrigger
-                                  placement="bottom"
-                                  delay={{ show: 50, hide: 150 }}
-                                  overlay={
-                                    <Tooltip id={`tooltip-invalid`}>
-                                      No, my answer is correct and the AI is
-                                      wrong!
-                                    </Tooltip>
-                                  }
-                                >
-                                  <Button
-                                    className="btn btn-danger mr-1"
-                                    style={{ padding: "0.2rem 0.5rem" }}
-                                    onClick={() =>
-                                      this.handleVerifyResponse(
-                                        item.index,
-                                        "modelfooled_validation_wrong"
-                                      )
-                                    }
-                                    disabled={this.state.verifyDisabled}
-                                  >
-                                    <FaThumbsDown
-                                      style={{ marginTop: "-0.25em" }}
-                                    />{" "}
-                                    No, I Beat the AI!
-                                  </Button>
-                                </OverlayTrigger>
-
-                                <OverlayTrigger
+                            <OverlayTrigger
                                   placement="bottom"
                                   delay={{ show: 50, hide: 150 }}
                                   overlay={
@@ -1019,7 +916,7 @@ class CreateInterface extends React.Component {
                                     onClick={() =>
                                       this.handleVerifyResponse(
                                         item.index,
-                                        "modelfooled_invalid"
+                                        "invalid"
                                       )
                                     }
                                     disabled={this.state.verifyDisabled}
@@ -1030,31 +927,27 @@ class CreateInterface extends React.Component {
                                     Invalid Example
                                   </Button>
                                 </OverlayTrigger>
-                              </InputGroup>
-                            </>
-                          ) : (
-                            <>
-                              <span>
-                                {item.validated ===
-                                "modelfooled_validation_correct"
-                                  ? "Thank you for validating that the AI answer is correct. "
-                                  : item.validated ===
-                                    "modelfooled_validation_wrong"
-                                  ? "Thank you for validating that the AI answer is wrong and that yours is correct. "
-                                  : item.validated === "modelfooled_invalid"
-                                  ? "Thank you for notifying us that this example is invalid. "
-                                  : null}
-                                You may now
-                                {item.index == this.state.total_tries
-                                  ? " submit the HIT!"
-                                  : " ask another question."}
-                              </span>
-                              <br />
-                            </>
-                          )}
-                        </div>
-                      </>
-                    )}
+                          </InputGroup>
+                        </>
+                      ) : (
+                        <>
+                          <span>
+                            {item.validated === "valid"
+                              ? "Thank you for validating that you successfully beat the AI! "
+                              : item.validated === "model_ans_correct"
+                              ? "Thank you for validating your answer is correct and that the AI is also correct. "
+                              : item.validated === "invalid"
+                              ? "Thank you for notifying us that this example is invalid. "
+                              : null}
+                            You may now
+                            {item.index == this.state.total_tries
+                              ? " submit the HIT!"
+                              : " ask another question."}
+                          </span>
+                          <br />
+                        </>
+                      )}
+                    </div>
                   </>
                 )}
               </small>
@@ -1099,31 +992,24 @@ class CreateInterface extends React.Component {
     var errorMessage = "";
     if (this.state.hypothesisNotDetected === true) {
       var errorMessage = (
-        <div>
-          <small style={{ color: "red" }}>* Please enter a question</small>
-        </div>
+        <small style={{ color: "red" }}>* Please enter a question</small>
       );
     }
     if (
       this.state.answerNotSelected === true &&
-      this.experiment_mode["answerSelect"] === "none"
+      (this.experiment_mode["answerSelect"] === "none" || !this.state.generatedAnswer)
     ) {
       var errorMessage = (
-        <div>
-          <small style={{ color: "red" }}>
-            * Please select an answer from the passage
-          </small>
-        </div>
+        <small style={{ color: "red" }}>
+          * Please select an answer from the passage
+        </small>
       );
     }
     if (this.state.pendingExampleValidation === true) {
       var errorMessage = (
-        <div>
-          <small style={{ color: "red" }}>
-            * Please validate the example above by clicking the green button for
-            a valid example or the red button for an invalid one.
-          </small>
-        </div>
+        <small style={{ color: "red" }}>
+          * Please validate the example by clicking one of the buttons shown above.
+        </small>
       );
     }
     return (
@@ -1185,7 +1071,7 @@ class CreateInterface extends React.Component {
           </InputGroup>
 
           {this.experiment_mode["adversary"] === "none" ? null : (
-            <div>
+            <div className="mb-2">
               {this.experiment_mode["answerSelect"] !== "none" &&
               this.state.generatedAnswer ? (
                 <p>
@@ -1199,17 +1085,15 @@ class CreateInterface extends React.Component {
                   </small>
                 </p>
               ) : null}
-              <p>
                 <small className="form-text text-muted">
                   Remember, the goal is to find an example that the AI gets
                   wrong but that another person would get right. Load time may
                   be slow; please be patient.
                 </small>
-              </p>
+                {errorMessage}
             </div>
           )}
 
-          {errorMessage}
           <InputGroup>
             {this.state.taskCompleted ? null : (
               <Button
@@ -1229,14 +1113,14 @@ class CreateInterface extends React.Component {
               </Button>
             )}
             {taskTracker}
-            {this.experiment_mode["adversary"] === "none" ? null : (
-              <small className="mt-1 mb-1">
-                *Kindly note that validation is a manual process meaning that
-                bonuses will take a few days to be processed. We thank you in
-                advance for your understanding and patience.
-              </small>
-            )}
           </InputGroup>
+          {this.experiment_mode["adversary"] === "none" ? null : (
+            <small className="mt-1 mb-1">
+              *Kindly note that validation is a manual process meaning that
+              bonuses will take a few days to be processed. We thank you in
+              advance for your understanding and patience.
+            </small>
+          )}
         </Row>
       </Container>
     );

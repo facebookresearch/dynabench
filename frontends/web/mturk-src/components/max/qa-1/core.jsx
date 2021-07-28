@@ -221,13 +221,16 @@ class TaskOnboardingInstructions extends React.Component {
       <>
         <br />
         <small>
-          {" "}
+          In this HIT, you will be given a passage from Wikipedia. Your task is 
+          to ask questions about the passage and select the correct answer.
+          <br />
+          <br />
           <strong>Onboarding:</strong> During the onboarding phase, you will be
           able to familiarize yourself with the annotation platform.
           <br />
           <br />
           (1) <strong>First,</strong> we will show you a passage and five
-          questions and ask you to highlight the right answer — a span of text
+          questions and ask you to highlight the right answer, which is a span of text
           from within the passage.
           <br />
           <br />
@@ -284,7 +287,7 @@ class TaskOnboardingCompletedInstructions extends React.Component {
           <li key="1">
             <strong>
               The instructions for the downstream task are different than the
-              onboarding.
+              onboarding. Please read them carefully!
             </strong>
           </li>
           <li key="2">
@@ -664,7 +667,9 @@ class MaxQATaskMain extends React.Component {
       // "http://0.0.0.0:8097/cce63f4d8238fc8061a2e3a268afe1c14c0e2135580bc1680aec62dc20f68e81",
     ];
     this.experiment_modes = [
-      // 0: no adversary and no generator (standard SQuAD)
+      // ==========
+      // Standard SQuAD
+      // 0: no adversary and no generator
       {
         id: 0,
         adversary: "none",
@@ -672,89 +677,117 @@ class MaxQATaskMain extends React.Component {
         filterMode: "",
         answerSelect: "none",
       },
-      // 1: no generator (standard adversarial annoation)
+      // ==========
+      // Investigating generative-assistance in a non-adversarial setting
+      // 1: : no adversary, squad generator + no filter
       {
         id: 1,
+        adversary: "none",
+        generator: "qgen_squad1",
+        filterMode: "",
+        answerSelect: "none",
+      },
+      // 2: no adversary, squad generator + adversarial sampler
+      {
+        id: 2,
+        adversary: "none",
+        generator: "qgen_squad1",
+        filterMode: "adversarial",
+        answerSelect: "none",
+      },
+      // 3: no adversary, squad generator + uncertainty sampler
+      {
+        id: 3,
+        adversary: "none",
+        generator: "qgen_squad1",
+        filterMode: "uncertain",
+        answerSelect: "none",
+      },
+      // ==========
+      // 4: no generator (standard adversarial annoation)
+      {
+        id: 4,
         adversary: "electra-synqa",
         generator: "none",
         filterMode: "",
         answerSelect: "none",
-      },
-      // 2: squad generator + no filter
-      {
-        id: 2,
-        adversary: "electra-synqa",
-        generator: "qgen_squad1",
-        filterMode: "",
-        answerSelect: "none",
-      },
-      // 3: adversarial generator + no filter
-      {
-        id: 3,
-        adversary: "electra-synqa",
-        generator: "qgen_dcombined",
-        filterMode: "",
-        answerSelect: "none",
-      },
-      // 4: combined generator + no filter
-      {
-        id: 4,
-        adversary: "electra-synqa",
-        generator: "qgen_dcombined_plus_squad_10k",
-        filterMode: "",
-        answerSelect: "none",
-      },
-      // 5: squad generator + adversarial sampler
+      },      
+      // 5: squad generator + no filter
       {
         id: 5,
         adversary: "electra-synqa",
         generator: "qgen_squad1",
+        filterMode: "",
+        answerSelect: "none",
+      },
+      // 6: adversarial generator + no filter
+      {
+        id: 6,
+        adversary: "electra-synqa",
+        generator: "qgen_dcombined",
+        filterMode: "",
+        answerSelect: "none",
+      },
+      // 7: combined generator + no filter
+      {
+        id: 7,
+        adversary: "electra-synqa",
+        generator: "qgen_dcombined_plus_squad_10k",
+        filterMode: "",
+        answerSelect: "none",
+      },
+      // 8: squad generator + adversarial sampler
+      {
+        id: 8,
+        adversary: "electra-synqa",
+        generator: "qgen_squad1",
         filterMode: "adversarial",
         answerSelect: "none",
       },
-      // 6: adversarial generator + adversarial sampler
+      // 9: adversarial generator + adversarial sampler
       {
-        id: 6,
+        id: 9,
         adversary: "electra-synqa",
         generator: "qgen_dcombined",
         filterMode: "adversarial",
         answerSelect: "none",
       },
-      // 7: combined generator + adversarial sampler
+      // 10: combined generator + adversarial sampler
       {
-        id: 7,
+        id: 10,
         adversary: "electra-synqa",
         generator: "qgen_dcombined_plus_squad_10k",
         filterMode: "adversarial",
         answerSelect: "none",
       },
-      // 8: squad generator + uncertainty sampler
+      // 11: squad generator + uncertainty sampler
       {
-        id: 8,
+        id: 11,
         adversary: "electra-synqa",
         generator: "qgen_squad1",
         filterMode: "uncertain",
         answerSelect: "none",
       },
-      // 9: adversarial generator + uncertainty sampler
+      // 12: adversarial generator + uncertainty sampler
       {
-        id: 9,
+        id: 12,
         adversary: "electra-synqa",
         generator: "qgen_dcombined",
         filterMode: "uncertain",
         answerSelect: "none",
       },
-      // 10: combined generator + uncertainty sampler
+      // 13: combined generator + uncertainty sampler
       {
-        id: 10,
+        id: 13,
         dversary: "electra-synqa",
         generator: "qgen_dcombined_plus_squad_10k",
         filterMode: "uncertain",
         answerSelect: "none",
       },
-      // 11: validation only (generate answer and question)
+      // ==========
+      // 14: validation only (generate answer and question)
       {
-        id: 11,
+        id: 14,
         adversary: "electra-synqa",
         generator: "qgen_dcombined_plus_squad_10k",
         filterMode: "",
@@ -771,10 +804,10 @@ class MaxQATaskMain extends React.Component {
       .map((x) => x.charCodeAt(0))
       .reduce((a, b) => a + b);
 
-    var num_experiments = this.experiment_modes.length; // 12
+    var num_experiments = this.experiment_modes.length; // 15
     var experiment_mode_id = mephistoIdCode % num_experiments;
     // ======================================================================================
-    var experiment_mode_id = 6; // TODO: DISABLE BEFORE LAUNCH
+    // var experiment_mode_id = 14; // TODO: DISABLE BEFORE LAUNCH
     // ======================================================================================
 
     var experiment_mode = this.experiment_modes[experiment_mode_id];
