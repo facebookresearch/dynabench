@@ -28,5 +28,4 @@ config = { \
         'ssl_cert_file_path': '', # Configuring the ssl certificate path
         'ssl_org_pem_file_path': '',
         'builder_sqs_queue': '',
-        'evaluation_sqs_queue': ''
         }

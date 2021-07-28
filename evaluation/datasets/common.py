@@ -104,7 +104,7 @@ class BaseDataset(ABC):
         path = self._get_data_s3_path(perturb_prefix)
         return path_available_on_s3(self.s3_client, self.s3_bucket, path, path)
 
-    def _register_dataset_in_db_and_eval(self, eval_config) -> bool:
+    def _register_dataset_in_db_and_eval(self, eval_config) -> None:
         t = TaskModel()
         task_id = t.getByTaskCode(self.task).id
         d = DatasetModel()
@@ -118,12 +118,15 @@ class BaseDataset(ABC):
                 source_url=self.source_url,
             ):
                 logger.info(f"Registered {self.name} in datasets db.")
-                send_eval_request(
-                    model_id="*",
-                    dataset_name=self.name,
-                    config=eval_config,
-                    logger=logger,
-                )
+                task_queue = self.task_config["evaluation_sqs_queue"]
+                if task_queue == eval_config["evaluation_sqs_queue"]:
+                    # Only send the eval request, if this server owns this task.
+                    send_eval_request(
+                        model_id="*",
+                        dataset_name=self.name,
+                        config=eval_config,
+                        logger=logger,
+                    )
 
     def get_output_s3_url(self, endpoint_name, raw=False, perturb_prefix=None):
         if raw:

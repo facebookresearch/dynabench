@@ -38,7 +38,10 @@ def send_eval_request(model_id, dataset_name, config, logger=None):
         )
         sqs = session.resource("sqs")
         queue = sqs.get_queue_by_name(QueueName=config["evaluation_sqs_queue"])
-        msg = {"model_id": model_id, "dataset_name": dataset_name}
+        msg = {
+            "model_id": model_id,
+            "dataset_name": dataset_name,
+        }
         queue.send_message(MessageBody=json.dumps(msg))
         if logger:
             logger.info(f"Sent message to {config['evaluation_sqs_queue']}: {msg}")

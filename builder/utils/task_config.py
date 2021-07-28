@@ -7,6 +7,7 @@ _default_config = {
     "aws_region": "us-west-1",
     "gpu": False,
     "torchserve_config": {},
+    "evaluation_sqs_queue": "dynabench-evaluation",
 }
 
 _custom_config = {
@@ -23,6 +24,7 @@ _custom_config = {
             "max_request_size": 12853500,
             "max_response_size": 12853500,
         },
+        "evaluation_sqs_queue": "flores-evaluation",
     }
 }
 

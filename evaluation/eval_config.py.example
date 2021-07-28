@@ -8,4 +8,5 @@ eval_config = {
     "scheduler_status_dump": "scheduler.dump",
     "computer_status_dump": "computer.dump",
     "max_submission": 20
+    "compute_metric_processes": 4,
 }
