@@ -20,36 +20,47 @@ from utils.requester import Requester
 
 sleep_interval = 5
 scheduler_update_interval = 300
+logger = logging.getLogger("evaluation")
 
 
-def main():
-    init_logger("evaluation")
-    logger = logging.getLogger("evaluation")
-    logger.info("Start evaluation server")
+def make_requester(config) -> Requester:
     sqs = boto3.resource(
         "sqs",
-        aws_access_key_id=eval_config["aws_access_key_id"],
-        aws_secret_access_key=eval_config["aws_secret_access_key"],
-        region_name=eval_config["aws_region"],
+        aws_access_key_id=config["aws_access_key_id"],
+        aws_secret_access_key=config["aws_secret_access_key"],
+        region_name=config["aws_region"],
     )
-    queue = sqs.get_queue_by_name(QueueName=eval_config["evaluation_sqs_queue"])
+    queue = sqs.get_queue_by_name(QueueName=config["evaluation_sqs_queue"])
     dataset_dict = load_datasets()
     while not dataset_dict:
         logger.info("Haven't got dataset_dict. Sleep.")
         time.sleep(sleep_interval)
 
-    with contextlib.ExitStack() as stack:
-        # 3 so that we can handle dev/test/devtest at once for one model
-        flores_pool = stack.enter_context(multiprocessing.pool.Pool(3))
-        pool = stack.enter_context(multiprocessing.pool.Pool(1))
+    return Requester(config, dataset_dict), queue
 
-        requester = Requester(eval_config, dataset_dict)
+
+def main():
+    init_logger("evaluation")
+    logger.info("Start evaluation server")
+
+    requester, queue = make_requester(eval_config)
+    this_server_id = eval_config["eval_server_id"]
+    cpus = eval_config.get("compute_metric_processes", 2)
+    with multiprocessing.pool.Pool(cpus) as pool:
         timer = scheduler_update_interval
         while True:
             # On each iteration, submit all requested jobs
             for message in queue.receive_messages():
                 msg = json.loads(message.body)
-                logger.info(f"Evaluation server received SQS message {msg}")
+                if msg.get("eval_server_id", "default") != this_server_id:
+                    logger.info(
+                        f"Evaluation server {this_server_id} ignored message {msg}"
+                    )
+                    continue
+
+                logger.info(
+                    f"Evaluation server {this_server_id} received SQS message {msg}"
+                )
                 requester.request(msg)
                 queue.delete_messages(
                     Entries=[
@@ -68,9 +79,7 @@ def main():
             # Evaluate one job
             job = requester.computer.find_next_ready_job()
             if job:
-                requester.computer.compute_one_async(
-                    flores_pool if "flores101" in job.dataset_name else pool, job
-                )
+                requester.computer.compute_one_async(pool, job)
             time.sleep(sleep_interval)
             timer += sleep_interval
 

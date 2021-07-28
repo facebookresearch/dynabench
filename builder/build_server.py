@@ -91,9 +91,11 @@ if __name__ == "__main__":
                             )
                         subject = f"Model {model.name} deployment successful"
                         template = "model_deployment_successful"
-                        eval_queue.send_message(
-                            MessageBody=json.dumps({"model_id": model_id})
-                        )
+                        eval_message = {
+                            "model_id": model_id,
+                            "eval_server_id": deployer.task_config["eval_server_id"],
+                        }
+                        eval_queue.send_message(MessageBody=json.dumps(eval_message))
 
                     # send email
                     user = m.getModelUserByMid(model_id)[1]
