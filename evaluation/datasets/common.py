@@ -12,7 +12,6 @@ from eval_config import eval_config
 from metrics import get_delta_metrics, get_eval_metrics, get_task_config_safe
 from models.dataset import AccessTypeEnum, DatasetModel
 from models.task import TaskModel
-from utils import helpers
 from utils.helpers import (
     get_data_s3_path,
     get_perturbed_filename,
