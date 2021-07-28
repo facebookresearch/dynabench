@@ -60,7 +60,7 @@ class VerifyInterface extends React.Component {
       UNKNOWN: "unknown",
     };
     this.state = {
-      taskId: null,
+      taskCode: null,
       task: {},
 
       owner_mode: false,
@@ -99,7 +99,7 @@ class VerifyInterface extends React.Component {
             "Please log in or sign up so that you can get credit for your generated examples."
           ) +
           "&src=" +
-          encodeURIComponent("/tasks/" + params.taskId + "/create")
+          encodeURIComponent(`/tasks/${params.taskCode}/create`)
       );
     }
 
@@ -121,14 +121,26 @@ class VerifyInterface extends React.Component {
       }
     }
 
-    this.setState({ taskId: params.taskId }, function () {
-      this.context.api.getTask(this.state.taskId).then(
+    this.setState({ taskCode: params.taskCode }, function () {
+      this.context.api.getTask(this.state.taskCode).then(
         (result) => {
           result.targets = result.targets.split("|"); // split targets
-          this.setState({ task: result }, function () {
-            this.state.task.selected_round = this.state.task.cur_round;
-            this.getNewExample();
-          });
+          this.setState(
+            { task: result, taskCode: result.task_code },
+            function () {
+              this.state.task.selected_round = this.state.task.cur_round;
+              this.getNewExample();
+              if (params.taskCode !== this.state.taskCode) {
+                this.props.history.replace({
+                  pathname: this.props.location.pathname.replace(
+                    `/tasks/${params.taskCode}`,
+                    `/tasks/${this.state.taskCode}`
+                  ),
+                  search: this.props.location.search,
+                });
+              }
+            }
+          );
         },
         (error) => {
           console.log(error);
@@ -162,7 +174,7 @@ class VerifyInterface extends React.Component {
     (this.state.owner_mode
       ? this.setRangesAndGetRandomFilteredExample()
       : this.context.api.getRandomExample(
-          this.state.taskId,
+          this.state.task.id,
           this.state.task.selected_round
         )
     ).then(
@@ -312,7 +324,7 @@ class VerifyInterface extends React.Component {
     }
 
     return this.context.api.getRandomFilteredExample(
-      this.state.taskId,
+      this.state.task.id,
       this.state.task.selected_round,
       minNumFlags,
       maxNumFlags,
