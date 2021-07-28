@@ -27,7 +27,6 @@ import {
   usePagination,
   useSortBy,
   useFlexLayout,
-  useBlockLayout,
 } from "react-table";
 import UserContext from "../../containers/UserContext";
 import FloresLanguages from "./FloresLanguages";
@@ -197,14 +196,18 @@ const LangPairsTable = ({ columns, data }) => {
     useFilters,
     useSortBy,
     usePagination,
-    useFlexLayout,
-    useBlockLayout
+    useFlexLayout
   );
 
   return (
     <>
       <Card.Body className="p-0 leaderboard-container">
-        <Table hover {...getTableProps()} className="pairs-leaderboard">
+        <Table
+          hover
+          responsive
+          {...getTableProps()}
+          className="pairs-leaderboard"
+        >
           <thead>
             {headerGroups.map((headerGroup) => (
               <tr {...headerGroup.getHeaderGroupProps()}>
@@ -325,14 +328,12 @@ const FloresPairsLeaderBoard = ({ taskId, history, ...props }) => {
         id: "source_lang",
         accessor: (data) => `${data.source_lang} (${data.source_tag})`,
         disableSortBy: true,
-        minWidth: 220,
       },
       {
         Header: "Target Language",
         id: "target_lang",
         accessor: (data) => `${data.target_lang} (${data.target_tag})`,
         disableSortBy: true,
-        minWidth: 220,
       },
       {
         Header: "Model",

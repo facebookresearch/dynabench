@@ -90,6 +90,7 @@ const ModelLeaderBoard = ({ taskId, history, isTop5 }) => {
 
   useEffect(() => {
     setIsLoading(true);
+    setPage(0);
     context.api.getTask(taskId).then(
       (result) => {
         setTask(result);

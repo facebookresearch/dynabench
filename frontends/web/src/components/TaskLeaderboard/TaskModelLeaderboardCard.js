@@ -55,7 +55,7 @@ const TaskModelLeaderboardCard = (props) => {
       setMetrics(result.orderedMetricWeights);
       setDatasetWeights(result.orderedDatasetWeights);
     });
-  }, [task]);
+  }, [context.api, props, task]);
 
   const [sort, setSort] = useState({
     field: "dynascore",
@@ -69,6 +69,11 @@ const TaskModelLeaderboardCard = (props) => {
   const [showForkModal, setShowForkModal] = useState(false);
 
   const taskId = props.taskId;
+
+  // Runs on taskID update only, i.e. task change, initialize page to 0.
+  useEffect(() => {
+    setPage(0);
+  }, [taskId]);
 
   /**
    * Update weight state for the appropriate metric
@@ -152,7 +157,16 @@ const TaskModelLeaderboardCard = (props) => {
     );
 
     return () => {};
-  }, [page, sort, metrics, datasetWeights, context.api, taskId, pageLimit]);
+  }, [
+    page,
+    sort,
+    metrics,
+    datasetWeights,
+    context.api,
+    taskId,
+    pageLimit,
+    props,
+  ]);
 
   const isEndOfPage = (page + 1) * pageLimit >= total;
 
