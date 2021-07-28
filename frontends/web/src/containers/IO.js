@@ -1,5 +1,5 @@
 import React from "react";
-import { FormControl, DropdownButton, Dropdown, Badge } from "react-bootstrap";
+import { FormControl, DropdownButton, Dropdown, Badge, InputGroup } from "react-bootstrap";
 import { PieRechart } from "../components/Rechart";
 import { useState } from "react";
 import { TokenAnnotator } from "react-text-annotate";
@@ -23,11 +23,12 @@ const MultipleChoiceIO = ({
   }
   return (
     <div>
-      <Badge variant="primary"> {io_key} </Badge>
-      <br />
       {location === "context" || !create ? (
-        example_io[io_key]
+        <><strong>{io_key}:</strong><br/>{example_io[io_key]}</>
       ) : (
+        <>
+        <Badge variant="primary"> {io_key} </Badge>
+        <br />
         <DropdownButton variant="light" className="p-1" title={choice}>
           {labels
             .filter((label, _) => label !== choice)
@@ -45,6 +46,69 @@ const MultipleChoiceIO = ({
               </Dropdown.Item>
             ))}
         </DropdownButton>
+        </>
+      )}
+    </div>
+  );
+};
+
+const GoalMessageMultipleChoiceIO = ({
+  create,
+  example_io,
+  set_example_io,
+  hide_by_key,
+  set_hide_by_key,
+  io_key,
+  location,
+  constructor_args,
+}) => {
+  const labels = constructor_args["labels"];
+  const random = labels[Math.floor(Math.random() * labels.length)]
+  const [choice, setChoice] = useState(random);
+  // This ensures that the UI resets when the value goes back to null
+  if (example_io[io_key] === null) {
+    example_io[io_key] = random;
+    set_example_io(example_io);
+    if (choice !== random) {
+      setChoice(random);
+    }
+  }
+
+  const vowels = ["a", "e", "i", "o", "u"];
+  const indefiniteArticle = vowels.indexOf(choice[0]) >= 0 ? "an" : "a";
+  const otherLabels = labels.filter((label, _) => label !== choice);
+  const otherLabelsStr = otherLabels.slice(0,otherLabels.length-2).join(", ") + otherLabels.slice(otherLabels.length-2, otherLabels.length).join(" or ");
+  return (
+    <div>
+      {location === "context" || !create ? (
+        <><strong>{io_key}:</strong><br/>{example_io[io_key]}</>
+      ) : (
+        <>
+        <Badge variant="primary"> {io_key} </Badge>
+        <br />
+        <InputGroup className="align-items-center">
+          <i className="fas fa-flag-checkered mr-1"></i>
+          Your goal: enter {indefiniteArticle}
+          <DropdownButton variant="light" className="p-1" title={choice}>
+            {labels
+              .filter((label, _) => label !== choice)
+              .map((label, index) => (
+                <Dropdown.Item
+                  onClick={() => {
+                    setChoice(label);
+                    example_io[io_key] = label;
+                    set_example_io(example_io);
+                  }}
+                  io_key={index}
+                  index={index}
+                >
+                  {label}
+                </Dropdown.Item>
+              ))}
+          </DropdownButton>
+          example that fools the model into predicting {otherLabelsStr}.
+        </InputGroup>
+        </>
       )}
     </div>
   );
@@ -62,13 +126,14 @@ const StringIO = ({
 }) => {
   return (
     <div>
-      <Badge variant="primary"> {io_key} </Badge>
-      <br />
       {location === "context" || !create ? (
-        example_io[io_key]
+        <><strong>{io_key}:</strong><br/>{example_io[io_key]}</>
       ) : (
+        <>
+        <Badge variant="primary"> {io_key} </Badge>
+        <br />
         <FormControl
-          className="m-3 p-3 rounded-1 thick-border light-gray-bg"
+          className="rounded-1 thick-border light-gray-bg"
           placeholder={"Enter..."}
           value={example_io[io_key] ? example_io[io_key] : ""}
           onChange={(event) => {
@@ -78,6 +143,7 @@ const StringIO = ({
           required={true}
           as="textarea"
         />
+        </>
       )}
     </div>
   );
@@ -104,14 +170,15 @@ const StringSelectionIO = ({
   }
   return (
     <div>
-      <Badge variant="primary">
-        {" "}
-        Select {io_key} in {constructor_args["reference_key"]}
-      </Badge>
-      <br />
       {location === "context" || !create ? (
-        example_io[io_key]
+        <><strong>{io_key} :</strong><br/>example_io[io_key]</>
       ) : (
+        <>
+        <Badge variant="primary">
+          {" "}
+          Select {io_key} in {constructor_args["reference_key"]}
+        </Badge>
+        <br />
         <TokenAnnotator
           className="mb-1 p-3 light-gray-bg qa-context"
           tokens={example_io[constructor_args["reference_key"]].split(/\b/)}
@@ -128,6 +195,7 @@ const StringSelectionIO = ({
             tag: io_key,
           })}
         />
+        </>
       )}
     </div>
   );
@@ -229,6 +297,19 @@ const IO = ({
     case "multiple_choice":
       return (
         <MultipleChoiceIO
+          create={create}
+          io_key={io_key}
+          example_io={example_io}
+          set_example_io={set_example_io}
+          hide_by_key={hide_by_key}
+          set_hide_by_key={set_hide_by_key}
+          location={location}
+          constructor_args={constructor_args}
+        />
+      );
+    case "goal_message_multiple_choice":
+      return (
+        <GoalMessageMultipleChoiceIO
           create={create}
           io_key={io_key}
           example_io={example_io}

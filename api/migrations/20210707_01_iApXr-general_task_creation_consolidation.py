@@ -25,9 +25,10 @@ steps = [
             "constructor_args": {}
         },
         "label": {
-            "type": "multiple_choice",
+            "type": "goal_message_multiple_choice",
             "location": "output",
-            "constructor_args": {"labels": ["entailed", "neutral", "contradictory"]}
+            "constructor_args": {"labels": ["entailed", "neutral", "contradictory"]},
+            "special_create_interface_location": "top"
         },
         "prob": {
             "type": "multiple_choice_probs",
@@ -70,7 +71,8 @@ steps = [
         "answer": {
             "type": "string_selection",
             "location": "output",
-            "constructor_args": {"reference_key": "context"}
+            "constructor_args": {"reference_key": "context"},
+            "special_create_interface_location": "context"
         },
         "conf": {
             "type": "conf",
@@ -81,15 +83,21 @@ steps = [
     ),
     step(
         """UPDATE tasks SET io_definition='{
+        "context": {
+            "type": "string",
+            "location": "context",
+            "constructor_args": {}
+        },
         "statement": {
             "type": "string",
             "location": "input",
             "constructor_args": {}
         },
         "label": {
-            "type": "multiple_choice",
+            "type": "goal_message_multiple_choice",
             "location": "output",
-            "constructor_args": {"labels": ["hateful", "not-hateful"]}
+            "constructor_args": {"labels": ["hateful", "not-hateful"]},
+            "special_create_interface_location": "top"
         },
         "prob": {
             "type": "multiple_choice_probs",
@@ -100,15 +108,21 @@ steps = [
     ),
     step(
         """UPDATE tasks SET io_definition='{
+        "context": {
+            "type": "string",
+            "location": "context",
+            "constructor_args": {}
+        },
         "statement": {
             "type": "string",
             "location": "input",
             "constructor_args": {}
         },
         "label": {
-            "type": "multiple_choice",
+            "type": "goal_message_multiple_choice",
             "location": "output",
-            "constructor_args": {"labels": ["positive", "neutral", "negative"]}
+            "constructor_args": {"labels": ["positive", "neutral", "negative"]},
+            "special_create_interface_location": "top"
         },
         "prob": {
             "type": "multiple_choice_probs",

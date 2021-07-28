@@ -19,11 +19,10 @@ import {
   OverlayTrigger,
   Tooltip,
   Modal,
-  Badge as BBadge,
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import UserContext from "./UserContext";
-import { KeyboardShortcuts } from "./KeyboardShortcuts.js";
+import ExplainFeedback from "./ExplainFeedback";
 import BootstrapSwitchButton from "bootstrap-switch-button-react";
 import {
   OverlayProvider,
@@ -57,10 +56,41 @@ class ResponseInfo extends React.Component {
     super(props);
     this.retractExample = this.retractExample.bind(this);
     this.flagExample = this.flagExample.bind(this);
+    this.explainExample = this.explainExample.bind(this);
     this.state = {
+      livemode: this.props.livemode,
       hide_by_key: new Set(),
     };
   }
+  componentDidMount() {
+    this.setState({
+      explainSaved: null,
+      feedbackSaved: null,
+    });
+  }
+
+  explainExample(e) {
+    e.preventDefault();
+    var type = e.target.getAttribute("data-type");
+    var explanation = e.target.value.trim();
+    if (explanation !== "" || this.state.hasPreviousExplanation) {
+      this.setState({ explainSaved: false, hasPreviousExplanation: true });
+      this.context.api
+        .explainExample(this.props.exampleId, type, explanation)
+        .then(
+          (result) => {
+            this.setState({ explainSaved: true });
+            if (explanation === "") {
+              this.setState({ hasPreviousExplanation: false });
+            }
+          },
+          (error) => {
+            console.log(error);
+          }
+        );
+    }
+  }
+
   retractExample(e) {
     e.preventDefault();
     var idx = e.target.getAttribute("data-index");
@@ -94,7 +124,7 @@ class ResponseInfo extends React.Component {
 
   render() {
     let sandboxContent = null;
-    if (!this.props.livemode) {
+    if (!this.state.livemode) {
       sandboxContent = (
         <div>
           This example was not stored because you are in sandbox mode.
@@ -121,143 +151,238 @@ class ResponseInfo extends React.Component {
         </div>
       );
     }
-    var classNames = this.props.obj.cls + " rounded border m-3";
-    var userFeedback = null;
-    var submissionResults = null;
 
-    if (this.props.obj.retracted) {
-      classNames += " response-warning";
-      userFeedback = (
-        <span>
-          <strong>Example retracted</strong> - thanks.
-        </span>
+    const userInput = (Object.keys(this.props.io_definition)
+      .filter(
+        (key, _) =>
+          !this.state.hide_by_key.has(key) &&
+          this.props.io_definition[key].location === "input"
+      )
+      .map((key, _) => (
+        <IO
+          key={key}
+          create={false}
+          io_key={key}
+          example_io={this.props.obj.example_io}
+          set_example_io={() => {}}
+          hide_by_key={this.state.hide_by_key}
+          set_hide_by_key={(hide_by_key) =>
+            this.setState({ hide_by_key: hide_by_key })
+          }
+          type={this.props.io_definition[key].type}
+          location={this.props.io_definition[key].location}
+          constructor_args={
+            this.props.io_definition[key].constructor_args
+          }
+        />
+      )))
+
+    const userOutput = (Object.keys(this.props.io_definition)
+      .filter(
+        (key, _) =>
+          !this.state.hide_by_key.has(key) &&
+          this.props.io_definition[key].location === "output"
+      )
+      .map((key, _) => (
+        <IO
+          key={key}
+          create={false}
+          io_key={key}
+          example_io={this.props.obj.example_io}
+          set_example_io={() => {}}
+          hide_by_key={this.state.hide_by_key}
+          set_hide_by_key={(hide_by_key) =>
+            this.setState({ hide_by_key: hide_by_key })
+          }
+          type={this.props.io_definition[key].type}
+          location={this.props.io_definition[key].location}
+          constructor_args={
+            this.props.io_definition[key].constructor_args
+          }
+        />
+      )))
+
+    const modelOutput = (Object.keys(this.props.io_definition)
+      .filter(
+        (key, _) =>
+          !this.state.hide_by_key.has(key) &&
+              this.props.io_definition[key].location ===
+                "output"
+      )
+      .map((key, _) => (
+        <IO
+          key={key}
+          create={false}
+          io_key={key}
+          example_io={this.props.obj.model_response_io}
+          set_example_io={() => {}}
+          hide_by_key={this.state.hide_by_key}
+          set_hide_by_key={(hide_by_key) =>
+            this.setState({ hide_by_key: hide_by_key })
+          }
+          type={this.props.io_definition[key].type}
+          location={this.props.io_definition[key].location}
+          constructor_args={
+            this.props.io_definition[key].constructor_args
+          }
+        />
+      )))
+
+      const modelResponseInfo = (Object.keys(this.props.io_definition)
+        .filter(
+          (key, _) =>
+            !this.state.hide_by_key.has(key) &&
+                this.props.io_definition[key].location ===
+                  "model_response_info"
+        )
+        .map((key, _) => (
+          <IO
+            key={key}
+            create={false}
+            io_key={key}
+            example_io={this.props.obj.model_response_io}
+            set_example_io={() => {}}
+            hide_by_key={this.state.hide_by_key}
+            set_hide_by_key={(hide_by_key) =>
+              this.setState({ hide_by_key: hide_by_key })
+            }
+            type={this.props.io_definition[key].type}
+            location={this.props.io_definition[key].location}
+            constructor_args={
+              this.props.io_definition[key].constructor_args
+            }
+          />
+        )))
+
+      var classNames = this.props.obj.cls + " rounded border m-3";
+
+      const submissionResults = (<Row>
+          <Col>The model predicted{" "}</Col>
+          <Col><strong>{modelOutput}</strong></Col>
+          <Col>and you say</Col>
+          <Col><strong>{userOutput}</strong></Col>
+        </Row>);
+
+      var userFeedback = (
+        <>
+          {this.props.livemode ? (
+            this.props.obj.model_correct ? (
+              <div className="mt-3">
+                <span>
+                  Optionally, provide an explanation for your example:
+                </span>
+                <ExplainFeedback
+                  feedbackSaved={this.state.explainSaved}
+                  type="explanation"
+                />
+                <div>
+                  <input
+                    type="text"
+                    style={{ width: 100 + "%", marginBottom: "1px" }}
+                    placeholder={
+                      "Explain why " +
+                      this.props.obj.targetText +
+                      " is the correct answer"
+                    }
+                    data-index={this.props.index}
+                    data-type="example"
+                    onChange={() => this.setState({ explainSaved: null })}
+                    onBlur={this.explainExample}
+                  />
+                </div>
+                <div>
+                  <input
+                    type="text"
+                    style={{ width: 100 + "%" }}
+                    placeholder="Explain why you think the model made a mistake"
+                    data-index={this.props.index}
+                    data-type="model"
+                    onChange={() => this.setState({ explainSaved: null })}
+                    onBlur={this.explainExample}
+                  />
+                </div>
+              </div>
+            ) : (
+              /* not fooled */
+              <div className="mt-3">
+                <span>
+                  Optionally, provide an explanation for your example:
+                </span>
+                <ExplainFeedback
+                  feedbackSaved={this.state.explainSaved}
+                  type="explanation"
+                />
+                <div>
+                  <input
+                    type="text"
+                    style={{ width: 100 + "%", marginBottom: "1px" }}
+                    placeholder={
+                      "Explain why " +
+                      this.props.obj.targetText +
+                      " is the correct answer"
+                    }
+                    data-index={this.props.index}
+                    data-type="example"
+                    onChange={() => this.setState({ explainSaved: null })}
+                    onBlur={this.explainExample}
+                  />
+                </div>
+                <div>
+                  <input
+                    type="text"
+                    style={{ width: 100 + "%" }}
+                    placeholder="Explain what you did to try to trick the model"
+                    data-index={this.props.index}
+                    data-type="model"
+                    onChange={() => this.setState({ explainSaved: null })}
+                    onBlur={this.explainExample}
+                  />
+                </div>
+              </div>
+            )
+          ) : ""}
+        </>
       );
-    } else if (this.props.obj.flagged) {
-      classNames += " response-warning";
-      userFeedback = (
-        <span>
-          <strong>Example flagged</strong> - thanks.
-        </span>
-      );
-    } else {
-      if (this.props.obj.model_correct) {
+
+      var title = null;
+      if (this.props.obj.retracted) {
         classNames += " response-warning";
-        submissionResults = (
-          <span>
-            <strong>You didn't fool the model. Please try again!</strong>
-          </span>
-        );
+        userFeedback = null;
+        title = (<span><strong>Example retracted</strong> - thanks</span>);
+      } else if (this.props.obj.flagged) {
+        classNames += " response-warning";
+        userFeedback = null;
+        title = (<span><strong>Example flagged</strong> - thanks</span>);
       } else {
-        classNames += " light-green-bg";
-        submissionResults = (
-          <span>
-            <strong>You fooled the model!</strong>
-          </span>
-        );
-      }
-    }
+        if (this.props.obj.model_correct) {
+          classNames += " response-warning";
+          title = (<span><strong>You didn't fool the model. Please try again!</strong></span>);
+        } else {
+          classNames += " light-green-bg";
+          title = (<span><strong>You fooled the model!</strong></span>);
+        }
 
     return (
-      <Card className={classNames + " text-center"}>
-        <Card.Title>{submissionResults}</Card.Title>
-        <Card.Body>
-          {Object.keys(this.props.io_definition)
-            .filter(
-              (key, _) =>
-                !this.state.hide_by_key.has(key) &&
-                this.props.io_definition[key].location === "input"
-            )
-            .map((key, _) => (
-              <IO
-                key={key}
-                create={false}
-                io_key={key}
-                example_io={this.props.obj.example_io}
-                set_example_io={() => {}}
-                hide_by_key={this.state.hide_by_key}
-                set_hide_by_key={(hide_by_key) =>
-                  this.setState({ hide_by_key: hide_by_key })
-                }
-                type={this.props.io_definition[key].type}
-                location={this.props.io_definition[key].location}
-                constructor_args={
-                  this.props.io_definition[key].constructor_args
-                }
-              />
-            ))}
-          <Row>
-            <Col>
-              <BBadge variant="secondary"> Your Output </BBadge>
-              {Object.keys(this.props.io_definition)
-                .filter(
-                  (key, _) =>
-                    !this.state.hide_by_key.has(key) &&
-                    this.props.io_definition[key].location === "output"
-                )
-                .map((key, _) => (
-                  <IO
-                    key={key}
-                    create={false}
-                    io_key={key}
-                    example_io={this.props.obj.example_io}
-                    set_example_io={() => {}}
-                    hide_by_key={this.state.hide_by_key}
-                    set_hide_by_key={(hide_by_key) =>
-                      this.setState({ hide_by_key: hide_by_key })
-                    }
-                    type={this.props.io_definition[key].type}
-                    location={this.props.io_definition[key].location}
-                    constructor_args={
-                      this.props.io_definition[key].constructor_args
-                    }
-                  />
-                ))}
-              <br />
-            </Col>
-            <Col>
-              <BBadge variant="secondary"> Model Output </BBadge>
-              {Object.keys(this.props.io_definition)
-                .filter(
-                  (key, _) =>
-                    !this.state.hide_by_key.has(key) &&
-                    (this.props.io_definition[key].location === "output" ||
-                      this.props.io_definition[key].location ===
-                        "model_response_info")
-                )
-                .map((key, _) => (
-                  <IO
-                    key={key}
-                    create={false}
-                    io_key={key}
-                    example_io={this.props.obj.model_response_io}
-                    set_example_io={() => {}}
-                    hide_by_key={this.state.hide_by_key}
-                    set_hide_by_key={(hide_by_key) =>
-                      this.setState({ hide_by_key: hide_by_key })
-                    }
-                    type={this.props.io_definition[key].type}
-                    location={this.props.io_definition[key].location}
-                    constructor_args={
-                      this.props.io_definition[key].constructor_args
-                    }
-                  />
-                ))}
-              <br />
-            </Col>
-          </Row>
+      <Card className={classNames} style={{ minHeight: 120 }}>
+        <Card.Body className="p-3">
           <Row>
             <Col xs={12} md={7}>
-              <div className="mb-3">{this.props.obj.text}</div>
+              <div className="mb-3">{title}</div>
+              <div className="mb-3">{userInput}</div>
               <small>
+                {submissionResults}
                 {userFeedback}
                 {sandboxContent}
               </small>
+            </Col>
+            <Col xs={12} md={5}>
+              {modelResponseInfo}
             </Col>
           </Row>
         </Card.Body>
         {this.props.obj.retracted ||
         this.props.obj.flagged ||
-        !this.props.livemode ? null : (
+        !this.state.livemode ? null : (
           <Card.Footer>
             {
               <div
@@ -310,6 +435,7 @@ class ResponseInfo extends React.Component {
       </Card>
     );
   }
+}
 }
 
 class CreateInterface extends React.Component {
@@ -762,7 +888,9 @@ class CreateInterface extends React.Component {
                 <Modal.Header closeButton>
                   <Modal.Title>Instructions</Modal.Title>
                 </Modal.Header>
-                <Modal.Body>{this.state.task.create_instructions}</Modal.Body>
+                <Modal.Body>
+                  {this.state.task.instructions}
+                </Modal.Body>
               </Modal>
               <Modal
                 show={this.state.showCreateSettingsModal}
@@ -784,42 +912,110 @@ class CreateInterface extends React.Component {
               taskName={this.state.task.name}
               selectedModel={this.state.selectedModel}
             />
-            <Card>
-              <Card.Body>
-                {this.state.io_definition && this.state.example_io
-                  ? Object.keys(this.state.io_definition)
-                      .filter(
-                        (key, _) =>
-                          !this.state.hide_by_key.has(key) &&
-                          this.state.io_definition[key].location !==
-                            "model_response_info"
-                      )
-                      .map((key, index) => (
-                        <Row key={index}>
-                          <IO
-                            key={key}
-                            create={true}
-                            io_key={key}
-                            example_io={this.state.example_io}
-                            set_example_io={(example_io) => {
-                              this.setState({ example_io: example_io });
-                            }}
-                            hide_by_key={this.state.hide_by_key}
-                            set_hide_by_key={(hide_by_key) => {
-                              this.setState({ hide_by_key: hide_by_key });
-                            }}
-                            type={this.state.io_definition[key].type}
-                            location={this.state.io_definition[key].location}
-                            constructor_args={
-                              this.state.io_definition[key].constructor_args
-                            }
-                          />
-                        </Row>
-                      ))
-                  : null}
+            <div className={"mb-3"}>
+            <div className="mb-1 p-3 rounded light-gray-bg">
+            {this.state.io_definition && this.state.example_io
+            ? Object.keys(this.state.io_definition)
+                .filter(
+                  (key, _) =>
+                    !this.state.hide_by_key.has(key) &&
+                    this.state.io_definition[key].special_create_interface_location ===
+                      "top"
+                )
+                .map((key, index) => (
+                    <IO
+                      key={key}
+                      create={true}
+                      io_key={key}
+                      example_io={this.state.example_io}
+                      set_example_io={(example_io) => {
+                        this.setState({ example_io: example_io });
+                      }}
+                      hide_by_key={this.state.hide_by_key}
+                      set_hide_by_key={(hide_by_key) => {
+                        this.setState({ hide_by_key: hide_by_key });
+                      }}
+                      type={this.state.io_definition[key].type}
+                      location={this.state.io_definition[key].location}
+                      constructor_args={
+                        this.state.io_definition[key].constructor_args
+                      }
+                    />
+                ))
+            : null}
+            </div>
+            </div>
+            <Card className="profile-card overflow-hidden">
+              <div className="mb-1 p-3 light-gray-bg">
+              {this.state.io_definition && this.state.example_io
+              ? Object.keys(this.state.io_definition)
+                  .filter(
+                    (key, _) =>
+                      !this.state.hide_by_key.has(key) &&
+                      (this.state.io_definition[key].special_create_interface_location === "context" || (this.state.io_definition[key].location === "context" && !this.state.io_definition[key].special_create_interface_location))
+                  )
+                  .map((key, index) => (
+                      <IO
+                        key={key}
+                        create={true}
+                        io_key={key}
+                        example_io={this.state.example_io}
+                        set_example_io={(example_io) => {
+                          this.setState({ example_io: example_io });
+                        }}
+                        hide_by_key={this.state.hide_by_key}
+                        set_hide_by_key={(hide_by_key) => {
+                          this.setState({ hide_by_key: hide_by_key });
+                        }}
+                        type={this.state.io_definition[key].type}
+                        location={this.state.io_definition[key].location}
+                        constructor_args={
+                          this.state.io_definition[key].constructor_args
+                        }
+                      />
+                  ))
+              : null}
+              </div>
+              <Card.Body
+                className="overflow-auto pt-2"
+                style={{
+                  height: 385,
+                }}
+                ref={this.chatContainerRef}
+              >
                 {responseContent}
                 <div className="bottom-anchor" ref={this.bottomAnchorRef} />
               </Card.Body>
+              <div className="mb-1 p-3">
+              {this.state.io_definition && this.state.example_io
+              ? Object.keys(this.state.io_definition)
+                  .filter(
+                    (key, _) =>
+                      !this.state.hide_by_key.has(key) &&
+                        (this.state.io_definition[key].special_create_interface_location === "below_model_response" || (this.state.io_definition[key].location !== "context" && !this.state.io_definition[key].special_create_interface_location))
+                  )
+                  .map((key, index) => (
+                      <IO
+                        key={key}
+                        create={true}
+                        io_key={key}
+                        example_io={this.state.example_io}
+                        set_example_io={(example_io) => {
+                          this.setState({ example_io: example_io });
+                        }}
+                        hide_by_key={this.state.hide_by_key}
+                        set_hide_by_key={(hide_by_key) => {
+                          this.setState({ hide_by_key: hide_by_key });
+                        }}
+                        type={this.state.io_definition[key].type}
+                        location={this.state.io_definition[key].location}
+                        constructor_args={
+                          this.state.io_definition[key].constructor_args
+                        }
+                      />
+                  ))
+              : null}
+              </div>
               <Form>
                 <Row className="p-3">
                   <Col xs={6}>
