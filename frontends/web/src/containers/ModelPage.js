@@ -149,6 +149,7 @@ class ModelPage extends React.Component {
         name: "",
         username: "",
       },
+      taskCode: null,
       task: {},
       isLoading: false,
     };
@@ -162,42 +163,55 @@ class ModelPage extends React.Component {
   }
 
   fetchModel = () => {
-    this.context.api.getModel(this.state.modelId).then((result) => {
-      this.setState(
-        { model: result, isLoading: false },
-        function () {
+    this.context.api.getModel(this.state.modelId).then(
+      (result) => {
+        this.setState({ model: result, isLoading: false }, function () {
           this.context.api.getTask(this.state.model.tid).then(
             (result) => {
               this.setState({
+                taskCode: result.task_code,
                 task: result,
               });
+              const taskCodeFromParams = this.props.match.params.taskCode;
+              if (
+                taskCodeFromParams &&
+                taskCodeFromParams !== result.task_code
+              ) {
+                this.props.history.replace({
+                  pathname: this.props.location.pathname.replace(
+                    `/tasks/${taskCodeFromParams}`,
+                    `/tasks/${result.task_code}`
+                  ),
+                  search: this.props.location.search,
+                });
+              }
             },
             (error) => {
               console.log(error);
             }
           );
-        },
-        (error) => {
-          console.log(error);
-          this.setState({ isLoading: false });
-          if (error.status_code === 404 || error.status_code === 405) {
-            this.props.history.push("/");
-          }
+        });
+      },
+      (error) => {
+        console.log(error);
+        this.setState({ isLoading: false });
+        if (error.status_code === 404 || error.status_code === 405) {
+          this.props.history.push("/");
         }
-      );
-    });
+      }
+    );
   };
 
   handleEdit = () => {
     this.props.history.push({
-      pathname: `/tasks/${this.state.model.tid}/models/${this.state.model.id}/updateModelInfo`,
+      pathname: `/tasks/${this.state.taskCode}/models/${this.state.model.id}/updateModelInfo`,
       state: { detail: this.state.model },
     });
   };
 
   handleInteract = () => {
     this.props.history.push({
-      pathname: `/tasks/${this.state.model.tid}/create`,
+      pathname: `/tasks/${this.state.taskCode}/create`,
       state: {
         detail: {
           endpointUrl:
@@ -213,7 +227,7 @@ class ModelPage extends React.Component {
     const modelName = this.state.model.name;
     if (!modelName || modelName === "") {
       this.props.history.push({
-        pathname: `/tasks/${this.state.model.tid}/models/${this.state.model.id}/updateModelInfo`,
+        pathname: `/tasks/${this.state.taskCode}/models/${this.state.model.id}/updateModelInfo`,
         state: { detail: this.state.model },
       });
       return;
@@ -357,7 +371,7 @@ ${latexTableContent}
   };
 
   render() {
-    const { model, task } = this.state;
+    const { model, task, taskCode } = this.state;
     const isFlores = FLORES_TASK_SHORT_NAMES.includes(task.shortname);
     const isModelOwner =
       parseInt(this.state.model.user_id) === parseInt(this.state.ctxUserId);
@@ -497,7 +511,7 @@ ${latexTableContent}
                           <tr style={{ border: `none` }}>
                             <td>Task</td>
                             <td>
-                              <Link to={`/tasks/${model.tid}#overall`}>
+                              <Link to={`/tasks/${taskCode}`}>
                                 <TasksContext.Consumer>
                                   {({ tasks }) => {
                                     const task =
