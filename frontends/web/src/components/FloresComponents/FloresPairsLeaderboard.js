@@ -167,6 +167,13 @@ const DefaultColumnFilter = ({
   );
 };
 
+/**
+ * A react-table component that manages filter, sorting and pagination.
+ *
+ * @param {Array} columns an array of objects containing the headers and keys of the data.
+ * @param {Array} data The data array to display om the table.
+ * @returns
+ */
 const LangPairsTable = ({ columns, data }) => {
   const defaultColumn = useMemo(
     () => ({
