@@ -36,10 +36,10 @@ def get_submitable_tasks():
     return util.json_encode(tasks)
 
 
-@bottle.get("/tasks/<tid:int>")
-def get_task(tid):
+@bottle.get("/tasks/<task_id_or_code>")
+def get_task(task_id_or_code):
     t = TaskModel()
-    task = t.getWithRoundAndMetricMetadata(tid)
+    task = t.getWithRoundAndMetricMetadata(task_id_or_code)
 
     if not task:
         bottle.abort(404, "Not found")

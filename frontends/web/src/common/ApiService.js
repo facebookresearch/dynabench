@@ -266,8 +266,8 @@ export default class ApiService {
     });
   }
 
-  getTask(id) {
-    return this.fetch(`${this.domain}/tasks/${id}`, {
+  getTask(idOrCode) {
+    return this.fetch(`${this.domain}/tasks/${idOrCode}`, {
       method: "GET",
     });
   }

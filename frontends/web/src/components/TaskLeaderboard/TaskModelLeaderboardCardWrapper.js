@@ -174,7 +174,7 @@ export const TaskModelForkLeaderboard = taskModelLeaderboardCardWrapper(
         console.log(error);
         if (error && error.status_code === 404) {
           history.replace({
-            pathname: `/tasks/${task.id}`,
+            pathname: `/tasks/${task.task_code}`,
           });
         }
         setWeightsCallback(

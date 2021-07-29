@@ -16,6 +16,7 @@ const ForkAndSnapshotModal = (props) => {
     metricWeights,
     datasetWeights,
     taskId,
+    taskCode,
     showModal,
     setShowModal,
     title,
@@ -177,7 +178,7 @@ const ForkAndSnapshotModal = (props) => {
                     props.history.push(
                       "/login?msg=" +
                         encodeURIComponent(redirectToLoginMsg) +
-                        `&src=/tasks/${taskId}`
+                        `&src=/tasks/${taskCode}`
                     );
                   } else {
                     setCreatedSuccessfully(false);

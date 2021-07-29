@@ -16,7 +16,7 @@ const TaskModelLeaderboardPage = (props) => {
   const [task, setTask] = useState(null); // Current Task ID
   const [isLoading, setIsLoading] = useState(false);
 
-  let { taskId } = useParams();
+  const { taskCode } = useParams();
 
   // Call api only once
   useEffect(() => {
@@ -24,13 +24,21 @@ const TaskModelLeaderboardPage = (props) => {
      * Invoke APIService to fetch  Task
      *
      * @param {*} api instance of @see APIService
-     * @param {number} page
      */
     const fetchTask = (api) => {
       setIsLoading(true);
-      api.getTask(taskId).then(
+      api.getTask(taskCode).then(
         (result) => {
           setTask(result);
+          if (taskCode !== result.task_code) {
+            props.history.replace({
+              pathname: props.location.pathname.replace(
+                `/tasks/top/${taskCode}`,
+                `/tasks/top/${result.task_code}`
+              ),
+              search: props.location.search,
+            });
+          }
 
           setIsLoading(false);
         },
@@ -44,7 +52,13 @@ const TaskModelLeaderboardPage = (props) => {
     fetchTask(context.api);
 
     return () => {};
-  }, [context.api, taskId]);
+  }, [
+    context.api,
+    props.history,
+    props.location.pathname,
+    props.location.search,
+    taskCode,
+  ]);
 
   if (isLoading || !task) {
     return (
@@ -58,13 +72,13 @@ const TaskModelLeaderboardPage = (props) => {
     <Container fluid>
       <Row className="px-4 px-lg-5">
         <a
-          href={`/tasks/${taskId}`}
+          href={`/tasks/${taskCode}`}
           target="_blank"
           style={{ width: "100%", textDecorationLine: "none" }}
         >
           <TaskModelDefaultLeaderboard
             task={task}
-            taskId={taskId}
+            taskCode={taskCode}
             isStandalone={true}
           />
         </a>

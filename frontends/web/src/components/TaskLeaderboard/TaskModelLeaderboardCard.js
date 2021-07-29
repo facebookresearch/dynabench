@@ -25,7 +25,7 @@ const SortDirection = {
  *
  * @param {Object} props React props de-structured.
  * @param {Object} props.task The task
- * @param {number} props.taskId The taskID
+ * @param {string} props.taskCode The task code
  * @param {boolean} props.disableToggleSort Whether or not changing sort field/direction is allowed
  * @param {boolean} props.disableAdjustWeights Whether or not changing metric/dataset weights is allowed
  * @param {boolean} props.disableForkAndSnapshot Whether or not forking and snapshotting is allowed
@@ -36,7 +36,8 @@ const SortDirection = {
  * @param {boolean} props.isStandalone is in Stand alone mode
  */
 const TaskModelLeaderboardCard = (props) => {
-  const task = props.task;
+  const { task, taskCode } = props;
+  const taskId = task.id;
 
   const [data, setData] = useState([]);
   const [enableHelp, setEnableHelp] = useState(false);
@@ -68,8 +69,6 @@ const TaskModelLeaderboardCard = (props) => {
   const [total, setTotal] = useState(0);
   const [showForkModal, setShowForkModal] = useState(false);
   const [showSnapshotModal, setShowSnapshotModal] = useState(false);
-
-  const taskId = props.taskId;
 
   /**
    * Update weight state for the appropriate metric
@@ -166,9 +165,9 @@ const TaskModelLeaderboardCard = (props) => {
     metrics,
     datasetWeights,
     context.api,
-    taskId,
+    taskCode,
     pageLimit,
-    props,
+    taskId,
   ]);
 
   const isEndOfPage = (page + 1) * pageLimit >= total;
@@ -184,6 +183,7 @@ const TaskModelLeaderboardCard = (props) => {
             metricWeights={metrics}
             datasetWeights={datasetWeights}
             taskId={taskId}
+            taskCode={taskCode}
             showModal={showForkModal}
             setShowModal={setShowForkModal}
             history={props.history}
@@ -192,6 +192,7 @@ const TaskModelLeaderboardCard = (props) => {
             metricWeights={metrics}
             datasetWeights={datasetWeights}
             taskId={taskId}
+            taskCode={taskCode}
             showModal={showSnapshotModal}
             setShowModal={setShowSnapshotModal}
             history={props.history}
@@ -331,7 +332,7 @@ const TaskModelLeaderboardCard = (props) => {
                           encodeURIComponent(
                             "You need to login to fork a leaderboard."
                           ) +
-                          `&src=/tasks/${taskId}`
+                          `&src=/tasks/${taskCode}`
                       );
                     }
                   }}

@@ -15,8 +15,10 @@ from models.task import TaskModel
 from utils.helpers import (
     get_data_s3_path,
     get_perturbed_filename,
+    parse_s3_outfile,
     path_available_on_s3,
     send_eval_request,
+    upload_predictions,
 )
 
 
@@ -188,6 +190,28 @@ class BaseDataset(ABC):
             self.read_labels(perturb_prefix)
         return self._n_examples[perturb_prefix]
 
+    def compute_job_metrics(self, job) -> tuple:
+        """Fetches the predictions for the given job, and compute the metrics (accuracy, ...).
+
+        This can be used by tasks to have a better control on how the metrics are computed.
+        """
+        raw_output_s3_uri = self.get_output_s3_url(
+            job.endpoint_name, raw=True, perturb_prefix=job.perturb_prefix
+        )
+        predictions = self.parse_outfile_and_upload(job)
+        eval_metrics_dict = self.eval(predictions, perturb_prefix=job.perturb_prefix)
+        delta_metrics_dict = {}
+        if job.perturb_prefix:
+            targets = [
+                self.pred_to_target_converter(self.pred_field_converter(prediction))
+                for prediction in self.parse_outfile_and_upload(job, original=True)
+            ]
+            delta_metrics_dict = self.eval(
+                predictions, targets, perturb_prefix=job.perturb_prefix
+            )
+
+        return eval_metrics_dict, delta_metrics_dict
+
     def eval(self, predictions: list, targets=None, perturb_prefix=None) -> dict:
         """
         Adapted from common.helpers.validate_prediction, compute accuracy / f1, etc.
@@ -199,10 +223,10 @@ class BaseDataset(ABC):
         target_ids = [x["id"] for x in target_examples]
         # note to compute accuracy with changed label,
         # each perturbed example needs to have a unique id too
-        target_labels = {t["id"]: t["answer"] for t in target_examples}
-        target_labels = [target_labels[id] for id in target_ids]
-        target_tags = {t["id"]: t["tags"] for t in target_examples}
-        target_tags = [target_tags[id] for id in target_ids]
+        target_labels_dict = {t["id"]: t["answer"] for t in target_examples}
+        target_labels = [target_labels_dict[id] for id in target_ids]
+        target_tags_dict = {t["id"]: t["tags"] for t in target_examples}
+        target_tags = [target_tags_dict[id] for id in target_ids]
 
         predictions = [
             self.pred_field_converter(prediction) for prediction in predictions
@@ -279,6 +303,25 @@ class BaseDataset(ABC):
                 score_obj["metadata_json"] = json.dumps(score_obj["metadata_json"])
 
         return score_obj
+
+    def parse_outfile_and_upload(self, job, original=False):
+        """Parses the job outfile, and reupload it in .jsonl format."""
+        perturb_prefix = None if original else job.perturb_prefix
+        try:
+            raw_output_s3_uri = self.get_output_s3_url(
+                job.endpoint_name, raw=True, perturb_prefix=perturb_prefix
+            )
+            predictions = parse_s3_outfile(self.s3_client, raw_output_s3_uri)
+            output_s3_uri = self.get_output_s3_url(
+                job.endpoint_name, raw=False, perturb_prefix=perturb_prefix
+            )
+            upload_predictions(self.s3_client, output_s3_uri, predictions)
+        except Exception as e:
+            logger.exception(
+                f"Exception in parsing output file for {job.job_name}: {e}"
+            )
+            raise e
+        return predictions
 
     def perturb_label_field_converter(self, example):
         return {"input_id": example["input_id"], **self.label_field_converter(example)}
