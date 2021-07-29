@@ -149,7 +149,7 @@ class MetricsComputer:
             process_pool.apply_async(
                 dataset.compute_job_metrics,
                 args=(job,),
-                callback=functools.partial(self.update_database_with_metrics, job),
+                callback=lambda res: self.update_database_with_metrics(job, *res),
                 error_callback=functools.partial(self.log_job_error, job),
             )
         except Exception as e:

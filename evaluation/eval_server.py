@@ -41,10 +41,10 @@ def make_requester(config) -> Requester:
 
 def main():
     init_logger("evaluation")
-    logger.info("Start evaluation server")
-
-    requester, queue = make_requester(eval_config)
     server_id = eval_config["eval_server_id"]
+
+    logger.info(f"Start evaluation server '{server_id}'")
+    requester, queue = make_requester(eval_config)
     cpus = eval_config.get("compute_metric_processes", 2)
     with multiprocessing.pool.Pool(cpus) as pool:
         timer = scheduler_update_interval
