@@ -6,7 +6,7 @@ mephisto:
   #   port: 4000
   task:
     task_name: max-qa-1
-    task_title: Beat the AI at Reading Comprehension
+    task_title: Generate Questions and Answers | Reading Comprehension
     task_description: >
       You will be presented with a short passage of text from Wikipedia. You will then be asked to write questions and select answers for a given question.
     task_reward: 1.00
