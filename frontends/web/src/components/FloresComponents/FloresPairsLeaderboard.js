@@ -73,6 +73,11 @@ const unique = (data, values, propertyName) => {
   );
 };
 
+/**
+ * Custom toggle component to open the dropdown,
+ * uses forwardRef to access the DOM node.
+ *
+ */
 const CustomToggle = forwardRef(({ children, onClick }, ref) => (
   <span
     ref={ref}
