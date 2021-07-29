@@ -16,6 +16,7 @@ const ForkModal = (props) => {
     metricWeights,
     datasetWeights,
     taskId,
+    taskCode,
     showForkModal,
     setShowForkModal,
   } = props;
@@ -44,10 +45,10 @@ const ForkModal = (props) => {
       .then(
         () => {
           const forkUrl = new URL(window.location.href);
-          forkUrl.pathname = `/tasks/${taskId}/leaderboard_configuration/${uriEncodedLeaderboardName}`;
+          forkUrl.pathname = `/tasks/${taskCode}/leaderboard_configuration/${uriEncodedLeaderboardName}`;
           props.history.replace({
             pathname: forkUrl.pathname,
-            hash: forkUrl.hash,
+            search: forkUrl.search,
           });
           setLeaderboardName("");
           setForkCreatedSuccessfully(true);
@@ -62,7 +63,7 @@ const ForkModal = (props) => {
             props.history.push(
               "/login?msg=" +
                 encodeURIComponent("You need to login to fork a leaderboard.") +
-                `&src=/tasks/${taskId}`
+                `&src=/tasks/${taskCode}`
             );
           } else {
             setForkCreatedSuccessfully(false);
