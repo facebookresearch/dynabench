@@ -69,8 +69,6 @@ const TaskModelLeaderboardCard = (props) => {
   const [total, setTotal] = useState(0);
   const [showForkModal, setShowForkModal] = useState(false);
 
-  const taskId = props.taskId;
-
   // Runs on taskID update only, i.e. task change, initialize page to 0.
   useEffect(() => {
     setPage(0);
@@ -158,16 +156,7 @@ const TaskModelLeaderboardCard = (props) => {
     );
 
     return () => {};
-  }, [
-    page,
-    sort,
-    metrics,
-    datasetWeights,
-    context.api,
-    taskCode,
-    pageLimit,
-    taskId,
-  ]);
+  }, [page, sort, metrics, datasetWeights, context.api, taskCode, pageLimit, taskId]);
 
   const isEndOfPage = (page + 1) * pageLimit >= total;
 
