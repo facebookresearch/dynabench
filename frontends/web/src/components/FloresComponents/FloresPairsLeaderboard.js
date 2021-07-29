@@ -86,6 +86,11 @@ const CustomToggle = forwardRef(({ children, onClick }, ref) => (
   </span>
 ));
 
+/**
+ * Custom dropdown menu to display languages and filter,
+ * uses forwardRef to access the DOM node.
+ *
+ */
 const LanguageMenu = forwardRef(
   ({ children, style, "aria-labelledby": labeledBy }, ref) => {
     const [value, setValue] = useState("");
