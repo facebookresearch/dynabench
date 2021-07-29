@@ -49,8 +49,8 @@ const preList = (perf_tags) => {
         source_tag: s.tag.split("-")[0],
         target_tag: s.tag.split("-")[1],
         perf: s.top_perf_info.perf.toFixed(2),
-        source_lang: source.LANGUAGE,
-        target_lang: target.LANGUAGE,
+        source_lang: source?.LANGUAGE || "-",
+        target_lang: target?.LANGUAGE || "-",
       };
     });
   return tableData;
