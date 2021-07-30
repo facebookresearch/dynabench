@@ -295,7 +295,7 @@ class Flores101Small2Test(Flores101Base):
 
 
 @functools.lru_cache(maxsize=256)
-def read_raw_data(folder: Path, split: str, lang: str) -> list[str]:
+def read_raw_data(folder: Path, split: str, lang: str) -> List[str]:
     """Makes sure we are reading each file at most once.
 
     There is 1000 sentences per file, one file per lang so the memory footprint is ok.
