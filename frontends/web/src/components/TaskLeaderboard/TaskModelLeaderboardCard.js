@@ -69,6 +69,11 @@ const TaskModelLeaderboardCard = (props) => {
   const [total, setTotal] = useState(0);
   const [showForkModal, setShowForkModal] = useState(false);
 
+  // Runs on taskID update only, i.e. task change, initialize page to 0.
+  useEffect(() => {
+    setPage(0);
+  }, [taskId]);
+
   /**
    * Update weight state for the appropriate metric
    *
