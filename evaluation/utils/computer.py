@@ -34,24 +34,6 @@ class MetricsComputer:
         self._waiting, self._failed = self._load_status()
         self._computing = []
         self.datasets = datasets
-        self._config = config
-        self._s3_client = None
-
-    @property
-    def s3_client(self):
-        if self._s3_client is None:
-            self._s3_client = boto3.client(
-                "s3",
-                aws_access_key_id=self._config["aws_access_key_id"],
-                aws_secret_access_key=self._config["aws_secret_access_key"],
-                region_name=self._config["aws_region"],
-            )
-        return self._s3_client
-
-    def __getstate__(self):
-        """Custom pickling method: doesn't try to serialize the S3 client"""
-        self._s3_client = None
-        return self.__dict__
 
     def _load_status(self):
         try:
@@ -127,7 +109,7 @@ class MetricsComputer:
             self.dump()
 
     def log_job_error(self, job, ex):
-        logger.exception(f"Exception in computing metrics {ex}")
+        logger.exception(ex)
         if job in self._computing:
             self._computing.remove(job)
         self._failed.append(job)
@@ -143,7 +125,7 @@ class MetricsComputer:
             self.log_job_error(job, e)
             return
 
-    def compute_one_async(self, process_pool, job) -> None:
+    def compute_one_async(self, process_pool, job):
         try:
             dataset = self.datasets[job.dataset_name]
             process_pool.apply_async(
@@ -159,9 +141,11 @@ class MetricsComputer:
                 " Probably due to a pickling error"
             )
             logger.exception(e)
+            self.dump()
             return
 
         self._computing.append(job)
+        self.dump()
 
     def find_next_ready_job(self) -> Optional[Job]:
         """Finds the next job ready to start evaluating.
@@ -203,13 +187,16 @@ class MetricsComputer:
         else:
             raise NotImplementedError(f"Scheduler does not maintain {status} queue")
 
-    def dump(self):
-        # dump status to pre-specified path
-        status = {
+    def get_status(self) -> dict:
+        return {
             "computing": self._computing,
             "waiting": self._waiting,
             "failed": self._failed,
         }
+
+    def dump(self):
+        # dump status to pre-specified path
+        status = self.get_status()
         logger.info(
             f"Computer status: \n"
             + f"waiting jobs: {[job.job_name for job in status['waiting']]}\n"

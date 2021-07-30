@@ -50,7 +50,9 @@ class BaseDataset(ABC):
         self.source_url = source_url
         self._config = config
         self._s3_client = None
+        self._ensure_model_on_s3()
 
+    def _ensure_model_on_s3(self):
         # Load dataset to S3 and register in db if not yet
         loaded = self.dataset_available_on_s3()
         if not loaded:
@@ -207,9 +209,6 @@ class BaseDataset(ABC):
 
         This can be used by tasks to have a better control on how the metrics are computed.
         """
-        raw_output_s3_uri = self.get_output_s3_url(
-            job.endpoint_name, raw=True, perturb_prefix=job.perturb_prefix
-        )
         predictions = self.parse_outfile_and_upload(job)
         eval_metrics_dict = self.eval(predictions, perturb_prefix=job.perturb_prefix)
         delta_metrics_dict = {}
