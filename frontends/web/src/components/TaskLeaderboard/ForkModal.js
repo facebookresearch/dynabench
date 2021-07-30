@@ -82,7 +82,7 @@ const ForkModal = (props) => {
   }, [showForkModal]);
 
   const copyToClipboard = () => {
-    const from = document.getElementById("forkUrl");
+    const from = document.getElementById("forkLink");
     const range = document.createRange();
     window.getSelection().removeAllRanges();
     range.selectNode(from);
@@ -152,9 +152,9 @@ const ForkModal = (props) => {
               placeholder={"Enter a name.."}
               value={leaderboardName}
               onChange={(e) => {
-                const updatedName = e.target.value;
-                setLeaderboardName(updatedName);
-                if (updatedName.length === 0) {
+                const updatedLeaderboardName = e.target.value;
+                setLeaderboardName(updatedLeaderboardName);
+                if (updatedLeaderboardName.length === 0) {
                   setForkFormValidationMessage("Fork name cannot be empty.");
                 } else {
                   setForkFormValidationMessage("");
@@ -173,7 +173,7 @@ const ForkModal = (props) => {
           {forkCreatedSuccessfully ? (
             <div>
               <p>{`Your fork is ready. Permanent link to your fork is:`}</p>
-              <p className="text-break" id="forkUrl">
+              <p className="text-break" id="forkLink">
                 {forkUrl}
               </p>
               <div className="flex text-center flex-column">
@@ -185,7 +185,8 @@ const ForkModal = (props) => {
             </div>
           ) : (
             <p>
-              {`There was an error in creating your fork. Please contact support or try again later.`}
+              There was an error in creating your fork. Please contact support
+              or try again later.
             </p>
           )}
         </Modal.Body>

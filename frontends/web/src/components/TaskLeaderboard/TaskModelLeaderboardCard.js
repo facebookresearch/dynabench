@@ -187,8 +187,8 @@ const TaskModelLeaderboardCard = (props) => {
             datasetWeights={datasetWeights}
             taskId={taskId}
             taskCode={taskCode}
-            showModal={showForkModal}
-            setShowModal={setShowForkModal}
+            showForkModal={showForkModal}
+            setShowForkModal={setShowForkModal}
             history={props.history}
           />
           <SnapshotModal

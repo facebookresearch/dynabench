@@ -17,7 +17,8 @@ const SnapshotModal = (props) => {
     setShowSnapshotModal,
   } = props;
 
-  const [snapshotCreatedSuccessfully, setSnapshotCreatedSuccessfully] = useState(null);
+  const [snapshotCreatedSuccessfully, setSnapshotCreatedSuccessfully] =
+    useState(null);
   const [copySuccess, setCopySuccess] = useState("");
   const [snapshotUrl, setSnapshotUrl] = useState("");
 
@@ -80,7 +81,11 @@ const SnapshotModal = (props) => {
   };
 
   return (
-    <Modal show={showSnapshotModal} onHide={() => setShowSnapshotModal(false)} centered={true}>
+    <Modal
+      show={showSnapshotModal}
+      onHide={() => setShowSnapshotModal(false)}
+      centered={true}
+    >
       <Modal.Header closeButton>
         <Modal.Title>Snapshot</Modal.Title>
       </Modal.Header>
@@ -114,8 +119,8 @@ const SnapshotModal = (props) => {
             </div>
           ) : (
             <p>
-              {`There was an error in creating your snapshot. Please contact support
-              or try again later.`}
+              There was an error in creating your snapshot. Please contact
+              support or try again later.
             </p>
           )}
         </Modal.Body>
