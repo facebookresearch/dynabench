@@ -273,7 +273,7 @@ class CreateInterface extends React.Component {
             } else {
               var modelPredIdx = null;
               var modelPredStr = result.answer;
-              var modelFooled = result.eval_f1 < 0.4;
+              var modelFooled = result.eval_f1 <= 0.4;
               var exactMatch = result.eval_exact >= 1;
               // TODO: Handle this more elegantly:
               result.prob = [result.conf, 1 - result.conf];
@@ -340,7 +340,7 @@ class CreateInterface extends React.Component {
           id: last_example.response.id,
           text: last_example.response.answer,
           prob: last_example.response.conf,
-          model_is_correct: !last_example.response.fooled,
+          model_is_correct: !last_example.fooled,
           eval_f1: last_example.response.eval_f1,
           eval_exact: last_example.response.eval_exact,
           signed: last_example.response.signed,
@@ -366,8 +366,10 @@ class CreateInterface extends React.Component {
           fullresponse: JSON.stringify(last_example.response),
           validated_by_annotator: last_example.validated,
         };
-        console.log("metadata:");
-        console.log(metadata);
+        // console.log("metadata:");
+        // console.log(metadata);
+        // console.log("response:");
+        // console.log(old_model_version_response)
         this.api
           .storeExample(
             this.state.task.id,
