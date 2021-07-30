@@ -923,15 +923,6 @@ class TaskPage extends React.Component {
                       task={this.state.task}
                       taskCode={this.state.taskCode}
                     />
-                  ) : this.props.match.params.snapshotName ? (
-                    <TaskModelSnapshotLeaderboard
-                      {...this.props}
-                      task={this.state.task}
-                      taskCode={this.state.taskCode}
-                      disableToggleSort={true}
-                      disableAdjustWeights={true}
-                      disableForkAndSnapshot={true}
-                    />
                   ) : (
                     <TaskModelDefaultLeaderboard
                       {...this.props}

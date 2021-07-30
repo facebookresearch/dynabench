@@ -553,7 +553,6 @@ export default class ApiService {
 
   createLeaderboardSnapshot(
     tid,
-    name,
     sort,
     metricWeights,
     datasetWeights,
@@ -564,7 +563,6 @@ export default class ApiService {
     return this.fetch(`${this.domain}/tasks/${tid}/leaderboard_snapshot`, {
       method: "PUT",
       body: JSON.stringify({
-        name: name,
         sort: sort,
         metricWeights: metricWeights,
         datasetWeights: datasetWeights,

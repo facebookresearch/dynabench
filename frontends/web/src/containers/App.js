@@ -282,12 +282,12 @@ class App extends React.Component {
                   component={TaskPage}
                 />
                 <Route
-                  path="/tasks/:taskCode/leaderboard_configuration/:leaderboardName"
+                  path="/tasks/:taskCode/f/:leaderboardName"
                   component={TaskPage}
                 />
                 <Route
-                  path="/tasks/:taskCode/leaderboard_snapshot/:snapshotName"
-                  component={TaskPage}
+                  path="/tasks/:taskCode/s/:snapshotName"
+                  component={TaskModelLeaderboardPage}
                 />
                 <Route path="/tasks/:taskCode" component={TaskPage} />
                 <Route

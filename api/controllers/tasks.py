@@ -530,7 +530,7 @@ def create_leaderboard_configuration(credentials, tid):
 
 
 @bottle.get("/tasks/<tid:int>/leaderboard_snapshot/<name>")
-def get_leaderboard_configuration(tid, name):
+def get_leaderboard_snapshot(tid, name):
 
     lsm = LeaderboardSnapshotModel()
     leaderboard_snapshot = lsm.getByTaskIdAndLeaderboardName(tid, name)
@@ -544,7 +544,7 @@ def get_leaderboard_configuration(tid, name):
 
 @bottle.put("/tasks/<tid:int>/leaderboard_snapshot")
 @_auth.requires_auth
-def create_leaderboard_configuration(credentials, tid):
+def create_leaderboard_snapshot(credentials, tid):
     data = bottle.request.json
     if not util.check_fields(
         data,
@@ -560,10 +560,10 @@ def create_leaderboard_configuration(credentials, tid):
         bottle.abort(400, "Missing data")
 
     lsm = LeaderboardSnapshotModel()
-    name = data["name"] or uuid.uuid4()
+    name = str(uuid.uuid4())[:8]
 
-    if lsm.exists(tid=tid, name=name):
-        bottle.abort(409, "A snapshot with the same name already exists for this task.")
+    while lsm.exists(tid=tid, name=name):
+        name = str(uuid.uuid4())[:8]
 
     dynaboard_info = get_dynaboard_info_for_params(
         tid,
