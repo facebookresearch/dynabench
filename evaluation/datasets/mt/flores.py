@@ -111,7 +111,7 @@ class Flores101Base(MTBase):
             "tags": ["-".join((example["sourceLanguage"], example["targetLanguage"]))],
         }
 
-    def eval_job(self, job: Job) -> Tuple[dict, dict]:
+    def compute_job_metrics(self, job: Job) -> Tuple[dict, dict]:
         """Custom evaluation for full Flores track.
 
         The output files are splitted by source language, and we are only interested
@@ -121,7 +121,7 @@ class Flores101Base(MTBase):
         Note: this implementation doesn't support pertubation
         """
         if not self.shard_by_lang:
-            return super().eval_job(job)
+            return super().compute_job_metrics(job)
 
         assert not job.perturb_prefix, "FloresFull task doesn't support pertubation"
 
