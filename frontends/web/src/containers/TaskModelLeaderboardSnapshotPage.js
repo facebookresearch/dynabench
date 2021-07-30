@@ -7,16 +7,18 @@
 import React, { useContext, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import "./TaskPage.css";
-import { Container, Row, Col, Spinner } from "react-bootstrap";
+import { Container, Row, Spinner } from "react-bootstrap";
 import UserContext from "./UserContext";
-import { TaskModelDefaultLeaderboard } from "../components/TaskLeaderboard/TaskModelLeaderboardCardWrapper";
+import { TaskModelSnapshotLeaderboard } from "../components/TaskLeaderboard/TaskModelLeaderboardCardWrapper";
+import Moment from "react-moment";
 
-const TaskModelLeaderboardPage = (props) => {
+const TaskModelLeaderboardSnapshotPage = (props) => {
   const context = useContext(UserContext); // for API
-  const [task, setTask] = useState(null); // Current Task ID
+  const [task, setTask] = useState(null); // Current task data
+  const [snapshotData, setSnapshotData] = useState(null); // Current snapshot data
   const [isLoading, setIsLoading] = useState(false);
 
-  const { taskCode } = useParams();
+  const { taskCode, snapshotName } = useParams();
 
   // Call api only once
   useEffect(() => {
@@ -33,8 +35,8 @@ const TaskModelLeaderboardPage = (props) => {
           if (taskCode !== result.task_code) {
             props.history.replace({
               pathname: props.location.pathname.replace(
-                `/tasks/top/${taskCode}`,
-                `/tasks/top/${result.task_code}`
+                `/tasks/${taskCode}`,
+                `/tasks/${result.task_code}`
               ),
               search: props.location.search,
             });
@@ -52,9 +54,31 @@ const TaskModelLeaderboardPage = (props) => {
     fetchTask(context.api);
 
     return () => {};
-  }, [context.api, taskCode]);
+  }, [context.api, taskCode, snapshotName]);
 
-  if (isLoading || !task) {
+  useEffect(() => {
+    if (task == null) {
+      setSnapshotData(null);
+      return;
+    }
+
+    context.api.getLeaderboardSnapshot(task.id, snapshotName).then(
+      (result) => {
+        setSnapshotData(result);
+      },
+      (error) => {
+        console.log(error);
+        if (error && error.status_code === 404) {
+          props.history.replace({
+            pathname: `/tasks/${taskCode}`,
+          });
+        }
+        setSnapshotData(null);
+      }
+    );
+  }, [task]);
+
+  if (isLoading || !task || !snapshotData) {
     return (
       <div className="d-flex justify-content-center mt-5">
         <Spinner animation="border" />
@@ -70,19 +94,28 @@ const TaskModelLeaderboardPage = (props) => {
           target="_blank"
           style={{ width: "100%", textDecorationLine: "none" }}
         >
-          <TaskModelDefaultLeaderboard
+          <TaskModelSnapshotLeaderboard
+            {...props}
             task={task}
             taskCode={taskCode}
+            snapshotData={JSON.parse(snapshotData.data_json)}
             disableToggleSort={true}
             disableAdjustWeights={true}
             disableForkAndSnapshot={true}
-            disablePagination={true}
-            title={"Model Leaderboard - " + task.name}
+            title={"Model Leaderboard - " + task.name + " (Snapshot)"}
           />
         </a>
+        <p className={"float-right"}>
+          Snapshot created{" "}
+          <b>
+            <Moment utc fromNow>
+              {snapshotData.create_datetime}
+            </Moment>
+          </b>
+        </p>
       </Row>
     </Container>
   );
 };
 
-export default TaskModelLeaderboardPage;
+export default TaskModelLeaderboardSnapshotPage;

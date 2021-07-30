@@ -18,9 +18,9 @@ const taskModelLeaderboardCardWrapper = (
 ) => {
   return (props) => {
     const dataFromProps = {
-      snapshotName: props.match?.params.snapshotName,
       leaderboardName: props.match?.params.leaderboardName,
       history: props.history,
+      snapshotData: props.snapshotData,
     };
 
     return (
@@ -186,50 +186,13 @@ export const TaskModelForkLeaderboard = taskModelLeaderboardCardWrapper(
   loadDefaultData
 );
 
-const getSnapshotData = (
-  taskId,
-  snapshotName,
-  api,
-  history,
-  resultCallback
-) => {
-  api.getLeaderboardSnapshot(taskId, snapshotName).then(
-    (result) => {
-      const dataJson = JSON.parse(result.data_json);
-      resultCallback(dataJson);
-    },
-    (error) => {
-      console.log(error);
-      if (error && error.status_code === 404) {
-        history.replace({
-          pathname: `/tasks/${taskId}`,
-        });
-      }
-      resultCallback(null);
-    }
-  );
-};
-
 export const TaskModelSnapshotLeaderboard = taskModelLeaderboardCardWrapper(
   (task, api, setWeightsCallback, dataFromProps) => {
-    const metricIdToDataObj = {};
-    const datasetIdToDataObj = {};
-
-    const { snapshotName, history } = dataFromProps;
-
-    getSnapshotData(task.id, snapshotName, api, history, (result) => {
-      if (result != null) {
-        const { metricWeights, datasetWeights } = result;
-        setWeightsCallback({
-          orderedMetricWeights: metricWeights,
-          orderedDatasetWeights: datasetWeights,
-        });
-      } else {
-        loadDefaultWeights(metricIdToDataObj, datasetIdToDataObj, task);
-        setWeightsCallback(
-          getOrderedWeightObjects(metricIdToDataObj, datasetIdToDataObj, task)
-        );
-      }
+    const { snapshotData } = dataFromProps;
+    const { metricWeights, datasetWeights } = snapshotData;
+    setWeightsCallback({
+      orderedMetricWeights: metricWeights,
+      orderedDatasetWeights: datasetWeights,
     });
   },
   (
@@ -243,18 +206,11 @@ export const TaskModelSnapshotLeaderboard = taskModelLeaderboardCardWrapper(
     updateResultCallback,
     dataFromProps
   ) => {
-    const { snapshotName, history } = dataFromProps;
-
-    getSnapshotData(taskId, snapshotName, api, history, (result) => {
-      if (result != null) {
-        updateResultCallback({
-          data: result.data.slice(page * pageLimit, (page + 1) * pageLimit),
-          count: result.count,
-          sort: result.miscInfoJson.sort,
-        });
-      } else {
-        updateResultCallback(null);
-      }
+    const { snapshotData } = dataFromProps;
+    updateResultCallback({
+      data: snapshotData.data.slice(page * pageLimit, (page + 1) * pageLimit),
+      count: snapshotData.count,
+      sort: snapshotData.miscInfoJson.sort,
     });
   }
 );

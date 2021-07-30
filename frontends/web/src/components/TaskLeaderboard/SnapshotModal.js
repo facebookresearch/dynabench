@@ -13,18 +13,19 @@ const SnapshotModal = (props) => {
     datasetWeights,
     taskId,
     taskCode,
-    showModal,
-    setShowModal,
+    showSnapshotModal,
+    setShowSnapshotModal,
   } = props;
 
-  const [createdSuccessfully, setCreatedSuccessfully] = useState(null);
+  const [snapshotCreatedSuccessfully, setSnapshotCreatedSuccessfully] = useState(null);
   const [copySuccess, setCopySuccess] = useState("");
   const [snapshotUrl, setSnapshotUrl] = useState("");
 
   useEffect(() => {
-    setCreatedSuccessfully(null);
+    setSnapshotCreatedSuccessfully(null);
     setCopySuccess("");
-  }, [showModal]);
+    setSnapshotUrl("");
+  }, [showSnapshotModal]);
 
   const copyToClipboard = () => {
     const from = document.getElementById("snapshotUrl");
@@ -59,7 +60,7 @@ const SnapshotModal = (props) => {
           snapshotUrl.pathname = `/tasks/${taskCode}/s/${result.name}`;
           snapshotUrl.search = "?content_only=true";
           setSnapshotUrl(snapshotUrl.toString());
-          setCreatedSuccessfully(true);
+          setSnapshotCreatedSuccessfully(true);
         },
         (error) => {
           console.log(error);
@@ -72,55 +73,53 @@ const SnapshotModal = (props) => {
                 `&src=/tasks/${taskCode}`
             );
           } else {
-            setCreatedSuccessfully(false);
+            setSnapshotCreatedSuccessfully(false);
           }
         }
       );
   };
 
   return (
-    <Modal show={showModal} onHide={() => setShowModal(false)} centered={true}>
+    <Modal show={showSnapshotModal} onHide={() => setShowSnapshotModal(false)} centered={true}>
       <Modal.Header closeButton>
         <Modal.Title>Snapshot</Modal.Title>
       </Modal.Header>
-      <Modal.Body>
-        {createdSuccessfully === null ? (
-          <>
-            <p>
-              Save leaderboard standings along weights for metrics and datasets
-              and share with anyone using a link. Results shown in a snapshot
-              table will be frozen and will not change over time.
-            </p>
-            <Row className="justify-content-center">
-              <Button variant="primary" onClick={saveSnapshot} className={""}>
-                Generate
-              </Button>
-            </Row>
-          </>
-        ) : (
-          <>
-            {createdSuccessfully ? (
-              <div>
-                <p>{`Your snapshot is ready. Permanent link to your snapshot is:`}</p>
-                <p className="text-break" id="snapshotUrl">
-                  {snapshotUrl}
-                </p>
-                <div className="flex text-center flex-column">
-                  <Button variant="primary" onClick={copyToClipboard}>
-                    Copy
-                  </Button>
-                  <p className="my-0">{copySuccess}</p>
-                </div>
-              </div>
-            ) : (
-              <p>
-                {`There was an error in creating your snapshot. Please contact support
-              or try again later.`}
+      {snapshotCreatedSuccessfully === null ? (
+        <Modal.Body>
+          <p>
+            Save leaderboard standings along weights for metrics and datasets
+            and share with anyone using a link. Results shown in the snapshot
+            table will be frozen and will not change over time.
+          </p>
+          <Row className="justify-content-center">
+            <Button variant="primary" onClick={saveSnapshot} className={""}>
+              Generate
+            </Button>
+          </Row>
+        </Modal.Body>
+      ) : (
+        <Modal.Body>
+          {snapshotCreatedSuccessfully ? (
+            <div>
+              <p>{`Your snapshot is ready. Permanent link to your snapshot is:`}</p>
+              <p className="text-break" id="snapshotUrl">
+                {snapshotUrl}
               </p>
-            )}
-          </>
-        )}
-      </Modal.Body>
+              <div className="flex text-center flex-column">
+                <Button variant="primary" onClick={copyToClipboard}>
+                  Copy
+                </Button>
+                <p className="my-0">{copySuccess}</p>
+              </div>
+            </div>
+          ) : (
+            <p>
+              {`There was an error in creating your snapshot. Please contact support
+              or try again later.`}
+            </p>
+          )}
+        </Modal.Body>
+      )}
     </Modal>
   );
 };

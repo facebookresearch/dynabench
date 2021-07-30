@@ -121,6 +121,7 @@ const TaskModelLeaderboardCard = (props) => {
     }
 
     const currentDirection = sort.direction;
+
     const newDirection =
       field !== sort.field
         ? SortDirection.DESC
@@ -195,8 +196,8 @@ const TaskModelLeaderboardCard = (props) => {
             datasetWeights={datasetWeights}
             taskId={taskId}
             taskCode={taskCode}
-            showModal={showSnapshotModal}
-            setShowModal={setShowSnapshotModal}
+            showSnapshotModal={showSnapshotModal}
+            setShowSnapshotModal={setShowSnapshotModal}
             history={props.history}
             sort={sort}
             total={total}
