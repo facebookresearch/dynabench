@@ -23,28 +23,24 @@ scheduler_update_interval = 300
 logger = logging.getLogger("evaluation")
 
 
-def make_requester(config) -> Requester:
+def main():
+    init_logger("evaluation")
+    server_id = eval_config["eval_server_id"]
+    logger.info(f"Start evaluation server '{server_id}'")
+
     sqs = boto3.resource(
         "sqs",
-        aws_access_key_id=config["aws_access_key_id"],
-        aws_secret_access_key=config["aws_secret_access_key"],
-        region_name=config["aws_region"],
+        aws_access_key_id=eval_config["aws_access_key_id"],
+        aws_secret_access_key=eval_config["aws_secret_access_key"],
+        region_name=eval_config["aws_region"],
     )
-    queue = sqs.get_queue_by_name(QueueName=config["evaluation_sqs_queue"])
+    queue = sqs.get_queue_by_name(QueueName=eval_config["evaluation_sqs_queue"])
     dataset_dict = load_datasets()
     while not dataset_dict:
         logger.info("Haven't got dataset_dict. Sleep.")
         time.sleep(sleep_interval)
+    requester = Requester(eval_config, dataset_dict)
 
-    return Requester(config, dataset_dict), queue
-
-
-def main():
-    init_logger("evaluation")
-    server_id = eval_config["eval_server_id"]
-
-    logger.info(f"Start evaluation server '{server_id}'")
-    requester, queue = make_requester(eval_config)
     cpus = eval_config.get("compute_metric_processes", 2)
     with multiprocessing.pool.Pool(cpus) as pool:
         timer = scheduler_update_interval
