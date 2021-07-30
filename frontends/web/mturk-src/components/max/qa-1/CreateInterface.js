@@ -522,6 +522,9 @@ class CreateInterface extends React.Component {
                   }
 
                   var question = merged[0].question;
+                  if ("context" in merged) {
+                    delete merged["context"];
+                  }
                   outerContext.setState({
                     hypothesis: question,
                     progressGenerating: false,
@@ -555,6 +558,10 @@ class CreateInterface extends React.Component {
                 "question_metadata" in result
                   ? result["question_metadata"]
                   : null;
+              if ("context" in questionMetadata) {
+                delete questionMetadata["context"];
+              }
+
               if (this.experiment_mode["answerSelect"] === "none") {
                 var activityType = "Generated a question";
               } else {
