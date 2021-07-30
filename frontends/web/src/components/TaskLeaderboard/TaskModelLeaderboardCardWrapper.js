@@ -18,7 +18,7 @@ const TaskModelLeaderboardCardWrapper = (
 ) => {
   return (props) => {
     const extraData = {
-      leaderboardName: props.match.params.leaderboardName,
+      leaderboardName: props.match?.params.leaderboardName,
       history: props.history,
     };
 
@@ -171,7 +171,7 @@ export const TaskModelForkLeaderboard = TaskModelLeaderboardCardWrapper(
         console.log(error);
         if (error && error.status_code === 404) {
           history.replace({
-            pathname: `/tasks/${task.id}`,
+            pathname: `/tasks/${task.task_code}`,
           });
         }
         setWeightsCallback(

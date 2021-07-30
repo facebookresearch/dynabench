@@ -149,6 +149,7 @@ class ModelPage extends React.Component {
         name: "",
         username: "",
       },
+      taskCode: null,
       task: {},
       isLoading: false,
     };
@@ -162,42 +163,55 @@ class ModelPage extends React.Component {
   }
 
   fetchModel = () => {
-    this.context.api.getModel(this.state.modelId).then((result) => {
-      this.setState(
-        { model: result, isLoading: false },
-        function () {
+    this.context.api.getModel(this.state.modelId).then(
+      (result) => {
+        this.setState({ model: result, isLoading: false }, function () {
           this.context.api.getTask(this.state.model.tid).then(
             (result) => {
               this.setState({
+                taskCode: result.task_code,
                 task: result,
               });
+              const taskCodeFromParams = this.props.match.params.taskCode;
+              if (
+                taskCodeFromParams &&
+                taskCodeFromParams !== result.task_code
+              ) {
+                this.props.history.replace({
+                  pathname: this.props.location.pathname.replace(
+                    `/tasks/${taskCodeFromParams}`,
+                    `/tasks/${result.task_code}`
+                  ),
+                  search: this.props.location.search,
+                });
+              }
             },
             (error) => {
               console.log(error);
             }
           );
-        },
-        (error) => {
-          console.log(error);
-          this.setState({ isLoading: false });
-          if (error.status_code === 404 || error.status_code === 405) {
-            this.props.history.push("/");
-          }
+        });
+      },
+      (error) => {
+        console.log(error);
+        this.setState({ isLoading: false });
+        if (error.status_code === 404 || error.status_code === 405) {
+          this.props.history.push("/");
         }
-      );
-    });
+      }
+    );
   };
 
   handleEdit = () => {
     this.props.history.push({
-      pathname: `/tasks/${this.state.model.tid}/models/${this.state.model.id}/updateModelInfo`,
+      pathname: `/tasks/${this.state.taskCode}/models/${this.state.model.id}/updateModelInfo`,
       state: { detail: this.state.model },
     });
   };
 
   handleInteract = () => {
     this.props.history.push({
-      pathname: `/tasks/${this.state.model.tid}/create`,
+      pathname: `/tasks/${this.state.taskCode}/create`,
       state: {
         detail: {
           endpointUrl:
@@ -213,7 +227,7 @@ class ModelPage extends React.Component {
     const modelName = this.state.model.name;
     if (!modelName || modelName === "") {
       this.props.history.push({
-        pathname: `/tasks/${this.state.model.tid}/models/${this.state.model.id}/updateModelInfo`,
+        pathname: `/tasks/${this.state.taskCode}/models/${this.state.model.id}/updateModelInfo`,
         state: { detail: this.state.model },
       });
       return;
@@ -240,13 +254,89 @@ class ModelPage extends React.Component {
     }
   };
 
-  processScoresArray = (csvRows, scoresArr, datasetType) => {
-    csvRows.push([""]);
-    csvRows.push([datasetType]);
+  escapeLatexCharacters = (strToEscape) => {
+    const escapes = {
+      "{": "\\{",
+      "}": "\\}",
+      "#": "\\#",
+      $: "\\$",
+      "%": "\\%",
+      "&": "\\&",
+      "^": "\\textasciicircum{}",
+      _: "\\_",
+      "~": "\\textasciitilde{}",
+      "\\": "\\textbackslash{}",
+    };
+    const regex = new RegExp(`[${Object.keys(escapes).join("")}\\]`);
+    return strToEscape.replace(regex, (match) => escapes[match]);
+  };
 
+  processScoresArrayForLatex = (scoresArr) => {
+    let tableContentForScores = "";
     scoresArr = (scoresArr || []).sort((a, b) => b.accuracy - a.accuracy);
     scoresArr.forEach((score) => {
-      csvRows.push([score.dataset_name, score.accuracy]);
+      tableContentForScores += `        ${this.escapeLatexCharacters(
+        score.dataset_name
+      )} & ${score.accuracy} \\\\\n`;
+    });
+    return tableContentForScores;
+  };
+
+  downloadLatex = () => {
+    let { leaderboard_scores, non_leaderboard_scores, name } = this.state.model;
+    const { task } = this.state;
+    const taskName = task.name;
+
+    let latexTableContent = "";
+
+    latexTableContent += this.processScoresArrayForLatex(leaderboard_scores);
+    latexTableContent += this.processScoresArrayForLatex(
+      non_leaderboard_scores
+    );
+
+    const modelUrl = window.location.href;
+
+    let latexDocStr = `\\documentclass{article}
+\\usepackage{hyperref}
+\\usepackage{booktabs}
+
+\\begin{document}
+
+\\begin{table}[]
+    \\centering
+    \\begin{tabular}{l|r}
+        \\toprule
+        \\textbf{Dataset} & \\textbf{${this.escapeLatexCharacters(
+          task.perf_metric_field_name
+        )}} \\\\
+        \\midrule
+${latexTableContent}
+        \\bottomrule
+    \\end{tabular}
+    \\caption{${this.escapeLatexCharacters(
+      taskName
+    )} results: \\url{${modelUrl}}}
+    \\label{tab:results}
+\\end{table}
+
+\\end{document}`;
+
+    const latexContent =
+      "data:application/x-latex;charset=utf-8," + latexDocStr;
+
+    const encodedUri = encodeURI(latexContent);
+    const csvLink = document.createElement("a");
+    csvLink.setAttribute("href", encodedUri);
+    csvLink.setAttribute("download", name + "-" + taskName + ".tex");
+    document.body.appendChild(csvLink);
+    csvLink.click();
+    document.body.removeChild(csvLink);
+  };
+
+  processScoresArrayForCsv = (csvRows, scoresArr, datasetType) => {
+    scoresArr = (scoresArr || []).sort((a, b) => b.accuracy - a.accuracy);
+    scoresArr.forEach((score) => {
+      csvRows.push([score.dataset_name, datasetType, score.accuracy]);
     });
   };
 
@@ -257,12 +347,12 @@ class ModelPage extends React.Component {
     const taskName = task.name;
 
     const rows = [];
-    rows.push(["Dataset", task.perf_metric_field_name]);
-    this.processScoresArray(rows, leaderboard_scores, "Leaderboard Datasets");
-    this.processScoresArray(
+    rows.push(["dataset-name", "dataset-type", task.perf_metric_field_name]);
+    this.processScoresArrayForCsv(rows, leaderboard_scores, "leaderboard");
+    this.processScoresArrayForCsv(
       rows,
       non_leaderboard_scores,
-      "Non-leaderboard Datasets"
+      "non-leaderboard"
     );
 
     let csvContent = "data:text/csv;charset=utf-8,";
@@ -281,7 +371,7 @@ class ModelPage extends React.Component {
   };
 
   render() {
-    const { model, task } = this.state;
+    const { model, task, taskCode } = this.state;
     const isFlores = FLORES_TASK_SHORT_NAMES.includes(task.shortname);
     const isModelOwner =
       parseInt(this.state.model.user_id) === parseInt(this.state.ctxUserId);
@@ -421,7 +511,7 @@ class ModelPage extends React.Component {
                           <tr style={{ border: `none` }}>
                             <td>Task</td>
                             <td>
-                              <Link to={`/tasks/${model.tid}#overall`}>
+                              <Link to={`/tasks/${taskCode}`}>
                                 <TasksContext.Consumer>
                                   {({ tasks }) => {
                                     const task =
@@ -473,6 +563,9 @@ class ModelPage extends React.Component {
                       >
                         <Dropdown.Item onClick={this.downloadCsv}>
                           {"CSV"}
+                        </Dropdown.Item>
+                        <Dropdown.Item onClick={this.downloadLatex}>
+                          {"LaTeX"}
                         </Dropdown.Item>
                       </DropdownButton>
                     </span>

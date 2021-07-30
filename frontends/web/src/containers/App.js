@@ -31,6 +31,7 @@ import CreateInterface from "./CreateInterface.js";
 import VerifyInterface from "./VerifyInterface.js";
 import UpdateModelInfoInterface from "./UpdateModelInfoInterface.js";
 import GenerateAPITokenPage from "./GenerateAPITokenPage.js";
+import TaskModelLeaderboardPage from "./TaskModelLeaderboardPage.js";
 import { Avatar } from "../components/Avatar/Avatar";
 import ReactGA from "react-ga";
 
@@ -113,16 +114,16 @@ class App extends React.Component {
   }
 
   render() {
-    //href={`/tasks/${task.id}`}
+    //href={`/tasks/${taskCode}`}
     var query = qs.parse(window.location.search, {
       ignoreQueryPrefix: true,
     });
     const showContentOnly = query.content_only === "true";
     const NavItems = this.state.tasks.map((task, index) => (
       <NavDropdown.Item
-        key={task.id}
+        key={task.task_code}
         as={Link}
-        to={`/tasks/${task.id}`}
+        to={`/tasks/${task.task_code}`}
         className="py-3"
       >
         {task.name}
@@ -257,30 +258,34 @@ class App extends React.Component {
                 <Route path="/termsofuse" component={TermsPage} />
                 <Route path="/datapolicy" component={DataPolicyPage} />
                 <Route
-                  path="/tasks/:taskId/create"
+                  path="/tasks/top/:taskCode"
+                  component={TaskModelLeaderboardPage}
+                />
+                <Route
+                  path="/tasks/:taskCode/create"
                   component={CreateInterface}
                 />
                 <Route
-                  path="/tasks/:taskId/validate"
+                  path="/tasks/:taskCode/validate"
                   component={VerifyInterface}
                 />
                 <Route
-                  path="/tasks/:taskId/models/:modelId/updateModelInfo"
+                  path="/tasks/:taskCode/models/:modelId/updateModelInfo"
                   component={UpdateModelInfoInterface}
                 />
                 <Route
-                  path="/tasks/:taskId/models/:modelId"
+                  path="/tasks/:taskCode/models/:modelId"
                   component={ModelPage}
                 />
                 <Route
-                  path="/tasks/:taskId/round/:roundId"
+                  path="/tasks/:taskCode/round/:roundId"
                   component={TaskPage}
                 />
                 <Route
-                  path="/tasks/:taskId/leaderboard_configuration/:leaderboardName"
+                  path="/tasks/:taskCode/leaderboard_configuration/:leaderboardName"
                   component={TaskPage}
                 />
-                <Route path="/tasks/:taskId" component={TaskPage} />
+                <Route path="/tasks/:taskCode" component={TaskPage} />
                 <Route
                   path="/flores/top5/:taskShortName"
                   component={FloresTop5Page}

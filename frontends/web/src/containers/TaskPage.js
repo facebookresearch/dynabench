@@ -128,7 +128,7 @@ const TaskActionButtons = (props) => {
             <Button
               as={Link}
               className="border-0 blue-color font-weight-bold light-gray-bg"
-              to={"/tasks/" + props.taskId + "/create"}
+              to={`/tasks/${props.taskCode}/create`}
             >
               <i className="fas fa-pen"></i> Create Examples
             </Button>
@@ -148,7 +148,7 @@ const TaskActionButtons = (props) => {
             <Button
               as={Link}
               className="border-0 blue-color font-weight-bold light-gray-bg"
-              to={"/tasks/" + props.taskId + "/validate"}
+              to={`/tasks/${props.taskCode}/validate`}
             >
               <i className="fas fa-search"></i> Validate Examples
             </Button>
@@ -285,7 +285,7 @@ class TaskPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      taskId: props.match.params.taskId,
+      taskCode: props.match.params.taskCode,
       task: {},
       trendScore: [],
       numMatchingValidations: 3,
@@ -295,15 +295,25 @@ class TaskPage extends React.Component {
   }
 
   getCurrentTaskData() {
-    this.setState({ taskId: this.props.match.params.taskId }, function () {
-      this.context.api.getTask(this.state.taskId).then(
+    this.setState({ taskCode: this.props.match.params.taskCode }, function () {
+      this.context.api.getTask(this.state.taskCode).then(
         (result) => {
           this.setState(
             {
+              taskCode: result.task_code,
               task: result,
               round: result.round,
             },
             function () {
+              if (this.props.match.params.taskCode !== this.state.taskCode) {
+                this.props.history.replace({
+                  pathname: this.props.location.pathname.replace(
+                    `/tasks/${this.props.match.params.taskCode}`,
+                    `/tasks/${this.state.taskCode}`
+                  ),
+                  search: this.props.location.search,
+                });
+              }
               this.fetchTrend();
             }
           );
@@ -323,13 +333,13 @@ class TaskPage extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.match.params.taskId !== this.state.taskId) {
+    if (this.props.match.params.taskCode !== this.state.taskCode) {
       this.getCurrentTaskData();
     }
   }
 
   fetchTrend() {
-    this.context.api.getTrends(this.state.taskId).then(
+    this.context.api.getTrends(this.state.task.id).then(
       (result) => {
         this.setState({
           trendScore: result,
@@ -420,7 +430,7 @@ class TaskPage extends React.Component {
           <Row className="justify-content-center">
             <TaskActionButtons
               api={this.context.api}
-              taskId={this.state.taskId}
+              taskCode={this.state.taskCode}
               user={this.context.user}
               task={this.state.task}
             />
@@ -446,13 +456,13 @@ class TaskPage extends React.Component {
                     <TaskModelForkLeaderboard
                       {...this.props}
                       task={this.state.task}
-                      taskId={this.state.taskId}
+                      taskCode={this.state.taskCode}
                     />
                   ) : (
                     <TaskModelDefaultLeaderboard
                       {...this.props}
                       task={this.state.task}
-                      taskId={this.state.taskId}
+                      taskCode={this.state.taskCode}
                     />
                   )}
                 </Annotation>

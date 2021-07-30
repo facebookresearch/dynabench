@@ -25,7 +25,7 @@ const SortDirection = {
  *
  * @param {Object} props React props de-structured.
  * @param {Object} props.task The task
- * @param {number} props.taskId The taskID
+ * @param {string} props.taskCode The task code
  * @param {boolean} props.disableToggleSort Whether or not changing sort field/direction is allowed
  * @param {boolean} props.disableAdjustWeights Whether or not changing metric/dataset weights is allowed
  * @param {boolean} props.disableForkAndSnapshot Whether or not forking and snapshotting is allowed
@@ -33,9 +33,11 @@ const SortDirection = {
  * @param {function} props.fetchLeaderboardData Fn to load leaderboard data
  * @param {string} props.history navigation API
  * @param {string} props.location navigation location
+ * @param {boolean} props.isStandalone is in Stand alone mode
  */
 const TaskModelLeaderboardCard = (props) => {
-  const task = props.task;
+  const { task, taskCode } = props;
+  const taskId = task.id;
 
   const [data, setData] = useState([]);
   const [enableHelp, setEnableHelp] = useState(false);
@@ -66,8 +68,6 @@ const TaskModelLeaderboardCard = (props) => {
   const [pageLimit, setPageLimit] = useState(10);
   const [total, setTotal] = useState(0);
   const [showForkModal, setShowForkModal] = useState(false);
-
-  const taskId = props.taskId;
 
   /**
    * Update weight state for the appropriate metric
@@ -113,7 +113,7 @@ const TaskModelLeaderboardCard = (props) => {
    * @param {string} field
    */
   const toggleSort = (field) => {
-    if (props.disableToggleSort) {
+    if (props.disableToggleSort || props.isStandalone) {
       return;
     }
 
@@ -151,19 +151,31 @@ const TaskModelLeaderboardCard = (props) => {
     );
 
     return () => {};
-  }, [page, sort, metrics, datasetWeights, context.api, taskId, pageLimit]);
+  }, [
+    page,
+    sort,
+    metrics,
+    datasetWeights,
+    context.api,
+    taskCode,
+    pageLimit,
+    taskId,
+  ]);
 
   const isEndOfPage = (page + 1) * pageLimit >= total;
 
   return (
     <Card className="my-4">
       <Card.Header className="light-gray-bg d-flex align-items-center">
-        <h2 className="text-uppercase m-0 text-reset">Model Leaderboard</h2>
+        <h2 className="text-uppercase m-0 text-reset">
+          Model Leaderboard {props.isStandalone ? " - " + task.name : ""}
+        </h2>
         <div className="d-flex justify-content-end flex-fill">
           <ForkModal
             metricWeights={metrics}
             datasetWeights={datasetWeights}
             taskId={taskId}
+            taskCode={taskCode}
             showForkModal={showForkModal}
             setShowForkModal={setShowForkModal}
             history={props.history}
@@ -255,7 +267,8 @@ const TaskModelLeaderboardCard = (props) => {
           </Modal>
           {(process.env.REACT_APP_ENABLE_LEADERBOARD_FORK === "true" ||
             context.user.admin) &&
-            !props.disableForkAndSnapshot && (
+            !props.disableForkAndSnapshot &&
+            !props.isStandalone && (
               <OverlayTrigger
                 placement="top"
                 overlay={<Tooltip id="tip-leaderboard-fork">Fork</Tooltip>}
@@ -271,7 +284,7 @@ const TaskModelLeaderboardCard = (props) => {
                           encodeURIComponent(
                             "You need to login to fork a leaderboard."
                           ) +
-                          `&src=/tasks/${taskId}`
+                          `&src=/tasks/${taskCode}`
                       );
                     }
                   }}
@@ -288,7 +301,9 @@ const TaskModelLeaderboardCard = (props) => {
           >
             <Button
               className="btn bg-transparent border-0"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
                 setEnableHelp(!enableHelp);
               }}
             >
@@ -297,7 +312,7 @@ const TaskModelLeaderboardCard = (props) => {
               </span>
             </Button>
           </OverlayTrigger>
-          {!props.disableAdjustWeights && (
+          {!props.disableAdjustWeights && !props.isStandalone && (
             <>
               <OverlayTrigger
                 placement="top"
@@ -355,22 +370,32 @@ const TaskModelLeaderboardCard = (props) => {
       </Card.Body>
       <Card.Footer className="text-center">
         <Pagination className="mb-0 float-right" size="sm">
-          <Pagination.Item
-            disabled={isLoading || page === 0}
-            onClick={() => {
-              setPage(page - 1);
-            }}
-          >
-            Previous
-          </Pagination.Item>
-          <Pagination.Item
-            disabled={isLoading || isEndOfPage}
-            onClick={() => {
-              setPage(page + 1);
-            }}
-          >
-            Next
-          </Pagination.Item>
+          {props.isStandalone && (
+            <img
+              src="/Powered_by_Dynabench-Logo.svg"
+              style={{ height: "24px" }}
+            />
+          )}
+          {!props.isStandalone && (
+            <>
+              <Pagination.Item
+                disabled={isLoading || page === 0}
+                onClick={() => {
+                  setPage(page - 1);
+                }}
+              >
+                Previous
+              </Pagination.Item>
+              <Pagination.Item
+                disabled={isLoading || isEndOfPage}
+                onClick={() => {
+                  setPage(page + 1);
+                }}
+              >
+                Next
+              </Pagination.Item>
+            </>
+          )}
         </Pagination>
       </Card.Footer>
     </Card>
