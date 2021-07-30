@@ -502,6 +502,21 @@ export default class ApiService {
     );
   }
 
+  getModelCorrect(
+    tid,
+    example_io,
+    model_response_io,
+  ) {
+    return this.fetch(`${this.domain}/examples/get-model-correct`, {
+      method: "POST",
+      body: JSON.stringify({
+        example_io: example_io,
+        tid: tid,
+        model_response_io: model_response_io,
+      }),
+    });
+  }
+
   storeExample(
     tid,
     rid,
@@ -510,6 +525,7 @@ export default class ApiService {
     example_io,
     model_response_io,
     metadata,
+    model_correct,
     tag = null,
     model_endpoint_name = null
   ) {
@@ -523,6 +539,7 @@ export default class ApiService {
         uid: uid,
         model_response_io: model_response_io,
         metadata: metadata,
+        model_correct: model_correct,
         tag: tag,
         model_endpoint_name: model_endpoint_name,
       }),

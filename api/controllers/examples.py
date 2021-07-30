@@ -13,7 +13,7 @@ from models.context import ContextModel
 from models.example import ExampleModel
 from models.round import RoundModel
 from models.round_user_example_info import RoundUserExampleInfoModel
-from models.task import TaskModel
+from models.task import TaskModel, model_correct_metrics
 from models.user import UserModel
 
 
@@ -232,6 +232,57 @@ def update_example(credentials, eid):
         bottle.abort(500, {"error": str(e)})
 
 
+@bottle.post("/examples/get-model-correct")
+def controller_get_model_correct():
+    data = bottle.request.json
+
+    if not util.check_fields(
+        data,
+        [
+            "tid",
+            "example_io",
+            "model_response_io",
+        ],
+    ):
+        bottle.abort(400, "Missing data")
+
+    model_correct, missing_keys = get_model_correct(data["tid"], data["example_io"], data["model_response_io"])
+    if missing_keys:
+        bottle.abort(400, "Missing keys")
+
+    return util.json_encode(
+        {
+            "success": "ok",
+            "model_correct": model_correct
+        }
+    )
+
+
+def get_model_correct(tid, example_io, model_response_io):
+    tm = TaskModel()
+    task = tm.get(tid)
+    model_correct_metric = model_correct_metrics[task.model_correct_metric.name]
+    output_keys = set(
+        map(
+            lambda item: item[0],
+            filter(
+                lambda item: item[1]["location"] == "output",
+                json.loads(task.io_definition).items(),
+            ),
+        )
+    )
+    model_output = {}
+    human_output = {}
+    for key, value in example_io.items():
+        if key in output_keys:
+            human_output[key] = value
+    for key, value in model_response_io.items():
+        if key in output_keys:
+            model_output[key] = value
+
+    return model_correct_metric(model_output, human_output), len(model_output.keys()) != len(output_keys) or len(human_output.keys()) != len(output_keys)
+
+
 @bottle.post("/examples")
 @_auth.requires_auth_or_turk
 def post_example(credentials):
@@ -248,6 +299,7 @@ def post_example(credentials):
             "model_response_io",
             "metadata",
             "model_endpoint_name",
+            "model_correct",
         ],
     ):
         bottle.abort(400, "Missing data")
@@ -271,6 +323,7 @@ def post_example(credentials):
         example_io=data["example_io"],
         model_response_io=data["model_response_io"],
         metadata=data["metadata"],
+        model_correct=data["model_correct"],
         tag=tag,
         model_endpoint_name=data["model_endpoint_name"],
     )
@@ -301,7 +354,6 @@ def post_example(credentials):
     return util.json_encode(
         {
             "success": "ok",
-            "model_correct": not example.model_wrong,
             "id": example.id,
             "badges": "|".join(badge_names) if (credentials["id"] != "turk") else None,
         }

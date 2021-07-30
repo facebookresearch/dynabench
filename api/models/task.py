@@ -157,6 +157,8 @@ class Task(Base):
         default=ModelCorrectMetricEnum.exact_match,
         nullable=False,
     )
+    instructions = db.Column(db.Text)
+    goal_message = db.Column(db.Text)
 
     desc = db.Column(db.String(length=255))
 

@@ -58,7 +58,6 @@ class ResponseInfo extends React.Component {
     this.flagExample = this.flagExample.bind(this);
     this.explainExample = this.explainExample.bind(this);
     this.state = {
-      livemode: this.props.livemode,
       hide_by_key: new Set(),
     };
   }
@@ -99,6 +98,7 @@ class ResponseInfo extends React.Component {
         const newContent = this.props.content.slice();
         newContent[idx].cls = "retracted";
         newContent[idx].retracted = true;
+        console.log(newContent[idx]);
         this.setState({ content: newContent });
       },
       (error) => {
@@ -124,9 +124,9 @@ class ResponseInfo extends React.Component {
 
   render() {
     let sandboxContent = null;
-    if (!this.state.livemode) {
+    if (!this.props.obj.livemode) {
       sandboxContent = (
-        <div>
+        <div className="mt-3">
           This example was not stored because you are in sandbox mode.
           {this.context.api.loggedIn() ? (
             ""
@@ -265,7 +265,7 @@ class ResponseInfo extends React.Component {
 
       var userFeedback = (
         <>
-          {this.props.livemode ? (
+          {this.props.obj.livemode ? (
             this.props.obj.model_correct ? (
               <div className="mt-3">
                 <span>
@@ -280,9 +280,7 @@ class ResponseInfo extends React.Component {
                     type="text"
                     style={{ width: 100 + "%", marginBottom: "1px" }}
                     placeholder={
-                      "Explain why " +
-                      this.props.obj.targetText +
-                      " is the correct answer"
+                      "Explain why your example is correct"
                     }
                     data-index={this.props.index}
                     data-type="example"
@@ -361,6 +359,7 @@ class ResponseInfo extends React.Component {
           classNames += " light-green-bg";
           title = (<span><strong>You fooled the model!</strong></span>);
         }
+      }
 
     return (
       <Card className={classNames} style={{ minHeight: 120 }}>
@@ -382,7 +381,7 @@ class ResponseInfo extends React.Component {
         </Card.Body>
         {this.props.obj.retracted ||
         this.props.obj.flagged ||
-        !this.state.livemode ? null : (
+        !this.props.obj.livemode ? null : (
           <Card.Footer>
             {
               <div
@@ -436,7 +435,6 @@ class ResponseInfo extends React.Component {
     );
   }
 }
-}
 
 class CreateInterface extends React.Component {
   static contextType = UserContext;
@@ -453,6 +451,7 @@ class CreateInterface extends React.Component {
       refreshDisabled: true,
       mapKeyToExampleId: {},
       hide_by_key: new Set(),
+      submitWithoutFullExample: false,
     };
     this.getNewContext = this.getNewContext.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
@@ -550,13 +549,6 @@ class CreateInterface extends React.Component {
     }
   };
 
-  instantlyScrollToBottom() {
-    setTimeout(() => {
-      if (this.chatContainerRef.current)
-        this.chatContainerRef.current.scrollTop = this.chatContainerRef.current.scrollHeight;
-    }, 0);
-  }
-
   smoothlyAnimateToBottom() {
     if (this.bottomAnchorRef.current) {
       this.bottomAnchorRef.current.scrollIntoView({
@@ -568,6 +560,13 @@ class CreateInterface extends React.Component {
 
   handleResponse(e) {
     e.preventDefault();
+    for (const key in this.state.io_definition) {
+      if (this.state.example_io[key] === null && ["input", "output"].includes(this.state.io_definition[key]["location"])){
+        this.setState({submitWithoutFullExample: true});
+        return;
+      }
+    }
+    this.setState({submitWithoutFullExample: false});
     this.setState({ submitDisabled: true, refreshDisabled: true }, () => {
       this.manageTextInput("blur");
       this.context.api
@@ -591,16 +590,7 @@ class CreateInterface extends React.Component {
                   fetchPredictionError: false,
                 });
               }
-              this.smoothlyAnimateToBottom();
-              // Save examples.
-              if (!this.state.livemode) {
-                // We are in sandbox.
-                this.setState({
-                  submitDisabled: false,
-                  refreshDisabled: false,
-                });
-                return;
-              }
+
               const example_io_inputs_and_outputs = Object.assign(
                 {},
                 ...Object.keys(this.state.io_definition)
@@ -612,6 +602,44 @@ class CreateInterface extends React.Component {
                   .map((key, _) => ({ [key]: this.state.example_io[key] }))
               );
               const metadata = { model: this.state.randomTargetModel };
+              this.context.api.getModelCorrect(this.state.task.id, example_io_inputs_and_outputs, model_response_result).then((model_correct_result) => {
+
+              this.setState({
+                content: [
+                  ...this.state.content,
+                  {
+                    livemode: this.state.livemode,
+                    model_correct: model_correct_result.model_correct,
+                    example_io: JSON.parse(
+                      JSON.stringify(this.state.example_io)
+                    ),
+                    model_response_io: model_response_result,
+                    url: this.state.randomTargetModel,
+                    retracted: false,
+                  },
+                ],
+              });
+
+              if (!this.state.livemode) {
+                if (!this.state.retainInput) {
+                  const example_io = JSON.parse(
+                    JSON.stringify(this.state.example_io)
+                  );
+                  for (const key in this.state.io_definition) {
+                    if (
+                      this.state.io_definition[key].location !== "context"
+                    ) {
+                      example_io[key] = null;
+                    }
+                  }
+                  this.setState({ example_io: example_io });
+                }
+                this.setState( {submitDisabled: false,
+                refreshDisabled: false,} )
+                return;
+              }
+
+              // Save examples.
               this.context.api
                 .storeExample(
                   this.state.task.id,
@@ -621,6 +649,7 @@ class CreateInterface extends React.Component {
                   example_io_inputs_and_outputs,
                   model_response_result,
                   metadata,
+                  model_correct_result.model_correct,
                   null,
                   this.state.randomTargetModel.split("predict?model=")[1]
                 )
@@ -635,18 +664,6 @@ class CreateInterface extends React.Component {
                         ...this.state.mapKeyToExampleId,
                         [key]: store_example_result.id,
                       },
-                      content: [
-                        ...this.state.content,
-                        {
-                          model_correct: store_example_result.model_correct,
-                          example_io: JSON.parse(
-                            JSON.stringify(this.state.example_io)
-                          ),
-                          model_response_io: model_response_result,
-                          url: this.state.randomTargetModel,
-                          retracted: false,
-                        },
-                      ],
                     });
 
                     if (!!store_example_result.badges) {
@@ -675,7 +692,14 @@ class CreateInterface extends React.Component {
                       refreshDisabled: false,
                     });
                   }
-                );
+                )}, (error) => {
+                  console.log(error);
+                  this.setState({
+                    submitDisabled: false,
+                    refreshDisabled: false,
+                    fetchPredictionError: true,
+                  });
+                }).then(() => this.smoothlyAnimateToBottom());
             }
           },
           (error) => {
@@ -768,7 +792,6 @@ class CreateInterface extends React.Component {
             key={index}
             index={index}
             exampleId={this.state.mapKeyToExampleId[index]}
-            livemode={this.state.livemode}
             obj={item}
             content={this.state.content}
           />
@@ -822,6 +845,100 @@ class CreateInterface extends React.Component {
     function renderSwitchContextTooltip(props) {
       return renderTooltip(props, "Don't like this context? Try another one.");
     }
+
+    const goalMessageIO = (this.state.io_definition && this.state.example_io
+    ? Object.keys(this.state.io_definition)
+        .filter(
+          (key, _) =>
+            !this.state.hide_by_key.has(key) &&
+            this.state.io_definition[key].special_create_interface_location ===
+              "top"
+        )
+        .map((key, index) => (
+          <div className={this.state.example_io[key] === null && this.state.submitWithoutFullExample ? "border rounded border-danger" : ""}>
+            <IO
+              key={key}
+              create={true}
+              io_key={key}
+              example_io={this.state.example_io}
+              set_example_io={(example_io) => {
+                this.setState({ example_io: example_io });
+              }}
+              hide_by_key={this.state.hide_by_key}
+              set_hide_by_key={(hide_by_key) => {
+                this.setState({ hide_by_key: hide_by_key });
+              }}
+              type={this.state.io_definition[key].type}
+              location={this.state.io_definition[key].location}
+              constructor_args={
+                this.state.io_definition[key].constructor_args
+              }
+            />
+          </div>
+        ))
+    : null)
+
+    const contextIO = (this.state.io_definition && this.state.example_io
+    ? Object.keys(this.state.io_definition)
+        .filter(
+          (key, _) =>
+            !this.state.hide_by_key.has(key) &&
+            (this.state.io_definition[key].special_create_interface_location === "context" || (this.state.io_definition[key].location === "context" && !this.state.io_definition[key].special_create_interface_location))
+        )
+        .map((key, index) => (
+          <div className={this.state.example_io[key] === null && this.state.submitWithoutFullExample ? "border rounded border-danger" : ""}>
+            <IO
+              key={key}
+              create={true}
+              io_key={key}
+              example_io={this.state.example_io}
+              set_example_io={(example_io) => {
+                this.setState({ example_io: example_io });
+              }}
+              hide_by_key={this.state.hide_by_key}
+              set_hide_by_key={(hide_by_key) => {
+                this.setState({ hide_by_key: hide_by_key });
+              }}
+              type={this.state.io_definition[key].type}
+              location={this.state.io_definition[key].location}
+              constructor_args={
+                this.state.io_definition[key].constructor_args
+              }
+            />
+          </div>
+        ))
+    : null)
+
+    const belowModelResponseIO = (this.state.io_definition && this.state.example_io
+    ? Object.keys(this.state.io_definition)
+        .filter(
+          (key, _) =>
+            !this.state.hide_by_key.has(key) &&
+              (this.state.io_definition[key].special_create_interface_location === "below_model_response" || ((this.state.io_definition[key].location === "input" || this.state.io_definition[key].location === "output") && !this.state.io_definition[key].special_create_interface_location))
+        )
+        .map((key, index) => (
+          <div className={this.state.example_io[key] === null && this.state.submitWithoutFullExample ? "border rounded border-danger" : ""}>
+            <IO
+              key={key}
+              create={true}
+              io_key={key}
+              example_io={this.state.example_io}
+              set_example_io={(example_io) => {
+                this.setState({ example_io: example_io });
+              }}
+              hide_by_key={this.state.hide_by_key}
+              set_hide_by_key={(hide_by_key) => {
+                this.setState({ hide_by_key: hide_by_key });
+              }}
+              type={this.state.io_definition[key].type}
+              location={this.state.io_definition[key].location}
+              constructor_args={
+                this.state.io_definition[key].constructor_args
+              }
+            />
+            </div>
+        ))
+    : null)
 
     return (
       <OverlayProvider initiallyHide={true}>
@@ -913,69 +1030,22 @@ class CreateInterface extends React.Component {
               selectedModel={this.state.selectedModel}
             />
             <div className={"mb-3"}>
-            <div className="mb-1 p-3 rounded light-gray-bg">
-            {this.state.io_definition && this.state.example_io
-            ? Object.keys(this.state.io_definition)
-                .filter(
-                  (key, _) =>
-                    !this.state.hide_by_key.has(key) &&
-                    this.state.io_definition[key].special_create_interface_location ===
-                      "top"
-                )
-                .map((key, index) => (
-                    <IO
-                      key={key}
-                      create={true}
-                      io_key={key}
-                      example_io={this.state.example_io}
-                      set_example_io={(example_io) => {
-                        this.setState({ example_io: example_io });
-                      }}
-                      hide_by_key={this.state.hide_by_key}
-                      set_hide_by_key={(hide_by_key) => {
-                        this.setState({ hide_by_key: hide_by_key });
-                      }}
-                      type={this.state.io_definition[key].type}
-                      location={this.state.io_definition[key].location}
-                      constructor_args={
-                        this.state.io_definition[key].constructor_args
-                      }
-                    />
-                ))
-            : null}
-            </div>
+            {this.state.task.goal_message || (goalMessageIO && goalMessageIO.length) > 0 ?
+              <div className="mb-1 p-3 rounded light-gray-bg">
+              {this.state.task.goal_message ?
+                <InputGroup className="align-items-center">
+                  <i className="fas fa-flag-checkered mr-1"></i>
+                  Your goal: {this.state.task.goal_message}
+                </InputGroup> : null
+              }
+              {goalMessageIO}
+              </div> : null}
             </div>
             <Card className="profile-card overflow-hidden">
-              <div className="mb-1 p-3 light-gray-bg">
-              {this.state.io_definition && this.state.example_io
-              ? Object.keys(this.state.io_definition)
-                  .filter(
-                    (key, _) =>
-                      !this.state.hide_by_key.has(key) &&
-                      (this.state.io_definition[key].special_create_interface_location === "context" || (this.state.io_definition[key].location === "context" && !this.state.io_definition[key].special_create_interface_location))
-                  )
-                  .map((key, index) => (
-                      <IO
-                        key={key}
-                        create={true}
-                        io_key={key}
-                        example_io={this.state.example_io}
-                        set_example_io={(example_io) => {
-                          this.setState({ example_io: example_io });
-                        }}
-                        hide_by_key={this.state.hide_by_key}
-                        set_hide_by_key={(hide_by_key) => {
-                          this.setState({ hide_by_key: hide_by_key });
-                        }}
-                        type={this.state.io_definition[key].type}
-                        location={this.state.io_definition[key].location}
-                        constructor_args={
-                          this.state.io_definition[key].constructor_args
-                        }
-                      />
-                  ))
-              : null}
-              </div>
+            {contextIO && contextIO.length > 0 ?
+              <div className="mb-1 p-3 rounded light-gray-bg">
+              {contextIO}
+              </div> : ""}
               <Card.Body
                 className="overflow-auto pt-2"
                 style={{
@@ -987,34 +1057,7 @@ class CreateInterface extends React.Component {
                 <div className="bottom-anchor" ref={this.bottomAnchorRef} />
               </Card.Body>
               <div className="mb-1 p-3">
-              {this.state.io_definition && this.state.example_io
-              ? Object.keys(this.state.io_definition)
-                  .filter(
-                    (key, _) =>
-                      !this.state.hide_by_key.has(key) &&
-                        (this.state.io_definition[key].special_create_interface_location === "below_model_response" || (this.state.io_definition[key].location !== "context" && !this.state.io_definition[key].special_create_interface_location))
-                  )
-                  .map((key, index) => (
-                      <IO
-                        key={key}
-                        create={true}
-                        io_key={key}
-                        example_io={this.state.example_io}
-                        set_example_io={(example_io) => {
-                          this.setState({ example_io: example_io });
-                        }}
-                        hide_by_key={this.state.hide_by_key}
-                        set_hide_by_key={(hide_by_key) => {
-                          this.setState({ hide_by_key: hide_by_key });
-                        }}
-                        type={this.state.io_definition[key].type}
-                        location={this.state.io_definition[key].location}
-                        constructor_args={
-                          this.state.io_definition[key].constructor_args
-                        }
-                      />
-                  ))
-              : null}
+              {belowModelResponseIO}
               </div>
               <Form>
                 <Row className="p-3">

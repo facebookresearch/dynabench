@@ -18,7 +18,6 @@ from models.validation import LabelEnum, ModeEnum, Validation
 
 from .base import Base, BaseModel
 from .context import ContextModel
-from .task import TaskModel, model_correct_metrics
 from .user import UserModel
 
 
@@ -85,9 +84,13 @@ class ExampleModel(BaseModel):
         example_io,
         model_response_io,
         metadata,
+        model_correct,
         tag=None,
         model_endpoint_name=None,
     ):
+
+        model_wrong = not model_correct  # TODO: clean up
+
         if uid == "turk" and "annotator_id" not in metadata:
             logger.error("Annotator id not specified but received Turk example")
             return False
@@ -101,28 +104,6 @@ class ExampleModel(BaseModel):
             )
             return False
 
-        tm = TaskModel()
-        task = tm.get(tid)
-        model_correct_metric = model_correct_metrics[task.model_correct_metric.name]
-        output_keys = set(
-            map(
-                lambda item: item[0],
-                filter(
-                    lambda item: item[1]["location"] == "output",
-                    json.loads(task.io_definition).items(),
-                ),
-            )
-        )
-        model_output = {}
-        human_output = {}
-        for key, value in example_io.items():
-            if key in output_keys:
-                human_output[key] = value
-        for key, value in model_response_io.items():
-            if key in output_keys:
-                model_output[key] = value
-
-        model_wrong = not model_correct_metric(model_output, human_output)
         example_io_with_context = json.loads(c.context)
         example_io_with_context.update(example_io)
 

@@ -84,8 +84,6 @@ const GoalMessageMultipleChoiceIO = ({
         <><strong>{io_key}:</strong><br/>{example_io[io_key]}</>
       ) : (
         <>
-        <Badge variant="primary"> {io_key} </Badge>
-        <br />
         <InputGroup className="align-items-center">
           <i className="fas fa-flag-checkered mr-1"></i>
           Your goal: enter {indefiniteArticle}
@@ -130,11 +128,9 @@ const StringIO = ({
         <><strong>{io_key}:</strong><br/>{example_io[io_key]}</>
       ) : (
         <>
-        <Badge variant="primary"> {io_key} </Badge>
-        <br />
         <FormControl
           className="rounded-1 thick-border light-gray-bg"
-          placeholder={"Enter..."}
+          placeholder={"Enter " + io_key + "..."}
           value={example_io[io_key] ? example_io[io_key] : ""}
           onChange={(event) => {
             example_io[io_key] = event.target.value;
@@ -171,7 +167,7 @@ const StringSelectionIO = ({
   return (
     <div>
       {location === "context" || !create ? (
-        <><strong>{io_key} :</strong><br/>example_io[io_key]</>
+        <><strong>{io_key} :</strong><br/>{example_io[io_key]}</>
       ) : (
         <>
         <Badge variant="primary">

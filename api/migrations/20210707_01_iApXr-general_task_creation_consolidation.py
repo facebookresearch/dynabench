@@ -11,6 +11,10 @@ __depends__ = {"20210630_01_ZczVK-make-task-code-required"}
 
 steps = [
     step("ALTER TABLE tasks ADD COLUMN aggregation_metric ENUM('dynascore')"),
+    step("ALTER TABLE tasks ADD COLUMN goal_message TEXT"),
+    step("UPDATE tasks SET goal_message='enter a question and answer based on the image, such that the model is fooled.' WHERE shortname in ('VQA', 'VQA-VAL')"),
+    step("UPDATE tasks SET goal_message='enter a question and select an answer in the context, such that the model is fooled.' WHERE shortname in ('QA', 'DK_QA', 'UCL_QA')"),
+    step("ALTER TABLE tasks ADD COLUMN instructions TEXT"),
     step("ALTER TABLE tasks ADD COLUMN io_definition TEXT"),
     step(
         """UPDATE tasks SET io_definition='{
