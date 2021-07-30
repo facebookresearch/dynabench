@@ -110,6 +110,7 @@ class MetricsComputer:
                     else:
                         score_obj["r_realid"] = 0
                     sm.create(**score_obj)
+            logger.info(f"Successfully evaluated {job.job_name}")
             return ComputeStatusEnum.successful
         except Exception as ex:
             logger.exception(f"Exception in computing metrics {ex}")
