@@ -7,27 +7,33 @@
 import React from "react";
 import { Row, Container, Button, InputGroup } from "react-bootstrap";
 
-import { VerifyInterface } from "./VerifyInterfaceQA.js";
-class DivyanshVerifyQATaskPreview extends React.Component {
+import { ValidateInterface } from "./ValidateInterface.js";
+class QAValidationTaskPreview extends React.Component {
   constructor(props) {
     super(props);
   }
   render() {
     return (
       <>
-        <h1>Generate Questions for Reading Comprehension</h1>
+        <h1>Validate Questions for Reading Comprehension</h1>
         <p>
-          In this task, you will be asked to verify whether a phrase correctly
-          answers a Question.
+          In this task, you will be asked to validate whether a span of
+          text is the correct answer to a given question.
         </p>
       </>
     );
   }
 }
 
-class DivyanshVerifyQATaskOnboarder extends React.Component {
+class QAValidationTaskOnboarder extends React.Component {
   constructor(props) {
     super(props);
+  }
+  render() {
+    return (
+      <>
+      </>
+    )
   }
 }
 
@@ -39,7 +45,7 @@ class TaskInstructions extends React.Component {
         <small>
           Below, you are shown a question, and a passage of text. A candidate
           answer to the question is highlighted in the passage. Please mark
-          whether it is the correct answer or not. If the selected answer is
+          whether the answer is correct or not. If the selected answer is
           incorrect and the correct answer is not in the context, then flag this
           example.
         </small>
@@ -49,7 +55,7 @@ class TaskInstructions extends React.Component {
   }
 }
 
-class DivyanshVerifyQATaskMain extends React.Component {
+class QAValidationTaskMain extends React.Component {
   constructor(props) {
     super(props);
     this.api = props.api;
@@ -79,14 +85,14 @@ class DivyanshVerifyQATaskMain extends React.Component {
           )}
           <br />
         </Container>
-        <VerifyInterface api={this.api} {...this.props} />
+        <ValidateInterface api={this.api} {...this.props} />
       </>
     );
   }
 }
 
 export {
-  DivyanshVerifyQATaskPreview,
-  DivyanshVerifyQATaskOnboarder,
-  DivyanshVerifyQATaskMain,
+  QAValidationTaskPreview,
+  QAValidationTaskOnboarder,
+  QAValidationTaskMain,
 };

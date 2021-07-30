@@ -4,6 +4,7 @@
 
 import json
 import time
+from pprint import pprint
 
 import numpy as np
 import pandas as pd
@@ -13,8 +14,8 @@ from mephisto.tools.data_browser import DataBrowser as MephistoDataBrowser
 
 
 BONUS = 0.50
-RUN_VALIDATION = True
-CALCULATE_TIMES = True
+RUN_VALIDATION = False
+CALCULATE_TIMES = False
 
 if CALCULATE_TIMES:
     # Note: we are checking the mephisto db to get the HIT durations
@@ -29,7 +30,7 @@ if CALCULATE_TIMES:
         worker_name = Worker(db, unit_data["worker_id"]).worker_name
 
         contents = unit_data["data"]
-        # if contents["outputs"]["final_data"]["taskCompleted"] is True:
+        # if contents["outputs"]["final_data"]["taskCompleted"] == True:
         duration = contents["times"]["task_end"] - contents["times"]["task_start"]
         mephisto_durations_by_worker_id.setdefault(worker_name, []).append(duration)
 
@@ -44,7 +45,7 @@ df["metadata_json"] = df["metadata_json"].apply(
     lambda x: json.loads(x)
 )  # convert metadata to json
 df["is_mturk"] = df["metadata_json"].apply(lambda x: "annotator_id" in x)
-df = df.loc[df["is_mturk"] is True]
+df = df.loc[df["is_mturk"] == True]
 print(f"Total mTurk examples: {len(df)}")
 
 # Extract key data
@@ -53,10 +54,30 @@ df["annotator_id"] = df["metadata_json"].apply(lambda x: x["annotator_id"])
 df["mephisto_id"] = df["metadata_json"].apply(lambda x: x["mephisto_id"])
 df["agent_id"] = df["metadata_json"].apply(lambda x: x["agentId"])
 df["assignment_id"] = df["metadata_json"].apply(lambda x: x["assignmentId"])
+df["experiment_mode_id"] = df["metadata_json"].apply(lambda x: x["experiment_mode"]["id"])
 df["model_name"] = df["metadata_json"].apply(lambda x: x["model_name"])
+df["generator_name"] = df["metadata_json"].apply(lambda x: x["generator_name"])
+df["time_taken"] = df["metadata_json"].apply(lambda x: x["timer_active_time_ms"] / 1000)
 df["val_approved"] = "empty"
 df["val_qtype"] = "empty"
 # print(f"df has keys: {df.keys()}")
+
+NUM_EXPERIMENT_MODES = 15
+experiment_mode_ids = list(range(NUM_EXPERIMENT_MODES))
+
+for i, row in df.iterrows():
+    print(i)
+    print("AssignmentID", row["assignment_id"])
+    print("MephistoID", row["mephisto_id"])
+    pprint(row["metadata_json"]["timer_active_time_ms"])
+    print('---')
+    if i > 20:
+        raise BaseException
+
+
+
+
+
 
 # We validate all the model fooling examples that have not yet been validated
 # Load and combine
@@ -93,14 +114,14 @@ question_types_low = {k.lower(): v for k, v in question_types.items()}
 
 if RUN_VALIDATION:
     df_to_val = df_val.loc[
-        (df_val["model_wrong"] is True) & (df_val["val_approved"] == "empty")
+        (df_val["model_wrong"] == True) & (df_val["val_approved"] == "empty")
     ]
     for i, row in df_to_val.iterrows():
         print(
             "{} examples requiring validation".format(
                 len(
                     df_val.loc[
-                        (df_val["model_wrong"] is True)
+                        (df_val["model_wrong"] == True)
                         & (df_val["val_approved"] == "empty")
                     ]
                 )
@@ -182,7 +203,7 @@ for i, row in df.iterrows():
 SAVE_FOOLING_EXAMPLES = False
 if SAVE_FOOLING_EXAMPLES:
     df_model_fooling = df.loc[
-        (df["model_wrong"] is True) & (df["val_approved"] == "yes")
+        (df["model_wrong"] == True) & (df["val_approved"] == "yes")
     ]
     df_model_fooling.to_csv("annotated_data/model_fooling_examples.csv", index=False)
 
@@ -212,11 +233,11 @@ for model_name in model_names:
         & (~df["annotator_id"].isin(annotators_to_remove))
     ]
     num_examples = len(df_temp)
-    num_fooling_examples = len(df_temp.loc[df_temp["model_wrong"] is True])
-    num_non_fooling_examples = len(df_temp.loc[df_temp["model_wrong"] is False])
+    num_fooling_examples = len(df_temp.loc[df_temp["model_wrong"] == True])
+    num_non_fooling_examples = len(df_temp.loc[df_temp["model_wrong"] == False])
     num_verified_fooling_examples = len(
         df_temp.loc[
-            (df_temp["model_wrong"] is True)
+            (df_temp["model_wrong"] == True)
             & (
                 (df_temp["val_approved"] == "yes")
                 | (df_temp["val_approved"] == "empty")
@@ -262,7 +283,7 @@ for model_name in model_names:
     num_fooling_examples_by_annotator = [
         len(
             df_temp.loc[
-                (df_temp["annotator_id"] == w_id) & (df_temp["model_wrong"] is True)
+                (df_temp["annotator_id"] == w_id) & (df_temp["model_wrong"] == True)
             ]
         )
         for w_id in worker_ids
@@ -271,7 +292,7 @@ for model_name in model_names:
         len(
             df_temp.loc[
                 (df_temp["annotator_id"] == w_id)
-                & (df_temp["model_wrong"] is True)
+                & (df_temp["model_wrong"] == True)
                 & (
                     (df_temp["val_approved"] == "yes")
                     | (df_temp["val_approved"] == "empty")

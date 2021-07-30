@@ -137,11 +137,6 @@ class CreateInterface extends React.Component {
               exampleHistory: [
                 {
                   timestamp: new Date().valueOf(),
-                  answer: "",
-                  question: "",
-                  questionCacheId: null,
-                  questionMetadata: null,
-                  questionType: "",
                   activityType: "Context loaded",
                 },
               ],
@@ -361,10 +356,10 @@ class CreateInterface extends React.Component {
           generator_url: this.generator_url,
           experiment_mode: this.experiment_mode,
           current_tries: this.state.tries,
-          exampleHistory: JSON.stringify(this.state.exampleHistory),
           modelInputs: last_example.modelInputs,
           fullresponse: JSON.stringify(last_example.response),
           validated_by_annotator: last_example.validated,
+          exampleHistory: JSON.stringify(this.state.exampleHistory),
         };
         // console.log("metadata:");
         // console.log(metadata);
@@ -467,8 +462,8 @@ class CreateInterface extends React.Component {
         for (var i = this.state.exampleHistory.length - 1; i >= 0; i--) {
           let item = this.state.exampleHistory[i];
           if (
-            item["answer"] == answer_text &&
-            item["questionType"] == "cache"
+            "answer" in item && item["answer"] == answer_text &&
+            "questionType" in item && item["questionType"] == "cache"
           ) {
             question_cache_id = parseInt(item["questionCacheId"]);
             break;
@@ -625,10 +620,7 @@ class CreateInterface extends React.Component {
         ...this.state.exampleHistory,
         {
           timestamp: new Date().valueOf(),
-          answer: "",
           question: e.target.value,
-          questionCacheId: null,
-          questionMetadata: null,
           questionType: "manual",
           activityType: "Question modified manually",
         },
@@ -674,10 +666,6 @@ class CreateInterface extends React.Component {
           {
             timestamp: new Date().valueOf(),
             answer: [value[value.length - 1]],
-            question: "",
-            questionCacheId: null,
-            questionMetadata: null,
-            questionType: "",
             activityType: "Answer changed",
           },
         ],
