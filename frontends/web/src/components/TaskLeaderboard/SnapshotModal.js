@@ -27,6 +27,7 @@ const SnapshotModal = (props) => {
     setSnapshotCreatedSuccessfully(null);
     setCopySuccess("");
     setSnapshotUrl("");
+    setDescription("");
   }, [showSnapshotModal]);
 
   const copyToClipboard = () => {

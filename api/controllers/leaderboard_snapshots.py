@@ -63,7 +63,7 @@ def create_leaderboard_snapshot(credentials):
         tid,
         credentials["id"],
         data_json=dynaboard_info,
-        description=data.get("description", None),
+        desc=data.get("description", None),
     )
 
     return util.json_encode(leaderboard_snapshot.to_dict())

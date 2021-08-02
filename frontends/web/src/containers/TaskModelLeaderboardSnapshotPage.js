@@ -128,7 +128,7 @@ const TaskModelLeaderboardSnapshotPage = (props) => {
       </Row>
       <Row className="text-center justify-content-center mt-4 px-4 px-lg-5">
         <Col xs={12} md={7}>
-          <p>{snapshot.description}</p>
+          <p>{snapshot.desc}</p>
         </Col>
       </Row>
       <Row className="px-4 px-lg-5">

@@ -15,7 +15,7 @@ class LeaderboardSnapshot(Base):
     tid = db.Column(db.Integer, db.ForeignKey("tasks.id"), nullable=False)
     uid = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
-    description = db.Column(db.Text)
+    desc = db.Column(db.Text)
     create_datetime = db.Column(db.DateTime)
     data_json = db.Column(db.Text, nullable=False)
 
