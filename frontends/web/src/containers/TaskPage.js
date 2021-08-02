@@ -35,7 +35,6 @@ import { OverlayProvider, Annotation, OverlayContext } from "./Overlay";
 import {
   TaskModelDefaultLeaderboard,
   TaskModelForkLeaderboard,
-  TaskModelSnapshotLeaderboard,
 } from "../components/TaskLeaderboard/TaskModelLeaderboardCardWrapper";
 
 const chartSizes = {

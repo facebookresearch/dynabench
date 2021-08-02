@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useContext, useState } from "react";
 import UserContext from "../../containers/UserContext";
-import { Button, Modal, Row } from "react-bootstrap";
+import { Button, FormControl, InputGroup, Modal, Row } from "react-bootstrap";
 import { getOrderedWeights } from "./TaskModelLeaderboardCardWrapper";
 
 const SnapshotModal = (props) => {
@@ -21,6 +21,7 @@ const SnapshotModal = (props) => {
     useState(null);
   const [copySuccess, setCopySuccess] = useState("");
   const [snapshotUrl, setSnapshotUrl] = useState("");
+  const [description, setDescription] = useState("");
 
   useEffect(() => {
     setSnapshotCreatedSuccessfully(null);
@@ -53,12 +54,13 @@ const SnapshotModal = (props) => {
         datasetWeights,
         orderedMetricWeights,
         orderedDatasetWeights,
-        total
+        total,
+        description
       )
       .then(
         (result) => {
           const snapshotUrl = new URL(window.location.href);
-          snapshotUrl.pathname = `/tasks/${taskCode}/s/${result.name}`;
+          snapshotUrl.pathname = `/tasks/${taskCode}/s/${result.id}`;
           snapshotUrl.search = "?content_only=true";
           setSnapshotUrl(snapshotUrl.toString());
           setSnapshotCreatedSuccessfully(true);
@@ -96,6 +98,18 @@ const SnapshotModal = (props) => {
             and share with anyone using a link. Results shown in the snapshot
             table will be frozen and will not change over time.
           </p>
+          <p className="mt-4">Enter a description for your snapshot:</p>
+          <InputGroup>
+            <FormControl
+              className="p-3 mb-4 rounded-1 thick-border h-auto"
+              placeholder={""}
+              value={description}
+              onChange={(e) => {
+                setDescription(e.target.value);
+              }}
+              as="textarea"
+            />
+          </InputGroup>
           <Row className="justify-content-center">
             <Button variant="primary" onClick={saveSnapshot} className={""}>
               Generate

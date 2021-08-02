@@ -5,9 +5,9 @@
  */
 
 import React, { useContext, useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import "./TaskPage.css";
-import { Container, Row, Spinner } from "react-bootstrap";
+import { Col, Container, Row, Spinner, Table } from "react-bootstrap";
 import UserContext from "./UserContext";
 import { TaskModelSnapshotLeaderboard } from "../components/TaskLeaderboard/TaskModelLeaderboardCardWrapper";
 import Moment from "react-moment";
@@ -15,10 +15,10 @@ import Moment from "react-moment";
 const TaskModelLeaderboardSnapshotPage = (props) => {
   const context = useContext(UserContext); // for API
   const [task, setTask] = useState(null); // Current task data
-  const [snapshotData, setSnapshotData] = useState(null); // Current snapshot data
+  const [snapshotWithCreator, setSnapshotWithCreator] = useState(null); // Current snapshot data
   const [isLoading, setIsLoading] = useState(false);
 
-  const { taskCode, snapshotName } = useParams();
+  const { taskCode, snapshotId } = useParams();
 
   // Call api only once
   useEffect(() => {
@@ -54,17 +54,23 @@ const TaskModelLeaderboardSnapshotPage = (props) => {
     fetchTask(context.api);
 
     return () => {};
-  }, [context.api, taskCode, snapshotName]);
+  }, [taskCode]);
 
   useEffect(() => {
     if (task == null) {
-      setSnapshotData(null);
+      setSnapshotWithCreator(null);
       return;
     }
 
-    context.api.getLeaderboardSnapshot(task.id, snapshotName).then(
+    context.api.getLeaderboardSnapshot(snapshotId).then(
       (result) => {
-        setSnapshotData(result);
+        if (result?.snapshot.tid !== task.id) {
+          props.history.replace({
+            pathname: `/tasks/${taskCode}`,
+          });
+        } else {
+          setSnapshotWithCreator(result);
+        }
       },
       (error) => {
         console.log(error);
@@ -73,12 +79,12 @@ const TaskModelLeaderboardSnapshotPage = (props) => {
             pathname: `/tasks/${taskCode}`,
           });
         }
-        setSnapshotData(null);
+        setSnapshotWithCreator(null);
       }
     );
-  }, [task]);
+  }, [task, snapshotId]);
 
-  if (isLoading || !task || !snapshotData) {
+  if (isLoading || !task || !snapshotWithCreator) {
     return (
       <div className="d-flex justify-content-center mt-5">
         <Spinner animation="border" />
@@ -86,8 +92,45 @@ const TaskModelLeaderboardSnapshotPage = (props) => {
     );
   }
 
+  const { snapshot, creator } = snapshotWithCreator;
+
   return (
     <Container fluid>
+      <Row className="justify-content-center">
+        <h2 className="task-page-header text-reset text-center ">
+          {task.name} Snapshot
+        </h2>
+      </Row>
+      <Row className="justify-content-center mt-4">
+        <Col xs={12} md={5}>
+          <Row className="justify-content-center">
+            <Table className="w-50 font-weight-bold">
+              <thead />
+              <tbody>
+                <tr>
+                  <td>Owner:</td>
+                  <td className="text-right">
+                    <Link to={`/users/${creator.id}`}>{creator.username}</Link>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Created:</td>
+                  <td className="text-right">
+                    <Moment utc fromNow>
+                      {snapshot.create_datetime}
+                    </Moment>
+                  </td>
+                </tr>
+              </tbody>
+            </Table>
+          </Row>
+        </Col>
+      </Row>
+      <Row className="text-center justify-content-center mt-4 px-4 px-lg-5">
+        <Col xs={12} md={7}>
+          <p>{snapshot.description}</p>
+        </Col>
+      </Row>
       <Row className="px-4 px-lg-5">
         <a
           href={`/tasks/${taskCode}`}
@@ -98,21 +141,12 @@ const TaskModelLeaderboardSnapshotPage = (props) => {
             {...props}
             task={task}
             taskCode={taskCode}
-            snapshotData={JSON.parse(snapshotData.data_json)}
+            snapshotData={JSON.parse(snapshot.data_json)}
             disableToggleSort={true}
             disableAdjustWeights={true}
             disableForkAndSnapshot={true}
-            title={"Model Leaderboard - " + task.name + " (Snapshot)"}
           />
         </a>
-        <p className={"float-right"}>
-          Snapshot created{" "}
-          <b>
-            <Moment utc fromNow>
-              {snapshotData.create_datetime}
-            </Moment>
-          </b>
-        </p>
       </Row>
     </Container>
   );

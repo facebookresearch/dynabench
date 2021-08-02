@@ -558,28 +558,28 @@ export default class ApiService {
     datasetWeights,
     orderedMetricWeights,
     orderedDatasetWeights,
-    totalCount
+    totalCount,
+    description
   ) {
-    return this.fetch(`${this.domain}/tasks/${tid}/leaderboard_snapshot`, {
+    return this.fetch(`${this.domain}/leaderboard_snapshot`, {
       method: "PUT",
       body: JSON.stringify({
+        tid: tid,
         sort: sort,
         metricWeights: metricWeights,
         datasetWeights: datasetWeights,
         orderedMetricWeights: orderedMetricWeights,
         orderedDatasetWeights: orderedDatasetWeights,
         totalCount: totalCount,
+        description: description,
       }),
     });
   }
 
-  getLeaderboardSnapshot(tid, name) {
-    return this.fetch(
-      `${this.domain}/tasks/${tid}/leaderboard_snapshot/${name}`,
-      {
-        method: "GET",
-      }
-    );
+  getLeaderboardSnapshot(sid) {
+    return this.fetch(`${this.domain}/leaderboard_snapshot/${sid}`, {
+      method: "GET",
+    });
   }
 
   loggedIn() {

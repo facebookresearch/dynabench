@@ -16,12 +16,13 @@ steps = [
     step(
         """
         CREATE TABLE leaderboard_snapshots (
+            id INT NOT NULL AUTO_INCREMENT,
             tid INT NOT NULL,
-            name VARCHAR(255) NOT NULL,
             uid INT NOT NULL,
+            description TEXT DEFAULT NULL,
             create_datetime DATETIME DEFAULT NULL,
             data_json LONGTEXT NOT NULL,
-            PRIMARY KEY (name, tid),
+            PRIMARY KEY (id),
             CONSTRAINT leaderboard_snapshots_tid FOREIGN KEY (tid) REFERENCES tasks (id),
             CONSTRAINT leaderboard_snapshots_uid FOREIGN KEY (uid) REFERENCES users (id)
         )
