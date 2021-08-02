@@ -70,7 +70,7 @@ class UnpickableMnliDataset(OfflineMnliDataset):
 
 
 class MetricsComputerWithoutDb(MetricsComputer):
-    def __init__(self, folder: Path, datasets: Dict[str, list]):
+    def __init__(self, folder: Path, datasets: dict):
         config = {"computer_status_dump": str(folder / "computer.unittest.dump")}
         super().__init__(config, datasets)
         self.metrics: dict = {}
