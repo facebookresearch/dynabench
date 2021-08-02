@@ -104,10 +104,9 @@ const ForkModal = (props) => {
       {forkCreatedSuccessfully === null ? (
         <Modal.Body>
           <p>
-            Save the weights for metrics and datasets and share this saved
-            configuration with anyone using a link. Results shown in a forked
-            table will not be frozen. They would be derived based on the latest
-            models, datasets and metrics.
+            Save the weights for metrics and datasets such that the
+            configuration can be shared with anyone using a link. This creates a
+            custom "fork" of the default leaderboard configuration.
           </p>
 
           <p>Below are the weights you have chosen:</p>

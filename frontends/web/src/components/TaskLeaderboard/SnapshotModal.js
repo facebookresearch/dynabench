@@ -38,7 +38,7 @@ const SnapshotModal = (props) => {
     window.getSelection().addRange(range);
     document.execCommand("copy");
     window.getSelection().removeAllRanges();
-    setCopySuccess("   Copied successfully!");
+    setCopySuccess("Copied successfully!");
   };
 
   const saveSnapshot = () => {
@@ -72,7 +72,7 @@ const SnapshotModal = (props) => {
             props.history.push(
               "/login?msg=" +
                 encodeURIComponent(
-                  "You need to login to snapshot a leaderboard."
+                  "You need to login to create a leaderboard snapshot."
                 ) +
                 `&src=/tasks/${taskCode}`
             );
@@ -95,9 +95,9 @@ const SnapshotModal = (props) => {
       {snapshotCreatedSuccessfully === null ? (
         <Modal.Body>
           <p>
-            Save leaderboard standings along weights for metrics and datasets
-            and share with anyone using a link. Results shown in the snapshot
-            table will be frozen and will not change over time.
+            Save leaderboard standings along with weights for metrics and
+            datasets and share with anyone using a link. Results shown in the
+            snapshot table will be frozen and will not change over time.
           </p>
           <p className="mt-4">Enter a description for your snapshot:</p>
           <InputGroup>

@@ -303,7 +303,7 @@ const TaskModelLeaderboardCard = (props) => {
                       props.history.push(
                         "/login?msg=" +
                           encodeURIComponent(
-                            "You need to login to snapshot a leaderboard."
+                            "You need to login to create a leaderboard snapshot."
                           ) +
                           `&src=/tasks/${taskId}`
                       );

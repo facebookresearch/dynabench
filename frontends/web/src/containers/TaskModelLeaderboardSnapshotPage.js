@@ -23,26 +23,47 @@ const TaskModelLeaderboardSnapshotPage = (props) => {
   // Call api only once
   useEffect(() => {
     /**
-     * Invoke APIService to fetch  Task
+     * Invoke APIService to fetch Task and Snapshot data
      *
      * @param {*} api instance of @see APIService
      */
-    const fetchTask = (api) => {
+    const fetchTaskAndSnapshot = (api) => {
       setIsLoading(true);
       api.getTask(taskCode).then(
-        (result) => {
-          setTask(result);
-          if (taskCode !== result.task_code) {
+        (taskData) => {
+          setTask(taskData);
+          if (taskCode !== taskData.task_code) {
             props.history.replace({
               pathname: props.location.pathname.replace(
                 `/tasks/${taskCode}`,
-                `/tasks/${result.task_code}`
+                `/tasks/${taskData.task_code}`
               ),
               search: props.location.search,
             });
           }
 
-          setIsLoading(false);
+          context.api.getLeaderboardSnapshot(snapshotId).then(
+            (snapshotWithCreatorData) => {
+              if (snapshotWithCreatorData?.snapshot.tid !== taskData.id) {
+                props.history.replace({
+                  pathname: `/tasks/${taskCode}`,
+                });
+              } else {
+                setSnapshotWithCreator(snapshotWithCreatorData);
+              }
+              setIsLoading(false);
+            },
+            (error) => {
+              console.log(error);
+              if (error && error.status_code === 404) {
+                props.history.replace({
+                  pathname: `/tasks/${taskCode}`,
+                });
+              }
+              setSnapshotWithCreator(null);
+              setIsLoading(false);
+            }
+          );
         },
         (error) => {
           console.log(error);
@@ -51,38 +72,10 @@ const TaskModelLeaderboardSnapshotPage = (props) => {
       );
     };
 
-    fetchTask(context.api);
+    fetchTaskAndSnapshot(context.api);
 
     return () => {};
-  }, [taskCode]);
-
-  useEffect(() => {
-    if (task == null) {
-      setSnapshotWithCreator(null);
-      return;
-    }
-
-    context.api.getLeaderboardSnapshot(snapshotId).then(
-      (result) => {
-        if (result?.snapshot.tid !== task.id) {
-          props.history.replace({
-            pathname: `/tasks/${taskCode}`,
-          });
-        } else {
-          setSnapshotWithCreator(result);
-        }
-      },
-      (error) => {
-        console.log(error);
-        if (error && error.status_code === 404) {
-          props.history.replace({
-            pathname: `/tasks/${taskCode}`,
-          });
-        }
-        setSnapshotWithCreator(null);
-      }
-    );
-  }, [task, snapshotId]);
+  }, [taskCode, snapshotId]);
 
   if (isLoading || !task || !snapshotWithCreator) {
     return (
@@ -132,11 +125,7 @@ const TaskModelLeaderboardSnapshotPage = (props) => {
         </Col>
       </Row>
       <Row className="px-4 px-lg-5">
-        <a
-          href={`/tasks/${taskCode}`}
-          target="_blank"
-          style={{ width: "100%", textDecorationLine: "none" }}
-        >
+        <Col xs={12}>
           <TaskModelSnapshotLeaderboard
             {...props}
             task={task}
@@ -146,7 +135,7 @@ const TaskModelLeaderboardSnapshotPage = (props) => {
             disableAdjustWeights={true}
             disableForkAndSnapshot={true}
           />
-        </a>
+        </Col>
       </Row>
     </Container>
   );
