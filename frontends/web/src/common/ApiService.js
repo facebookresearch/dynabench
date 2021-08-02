@@ -159,7 +159,7 @@ export default class ApiService {
     });
   }
 
-  publishModel({
+  updateModel({
     modelId,
     name,
     description,
@@ -169,7 +169,7 @@ export default class ApiService {
     source_url,
     model_card,
   }) {
-    return this.fetch(`${this.domain}/models/${modelId}/publish`, {
+    return this.fetch(`${this.domain}/models/${modelId}/update`, {
       method: "PUT",
       body: JSON.stringify({
         name,
@@ -186,13 +186,6 @@ export default class ApiService {
   toggleModelStatus(modelId) {
     return this.fetch(`${this.domain}/models/${modelId}/revertstatus`, {
       method: "PUT",
-    });
-  }
-
-  updateModel(modelId, data) {
-    return this.fetch(`${this.domain}/models/${modelId}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
     });
   }
 
@@ -280,8 +273,8 @@ export default class ApiService {
     });
   }
 
-  getTask(id) {
-    return this.fetch(`${this.domain}/tasks/${id}`, {
+  getTask(idOrCode) {
+    return this.fetch(`${this.domain}/tasks/${idOrCode}`, {
       method: "GET",
     });
   }
@@ -502,11 +495,7 @@ export default class ApiService {
     );
   }
 
-  getModelCorrect(
-    tid,
-    example_io,
-    model_response_io,
-  ) {
+  getModelCorrect(tid, example_io, model_response_io) {
     return this.fetch(`${this.domain}/examples/get-model-correct`, {
       method: "POST",
       body: JSON.stringify({

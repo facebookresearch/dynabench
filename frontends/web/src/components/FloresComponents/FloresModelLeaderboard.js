@@ -91,6 +91,7 @@ const ModelLeaderBoard = ({ taskId, history, isTop5 }) => {
 
   useEffect(() => {
     setIsLoading(true);
+    setPage(0);
     context.api.getTask(taskId).then(
       (result) => {
         setTask(result);
@@ -127,16 +128,23 @@ const ModelLeaderBoard = ({ taskId, history, isTop5 }) => {
   const leaderBoardData = data.map((i, index) => {
     const modelCell = isTop5 ? (
       <td>
-        {i.model_name} ({i.username})
+        {i.model_name ? i.model_name : "Model " + i.model_id}{" "}
+        {i.username ? "(" + i.username + ")" : null}
       </td>
     ) : (
       <td>
-        <Link to={`/models/${i.model_id}`} className="btn-link">
-          {i.model_name}
-        </Link>{" "}
-        <Link to={`/users/${i.uid}#profile`} className="btn-link">
-          ({i.username})
-        </Link>
+        {i.model_name ? (
+          <Link to={`/models/${i.model_id}`} className="btn-link">
+            {i.model_name}
+          </Link>
+        ) : (
+          "Anonymous Model " + i.model_id
+        )}{" "}
+        {i.username ? (
+          <Link to={`/users/${i.uid}#profile`} className="btn-link">
+            ({i.username})
+          </Link>
+        ) : null}
       </td>
     );
 

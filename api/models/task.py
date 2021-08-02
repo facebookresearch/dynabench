@@ -265,17 +265,24 @@ class TaskModel(BaseModel):
             return 4
         return 1
 
-    def getWithRoundAndMetricMetadata(self, tid):
-
+    def getWithRoundAndMetricMetadata(self, task_id_or_code):
         try:
-            t, r = (
-                self.dbs.query(Task, Round)
-                .filter(Task.id == tid)
-                .join(Round, (Round.tid == Task.id) & (Round.rid == Task.cur_round))
-                .one()
-            )
+            if isinstance(task_id_or_code, int) or task_id_or_code.isdigit():
+                t, r = (
+                    self.dbs.query(Task, Round)
+                    .filter(Task.id == task_id_or_code)
+                    .join(Round, (Round.tid == Task.id) & (Round.rid == Task.cur_round))
+                    .one()
+                )
+            else:
+                t, r = (
+                    self.dbs.query(Task, Round)
+                    .filter(Task.task_code == task_id_or_code)
+                    .join(Round, (Round.tid == Task.id) & (Round.rid == Task.cur_round))
+                    .one()
+                )
             dm = DatasetModel()
-            datasets = dm.getByTid(tid)
+            datasets = dm.getByTid(t.id)
             dataset_list = []
             scoring_dataset_list = []
             for dataset in datasets:

@@ -27,7 +27,6 @@ import {
   usePagination,
   useSortBy,
   useFlexLayout,
-  useBlockLayout,
 } from "react-table";
 import UserContext from "../../containers/UserContext";
 import FloresLanguages from "./FloresLanguages";
@@ -50,8 +49,8 @@ const preList = (perf_tags) => {
         source_tag: s.tag.split("-")[0],
         target_tag: s.tag.split("-")[1],
         perf: s.top_perf_info.perf.toFixed(2),
-        source_lang: source.LANGUAGE,
-        target_lang: target.LANGUAGE,
+        source_lang: source?.LANGUAGE || "-",
+        target_lang: target?.LANGUAGE || "-",
       };
     });
   return tableData;
@@ -74,6 +73,11 @@ const unique = (data, values, propertyName) => {
   );
 };
 
+/**
+ * Custom toggle component to open the dropdown,
+ * uses forwardRef to access the DOM node.
+ *
+ */
 const CustomToggle = forwardRef(({ children, onClick }, ref) => (
   <span
     ref={ref}
@@ -87,6 +91,11 @@ const CustomToggle = forwardRef(({ children, onClick }, ref) => (
   </span>
 ));
 
+/**
+ * Custom dropdown menu to display languages and filter,
+ * uses forwardRef to access the DOM node.
+ *
+ */
 const LanguageMenu = forwardRef(
   ({ children, style, "aria-labelledby": labeledBy }, ref) => {
     const [value, setValue] = useState("");
@@ -158,6 +167,13 @@ const DefaultColumnFilter = ({
   );
 };
 
+/**
+ * A react-table component that manages filter, sorting and pagination.
+ *
+ * @param {Array} columns an array of objects containing the headers and keys of the data.
+ * @param {Array} data The data array to display om the table.
+ * @returns
+ */
 const LangPairsTable = ({ columns, data }) => {
   const defaultColumn = useMemo(
     () => ({
@@ -197,14 +213,18 @@ const LangPairsTable = ({ columns, data }) => {
     useFilters,
     useSortBy,
     usePagination,
-    useFlexLayout,
-    useBlockLayout
+    useFlexLayout
   );
 
   return (
     <>
       <Card.Body className="p-0 leaderboard-container">
-        <Table hover {...getTableProps()} className="pairs-leaderboard">
+        <Table
+          hover
+          responsive
+          {...getTableProps()}
+          className="pairs-leaderboard"
+        >
           <thead>
             {headerGroups.map((headerGroup) => (
               <tr {...headerGroup.getHeaderGroupProps()}>
@@ -325,14 +345,12 @@ const FloresPairsLeaderBoard = ({ taskId, history, ...props }) => {
         id: "source_lang",
         accessor: (data) => `${data.source_lang} (${data.source_tag})`,
         disableSortBy: true,
-        minWidth: 220,
       },
       {
         Header: "Target Language",
         id: "target_lang",
         accessor: (data) => `${data.target_lang} (${data.target_tag})`,
         disableSortBy: true,
-        minWidth: 220,
       },
       {
         Header: "Model",
@@ -340,11 +358,14 @@ const FloresPairsLeaderBoard = ({ taskId, history, ...props }) => {
         disableSortBy: true,
         disableFilters: true,
         minWidth: 110,
-        accessor: (data) => (
-          <a href={`/models/${data.model.model_id}`} className="btn-link">
-            {data.model.model_name || null}
-          </a>
-        ),
+        accessor: (data) =>
+          data.model.model_name ? (
+            <a href={`/models/${data.model.model_id}`} className="btn-link">
+              {data.model.model_name || null}
+            </a>
+          ) : (
+            "Anonymous Model " + data.model.model_id
+          ),
       },
       {
         Header: "BLEU Score",

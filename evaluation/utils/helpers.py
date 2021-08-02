@@ -1,13 +1,16 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
+import os
+import tempfile
 import time
 from datetime import datetime, timedelta
+from typing import List
 
 import boto3
 
 
-def send_eval_request(model_id, dataset_name, config, logger=None):
+def send_eval_request(model_id, dataset_name, config, eval_server_id, logger=None):
     """
     If dataset name is a perturbed dataset with prefix, will evaluate this
     perturbed dataset only;
@@ -35,7 +38,11 @@ def send_eval_request(model_id, dataset_name, config, logger=None):
         )
         sqs = session.resource("sqs")
         queue = sqs.get_queue_by_name(QueueName=config["evaluation_sqs_queue"])
-        msg = {"model_id": model_id, "dataset_name": dataset_name}
+        msg = {
+            "model_id": model_id,
+            "dataset_name": dataset_name,
+            "eval_server_id": eval_server_id,
+        }
         queue.send_message(MessageBody=json.dumps(msg))
         if logger:
             logger.info(f"Sent message to {config['evaluation_sqs_queue']}: {msg}")
@@ -135,3 +142,52 @@ def update_metadata_json_string(original_json_string, new_json_string_list):
         original_json = {**original_json, **new_json}
     metadata_json_string = json.dumps(original_json)
     return metadata_json_string
+
+
+def parse_s3_outfile(s3_client, s3_uri: str) -> List[dict]:
+    """Download raw predictions file from S3 and parse it.
+
+    We parse batch transform output by balancing brackets,
+    since torchserve outputs pretty printed json by default
+    """
+    raw_s3_bucket, raw_s3_path = parse_s3_uri(s3_uri)
+    fd, local_file = tempfile.mkstemp(suffix=raw_s3_path.split("/")[-1])
+    s3_client.download_file(raw_s3_bucket, raw_s3_path, local_file)
+    os.close(fd)
+
+    predictions = []
+    json_lines = True
+    with open(local_file) as f:
+        tmp = ""
+        lb = 0
+        for line in f:
+            if not (line.startswith("{") and line.endswith("}\n")):
+                json_lines = False
+            if json_lines:
+                # One json per line
+                predictions.append(json.loads(line))
+                continue
+            line = line.strip()
+            if line.startswith("{") or line.endswith("{"):
+                lb += 1
+            elif line.startswith("}") or line.endswith("}"):
+                lb -= 1
+            if lb == 0 and tmp:
+                tmp += line
+                predictions.append(json.loads(tmp))
+                tmp = ""
+            elif line:
+                tmp += line
+    os.remove(local_file)
+    return predictions
+
+
+def upload_predictions(s3_client, s3_uri: str, predictions: List[dict]) -> None:
+    s3_bucket, s3_path = parse_s3_uri(s3_uri)
+    fd, parsed_pred_file = tempfile.mkstemp(suffix=s3_uri.split("/")[-1] + ".parsed")
+    with open(parsed_pred_file, "w") as f:
+        for pred in predictions:
+            f.write(json.dumps(pred) + "\n")
+    s3_client.upload_file(parsed_pred_file, s3_bucket, s3_path)
+    os.close(fd)
+    os.remove(parsed_pred_file)

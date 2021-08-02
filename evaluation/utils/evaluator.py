@@ -1,5 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 import logging
+import math
 import pickle
 import time
 from datetime import datetime
@@ -110,10 +111,9 @@ class JobScheduler:
                     sagemaker, job.endpoint_name, job.job_name, job.perturb_prefix
                 )
             except sagemaker.exceptions.ResourceLimitExceeded as ex:
-                logger.exception(
-                    f"Requeueing job {job.job_name} due to AWS limit exceeds."
+                logger.warning(
+                    f"Requeueing job {job.job_name} due to AWS limit exceeds: {ex}"
                 )
-                logger.debug(f"{ex}")
                 self._queued.append(job)
                 return False
             except sagemaker.exceptions.ResourceInUse as ex:
@@ -218,18 +218,23 @@ class JobScheduler:
                             Dimensions=[{"Name": "Host", "Value": host}],
                         )
                         if metrics["Metrics"]:
+                            round_start = round_start_dt(
+                                job.status["TransformStartTime"]
+                            )
+                            round_end = round_end_dt(job.status["TransformEndTime"])
+                            # Make sure to not ask more than 1440 points (API limit)
+                            period = (round_end - round_start).total_seconds() / 1440
+                            # Period must be a multiple of 60
+                            period = int(math.ceil(period / 60) * 60)
+                            period = max(60, period)
                             for m in metrics["Metrics"]:
                                 r = cloudwatch.get_metric_statistics(
                                     Namespace=m["Namespace"],
                                     MetricName=m["MetricName"],
                                     Dimensions=m["Dimensions"],
-                                    StartTime=round_start_dt(
-                                        job.status["TransformStartTime"]
-                                    ),
-                                    EndTime=round_end_dt(
-                                        job.status["TransformEndTime"]
-                                    ),
-                                    Period=60,
+                                    StartTime=round_start,
+                                    EndTime=round_end,
+                                    Period=period,
                                     Statistics=["Average"],
                                 )
                                 if r["Datapoints"]:
