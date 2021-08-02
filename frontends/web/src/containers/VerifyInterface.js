@@ -14,6 +14,7 @@ import {
   Dropdown,
   Modal,
   Form,
+  Button,
   InputGroup,
 } from "react-bootstrap";
 import UserContext from "./UserContext";
@@ -66,7 +67,7 @@ class VerifyInterface extends React.Component {
             "Please log in or sign up so that you can get credit for your generated examples."
           ) +
           "&src=" +
-          encodeURIComponent("/tasks/" + params.taskId + "/create")
+          encodeURIComponent("/tasks/" + params.taskId + "/validate")
       );
     }
 
@@ -251,6 +252,53 @@ class VerifyInterface extends React.Component {
   }
 
   render() {
+    const inputOutputIO = Object.keys(this.state.io_definition)
+      .filter(
+        (key, _) =>
+          !this.state.hide_by_key.has(key) &&
+          (this.state.io_definition[key].location === "input" ||
+            this.state.io_definition[key].location === "output")
+      )
+      .map((key, _) => (
+        <IO
+          key={key}
+          create={false}
+          io_key={key}
+          example_io={this.state.example_io}
+          set_example_io={() => {}}
+          hide_by_key={this.state.hide_by_key}
+          set_hide_by_key={(hide_by_key) =>
+            this.setState({ hide_by_key: hide_by_key })
+          }
+          type={this.state.io_definition[key].type}
+          location={this.state.io_definition[key].location}
+          constructor_args={this.state.io_definition[key].constructor_args}
+        />
+      ));
+
+    const contextIO = Object.keys(this.state.io_definition)
+      .filter(
+        (key, _) =>
+          !this.state.hide_by_key.has(key) &&
+          this.state.io_definition[key].location === "context"
+      )
+      .map((key, _) => (
+        <IO
+          key={key}
+          create={false}
+          io_key={key}
+          example_io={this.state.example_io}
+          set_example_io={() => {}}
+          hide_by_key={this.state.hide_by_key}
+          set_hide_by_key={(hide_by_key) =>
+            this.setState({ hide_by_key: hide_by_key })
+          }
+          type={this.state.io_definition[key].type}
+          location={this.state.io_definition[key].location}
+          constructor_args={this.state.io_definition[key].constructor_args}
+        />
+      ));
+
     return (
       <OverlayProvider initiallyHide={true}>
         <BadgeOverlay
@@ -359,7 +407,7 @@ class VerifyInterface extends React.Component {
             ) : (
               ""
             )}
-            <div className="mt-4 mb-5 pt-3">
+            <div className="mt-4 pt-3">
               <p className="text-uppercase mb-0 spaced-header">
                 {this.state.task.name}
               </p>
@@ -371,246 +419,215 @@ class VerifyInterface extends React.Component {
                 correct.
               </p>
             </div>
-            {this.state.task.name === "Hate Speech" ? (
+            {this.state.task.warning ? (
               <p className="mt-3 p-3 light-red-bg rounded white-color">
-                <strong>WARNING</strong>: This is sensitive content! If you do
-                not want to see any hateful examples, please switch to another
-                task.
+                <strong>WARNING</strong>: {this.state.task.warning}
               </p>
             ) : null}
-            <Card className="profile-card overflow-hidden">
-              <Card.Body
-                className="overflow-auto pt-2"
-                style={{ height: "auto" }}
-              >
-                {this.state.example ? (
-                  <>
-                    <Card.Body className="p-3">
-                      <Row>
-                        <Col xs={12} md={7}>
-                          {Object.keys(this.state.io_definition)
-                            .filter(
-                              (key, _) =>
-                                !this.state.hide_by_key.has(key) &&
-                                (this.state.io_definition[key].location ===
-                                  "input" ||
-                                  this.state.io_definition[key].location ===
-                                    "output" ||
-                                  this.state.io_definition[key].location ===
-                                    "context")
-                            )
-                            .map((key, _) => (
-                              <IO
-                                key={key}
-                                create={false}
-                                io_key={key}
-                                example_io={this.state.example_io}
-                                set_example_io={() => {}}
-                                hide_by_key={this.state.hide_by_key}
-                                set_hide_by_key={(hide_by_key) =>
-                                  this.setState({ hide_by_key: hide_by_key })
-                                }
-                                type={this.state.io_definition[key].type}
-                                location={
-                                  this.state.io_definition[key].location
-                                }
-                                constructor_args={
-                                  this.state.io_definition[key].constructor_args
-                                }
-                              />
-                            ))}
-                          <br />
-                          <div className="mb-3">
-                            {this.state.example.example_explanation ? (
-                              <>
-                                <h6 className="text-uppercase dark-blue-color spaced-header">
-                                  Example explanation{" "}
-                                  <small>(why target label is correct)</small>
-                                </h6>
-                                <p>{this.state.example.example_explanation}</p>
-                              </>
-                            ) : (
-                              ""
-                            )}
-                            {this.state.example.model_explanation ? (
-                              <>
-                                <h6 className="text-uppercase dark-blue-color spaced-header">
-                                  Model explanation{" "}
-                                  <small>
-                                    (
-                                    {this.state.example.model_wrong
-                                      ? "why model was fooled"
-                                      : "how they tried to trick the model"}
-                                    )
-                                  </small>
-                                </h6>
-                                <p>{this.state.example.model_explanation}</p>
-                              </>
-                            ) : (
-                              ""
-                            )}
-                          </div>
-                          <h6 className="text-uppercase dark-blue-color spaced-header">
-                            Actions:
-                          </h6>
-                          <p>
+            <Card className="profile-card">
+              {this.state.example ? (
+                <>
+                  {contextIO && contextIO.length > 0 ? (
+                    <div className="mb-1 p-3 rounded light-gray-bg">
+                      {contextIO}
+                    </div>
+                  ) : (
+                    ""
+                  )}
+                  <Card.Body className="p-3">
+                    <Row>
+                      <Col xs={12} md={7}>
+                        {inputOutputIO}
+                        <br />
+                        <div className="mb-3">
+                          {this.state.example.example_explanation ? (
+                            <>
+                              <h6 className="text-uppercase dark-blue-color spaced-header">
+                                Example explanation{" "}
+                                <small>(why target label is correct)</small>
+                              </h6>
+                              <p>{this.state.example.example_explanation}</p>
+                            </>
+                          ) : (
+                            ""
+                          )}
+                          {this.state.example.model_explanation ? (
+                            <>
+                              <h6 className="text-uppercase dark-blue-color spaced-header">
+                                Model explanation{" "}
+                                <small>
+                                  (
+                                  {this.state.example.model_wrong
+                                    ? "why model was fooled"
+                                    : "how they tried to trick the model"}
+                                  )
+                                </small>
+                              </h6>
+                              <p>{this.state.example.model_explanation}</p>
+                            </>
+                          ) : (
+                            ""
+                          )}
+                        </div>
+                        <h6 className="text-uppercase dark-blue-color spaced-header">
+                          Actions:
+                        </h6>
+                        <p>
+                          <InputGroup className="align-items-center">
+                            <Form.Check
+                              checked={this.state.correctSelected}
+                              type="radio"
+                              onChange={() =>
+                                this.resetValidatorSelections(() =>
+                                  this.setState({ correctSelected: true })
+                                )
+                              }
+                            />
+                            <i className="fas fa-thumbs-up"></i> &nbsp;{" "}
+                            {this.state.owner_mode ? "Verified " : ""} Correct
+                          </InputGroup>
+                          <InputGroup className="align-items-center">
+                            <Form.Check
+                              checked={this.state.incorrectSelected}
+                              type="radio"
+                              onChange={() =>
+                                this.resetValidatorSelections(() =>
+                                  this.setState({ incorrectSelected: true })
+                                )
+                              }
+                            />
+                            <i className="fas fa-thumbs-down"></i> &nbsp;{" "}
+                            {this.state.owner_mode ? "Verified " : ""} Incorrect
+                          </InputGroup>
+                          {this.state.owner_mode ? (
+                            ""
+                          ) : (
                             <InputGroup className="align-items-center">
                               <Form.Check
-                                checked={this.state.correctSelected}
+                                checked={this.state.flaggedSelected}
                                 type="radio"
                                 onChange={() =>
                                   this.resetValidatorSelections(() =>
-                                    this.setState({ correctSelected: true })
+                                    this.setState({ flaggedSelected: true })
                                   )
                                 }
                               />
-                              <i className="fas fa-thumbs-up"></i> &nbsp;{" "}
-                              {this.state.owner_mode ? "Verified " : ""} Correct
+                              <i className="fas fa-flag"></i> &nbsp; Flag
                             </InputGroup>
-                            <InputGroup className="align-items-center">
-                              <Form.Check
-                                checked={this.state.incorrectSelected}
-                                type="radio"
-                                onChange={() =>
-                                  this.resetValidatorSelections(() =>
-                                    this.setState({ incorrectSelected: true })
-                                  )
-                                }
-                              />
-                              <i className="fas fa-thumbs-down"></i> &nbsp;{" "}
-                              {this.state.owner_mode ? "Verified " : ""}{" "}
-                              Incorrect
-                            </InputGroup>
-                            {this.state.owner_mode ? (
-                              ""
-                            ) : (
-                              <InputGroup className="align-items-center">
-                                <Form.Check
-                                  checked={this.state.flaggedSelected}
-                                  type="radio"
-                                  onChange={() =>
-                                    this.resetValidatorSelections(() =>
-                                      this.setState({ flaggedSelected: true })
-                                    )
+                          )}
+                          <InputGroup className="ml-3">
+                            {this.state.flaggedSelected ? (
+                              <Col sm="12 p-1">
+                                <Form.Control
+                                  type="text"
+                                  placeholder="Reason for flagging"
+                                  onChange={(e) =>
+                                    this.setState({
+                                      flagReason: e.target.value,
+                                    })
                                   }
                                 />
-                                <i className="fas fa-flag"></i> &nbsp; Flag
-                              </InputGroup>
+                              </Col>
+                            ) : (
+                              ""
                             )}
-                            <InputGroup className="ml-3">
-                              {this.state.flaggedSelected ? (
-                                <Col sm="12 p-1">
-                                  <Form.Control
-                                    type="text"
-                                    placeholder="Reason for flagging"
-                                    onChange={(e) =>
-                                      this.setState({
-                                        flagReason: e.target.value,
-                                      })
-                                    }
-                                  />
-                                </Col>
-                              ) : (
-                                ""
-                              )}
-                            </InputGroup>
-                          </p>
-                          {this.state.incorrectSelected ||
-                          this.state.correctSelected ||
-                          this.state.flaggedSelected ? (
-                            <div>
-                              <h6 className="text-uppercase dark-blue-color spaced-header">
-                                Optionally, provide an explanation for this
-                                example:
-                              </h6>
-                              <p>
-                                <div className="mt-3">
-                                  {this.state.incorrectSelected ||
-                                  this.state.correctSelected ? (
-                                    <div>
-                                      <Form.Control
-                                        type="text"
-                                        placeholder={
-                                          "Explain why the given example is " +
-                                          (this.state.correctSelected
-                                            ? "correct"
-                                            : "incorrect")
-                                        }
-                                        onChange={(e) =>
-                                          this.setState({
-                                            labelExplanation: e.target.value,
-                                          })
-                                        }
-                                      />
-                                    </div>
-                                  ) : (
-                                    ""
-                                  )}
+                          </InputGroup>
+                        </p>
+                        {this.state.incorrectSelected ||
+                        this.state.correctSelected ||
+                        this.state.flaggedSelected ? (
+                          <div>
+                            <h6 className="text-uppercase dark-blue-color spaced-header">
+                              Optionally, provide an explanation for this
+                              example:
+                            </h6>
+                            <p>
+                              <div className="mt-3">
+                                {this.state.incorrectSelected ||
+                                this.state.correctSelected ? (
                                   <div>
                                     <Form.Control
                                       type="text"
-                                      placeholder="Explain what you think the creator did to try to trick the model"
+                                      placeholder={
+                                        "Explain why the given example is " +
+                                        (this.state.correctSelected
+                                          ? "correct"
+                                          : "incorrect")
+                                      }
                                       onChange={(e) =>
                                         this.setState({
-                                          creatorAttemptExplanation:
-                                            e.target.value,
+                                          labelExplanation: e.target.value,
                                         })
                                       }
                                     />
                                   </div>
+                                ) : (
+                                  ""
+                                )}
+                                <div>
+                                  <Form.Control
+                                    type="text"
+                                    placeholder="Explain what you think the creator did to try to trick the model"
+                                    onChange={(e) =>
+                                      this.setState({
+                                        creatorAttemptExplanation:
+                                          e.target.value,
+                                      })
+                                    }
+                                  />
                                 </div>
-                              </p>
-                            </div>
-                          ) : (
-                            ""
-                          )}
-                        </Col>
-                      </Row>
-                      <InputGroup className="align-items-center">
-                        <button
-                          type="button"
-                          className="btn btn-primary t btn-sm"
-                          onClick={() => this.handleResponse()}
-                        >
-                          {" "}
-                          Submit{" "}
-                        </button>
-                        <button
-                          data-index={this.props.index}
-                          onClick={this.getNewExample}
-                          type="button"
-                          className="btn btn-light btn-sm pull-right"
-                        >
-                          <i className="fas fa-undo-alt"></i> Skip and load new
-                          example
-                        </button>
-                      </InputGroup>
-                    </Card.Body>
-                  </>
-                ) : (
-                  <Card.Body className="p-3">
-                    <Row>
-                      <Col xs={12} md={7}>
-                        <p>
-                          No more examples to be verified. Please create more
-                          examples!
-                        </p>
+                              </div>
+                            </p>
+                          </div>
+                        ) : (
+                          ""
+                        )}
                       </Col>
                     </Row>
+                    <InputGroup className="align-items-center">
+                      <Button
+                        type="button"
+                        className="font-weight-bold blue-bg border-0 task-action-btn"
+                        onClick={() => this.handleResponse()}
+                      >
+                        {" "}
+                        Submit{" "}
+                      </Button>
+                      <Button
+                        data-index={this.props.index}
+                        onClick={this.getNewExample}
+                        type="button"
+                        className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"
+                      >
+                        <i className="fas fa-undo-alt"></i> Skip and load new
+                        example
+                      </Button>
+                    </InputGroup>
                   </Card.Body>
+                </>
+              ) : (
+                <Card.Body className="p-3">
+                  <Row>
+                    <Col xs={12} md={7}>
+                      <p>
+                        No more examples to be verified. Please create more
+                        examples!
+                      </p>
+                    </Col>
+                  </Row>
+                </Card.Body>
+              )}
+              <div className="p-2">
+                {this.state.owner_mode ? (
+                  <p style={{ color: "red" }}>
+                    WARNING: You are in "Task owner mode." You can verify
+                    examples as correct or incorrect without input from anyone
+                    else!!
+                  </p>
+                ) : (
+                  ""
                 )}
-                <div className="p-2">
-                  {this.state.owner_mode ? (
-                    <p style={{ color: "red" }}>
-                      WARNING: You are in "Task owner mode." You can verify
-                      examples as correct or incorrect without input from anyone
-                      else!!
-                    </p>
-                  ) : (
-                    ""
-                  )}
-                </div>
-              </Card.Body>
+              </div>
             </Card>
           </Col>
         </Container>
