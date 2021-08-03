@@ -1,7 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 """
-Change example metadata_json type from TEXT to LONGTEXT
+Change example metadata_json type from TEXT to MEDIUMTEXT
 """
 
 from yoyo import step
@@ -14,6 +14,6 @@ __depends__ = {
 }
 
 steps = [
-    step("ALTER TABLE examples MODIFY metadata_json LONGTEXT"),
+    step("ALTER TABLE examples MODIFY metadata_json MEDIUMTEXT"),
     step("ALTER TABLE examples MODIFY metadata_json TEXT"),
 ]
