@@ -62,7 +62,6 @@ const SnapshotModal = (props) => {
         (result) => {
           const snapshotUrl = new URL(window.location.href);
           snapshotUrl.pathname = `/tasks/${taskCode}/s/${result.id}`;
-          snapshotUrl.search = "?content_only=true";
           setSnapshotUrl(snapshotUrl.toString());
           setSnapshotCreatedSuccessfully(true);
         },
