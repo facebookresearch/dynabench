@@ -30,9 +30,7 @@ class Job:
         self.endpoint_name = model.endpoint_name
         self.dataset_name = dataset_name
         self.perturb_prefix = perturb_prefix
-        self.job_name = generate_job_name(
-            self.endpoint_name, dataset_name, perturb_prefix
-        )
+        self.job_name = generate_job_name(model_id, dataset_name, perturb_prefix)
 
         self.status = None  # will update once job is successfully submitted
         self.aws_metrics = {}  # will update once job is completed
