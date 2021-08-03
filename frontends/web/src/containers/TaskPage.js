@@ -423,9 +423,10 @@ class TaskPage extends React.Component {
     this.exportAllTaskData = this.exportAllTaskData.bind(this);
     this.getSavedTaskSettings = this.getSavedTaskSettings.bind(this);
     this.exportCurrentRoundData = this.exportCurrentRoundData.bind(this);
+    this.getCurrentTaskData = this.getCurrentTaskData.bind(this);
   }
 
-  componentDidMount() {
+  getCurrentTaskData() {
     this.setState({ taskCode: this.props.match.params.taskCode }, function () {
       this.context.api.getTask(this.state.taskCode).then(
         (result) => {
@@ -460,34 +461,13 @@ class TaskPage extends React.Component {
     });
   }
 
+  componentDidMount() {
+    this.getCurrentTaskData();
+  }
+
   componentDidUpdate(prevProps) {
     if (this.props.match.params.taskCode !== this.state.taskCode) {
-      this.setState(
-        { taskCode: this.props.match.params.taskCode },
-        function () {
-          this.context.api.getTask(this.state.taskCode).then(
-            (result) => {
-              this.setState(
-                {
-                  taskCode: result.task_code,
-                  task: result,
-                  displayRound: "overall",
-                  round: result.round,
-                },
-                function () {
-                  this.refreshData();
-                }
-              );
-            },
-            (error) => {
-              console.log(error);
-              if (error.status_code === 404 || error.status_code === 405) {
-                this.props.history.push("/");
-              }
-            }
-          );
-        }
-      );
+      this.getCurrentTaskData();
     }
   }
 

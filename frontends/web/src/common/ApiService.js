@@ -551,6 +551,37 @@ export default class ApiService {
     );
   }
 
+  createLeaderboardSnapshot(
+    tid,
+    sort,
+    metricWeights,
+    datasetWeights,
+    orderedMetricWeights,
+    orderedDatasetWeights,
+    totalCount,
+    description
+  ) {
+    return this.fetch(`${this.domain}/leaderboard_snapshot`, {
+      method: "PUT",
+      body: JSON.stringify({
+        tid: tid,
+        sort: sort,
+        metricWeights: metricWeights,
+        datasetWeights: datasetWeights,
+        orderedMetricWeights: orderedMetricWeights,
+        orderedDatasetWeights: orderedDatasetWeights,
+        totalCount: totalCount,
+        description: description,
+      }),
+    });
+  }
+
+  getLeaderboardSnapshot(sid) {
+    return this.fetch(`${this.domain}/leaderboard_snapshot/${sid}`, {
+      method: "GET",
+    });
+  }
+
   loggedIn() {
     const token = this.getToken();
     if (!token) {

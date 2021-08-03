@@ -11,6 +11,7 @@ import {
 import UserContext from "../../containers/UserContext";
 import TaskModelLeaderboardTable from "./TaskModelLeaderboardTable";
 import ForkModal from "./ForkModal";
+import SnapshotModal from "./SnapshotModal";
 
 const SortDirection = {
   ASC: "asc",
@@ -33,7 +34,8 @@ const SortDirection = {
  * @param {function} props.fetchLeaderboardData Fn to load leaderboard data
  * @param {string} props.history navigation API
  * @param {string} props.location navigation location
- * @param {boolean} props.isStandalone is in Stand alone mode
+ * @param {boolean} props.disablePagination Whether or not to show pagination buttons in footer
+ * @param {string} props.title Override the table title
  */
 const TaskModelLeaderboardCard = (props) => {
   const { task, taskCode } = props;
@@ -68,6 +70,7 @@ const TaskModelLeaderboardCard = (props) => {
   const [pageLimit, setPageLimit] = useState(10);
   const [total, setTotal] = useState(0);
   const [showForkModal, setShowForkModal] = useState(false);
+  const [showSnapshotModal, setShowSnapshotModal] = useState(false);
 
   // Runs on taskID update only, i.e. task change, initialize page to 0.
   useEffect(() => {
@@ -118,7 +121,7 @@ const TaskModelLeaderboardCard = (props) => {
    * @param {string} field
    */
   const toggleSort = (field) => {
-    if (props.disableToggleSort || props.isStandalone) {
+    if (props.disableToggleSort) {
       return;
     }
 
@@ -151,6 +154,14 @@ const TaskModelLeaderboardCard = (props) => {
       (result) => {
         setData(result ? result.data : []);
         setTotal(result ? result.count : 0);
+        if (
+          result &&
+          result.sort &&
+          (result.sort.direction !== sort.direction ||
+            result.sort.field !== sort.field)
+        ) {
+          setSort(result.sort);
+        }
         setIsLoading(false);
       }
     );
@@ -173,7 +184,7 @@ const TaskModelLeaderboardCard = (props) => {
     <Card className="my-4">
       <Card.Header className="light-gray-bg d-flex align-items-center">
         <h2 className="text-uppercase m-0 text-reset">
-          Model Leaderboard {props.isStandalone ? " - " + task.name : ""}
+          {props.title || "Model Leaderboard"}
         </h2>
         <div className="d-flex justify-content-end flex-fill">
           <ForkModal
@@ -184,6 +195,17 @@ const TaskModelLeaderboardCard = (props) => {
             showForkModal={showForkModal}
             setShowForkModal={setShowForkModal}
             history={props.history}
+          />
+          <SnapshotModal
+            metricWeights={metrics}
+            datasetWeights={datasetWeights}
+            taskId={taskId}
+            taskCode={taskCode}
+            showSnapshotModal={showSnapshotModal}
+            setShowSnapshotModal={setShowSnapshotModal}
+            history={props.history}
+            sort={sort}
+            total={total}
           />
           <Modal
             size="lg"
@@ -270,10 +292,38 @@ const TaskModelLeaderboardCard = (props) => {
               For more details, see the paper.
             </Modal.Body>
           </Modal>
+          {(process.env.REACT_APP_ENABLE_LEADERBOARD_SNAPSHOT === "true" ||
+            context.user.admin) &&
+            !props.disableForkAndSnapshot && (
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip id="tip-leaderboard-fork">Snapshot</Tooltip>}
+              >
+                <Button
+                  className="btn bg-transparent border-0"
+                  onClick={() => {
+                    if (context.api.loggedIn()) {
+                      setShowSnapshotModal(true);
+                    } else {
+                      props.history.push(
+                        "/login?msg=" +
+                          encodeURIComponent(
+                            "You need to login to create a leaderboard snapshot."
+                          ) +
+                          `&src=/tasks/${taskId}`
+                      );
+                    }
+                  }}
+                >
+                  <span className="text-black-50">
+                    <i className="fas fa-camera"></i>
+                  </span>
+                </Button>
+              </OverlayTrigger>
+            )}
           {(process.env.REACT_APP_ENABLE_LEADERBOARD_FORK === "true" ||
             context.user.admin) &&
-            !props.disableForkAndSnapshot &&
-            !props.isStandalone && (
+            !props.disableForkAndSnapshot && (
               <OverlayTrigger
                 placement="top"
                 overlay={<Tooltip id="tip-leaderboard-fork">Fork</Tooltip>}
@@ -282,7 +332,7 @@ const TaskModelLeaderboardCard = (props) => {
                   className="btn bg-transparent border-0"
                   onClick={() => {
                     if (context.api.loggedIn()) {
-                      setShowForkModal(!showForkModal);
+                      setShowForkModal(true);
                     } else {
                       props.history.push(
                         "/login?msg=" +
@@ -317,7 +367,7 @@ const TaskModelLeaderboardCard = (props) => {
               </span>
             </Button>
           </OverlayTrigger>
-          {!props.disableAdjustWeights && !props.isStandalone && (
+          {!props.disableAdjustWeights && (
             <>
               <OverlayTrigger
                 placement="top"
@@ -375,13 +425,12 @@ const TaskModelLeaderboardCard = (props) => {
       </Card.Body>
       <Card.Footer className="text-center">
         <Pagination className="mb-0 float-right" size="sm">
-          {props.isStandalone && (
+          {props.disablePagination ? (
             <img
               src="/Powered_by_Dynabench-Logo.svg"
               style={{ height: "24px" }}
             />
-          )}
-          {!props.isStandalone && (
+          ) : (
             <>
               <Pagination.Item
                 disabled={isLoading || page === 0}

@@ -9,26 +9,29 @@ import TaskModelLeaderboardCard from "./TaskModelLeaderboardCard";
  *
  * @param getInitialWeights Function that defines how weights for metrics and datasets are to be initialized
  * @param fetchLeaderboardData Function that defines how the leaderboard data is to be fetched
- * @returns {function(*)} A functional component that uses the custom function passed to TaskModelLeaderboardCardWrapper
+ * @returns {function(*)} A functional component that uses the custom function passed to taskModelLeaderboardCardWrapper
  * and renders the TaskModelLeaderboardCard.
  */
-const TaskModelLeaderboardCardWrapper = (
+const taskModelLeaderboardCardWrapper = (
   getInitialWeights,
   fetchLeaderboardData
 ) => {
   return (props) => {
-    const extraData = {
+    const dataFromProps = {
       leaderboardName: props.match?.params.leaderboardName,
       history: props.history,
+      snapshotData: props.snapshotData,
     };
 
     return (
       <TaskModelLeaderboardCard
         {...props}
-        getInitialWeights={(task, api, setWeightsCallback) => {
-          getInitialWeights(task, api, setWeightsCallback, extraData);
-        }}
-        fetchLeaderboardData={fetchLeaderboardData}
+        getInitialWeights={(...args) =>
+          getInitialWeights(...args, dataFromProps)
+        }
+        fetchLeaderboardData={(...args) =>
+          fetchLeaderboardData(...args, dataFromProps)
+        }
       />
     );
   };
@@ -53,7 +56,7 @@ const loadDefaultWeights = (metricIdToDataObj, datasetIdToDataObj, task) => {
   });
 };
 
-const getOrderedWeights = (metricWeights, datasetWeights) => {
+export const getOrderedWeights = (metricWeights, datasetWeights) => {
   const metricSum = metricWeights?.reduce(
     (acc, entry) => acc + entry.weight,
     0
@@ -122,7 +125,7 @@ const getOrderedWeightObjects = (
   return { orderedMetricWeights, orderedDatasetWeights };
 };
 
-export const TaskModelDefaultLeaderboard = TaskModelLeaderboardCardWrapper(
+export const TaskModelDefaultLeaderboard = taskModelLeaderboardCardWrapper(
   (task, api, setWeightsCallback) => {
     const metricIdToDataObj = {};
     const datasetIdToDataObj = {};
@@ -135,8 +138,8 @@ export const TaskModelDefaultLeaderboard = TaskModelLeaderboardCardWrapper(
   loadDefaultData
 );
 
-export const TaskModelForkLeaderboard = TaskModelLeaderboardCardWrapper(
-  (task, api, setWeightsCallback, extraData) => {
+export const TaskModelForkLeaderboard = taskModelLeaderboardCardWrapper(
+  (task, api, setWeightsCallback, dataFromProps) => {
     const metricIdToDataObj = {};
     const datasetIdToDataObj = {};
 
@@ -145,7 +148,7 @@ export const TaskModelForkLeaderboard = TaskModelLeaderboardCardWrapper(
      */
     loadDefaultWeights(metricIdToDataObj, datasetIdToDataObj, task);
 
-    const { leaderboardName, history } = extraData;
+    const { leaderboardName, history } = dataFromProps;
 
     /* Through this API, the default weights for metrics and datasets get overwritten by the weights saved during
      * creation of the fork.
@@ -181,4 +184,33 @@ export const TaskModelForkLeaderboard = TaskModelLeaderboardCardWrapper(
     );
   },
   loadDefaultData
+);
+
+export const TaskModelSnapshotLeaderboard = taskModelLeaderboardCardWrapper(
+  (task, api, setWeightsCallback, dataFromProps) => {
+    const { snapshotData } = dataFromProps;
+    const { metricWeights, datasetWeights } = snapshotData;
+    setWeightsCallback({
+      orderedMetricWeights: metricWeights,
+      orderedDatasetWeights: datasetWeights,
+    });
+  },
+  (
+    api,
+    taskId,
+    pageLimit,
+    page,
+    sort,
+    metrics,
+    datasetWeights,
+    updateResultCallback,
+    dataFromProps
+  ) => {
+    const { snapshotData } = dataFromProps;
+    updateResultCallback({
+      data: snapshotData.data.slice(page * pageLimit, (page + 1) * pageLimit),
+      count: snapshotData.count,
+      sort: snapshotData.miscInfoJson.sort,
+    });
+  }
 );
