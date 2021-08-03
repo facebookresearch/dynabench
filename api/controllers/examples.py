@@ -173,6 +173,27 @@ def get_example_metadata(credentials, eid):
         bottle.abort(403, "Access denied")
     return util.json_encode(example.metadata_json)
 
+@bottle.put("/examples/<eid:int>")
+@_auth.requires_auth_or_turk
+def add_example_metadata_io(credentials, eid):
+    em = ExampleModel()
+    example = em.get(eid)
+
+    if not example:
+        bottle.abort(404, "Not found")
+    if credentials["id"] != "turk" and example.uid != credentials["id"]:
+        bottle.abort(403, "Access denied")
+    if credentials["id"] == "turk":
+        if not util.check_fields(data, ["uid"]):
+            bottle.abort(400, "Missing data")
+        metadata = json.loads(example.metadata_json)
+        if (
+            "annotator_id" not in metadata
+            or metadata["annotator_id"] != data["uid"]
+        ):
+            bottle.abort(403, "Access denied")
+        del data["uid"]  # don't store this
+
 
 @bottle.put("/examples/<eid:int>")
 @_auth.requires_auth_or_turk
@@ -197,6 +218,10 @@ def update_example(credentials, eid):
                 bottle.abort(403, "Access denied")
             del data["uid"]  # don't store this
 
+        for field in data:
+            if field not in ('model_wrong', 'flagged', 'retracted', 'user_metadata_io'):
+                bottle.abort(403, "Can only modify  model_wrong, retracted, and user_metadata_io")
+
         if (
             "model_wrong" in data
             and data["model_wrong"] is True
@@ -212,6 +237,9 @@ def update_example(credentials, eid):
                 info = RoundUserExampleInfoModel()
                 um.incrementFooledCount(example.uid)
                 info.incrementFooledCount(example.uid, context.r_realid)
+
+        if "user_metadata_io" in data:
+            data["user_metadata_io"] = json.dumps(data["user_metadata_io"])
 
         logger.info(f"Updating example {example.id} with {data}")
         em.update(example.id, data)
@@ -264,11 +292,8 @@ def get_model_correct(tid, example_io, model_response_io):
     model_correct_metric = model_correct_metrics[task.model_correct_metric.name]
     output_keys = set(
         map(
-            lambda item: item[0],
-            filter(
-                lambda item: item[1]["location"] == "output",
-                json.loads(task.io_definition).items(),
-            ),
+            lambda item: item["name"],
+            json.loads(task.io_definition)["output"],
         )
     )
     model_output = {}

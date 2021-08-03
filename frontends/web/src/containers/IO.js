@@ -18,11 +18,11 @@ const MultipleChoiceIO = ({
   name,
   constructor_args,
 }) => {
-  const [choice, setChoice] = useState("Select Choice");
-  const labels = constructor_args["labels"];
+  const [choice, setChoice] = useState(constructor_args.placeholder);
+  const labels = constructor_args.labels;
   // This ensures that the UI resets when the value goes back to null
-  if (example_io[name] === null && choice !== "Select Choice") {
-    setChoice("Select Choice");
+  if (example_io[name] === null && choice !== constructor_args.placeholder) {
+    setChoice(constructor_args.placeholder);
   }
   return (
     <div>
@@ -34,8 +34,6 @@ const MultipleChoiceIO = ({
         </>
       ) : (
         <>
-          <Badge variant="primary"> {name} </Badge>
-          <br />
           <DropdownButton variant="light" className="p-1" title={choice}>
             {labels
               .filter((label, _) => label !== choice)
@@ -66,7 +64,7 @@ const GoalMessageMultipleChoiceIO = ({
   name,
   constructor_args,
 }) => {
-  const labels = constructor_args["labels"];
+  const labels = constructor_args.labels;
   const random = labels[Math.floor(Math.random() * labels.length)];
   const [choice, setChoice] = useState(random);
   // This ensures that the UI resets when the value goes back to null
@@ -156,7 +154,7 @@ const StringIO = ({
   );
 };
 
-const StringSelectionIO = ({
+const ContextStringSelectionIO = ({
   create,
   example_io,
   set_example_io,
@@ -170,7 +168,7 @@ const StringSelectionIO = ({
   }
   return (
     <div>
-      {create ? (
+      {!create ? (
         <>
           <strong>{name} :</strong>
           <br />
@@ -180,12 +178,12 @@ const StringSelectionIO = ({
         <>
           <Badge variant="primary">
             {" "}
-            Select {name} in {constructor_args["reference_key"]}
+            Select {name} in {constructor_args.reference_key}
           </Badge>
           <br />
           <TokenAnnotator
             className="mb-1 p-3 light-gray-bg qa-context"
-            tokens={example_io[constructor_args["reference_key"]].split(/\b/)}
+            tokens={example_io[constructor_args.reference_key].split(/\b/)}
             value={selection_info}
             onChange={(value) => {
               if (value.length > 0) {
@@ -300,9 +298,9 @@ const IO = ({
           constructor_args={constructor_args}
         />
       );
-    case "string_selection":
+    case "context_string_selection":
       return (
-        <StringSelectionIO
+        <ContextStringSelectionIO
           create={create}
           name={name}
           example_io={example_io}

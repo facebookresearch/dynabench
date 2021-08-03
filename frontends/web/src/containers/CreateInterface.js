@@ -56,35 +56,31 @@ class ResponseInfo extends React.Component {
     super(props);
     this.retractExample = this.retractExample.bind(this);
     this.flagExample = this.flagExample.bind(this);
-    this.explainExample = this.explainExample.bind(this);
+    this.updateExample = this.updateExample.bind(this);
+    this.state = {user_metadata_io: {}}
   }
   componentDidMount() {
+    const user_metadata_io = {};
+    (this.props.obj.model_correct ? this.props.io_definition.user_metadata_model_correct : this.props.io_definition.user_metadata_model_incorrect)
+      .forEach((io_obj) => {
+        user_metadata_io[io_obj.name] = null;
+      });
     this.setState({
-      explainSaved: null,
+      user_metadata_io: user_metadata_io,
+      exampleUpdated: null,
       feedbackSaved: null,
     });
   }
 
-  explainExample(e) {
-    e.preventDefault();
-    var type = e.target.getAttribute("data-type");
-    var explanation = e.target.value.trim();
-    if (explanation !== "" || this.state.hasPreviousExplanation) {
-      this.setState({ explainSaved: false, hasPreviousExplanation: true });
+  updateExample() {
       this.context.api
-        .explainExample(this.props.exampleId, type, explanation)
+        .updateExample(this.props.exampleId, {user_metadata_io: this.state.user_metadata_io})
         .then(
-          (result) => {
-            this.setState({ explainSaved: true });
-            if (explanation === "") {
-              this.setState({ hasPreviousExplanation: false });
-            }
-          },
+          (result) => {},
           (error) => {
             console.log(error);
           }
         );
-    }
   }
 
   retractExample(e) {
@@ -198,6 +194,20 @@ class ResponseInfo extends React.Component {
       )
     );
 
+    const userMetadata = (this.props.model_correct ? this.props.io_definition.user_metadata_model_correct : this.props.io_definition.user_metadata_model_incorrect).map(
+      (io_obj, _) => (
+        <IO
+          key={io_obj.name}
+          create={true}
+          name={io_obj.name}
+          example_io={this.state.user_metadata_io}
+          set_example_io={(example_io) => this.setState({user_metadata_io: example_io, exampleUpdated: false})}
+          type={io_obj.type}
+          constructor_args={io_obj.constructor_args}
+        />
+      )
+    );
+
     var classNames = this.props.obj.cls + " rounded border m-3";
 
     const submissionResults = (
@@ -216,72 +226,21 @@ class ResponseInfo extends React.Component {
     var userFeedback = (
       <>
         {this.props.obj.livemode ? (
-          this.props.obj.model_correct ? (
             <div className="mt-3">
-              <span>Optionally, provide an explanation for your example:</span>
-              <ExplainFeedback
-                feedbackSaved={this.state.explainSaved}
-                type="explanation"
-              />
-              <div>
-                <input
-                  type="text"
-                  style={{ width: 100 + "%", marginBottom: "1px" }}
-                  placeholder={"Explain why your example is correct"}
-                  data-index={this.props.index}
-                  data-type="example"
-                  onChange={() => this.setState({ explainSaved: null })}
-                  onBlur={this.explainExample}
-                />
-              </div>
-              <div>
-                <input
-                  type="text"
-                  style={{ width: 100 + "%" }}
-                  placeholder="Explain why you think the model made a mistake"
-                  data-index={this.props.index}
-                  data-type="model"
-                  onChange={() => this.setState({ explainSaved: null })}
-                  onBlur={this.explainExample}
-                />
-              </div>
+              <span>Optionally, enter more info for your example:</span>
+              {this.state.exampleUpdated ?
+                <span style={{ float: "right"}}> Saved! </span>
+                :
+                <button
+                  onClick={() => {this.updateExample(); this.setState({exampleUpdated: true})}}
+                  type="button"
+                  style={{ float: "right" }}
+                  className="btn btn-light btn-sm"
+                >
+                  Save Info
+                </button>}
+              {userMetadata}
             </div>
-          ) : (
-            /* not fooled */
-            <div className="mt-3">
-              <span>Optionally, provide an explanation for your example:</span>
-              <ExplainFeedback
-                feedbackSaved={this.state.explainSaved}
-                type="explanation"
-              />
-              <div>
-                <input
-                  type="text"
-                  style={{ width: 100 + "%", marginBottom: "1px" }}
-                  placeholder={
-                    "Explain why " +
-                    this.props.obj.targetText +
-                    " is the correct answer"
-                  }
-                  data-index={this.props.index}
-                  data-type="example"
-                  onChange={() => this.setState({ explainSaved: null })}
-                  onBlur={this.explainExample}
-                />
-              </div>
-              <div>
-                <input
-                  type="text"
-                  style={{ width: 100 + "%" }}
-                  placeholder="Explain what you did to try to trick the model"
-                  data-index={this.props.index}
-                  data-type="model"
-                  onChange={() => this.setState({ explainSaved: null })}
-                  onBlur={this.explainExample}
-                />
-              </div>
-            </div>
-          )
         ) : (
           ""
         )}
@@ -435,7 +394,7 @@ class CreateInterface extends React.Component {
   getNewContext() {
     this.setState({ submitDisabled: true, refreshDisabled: true }, () => {
       this.context.api
-        .getRandomContext(this.state.taskId, this.state.task.selected_round)
+        .getRandomContext(this.state.task.id, this.state.task.selected_round)
         .then(
           (result) => {
             const randomTargetModel = this.pickModel(this.state.task.round.url);
@@ -786,11 +745,9 @@ class CreateInterface extends React.Component {
             io_definition={this.state.parsed_io_definition}
             key={index}
             index={index}
-            exampleId={this.state.mapKeyToExampleId[index]}
+            exampleId={this.state.mapKeyToExampleId[index+1]}
             obj={item}
             content={this.state.content}
-            getNewContext={this.getNewContext}
-            taskCode={this.state.taskCode}
           />
         )
       )
@@ -843,6 +800,8 @@ class CreateInterface extends React.Component {
       return renderTooltip(props, "Don't like this context? Try another one.");
     }
 
+    // The goal_message_multiple_choice type is special. We want this object to
+    // appear in a special place in the interface.
     const goalMessageIO = this.state.parsed_io_definition.input
       .concat(this.state.parsed_io_definition.output)
       .filter((io_obj, _) => io_obj.type === "goal_message_multiple_choice")
@@ -869,8 +828,15 @@ class CreateInterface extends React.Component {
         </div>
       ));
 
-    const contextIO = this.state.parsed_io_definition.context.map(
-      (io_obj, _) => (
+    // The context_string_selection type is special. When it is present, we want
+    // to remove the context string from view and put the context_string_selection
+    // in its place
+    const contextStringSelectionGroup = this.state.parsed_io_definition.input.concat(this.state.parsed_io_definition.output).filter((io_obj, _) => io_obj.type === "context_string_selection")
+    const selectableContexts = contextStringSelectionGroup.map(io_obj => io_obj.constructor_args.reference_key)
+    console.log(selectableContexts)
+    const contextIO = this.state.parsed_io_definition.context.concat(contextStringSelectionGroup)
+      .filter((io_obj, _) => !selectableContexts.includes(io_obj.name))
+      .map((io_obj, _) => (
         <div
           className={
             this.state.example_io[io_obj.name] === null &&
@@ -881,7 +847,7 @@ class CreateInterface extends React.Component {
         >
           <IO
             key={io_obj.name}
-            create={false}
+            create={io_obj.type === "context_string_selection" ? true : false}
             name={io_obj.name}
             example_io={this.state.example_io}
             set_example_io={() => {}}
@@ -894,7 +860,7 @@ class CreateInterface extends React.Component {
 
     const belowModelResponseIO = this.state.parsed_io_definition.input
       .concat(this.state.parsed_io_definition.output)
-      .filter((io_obj, _) => io_obj.type !== "goal_message_multiple_choice")
+      .filter((io_obj, _) => !["goal_message_multiple_choice", "context_string_selection"].includes(io_obj.type))
       .map((io_obj, _) => (
         <div
           className={

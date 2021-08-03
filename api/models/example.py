@@ -34,11 +34,13 @@ class Example(Base):
     user = db.orm.relationship("User", foreign_keys="Example.uid")
     tag = db.Column(db.Text)
 
-    io = db.Column(db.Text)
+    user_input_output_io = db.Column(db.Text)
+    model_metadata_io = db.Column(db.Text)
+    user_metadata_io = db.Column(db.Text)
     # why is X the label for this example
-    example_explanation = db.Column(db.Text)
+    #example_explanation = db.Column(db.Text)
     # why do you think the model got it wrong
-    model_explanation = db.Column(db.Text)
+    #model_explanation = db.Column(db.Text)
 
     metadata_json = db.Column(db.Text)
 
@@ -163,7 +165,7 @@ class ExampleModel(BaseModel):
         try:
             e = Example(
                 context=c,
-                io=json.dumps(example_io),
+                user_input_output_io=json.dumps(example_io),
                 model_wrong=model_wrong,
                 model_response_io=json.dumps(model_response_io),
                 generated_datetime=db.sql.func.now(),

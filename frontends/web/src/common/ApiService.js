@@ -72,16 +72,14 @@ export default class ApiService {
     });
   }
 
-  updateExample(id, target, fooled, uid = null) {
-    var obj = {};
-    obj.target_pred = target;
-    obj.model_wrong = fooled;
+  updateExample(id, data, uid = null) {
     if (this.mode === "mturk") {
-      obj.uid = uid;
+      data.uid = uid;
     }
+    console.log(data)
     return this.fetch(`${this.domain}/examples/${id}`, {
       method: "PUT",
-      body: JSON.stringify(obj),
+      body: JSON.stringify(data),
     });
   }
 
@@ -420,22 +418,6 @@ export default class ApiService {
   setExampleMetadata(id, metadata_json) {
     var obj = {};
     obj.metadata_json = JSON.stringify(metadata_json);
-    return this.fetch(`${this.domain}/examples/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(obj),
-    });
-  }
-
-  explainExample(id, type, explanation, uid = null) {
-    var obj = {};
-    if (type === "example") {
-      obj.example_explanation = explanation;
-    } else if (type === "model") {
-      obj.model_explanation = explanation;
-    }
-    if (this.mode === "mturk") {
-      obj.uid = uid;
-    }
     return this.fetch(`${this.domain}/examples/${id}`, {
       method: "PUT",
       body: JSON.stringify(obj),
