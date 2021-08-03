@@ -116,6 +116,9 @@ def test_corpus_bleu():
     )
     assert en_ru_score["perf_dict"]["sp_bleu"] == en_ru_bleu.score
 
+    fixed_result = compute_averages("sp_bleu", scores["perf_by_tag"])
+    assert fixed_result["perf"] == (ru_en_bleu.score + en_ru_bleu.score) / 2
+
 
 def test_compute_averages():
     # Dumped and simplified from the SQL database for a small1 model.
