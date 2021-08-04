@@ -11,18 +11,15 @@ from dateutil.tz import tzlocal
 
 from metrics import get_task_config_safe
 from models.model import ModelModel
-from utils.helpers import (
-    generate_job_name,
-    process_aws_metrics,
-    round_end_dt,
-    round_start_dt,
-)
+from utils.helpers import process_aws_metrics, round_end_dt, round_start_dt
 
 
 logger = logging.getLogger("evaluator")
 
 
 class Job:
+    TEMP_JOB_NAME_SUFFIX = "???"
+
     def __init__(self, model_id, dataset_name, perturb_prefix=None):
         self.model_id = model_id
         m = ModelModel()
@@ -30,9 +27,9 @@ class Job:
         self.endpoint_name = model.endpoint_name
         self.dataset_name = dataset_name
         self.perturb_prefix = perturb_prefix
-        self.job_name = generate_job_name(
-            self.endpoint_name, dataset_name, perturb_prefix
-        )
+        # Generate a temporary name, the scheduler will put a proper timestamp
+        # at the time of submission
+        self.job_name = generate_job_name(self, timestamp=self.TEMP_JOB_NAME_SUFFIX)
 
         self.status = None  # will update once job is successfully submitted
         self.aws_metrics = {}  # will update once job is completed
@@ -55,6 +52,7 @@ class JobScheduler:
         self.datasets = datasets
         self._clients = {"sagemaker": {}, "logs": {}, "cloudwatch": {}}
         self.cloudwatch_namespace = "/aws/sagemaker/TransformJobs"
+        self._last_submission = 0
 
     def client(self, kind: str, dataset_name: str):
         """Returns the corresponding client for a dataset.
@@ -99,6 +97,19 @@ class JobScheduler:
 
         if dump:
             self.dump()
+
+    def _set_jobname_with_unique_timestamp(self, job: Job) -> None:
+        """Make sure that we aren't submitting jobs too fast,
+        and that timestamps uniquely identify jobs.
+        """
+        if not job.job_name.endswith(Job.TEMP_JOB_NAME_SUFFIX):
+            # The job already received a unique timestamp
+            return
+        if time.time() - self._last_submission < 1:
+            time.sleep(1.1)
+        submission_timestamp = int(time.time())
+        job.job_name = generate_job_name(job, submission_timestamp)
+        self._last_submission = submission_timestamp
 
     def submit(self):
         def _create_batch_transform(job):
@@ -150,10 +161,13 @@ class JobScheduler:
         # Submit remaining jobs
         N_to_submit = min(self.max_submission - len(self._submitted), len(self._queued))
         if N_to_submit > 0:
-            for _ in range(N_to_submit):
-                job = self._queued.pop(0)
-                _create_batch_transform(job)
-            self.dump()
+            try:
+                for _ in range(N_to_submit):
+                    job = self._queued.pop(0)
+                    self._set_jobname_with_unique_timestamp(job)
+                    _create_batch_transform(job)
+            finally:
+                self.dump()
 
     def stop(self, job):
         try:
@@ -305,3 +319,18 @@ class JobScheduler:
         )
         pickle.dump(status, open(self._status_dump, "wb"))
         print(f"Scheduler dumped status to {self._status_dump}")
+
+
+def generate_job_name(job: Job, timestamp: int):
+    """Generate the job name with a given timestamp.
+
+    The timestamp need to be properly spaced out, because they need to be unique
+    across all jobs in the same AWS region.
+    This is taken care of by `_set_jobname_with_unique_timestamp`
+    """
+    suffix = f"-{timestamp}"
+    prefix = "-".join(
+        filter(None, (job.endpoint_name, job.perturb_prefix, job.dataset_name))
+    )
+    # :63 is AWS requirement, and we want to keep the timestamp intact
+    return prefix[: 63 - len(suffix)] + suffix
