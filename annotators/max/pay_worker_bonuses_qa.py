@@ -75,8 +75,8 @@ total_to_pay = HIT_PRICE * (
 print(f"Paying approx ${total_to_pay:.2f}")
 print(f"Paying an additional ${parsed_validations['sendbonus'].sum():.2f} in bonuses")
 
-confirm = input("Proceed?: y/n")
-if confirm.lower() is not "y":
+confirm = input("Proceed? (y/n): ")
+if str(confirm).lower() != "y":
     raise BaseException("Confirmation to proceed not adequately received.")
 
 
