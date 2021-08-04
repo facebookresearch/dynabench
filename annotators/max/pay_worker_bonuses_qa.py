@@ -23,7 +23,7 @@ HIT_PRICE = 1.00
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Paying Bonuses")
-    parser.add_argument("--pay", action="store_true", default=False)
+    parser.add_argument("--process", action="store_true", default=False)
     parser.add_argument("--ignore_prints", action="store_true", default=False)
     args, remaining_args = parser.parse_known_args()
     assert remaining_args == [], remaining_args
@@ -157,12 +157,13 @@ if __name__ == "__main__":
             keep = parsed_validations.loc[itr, "keep"]
             sendbonus = parsed_validations.loc[itr, "sendbonus"]
             if keep == "a":
-                unit.get_assigned_agent().approve_work()
+                if args.process:
+                    unit.get_assigned_agent().approve_work()
                 num_approved += 1
                 sendbonus = round(sendbonus, 2)
                 if sendbonus > 0:
                     try:
-                        if args.pay:
+                        if args.process:
                             unit.get_assigned_agent().get_worker().bonus_worker(
                                 amount=sendbonus,
                                 reason="Bonus for validated questions that fooled the model",
@@ -183,16 +184,18 @@ if __name__ == "__main__":
                     )
                 else:
                     reason = input("Why are you rejecting this work?")
-                unit.get_assigned_agent().reject_work(reason)
+                if args.process:
+                    unit.get_assigned_agent().reject_work(reason)
             elif keep == "p":
                 # General best practice is to accept borderline work and then disqualify
                 # the worker from working on more of these tasks
-                agent = unit.get_assigned_agent()
-                agent.soft_reject_work()
+                if args.process:
+                    agent = unit.get_assigned_agent()
+                    agent.soft_reject_work()
                 sendbonus = round(sendbonus, 2)
                 if sendbonus > 0:
                     try:
-                        if args.pay:
+                        if args.process:
                             unit.get_assigned_agent().get_worker().bonus_worker(
                                 amount=sendbonus,
                                 reason="Bonus for validated questions that fooled the model",
@@ -205,8 +208,9 @@ if __name__ == "__main__":
                         print(f"Raised exception details: {e}")
                         print("---")
 
-                worker = agent.get_worker()
-                worker.grant_qualification(disqualification_name, 1)
+                if args.process:
+                    worker = agent.get_worker()
+                    worker.grant_qualification(disqualification_name, 1)
         else:
             continue
 
