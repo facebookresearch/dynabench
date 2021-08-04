@@ -24,6 +24,7 @@ HIT_PRICE = 1.00
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Paying Bonuses")
     parser.add_argument("--pay", action="store_true", default=False)
+    parser.add_argument("--ignore_prints", action="store_true", default=False)
     args, remaining_args = parser.parse_known_args()
     assert remaining_args == [], remaining_args
 
@@ -144,13 +145,15 @@ if __name__ == "__main__":
             continue
         if unit.get_status() == "completed":
             try:
-                print(
-                    format_for_printing_data(mephisto_data_browser.get_data_from_unit(unit))
-                )
+                if not args.ignore_prints:
+                    print(
+                        format_for_printing_data(mephisto_data_browser.get_data_from_unit(unit))
+                    )
             except Exception as e:
                 print(e.message)
                 if unit.get_assigned_agent() is None:
                     continue
+
             keep = parsed_validations.loc[itr, "keep"]
             sendbonus = parsed_validations.loc[itr, "sendbonus"]
             if keep == "a":
