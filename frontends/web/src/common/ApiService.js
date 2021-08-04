@@ -76,7 +76,7 @@ export default class ApiService {
     if (this.mode === "mturk") {
       data.uid = uid;
     }
-    console.log(data)
+    console.log(data);
     return this.fetch(`${this.domain}/examples/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
@@ -184,13 +184,6 @@ export default class ApiService {
   toggleModelStatus(modelId) {
     return this.fetch(`${this.domain}/models/${modelId}/revertstatus`, {
       method: "PUT",
-    });
-  }
-
-  createTask(data) {
-    return this.fetch(`${this.domain}/tasks/create`, {
-      method: "POST",
-      body: JSON.stringify(data),
     });
   }
 
@@ -477,13 +470,13 @@ export default class ApiService {
     );
   }
 
-  getModelCorrect(tid, example_io, model_response_io) {
-    return this.fetch(`${this.domain}/examples/get-model-correct`, {
+  getModelWrong(tid, user_output_io, model_output_io) {
+    return this.fetch(`${this.domain}/examples/get-model-wrong`, {
       method: "POST",
       body: JSON.stringify({
-        example_io: example_io,
+        user_output_io: user_output_io,
         tid: tid,
-        model_response_io: model_response_io,
+        model_output_io: model_output_io,
       }),
     });
   }
@@ -493,24 +486,30 @@ export default class ApiService {
     rid,
     uid,
     cid,
-    example_io,
-    model_response_io,
+    input_io,
+    user_output_io,
+    model_output_io,
+    model_metadata_io,
+    model_signature,
     metadata,
-    model_correct,
+    model_wrong,
     tag = null,
     model_endpoint_name = null
   ) {
     return this.fetch(`${this.domain}/examples`, {
       method: "POST",
       body: JSON.stringify({
-        example_io: example_io,
         tid: tid,
         rid: rid,
         cid: cid,
         uid: uid,
-        model_response_io: model_response_io,
+        input_io: input_io,
+        user_output_io: user_output_io,
+        model_output_io: model_output_io,
+        model_metadata_io: model_metadata_io,
+        model_signature: model_signature,
         metadata: metadata,
-        model_correct: model_correct,
+        model_wrong: model_wrong,
         tag: tag,
         model_endpoint_name: model_endpoint_name,
       }),

@@ -18,6 +18,7 @@ from models.validation import LabelEnum, ModeEnum, Validation
 
 from .base import Base, BaseModel
 from .context import ContextModel
+from .task import TaskModel
 from .user import UserModel
 
 
@@ -34,17 +35,14 @@ class Example(Base):
     user = db.orm.relationship("User", foreign_keys="Example.uid")
     tag = db.Column(db.Text)
 
-    user_input_output_io = db.Column(db.Text)
+    input_io = db.Column(db.Text)
+    user_output_io = db.Column(db.Text)
+    model_output_io = db.Column(db.Text)
     model_metadata_io = db.Column(db.Text)
     user_metadata_io = db.Column(db.Text)
-    # why is X the label for this example
-    #example_explanation = db.Column(db.Text)
-    # why do you think the model got it wrong
-    #model_explanation = db.Column(db.Text)
 
     metadata_json = db.Column(db.Text)
 
-    model_response_io = db.Column(db.Text)
     model_endpoint_name = db.Column(db.Text)
 
     split = db.Column(db.String(length=255), default="undecided")
@@ -83,15 +81,16 @@ class ExampleModel(BaseModel):
         rid,
         uid,
         cid,
-        example_io,
-        model_response_io,
+        input_io,
+        user_output_io,
+        model_output_io,
+        model_metadata_io,
+        model_signature,
         metadata,
-        model_correct,
+        model_wrong,
         tag=None,
         model_endpoint_name=None,
     ):
-
-        model_wrong = not model_correct  # TODO: clean up
 
         if uid == "turk" and "annotator_id" not in metadata:
             logger.error("Annotator id not specified but received Turk example")
@@ -106,13 +105,34 @@ class ExampleModel(BaseModel):
             )
             return False
 
-        example_io_with_context = json.loads(c.context)
-        example_io_with_context.update(example_io)
+        context_io = json.loads(c.context_io)
+
+        # Make sure that we aren't accepting any corrupted example io
+        all_model_io = {}
+        all_model_io.update(context_io)
+        all_model_io.update(input_io)
+        all_model_io.update(model_output_io)
+        all_model_io.update(model_metadata_io)
+        print(all_model_io)
+        if not TaskModel().get(tid).verify_io(all_model_io):
+            logger.error("Improper formatting in model io")
+            return False
+
+        all_user_io = {}
+        all_user_io.update(context_io)
+        all_user_io.update(input_io)
+        all_user_io.update(user_output_io)
+        if not TaskModel().get(tid).verify_io(all_user_io):
+            logger.error("Improper formatting in user io")
+            return False
 
         if uid == "turk" and "model" in metadata and metadata["model"] == "no-model":
             pass  # ignore signature when we don't have a model in the loop with turkers
         else:
-            if "signed" in model_response_io:
+            # TODO: can remove this when the dynalab part of dynatask is done
+            if model_endpoint_name.startswith(
+                "ts"
+            ):  # This means that we have a dynalab model
                 if c.round.task.name == "Hate Speech":
                     dynalab_task = dynalab.tasks.hs
                 elif c.round.task.name == "Natural Language Inference":
@@ -134,17 +154,16 @@ class ExampleModel(BaseModel):
                     .one()
                     .secret
                 )
-                if model_response_io[
-                    "signed"
-                ] != dynalab_task.TaskIO().generate_response_signature(
-                    model_response_io, example_io_with_context, model_secret
+                all_model_io["signed"] = model_signature
+                if model_signature != dynalab_task.TaskIO().generate_response_signature(
+                    all_model_io, all_model_io, model_secret
                 ):
                     logger.error(
                         "Signature does not match (received %s, expected %s)"
                         % (
-                            model_response_io["signed"],
+                            all_model_io["signed"],
                             dynalab_task.TaskIO().generate_response_signature(
-                                model_response_io, example_io_with_context, model_secret
+                                all_model_io, all_model_io, model_secret
                             ),
                         )
                     )
@@ -153,21 +172,32 @@ class ExampleModel(BaseModel):
                     logger.info(
                         "Signature matches(received %s, expected %s)"
                         % (
-                            model_response_io["signed"],
+                            all_model_io["signed"],
                             dynalab_task.TaskIO().generate_response_signature(
-                                model_response_io, example_io_with_context, model_secret
+                                all_model_io, all_model_io, model_secret
                             ),
                         )
                     )
             else:
-                return False
+                # TODO: remove this old verify method when all target models are
+                # reuploaded via dynalab. We can also clean up the arguments to
+                # this create function.
+                if not self.verify_signature(
+                    model_signature,
+                    c,
+                    input_io.values()[0],
+                    model_output_io.values()[0],
+                ):
+                    return False
 
         try:
             e = Example(
                 context=c,
-                user_input_output_io=json.dumps(example_io),
+                input_io=json.dumps(input_io),
+                user_output_io=json.dumps(user_output_io),
+                model_output_io=json.dumps(model_output_io),
+                model_metadata_io=json.dumps(model_metadata_io),
                 model_wrong=model_wrong,
-                model_response_io=json.dumps(model_response_io),
                 generated_datetime=db.sql.func.now(),
                 metadata_json=json.dumps(metadata),
                 tag=tag,
@@ -187,6 +217,41 @@ class ExampleModel(BaseModel):
             logger.error("Could not create example (%s)" % error_message)
             return False
         return e
+
+    # TODO: remove when dynalab integration is fully accomplished
+    def verify_signature(self, signature, context, hypothesis, pred_str):
+        tid = context.round.task.id
+        rid = context.round.rid
+        secret = context.round.secret
+        context_str = json.loads(context.context_io).values()[0]
+
+        fields_to_sign = []
+        fields_to_sign.append(pred_str.encode("utf-8"))
+        if (
+            context.round.task.has_context
+            and context.round.task.task_code != "sentiment"
+        ):
+            fields_to_sign.append(context_str.encode("utf-8"))
+        fields_to_sign.append(hypothesis.encode("utf-8"))
+        fields_to_sign.append(f"{tid}{rid}{secret}".encode("utf-8"))
+
+        h = hashlib.sha1()
+        for f in fields_to_sign:
+            h.update(f)
+
+        if h.hexdigest() != signature:
+            logger.error(
+                "Signature does not match (received %s, expected %s [%s])"
+                % (h.hexdigest(), signature, "".join([str(x) for x in fields_to_sign]))
+            )
+            return False
+        else:
+            logger.info(
+                "Signature matched (received %s, expected %s [%s])"
+                % (h.hexdigest(), signature, "".join([str(x) for x in fields_to_sign]))
+            )
+
+        return True
 
     def get_anon_uid(self, secret, uid):
         anon_uid = hashlib.sha1()

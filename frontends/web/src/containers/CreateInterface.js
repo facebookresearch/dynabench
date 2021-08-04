@@ -22,7 +22,6 @@ import {
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import UserContext from "./UserContext";
-import ExplainFeedback from "./ExplainFeedback";
 import BootstrapSwitchButton from "bootstrap-switch-button-react";
 import {
   OverlayProvider,
@@ -57,14 +56,16 @@ class ResponseInfo extends React.Component {
     this.retractExample = this.retractExample.bind(this);
     this.flagExample = this.flagExample.bind(this);
     this.updateExample = this.updateExample.bind(this);
-    this.state = {user_metadata_io: {}}
+    this.state = { user_metadata_io: {} };
   }
   componentDidMount() {
     const user_metadata_io = {};
-    (this.props.obj.model_correct ? this.props.io_definition.user_metadata_model_correct : this.props.io_definition.user_metadata_model_incorrect)
-      .forEach((io_obj) => {
-        user_metadata_io[io_obj.name] = null;
-      });
+    (this.props.obj.model_wrong
+      ? this.props.user_metadata_model_wrong_io_def
+      : this.props.user_metadata_model_correct_io_def
+    ).forEach((io_obj) => {
+      user_metadata_io[io_obj.name] = null;
+    });
     this.setState({
       user_metadata_io: user_metadata_io,
       exampleUpdated: null,
@@ -73,14 +74,16 @@ class ResponseInfo extends React.Component {
   }
 
   updateExample() {
-      this.context.api
-        .updateExample(this.props.exampleId, {user_metadata_io: this.state.user_metadata_io})
-        .then(
-          (result) => {},
-          (error) => {
-            console.log(error);
-          }
-        );
+    this.context.api
+      .updateExample(this.props.exampleId, {
+        user_metadata_io: this.state.user_metadata_io,
+      })
+      .then(
+        (result) => {},
+        (error) => {
+          console.log(error);
+        }
+      );
   }
 
   retractExample(e) {
@@ -144,7 +147,7 @@ class ResponseInfo extends React.Component {
       );
     }
 
-    const userInput = this.props.io_definition.input.map((io_obj, _) => (
+    const userInput = this.props.input_io_def.map((io_obj, _) => (
       <IO
         key={io_obj.name}
         create={false}
@@ -156,7 +159,7 @@ class ResponseInfo extends React.Component {
       />
     ));
 
-    const userOutput = this.props.io_definition.output.map((io_obj, _) => (
+    const userOutput = this.props.output_io_def.map((io_obj, _) => (
       <IO
         key={io_obj.name}
         create={false}
@@ -168,7 +171,7 @@ class ResponseInfo extends React.Component {
       />
     ));
 
-    const modelOutput = this.props.io_definition.output.map((io_obj, _) => (
+    const modelOutput = this.props.output_io_def.map((io_obj, _) => (
       <IO
         key={io_obj.name}
         create={false}
@@ -180,33 +183,34 @@ class ResponseInfo extends React.Component {
       />
     ));
 
-    const modelMetadata = this.props.io_definition.model_metadata.map(
-      (io_obj, _) => (
-        <IO
-          key={io_obj.name}
-          create={false}
-          name={io_obj.name}
-          example_io={this.props.obj.model_response_io}
-          set_example_io={() => {}}
-          type={io_obj.type}
-          constructor_args={io_obj.constructor_args}
-        />
-      )
-    );
+    const modelMetadata = this.props.model_metadata_io_def.map((io_obj, _) => (
+      <IO
+        key={io_obj.name}
+        create={false}
+        name={io_obj.name}
+        example_io={this.props.obj.model_response_io}
+        set_example_io={() => {}}
+        type={io_obj.type}
+        constructor_args={io_obj.constructor_args}
+      />
+    ));
 
-    const userMetadata = (this.props.model_correct ? this.props.io_definition.user_metadata_model_correct : this.props.io_definition.user_metadata_model_incorrect).map(
-      (io_obj, _) => (
-        <IO
-          key={io_obj.name}
-          create={true}
-          name={io_obj.name}
-          example_io={this.state.user_metadata_io}
-          set_example_io={(example_io) => this.setState({user_metadata_io: example_io, exampleUpdated: false})}
-          type={io_obj.type}
-          constructor_args={io_obj.constructor_args}
-        />
-      )
-    );
+    const userMetadata = (this.props.model_wrong
+      ? this.props.user_metadata_model_wrong_io_def
+      : this.props.user_metadata_model_correct_io_def
+    ).map((io_obj, _) => (
+      <IO
+        key={io_obj.name}
+        create={true}
+        name={io_obj.name}
+        example_io={this.state.user_metadata_io}
+        set_example_io={(example_io) =>
+          this.setState({ user_metadata_io: example_io, exampleUpdated: false })
+        }
+        type={io_obj.type}
+        constructor_args={io_obj.constructor_args}
+      />
+    ));
 
     var classNames = this.props.obj.cls + " rounded border m-3";
 
@@ -226,21 +230,25 @@ class ResponseInfo extends React.Component {
     var userFeedback = (
       <>
         {this.props.obj.livemode ? (
-            <div className="mt-3">
-              <span>Optionally, enter more info for your example:</span>
-              {this.state.exampleUpdated ?
-                <span style={{ float: "right"}}> Saved! </span>
-                :
-                <button
-                  onClick={() => {this.updateExample(); this.setState({exampleUpdated: true})}}
-                  type="button"
-                  style={{ float: "right" }}
-                  className="btn btn-light btn-sm"
-                >
-                  Save Info
-                </button>}
-              {userMetadata}
-            </div>
+          <div className="mt-3">
+            <span>Optionally, enter more info for your example:</span>
+            {this.state.exampleUpdated ? (
+              <span style={{ float: "right" }}> Saved! </span>
+            ) : (
+              <button
+                onClick={() => {
+                  this.updateExample();
+                  this.setState({ exampleUpdated: true });
+                }}
+                type="button"
+                style={{ float: "right" }}
+                className="btn btn-light btn-sm"
+              >
+                Save Info
+              </button>
+            )}
+            {userMetadata}
+          </div>
         ) : (
           ""
         )}
@@ -265,18 +273,18 @@ class ResponseInfo extends React.Component {
         </span>
       );
     } else {
-      if (this.props.obj.model_correct) {
-        classNames += " response-warning";
-        title = (
-          <span>
-            <strong>You didn't fool the model. Please try again!</strong>
-          </span>
-        );
-      } else {
+      if (this.props.obj.model_wrong) {
         classNames += " light-green-bg";
         title = (
           <span>
             <strong>You fooled the model!</strong>
+          </span>
+        );
+      } else {
+        classNames += " response-warning";
+        title = (
+          <span>
+            <strong>You didn't fool the model. Please try again!</strong>
           </span>
         );
       }
@@ -373,13 +381,12 @@ class CreateInterface extends React.Component {
       refreshDisabled: true,
       mapKeyToExampleId: {},
       submitWithoutFullExample: false,
-      parsed_io_definition: {
-        input: [],
-        output: [],
-        context: [],
-        model_metadata: [],
-        user_metadata: [],
-      },
+      input_io_def: [],
+      output_io_def: [],
+      context_io_def: [],
+      model_metadata_io_def: [],
+      user_metadata_model_correct_io_def: [],
+      user_metadata_model_wrong_io_def: [],
     };
     this.getNewContext = this.getNewContext.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
@@ -398,26 +405,39 @@ class CreateInterface extends React.Component {
         .then(
           (result) => {
             const randomTargetModel = this.pickModel(this.state.task.round.url);
-            const io_definition = JSON.parse(this.state.task.io_definition);
-            const context_io = JSON.parse(result.context);
+            const input_io_def = JSON.parse(this.state.task.input_io_def);
+            const output_io_def = JSON.parse(this.state.task.output_io_def);
+            const context_io_def = JSON.parse(this.state.task.context_io_def);
+            const model_metadata_io_def = JSON.parse(
+              this.state.task.model_metadata_io_def
+            );
+            const user_metadata_model_wrong_io_def = JSON.parse(
+              this.state.task.user_metadata_model_wrong_io_def
+            );
+            const user_metadata_model_correct_io_def = JSON.parse(
+              this.state.task.user_metadata_model_correct_io_def
+            );
+            const context_io = JSON.parse(result.context_io);
             const example_io = {};
-            io_definition.input
-              .concat(io_definition.output)
-              .forEach((io_obj) => {
-                example_io[io_obj.name] = null;
-              });
+            input_io_def.concat(output_io_def).forEach((io_obj) => {
+              example_io[io_obj.name] = null;
+            });
             for (const key in context_io) {
               example_io[key] = context_io[key];
             }
-            console.log(example_io);
             this.setState({
               randomTargetModel: randomTargetModel,
               context: result,
-              content: [{ cls: "context", text: result.context }],
+              content: [{ cls: "context" }],
               submitDisabled: false,
               refreshDisabled: false,
               example_io: example_io,
-              parsed_io_definition: io_definition,
+              input_io_def: input_io_def,
+              output_io_def: output_io_def,
+              context_io_def: context_io_def,
+              model_metadata_io_def: model_metadata_io_def,
+              user_metadata_model_wrong_io_def: user_metadata_model_wrong_io_def,
+              user_metadata_model_correct_io_def: user_metadata_model_correct_io_def,
             });
           },
           (error) => {
@@ -490,8 +510,8 @@ class CreateInterface extends React.Component {
   handleResponse(e) {
     e.preventDefault();
     var incomplete_example = false;
-    this.state.parsed_io_definition.input
-      .concat(this.state.parsed_io_definition.output)
+    this.state.input_io_def
+      .concat(this.state.output_io_def)
       .forEach((io_obj) => {
         if (this.state.example_io[io_obj.name] === null) {
           this.setState({ submitWithoutFullExample: true });
@@ -527,29 +547,45 @@ class CreateInterface extends React.Component {
                 });
               }
 
-              const example_io_inputs_and_outputs = Object.assign(
+              const user_output_io = Object.assign(
                 {},
-                ...this.state.parsed_io_definition.input
-                  .concat(this.state.parsed_io_definition.output)
-                  .map((io_obj, _) => ({
-                    [io_obj.name]: this.state.example_io[io_obj.name],
-                  }))
+                ...this.state.output_io_def.map((io_obj, _) => ({
+                  [io_obj.name]: this.state.example_io[io_obj.name],
+                }))
+              );
+              const model_output_io = Object.assign(
+                {},
+                ...this.state.output_io_def.map((io_obj, _) => ({
+                  [io_obj.name]: model_response_result[io_obj.name],
+                }))
+              );
+              const input_io = Object.assign(
+                {},
+                ...this.state.input_io_def.map((io_obj, _) => ({
+                  [io_obj.name]: this.state.example_io[io_obj.name],
+                }))
+              );
+              const model_metadata_io = Object.assign(
+                {},
+                ...this.state.model_metadata_io_def.map((io_obj, _) => ({
+                  [io_obj.name]: model_response_result[io_obj.name],
+                }))
               );
               const metadata = { model: this.state.randomTargetModel };
               this.context.api
-                .getModelCorrect(
+                .getModelWrong(
                   this.state.task.id,
-                  example_io_inputs_and_outputs,
-                  model_response_result
+                  user_output_io,
+                  model_output_io
                 )
                 .then(
-                  (model_correct_result) => {
+                  (model_wrong_result) => {
                     this.setState({
                       content: [
                         ...this.state.content,
                         {
                           livemode: this.state.livemode,
-                          model_correct: model_correct_result.model_correct,
+                          model_wrong: model_wrong_result.model_wrong,
                           example_io: JSON.parse(
                             JSON.stringify(this.state.example_io)
                           ),
@@ -565,8 +601,8 @@ class CreateInterface extends React.Component {
                         const example_io = JSON.parse(
                           JSON.stringify(this.state.example_io)
                         );
-                        this.state.parsed_io_definition.input
-                          .concat(this.state.parsed_io_definition.output)
+                        this.state.input_io_def
+                          .concat(this.state.output_io_def)
                           .forEach((io_obj) => {
                             example_io[io_obj.name] = null;
                           });
@@ -586,10 +622,13 @@ class CreateInterface extends React.Component {
                         this.state.task.selected_round,
                         this.context.user.id,
                         this.state.context.id,
-                        example_io_inputs_and_outputs,
-                        model_response_result,
+                        input_io,
+                        user_output_io,
+                        model_output_io,
+                        model_metadata_io,
+                        model_response_result["signed"],
                         metadata,
-                        model_correct_result.model_correct,
+                        model_wrong_result.model_wrong,
                         null,
                         this.state.randomTargetModel.split("predict?model=")[1]
                       )
@@ -615,8 +654,8 @@ class CreateInterface extends React.Component {
                             const example_io = JSON.parse(
                               JSON.stringify(this.state.example_io)
                             );
-                            this.state.parsed_io_definition.input
-                              .concat(this.state.parsed_io_definition.output)
+                            this.state.input_io_def
+                              .concat(this.state.output_io_def)
                               .forEach((io_obj) => {
                                 example_io[io_obj.name] = null;
                               });
@@ -742,10 +781,19 @@ class CreateInterface extends React.Component {
       .map((item, index) =>
         item.cls === "context" ? undefined : (
           <ResponseInfo
-            io_definition={this.state.parsed_io_definition}
+            input_io_def={this.state.input_io_def}
+            output_io_def={this.state.output_io_def}
+            context_io_def={this.state.context_io_def}
+            model_metadata_io_def={this.state.model_metadata_io_def}
+            user_metadata_model_wrong_io_def={
+              this.state.user_metadata_model_wrong_io_def
+            }
+            user_metadata_model_correct_io_def={
+              this.state.user_metadata_model_correct_io_def
+            }
             key={index}
             index={index}
-            exampleId={this.state.mapKeyToExampleId[index+1]}
+            exampleId={this.state.mapKeyToExampleId[index + 1]}
             obj={item}
             content={this.state.content}
           />
@@ -802,8 +850,8 @@ class CreateInterface extends React.Component {
 
     // The goal_message_multiple_choice type is special. We want this object to
     // appear in a special place in the interface.
-    const goalMessageIO = this.state.parsed_io_definition.input
-      .concat(this.state.parsed_io_definition.output)
+    const goalMessageIO = this.state.input_io_def
+      .concat(this.state.output_io_def)
       .filter((io_obj, _) => io_obj.type === "goal_message_multiple_choice")
       .map((io_obj, _) => (
         <div
@@ -831,10 +879,15 @@ class CreateInterface extends React.Component {
     // The context_string_selection type is special. When it is present, we want
     // to remove the context string from view and put the context_string_selection
     // in its place
-    const contextStringSelectionGroup = this.state.parsed_io_definition.input.concat(this.state.parsed_io_definition.output).filter((io_obj, _) => io_obj.type === "context_string_selection")
-    const selectableContexts = contextStringSelectionGroup.map(io_obj => io_obj.constructor_args.reference_key)
-    console.log(selectableContexts)
-    const contextIO = this.state.parsed_io_definition.context.concat(contextStringSelectionGroup)
+    const contextStringSelectionGroup = this.state.input_io_def
+      .concat(this.state.output_io_def)
+      .filter((io_obj, _) => io_obj.type === "context_string_selection");
+    const selectableContexts = contextStringSelectionGroup.map(
+      (io_obj) => io_obj.constructor_args.reference_key
+    );
+    console.log(selectableContexts);
+    const contextIO = this.state.context_io_def
+      .concat(contextStringSelectionGroup)
       .filter((io_obj, _) => !selectableContexts.includes(io_obj.name))
       .map((io_obj, _) => (
         <div
@@ -855,12 +908,17 @@ class CreateInterface extends React.Component {
             constructor_args={io_obj.constructor_args}
           />
         </div>
-      )
-    );
+      ));
 
-    const belowModelResponseIO = this.state.parsed_io_definition.input
-      .concat(this.state.parsed_io_definition.output)
-      .filter((io_obj, _) => !["goal_message_multiple_choice", "context_string_selection"].includes(io_obj.type))
+    const belowModelResponseIO = this.state.input_io_def
+      .concat(this.state.output_io_def)
+      .filter(
+        (io_obj, _) =>
+          ![
+            "goal_message_multiple_choice",
+            "context_string_selection",
+          ].includes(io_obj.type)
+      )
       .map((io_obj, _) => (
         <div
           className={

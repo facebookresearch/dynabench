@@ -5,6 +5,7 @@ import sys
 
 import enum
 import sqlalchemy as db
+from transformers.data.metrics.squad_metrics import compute_f1
 
 from .base import Base, BaseModel
 from .dataset import AccessTypeEnum, DatasetModel
@@ -13,16 +14,40 @@ from .user import User
 
 
 sys.path.append("../evaluation")  # noqa
-import metrics.metrics as metrics
-from metrics.instance_property import instance_property
+from metrics.metric_getters import get_task_metrics_meta  # isort:skip
 
 
-class ModelCorrectMetricEnum(enum.Enum):
+class ModelWrongMetricEnum(enum.Enum):
     exact_match = "exact_match"
+    string_f1 = "string_f1"
+    ask_user = "ask_user"
 
 
-def is_model_correct_exact_match(model_output, human_output):
-    return model_output == human_output
+def exact_match(model_output, human_output):
+    return model_output != human_output
+
+
+def string_f1(model_output, human_output):
+    assert len(model_output.values()) == 1
+    assert len(human_output.values()) == 1
+    return (
+        compute_f1(list(model_output.values())[0], list(human_output.values())[0]) < 0.9
+    )
+
+
+def ask_user(model_output, human_output):
+    raise NotImplementedError(
+        """
+    The 'ask_user' model wrong metric is implemented in the frontend, not the backend
+    """
+    )
+
+
+model_wrong_metrics = {
+    ModelWrongMetricEnum.exact_match.name: exact_match,
+    ModelWrongMetricEnum.string_f1.name: string_f1,
+    ModelWrongMetricEnum.ask_user.name: ask_user,
+}
 
 
 class PerfMetricEnum(enum.Enum):
@@ -37,108 +62,6 @@ class AggregationMetricEnum(enum.Enum):
     dynascore = "dynascore"
 
 
-class IOTypeEnum(enum.Enum):
-    image_url = "image_url"
-    string = "string"
-    multiple_choice = "multiple_choice"
-    string_selection = "string_selection"
-    multinomial_distribution = "multinomial_distribution"
-
-
-class LocationEnum(enum.Enum):
-    context = "context"
-    input = "input"
-    output = "output"
-    info = "model_response_info"
-
-
-class IO:
-    def __init__(self, io_definition, key):
-        assert key in io_definition
-        assert "constructor_args" in io_definition[key]
-        assert "type" in io_definition[key]
-        assert io_definition[key]["type"] in map(lambda e: e.name, IOTypeEnum)
-        assert "location" in io_definition[key]
-        assert io_definition[key]["location"] in map(lambda e: e.name, LocationEnum)
-        self.key = key
-
-    def verify_example_io(self, example_io):
-        raise NotImplementedError
-
-
-class StringIO(IO):
-    def __init__(self, io_definition, key):
-        IO.__init__(self, io_definition, key)
-
-    def verify_example_io(self, example_io):
-        assert self.key in example_io
-        assert isinstance(example_io[self.key], str)
-
-
-class MultipleChoiceProbsIO(IO):
-    def __init__(self, io_definition, key):
-        IO.__init__(self, io_definition, key)
-        self.reference_key = io_definition[key]["constructor_args"]["reference_key"]
-        assert self.reference_key in io_definition
-
-    def verify_example_io(self, example_io):
-        assert self.key in example_io
-        assert sum(example_io[self.key].values()) == 1
-        assert set(example_io[self.reference_key]) == set(example_io[self.key].keys())
-
-
-class ConfIO(IO):
-    def __init__(self, io_definition, key):
-        IO.__init__(self, io_definition, key)
-
-    def verify_example_io(self, example_io):
-        assert self.key in example_io
-        assert example_io[self.key] <= 1
-        assert example_io[self.key] >= 0
-
-
-class ImageUrlIO(IO):
-    def __init__(self, io_definition, key):
-        IO.__init__(self, io_definition, key)
-
-    def verify_example_io(self, example_io):
-        assert self.key in example_io
-        assert isinstance(example_io[self.key], str)
-
-
-class MultipleChoiceIO(IO):
-    def __init__(self, io_definition, key):
-        IO.__init__(self, io_definition, key)
-        self.labels = io_definition[key]["constructor_args"]["labels"]
-
-    def verify_example_io(self, example_io):
-        assert self.key in example_io
-        assert example_io[self.key] in self.labels
-
-
-class StringSelectionIO(IO):
-    def __init__(self, io_definition, key):
-        IO.__init__(self, io_definition, key)
-        self.reference_key = io_definition[key]["constructor_args"]["reference_key"]
-        assert self.reference_key in io_definition
-
-    def verify_example_io(self, example_io):
-        assert self.key in example_io
-        assert self.reference_key in example_io
-        assert example_io[self.key] in example_io[self.reference_key]
-
-
-io_types = {
-    IOTypeEnum.image_url.name: ImageUrlIO,
-    IOTypeEnum.string.name: StringIO,
-    IOTypeEnum.multiple_choice.name: MultipleChoiceIO,
-    IOTypeEnum.string_selection.name: StringSelectionIO,
-}
-perf_metrics = set(PerfMetricEnum)
-aggregation_metrics = set(AggregationMetricEnum)
-model_correct_metrics = {"exact_match": is_model_correct_exact_match}
-
-
 class Task(Base):
     __tablename__ = "tasks"
     __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_general_ci"}
@@ -148,19 +71,25 @@ class Task(Base):
     task_code = db.Column(db.String(length=255), unique=True, nullable=False)
 
     name = db.Column(db.String(length=255), nullable=False, unique=True)
-    io_definition = db.Column(db.Text, nullable=False)
+    input_io_def = db.Column(db.Text, nullable=False)
+    output_io_def = db.Column(db.Text, nullable=False)
+    context_io_def = db.Column(db.Text, nullable=False)
+    user_metadata_model_correct_io_def = db.Column(db.Text, nullable=False)
+    user_metadata_model_wrong_io_def = db.Column(db.Text, nullable=False)
+    model_metadata_io_def = db.Column(db.Text, nullable=False)
     aggregation_metric = db.Column(
         db.Enum(AggregationMetricEnum),
         default=AggregationMetricEnum.dynascore,
         nullable=False,
     )
-    model_correct_metric = db.Column(
-        db.Enum(ModelCorrectMetricEnum),
-        default=ModelCorrectMetricEnum.exact_match,
+    model_wrong_metric = db.Column(
+        db.Enum(ModelWrongMetricEnum),
+        default=ModelWrongMetricEnum.exact_match,
         nullable=False,
     )
     instructions = db.Column(db.Text)
     goal_message = db.Column(db.Text)
+    warning_message = db.Column(db.Text)
 
     desc = db.Column(db.String(length=255))
 
@@ -182,6 +111,7 @@ class Task(Base):
     s3_bucket = db.Column(
         db.Text, default="evaluation-us-west-1-096166425824", nullable=False
     )
+    eval_server_id = db.Column(db.Text, default="default", nullable=False)
 
     def __repr__(self):
         return f"<Task {self.name}>"
@@ -191,6 +121,9 @@ class Task(Base):
         for column in self.__table__.columns:
             d[column.name] = getattr(self, column.name)
         return d
+
+    def verify_io(self, io_obj):
+        return True  # TODO: implement
 
 
 class TaskUserPermission(Base):
@@ -220,9 +153,9 @@ class TaskModel(BaseModel):
     def __init__(self):
         super().__init__(Task)
 
-    def getByName(self, name):
+    def getByTaskCode(self, task_code):
         try:
-            return self.dbs.query(Task).filter(Task.name == name).one()
+            return self.dbs.query(Task).filter(Task.task_code == task_code).one()
         except db.orm.exc.NoResultFound:
             return False
 
@@ -307,11 +240,13 @@ class TaskModel(BaseModel):
             t_dict["ordered_scoring_datasets"] = scoring_dataset_list
             t_dict["ordered_datasets"] = dataset_list
             t_dict["perf_metric_field_name"] = t_dict["perf_metric"]
+            # TODO: make the frontend use pert_metric instead of perf_metric_field_name?
             metrics_meta, ordered_field_names = get_task_metrics_meta(t)
             ordered_metrics = [
                 dict(
                     {
                         "name": metrics_meta[field_name]["pretty_name"],
+                        # TODO: make the frontend use pretty_name?
                         "field_name": field_name,
                         "default_weight": self.get_default_metric_weight(
                             t, field_name, t_dict["perf_metric_field_name"]
@@ -327,87 +262,3 @@ class TaskModel(BaseModel):
             return t_dict
         except db.orm.exc.NoResultFound:
             return False
-
-
-# all eval_metrics takes predictions and targets as input, and output a metric number
-eval_metrics_config = {
-    "accuracy": metrics.get_accuracy,
-    "macro_f1": metrics.get_macro_f1,
-    "squad_f1": metrics.get_squad_f1,
-    "bleu": metrics.get_bleu,
-    "sp_bleu": metrics.get_sp_bleu,
-}
-
-delta_metrics_config = {
-    "fairness": metrics.get_unperturbed_percent,
-    "robustness": metrics.get_unperturbed_percent,
-}
-
-job_metrics_config = {
-    "memory_utilization": metrics.get_memory_utilization_constructor(instance_property),
-    "examples_per_second": metrics.get_examples_per_second,
-}
-
-metrics_meta_config = {
-    "accuracy": metrics.get_accuracy_meta,
-    "macro_f1": metrics.get_macro_f1_meta,
-    "squad_f1": metrics.get_squad_f1_meta,
-    "bleu": metrics.get_bleu_meta,
-    "sp_bleu": metrics.get_sp_bleu_meta,
-    "memory_utilization": metrics.get_memory_utilization_meta_constructor(
-        instance_property
-    ),
-    "examples_per_second": metrics.get_examples_per_second_meta,
-    "fairness": metrics.get_fairness_meta,
-    "robustness": metrics.get_robustness_meta,
-}
-
-
-def get_eval_metrics(task: str, predictions: list, targets: list) -> tuple:
-    task = TaskModel().getByName(task)
-    eval_metrics = task.eval_metrics.split("|")
-    eval_metrics_dict = {
-        key: eval_metrics_config[key](predictions, targets) for key in eval_metrics
-    }
-    return eval_metrics_dict[task.perf_metric], eval_metrics_dict
-
-
-def get_job_metrics(job, dataset) -> dict:
-    if not job.aws_metrics:
-        return {}
-    instance_config = instance_property[dataset.task.instance_type]
-    job_metrics = instance_config["aws_metrics"]
-    return {key: job_metrics_config[key](job, dataset) for key in job_metrics}
-
-
-def get_delta_metrics(
-    task: str, predictions: list, targets: list, perturb_prefix: str
-) -> dict:
-    """
-    predictions: a list of list of predictions
-    targets: a list of labels
-    """
-    task = TaskModel().getByName(task)
-    perf_metric = eval_metrics_config[task.perf_metric]
-    delta_metrics_dict = {
-        perturb_prefix: delta_metrics_config[perturb_prefix](
-            predictions, targets, perf_metric
-        )
-    }
-    return delta_metrics_dict
-
-
-def get_task_metrics_meta(task):
-    instance_config = instance_property[task.instance_type]
-    perf_metric = task.perf_metric
-    delta_metrics = []
-    if task.delta_metrics is not None:
-        delta_metrics = task.delta_metrics.split("|")
-    ordered_metric_field_names = (
-        [perf_metric] + instance_config["aws_metrics"] + delta_metrics
-    )
-    metrics_meta = {
-        metric: metrics_meta_config.get(metric, metrics_meta_config[perf_metric])(task)
-        for metric in ordered_metric_field_names
-    }
-    return metrics_meta, ordered_metric_field_names

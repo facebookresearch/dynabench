@@ -39,7 +39,12 @@ class VerifyInterface extends React.Component {
       labelExplanation: null,
       creatorAttemptExplanation: null,
       hide_by_key: new Set(),
-      io_definition: {},
+      input_io_def: [],
+      output_io_def: [],
+      context_io_def: [],
+      model_metadata_io_def: [],
+      user_metadata_model_correct_io_def: [],
+      user_metadata_model_wrong_io_def: [],
       example_io: {},
     };
     this.getNewExample = this.getNewExample.bind(this);
@@ -138,23 +143,51 @@ class VerifyInterface extends React.Component {
       (this.state.owner_mode
         ? this.setRangesAndGetRandomFilteredExample()
         : this.context.api.getRandomExample(
-            this.state.taskId,
+            this.state.task.id,
             this.state.task.selected_round
           )
       ).then(
         (result) => {
-          const io_definition = JSON.parse(this.state.task.io_definition);
-          const context_io = JSON.parse(result.context.context);
-          const example_io = JSON.parse(result.io);
+          const input_io_def = JSON.parse(this.state.task.input_io_def);
+          const output_io_def = JSON.parse(this.state.task.output_io_def);
+          const context_io_def = JSON.parse(this.state.task.context_io_def);
+          const model_metadata_io_def = JSON.parse(
+            this.state.task.model_metadata_io_def
+          );
+          const user_metadata_model_wrong_io_def = JSON.parse(
+            this.state.task.user_metadata_model_wrong_io_def
+          );
+          const user_metadata_model_correct_io_def = JSON.parse(
+            this.state.task.user_metadata_model_correct_io_def
+          );
+
+          const example_io = {};
+          const context_io = JSON.parse(result.context.context_io);
           for (const key in context_io) {
             example_io[key] = context_io[key];
           }
-          console.log(example_io);
-          console.log(io_definition);
+          const input_io = JSON.parse(result.input_io);
+          for (const key in input_io) {
+            example_io[key] = input_io[key];
+          }
+          const user_output_io = JSON.parse(result.user_output_io);
+          for (const key in user_output_io) {
+            example_io[key] = user_output_io[key];
+          }
+          const user_metadata_io = JSON.parse(result.user_metadata_io);
+          for (const key in user_metadata_io) {
+            example_io[key] = user_metadata_io[key];
+          }
+
           this.setState({
-            io_definition: io_definition,
-            example_io: example_io,
             example: result,
+            example_io: example_io,
+            input_io_def: input_io_def,
+            output_io_def: output_io_def,
+            context_io_def: context_io_def,
+            model_metadata_io_def: model_metadata_io_def,
+            user_metadata_model_wrong_io_def: user_metadata_model_wrong_io_def,
+            user_metadata_model_correct_io_def: user_metadata_model_correct_io_def,
           });
         },
         (error) => {
@@ -264,52 +297,41 @@ class VerifyInterface extends React.Component {
   }
 
   render() {
-    const inputOutputIO = Object.keys(this.state.io_definition)
-      .filter(
-        (key, _) =>
-          !this.state.hide_by_key.has(key) &&
-          (this.state.io_definition[key].location === "input" ||
-            this.state.io_definition[key].location === "output")
+    console.log(this.state.example_io);
+    const inputOutputUserMetadataIO = this.state.input_io_def
+      .concat(this.state.output_io_def)
+      .concat(
+        this.state.example.model_wrong
+          ? this.state.user_metadata_model_wrong_io_def
+          : this.state.user_metadata_model_correct_io_def
       )
-      .map((key, _) => (
+      .filter(
+        (io_obj) =>
+          ![undefined, null].includes(this.state.example_io[io_obj.name])
+      )
+      .map((io_obj, _) => (
         <IO
-          key={key}
+          key={io_obj.name}
           create={false}
-          io_key={key}
+          name={io_obj.name}
           example_io={this.state.example_io}
           set_example_io={() => {}}
-          hide_by_key={this.state.hide_by_key}
-          set_hide_by_key={(hide_by_key) =>
-            this.setState({ hide_by_key: hide_by_key })
-          }
-          type={this.state.io_definition[key].type}
-          location={this.state.io_definition[key].location}
-          constructor_args={this.state.io_definition[key].constructor_args}
+          type={io_obj.type}
+          constructor_args={io_obj.constructor_args}
         />
       ));
 
-    const contextIO = Object.keys(this.state.io_definition)
-      .filter(
-        (key, _) =>
-          !this.state.hide_by_key.has(key) &&
-          this.state.io_definition[key].location === "context"
-      )
-      .map((key, _) => (
-        <IO
-          key={key}
-          create={false}
-          io_key={key}
-          example_io={this.state.example_io}
-          set_example_io={() => {}}
-          hide_by_key={this.state.hide_by_key}
-          set_hide_by_key={(hide_by_key) =>
-            this.setState({ hide_by_key: hide_by_key })
-          }
-          type={this.state.io_definition[key].type}
-          location={this.state.io_definition[key].location}
-          constructor_args={this.state.io_definition[key].constructor_args}
-        />
-      ));
+    const contextIO = this.state.context_io_def.map((io_obj, _) => (
+      <IO
+        key={io_obj.name}
+        create={false}
+        name={io_obj.name}
+        example_io={this.state.example_io}
+        set_example_io={() => {}}
+        type={io_obj.type}
+        constructor_args={io_obj.constructor_args}
+      />
+    ));
 
     return (
       <OverlayProvider initiallyHide={true}>
@@ -431,9 +453,9 @@ class VerifyInterface extends React.Component {
                 correct.
               </p>
             </div>
-            {this.state.task.warning ? (
+            {this.state.task.warning_message ? (
               <p className="mt-3 p-3 light-red-bg rounded white-color">
-                <strong>WARNING</strong>: {this.state.task.warning}
+                <strong>WARNING</strong>: {this.state.task.warning_message}
               </p>
             ) : null}
             <Card className="profile-card">
@@ -449,7 +471,7 @@ class VerifyInterface extends React.Component {
                   <Card.Body className="p-3">
                     <Row>
                       <Col xs={12} md={7}>
-                        {inputOutputIO}
+                        {inputOutputUserMetadataIO}
                         <br />
                         <div className="mb-3">
                           {this.state.example.example_explanation ? (

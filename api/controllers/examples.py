@@ -13,7 +13,7 @@ from models.context import ContextModel
 from models.example import ExampleModel
 from models.round import RoundModel
 from models.round_user_example_info import RoundUserExampleInfoModel
-from models.task import TaskModel, model_correct_metrics
+from models.task import TaskModel, model_wrong_metrics
 from models.user import UserModel
 
 
@@ -173,27 +173,6 @@ def get_example_metadata(credentials, eid):
         bottle.abort(403, "Access denied")
     return util.json_encode(example.metadata_json)
 
-@bottle.put("/examples/<eid:int>")
-@_auth.requires_auth_or_turk
-def add_example_metadata_io(credentials, eid):
-    em = ExampleModel()
-    example = em.get(eid)
-
-    if not example:
-        bottle.abort(404, "Not found")
-    if credentials["id"] != "turk" and example.uid != credentials["id"]:
-        bottle.abort(403, "Access denied")
-    if credentials["id"] == "turk":
-        if not util.check_fields(data, ["uid"]):
-            bottle.abort(400, "Missing data")
-        metadata = json.loads(example.metadata_json)
-        if (
-            "annotator_id" not in metadata
-            or metadata["annotator_id"] != data["uid"]
-        ):
-            bottle.abort(403, "Access denied")
-        del data["uid"]  # don't store this
-
 
 @bottle.put("/examples/<eid:int>")
 @_auth.requires_auth_or_turk
@@ -219,8 +198,10 @@ def update_example(credentials, eid):
             del data["uid"]  # don't store this
 
         for field in data:
-            if field not in ('model_wrong', 'flagged', 'retracted', 'user_metadata_io'):
-                bottle.abort(403, "Can only modify  model_wrong, retracted, and user_metadata_io")
+            if field not in ("model_wrong", "flagged", "retracted", "user_metadata_io"):
+                bottle.abort(
+                    403, "Can only modify  model_wrong, retracted, and user_metadata_io"
+                )
 
         if (
             "model_wrong" in data
@@ -239,6 +220,15 @@ def update_example(credentials, eid):
                 info.incrementFooledCount(example.uid, context.r_realid)
 
         if "user_metadata_io" in data:
+            cm = ContextModel()
+            context = cm.get(example.cid)
+            all_user_io = {}
+            all_user_io.update(json.loads(context.context_io))
+            all_user_io.update(json.loads(example.input_io))
+            all_user_io.update(json.loads(example.user_output_io))
+            all_user_io.update(data["user_metadata_io"])
+            if not TaskModel().get(example.context.round.tid).verify_io(all_user_io):
+                bottle.abort(403, "user_metadata_io is not properly formatted")
             data["user_metadata_io"] = json.dumps(data["user_metadata_io"])
 
         logger.info(f"Updating example {example.id} with {data}")
@@ -260,42 +250,27 @@ def update_example(credentials, eid):
         bottle.abort(500, {"error": str(e)})
 
 
-@bottle.post("/examples/get-model-correct")
-def controller_get_model_correct():
+@bottle.post("/examples/get-model-wrong")
+def controller_get_model_wrong():
     data = bottle.request.json
 
-    if not util.check_fields(
-        data,
-        [
-            "tid",
-            "example_io",
-            "model_response_io",
-        ],
-    ):
+    if not util.check_fields(data, ["tid", "user_output_io", "model_output_io"]):
         bottle.abort(400, "Missing data")
 
-    model_correct, missing_keys = get_model_correct(data["tid"], data["example_io"], data["model_response_io"])
+    model_wrong, missing_keys = get_model_wrong(
+        data["tid"], data["user_output_io"], data["model_output_io"]
+    )
     if missing_keys:
         bottle.abort(400, "Missing keys")
 
-    return util.json_encode(
-        {
-            "success": "ok",
-            "model_correct": model_correct
-        }
-    )
+    return util.json_encode({"success": "ok", "model_wrong": model_wrong})
 
 
-def get_model_correct(tid, example_io, model_response_io):
+def get_model_wrong(tid, example_io, model_response_io):
     tm = TaskModel()
     task = tm.get(tid)
-    model_correct_metric = model_correct_metrics[task.model_correct_metric.name]
-    output_keys = set(
-        map(
-            lambda item: item["name"],
-            json.loads(task.io_definition)["output"],
-        )
-    )
+    model_wrong_metric = model_wrong_metrics[task.model_wrong_metric.name]
+    output_keys = set(map(lambda item: item["name"], json.loads(task.output_io_def)))
     model_output = {}
     human_output = {}
     for key, value in example_io.items():
@@ -305,14 +280,17 @@ def get_model_correct(tid, example_io, model_response_io):
         if key in output_keys:
             model_output[key] = value
 
-    return model_correct_metric(model_output, human_output), len(model_output.keys()) != len(output_keys) or len(human_output.keys()) != len(output_keys)
+    return (
+        model_wrong_metric(model_output, human_output),
+        len(model_output.keys()) != len(output_keys)
+        or len(human_output.keys()) != len(output_keys),
+    )
 
 
 @bottle.post("/examples")
 @_auth.requires_auth_or_turk
 def post_example(credentials):
     data = bottle.request.json
-
     if not util.check_fields(
         data,
         [
@@ -320,11 +298,14 @@ def post_example(credentials):
             "rid",
             "uid",
             "cid",
-            "example_io",
-            "model_response_io",
+            "input_io",
+            "user_output_io",
+            "model_output_io",
+            "model_metadata_io",
+            "model_signature",
             "metadata",
             "model_endpoint_name",
-            "model_correct",
+            "model_wrong",
         ],
     ):
         bottle.abort(400, "Missing data")
@@ -345,10 +326,13 @@ def post_example(credentials):
         rid=data["rid"],
         uid=data["uid"] if credentials["id"] != "turk" else "turk",
         cid=data["cid"],
-        example_io=data["example_io"],
-        model_response_io=data["model_response_io"],
+        input_io=data["input_io"],
+        user_output_io=data["user_output_io"],
+        model_output_io=data["model_output_io"],
+        model_metadata_io=data["model_metadata_io"],
+        model_signature=data["model_signature"],
         metadata=data["metadata"],
-        model_correct=data["model_correct"],
+        model_wrong=data["model_wrong"],
         tag=tag,
         model_endpoint_name=data["model_endpoint_name"],
     )

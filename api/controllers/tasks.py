@@ -1,65 +1,23 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
-import secrets
 from urllib.parse import parse_qs
 
 import bottle
-import sqlalchemy as db
 
 import common.auth as _auth
 import common.helpers as util
 from common.logging import logger
-from models.base import DBSession as dbs
 from models.dataset import Dataset
 from models.example import ExampleModel
 from models.leaderboard_configuration import LeaderboardConfigurationModel
 from models.model import Model
-from models.round import Round, RoundModel
+from models.round import RoundModel
 from models.round_user_example_info import RoundUserExampleInfoModel
 from models.score import ScoreModel
-from models.task import Task, TaskModel, io_types
+from models.task import TaskModel
 from models.user import UserModel
 from models.validation import Validation, ValidationModel
-
-
-@bottle.post("/tasks/create")
-@_auth.requires_auth_or_turk
-def post_task(credentials):
-    data = bottle.request.json
-
-    if not util.check_fields(
-        data, ["name", "desc", "io_definition", "perf_metric", "aggregation_metric"]
-    ):
-        bottle.abort(400, "Missing data")
-
-    for key, value in data["io_definition"].items():
-        if not util.check_fields(value, ["type", "location", "constructor_args"]):
-            bottle.abort(400, "Missing data")
-        if value["type"] in io_types:
-            try:
-                io_types[value["type"]](data["io_definition"], key)
-            except Exception:
-                bottle.abort(400, "Invalid IO Specification")
-        else:
-            bottle.abort(400, "Invalid IO Type")
-
-    t = Task(
-        name=data["name"],
-        desc=data["desc"],
-        io_definition=json.dumps(data["io_definition"]),
-        perf_metric=data["perf_metric"],
-        aggregation_metric=data["aggregation_metric"],
-        cur_round=0,
-        last_updated=db.sql.func.now(),
-    )
-    dbs.add(t)
-    dbs.flush()
-    r = Round(task=t, rid=0, secret=secrets.token_hex(), url="https://TBD")
-    dbs.add(r)
-    dbs.flush()
-    t.cur_round = r.rid
-    dbs.commit()
 
 
 @bottle.get("/tasks")
