@@ -231,7 +231,7 @@ class CreateInterface extends React.Component {
         }
         if (this.state.task.type == "extract") {
           if (this.state.generatedAnswer) {
-            var answer_text = this.state.generatedAnswer;
+            var answer_text = this.state.generatedAnswer.ans;
           } else {
             var answer_text = "";
             if (this.state.answer.length > 0) {
@@ -566,10 +566,22 @@ class CreateInterface extends React.Component {
                 var activityType = "Generated a question";
               } else {
                 var activityType = "Generated a QA pair";
-                answer_text = questionMetadata.ans;
+                var ans_char_start = questionMetadata.metadata_gen.answer_start;
+                var ans_char_end = questionMetadata.metadata_gen.answer_end;
+                var tokens = this.state.context.context.split(/\b|(?<=[\s\(\)])|(?=[\s\(\)])/);
+                var char_to_token_map = [];
+                for (let token_id = 0; token_id < tokens.length; token_id++) {
+                  for (var char_id = 0; char_id < tokens[token_id].length; char_id++) {
+                    char_to_token_map.push(token_id);
+                  }
+                }
+                var ans_start = char_to_token_map[ans_char_start];
+                var ans_end = char_to_token_map[ans_char_end];
+                var answerObj = [{ start: ans_start, end: ans_end, tag: "ANS" }];
+
                 this.setState({
-                  answer: [],
-                  generatedAnswer: answer_text,
+                  answer: answerObj,
+                  generatedAnswer: questionMetadata,
                   target: answer_text,
                   answerNotSelected: false,
                 });
@@ -1072,7 +1084,7 @@ class CreateInterface extends React.Component {
               {this.experiment_mode["answerSelect"] !== "none" &&
               this.state.generatedAnswer ? (
                 <p>
-                  <i>Answer:</i> <b>{this.state.generatedAnswer}</b>
+                  <i>Generated Answer:</i> <b>{this.state.generatedAnswer.ans}</b>
                   <br />
                   <small className="form-text" style={{ color: "red" }}>
                     <b>

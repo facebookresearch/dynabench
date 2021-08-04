@@ -779,7 +779,7 @@ class MaxQATaskMain extends React.Component {
       // 13: combined generator + uncertainty sampler
       {
         id: 13,
-        dversary: "electra-synqa",
+        adversary: "electra-synqa",
         generator: "qgen_dcombined_plus_squad_10k",
         filterMode: "uncertain",
         answerSelect: "none",
@@ -807,15 +807,16 @@ class MaxQATaskMain extends React.Component {
     var num_experiments = this.experiment_modes.length; // 15
     var experiment_mode_id = mephistoIdCode % num_experiments;
     // ======================================================================================
-    // var experiment_mode_id = 14; // TODO: DISABLE BEFORE LAUNCH
+    var experiment_mode_id = 14; // TODO: DISABLE BEFORE LAUNCH
     // ======================================================================================
 
     var experiment_mode = this.experiment_modes[experiment_mode_id];
     console.log(
       "You are running experiment mode ID: " +
         experiment_mode_id +
-        " of " +
-        num_experiments
+        ". There are " +
+        num_experiments + 
+        " experiments."
     );
     console.log(experiment_mode);
 

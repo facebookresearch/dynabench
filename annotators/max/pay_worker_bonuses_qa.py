@@ -3,6 +3,7 @@
 
 import os  # noqa
 import sys  # noqa
+import json # noqa
 
 import pandas as pd  # noqa
 from mephisto.abstractions.databases.local_database import LocalMephistoDB
@@ -23,16 +24,27 @@ HIT_PRICE = 1.00
 #     input("Enter name of the file outputted by your processing script "), sep="\t"
 # )
 
-val_file_path = "annotated_data/val.csv"
-parsed_validations = pd.read_csv(val_file_path)
+val_file_path = "annotated_data/val.pkl"
+parsed_validations = pd.read_pickle(val_file_path)
 
+# Check how many to manually validated per annotator
+annotator_ids = parsed_validations.annotator_id.unique().tolist()
+examples_per_annotator = {}
+for x in annotator_ids:
+    examples_per_annotator[x] = {
+        "approved": len(parsed_validations[(parsed_validations.annotator_id == x) & (parsed_validations.val_approved == "yes")]),
+        "validated": len(parsed_validations[(parsed_validations.annotator_id == x) & (parsed_validations.val_approved != "empty")]),
+        "total": len(parsed_validations[parsed_validations.annotator_id == x]),
+    }
+    examples_per_annotator[x]["approval_rate"] = examples_per_annotator[x]["approved"] / examples_per_annotator[x]["validated"] if examples_per_annotator[x]["validated"] > 0 else 0
 
 # Process parsing
 def calculate_bonus(row):
-    if row["model_wrong"] is True and row["val_approved"] in ["yes", "empty"]:
+    if examples_per_annotator[row.annotator_id]["approval_rate"] > 0 and \
+        row["validated_by_annotator"] == "valid" and row["val_approved"] in ["yes", "empty"] and \
+            json.loads(row['metadata_json']['fullresponse'])['eval_f1'] <= 0.8:
         return BONUS
     return 0.0
-
 
 parsed_validations["keep"] = "a"
 parsed_validations["sendbonus"] = parsed_validations.apply(calculate_bonus, axis=1)
@@ -62,6 +74,10 @@ total_to_pay = HIT_PRICE * (
 )
 print(f"Paying approx ${total_to_pay:.2f}")
 print(f"Paying an additional ${parsed_validations['sendbonus'].sum():.2f} in bonuses")
+
+confirm = input("Proceed?: y/n")
+if confirm.lower() is not "y":
+    raise BaseException("Confirmation to proceed not adequately received.")
 
 
 disqualification_name = None
