@@ -20,6 +20,7 @@ def init_logger(name):
     logging.getLogger("boto3.resources").setLevel(logging.INFO)
     logging.getLogger("botocore").setLevel(logging.INFO)
     logging.getLogger("urllib3.connectionpool").setLevel(logging.INFO)
+    logging.getLogger("s3transfer").setLevel(logging.WARNING)
 
     os.makedirs("../logs", exist_ok=True)
     file_handler = logging.FileHandler(f"../logs/dynabench-server-{name}.log")
