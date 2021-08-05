@@ -47,7 +47,7 @@ allowed and can be truncated.
 https://github.com/facebookresearch/dynabench/issues/633
 
 
-To see the logs, first click on the job, then go to the tab "Monitoring",
+To see the logs, first click on the job, then go to the tab "Monitor",
 then you can access the job logs.
 The job logs come in two parts "data logs" and regular logs.
 "data logs" are on the Sagemaker side, normally there is nothing interesting there.
@@ -89,3 +89,33 @@ But this assumes you have a running evaluation server.
 
 `python eval_model.py eval --mid  MID` works in autonomy and doesn't require
 an additional server.
+
+
+## How to check the logs of the eval server
+
+Connect to the AWS eval server
+you'll need proper credentials and to first ssh into the bastion.
+The eval server typically runs inside the `eval` screen session.
+You can connect to it if you need to interact with it, 
+but to browse the log you can simply look at the log file:
+`dynabench/logs/dynabench-server-evaluation.log`.
+(The log file is a bit more verbose though, so screen can be nice).
+
+The main events logged are:
+* datasets checking on server start
+* message received from SQS queue. This correspond to a new model uploaded by user
+* Scheduler status, that corresponds to the monitoring
+  of ongoing "batch transform" inference jobs, running on Sagemaker
+* Computer status, that correspond to the final stage of computing the metrics.
+  The flores server also reports how many processes are running for its two pools
+  since the Flores full track takes a very long time to run, it can become a bottleneck.
+* Files downloaded from S3.
+  Small tasks evaluation requires one download, large task requires 101 downloads.
+  The file are downloaded in alpahabetical order, so that gives you an idea of the ongoing progress.
+
+
+## How to restart the eval server
+
+`screen -r eval` then ctrl+c, then `python eval_server.py` or `python flores_eval_server.py` depending on the use case.
+Note that in the case of Flores this will interrupt the bleu computation 
+for the large task.
