@@ -8,7 +8,7 @@ import dynalab.tasks.nli
 import dynalab.tasks.qa
 import dynalab.tasks.sentiment
 import sqlalchemy as db
-from sqlalchemy import JSON, case
+from sqlalchemy import case
 
 from common.logging import logger
 from models.context import Context
@@ -113,7 +113,6 @@ class ExampleModel(BaseModel):
         all_model_io.update(input_io)
         all_model_io.update(model_output_io)
         all_model_io.update(model_metadata_io)
-        print(all_model_io)
         if not TaskModel().get(tid).verify_io(all_model_io):
             logger.error("Improper formatting in model io")
             return False
@@ -179,16 +178,65 @@ class ExampleModel(BaseModel):
                         )
                     )
             else:
-                # TODO: remove this old verify method when all target models are
-                # reuploaded via dynalab. We can also clean up the arguments to
-                # this create function.
+                # Begin hack that can be removed upon full dynalab integration
+                if c.round.task.task_code in ("qa", "vqa"):
+                    if (
+                        c.round.task.task_code == "vqa"
+                        and "answer" in model_output_io
+                        and "prob" in model_output_io
+                    ):
+                        model_wrong = False
+                        pred = (
+                            str(model_output_io["answer"])
+                            + "|"
+                            + str(float(model_output_io["prob"]))
+                        )
+                    elif (
+                        "model_is_correct" in model_output_io
+                        and "text" in model_output_io
+                    ):
+                        pred = (
+                            str(model_output_io["model_is_correct"])
+                            + "|"
+                            + str(model_output_io["text"])
+                        )
+                        model_wrong = not model_output_io["model_is_correct"]
+                    else:
+                        return False
+                    if "model_id" in model_output_io:
+                        pred += "|" + str(model_output_io["model_id"])
+                else:
+                    if "prob" not in model_output_io:
+                        return False
+                    if c.round.task.task_code == "nli":
+                        pred = "|".join(
+                            [
+                                str(model_output_io["prob"]["entailed"]),
+                                str(model_output_io["prob"]["neutral"]),
+                                str(model_output_io["prob"]["contradictory"]),
+                            ]
+                        )
+                    if c.round.task.task_code == "sentiment":
+                        pred = "|".join(
+                            [
+                                str(model_output_io["prob"]["negative"]),
+                                str(model_output_io["prob"]["positive"]),
+                                str(model_output_io["prob"]["neutral"]),
+                            ]
+                        )
+                    if c.round.task.task_code == "hs":
+                        pred = "|".join(
+                            [
+                                str(model_output_io["prob"]["not-hateful"]),
+                                str(model_output_io["prob"]["hateful"]),
+                            ]
+                        )
+
                 if not self.verify_signature(
-                    model_signature,
-                    c,
-                    input_io.values()[0],
-                    model_output_io.values()[0],
+                    model_signature, c, list(input_io.values())[0], pred
                 ):
                     return False
+                # End hack that can be removed upon full dynalab integration
 
         try:
             e = Example(
@@ -218,19 +266,16 @@ class ExampleModel(BaseModel):
             return False
         return e
 
-    # TODO: remove when dynalab integration is fully accomplished
+    # Begin hack that can be removed upon full dynalab integration
     def verify_signature(self, signature, context, hypothesis, pred_str):
         tid = context.round.task.id
         rid = context.round.rid
         secret = context.round.secret
-        context_str = json.loads(context.context_io).values()[0]
+        context_str = list(json.loads(context.context_io).values())[0]
 
         fields_to_sign = []
         fields_to_sign.append(pred_str.encode("utf-8"))
-        if (
-            context.round.task.has_context
-            and context.round.task.task_code != "sentiment"
-        ):
+        if context.round.task.task_code not in ("sentiment", "hs"):
             fields_to_sign.append(context_str.encode("utf-8"))
         fields_to_sign.append(hypothesis.encode("utf-8"))
         fields_to_sign.append(f"{tid}{rid}{secret}".encode("utf-8"))
@@ -252,6 +297,8 @@ class ExampleModel(BaseModel):
             )
 
         return True
+
+    # End hack that can be removed upon full dynalab integration
 
     def get_anon_uid(self, secret, uid):
         anon_uid = hashlib.sha1()
@@ -367,134 +414,6 @@ class ExampleModel(BaseModel):
         result = result_partially_validated.union(result_not_validated)
         if my_uid is not None:
             result = result.filter(Example.uid != my_uid)
-        result = (
-            result.order_by(
-                db.not_(Example.model_wrong),
-                Example.total_verified.asc(),
-                db.sql.func.rand(),
-            )
-            .limit(n)
-            .all()
-        )
-        return result
-
-    def getRandomVQA(
-        self,
-        rid,
-        validate_non_fooling,
-        num_matching_validations,
-        n=1,
-        mode="owner",
-        my_uid=None,
-        tags=None,
-        context_tags=None,
-    ):
-        cnt_owner_validated = db.sql.func.sum(
-            case([(Validation.mode == ModeEnum.owner, 1)], else_=0)
-        ).label("cnt_owner_validated")
-
-        if context_tags:
-            result = (
-                self.dbs.query(Example)
-                .join(Context, Example.cid == Context.id)
-                .filter(Context.r_realid == rid)
-                .filter(Example.retracted == False)  # noqa
-                .filter(Context.tag.in_(context_tags))
-            )
-        else:
-            result = (
-                self.dbs.query(Example)
-                .join(Context, Example.cid == Context.id)
-                .filter(Context.r_realid == rid)
-                .filter(Example.retracted == False)  # noqa
-            )
-
-        if tags:
-            result = result.filter(Example.tag.in_(tags))  # noqa
-
-        if not validate_non_fooling:
-            result = result.filter(Example.model_wrong == True)  # noqa
-
-        cm = ContextModel()
-        (
-            contexts_with_example_stats,
-            examples_with_validation_stats,
-            # contexts stats:
-            # how many examples passed, failed, inflight, pre-validation per context
-            (
-                cnt_correct_examples,
-                cnt_failed_examples,
-                cnt_inflight_examples,
-                cnt_pre_val_examples,
-            ),
-            # example stats:
-            # how many validations correct, incorrect, flagged, total per example
-            (cnt_correct_val, cnt_incorrect_val, cnt_flagged_val, cnt_total_val),
-        ) = cm.getContextValidationResults(
-            num_matching_validations,
-            validate_non_fooling=validate_non_fooling,
-            example_tags=tags,
-        )
-
-        if my_uid is not None:
-            if mode == "owner":
-                cnt_uid = db.sql.func.sum(
-                    case([(Validation.uid == my_uid, 1)], else_=0)
-                ).label("cnt_uid")
-            elif mode == "user":
-                examples_with_validation_stats = examples_with_validation_stats.filter(
-                    db.cast(Example.metadata_json, JSON)["annotator_id"] != my_uid
-                )
-                cnt_uid = db.sql.func.sum(
-                    case(
-                        [
-                            (
-                                db.cast(Validation.metadata_json, JSON)["annotator_id"]
-                                == my_uid,
-                                1,
-                            )
-                        ],
-                        else_=0,
-                    )
-                ).label("cnt_uid")
-            examples_with_validation_stats = examples_with_validation_stats.having(
-                cnt_uid == 0
-            )
-
-        # partially validated
-        examples_partially_validated = examples_with_validation_stats.having(
-            db.and_(
-                cnt_correct_val < num_matching_validations,
-                cnt_flagged_val < num_matching_validations,
-                cnt_incorrect_val < num_matching_validations,
-                cnt_total_val > 0,
-                cnt_owner_validated == 0,
-            )
-        )
-        examples_partially_validated = examples_partially_validated.subquery()
-        result_partially_validated = result.join(
-            examples_partially_validated,
-            examples_partially_validated.c.id == Example.id,
-        )
-
-        # not validated
-        examples_not_validated = examples_with_validation_stats.having(
-            db.and_(cnt_total_val == 0, cnt_owner_validated == 0)
-        )
-        examples_not_validated = examples_not_validated.subquery()
-        contexts_with_example_stats = contexts_with_example_stats.having(
-            cnt_correct_examples == 0
-        )
-        contexts_with_example_stats = contexts_with_example_stats.subquery()
-        result_not_validated = result.join(
-            contexts_with_example_stats,
-            contexts_with_example_stats.c.cid == Example.cid,
-        ).join(examples_not_validated, examples_not_validated.c.id == Example.id)
-
-        result = result_partially_validated.union(result_not_validated)
-        if my_uid is not None and mode == "owner":
-            result = result.filter(Example.uid != my_uid)
-
         result = (
             result.order_by(
                 db.not_(Example.model_wrong),

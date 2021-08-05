@@ -55,12 +55,16 @@ class ResponseInfo extends React.Component {
     super(props);
     this.retractExample = this.retractExample.bind(this);
     this.flagExample = this.flagExample.bind(this);
-    this.updateExample = this.updateExample.bind(this);
-    this.state = { user_metadata_io: {} };
+    this.updateUserMetadataIO = this.updateUserMetadataIO.bind(this);
+    this.updateModelWrong = this.updateModelWrong.bind(this);
+    this.state = {
+      user_metadata_io: {},
+      model_wrong: this.props.obj.model_wrong,
+    };
   }
   componentDidMount() {
     const user_metadata_io = {};
-    (this.props.obj.model_wrong
+    (this.state.model_wrong
       ? this.props.user_metadata_model_wrong_io_def
       : this.props.user_metadata_model_correct_io_def
     ).forEach((io_obj) => {
@@ -73,7 +77,7 @@ class ResponseInfo extends React.Component {
     });
   }
 
-  updateExample() {
+  updateUserMetadataIO() {
     this.context.api
       .updateExample(this.props.exampleId, {
         user_metadata_io: this.state.user_metadata_io,
@@ -84,6 +88,23 @@ class ResponseInfo extends React.Component {
           console.log(error);
         }
       );
+  }
+
+  updateModelWrong(model_wrong) {
+    if (this.props.obj.livemode) {
+      this.context.api
+        .updateExample(this.props.exampleId, {
+          model_wrong: model_wrong,
+        })
+        .then(
+          (result) => this.setState({ model_wrong: model_wrong }),
+          (error) => {
+            console.log(error);
+          }
+        );
+    } else {
+      this.setState({ model_wrong: model_wrong });
+    }
   }
 
   retractExample(e) {
@@ -195,7 +216,7 @@ class ResponseInfo extends React.Component {
       />
     ));
 
-    const userMetadata = (this.props.model_wrong
+    const userMetadata = (this.state.model_wrong
       ? this.props.user_metadata_model_wrong_io_def
       : this.props.user_metadata_model_correct_io_def
     ).map((io_obj, _) => (
@@ -230,25 +251,29 @@ class ResponseInfo extends React.Component {
     var userFeedback = (
       <>
         {this.props.obj.livemode ? (
-          <div className="mt-3">
-            <span>Optionally, enter more info for your example:</span>
-            {this.state.exampleUpdated ? (
-              <span style={{ float: "right" }}> Saved! </span>
-            ) : (
-              <button
-                onClick={() => {
-                  this.updateExample();
-                  this.setState({ exampleUpdated: true });
-                }}
-                type="button"
-                style={{ float: "right" }}
-                className="btn btn-light btn-sm"
-              >
-                Save Info
-              </button>
-            )}
-            {userMetadata}
-          </div>
+          this.state.model_wrong !== null ? (
+            <div className="mt-3">
+              <span>Optionally, enter more info for your example:</span>
+              {this.state.exampleUpdated ? (
+                <span style={{ float: "right" }}> Saved! </span>
+              ) : (
+                <button
+                  onClick={() => {
+                    this.updateUserMetadataIO();
+                    this.setState({ exampleUpdated: true });
+                  }}
+                  type="button"
+                  style={{ float: "right" }}
+                  className="btn btn-light btn-sm"
+                >
+                  Save Info
+                </button>
+              )}
+              {userMetadata}
+            </div>
+          ) : (
+            ""
+          )
         ) : (
           ""
         )}
@@ -273,20 +298,47 @@ class ResponseInfo extends React.Component {
         </span>
       );
     } else {
-      if (this.props.obj.model_wrong) {
-        classNames += " light-green-bg";
+      if (this.state.model_wrong === null) {
+        classNames += " light-gray-bg";
         title = (
           <span>
-            <strong>You fooled the model!</strong>
+            <strong>Is the model also correct?</strong>{" "}
+            <div className="btn-group" role="group" aria-label="model wrong">
+              <button
+                data-index={this.props.index}
+                onClick={() => this.updateModelWrong(false)}
+                type="button"
+                className="btn btn-primary btn-sm"
+              >
+                Yes
+              </button>
+              <button
+                data-index={this.props.index}
+                onClick={() => this.updateModelWrong(true)}
+                type="button"
+                className="btn btn-primary btn-sm"
+              >
+                No
+              </button>
+            </div>
           </span>
         );
       } else {
-        classNames += " response-warning";
-        title = (
-          <span>
-            <strong>You didn't fool the model. Please try again!</strong>
-          </span>
-        );
+        if (this.state.model_wrong) {
+          classNames += " light-green-bg";
+          title = (
+            <span>
+              <strong>You fooled the model!</strong>
+            </span>
+          );
+        } else {
+          classNames += " response-warning";
+          title = (
+            <span>
+              <strong>You didn't fool the model. Please try again!</strong>
+            </span>
+          );
+        }
       }
     }
 
@@ -521,184 +573,258 @@ class CreateInterface extends React.Component {
     if (incomplete_example) {
       return;
     }
+
     this.setState({ submitWithoutFullExample: false });
     this.setState({ submitDisabled: true, refreshDisabled: true }, () => {
       this.manageTextInput("blur");
-      console.log(this.state.example_io);
-      this.context.api
-        .getModelResponse(
-          this.state.selectedModel
-            ? this.state.selectedModel.endpointUrl
-            : this.state.randomTargetModel,
-          this.state.example_io
-        )
-        .then(
-          (model_response_result) => {
-            if (model_response_result.errorMessage) {
-              this.setState({
-                submitDisabled: false,
-                refreshDisabled: false,
-                fetchPredictionError: true,
-              });
-            } else {
-              if (this.state.fetchPredictionError) {
-                this.setState({
-                  fetchPredictionError: false,
-                });
-              }
+      const url = this.state.selectedModel
+        ? this.state.selectedModel.endpointUrl
+        : this.state.randomTargetModel;
+      const endpoint = url.split("predict?model=")[1];
 
-              const user_output_io = Object.assign(
-                {},
-                ...this.state.output_io_def.map((io_obj, _) => ({
-                  [io_obj.name]: this.state.example_io[io_obj.name],
-                }))
-              );
-              const model_output_io = Object.assign(
-                {},
-                ...this.state.output_io_def.map((io_obj, _) => ({
-                  [io_obj.name]: model_response_result[io_obj.name],
-                }))
-              );
-              const input_io = Object.assign(
-                {},
-                ...this.state.input_io_def.map((io_obj, _) => ({
-                  [io_obj.name]: this.state.example_io[io_obj.name],
-                }))
-              );
-              const model_metadata_io = Object.assign(
-                {},
-                ...this.state.model_metadata_io_def.map((io_obj, _) => ({
-                  [io_obj.name]: model_response_result[io_obj.name],
-                }))
-              );
-              const metadata = { model: this.state.randomTargetModel };
-              this.context.api
-                .getModelWrong(
-                  this.state.task.id,
-                  user_output_io,
-                  model_output_io
-                )
-                .then(
-                  (model_wrong_result) => {
-                    this.setState({
-                      content: [
-                        ...this.state.content,
-                        {
-                          livemode: this.state.livemode,
-                          model_wrong: model_wrong_result.model_wrong,
-                          example_io: JSON.parse(
-                            JSON.stringify(this.state.example_io)
-                          ),
-                          model_response_io: model_response_result,
-                          url: this.state.randomTargetModel,
-                          retracted: false,
-                        },
-                      ],
-                    });
+      // Begin hack that can be removed upon full dynalab integration
+      if (
+        !endpoint.startsWith("ts") &&
+        (this.state.task.task_code === "hs" ||
+          this.state.task.task_code === "sentiment")
+      ) {
+        this.state.example_io["hypothesis"] = this.state.example_io[
+          "statement"
+        ];
+      }
+      if (!endpoint.startsWith("ts") && this.state.task.task_code === "qa") {
+        this.state.example_io["hypothesis"] = this.state.example_io["question"];
+      }
+      // End hack that can be removed upon full dynalab integration
 
-                    if (!this.state.livemode) {
-                      if (!this.state.retainInput) {
-                        const example_io = JSON.parse(
-                          JSON.stringify(this.state.example_io)
-                        );
-                        this.state.input_io_def
-                          .concat(this.state.output_io_def)
-                          .forEach((io_obj) => {
-                            example_io[io_obj.name] = null;
-                          });
-                        this.setState({ example_io: example_io });
-                      }
-                      this.setState({
-                        submitDisabled: false,
-                        refreshDisabled: false,
-                      });
-                      return;
-                    }
+      this.context.api.getModelResponse(url, this.state.example_io).then(
+        (model_response_result) => {
+          // Begin hack that can be removed upon full dynalab integration
+          if (
+            !endpoint.startsWith("ts") &&
+            this.state.task.task_code === "hs"
+          ) {
+            model_response_result["label"] =
+              model_response_result["prob"][0] >
+              model_response_result["prob"][1]
+                ? "not-hateful"
+                : "hateful";
+            model_response_result["prob"] = {
+              "not-hateful": model_response_result["prob"][0],
+              hateful: model_response_result["prob"][1],
+            };
+          }
+          if (
+            !endpoint.startsWith("ts") &&
+            this.state.task.task_code === "sentiment"
+          ) {
+            model_response_result["label"] =
+              model_response_result["prob"][0] >
+                model_response_result["prob"][1] &&
+              model_response_result["prob"][0] >
+                model_response_result["prob"][2]
+                ? "negative"
+                : model_response_result["prob"][1] >
+                  model_response_result["prob"][2]
+                ? "positive"
+                : "neutral";
+            model_response_result["prob"] = {
+              negative: model_response_result["prob"][0],
+              positive: model_response_result["prob"][1],
+              neutral: model_response_result["prob"][2],
+            };
+          }
+          if (
+            !endpoint.startsWith("ts") &&
+            this.state.task.task_code === "nli"
+          ) {
+            model_response_result["label"] =
+              model_response_result["prob"][0] >
+                model_response_result["prob"][1] &&
+              model_response_result["prob"][0] >
+                model_response_result["prob"][2]
+                ? "entailed"
+                : model_response_result["prob"][1] >
+                  model_response_result["prob"][2]
+                ? "neutral"
+                : "contradictory";
+            model_response_result["prob"] = {
+              entailed: model_response_result["prob"][0],
+              neutral: model_response_result["prob"][1],
+              contradictory: model_response_result["prob"][2],
+            };
+          }
+          if (
+            !endpoint.startsWith("ts") &&
+            this.state.task.task_code === "qa"
+          ) {
+            model_response_result["answer"] = model_response_result["text"];
+            model_response_result["conf"] = model_response_result["prob"];
+          }
+          // End hack that can be removed upon full dynalab integration
 
-                    // Save examples.
-                    this.context.api
-                      .storeExample(
-                        this.state.task.id,
-                        this.state.task.selected_round,
-                        this.context.user.id,
-                        this.state.context.id,
-                        input_io,
-                        user_output_io,
-                        model_output_io,
-                        model_metadata_io,
-                        model_response_result["signed"],
-                        metadata,
-                        model_wrong_result.model_wrong,
-                        null,
-                        this.state.randomTargetModel.split("predict?model=")[1]
-                      )
-                      .then(
-                        (store_example_result) => {
-                          var key = this.state.content.length;
-                          // Reset state variables and store example id.
-                          this.setState({
-                            submitDisabled: false,
-                            refreshDisabled: false,
-                            mapKeyToExampleId: {
-                              ...this.state.mapKeyToExampleId,
-                              [key]: store_example_result.id,
-                            },
-                          });
-
-                          if (!!store_example_result.badges) {
-                            this.setState({
-                              showBadges: store_example_result.badges,
-                            });
-                          }
-                          if (!this.state.retainInput) {
-                            const example_io = JSON.parse(
-                              JSON.stringify(this.state.example_io)
-                            );
-                            this.state.input_io_def
-                              .concat(this.state.output_io_def)
-                              .forEach((io_obj) => {
-                                example_io[io_obj.name] = null;
-                              });
-                            this.setState({ example_io: example_io });
-                          }
-                        },
-                        (error) => {
-                          console.log(error);
-                          this.setState({
-                            submitDisabled: false,
-                            refreshDisabled: false,
-                          });
-                        }
-                      );
-                  },
-                  (error) => {
-                    console.log(error);
-                    this.setState({
-                      submitDisabled: false,
-                      refreshDisabled: false,
-                      fetchPredictionError: true,
-                    });
-                  }
-                )
-                .then(() => this.smoothlyAnimateToBottom());
-            }
-          },
-          (error) => {
-            console.log(error);
-            if (error && error.message && error.message === "Unauthorized") {
-              this.props.history.push(
-                "/login?msg=" +
-                  encodeURIComponent("You need to login to use this feature.") +
-                  "&src=" +
-                  encodeURIComponent(`/tasks/${this.state.taskCode}/create`)
-              );
-            }
+          if (model_response_result.errorMessage) {
             this.setState({
               submitDisabled: false,
               refreshDisabled: false,
+              fetchPredictionError: true,
             });
+          } else {
+            if (this.state.fetchPredictionError) {
+              this.setState({
+                fetchPredictionError: false,
+              });
+            }
+
+            const user_output_io = Object.assign(
+              {},
+              ...this.state.output_io_def.map((io_obj, _) => ({
+                [io_obj.name]: this.state.example_io[io_obj.name],
+              }))
+            );
+            const model_output_io = JSON.parse(
+              JSON.stringify(model_response_result)
+            ); // TODO: this needs to be more than what is in the io definition, for old non-dynalab signature verification to work. This can be changed when full dynalab integration is done
+            const input_io = Object.assign(
+              {},
+              ...this.state.input_io_def.map((io_obj, _) => ({
+                [io_obj.name]: this.state.example_io[io_obj.name],
+              }))
+            );
+            const model_metadata_io = Object.assign(
+              {},
+              ...this.state.model_metadata_io_def.map((io_obj, _) => ({
+                [io_obj.name]: model_response_result[io_obj.name],
+              }))
+            );
+            const metadata = { model: this.state.randomTargetModel };
+            this.context.api
+              .getModelWrong(
+                this.state.task.id,
+                user_output_io,
+                model_output_io
+              )
+              .then(
+                (model_wrong_result) => {
+                  this.setState({
+                    content: [
+                      ...this.state.content,
+                      {
+                        livemode: this.state.livemode,
+                        model_wrong: model_wrong_result.model_wrong,
+                        example_io: JSON.parse(
+                          JSON.stringify(this.state.example_io)
+                        ),
+                        model_response_io: model_response_result,
+                        url: this.state.randomTargetModel,
+                        retracted: false,
+                      },
+                    ],
+                  });
+
+                  if (!this.state.livemode) {
+                    if (!this.state.retainInput) {
+                      const example_io = JSON.parse(
+                        JSON.stringify(this.state.example_io)
+                      );
+                      this.state.input_io_def
+                        .concat(this.state.output_io_def)
+                        .forEach((io_obj) => {
+                          example_io[io_obj.name] = null;
+                        });
+                      this.setState({ example_io: example_io });
+                    }
+                    this.setState({
+                      submitDisabled: false,
+                      refreshDisabled: false,
+                    });
+                    return;
+                  }
+
+                  // Save examples.
+                  this.context.api
+                    .storeExample(
+                      this.state.task.id,
+                      this.state.task.selected_round,
+                      this.context.user.id,
+                      this.state.context.id,
+                      input_io,
+                      user_output_io,
+                      model_output_io,
+                      model_metadata_io,
+                      model_response_result["signed"],
+                      metadata,
+                      model_wrong_result.model_wrong,
+                      null,
+                      endpoint
+                    )
+                    .then(
+                      (store_example_result) => {
+                        var key = this.state.content.length;
+                        // Reset state variables and store example id.
+                        this.setState({
+                          submitDisabled: false,
+                          refreshDisabled: false,
+                          mapKeyToExampleId: {
+                            ...this.state.mapKeyToExampleId,
+                            [key]: store_example_result.id,
+                          },
+                        });
+
+                        if (!!store_example_result.badges) {
+                          this.setState({
+                            showBadges: store_example_result.badges,
+                          });
+                        }
+                        if (!this.state.retainInput) {
+                          const example_io = JSON.parse(
+                            JSON.stringify(this.state.example_io)
+                          );
+                          this.state.input_io_def
+                            .concat(this.state.output_io_def)
+                            .forEach((io_obj) => {
+                              example_io[io_obj.name] = null;
+                            });
+                          this.setState({ example_io: example_io });
+                        }
+                      },
+                      (error) => {
+                        console.log(error);
+                        this.setState({
+                          submitDisabled: false,
+                          refreshDisabled: false,
+                        });
+                      }
+                    );
+                },
+                (error) => {
+                  console.log(error);
+                  this.setState({
+                    submitDisabled: false,
+                    refreshDisabled: false,
+                    fetchPredictionError: true,
+                  });
+                }
+              )
+              .then(() => this.smoothlyAnimateToBottom());
           }
-        );
+        },
+        (error) => {
+          console.log(error);
+          if (error && error.message && error.message === "Unauthorized") {
+            this.props.history.push(
+              "/login?msg=" +
+                encodeURIComponent("You need to login to use this feature.") +
+                "&src=" +
+                encodeURIComponent(`/tasks/${this.state.taskCode}/create`)
+            );
+          }
+          this.setState({
+            submitDisabled: false,
+            refreshDisabled: false,
+          });
+        }
+      );
     });
   }
 
@@ -885,7 +1011,6 @@ class CreateInterface extends React.Component {
     const selectableContexts = contextStringSelectionGroup.map(
       (io_obj) => io_obj.constructor_args.reference_key
     );
-    console.log(selectableContexts);
     const contextIO = this.state.context_io_def
       .concat(contextStringSelectionGroup)
       .filter((io_obj, _) => !selectableContexts.includes(io_obj.name))

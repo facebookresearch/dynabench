@@ -36,11 +36,7 @@ def string_f1(model_output, human_output):
 
 
 def ask_user(model_output, human_output):
-    raise NotImplementedError(
-        """
-    The 'ask_user' model wrong metric is implemented in the frontend, not the backend
-    """
-    )
+    return None  # The frontend is supposed to see the None and then ask the user
 
 
 model_wrong_metrics = {

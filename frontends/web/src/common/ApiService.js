@@ -76,7 +76,6 @@ export default class ApiService {
     if (this.mode === "mturk") {
       data.uid = uid;
     }
-    console.log(data);
     return this.fetch(`${this.domain}/examples/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),

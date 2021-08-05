@@ -15,6 +15,7 @@ import {
   Modal,
   Form,
   Button,
+  Spinner,
   InputGroup,
 } from "react-bootstrap";
 import UserContext from "./UserContext";
@@ -46,6 +47,8 @@ class VerifyInterface extends React.Component {
       user_metadata_model_correct_io_def: [],
       user_metadata_model_wrong_io_def: [],
       example_io: {},
+      validator_io: {},
+      loading: true,
     };
     this.getNewExample = this.getNewExample.bind(this);
     this.resetValidatorSelections = this.resetValidatorSelections.bind(this);
@@ -139,77 +142,87 @@ class VerifyInterface extends React.Component {
   }
 
   getNewExample() {
-    this.resetValidatorSelections(() =>
-      (this.state.owner_mode
-        ? this.setRangesAndGetRandomFilteredExample()
-        : this.context.api.getRandomExample(
-            this.state.task.id,
-            this.state.task.selected_round
-          )
-      ).then(
-        (result) => {
-          const input_io_def = JSON.parse(this.state.task.input_io_def);
-          const output_io_def = JSON.parse(this.state.task.output_io_def);
-          const context_io_def = JSON.parse(this.state.task.context_io_def);
-          const model_metadata_io_def = JSON.parse(
-            this.state.task.model_metadata_io_def
-          );
-          const user_metadata_model_wrong_io_def = JSON.parse(
-            this.state.task.user_metadata_model_wrong_io_def
-          );
-          const user_metadata_model_correct_io_def = JSON.parse(
-            this.state.task.user_metadata_model_correct_io_def
-          );
+    this.setState({ loading: true });
+    this.setState(
+      { validator_io: {}, example_io: {} },
+      this.resetValidatorSelections(() =>
+        (this.state.owner_mode
+          ? this.setRangesAndGetRandomFilteredExample()
+          : this.context.api.getRandomExample(
+              this.state.task.id,
+              this.state.task.selected_round
+            )
+        ).then(
+          (result) => {
+            const input_io_def = JSON.parse(this.state.task.input_io_def);
+            const output_io_def = JSON.parse(this.state.task.output_io_def);
+            const context_io_def = JSON.parse(this.state.task.context_io_def);
+            const model_metadata_io_def = JSON.parse(
+              this.state.task.model_metadata_io_def
+            );
+            const user_metadata_model_wrong_io_def = JSON.parse(
+              this.state.task.user_metadata_model_wrong_io_def
+            );
+            const user_metadata_model_correct_io_def = JSON.parse(
+              this.state.task.user_metadata_model_correct_io_def
+            );
 
-          const example_io = {};
-          const context_io = JSON.parse(result.context.context_io);
-          for (const key in context_io) {
-            example_io[key] = context_io[key];
-          }
-          const input_io = JSON.parse(result.input_io);
-          for (const key in input_io) {
-            example_io[key] = input_io[key];
-          }
-          const user_output_io = JSON.parse(result.user_output_io);
-          for (const key in user_output_io) {
-            example_io[key] = user_output_io[key];
-          }
-          const user_metadata_io = JSON.parse(result.user_metadata_io);
-          for (const key in user_metadata_io) {
-            example_io[key] = user_metadata_io[key];
-          }
+            const example_io = {};
+            const context_io = JSON.parse(result.context.context_io);
+            for (const key in context_io) {
+              example_io[key] = context_io[key];
+            }
+            const input_io = JSON.parse(result.input_io);
+            for (const key in input_io) {
+              example_io[key] = input_io[key];
+            }
+            const user_output_io = JSON.parse(result.user_output_io);
+            for (const key in user_output_io) {
+              example_io[key] = user_output_io[key];
+            }
+            const user_metadata_io = JSON.parse(result.user_metadata_io);
+            for (const key in user_metadata_io) {
+              example_io[key] = user_metadata_io[key];
+            }
 
-          this.setState({
-            example: result,
-            example_io: example_io,
-            input_io_def: input_io_def,
-            output_io_def: output_io_def,
-            context_io_def: context_io_def,
-            model_metadata_io_def: model_metadata_io_def,
-            user_metadata_model_wrong_io_def: user_metadata_model_wrong_io_def,
-            user_metadata_model_correct_io_def: user_metadata_model_correct_io_def,
-          });
-        },
-        (error) => {
-          console.log(error);
-          this.setState({
-            example: false,
-          });
-        }
+            const validator_io = JSON.parse(JSON.stringify(example_io));
+
+            this.setState({
+              validator_io: validator_io,
+              example: result,
+              example_io: example_io,
+              input_io_def: input_io_def,
+              output_io_def: output_io_def,
+              context_io_def: context_io_def,
+              model_metadata_io_def: model_metadata_io_def,
+              user_metadata_model_wrong_io_def: user_metadata_model_wrong_io_def,
+              user_metadata_model_correct_io_def: user_metadata_model_correct_io_def,
+              loading: false,
+            });
+          },
+          (error) => {
+            console.log(error);
+            this.setState({
+              loading: false,
+              example: false,
+            });
+          }
+        )
       )
     );
   }
   handleResponse() {
     var action;
+    var metadata = {};
     if (this.state.correctSelected) {
       action = "correct";
     } else if (this.state.incorrectSelected) {
       action = "incorrect";
+      metadata["validator_io"] = this.state.validator_io;
     } else if (this.state.flaggedSelected) {
       action = "flagged";
     }
     const mode = this.state.owner_mode ? "owner" : "user";
-    var metadata = {};
 
     if (this.state.flagReason !== null) {
       metadata["flag_reason"] = this.state.flagReason;
@@ -297,7 +310,6 @@ class VerifyInterface extends React.Component {
   }
 
   render() {
-    console.log(this.state.example_io);
     const inputOutputUserMetadataIO = this.state.input_io_def
       .concat(this.state.output_io_def)
       .concat(
@@ -321,17 +333,53 @@ class VerifyInterface extends React.Component {
         />
       ));
 
-    const contextIO = this.state.context_io_def.map((io_obj, _) => (
-      <IO
-        key={io_obj.name}
-        create={false}
-        name={io_obj.name}
-        example_io={this.state.example_io}
-        set_example_io={() => {}}
-        type={io_obj.type}
-        constructor_args={io_obj.constructor_args}
-      />
-    ));
+    const contextIO = this.state.context_io_def
+      .filter(
+        (io_obj) =>
+          ![undefined, null].includes(this.state.example_io[io_obj.name])
+      )
+      .map((io_obj, _) => (
+        <IO
+          key={io_obj.name}
+          create={false}
+          name={io_obj.name}
+          example_io={this.state.example_io}
+          set_example_io={() => {}}
+          type={io_obj.type}
+          constructor_args={io_obj.constructor_args}
+        />
+      ));
+
+    const validatorOutputIO = this.state.output_io_def
+      .filter(
+        (io_obj) =>
+          ![undefined, null].includes(this.state.example_io[io_obj.name])
+      )
+      .map((io_obj, _) => (
+        <IO
+          key={io_obj.name}
+          create={true}
+          name={io_obj.name}
+          example_io={this.state.validator_io}
+          set_example_io={(example_io) =>
+            this.setState({ validator_io: example_io })
+          }
+          type={
+            io_obj.type === "goal_message_multiple_choice"
+              ? "multiple_choice"
+              : io_obj.type
+          }
+          constructor_args={
+            io_obj.type === "goal_message_multiple_choice"
+              ? Object.assign(
+                  {},
+                  { placeholder: "Enter " + io_obj.name },
+                  io_obj.constructor_args
+                )
+              : io_obj.constructor_args
+          }
+        />
+      ));
 
     return (
       <OverlayProvider initiallyHide={true}>
@@ -459,197 +507,212 @@ class VerifyInterface extends React.Component {
               </p>
             ) : null}
             <Card className="profile-card">
-              {this.state.example ? (
-                <>
-                  {contextIO && contextIO.length > 0 ? (
-                    <div className="mb-1 p-3 rounded light-gray-bg">
-                      {contextIO}
-                    </div>
-                  ) : (
-                    ""
-                  )}
-                  <Card.Body className="p-3">
-                    <Row>
-                      <Col xs={12} md={7}>
-                        {inputOutputUserMetadataIO}
-                        <br />
-                        <div className="mb-3">
-                          {this.state.example.example_explanation ? (
-                            <>
-                              <h6 className="text-uppercase dark-blue-color spaced-header">
-                                Example explanation{" "}
-                                <small>(why target label is correct)</small>
-                              </h6>
-                              <p>{this.state.example.example_explanation}</p>
-                            </>
-                          ) : (
-                            ""
-                          )}
-                          {this.state.example.model_explanation ? (
-                            <>
-                              <h6 className="text-uppercase dark-blue-color spaced-header">
-                                Model explanation{" "}
-                                <small>
-                                  (
-                                  {this.state.example.model_wrong
-                                    ? "why model was fooled"
-                                    : "how they tried to trick the model"}
-                                  )
-                                </small>
-                              </h6>
-                              <p>{this.state.example.model_explanation}</p>
-                            </>
-                          ) : (
-                            ""
-                          )}
-                        </div>
-                        <h6 className="text-uppercase dark-blue-color spaced-header">
-                          Actions:
-                        </h6>
-                        <p>
-                          <InputGroup className="align-items-center">
-                            <Form.Check
-                              checked={this.state.correctSelected}
-                              type="radio"
-                              onChange={() =>
-                                this.resetValidatorSelections(() =>
-                                  this.setState({ correctSelected: true })
-                                )
-                              }
-                            />
-                            <i className="fas fa-thumbs-up"></i> &nbsp;{" "}
-                            {this.state.owner_mode ? "Verified " : ""} Correct
-                          </InputGroup>
-                          <InputGroup className="align-items-center">
-                            <Form.Check
-                              checked={this.state.incorrectSelected}
-                              type="radio"
-                              onChange={() =>
-                                this.resetValidatorSelections(() =>
-                                  this.setState({ incorrectSelected: true })
-                                )
-                              }
-                            />
-                            <i className="fas fa-thumbs-down"></i> &nbsp;{" "}
-                            {this.state.owner_mode ? "Verified " : ""} Incorrect
-                          </InputGroup>
-                          {this.state.owner_mode ? (
-                            ""
-                          ) : (
-                            <InputGroup className="align-items-center">
-                              <Form.Check
-                                checked={this.state.flaggedSelected}
-                                type="radio"
-                                onChange={() =>
-                                  this.resetValidatorSelections(() =>
-                                    this.setState({ flaggedSelected: true })
-                                  )
-                                }
-                              />
-                              <i className="fas fa-flag"></i> &nbsp; Flag
-                            </InputGroup>
-                          )}
-                          <InputGroup className="ml-3">
-                            {this.state.flaggedSelected ? (
-                              <Col sm="12 p-1">
-                                <Form.Control
-                                  type="text"
-                                  placeholder="Reason for flagging"
-                                  onChange={(e) =>
-                                    this.setState({
-                                      flagReason: e.target.value,
-                                    })
-                                  }
-                                />
-                              </Col>
+              {!this.state.loading ? (
+                this.state.example ? (
+                  <>
+                    {contextIO && contextIO.length > 0 ? (
+                      <div className="mb-1 p-3 rounded light-gray-bg">
+                        {contextIO}
+                      </div>
+                    ) : (
+                      ""
+                    )}
+                    <Card.Body className="p-3">
+                      <Row>
+                        <Col xs={12} md={7}>
+                          {inputOutputUserMetadataIO}
+                          <br />
+                          <div className="mb-3">
+                            {this.state.example.example_explanation ? (
+                              <>
+                                <h6 className="text-uppercase dark-blue-color spaced-header">
+                                  Example explanation{" "}
+                                  <small>(why target label is correct)</small>
+                                </h6>
+                                <p>{this.state.example.example_explanation}</p>
+                              </>
                             ) : (
                               ""
                             )}
-                          </InputGroup>
-                        </p>
-                        {this.state.incorrectSelected ||
-                        this.state.correctSelected ||
-                        this.state.flaggedSelected ? (
-                          <div>
-                            <h6 className="text-uppercase dark-blue-color spaced-header">
-                              Optionally, provide an explanation for this
-                              example:
-                            </h6>
-                            <p>
-                              <div className="mt-3">
-                                {this.state.incorrectSelected ||
-                                this.state.correctSelected ? (
+                            {this.state.example.model_explanation ? (
+                              <>
+                                <h6 className="text-uppercase dark-blue-color spaced-header">
+                                  Model explanation{" "}
+                                  <small>
+                                    (
+                                    {this.state.example.model_wrong
+                                      ? "why model was fooled"
+                                      : "how they tried to trick the model"}
+                                    )
+                                  </small>
+                                </h6>
+                                <p>{this.state.example.model_explanation}</p>
+                              </>
+                            ) : (
+                              ""
+                            )}
+                          </div>
+                          <h6 className="text-uppercase dark-blue-color spaced-header">
+                            Actions:
+                          </h6>
+                          <p>
+                            <InputGroup className="align-items-center">
+                              <Form.Check
+                                checked={this.state.correctSelected}
+                                type="radio"
+                                onChange={() =>
+                                  this.resetValidatorSelections(() =>
+                                    this.setState({ correctSelected: true })
+                                  )
+                                }
+                              />
+                              <i className="fas fa-thumbs-up"></i> &nbsp;{" "}
+                              {this.state.owner_mode ? "Verified " : ""} Correct
+                            </InputGroup>
+                            <InputGroup className="align-items-center">
+                              <Form.Check
+                                checked={this.state.incorrectSelected}
+                                type="radio"
+                                onChange={() =>
+                                  this.resetValidatorSelections(() =>
+                                    this.setState({ incorrectSelected: true })
+                                  )
+                                }
+                              />
+                              <i className="fas fa-thumbs-down"></i> &nbsp;{" "}
+                              {this.state.owner_mode ? "Verified " : ""}{" "}
+                              Incorrect
+                            </InputGroup>
+                            {this.state.incorrectSelected ? (
+                              <>
+                                <b>Enter the correct output(s)</b>
+                                {validatorOutputIO}
+                              </>
+                            ) : (
+                              ""
+                            )}
+                            {this.state.owner_mode ? (
+                              ""
+                            ) : (
+                              <InputGroup className="align-items-center">
+                                <Form.Check
+                                  checked={this.state.flaggedSelected}
+                                  type="radio"
+                                  onChange={() =>
+                                    this.resetValidatorSelections(() =>
+                                      this.setState({ flaggedSelected: true })
+                                    )
+                                  }
+                                />
+                                <i className="fas fa-flag"></i> &nbsp; Flag
+                              </InputGroup>
+                            )}
+                            <InputGroup className="ml-3">
+                              {this.state.flaggedSelected ? (
+                                <Col sm="12 p-1">
+                                  <Form.Control
+                                    type="text"
+                                    placeholder="Reason for flagging"
+                                    onChange={(e) =>
+                                      this.setState({
+                                        flagReason: e.target.value,
+                                      })
+                                    }
+                                  />
+                                </Col>
+                              ) : (
+                                ""
+                              )}
+                            </InputGroup>
+                          </p>
+                          {this.state.incorrectSelected ||
+                          this.state.correctSelected ||
+                          this.state.flaggedSelected ? (
+                            <div>
+                              <h6 className="text-uppercase dark-blue-color spaced-header">
+                                Optionally, provide an explanation for this
+                                example:
+                              </h6>
+                              <p>
+                                <div className="mt-3">
+                                  {this.state.incorrectSelected ||
+                                  this.state.correctSelected ? (
+                                    <div>
+                                      <Form.Control
+                                        type="text"
+                                        placeholder={
+                                          "Explain why the given example is " +
+                                          (this.state.correctSelected
+                                            ? "correct"
+                                            : "incorrect")
+                                        }
+                                        onChange={(e) =>
+                                          this.setState({
+                                            labelExplanation: e.target.value,
+                                          })
+                                        }
+                                      />
+                                    </div>
+                                  ) : (
+                                    ""
+                                  )}
                                   <div>
                                     <Form.Control
                                       type="text"
-                                      placeholder={
-                                        "Explain why the given example is " +
-                                        (this.state.correctSelected
-                                          ? "correct"
-                                          : "incorrect")
-                                      }
+                                      placeholder="Explain what you think the creator did to try to trick the model"
                                       onChange={(e) =>
                                         this.setState({
-                                          labelExplanation: e.target.value,
+                                          creatorAttemptExplanation:
+                                            e.target.value,
                                         })
                                       }
                                     />
                                   </div>
-                                ) : (
-                                  ""
-                                )}
-                                <div>
-                                  <Form.Control
-                                    type="text"
-                                    placeholder="Explain what you think the creator did to try to trick the model"
-                                    onChange={(e) =>
-                                      this.setState({
-                                        creatorAttemptExplanation:
-                                          e.target.value,
-                                      })
-                                    }
-                                  />
                                 </div>
-                              </div>
-                            </p>
-                          </div>
-                        ) : (
-                          ""
-                        )}
+                              </p>
+                            </div>
+                          ) : (
+                            ""
+                          )}
+                        </Col>
+                      </Row>
+                      <InputGroup className="align-items-center">
+                        <Button
+                          type="button"
+                          className="font-weight-bold blue-bg border-0 task-action-btn"
+                          onClick={() => this.handleResponse()}
+                        >
+                          {" "}
+                          Submit{" "}
+                        </Button>
+                        <Button
+                          data-index={this.props.index}
+                          onClick={this.getNewExample}
+                          type="button"
+                          className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"
+                        >
+                          <i className="fas fa-undo-alt"></i> Skip and load new
+                          example
+                        </Button>
+                      </InputGroup>
+                    </Card.Body>
+                  </>
+                ) : (
+                  <Card.Body className="p-3">
+                    <Row>
+                      <Col xs={12} md={7}>
+                        <p>
+                          No more examples to be verified. Please create more
+                          examples!
+                        </p>
                       </Col>
                     </Row>
-                    <InputGroup className="align-items-center">
-                      <Button
-                        type="button"
-                        className="font-weight-bold blue-bg border-0 task-action-btn"
-                        onClick={() => this.handleResponse()}
-                      >
-                        {" "}
-                        Submit{" "}
-                      </Button>
-                      <Button
-                        data-index={this.props.index}
-                        onClick={this.getNewExample}
-                        type="button"
-                        className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"
-                      >
-                        <i className="fas fa-undo-alt"></i> Skip and load new
-                        example
-                      </Button>
-                    </InputGroup>
                   </Card.Body>
-                </>
+                )
               ) : (
-                <Card.Body className="p-3">
-                  <Row>
-                    <Col xs={12} md={7}>
-                      <p>
-                        No more examples to be verified. Please create more
-                        examples!
-                      </p>
-                    </Col>
-                  </Row>
-                </Card.Body>
+                <div className="mx-auto my-3">
+                  <Spinner animation="border" />{" "}
+                </div>
               )}
               <div className="p-2">
                 {this.state.owner_mode ? (
