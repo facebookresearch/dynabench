@@ -1,6 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
+import logging
 import os
 import tempfile
 import time
@@ -8,6 +9,9 @@ from datetime import datetime, timedelta
 from typing import List
 
 import boto3
+
+
+logger = logging.getLogger(__name__)
 
 
 def send_eval_request(model_id, dataset_name, config, eval_server_id, logger=None):
@@ -141,6 +145,7 @@ def parse_s3_outfile(s3_client, s3_uri: str) -> List[dict]:
     """
     raw_s3_bucket, raw_s3_path = parse_s3_uri(s3_uri)
     fd, local_file = tempfile.mkstemp(suffix=raw_s3_path.split("/")[-1])
+    logger.info(f"Will download s3://{raw_s3_bucket}/{raw_s3_path} to {local_file}")
     s3_client.download_file(raw_s3_bucket, raw_s3_path, local_file)
     os.close(fd)
 

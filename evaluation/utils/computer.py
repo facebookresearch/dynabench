@@ -109,7 +109,7 @@ class MetricsComputer:
             self.dump()
 
     def log_job_error(self, job, ex):
-        logger.exception(ex)
+        logger.error(f"Error while evaluating {job.job_name}: {ex}")
         if job in self._computing:
             self._computing.remove(job)
         self._failed.append(job)
