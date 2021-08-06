@@ -92,6 +92,11 @@ steps = [
     ),
     step("ALTER TABLE tasks ADD COLUMN instructions TEXT"),
     # TODO: add instructions
+    step(
+        """
+    UPDATE tasks SET instructions='You will be presented with a label and a passage of text. Assuming the passage is true, please write another passage that is paired with the first via the label (either "entailment", "neutral", or "contradiction").\n\nWrite your passage so another person will be able to guess the correct label, but the AI will be fooled!\n\nTry to come up with creative ways to beat the AI! If you notice any consistent AI failure modes, please share them in the "explanation of model failure" field! If you would like to explain why you are right and the model is wrong, please add that information in the "explanation of label" field!\n\nTry to ensure that:\n1. Your passage contains at least one complete sentence.\n2. Your passage cannot be related to the provided text by any label other than the provided one (remember, you can always retract mistakes!).\n3. You do not refer to the passage structure itself, such as "the third word of the passage is \\'the\\'".\n4. You do not refer to or speculate about the author of the passage, but instead focus only on its content.\n5. Your passage does not require any expert external knowledge not provided.\n6. Your spelling is correct.'
+    """
+    ),
     step("ALTER TABLE tasks ADD COLUMN goal_message TEXT"),
     step(
         "UPDATE tasks SET goal_message='enter a question and answer based on the image, such that the model is fooled.' WHERE shortname in ('VQA', 'VQA-VAL')"

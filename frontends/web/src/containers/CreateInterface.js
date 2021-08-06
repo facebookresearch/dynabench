@@ -29,6 +29,7 @@ import {
   OverlayContext,
   BadgeOverlay,
 } from "./Overlay";
+import Markdown from "react-markdown";
 import "./CreateInterface.css";
 import IO from "./IO.js";
 
@@ -78,9 +79,20 @@ class ResponseInfo extends React.Component {
   }
 
   updateUserMetadataIO() {
+    const non_null_user_metadata_io = {};
+    (this.state.model_wrong
+      ? this.props.user_metadata_model_wrong_io_def
+      : this.props.user_metadata_model_correct_io_def
+    ).forEach((io_obj) => {
+      if (this.state.user_metadata_io[io_obj.name] !== null) {
+        non_null_user_metadata_io[io_obj.name] = this.state.user_metadata_io[
+          io_obj.name
+        ];
+      }
+    });
     this.context.api
       .updateExample(this.props.exampleId, {
-        user_metadata_io: this.state.user_metadata_io,
+        user_metadata_io: non_null_user_metadata_io,
       })
       .then(
         (result) => {},
@@ -1132,7 +1144,9 @@ class CreateInterface extends React.Component {
                 <Modal.Header closeButton>
                   <Modal.Title>Instructions</Modal.Title>
                 </Modal.Header>
-                <Modal.Body>{this.state.task.instructions}</Modal.Body>
+                <Modal.Body>
+                  <Markdown>{this.state.task.instructions}</Markdown>
+                </Modal.Body>
               </Modal>
               <Modal
                 show={this.state.showCreateSettingsModal}
@@ -1260,7 +1274,7 @@ class CreateInterface extends React.Component {
                       >
                         <Annotation
                           placement="left"
-                          tooltip="Don’t like this context, or this goal label? Try another one."
+                          tooltip="Don’t like this context? Try another one."
                         >
                           <Button
                             className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"

@@ -7,6 +7,8 @@ import enum
 import sqlalchemy as db
 from transformers.data.metrics.squad_metrics import compute_f1
 
+from common.logging import logger
+
 from .base import Base, BaseModel
 from .dataset import AccessTypeEnum, DatasetModel
 from .round import Round
@@ -56,6 +58,73 @@ class PerfMetricEnum(enum.Enum):
 
 class AggregationMetricEnum(enum.Enum):
     dynascore = "dynascore"
+
+
+class IOTypeEnum(enum.Enum):
+    image_url = "image_url"
+    string = "string"
+    context_string_selection = "context_string_selection"
+    conf = "conf"
+    multiple_choice_probs = "multiple_choice_probs"
+    multiple_choice = "multiple_choice"
+    goal_message_multiple_choice = "goal_message_multiple_choice"
+
+
+def verify_image_url(obj, obj_constructor_args, name_to_constructor_args, example_io):
+    assert isinstance(obj, str)
+
+
+def verify_string(obj, obj_constructor_args, name_to_constructor_args, example_io):
+    assert isinstance(obj, str)
+
+
+def verify_context_string_selection(
+    obj, constructor_args, name_to_constructor_args, example_io
+):
+    assert isinstance(obj, str)
+    assert obj in example_io[constructor_args["reference_key"]]
+
+
+def verify_conf(obj, obj_constructor_args, name_to_constructor_args, example_io):
+    assert isinstance(obj, float)
+    assert obj >= 0
+    assert obj <= 1
+
+
+def verify_multiple_choice_probs(
+    obj, obj_constructor_args, name_to_constructor_args, example_io
+):
+    assert isinstance(obj, dict)
+    assert set(obj.keys()) == set(
+        name_to_constructor_args[obj_constructor_args["reference_key"]]["labels"]
+    )
+    assert sum(obj.values()) < 1.001
+    assert sum(obj.values()) > 0.999
+
+
+def verify_multiple_choice(
+    obj, obj_constructor_args, name_to_constructor_args, example_io
+):
+    assert isinstance(obj, str)
+    assert obj in obj_constructor_args["labels"]
+
+
+def verify_goal_message_multiple_choice(
+    obj, obj_constructor_args, name_to_constructor_args, example_io
+):
+    assert isinstance(obj, str)
+    assert obj in obj_constructor_args["labels"]
+
+
+io_type_verifiers = {
+    IOTypeEnum.image_url.name: verify_image_url,
+    IOTypeEnum.string.name: verify_string,
+    IOTypeEnum.context_string_selection.name: verify_context_string_selection,
+    IOTypeEnum.conf.name: verify_conf,
+    IOTypeEnum.multiple_choice_probs.name: verify_multiple_choice_probs,
+    IOTypeEnum.multiple_choice.name: verify_multiple_choice,
+    IOTypeEnum.goal_message_multiple_choice.name: verify_goal_message_multiple_choice,
+}
 
 
 class Task(Base):
@@ -118,8 +187,34 @@ class Task(Base):
             d[column.name] = getattr(self, column.name)
         return d
 
-    def verify_io(self, io_obj):
-        return True  # TODO: implement
+    def verify_io(self, io_objs):
+        name_to_constructor_args = {}
+        name_to_type = {}
+        for item in (
+            json.loads(self.input_io_def)
+            + json.loads(self.output_io_def)
+            + json.loads(self.context_io_def)
+            + json.loads(self.user_metadata_model_correct_io_def)
+            + json.loads(self.user_metadata_model_wrong_io_def)
+            + json.loads(self.model_metadata_io_def)
+        ):
+            name_to_constructor_args[item["name"]] = item["constructor_args"]
+            name_to_type[item["name"]] = item["type"]
+        for name, obj in io_objs.items():
+            if (
+                name in name_to_type
+            ):  # TODO This check is necessary for non-dynalab models. Can be removed when dynatask-dynalab integration is complete.
+                try:
+                    io_type_verifiers[name_to_type[name]](
+                        obj,
+                        name_to_constructor_args[name],
+                        name_to_constructor_args,
+                        io_objs,
+                    )
+                except Exception:
+                    logger.error(name + " is improperly formatted")
+                    return False
+        return True
 
 
 class TaskUserPermission(Base):
