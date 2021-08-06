@@ -107,6 +107,7 @@ class Flores101Base(BaseDataset):
         be added.
         """
         assert not job.perturb_prefix, "Flores tasks don't support pertubation"
+
         if not self.shard_by_lang:
             # the default algorithm computes a bleu over all sentences,
             # where we want an average bleu across all directions
@@ -114,10 +115,23 @@ class Flores101Base(BaseDataset):
             metadata_json = json.loads(eval_metrics["metadata_json"])
             perf_by_tag: List[dict] = metadata_json["perf_by_tag"]
         else:
+            job_dir = Path("/tmp/flores") / job.job_name
+            job_dir.mkdir(exist_ok=True)
+            treated = []
             perf_by_tag = []
+            if (job_dir / f"treated.json").exists():
+                treated = json.loads((job_dir / f"treated.json").read_text())
+                perf_by_tag = json.loads((job_dir / f"perf_by_tag.json").read_text())
             for src in self.languages:
+                if src in treated:
+                    continue
                 src_perfs = self.eval_src_lang(job, src)
                 perf_by_tag.extend(src_perfs)
+                (job_dir / f"perf_by_tag.json").write_text(
+                    json.dumps(perf_by_tag, indent=2)
+                )
+                treated.append(src)
+                (job_dir / f"treated.json").write_text(json.dumps(treated, indent=2))
 
         perf_metric_type = json.loads(self.task.annotation_config_json)["perf_metric"][
             "type"
@@ -142,7 +156,7 @@ class Flores101Base(BaseDataset):
             ),
         )
         duration = (time.time() - start) / 60
-        logger.debug(f"downloaded {src}-xx predictions, took {duration:.1f} minutes")
+        logger.info(f"downloaded {src}-xx predictions, took {duration:.1f} minutes")
         targets = [self.label_field_converter(target) for target in targets]
         # Reuse the base eval method,
         # but we are only interested in the per-directions results
@@ -153,8 +167,15 @@ class Flores101Base(BaseDataset):
         assert sorted(directions) == sorted(expected_directions)
 
         duration = (time.time() - start) / 60
-        logger.debug(f"evaluated {src}-xx directions, took {duration:.1f} minutes")
+        logger.info(f"evaluated {src}-xx directions, took {duration:.1f} minutes")
         return src_perfs
+
+    def get_n_examples(self, perturb_prefix=None) -> int:
+        sizes = {"dev": 997, "devtest": 1012, "test": 992}
+        split = self.name.split("-")[-1]
+        split_size = sizes.get(split, 0)
+        n_directions = len(self.languages) * (len(self.languages) - 1)
+        return split_size * n_directions
 
 
 class Flores101FullDev(Flores101Base):
