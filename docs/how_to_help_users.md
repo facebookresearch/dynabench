@@ -118,3 +118,29 @@ there a several models that only got evaluated on a portion of the datasets
 (generally dev and test).
 I already re-evaluated some of them on the devtest,
 but there might be some more to do.
+
+
+## Browse the logs
+
+The logs can be found in dynabench `logs` folder,
+but they are very verbose and it's hard to find the relevant part.
+grep is your friend here.
+You can search for a job name.
+
+
+## Restart the evaluation server
+
+If you make change to the evaluation server code, you'll need to restart it.
+To do so, use the following steps:
+ 
+1. connect to the first eval server
+2. then connect to the screen session running the eval server process `screen -r eval`
+3. Then you `ctrl-c` to interrupt the current process.
+4. `git pull`
+5. `python eval_server.py` or `python flores_eval_server.py` depending on which server you're on.
+6. press `ctrl-a` then `:` then type `detach` in the command bar opening at the bottom
+   this will bring you back to the regular terminal.
+
+Go to the other evaluation server to restart it too.
+You can ask help from Tristan or Zhiyi for this,
+but do bring up `flores_eval_server.py` since this is new.
