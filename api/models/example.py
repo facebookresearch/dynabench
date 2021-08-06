@@ -113,7 +113,7 @@ class ExampleModel(BaseModel):
         all_model_io.update(input_io)
         all_model_io.update(model_output_io)
         all_model_io.update(model_metadata_io)
-        if not TaskModel().get(tid).verify_io(all_model_io):
+        if not TaskModel().get(tid).verify_io(all_model_io, None):
             logger.error("Improper formatting in model io")
             return False
 
@@ -121,7 +121,7 @@ class ExampleModel(BaseModel):
         all_user_io.update(context_io)
         all_user_io.update(input_io)
         all_user_io.update(user_output_io)
-        if not TaskModel().get(tid).verify_io(all_user_io):
+        if not TaskModel().get(tid).verify_io(all_user_io, None):
             logger.error("Improper formatting in user io")
             return False
 

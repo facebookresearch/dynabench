@@ -807,7 +807,9 @@ class TaskPage extends React.Component {
                     Add new contexts to the current round by uploading them
                     here, as a jsonl where each datum has three fields: <br />{" "}
                     <br />
-                    <b>text</b>: a string representation of the context <br />
+                    <b>context_io</b>: a json dictionary with a key for each
+                    context io component name, along with the corresponding
+                    values <br />
                     <b>tag</b>: a string that associates this context with a set
                     of other contexts <br />
                     <b>metadata</b>: a dictionary in json format representing

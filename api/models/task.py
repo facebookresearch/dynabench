@@ -187,15 +187,21 @@ class Task(Base):
             d[column.name] = getattr(self, column.name)
         return d
 
-    def verify_io(self, io_objs):
+    def verify_io(self, io_objs, model_wrong):
         name_to_constructor_args = {}
         name_to_type = {}
+        user_metadata_io_def = []
+        if model_wrong is not None:
+            user_metadata_io_def = (
+                json.loads(self.user_metadata_model_wrong_io_def)
+                if model_wrong
+                else json.loads(self.user_metadata_model_correct_io_def)
+            )
         for item in (
             json.loads(self.input_io_def)
             + json.loads(self.output_io_def)
             + json.loads(self.context_io_def)
-            + json.loads(self.user_metadata_model_correct_io_def)
-            + json.loads(self.user_metadata_model_wrong_io_def)
+            + user_metadata_io_def
             + json.loads(self.model_metadata_io_def)
         ):
             name_to_constructor_args[item["name"]] = item["constructor_args"]
