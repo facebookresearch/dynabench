@@ -5,6 +5,7 @@ import logging
 import multiprocessing
 import os
 import sys
+from pathlib import Path
 
 import boto3
 import func_argparse
@@ -32,45 +33,6 @@ TASKS = TaskModel()
 SCORES = ScoreModel()
 
 
-def compute_metrics(mid: int, task: Task, blocking: bool = False) -> None:
-    """Compute/recompute the metric for the given model"""
-    cmp = computer.MetricsComputer(config, load_datasets())
-    model_datasets = DatasetModel().getByTid(task.id)
-    model = get_model(mid)
-    with multiprocessing.pool.Pool(4) as pool:
-        for dataset in model_datasets:
-            if blocking:
-                cmp.compute_one_blocking(Job(mid, dataset.name))
-            else:
-                cmp.compute_one_async(pool, Job(mid, dataset.name))
-
-        pool.close()
-        pool.join()
-
-
-def inference_and_eval(mid: int, task_code: str, dataset: str) -> None:
-    task_config = metrics.get_task_config_safe(task_code)
-    helpers.send_eval_request(
-        model_id=mid,
-        dataset_name=dataset,
-        config=config,
-        eval_server_id=task_config["eval_server_id"],
-        logger=logger,
-    )
-
-
-def get_model(mid: int) -> Model:
-    return MODELS.getUnpublishedModelByMid(mid)
-
-
-def get_task(model: Model) -> Task:
-    return TASKS.dbs.query(Task).filter(Task.id == model.tid).one()
-
-
-def get_shortname(taskname: str) -> str:
-    return taskname.upper().replace("_", "-")
-
-
 def eval(
     mid: int, dataset: str = "*", inference: bool = False, blocking: bool = False
 ) -> None:
@@ -89,7 +51,54 @@ def eval(
         compute_metrics(mid, task, blocking=blocking)
 
 
-def list_models(task: str = "", mid: int = 0, scores: bool = False) -> None:
+def inference_and_eval(mid: int, task_code: str, dataset: str) -> None:
+    task_config = metrics.get_task_config_safe(task_code)
+    helpers.send_eval_request(
+        model_id=mid,
+        dataset_name=dataset,
+        config=config,
+        eval_server_id=task_config["eval_server_id"],
+        logger=logger,
+    )
+
+
+def compute_metrics(mid: int, task: Task, blocking: bool = False) -> None:
+    """Compute/recompute the metric for the given model"""
+    cmp = computer.MetricsComputer(config, load_datasets())
+    model_datasets = DatasetModel().getByTid(task.id)
+    model = get_model(mid)
+    if blocking:
+        for dataset in model_datasets:
+            job = Job(mid, dataset.name)
+            try_resume_bleu_computation(job)
+            cmp.compute_one_blocking(job)
+        return
+
+    with multiprocessing.pool.Pool(4) as pool:
+        for dataset in model_datasets:
+            job = Job(mid, dataset.name)
+            try_resume_bleu_computation(job)
+            cmp.compute_one_async(pool, Job(mid, dataset.name))
+
+        pool.close()
+        pool.join()
+
+
+def try_resume_bleu_computation(job: Job):
+    """Flores BLEU scoring writes temp files on the server when doing the large track.
+    Finding them will allow resuming from where we stopped.
+    """
+    tmp_dir = Path("/tmp/flores")
+    candidates = sorted(tmp_dir.glob(job.job_name.replace("???", "*")))
+    if candidates:
+        candidate = candidates[-1]
+        logger.info(
+            f"Will resume bleu computation for {job.job_name} using {candidate}"
+        )
+        job.job_name = candidate.name
+
+
+def ls(task: str = "", mid: int = 0, scores: bool = False) -> None:
     """List models for the given task or just show details about one model.
 
     --task: the task shortname
@@ -104,7 +113,7 @@ def list_models(task: str = "", mid: int = 0, scores: bool = False) -> None:
         if not task_obj:
             availabe_tasks = [t.shortname for t in TASKS.dbs.query(Task)]
             raise Exception(f"Unknown task {task}. Chose from {availabe_tasks}")
-        models = MODELS.getByTid(task_obj.tid)
+        models = MODELS.getByTid(task_obj.id)
     else:
         raise Exception("--task or --mid flags are required")
 
@@ -119,5 +128,17 @@ def list_models(task: str = "", mid: int = 0, scores: bool = False) -> None:
             print(e)
 
 
+def get_model(mid: int) -> Model:
+    return MODELS.getUnpublishedModelByMid(mid)
+
+
+def get_task(model: Model) -> Task:
+    return TASKS.dbs.query(Task).filter(Task.id == model.tid).one()
+
+
+def get_shortname(taskname: str) -> str:
+    return taskname.upper().replace("_", "-")
+
+
 if __name__ == "__main__":
-    func_argparse.main(eval, list_models)
+    func_argparse.main(eval, ls)

@@ -3,11 +3,13 @@
 Dynabench users don't have access to a lot of information
 and it's hard for them to debug what's wrong with their model.
 
+Make sure that the users have read Dynalab instructions from the 
+[Flores repo](https://github.com/facebookresearch/flores/tree/master/dynalab)
 Dynalab provide some unit tests, and docker tests.
 Make sure the users have run those before submitting their models.
 `dynalab test --local` and `dynalab test`
 
-The Flores handler also contains extra tests that can be run with:
+The handler from Flores repo also contains extra tests that can be run with:
 `python handler.py`
 
 Then you should do the following steps.
@@ -15,15 +17,20 @@ Then you should do the following steps.
 ## Find the model name/id
 
 The `evaluation/scripts` folder contains a few helper scripts.
-You need to `cd` there before running the scripts.
+You need to access the SQL db to run those,
+so you need to ssh into one of the eval server to run them
+(unless you're doing local devlopment).
+Also you need to `cd evaluation/scripts` before running the scripts.
 
 Generally the users will share with you the id of their model,
 or its "shortname".
-Each model also get a unique name used in AWS job names and S3 paths.
+Each model also get an endpoint name used in AWS job names and S3 paths.
+It looks like `ts1628233220-beam2bsz80large`.
 
 You can run either:
-`python eval_model.py --task FLORES-SMALL2` to list all Flores models with their name, id and endpoint name.
-`python eval_model.py --mid 123` to show the same info about a particular model.
+`python eval_model.py ls --task FLORES-SMALL2` 
+to list all Flores models with their name, id and endpoint name.
+`python eval_model.py ls --mid 123` to show the same info about a particular model.
 
 ## Find the job logs in AWS
 
@@ -46,8 +53,7 @@ allowed and can be truncated.
 !!! The naming scheme is about to change !!!
 https://github.com/facebookresearch/dynabench/issues/633
 
-
-To see the logs, first click on the job, then go to the tab "Monitor",
+To see the logs, first click on the job, then go to the tab "Monitoring",
 then you can access the job logs.
 The job logs come in two parts "data logs" and regular logs.
 "data logs" are on the Sagemaker side, normally there is nothing interesting there.
@@ -57,6 +63,18 @@ you have logs for each batch.
 Python traceback will also appear here.
 
 Tips: tick "view as text" checkbox and filter by "MODEL_LOG" to remove torchserve logs.
+
+There are different kind of errors to look for:
+* client code error, normally those are detected by the unit tests,
+  but some can go through notably we don't test that the models handle all the different languages.
+* out of memory error: here the recommendation to the user is to decrease the batch size.
+* latency error: if the model takes too long to answer to the batch, torchserve will interrupt it. Here the recommandation is to increase the batch size.
+
+Note that the latency requirement is chosen here in builder's
+[task_config.py](https://github.com/facebookresearch/dynabench/blob/master/builder/utils/task_config.py#L22-L22)
+The batch size corresponding to this latency is chosen by Sagemaker 
+and is 1Mb of json, ie about 1800 sentences.
+The handler takes care of splitting that in smaller batches.
 
 If the jobs are all green, that means that the model successfully ran.
 If the user still can't see their results, it means something is wrong with
@@ -74,6 +92,11 @@ We have four main buckets:
 - xxx-us-west-1 contains data for all tasks
 - xxx-us-west-2 contains Flores related data
 
+This can be helpful to ensure that the job did output data in the correct format.
+It shouldn't be an issue if they used the correct handler.
+Also I never observed any inconsistency on the AWS side. 
+Green jobs have all their corresponding data in S3.
+
 
 ## Resend the job for evaluation
 
@@ -90,32 +113,8 @@ But this assumes you have a running evaluation server.
 `python eval_model.py eval --mid  MID` works in autonomy and doesn't require
 an additional server.
 
-
-## How to check the logs of the eval server
-
-Connect to the AWS eval server
-you'll need proper credentials and to first ssh into the bastion.
-The eval server typically runs inside the `eval` screen session.
-You can connect to it if you need to interact with it, 
-but to browse the log you can simply look at the log file:
-`dynabench/logs/dynabench-server-evaluation.log`.
-(The log file is a bit more verbose though, so screen can be nice).
-
-The main events logged are:
-* datasets checking on server start
-* message received from SQS queue. This correspond to a new model uploaded by user
-* Scheduler status, that corresponds to the monitoring
-  of ongoing "batch transform" inference jobs, running on Sagemaker
-* Computer status, that correspond to the final stage of computing the metrics.
-  The flores server also reports how many processes are running for its two pools
-  since the Flores full track takes a very long time to run, it can become a bottleneck.
-* Files downloaded from S3.
-  Small tasks evaluation requires one download, large task requires 101 downloads.
-  The file are downloaded in alpahabetical order, so that gives you an idea of the ongoing progress.
-
-
-## How to restart the eval server
-
-`screen -r eval` then ctrl+c, then `python eval_server.py` or `python flores_eval_server.py` depending on the use case.
-Note that in the case of Flores this will interrupt the bleu computation 
-for the large task.
+Following [too-long-names issue](https://github.com/facebookresearch/dynabench/issues/633)
+there a several models that only got evaluated on a portion of the datasets
+(generally dev and test).
+I already re-evaluated some of them on the devtest,
+but there might be some more to do.
