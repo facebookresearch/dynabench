@@ -224,6 +224,12 @@ class App extends React.Component {
                           <NavDropdown.Item as={Link} to="/account#models">
                             Models
                           </NavDropdown.Item>
+                          <NavDropdown.Item
+                            as={Link}
+                            to="/account#forks-and-snapshots"
+                          >
+                            Forks &amp; Snapshots
+                          </NavDropdown.Item>
                           <NavDropdown.Divider />
                           <NavDropdown.Item as={Link} to="/logout">
                             Logout

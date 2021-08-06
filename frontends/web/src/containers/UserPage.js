@@ -10,8 +10,6 @@ import {
   Col,
   Row,
   Card,
-  Pagination,
-  Table,
   Form,
   Nav,
   OverlayTrigger,
@@ -19,7 +17,6 @@ import {
 import { Link } from "react-router-dom";
 import { Avatar } from "../components/Avatar/Avatar";
 import "./Sidebar-Layout.css";
-import TasksContext from "./TasksContext";
 import UserContext from "./UserContext";
 import BadgeGrid from "./BadgeGrid";
 import {
@@ -27,6 +24,7 @@ import {
   RetractionTooltip,
   RejectionTooltip,
 } from "./UserStatTooltips";
+import ModelSubPage from "../components/ProfilePageComponents/ModelSubPage";
 
 class UserPage extends React.Component {
   static contextType = UserContext;
@@ -35,10 +33,7 @@ class UserPage extends React.Component {
     this.state = {
       userId: this.props.match.params.userId,
       user: {},
-      userModels: [],
-      userModelsPage: 0,
       pageLimit: 10,
-      isEndOfUserModelsPage: true,
     };
   }
 
@@ -53,9 +48,10 @@ class UserPage extends React.Component {
       if (this.props.location.hash === "") {
         this.props.location.hash = "#profile";
       }
-      this.props.location.hash === "#profile"
-        ? this.fetchUser()
-        : this.fetchModel(0);
+
+      if (this.props.location.hash === "#profile") {
+        this.fetchUser();
+      }
     }
   }
 
@@ -69,39 +65,6 @@ class UserPage extends React.Component {
         if (error.status_code === 404 || error.status_code === 405) {
           this.props.history.push("/");
         }
-      }
-    );
-  };
-
-  fetchModel = (page) => {
-    this.context.api
-      .getUserModels(this.state.userId, this.state.pageLimit, page)
-      .then(
-        (result) => {
-          const isEndOfPage =
-            (page + 1) * this.state.pageLimit >= (result.count || 0);
-          this.setState({
-            isEndOfUserModelsPage: isEndOfPage,
-            userModels: result.data || [],
-          });
-        },
-        (error) => {
-          console.log(error);
-        }
-      );
-  };
-
-  paginate = (state) => {
-    var isNext = state === "next";
-    var newUserModelsPage = isNext
-      ? this.state.userModelsPage + 1
-      : this.state.userModelsPage - 1;
-    this.setState(
-      {
-        userModelsPage: newUserModelsPage,
-      },
-      () => {
-        this.fetchModel(this.state.userModelsPage);
       }
     );
   };
@@ -122,12 +85,11 @@ class UserPage extends React.Component {
       this.setState(
         {
           user: {},
-          userModels: [],
         },
         () => {
-          this.props.location.hash === "#profile"
-            ? this.fetchUser()
-            : this.fetchModel(0);
+          if (this.props.location.hash === "#profile") {
+            this.fetchUser();
+          }
         }
       );
     }
@@ -355,83 +317,14 @@ class UserPage extends React.Component {
                 </>
               ) : null}
               {pageHash === "#models" ? (
-                <>
-                  <h1 className="my-4 pt-3 text-uppercase text-center">
-                    User Models
-                  </h1>
-                  <Col className="m-auto" lg={8}>
-                    <Card className="profile-card">
-                      <Card.Body>
-                        <Table className="mb-0">
-                          <thead className="blue-color border-bottom">
-                            <tr>
-                              <td>
-                                <b>Name</b>
-                              </td>
-                              <td>
-                                <b>Task</b>
-                              </td>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {!this.state.userModels.length ? (
-                              <tr>
-                                <td colSpan="3">
-                                  <div className="text-center">
-                                    No data found
-                                  </div>
-                                </td>
-                              </tr>
-                            ) : null}
-                            {this.state.userModels.map((model) => {
-                              return (
-                                <tr key={model.id}>
-                                  <td>
-                                    <Link to={`/models/${model.id}`}>
-                                      {model.name || "Unknown"}
-                                    </Link>
-                                  </td>
-                                  <td>
-                                    <TasksContext.Consumer>
-                                      {({ tasks }) => {
-                                        const task =
-                                          model &&
-                                          tasks.filter(
-                                            (e) => e.id === model.tid
-                                          );
-                                        return (
-                                          task &&
-                                          task.length &&
-                                          task[0].shortname
-                                        );
-                                      }}
-                                    </TasksContext.Consumer>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </Table>
-                      </Card.Body>
-                      <Card.Footer className="text-center">
-                        <Pagination className="mb-0 float-right" size="sm">
-                          <Pagination.Item
-                            disabled={!this.state.userModelsPage}
-                            onClick={() => this.paginate("prev")}
-                          >
-                            Previous
-                          </Pagination.Item>
-                          <Pagination.Item
-                            disabled={this.state.isEndOfUserModelsPage}
-                            onClick={() => this.paginate("next")}
-                          >
-                            Next
-                          </Pagination.Item>
-                        </Pagination>
-                      </Card.Footer>
-                    </Card>
-                  </Col>
-                </>
+                <ModelSubPage
+                  api={this.context.api}
+                  userId={this.state.userId}
+                  pageLimit={this.state.pageLimit}
+                  history={this.props.history}
+                  pageTitle={"User Models"}
+                  isSelfModelsTable={false}
+                />
               ) : null}
             </Container>
           </Col>

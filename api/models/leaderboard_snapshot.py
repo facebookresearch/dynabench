@@ -2,6 +2,7 @@ import datetime
 
 import sqlalchemy as db
 
+from common import helpers as util
 from models.user import User
 
 from .base import Base, BaseModel
@@ -51,3 +52,11 @@ class LeaderboardSnapshotModel(BaseModel):
             )
         except db.orm.exc.NoResultFound:
             return False
+
+    def getUserSnapshotsByUid(self, uid, limit=5, offset=0):
+        query_res = self.dbs.query(LeaderboardSnapshot).filter(
+            LeaderboardSnapshot.uid == uid
+        )
+        return query_res.limit(limit).offset(offset * limit), util.get_query_count(
+            query_res
+        )
