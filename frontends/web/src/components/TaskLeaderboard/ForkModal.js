@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useContext, useState } from "react";
 import UserContext from "../../containers/UserContext";
 import {
@@ -20,12 +20,16 @@ const ForkModal = (props) => {
     showForkModal,
     setShowForkModal,
   } = props;
+
+  const emptyNameValidationMsg = "Fork name cannot be empty.";
+
   const [leaderboardName, setLeaderboardName] = useState("");
   const [forkFormValidationMessage, setForkFormValidationMessage] = useState(
-    "Fork name cannot be empty."
+    emptyNameValidationMsg
   );
   const [forkCreatedSuccessfully, setForkCreatedSuccessfully] = useState(null);
   const [copySuccess, setCopySuccess] = useState("");
+  const [forkUrl, setForkUrl] = useState("");
 
   const createLeaderboardConfiguration = () => {
     const uriEncodedLeaderboardName = encodeURIComponent(
@@ -45,13 +49,10 @@ const ForkModal = (props) => {
       .then(
         () => {
           const forkUrl = new URL(window.location.href);
-          forkUrl.pathname = `/tasks/${taskCode}/leaderboard_configuration/${uriEncodedLeaderboardName}`;
-          props.history.replace({
-            pathname: forkUrl.pathname,
-            search: forkUrl.search,
-          });
+          forkUrl.pathname = `/tasks/${taskCode}/f/${uriEncodedLeaderboardName}`;
           setLeaderboardName("");
           setForkCreatedSuccessfully(true);
+          setForkUrl(forkUrl.toString());
         },
         (error) => {
           console.log(error);
@@ -72,13 +73,13 @@ const ForkModal = (props) => {
       );
   };
 
-  const resetModal = () => {
+  useEffect(() => {
     setLeaderboardName("");
-    setShowForkModal(false);
-    setForkFormValidationMessage("Fork name cannot be empty.");
+    setForkFormValidationMessage(emptyNameValidationMsg);
     setForkCreatedSuccessfully(null);
     setCopySuccess("");
-  };
+    setForkUrl("");
+  }, [showForkModal]);
 
   const copyToClipboard = () => {
     const from = document.getElementById("forkLink");
@@ -92,12 +93,22 @@ const ForkModal = (props) => {
   };
 
   return (
-    <Modal show={showForkModal} onHide={resetModal} centered={true}>
+    <Modal
+      show={showForkModal}
+      onHide={() => setShowForkModal(false)}
+      centered={true}
+    >
       <Modal.Header closeButton>
         <Modal.Title>Fork</Modal.Title>
       </Modal.Header>
       {forkCreatedSuccessfully === null ? (
         <Modal.Body>
+          <p>
+            Save the weights for metrics and datasets such that the
+            configuration can be shared with anyone using a link. This creates a
+            custom "fork" of the default leaderboard configuration.
+          </p>
+
           <p>Below are the weights you have chosen:</p>
           <Table>
             <thead>
@@ -110,7 +121,7 @@ const ForkModal = (props) => {
             <tbody>
               {metricWeights &&
                 metricWeights.map((metricWeightDatum) => (
-                  <tr>
+                  <tr key={metricWeightDatum.label}>
                     <td>Metric</td>
                     <td>{metricWeightDatum.label}</td>
                     <td>{metricWeightDatum.weight}</td>
@@ -121,7 +132,7 @@ const ForkModal = (props) => {
               </tr>
               {datasetWeights &&
                 datasetWeights.map((datasetWeightDatum) => (
-                  <tr>
+                  <tr key={datasetWeightDatum.name}>
                     <td>Dataset</td>
                     <td>{datasetWeightDatum.name}</td>
                     <td>{datasetWeightDatum.weight}</td>
@@ -129,6 +140,7 @@ const ForkModal = (props) => {
                 ))}
             </tbody>
           </Table>
+
           <p className="mt-4">
             Choose a name for your fork. The name will be URI encoded upon
             saving.
@@ -159,9 +171,9 @@ const ForkModal = (props) => {
         <Modal.Body>
           {forkCreatedSuccessfully ? (
             <div>
-              <p>Your fork is ready. Permanent link to your fork is:</p>
+              <p>{`Your fork is ready. Permanent link to your fork is:`}</p>
               <p className="text-break" id="forkLink">
-                {window.location.href}
+                {forkUrl}
               </p>
               <div className="flex text-center flex-column">
                 <Button variant="primary" onClick={copyToClipboard}>
@@ -179,9 +191,6 @@ const ForkModal = (props) => {
         </Modal.Body>
       )}
       <Modal.Footer>
-        <Button variant="secondary" onClick={resetModal}>
-          Close
-        </Button>
         {forkCreatedSuccessfully === null && (
           <Button
             disabled={forkFormValidationMessage.length !== 0}

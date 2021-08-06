@@ -19,6 +19,8 @@ test_config = {
     "eval_server_id": "unittest",
 }
 
+# TODO: we should use a diffent DB
+
 eval_config.eval_config.update(test_config)
 
 # Skips the code that check that the dataset are on S3 and in the DB

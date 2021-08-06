@@ -265,11 +265,6 @@ def get_top_leaderboard_tags(tid):
 @bottle.get("/tasks/<tid:int>/models/dynaboard")
 def get_dynaboard_info(tid):
 
-    tm = TaskModel()
-    t_dict = tm.getWithRoundAndMetricMetadata(tid)
-    ordered_metrics = t_dict["ordered_metrics"]
-    perf_metric_field_name = t_dict["perf_metric_field_name"]
-
     # defaults
     sort_by = "dynascore"
     sort_direction = "asc"
@@ -282,11 +277,7 @@ def get_dynaboard_info(tid):
     if "sort_direction" in query_dict:
         sort_direction = query_dict["sort_direction"][0]
 
-    if sort_direction == "asc":
-        reverse_sort = False
-    elif sort_direction == "desc":
-        reverse_sort = True
-    else:
+    if sort_direction != "asc" and sort_direction != "desc":
         bottle.abort(400, "unrecognized sort direction")
 
     if "offset" in query_dict:
@@ -309,6 +300,36 @@ def get_dynaboard_info(tid):
         ]
     else:
         bottle.abort(400, "missing dataset weight data")
+
+    return get_dynaboard_info_for_params(
+        tid,
+        ordered_metric_weights,
+        ordered_dataset_weights,
+        sort_by,
+        sort_direction,
+        limit,
+        offset,
+    )
+
+
+def get_dynaboard_info_for_params(
+    tid,
+    ordered_metric_weights,
+    ordered_dataset_weights,
+    sort_by,
+    sort_direction,
+    limit,
+    offset,
+):
+    if sort_direction == "asc":
+        reverse_sort = False
+    elif sort_direction == "desc":
+        reverse_sort = True
+
+    tm = TaskModel()
+    t_dict = tm.getWithRoundAndMetricMetadata(tid)
+    ordered_metrics = t_dict["ordered_metrics"]
+    perf_metric_field_name = t_dict["perf_metric_field_name"]
 
     ordered_metric_and_weight = [
         dict({"weight": weight}, **metric)
