@@ -3,10 +3,8 @@
 import logging
 
 from common.config import config
-from metrics.task_config import get_task_config_safe
 from models.dataset import DatasetModel
 from models.model import DeploymentStatusEnum, ModelModel
-from models.task import TaskModel
 from utils.computer import MetricsComputer
 from utils.evaluator import JobScheduler
 from utils.helpers import get_perturb_prefix, send_takedown_model_request
@@ -74,8 +72,10 @@ class Requester:
             self.scheduler.enqueue(model_id, dataset_name, perturb_prefix, dump=False)
             if not perturb_prefix:
                 dataset = self.datasets[dataset_name]
-                task_config = get_task_config_safe(dataset.task)
-                for prefix in task_config["delta_metrics"]:
+                delta_metrics = []
+                if dataset.task.delta_metrics:
+                    delta_metrics = dataset.task.delta_metrics.split("|")
+                for prefix in delta_metrics:
                     if dataset.dataset_available_on_s3(prefix):
                         self.scheduler.enqueue(
                             model_id, dataset_name, prefix, dump=False
@@ -106,8 +106,7 @@ class Requester:
         except RuntimeError as ex:
             logger.exception(ex)
         else:
-            t = TaskModel()
-            tid = t.getByTaskCode(self.datasets[original_dataset_name].task).id
+            tid = self.datasets[original_dataset_name].task.id
             if tid:
                 m = ModelModel()
                 models = m.getByTid(tid)

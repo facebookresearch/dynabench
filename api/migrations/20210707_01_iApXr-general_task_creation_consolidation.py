@@ -261,6 +261,18 @@ steps = [
         """UPDATE examples SET user_metadata_io=JSON_OBJECT("example explanation", example_explanation, "model explanation", model_explanation)"""
     ),
     step("ALTER TABLE examples ADD COLUMN model_metadata_io TEXT"),
+    step(
+        """UPDATE examples SET model_metadata_io=JSON_OBJECT("prob", JSON_OBJECT("entailed", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "contradictory", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'DK_NLI')))))"""
+    ),
+    step(
+        """UPDATE examples SET model_metadata_io=JSON_OBJECT("conf", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1))) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('VQA', 'VQA-VAL')))))"""
+    ),  # The 'QA' and 'UCL_QA' tasks never actually saved the model conf
+    step(
+        """UPDATE examples SET model_metadata_io=JSON_OBJECT("prob", JSON_OBJECT("not-hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)))) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
+    ),
+    step(
+        """UPDATE examples SET input_io=JSON_OBJECT("prob", JSON_OBJECT("negative", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "positive", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
+    ),
     step("ALTER TABLE tasks DROP shortname"),
     step("ALTER TABLE tasks DROP type"),
     step("ALTER TABLE tasks DROP owner_str"),
@@ -277,18 +289,3 @@ steps = [
     step("ALTER TABLE examples DROP example_explanation"),
     step("ALTER TABLE examples DROP model_explanation"),
 ]
-
-''' TODO
-step(
-    """UPDATE examples SET model_metadata_io=JSON_OBJECT("prob", JSON_OBJECT("entailed", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1), "contradictory", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1))) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'DK_NLI')))))"""
-),
-step(
-    """UPDATE examples SET model_metadata_io=JSON_OBJECT("conf", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1))) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('VQA', 'VQA-VAL')))))"""
-), # The 'QA' and 'UCL_QA' tasks never actually saved the model conf
-step(
-    """UPDATE examples SET model_metadata_io=JSON_OBJECT("prob", JSON_OBJECT("not-hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1), "hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1))) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
-),
-step(
-    """UPDATE examples SET input_io=JSON_OBJECT("prob", JSON_OBJECT("negative", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1), "positive", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1))) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
-),
-'''

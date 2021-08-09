@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 import boto3
 
 from eval_config import eval_config
-from metric_getters import get_delta_metrics, get_eval_metrics
+from metrics.metric_getters import get_delta_metrics, get_eval_metrics
 from models.dataset import AccessTypeEnum, DatasetModel
 from models.task import TaskModel
 from utils.helpers import (
@@ -90,16 +90,16 @@ class BaseDataset(ABC):
         return f"s3://{self.s3_bucket}/" + "/".join(parts)
 
     def _get_data_s3_path(self, perturb_prefix=None):
-        return get_data_s3_path(self.task_code, self.filename, perturb_prefix)
+        return get_data_s3_path(self.task.task_code, self.filename, perturb_prefix)
 
     def _get_data_s3_url(self, perturb_prefix=None):
         return self.s3_path(self._get_data_s3_path(perturb_prefix))
 
     def _get_output_s3_url_prefix(self, endpoint_name):
-        return self.s3_path("predictions", endpoint_name, self.task_code)
+        return self.s3_path("predictions", endpoint_name, self.task.task_code)
 
     def _get_raw_output_s3_url_prefix(self, endpoint_name):
-        return self.s3_path("predictions", endpoint_name, "raw", self.task_code)
+        return self.s3_path("predictions", endpoint_name, "raw", self.task.task_code)
 
     def dataset_available_on_s3(self, perturb_prefix=None) -> bool:
         path = self._get_data_s3_path(perturb_prefix)
@@ -107,7 +107,7 @@ class BaseDataset(ABC):
 
     def _register_dataset_in_db_and_eval(self, eval_config) -> bool:
         t = TaskModel()
-        task_id = t.getByTaskCode(self.task_code).id
+        task_id = t.getByTaskCode(self.task.task_code).id
         d = DatasetModel()
         if not d.getByName(self.name):  # avoid id increment for unsuccessful creation
             if d.create(
@@ -140,7 +140,7 @@ class BaseDataset(ABC):
     ) -> bool:
         """Submit an evaluation job"""
         logger.debug(
-            f"Will create transform job {job_name} with task: {self.task_code}"
+            f"Will create transform job {job_name} with task: {self.task.task_code}"
         )
         batch_transform_config = self.get_batch_transform_config(
             sagemaker_client, endpoint_name, job_name, perturb_prefix
@@ -211,9 +211,11 @@ class BaseDataset(ABC):
         return self._n_examples[perturb_prefix]
 
     def compute_job_metrics(self, job) -> tuple:
-        """Fetches the predictions for the given job, and compute the metrics (accuracy, ...).
+        """Fetches the predictions for the given job, and compute the metrics
+        (accuracy, ...).
 
-        This can be used by tasks to have a better control on how the metrics are computed.
+        This can be used by tasks to have a better control on how the metrics are
+        computed.
         """
         predictions = self.parse_outfile_and_upload(job)
         eval_metrics_dict = self.eval(predictions, perturb_prefix=job.perturb_prefix)

@@ -9,7 +9,6 @@ import boto3
 import botocore
 from dateutil.tz import tzlocal
 
-from metrics import get_task_config_safe
 from models.model import ModelModel
 from utils.helpers import (
     generate_job_name,
@@ -66,7 +65,7 @@ class JobScheduler:
         task = dataset.task
 
         if task not in self._clients[kind]:
-            region = get_task_config_safe(task)["aws_region"]
+            region = task.aws_region
             self._clients[kind][task] = boto3.client(
                 kind,
                 aws_access_key_id=self.config["aws_access_key_id"],
