@@ -166,9 +166,14 @@ export const TaskModelForkLeaderboard = taskModelLeaderboardCardWrapper(
             datasetIdToDataObj[d.id].weight = d.weight;
           }
         });
-        setWeightsCallback(
-          getOrderedWeightObjects(metricIdToDataObj, datasetIdToDataObj, task)
-        );
+        setWeightsCallback({
+          ...getOrderedWeightObjects(
+            metricIdToDataObj,
+            datasetIdToDataObj,
+            task
+          ),
+          description: result.desc,
+        });
       },
       (error) => {
         console.log(error);

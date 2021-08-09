@@ -7,6 +7,7 @@ import {
   Tooltip,
   OverlayTrigger,
   Modal,
+  Popover,
 } from "react-bootstrap";
 import UserContext from "../../containers/UserContext";
 import TaskModelLeaderboardTable from "./TaskModelLeaderboardTable";
@@ -57,6 +58,7 @@ const TaskModelLeaderboardCard = (props) => {
     props.getInitialWeights(task, context.api, (result) => {
       setMetrics(result.orderedMetricWeights);
       setDatasetWeights(result.orderedDatasetWeights);
+      setDescription(result.description);
     });
   }, [task]);
 
@@ -71,6 +73,7 @@ const TaskModelLeaderboardCard = (props) => {
   const [total, setTotal] = useState(0);
   const [showForkModal, setShowForkModal] = useState(false);
   const [showSnapshotModal, setShowSnapshotModal] = useState(false);
+  const [description, setDescription] = useState(null);
 
   // Runs on taskID update only, i.e. task change, initialize page to 0.
   useEffect(() => {
@@ -186,6 +189,25 @@ const TaskModelLeaderboardCard = (props) => {
         <h2 className="text-uppercase m-0 text-reset">
           {props.title || "Model Leaderboard"}
         </h2>
+        {description && description.length !== 0 && (
+          <OverlayTrigger
+            placement={"right"}
+            delay={{ show: 250, hide: 400 }}
+            overlay={
+              <Popover>
+                {<Popover.Content>{description}</Popover.Content>}
+              </Popover>
+            }
+          >
+            <div className="d-inline-block">
+              <i
+                style={{ lineHeight: "inherit" }}
+                className="fa fa-info-circle ml-1 align-middle"
+                aria-hidden="true"
+              />
+            </div>
+          </OverlayTrigger>
+        )}
         <div className="d-flex justify-content-end flex-fill">
           <ForkModal
             metricWeights={metrics}
