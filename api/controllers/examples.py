@@ -181,7 +181,9 @@ def update_example(credentials, eid):
                 .get(example.context.round.tid)
                 .verify_io(
                     all_user_io,
-                    data["model_wrong"] if data["model_wrong"] else example.model_wrong,
+                    data["model_wrong"]
+                    if ("model_wrong" in data)
+                    else example.model_wrong,
                 )
             ):
                 bottle.abort(403, "user_metadata_io is not properly formatted")

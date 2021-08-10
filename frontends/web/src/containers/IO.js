@@ -10,8 +10,10 @@ import { PieRechart } from "../components/Rechart";
 import { useState } from "react";
 import { TokenAnnotator } from "react-text-annotate";
 import AtomicImage from "./AtomicImage";
+import "./IO.css";
 
 const MultipleChoiceIO = ({
+  className,
   create,
   example_io,
   set_example_io,
@@ -25,11 +27,10 @@ const MultipleChoiceIO = ({
     setChoice(constructor_args.placeholder);
   }
   return (
-    <div>
+    <div className="mb-1 mt-1">
       {!create ? (
         <>
-          <strong>{name}:</strong>
-          <br />
+          <h6 className={"spaced-header " + className}>{name}:</h6>
           {example_io[name]}
         </>
       ) : (
@@ -58,6 +59,7 @@ const MultipleChoiceIO = ({
 };
 
 const GoalMessageMultipleChoiceIO = ({
+  className,
   create,
   example_io,
   set_example_io,
@@ -83,11 +85,10 @@ const GoalMessageMultipleChoiceIO = ({
     otherLabels.slice(0, otherLabels.length - 2).join(", ") +
     otherLabels.slice(otherLabels.length - 2, otherLabels.length).join(" or ");
   return (
-    <div>
+    <div className="mb-1 mt-1">
       {!create ? (
         <>
-          <strong>{name}:</strong>
-          <br />
+          <h6 className={"spaced-header " + className}>{name}:</h6>
           {example_io[name]}
         </>
       ) : (
@@ -121,6 +122,7 @@ const GoalMessageMultipleChoiceIO = ({
 };
 
 const StringIO = ({
+  className,
   create,
   example_io,
   set_example_io,
@@ -128,17 +130,16 @@ const StringIO = ({
   constructor_args,
 }) => {
   return (
-    <div>
+    <div className="mb-1 mt-1">
       {!create ? (
         <>
-          <strong>{name}:</strong>
-          <br />
+          <h6 className={"spaced-header " + className}>{name}:</h6>
           {example_io[name]}
         </>
       ) : (
         <>
           <FormControl
-            className="rounded-1 thick-border light-gray-bg"
+            className={"rounded-1 thick-border p-3 " + className}
             placeholder={constructor_args.placeholder}
             value={example_io[name] ? example_io[name] : ""}
             onChange={(event) => {
@@ -146,7 +147,6 @@ const StringIO = ({
               set_example_io(example_io);
             }}
             required={true}
-            as="textarea"
           />
         </>
       )}
@@ -155,6 +155,7 @@ const StringIO = ({
 };
 
 const ContextStringSelectionIO = ({
+  className,
   create,
   example_io,
   set_example_io,
@@ -167,11 +168,10 @@ const ContextStringSelectionIO = ({
     setSelectionInfo("");
   }
   return (
-    <div>
+    <div className="mb-1 mt-1">
       {!create ? (
         <>
-          <strong>{name} :</strong>
-          <br />
+          <h6 className={"spaced-header " + className}>{name}:</h6>
           {example_io[name]}
         </>
       ) : (
@@ -241,7 +241,7 @@ const ImageUrlIO = ({
   constructor_args,
 }) => {
   return (
-    <div>
+    <div className="mb-1 mt-1">
       <Badge variant="primary"> {name} </Badge>
       <br />
       <AtomicImage src={example_io[name]} />
@@ -250,6 +250,7 @@ const ImageUrlIO = ({
 };
 
 const IO = ({
+  className,
   create,
   example_io,
   set_example_io,
@@ -271,6 +272,7 @@ const IO = ({
     case "string":
       return (
         <StringIO
+          className={className}
           create={create}
           name={name}
           example_io={example_io}
@@ -281,6 +283,7 @@ const IO = ({
     case "multiple_choice":
       return (
         <MultipleChoiceIO
+          className={className}
           create={create}
           name={name}
           example_io={example_io}
@@ -291,6 +294,7 @@ const IO = ({
     case "goal_message_multiple_choice":
       return (
         <GoalMessageMultipleChoiceIO
+          className={className}
           create={create}
           name={name}
           example_io={example_io}
@@ -301,6 +305,7 @@ const IO = ({
     case "context_string_selection":
       return (
         <ContextStringSelectionIO
+          className={className}
           create={create}
           name={name}
           example_io={example_io}

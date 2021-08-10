@@ -168,6 +168,7 @@ class VerifyInterface extends React.Component {
             );
 
             const example_io = {};
+            const validator_io = {};
             const context_io = JSON.parse(result.context.context_io);
             for (const key in context_io) {
               example_io[key] = context_io[key];
@@ -179,13 +180,12 @@ class VerifyInterface extends React.Component {
             const user_output_io = JSON.parse(result.user_output_io);
             for (const key in user_output_io) {
               example_io[key] = user_output_io[key];
+              validator_io[key] = null;
             }
             const user_metadata_io = JSON.parse(result.user_metadata_io);
             for (const key in user_metadata_io) {
               example_io[key] = user_metadata_io[key];
             }
-
-            const validator_io = JSON.parse(JSON.stringify(example_io));
 
             this.setState({
               validator_io: validator_io,
@@ -322,15 +322,18 @@ class VerifyInterface extends React.Component {
           ![undefined, null].includes(this.state.example_io[io_obj.name])
       )
       .map((io_obj, _) => (
-        <IO
-          key={io_obj.name}
-          create={false}
-          name={io_obj.name}
-          example_io={this.state.example_io}
-          set_example_io={() => {}}
-          type={io_obj.type}
-          constructor_args={io_obj.constructor_args}
-        />
+        <div className="mb-3">
+          <IO
+            className="name-display-primary"
+            key={io_obj.name}
+            create={false}
+            name={io_obj.name}
+            example_io={this.state.example_io}
+            set_example_io={() => {}}
+            type={io_obj.type}
+            constructor_args={io_obj.constructor_args}
+          />
+        </div>
       ));
 
     const contextIO = this.state.context_io_def
@@ -340,6 +343,7 @@ class VerifyInterface extends React.Component {
       )
       .map((io_obj, _) => (
         <IO
+          className="name-display-primary"
           key={io_obj.name}
           create={false}
           name={io_obj.name}
@@ -357,6 +361,7 @@ class VerifyInterface extends React.Component {
       )
       .map((io_obj, _) => (
         <IO
+          className="user-input-secondary"
           key={io_obj.name}
           create={true}
           name={io_obj.name}
@@ -521,37 +526,34 @@ class VerifyInterface extends React.Component {
                       <Row>
                         <Col xs={12} md={7}>
                           {inputOutputUserMetadataIO}
-                          <br />
-                          <div className="mb-3">
-                            {this.state.example.example_explanation ? (
-                              <>
-                                <h6 className="text-uppercase dark-blue-color spaced-header">
-                                  Example explanation{" "}
-                                  <small>(why target label is correct)</small>
-                                </h6>
-                                <p>{this.state.example.example_explanation}</p>
-                              </>
-                            ) : (
-                              ""
-                            )}
-                            {this.state.example.model_explanation ? (
-                              <>
-                                <h6 className="text-uppercase dark-blue-color spaced-header">
-                                  Model explanation{" "}
-                                  <small>
-                                    (
-                                    {this.state.example.model_wrong
-                                      ? "why model was fooled"
-                                      : "how they tried to trick the model"}
-                                    )
-                                  </small>
-                                </h6>
-                                <p>{this.state.example.model_explanation}</p>
-                              </>
-                            ) : (
-                              ""
-                            )}
-                          </div>
+                          {this.state.example.example_explanation ? (
+                            <>
+                              <h6 className="text-uppercase dark-blue-color spaced-header">
+                                Example explanation{" "}
+                                <small>(why target label is correct)</small>
+                              </h6>
+                              <p>{this.state.example.example_explanation}</p>
+                            </>
+                          ) : (
+                            ""
+                          )}
+                          {this.state.example.model_explanation ? (
+                            <>
+                              <h6 className="text-uppercase dark-blue-color spaced-header">
+                                Model explanation{" "}
+                                <small>
+                                  (
+                                  {this.state.example.model_wrong
+                                    ? "why model was fooled"
+                                    : "how they tried to trick the model"}
+                                  )
+                                </small>
+                              </h6>
+                              <p>{this.state.example.model_explanation}</p>
+                            </>
+                          ) : (
+                            ""
+                          )}
                           <h6 className="text-uppercase dark-blue-color spaced-header">
                             Actions:
                           </h6>
@@ -585,7 +587,7 @@ class VerifyInterface extends React.Component {
                             </InputGroup>
                             {this.state.incorrectSelected ? (
                               <>
-                                <b>Enter the correct output(s)</b>
+                                <b>Enter the correct output</b>
                                 {validatorOutputIO}
                               </>
                             ) : (

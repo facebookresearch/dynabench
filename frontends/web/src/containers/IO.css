@@ -1,0 +1,9 @@
+.user-input-primary {
+    background-color: #f0f2f5;
+    height: auto;
+}
+
+.name-display-primary {
+    text-transform: uppercase;
+    color: #005798;
+}

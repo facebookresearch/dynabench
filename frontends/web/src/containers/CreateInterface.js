@@ -182,6 +182,7 @@ class ResponseInfo extends React.Component {
 
     const userInput = this.props.input_io_def.map((io_obj, _) => (
       <IO
+        className="name-display-secondary"
         key={io_obj.name}
         create={false}
         name={io_obj.name}
@@ -194,6 +195,7 @@ class ResponseInfo extends React.Component {
 
     const userOutput = this.props.output_io_def.map((io_obj, _) => (
       <IO
+        className="name-display-secondary"
         key={io_obj.name}
         create={false}
         name={io_obj.name}
@@ -206,6 +208,7 @@ class ResponseInfo extends React.Component {
 
     const modelOutput = this.props.output_io_def.map((io_obj, _) => (
       <IO
+        className="name-display-secondary"
         key={io_obj.name}
         create={false}
         name={io_obj.name}
@@ -218,6 +221,7 @@ class ResponseInfo extends React.Component {
 
     const modelMetadata = this.props.model_metadata_io_def.map((io_obj, _) => (
       <IO
+        className="name-display-secondary"
         key={io_obj.name}
         create={false}
         name={io_obj.name}
@@ -233,6 +237,7 @@ class ResponseInfo extends React.Component {
       : this.props.user_metadata_model_correct_io_def
     ).map((io_obj, _) => (
       <IO
+        className="user-input-secondary"
         key={io_obj.name}
         create={true}
         name={io_obj.name}
@@ -249,11 +254,15 @@ class ResponseInfo extends React.Component {
 
     const submissionResults = (
       <Row>
-        <Col>The model predicted </Col>
+        <Col>
+          <nobr>The model predicted</nobr>
+        </Col>
         <Col>
           <strong>{modelOutput}</strong>
         </Col>
-        <Col>and you say</Col>
+        <Col>
+          <nobr>and you say</nobr>
+        </Col>
         <Col>
           <strong>{userOutput}</strong>
         </Col>
@@ -266,21 +275,18 @@ class ResponseInfo extends React.Component {
           this.state.model_wrong !== null ? (
             <div className="mt-3">
               <span>Optionally, enter more info for your example:</span>
-              {this.state.exampleUpdated ? (
-                <span style={{ float: "right" }}> Saved! </span>
-              ) : (
-                <button
-                  onClick={() => {
-                    this.updateUserMetadataIO();
-                    this.setState({ exampleUpdated: true });
-                  }}
-                  type="button"
-                  style={{ float: "right" }}
-                  className="btn btn-light btn-sm"
-                >
-                  Save Info
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  this.updateUserMetadataIO();
+                  this.setState({ exampleUpdated: true });
+                }}
+                type="button"
+                style={{ float: "right", margin: "5px" }}
+                className="btn btn-outline-primary btn-sm "
+                disabled={this.state.exampleUpdated}
+              >
+                {this.state.exampleUpdated ? "Saved!" : "Save Info"}
+              </button>
               {userMetadata}
             </div>
           ) : (
@@ -293,6 +299,7 @@ class ResponseInfo extends React.Component {
     );
 
     var title = null;
+    var modelCorrectQuestion = null;
     if (this.props.obj.retracted) {
       classNames += " response-warning";
       userFeedback = null;
@@ -312,25 +319,26 @@ class ResponseInfo extends React.Component {
     } else {
       if (this.state.model_wrong === null) {
         classNames += " light-gray-bg";
-        title = (
+        modelCorrectQuestion = (
           <span>
-            <strong>Is the model also correct?</strong>{" "}
+            <strong>Is the model correct?</strong>
+            <br />
             <div className="btn-group" role="group" aria-label="model wrong">
               <button
                 data-index={this.props.index}
                 onClick={() => this.updateModelWrong(false)}
                 type="button"
-                className="btn btn-primary btn-sm"
+                className="btn btn-outline-primary btn-sm"
               >
-                Yes
+                Correct
               </button>
               <button
                 data-index={this.props.index}
                 onClick={() => this.updateModelWrong(true)}
                 type="button"
-                className="btn btn-primary btn-sm"
+                className="btn btn-outline-primary btn-sm"
               >
-                No
+                Incorrect
               </button>
             </div>
           </span>
@@ -360,12 +368,13 @@ class ResponseInfo extends React.Component {
           <Row>
             <Col xs={12} md={7}>
               <div className="mb-3">{title}</div>
-              <div className="mb-3">{userInput}</div>
-              <small>
-                {submissionResults}
-                {userFeedback}
-                {sandboxContent}
-              </small>
+              <div className="mb-3">
+                <strong>{userInput}</strong>
+              </div>
+              {submissionResults}
+              {userFeedback}
+              {modelCorrectQuestion}
+              {sandboxContent}
             </Col>
             <Col xs={12} md={5}>
               {modelMetadata}
@@ -492,7 +501,7 @@ class CreateInterface extends React.Component {
             this.setState({
               randomTargetModel: randomTargetModel,
               context: result,
-              content: [{ cls: "context" }],
+              content: [],
               submitDisabled: false,
               refreshDisabled: false,
               example_io: example_io,
@@ -916,27 +925,25 @@ class CreateInterface extends React.Component {
 
   render() {
     const responseContent = this.state.content
-      .map((item, index) =>
-        item.cls === "context" ? undefined : (
-          <ResponseInfo
-            input_io_def={this.state.input_io_def}
-            output_io_def={this.state.output_io_def}
-            context_io_def={this.state.context_io_def}
-            model_metadata_io_def={this.state.model_metadata_io_def}
-            user_metadata_model_wrong_io_def={
-              this.state.user_metadata_model_wrong_io_def
-            }
-            user_metadata_model_correct_io_def={
-              this.state.user_metadata_model_correct_io_def
-            }
-            key={index}
-            index={index}
-            exampleId={this.state.mapKeyToExampleId[index + 1]}
-            obj={item}
-            content={this.state.content}
-          />
-        )
-      )
+      .map((item, index) => (
+        <ResponseInfo
+          input_io_def={this.state.input_io_def}
+          output_io_def={this.state.output_io_def}
+          context_io_def={this.state.context_io_def}
+          model_metadata_io_def={this.state.model_metadata_io_def}
+          user_metadata_model_wrong_io_def={
+            this.state.user_metadata_model_wrong_io_def
+          }
+          user_metadata_model_correct_io_def={
+            this.state.user_metadata_model_correct_io_def
+          }
+          key={index}
+          index={index}
+          exampleId={this.state.mapKeyToExampleId[index + 1]}
+          obj={item}
+          content={this.state.content}
+        />
+      ))
       .filter((item) => item !== undefined);
     // sentinel value of undefined filtered out after to preserve index values
     const rounds = (this.state.task.round && this.state.task.cur_round) || 0;
@@ -1001,6 +1008,7 @@ class CreateInterface extends React.Component {
           }
         >
           <IO
+            className="user-input-primary"
             key={io_obj.name}
             create={true}
             name={io_obj.name}
@@ -1023,6 +1031,9 @@ class CreateInterface extends React.Component {
     const selectableContexts = contextStringSelectionGroup.map(
       (io_obj) => io_obj.constructor_args.reference_key
     );
+    const tooTallForResponseInfoPlaceholder = this.state.context_io_def
+      .map((io_obj) => io_obj.type)
+      .includes("image_url");
     const contextIO = this.state.context_io_def
       .concat(contextStringSelectionGroup)
       .filter((io_obj, _) => !selectableContexts.includes(io_obj.name))
@@ -1036,6 +1047,11 @@ class CreateInterface extends React.Component {
           }
         >
           <IO
+            className={
+              io_obj.type === "context_string_selection"
+                ? "user-input-primary"
+                : "name-display-primary"
+            }
             key={io_obj.name}
             create={io_obj.type === "context_string_selection" ? true : false}
             name={io_obj.name}
@@ -1066,6 +1082,7 @@ class CreateInterface extends React.Component {
           }
         >
           <IO
+            className="user-input-primary"
             key={io_obj.name}
             create={true}
             name={io_obj.name}
@@ -1193,7 +1210,7 @@ class CreateInterface extends React.Component {
               <Card.Body
                 className="overflow-auto pt-2"
                 style={{
-                  height: 385,
+                  height: tooTallForResponseInfoPlaceholder ? "auto" : 385,
                 }}
                 ref={this.chatContainerRef}
               >
