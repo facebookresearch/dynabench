@@ -52,13 +52,7 @@ const TaskModelLeaderboardPage = (props) => {
     fetchTask(context.api);
 
     return () => {};
-  }, [
-    context.api,
-    props.history,
-    props.location.pathname,
-    props.location.search,
-    taskCode,
-  ]);
+  }, [context.api, taskCode]);
 
   if (isLoading || !task) {
     return (
@@ -79,7 +73,11 @@ const TaskModelLeaderboardPage = (props) => {
           <TaskModelDefaultLeaderboard
             task={task}
             taskCode={taskCode}
-            isStandalone={true}
+            disableToggleSort={true}
+            disableAdjustWeights={true}
+            disableForkAndSnapshot={true}
+            disablePagination={true}
+            title={"Model Leaderboard - " + task.name}
           />
         </a>
       </Row>

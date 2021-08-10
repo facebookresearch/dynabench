@@ -17,25 +17,18 @@ import {
   Table,
   Tooltip,
   OverlayTrigger,
-  Pagination,
-  DropdownButton,
-  Dropdown,
-  Modal,
-  Form,
-  InputGroup,
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import { Formik } from "formik";
 import UserContext from "./UserContext";
 import { LineRechart } from "../components/Rechart";
-import { Avatar } from "../components/Avatar/Avatar";
 import Moment from "react-moment";
-import DragAndDrop from "../components/DragAndDrop/DragAndDrop";
 import { OverlayProvider, Annotation, OverlayContext } from "./Overlay";
 import {
   TaskModelDefaultLeaderboard,
   TaskModelForkLeaderboard,
 } from "../components/TaskLeaderboard/TaskModelLeaderboardCardWrapper";
+import UserLeaderboardCard from "../components/TaskPageComponents/UserLeaderboardCard";
+import TaskOwnerConsole from "../components/TaskPageComponents/TaskOwnerConsole";
 
 const chartSizes = {
   xs: { fontSize: 10 },
@@ -238,123 +231,6 @@ const OverallTaskStats = (props) => {
   );
 };
 
-const UserLeaderBoard = (props) => {
-  const rounds = (props.round && props.cur_round) || 0;
-  const roundNavs = [];
-  for (let i = rounds; i >= 0; i--) {
-    let cur = "";
-    let active = false;
-    if (i === props.cur_round) {
-      cur = " (active)";
-    }
-    const dropDownRound = i === 0 ? "overall" : i;
-    if (dropDownRound === props.displayRound) {
-      active = true;
-    }
-    roundNavs.push(
-      <Dropdown.Item
-        key={dropDownRound}
-        index={dropDownRound}
-        onClick={() => props.fetchOverallUserLeaderboard(0, dropDownRound)}
-        active={active}
-      >
-        {dropDownRound === "overall" ? "Overall" : "Round " + dropDownRound}
-        {cur}
-      </Dropdown.Item>
-    );
-    if (i === props.cur_round) {
-      roundNavs.push(<Dropdown.Divider key={"div" + i} />);
-    }
-  }
-  return (
-    <Annotation
-      placement="left"
-      tooltip="This shows how well our users did on this task. This does not include non-Dynabench users such as Mechanical Turkers."
-    >
-      <Card className="my-4">
-        <Card.Header className="light-gray-bg d-flex align-items-center">
-          <h2 className="text-uppercase m-0 text-reset">User Leaderboard</h2>
-          <div className="d-flex justify-content-end flex-fill">
-            <OverlayTrigger
-              placement="top"
-              overlay={
-                <Tooltip id="tip-user-round-selection">Switch Round</Tooltip>
-              }
-            >
-              <DropdownButton
-                variant="light"
-                className="border-0 blue-color font-weight-bold light-gray-bg"
-                style={{ marginRight: 10 }}
-                id="dropdown-basic-button"
-                title={
-                  props.displayRound === "overall"
-                    ? "Overall"
-                    : "Round " +
-                      props.displayRound +
-                      (props.cur_round === props.displayRound
-                        ? " (active)"
-                        : "")
-                }
-              >
-                {roundNavs}
-              </DropdownButton>
-            </OverlayTrigger>
-          </div>
-        </Card.Header>
-        <Table hover className="mb-0">
-          <thead>
-            <tr>
-              <th>User</th>
-              <th className="text-right">Verified MER</th>
-              <th className="text-right pr-4">Totals</th>
-            </tr>
-          </thead>
-          <tbody>
-            {props.data.map((data) => {
-              return (
-                <tr key={data.uid}>
-                  <td>
-                    <Avatar
-                      avatar_url={data.avatar_url}
-                      username={data.username}
-                      isThumbnail={true}
-                      theme="blue"
-                    />
-                    <Link
-                      to={`/users/${data.uid}#profile`}
-                      className="btn-link"
-                    >
-                      {data.username}
-                    </Link>
-                  </td>
-                  <td className="text-right">{data.MER}%</td>
-                  <td className="text-right pr-4">{data.total}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </Table>
-        <Card.Footer className="text-center">
-          <Pagination className="mb-0 float-right" size="sm">
-            <Pagination.Item
-              disabled={!props.userLeaderBoardPage}
-              onClick={() => props.paginate("previous", props.displayRound)}
-            >
-              Previous
-            </Pagination.Item>
-            <Pagination.Item
-              disabled={props.isEndOfUserLeaderPage}
-              onClick={() => props.paginate("next", props.displayRound)}
-            >
-              Next
-            </Pagination.Item>
-          </Pagination>
-        </Card.Footer>
-      </Card>
-    </Annotation>
-  );
-};
-
 class RoundDescription extends React.Component {
   constructor(props) {
     super(props);
@@ -407,20 +283,13 @@ class TaskPage extends React.Component {
       taskCode: props.match.params.taskCode,
       task: {},
       trendScore: [],
-      userLeaderBoardData: [],
-      userLeaderBoardPage: 0,
-      isEndOfUserLeaderPage: true,
-      pageLimit: 7,
-      validateNonFooling: false,
       numMatchingValidations: 3,
     };
 
-    this.exportAllTaskData = this.exportAllTaskData.bind(this);
-    this.getSavedTaskSettings = this.getSavedTaskSettings.bind(this);
-    this.exportCurrentRoundData = this.exportCurrentRoundData.bind(this);
+    this.getCurrentTaskData = this.getCurrentTaskData.bind(this);
   }
 
-  componentDidMount() {
+  getCurrentTaskData() {
     this.setState({ taskCode: this.props.match.params.taskCode }, function () {
       this.context.api.getTask(this.state.taskCode).then(
         (result) => {
@@ -428,7 +297,6 @@ class TaskPage extends React.Component {
             {
               taskCode: result.task_code,
               task: result,
-              displayRound: "overall",
               round: result.round,
             },
             function () {
@@ -441,7 +309,7 @@ class TaskPage extends React.Component {
                   search: this.props.location.search,
                 });
               }
-              this.refreshData();
+              this.fetchTrend();
             }
           );
         },
@@ -455,87 +323,14 @@ class TaskPage extends React.Component {
     });
   }
 
+  componentDidMount() {
+    this.getCurrentTaskData();
+  }
+
   componentDidUpdate(prevProps) {
     if (this.props.match.params.taskCode !== this.state.taskCode) {
-      this.setState(
-        { taskCode: this.props.match.params.taskCode },
-        function () {
-          this.context.api.getTask(this.state.taskCode).then(
-            (result) => {
-              this.setState(
-                {
-                  taskCode: result.task_code,
-                  task: result,
-                  displayRound: "overall",
-                  round: result.round,
-                },
-                function () {
-                  this.refreshData();
-                }
-              );
-            },
-            (error) => {
-              console.log(error);
-              if (error.status_code === 404 || error.status_code === 405) {
-                this.props.history.push("/");
-              }
-            }
-          );
-        }
-      );
+      this.getCurrentTaskData();
     }
-  }
-
-  getSavedTaskSettings() {
-    if (this.state.task.settings_json) {
-      const settings_json = JSON.parse(this.state.task.settings_json);
-      this.setState({
-        validateNonFooling: settings_json.hasOwnProperty("validate_non_fooling")
-          ? settings_json["validate_non_fooling"]
-          : false,
-      });
-      this.setState({
-        numMatchingValidations: settings_json.hasOwnProperty(
-          "num_matching_validations"
-        )
-          ? settings_json["num_matching_validations"]
-          : 3,
-      });
-    } else {
-      this.setState({
-        validateNonFooling: false,
-        numMatchingValidations: 3,
-      });
-    }
-  }
-
-  refreshData() {
-    this.setState(
-      {
-        userLeaderBoardPage: 0,
-        isEndOfUserLeaderPage: true,
-        displayRound: "overall",
-      },
-      () => {
-        this.fetchOverallUserLeaderboard(
-          this.state.userLeaderBoardPage,
-          this.state.displayRound
-        );
-        this.getSavedTaskSettings();
-        this.fetchTrend();
-      }
-    );
-  }
-
-  exportAllTaskData() {
-    return this.context.api.exportData(this.state.task.id);
-  }
-
-  exportCurrentRoundData() {
-    return this.context.api.exportData(
-      this.state.task.id,
-      this.state.task.cur_round
-    );
   }
 
   fetchTrend() {
@@ -550,82 +345,6 @@ class TaskPage extends React.Component {
       }
     );
   }
-
-  fetchOverallUserLeaderboard = (page, displayRound) => {
-    this.context.api
-      .getOverallUserLeaderboard(
-        this.state.task.id,
-        displayRound,
-        this.state.pageLimit,
-        page
-      )
-      .then(
-        (result) => {
-          const isEndOfPage = (page + 1) * this.state.pageLimit >= result.count;
-          this.setState({
-            isEndOfUserLeaderPage: isEndOfPage,
-            userLeaderBoardData: result.data,
-            displayRound: displayRound,
-            userLeaderBoardPage: page,
-          });
-        },
-        (error) => {
-          console.log(error);
-        }
-      );
-  };
-
-  escapeRegExp = (string) => {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  };
-
-  handleValidation = (values) => {
-    const errors = {};
-    let allowedTaskExtension = ".jsonl";
-    const allowedExtensions = new RegExp(
-      this.escapeRegExp(allowedTaskExtension) + "$",
-      "i"
-    );
-
-    if (!values.file) {
-      errors.file = "Required";
-      values.result = "";
-    } else if (!allowedExtensions.exec(values.file.name)) {
-      errors.file =
-        "Invalid file type - Please upload in " +
-        allowedTaskExtension +
-        " format";
-      values.result = "";
-    }
-    return errors;
-  };
-
-  handleSubmit = (values, { setFieldValue, setSubmitting }) => {
-    const reqObj = {
-      taskId: this.state.task.id,
-      file: values.file,
-    };
-    this.context.api.submitContexts(reqObj).then(
-      (result) => {
-        setSubmitting(false);
-        setFieldValue("file", null, false);
-        setFieldValue("result", "Submitted!", false);
-      },
-      (error) => {
-        setSubmitting(false);
-        setFieldValue("result", "Failed To Submit. Plese try again");
-        console.log(error);
-      }
-    );
-  };
-
-  userLeaderBoardPaginate = (state, round) => {
-    const page =
-      state === "next"
-        ? this.state.userLeaderBoardPage + 1
-        : this.state.userLeaderBoardPage - 1;
-    this.fetchOverallUserLeaderboard(page, round);
-  };
 
   render() {
     const pwc_logo = (
@@ -690,213 +409,8 @@ class TaskPage extends React.Component {
                       )}
                     </OverlayContext.Consumer>
                   </Annotation>
-                  {this.context.api.isTaskOwner(
-                    this.context.user,
-                    this.state.task.id
-                  ) || this.context.user.admin ? (
-                    <Annotation
-                      placement="top"
-                      tooltip="Click to adjust your owner task settings"
-                    >
-                      <button
-                        type="button"
-                        className="btn btn-outline-primary btn-sm btn-help-info"
-                        onClick={() => {
-                          this.setState({ showTaskOwnerSettingsModal: true });
-                        }}
-                      >
-                        <i className="fa fa-cog"></i>
-                      </button>
-                    </Annotation>
-                  ) : (
-                    ""
-                  )}
+                  <TaskOwnerConsole task={this.state.task} />
                 </ButtonGroup>
-                <Modal
-                  show={this.state.showTaskOwnerSettingsModal}
-                  onHide={() =>
-                    this.setState({ showTaskOwnerSettingsModal: false })
-                  }
-                >
-                  <Modal.Header closeButton>
-                    <Modal.Title>Task Owner Console</Modal.Title>
-                  </Modal.Header>
-                  <Modal.Body>
-                    <Modal.Title style={{ fontSize: 20 }}>Settings</Modal.Title>
-                    <hr />
-                    Validate non-model-fooling examples? &nbsp;
-                    <span className="float-right">
-                      <Form.Check
-                        checked={this.state.validateNonFooling}
-                        onChange={() => {
-                          this.setState(
-                            {
-                              validateNonFooling: !this.state
-                                .validateNonFooling,
-                            },
-                            () =>
-                              this.context.api.updateTaskSettings(
-                                this.state.task.id,
-                                {
-                                  validate_non_fooling: this.state
-                                    .validateNonFooling,
-                                  num_matching_validations: this.state
-                                    .numMatchingValidations,
-                                }
-                              )
-                          );
-                        }}
-                      />
-                    </span>
-                    <hr />
-                    Number of correct, incorrect, <br /> or flagged marks when
-                    an example
-                    <span className="float-right">
-                      {this.state.numMatchingValidations}
-                      <span className="float-right">
-                        <Form.Control
-                          className="p-1"
-                          type="range"
-                          min="1"
-                          max="10"
-                          step="1"
-                          defaultValue={this.state.numMatchingValidations}
-                          onChange={(e) => {
-                            this.setState(
-                              {
-                                numMatchingValidations: parseInt(
-                                  e.target.value
-                                ),
-                              },
-                              () =>
-                                this.context.api.updateTaskSettings(
-                                  this.state.task.id,
-                                  {
-                                    validate_non_fooling: this.state
-                                      .validateNonFooling,
-                                    num_matching_validations: this.state
-                                      .numMatchingValidations,
-                                  }
-                                )
-                            );
-                          }}
-                        />
-                      </span>
-                    </span>
-                    <br /> is no longer shown to validators?
-                    <hr />
-                    <Modal.Title style={{ fontSize: 20 }}>Actions</Modal.Title>
-                    <hr />
-                    <span className="float-right">
-                      <DropdownButton
-                        className="border-0 blue-color font-weight-bold p-1"
-                        id="dropdown-basic-button"
-                        title="Export Data"
-                      >
-                        <Dropdown.Item onClick={this.exportCurrentRoundData}>
-                          Export current round
-                        </Dropdown.Item>
-                        <Dropdown.Item onClick={this.exportAllTaskData}>
-                          Export all
-                        </Dropdown.Item>
-                      </DropdownButton>
-                    </span>
-                    Click here to export data from the <br />
-                    current round or all rounds
-                    <hr />
-                    Add new contexts to the current round by uploading them
-                    here, as a jsonl where each datum has three fields: <br />{" "}
-                    <br />
-                    <b>context_io</b>: a json dictionary with a key for each
-                    context io component name, along with the corresponding
-                    values <br />
-                    <b>tag</b>: a string that associates this context with a set
-                    of other contexts <br />
-                    <b>metadata</b>: a dictionary in json format representing
-                    any other data that is useful to you <br /> <br />
-                    <Formik
-                      initialValues={{
-                        file: null,
-                        result: "",
-                      }}
-                      validate={this.handleValidation}
-                      onSubmit={this.handleSubmit}
-                    >
-                      {({
-                        values,
-                        errors,
-                        handleChange,
-                        setFieldValue,
-                        handleSubmit,
-                        isSubmitting,
-                        setValues,
-                      }) => (
-                        <form
-                          onSubmit={handleSubmit}
-                          encType="multipart/form-data"
-                        >
-                          <Container>
-                            <Form.Group>
-                              {values.file ? (
-                                <div className="UploadResult">
-                                  <Card>
-                                    <Card.Body>
-                                      <Container>
-                                        <Row>
-                                          <Col md={10}>{values.file.name}</Col>
-                                          <Col md={2}>
-                                            <Button
-                                              variant="outline-danger"
-                                              size="sm"
-                                              onClick={(event) => {
-                                                setFieldValue("result", "");
-                                                setFieldValue("file", null);
-                                              }}
-                                            >
-                                              Delete
-                                            </Button>
-                                          </Col>
-                                        </Row>
-                                      </Container>
-                                    </Card.Body>
-                                  </Card>
-                                </div>
-                              ) : (
-                                <DragAndDrop
-                                  handleChange={(event) => {
-                                    setValues({
-                                      ...values,
-                                      file: event.currentTarget.files[0],
-                                      result: "",
-                                    });
-                                  }}
-                                  required={errors.file}
-                                  name="file"
-                                >
-                                  Drag
-                                </DragAndDrop>
-                              )}
-                              <small className="form-text text-muted">
-                                {errors.file}
-                                {values.result}
-                              </small>
-                              <InputGroup>
-                                <Button
-                                  type="submit"
-                                  variant="primary"
-                                  className="fadeIn third submitBtn button-ellipse"
-                                  disabled={isSubmitting}
-                                >
-                                  Upload Contexts
-                                </Button>
-                              </InputGroup>
-                            </Form.Group>
-                          </Container>
-                        </form>
-                      )}
-                    </Formik>
-                  </Modal.Body>
-                </Modal>
               </div>
             </Col>
           </Row>
@@ -955,15 +469,10 @@ class TaskPage extends React.Component {
           )}
           <Row>
             <Col xs={12} md={6}>
-              <UserLeaderBoard
-                fetchOverallUserLeaderboard={this.fetchOverallUserLeaderboard}
+              <UserLeaderboardCard
+                taskId={this.state.taskId}
                 round={this.state.task.round}
                 cur_round={this.state.task.cur_round}
-                data={this.state.userLeaderBoardData}
-                paginate={this.userLeaderBoardPaginate}
-                displayRound={this.state.displayRound}
-                isEndOfUserLeaderPage={this.state.isEndOfUserLeaderPage}
-                userLeaderBoardPage={this.state.userLeaderBoardPage}
               />
             </Col>
             <Col xs={12} md={6}>

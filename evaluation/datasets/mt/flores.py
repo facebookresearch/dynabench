@@ -118,20 +118,21 @@ class Flores101Base(MTBase):
         in per direction results.
         So we evaluate each direction independently.
 
-        Note: this implementation doesn't support pertubation
+        Note: this implementation doesn't support pertubation, but it could/should
+        be added.
         """
+        assert not job.perturb_prefix, "Flores tasks don't support pertubation"
         if not self.shard_by_lang:
-            return super().compute_job_metrics(job)
-
-        assert not job.perturb_prefix, "FloresFull task doesn't support pertubation"
-
-        perf_by_tag: List[dict] = []
-        # TODO: parallelize this
-        # Multiprocessing doesn't work out of the box because of how eval server is
-        # launched.
-        for src in self.languages[:3]:
-            src_perfs = self.eval_src_lang(job, src)
-            perf_by_tag.extend(src_perfs)
+            # the default algorithm computes a bleu over all sentences,
+            # where we want an average bleu across all directions
+            eval_metrics, _ = super().compute_job_metrics(job)
+            metadata_json = json.loads(eval_metrics["metadata_json"])
+            perf_by_tag: List[dict] = metadata_json["perf_by_tag"]
+        else:
+            perf_by_tag = []
+            for src in self.languages:
+                src_perfs = self.eval_src_lang(job, src)
+                perf_by_tag.extend(src_perfs)
 
         perf_metric = self.task.perf_metric
         return compute_averages(perf_metric, perf_by_tag), {}
