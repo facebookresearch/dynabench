@@ -24,16 +24,40 @@ const ForkModal = (props) => {
   const emptyNameValidationMsg = "Fork name cannot be empty.";
 
   const [leaderboardName, setLeaderboardName] = useState("");
-  const [forkFormValidationMessage, setForkFormValidationMessage] = useState(
-    emptyNameValidationMsg
-  );
+  const [forkFormValidationMessage, setForkFormValidationMessage] =
+    useState("");
   const [forkCreatedSuccessfully, setForkCreatedSuccessfully] = useState(null);
   const [copySuccess, setCopySuccess] = useState("");
   const [forkUrl, setForkUrl] = useState("");
+  const [description, setDescription] = useState("");
 
   const createLeaderboardConfiguration = () => {
+    const trimmedLeaderboardName = leaderboardName.trim();
+    if (trimmedLeaderboardName.length === 0) {
+      setForkFormValidationMessage(emptyNameValidationMsg);
+      return;
+    }
+
+    // We do this to ensure uniqueness between snapshot id (integer) and fork name (string).
+    if (trimmedLeaderboardName.match(/^[0-9]+$/) != null) {
+      setForkFormValidationMessage("Fork name cannot contain digits only.");
+      return;
+    }
+
+    // We do this to avoid collision between existing page - tasks/<task_code>/create, tasks/<task_code>/verify, etc
+    if (
+      ["create", "validate", "models", "round"].indexOf(
+        trimmedLeaderboardName
+      ) !== -1
+    ) {
+      setForkFormValidationMessage(
+        "You cannot use this name. Please try a different one."
+      );
+      return;
+    }
+
     const uriEncodedLeaderboardName = encodeURIComponent(
-      leaderboardName.trim()
+      trimmedLeaderboardName
     );
     const configuration_json = JSON.stringify({
       metricWeights: metricWeights,
@@ -44,12 +68,13 @@ const ForkModal = (props) => {
       .createLeaderboardConfiguration(
         taskId,
         uriEncodedLeaderboardName,
-        configuration_json
+        configuration_json,
+        description
       )
       .then(
         () => {
           const forkUrl = new URL(window.location.href);
-          forkUrl.pathname = `/tasks/${taskCode}/f/${uriEncodedLeaderboardName}`;
+          forkUrl.pathname = `/tasks/${taskCode}/${uriEncodedLeaderboardName}`;
           setLeaderboardName("");
           setForkCreatedSuccessfully(true);
           setForkUrl(forkUrl.toString());
@@ -75,10 +100,11 @@ const ForkModal = (props) => {
 
   useEffect(() => {
     setLeaderboardName("");
-    setForkFormValidationMessage(emptyNameValidationMsg);
+    setForkFormValidationMessage("");
     setForkCreatedSuccessfully(null);
     setCopySuccess("");
     setForkUrl("");
+    setDescription("");
   }, [showForkModal]);
 
   const copyToClipboard = () => {
@@ -109,38 +135,6 @@ const ForkModal = (props) => {
             custom "fork" of the default leaderboard configuration.
           </p>
 
-          <p>Below are the weights you have chosen:</p>
-          <Table>
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Name</th>
-                <th>Weight</th>
-              </tr>
-            </thead>
-            <tbody>
-              {metricWeights &&
-                metricWeights.map((metricWeightDatum) => (
-                  <tr key={metricWeightDatum.label}>
-                    <td>Metric</td>
-                    <td>{metricWeightDatum.label}</td>
-                    <td>{metricWeightDatum.weight}</td>
-                  </tr>
-                ))}
-              <tr>
-                <td />
-              </tr>
-              {datasetWeights &&
-                datasetWeights.map((datasetWeightDatum) => (
-                  <tr key={datasetWeightDatum.name}>
-                    <td>Dataset</td>
-                    <td>{datasetWeightDatum.name}</td>
-                    <td>{datasetWeightDatum.weight}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </Table>
-
           <p className="mt-4">
             Choose a name for your fork. The name will be URI encoded upon
             saving.
@@ -153,9 +147,7 @@ const ForkModal = (props) => {
               onChange={(e) => {
                 const updatedLeaderboardName = e.target.value;
                 setLeaderboardName(updatedLeaderboardName);
-                if (updatedLeaderboardName.length === 0) {
-                  setForkFormValidationMessage("Fork name cannot be empty.");
-                } else {
+                if (updatedLeaderboardName.length !== 0) {
                   setForkFormValidationMessage("");
                 }
               }}
@@ -165,6 +157,18 @@ const ForkModal = (props) => {
             <Form.Control.Feedback className="px-3" type="invalid">
               {forkFormValidationMessage}
             </Form.Control.Feedback>
+          </InputGroup>
+          <p className="mt-4">Enter a description for your fork:</p>
+          <InputGroup>
+            <FormControl
+              className="mx-3 p-3 rounded-1 thick-border h-auto"
+              placeholder={""}
+              value={description}
+              onChange={(e) => {
+                setDescription(e.target.value);
+              }}
+              as="textarea"
+            />
           </InputGroup>
         </Modal.Body>
       ) : (

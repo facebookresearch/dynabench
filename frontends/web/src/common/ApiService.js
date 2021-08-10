@@ -550,12 +550,13 @@ export default class ApiService {
     });
   }
 
-  createLeaderboardConfiguration(tid, name, configuration_json) {
+  createLeaderboardConfiguration(tid, name, configuration_json, description) {
     return this.fetch(`${this.domain}/tasks/${tid}/leaderboard_configuration`, {
       method: "PUT",
       body: JSON.stringify({
         name: name,
         configuration_json: configuration_json,
+        description: description,
       }),
     });
   }
