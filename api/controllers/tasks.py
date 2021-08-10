@@ -522,7 +522,11 @@ def create_leaderboard_configuration(credentials, tid):
         bottle.abort(409, "A fork with the same name already exists for this task.")
 
     leaderboard_configuration = lcm.create(
-        tid, name, credentials["id"], data["configuration_json"]
+        tid,
+        name,
+        credentials["id"],
+        configuration_json=data["configuration_json"],
+        desc=data.get("description", None),
     )
     return util.json_encode(leaderboard_configuration)
 
