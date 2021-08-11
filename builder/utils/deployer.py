@@ -19,7 +19,6 @@ from sagemaker.predictor import Predictor
 from deploy_config import deploy_config
 from dynalab_cli.utils import SetupConfigHandler
 from utils.logging import logger
-from utils.task_config import get_task_config_safe
 
 
 class ModelDeployer:
@@ -30,8 +29,6 @@ class ModelDeployer:
         self.endpoint_name = model.endpoint_name
         self.repository_name = self.endpoint_name.lower()
         self.archive_name = f"archive.{self.endpoint_name}"
-        self.task_code = model.task.task_code
-        self.task_config = get_task_config_safe(self.task_code)
 
         self.rootp = tempfile.TemporaryDirectory(prefix=self.endpoint_name)
         self.root_dir = self.rootp.name
@@ -80,7 +77,7 @@ class ModelDeployer:
 
     def setup_sagemaker_env(self):
         env = {}
-        region = self.task_config["aws_region"]
+        region = self.model.task.aws_region
         session = boto3.Session(
             aws_access_key_id=deploy_config["aws_access_key_id"],
             aws_secret_access_key=deploy_config["aws_secret_access_key"],
@@ -192,7 +189,7 @@ class ModelDeployer:
 
         torchserve_config_file = os.path.join(self.root_dir, "config.properties")
         config = get_torchserve_config(
-            torchserve_config_file, self.task_code, self.task_config
+            torchserve_config_file, self.model.task.task_code, self.model.task.torchserve_config
         )
         Path(torchserve_config_file).write_text(config)
 
@@ -367,11 +364,11 @@ class ModelDeployer:
             enable_network_isolation=True,
         )
 
-        if self.task_config["create_endpoint"]:
+        if self.model.task.create_endpoint:
             logger.info(f"Creating model and endpoint for {self.name} on Sagemaker")
             torchserve_model.deploy(
-                instance_type=self.task_config["instance_type"],
-                initial_instance_count=self.task_config["instance_count"],
+                instance_type=self.model.task.instance_type,
+                initial_instance_count=self.model.task.instance_count,
                 endpoint_name=self.endpoint_name,
             )
             return f"{deploy_config['gateway_url']}?model={self.endpoint_name}"
@@ -419,7 +416,7 @@ class ModelDeployer:
                 status = "delayed"
             elif deployed:
                 status = (
-                    "deployed" if self.task_config["create_endpoint"] else "created"
+                    "deployed" if self.model.task.create_endpoint else "created"
                 )
             else:
                 status = "failed"
@@ -457,7 +454,7 @@ class ModelDeployer:
             else:  # if no s3_uri is specified, use the default path, may not really find it
                 self.env["s3_client"].delete_object(
                     Bucket=self.env["bucket_name"],
-                    Key=f"torchserve/models/{self.task_code}/{self.archive_name}.tar.gz",
+                    Key=f"torchserve/models/{self.model.task.task_code}/{self.archive_name}.tar.gz",
                 )
         except Exception as ex:
             logger.exception(
@@ -465,7 +462,7 @@ class ModelDeployer:
             )
 
     def use_gpu(self) -> bool:
-        return self.task_config["gpu"]
+        return self.model.task.gpu
 
 
 def docker_build_cmd(
@@ -479,11 +476,12 @@ def docker_build_cmd(
     return f"docker build --network host -t {repository_name} -f {docker_file} {docker_build_args} ."
 
 
-def get_torchserve_config(base_file: Path, task_code: str, task_config: dict) -> str:
+def get_torchserve_config(base_file: Path, task_code: str, torchserve_config_str: str) -> str:
     base_content = Path(base_file).read_text()
-    config = task_config["torchserve_config"]
+    config = torchserve_config_str
     if not config:
         return base_content
+    config = json.loads(config)
 
     extra_lines = [f"# extra settings from task {task_code}"]
     for k, v in config.items():

@@ -10,6 +10,9 @@ from yoyo import step
 __depends__ = {"20210806_01_0LQae-adding-limiting-behavior-of-adc-task"}
 
 steps = [
+    step("ALTER TABLE tasks ADD COLUMN create_endpoint Boolean"),  # TODO
+    step("ALTER TABLE tasks ADD COLUMN gpu Boolean"),  # TODO
+    step("ALTER TABLE tasks ADD COLUMN torchserve_config TEXT"),  # TODO
     step("ALTER TABLE tasks ADD COLUMN input_io_def TEXT"),
     step(
         """UPDATE tasks SET input_io_def='[{"name": "hypothesis", "type": "string", "constructor_args": {"placeholder": "Enter hypothesis..."}}]' WHERE shortname in ('DK_NLI', 'NLI', 'LADC')"""

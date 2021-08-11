@@ -3,7 +3,8 @@
 # LICENSE file in the root directory of this source tree.
 from pathlib import Path
 
-from utils import deployer, task_config
+from utils import deployer
+from models.task import TaskModel, Task
 
 
 DOCKERFILES = Path(__file__).parent.parent / "dockerfiles"
@@ -11,12 +12,12 @@ TORCHSERVE_CONFIG = DOCKERFILES / "config.properties"
 
 
 def test_torchserve_config_is_valid():
-    for task_code, config in task_config.tasks_config.items():
-        deployer.get_torchserve_config(TORCHSERVE_CONFIG, task_code, config)
+    for task in TaskModel.dbs.query(Task):
+        deployer.get_torchserve_config(TORCHSERVE_CONFIG, task.task_code, task.torchserve_config)
 
 
 def test_flores_config():
-    flores_config = task_config.get_task_config_safe("flores_small1")
+    flores_config = TaskModel().getByTaskCode("flores_small1").torchserve_config
     expected_torchserve_config = """
 # Copyright (c) Facebook, Inc. and its affiliates.
 # This source code is licensed under the MIT license found in the

@@ -60,7 +60,7 @@ const TaskModelLeaderboardCard = (props) => {
       setDatasetWeights(result.orderedDatasetWeights);
       setDescription(result.description);
     });
-  }, [task]);
+  }, [props, task]);
 
   const [sort, setSort] = useState({
     field: "dynascore",
@@ -179,6 +179,7 @@ const TaskModelLeaderboardCard = (props) => {
     taskCode,
     pageLimit,
     taskId,
+    props,
   ]);
 
   const isEndOfPage = (page + 1) * pageLimit >= total;
@@ -440,7 +441,6 @@ const TaskModelLeaderboardCard = (props) => {
           enableDatasetWeights={enableDatasetWeights}
           datasetWeights={datasetWeights}
           setDatasetWeight={setDatasetWeight}
-          taskShortName={props.task.shortname}
           sort={sort}
           toggleSort={toggleSort}
         />
