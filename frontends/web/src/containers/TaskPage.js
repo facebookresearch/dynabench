@@ -455,6 +455,7 @@ class TaskPage extends React.Component {
                       {...this.props}
                       task={this.state.task}
                       taskCode={this.state.taskCode}
+                      title={"Model Leaderboard (Fork)"}
                     />
                   ) : (
                     <TaskModelDefaultLeaderboard
@@ -470,7 +471,7 @@ class TaskPage extends React.Component {
           <Row>
             <Col xs={12} md={6}>
               <UserLeaderboardCard
-                taskId={this.state.taskId}
+                taskId={this.state.task.id}
                 round={this.state.task.round}
                 cur_round={this.state.task.cur_round}
               />
