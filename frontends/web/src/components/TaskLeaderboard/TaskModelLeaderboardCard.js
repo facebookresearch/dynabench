@@ -60,7 +60,7 @@ const TaskModelLeaderboardCard = (props) => {
       setDatasetWeights(result.orderedDatasetWeights);
       setDescription(result.description);
     });
-  }, [context.api, props, task]);
+  }, [props, task]);
 
   const [sort, setSort] = useState({
     field: "dynascore",
