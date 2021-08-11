@@ -1,8 +1,171 @@
 import React, { useEffect, useState } from "react";
-import { Card, Col, Container, Pagination, Table } from "react-bootstrap";
+import {
+  Button,
+  Card,
+  Col,
+  Container,
+  Pagination,
+  Table,
+} from "react-bootstrap";
 import TasksContext from "../../containers/TasksContext";
 import { Link } from "react-router-dom";
 import Moment from "react-moment";
+
+const ForkOrSnapshotTable = (props) => {
+  const { data, isForkList, page, paginate, isEndOfPage } = props;
+  const [descriptionConfiguration, setDescriptionConfiguration] = useState({});
+
+  const usesEllipsis = (elementId) => {
+    const e = document.getElementById(elementId);
+    return e == null ? false : e.offsetWidth < e.scrollWidth;
+  };
+
+  useEffect(() => {
+    const newDescriptionConfiguration = {};
+    data.forEach((datum) => {
+      const descriptionId = getDescriptionId(datum);
+      newDescriptionConfiguration[descriptionId] = {
+        usesEllipsis: usesEllipsis(descriptionId),
+        isExpanded: false,
+      };
+    });
+    setDescriptionConfiguration(newDescriptionConfiguration);
+  }, [data]);
+
+  const getRowKey = (datum) => {
+    return isForkList ? datum.tid + "-" + datum.name : datum.id;
+  };
+
+  const getDescriptionId = (datum) => {
+    return getRowKey(datum) + "-desc";
+  };
+
+  const toggleDescriptionEllipsis = (descriptionId) => {
+    const dupDescriptionConfiguration = {
+      ...descriptionConfiguration,
+    };
+    dupDescriptionConfiguration[descriptionId].isExpanded =
+      !dupDescriptionConfiguration[descriptionId].isExpanded;
+    setDescriptionConfiguration(dupDescriptionConfiguration);
+  };
+
+  return (
+    <Col className="m-auto" lg={12}>
+      <Card className="profile-card">
+        <Card.Body className="overflow-auto">
+          <Table className="mb-0">
+            <thead className="blue-color border-bottom">
+              <tr>
+                <td className="col-4">
+                  <b>Link to {isForkList ? "Fork" : "Snapshot"}</b>
+                </td>
+                <td className="col-1">
+                  <b>Task</b>
+                </td>
+                <td className="col-5">
+                  <b>Description</b>
+                </td>
+                <td className="col-2">
+                  <b>Created</b>
+                </td>
+              </tr>
+            </thead>
+            <tbody>
+              {!data.length ? (
+                <tr>
+                  <td colSpan="4">
+                    <div className="text-center">No data found</div>
+                  </td>
+                </tr>
+              ) : null}
+              {data.map((datum) => {
+                const rowKey = getRowKey(datum);
+                const descriptionId = getDescriptionId(datum);
+                const usesEllipsis =
+                  descriptionConfiguration[descriptionId]?.usesEllipsis;
+                const isDescriptionExpanded =
+                  descriptionConfiguration[descriptionId]?.isExpanded;
+
+                return (
+                  <tr key={rowKey}>
+                    <TasksContext.Consumer>
+                      {({ tasks }) => {
+                        const task =
+                          datum && tasks.filter((e) => e.id === datum.tid);
+                        if (!task || !task.length) {
+                          return null;
+                        }
+                        const forkOrSnapshotUrl = new URL(
+                          window.location.origin
+                        );
+                        forkOrSnapshotUrl.pathname = `/tasks/${
+                          task[0].task_code
+                        }/${isForkList ? datum.name : datum.id}`;
+                        return (
+                          <>
+                            <td className="text-truncate long-text">
+                              <span>
+                                <Link to={forkOrSnapshotUrl}>
+                                  {forkOrSnapshotUrl.toString()}
+                                </Link>
+                              </span>
+                            </td>
+                            <td>
+                              <Link to={`/tasks/${task[0].task_code}`}>
+                                {task[0].shortname}
+                              </Link>
+                            </td>
+                          </>
+                        );
+                      }}
+                    </TasksContext.Consumer>
+                    <td
+                      id={descriptionId}
+                      className={`${
+                        isDescriptionExpanded ? "" : "text-truncate"
+                      } long-text col`}
+                    >
+                      <span>{datum.desc}</span>
+                      {usesEllipsis && (
+                        <Button
+                          className="btn-xs float-right p-1 mt-1"
+                          variant="outline-primary"
+                          onClick={() =>
+                            toggleDescriptionEllipsis(descriptionId)
+                          }
+                        >
+                          {isDescriptionExpanded ? "show less" : "show more"}
+                        </Button>
+                      )}
+                    </td>
+                    <td className="text-nowrap">
+                      <Moment utc format={"DD-MMM-YYYY HH:mm:ss"}>
+                        {datum.create_datetime}
+                      </Moment>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </Table>
+        </Card.Body>
+        <Card.Footer className="text-center">
+          <Pagination className="mb-0 float-right" size="sm">
+            <Pagination.Item disabled={!page} onClick={() => paginate("prev")}>
+              Previous
+            </Pagination.Item>
+            <Pagination.Item
+              disabled={isEndOfPage}
+              onClick={() => paginate("next")}
+            >
+              Next
+            </Pagination.Item>
+          </Pagination>
+        </Card.Footer>
+      </Card>
+    </Col>
+  );
+};
 
 const ForksAndSnapshotsSubPage = (props) => {
   const [userForks, setUserForks] = useState([]);
@@ -57,174 +220,21 @@ const ForksAndSnapshotsSubPage = (props) => {
   return (
     <Container className="mb-5 pb-5">
       <h1 className="my-4 pt-3 text-uppercase text-center">Your Forks</h1>
-      <Col className="m-auto" lg={10}>
-        <Card className="profile-card">
-          <Card.Body className="overflow-auto">
-            <Table className="modelTable mb-0">
-              <thead className="blue-color border-bottom">
-                <tr>
-                  <td>
-                    <b>Link to Fork</b>
-                  </td>
-                  <td>
-                    <b>Task</b>
-                  </td>
-                  <td>
-                    <b>Created</b>
-                  </td>
-                </tr>
-              </thead>
-              <tbody>
-                {!userForks.length ? (
-                  <tr>
-                    <td colSpan="4">
-                      <div className="text-center">No data found</div>
-                    </td>
-                  </tr>
-                ) : null}
-                {userForks.map((fork) => {
-                  return (
-                    <tr key={fork.tid + fork.name}>
-                      <TasksContext.Consumer>
-                        {({ tasks }) => {
-                          const task =
-                            fork && tasks.filter((e) => e.id === fork.tid);
-                          if (!task || !task.length) {
-                            return null;
-                          }
-                          const forkUrl = new URL(window.location.origin);
-                          forkUrl.pathname = `/tasks/${task[0].task_code}/f/${fork.name}`;
-                          return (
-                            <>
-                              <td>
-                                <Link to={forkUrl}>{forkUrl.toString()}</Link>
-                              </td>
-                              <td>
-                                <Link to={`/tasks/${task[0].task_code}`}>
-                                  {task[0].shortname}
-                                </Link>
-                              </td>
-                            </>
-                          );
-                        }}
-                      </TasksContext.Consumer>
-                      <td className="text-nowrap">
-                        <Moment utc format={"DD-MMM-YYYY HH:mm:ss"}>
-                          {fork.create_datetime}
-                        </Moment>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </Table>
-          </Card.Body>
-          <Card.Footer className="text-center">
-            <Pagination className="mb-0 float-right" size="sm">
-              <Pagination.Item
-                disabled={!forksPage}
-                onClick={() => paginateForks("prev")}
-              >
-                Previous
-              </Pagination.Item>
-              <Pagination.Item
-                disabled={isEndOfForksPage}
-                onClick={() => paginateForks("next")}
-              >
-                Next
-              </Pagination.Item>
-            </Pagination>
-          </Card.Footer>
-        </Card>
-      </Col>
+      <ForkOrSnapshotTable
+        data={userForks}
+        isForkList={true}
+        page={forksPage}
+        paginate={paginateForks}
+        isEndOfPage={isEndOfForksPage}
+      />
       <h1 className="my-4 pt-3 text-uppercase text-center">Your Snapshots</h1>
-      <Col className="m-auto" lg={10}>
-        <Card className="profile-card">
-          <Card.Body className="overflow-auto">
-            <Table className="mb-0">
-              <thead className="blue-color border-bottom">
-                <tr>
-                  <td>
-                    <b>Link to Fork</b>
-                  </td>
-                  <td>
-                    <b>Task</b>
-                  </td>
-                  <td>
-                    <b>Description</b>
-                  </td>
-                  <td>
-                    <b>Created</b>
-                  </td>
-                </tr>
-              </thead>
-              <tbody>
-                {!userSnapshots.length ? (
-                  <tr>
-                    <td colSpan="4">
-                      <div className="text-center">No data found</div>
-                    </td>
-                  </tr>
-                ) : null}
-                {userSnapshots.map((snapshot) => {
-                  return (
-                    <tr key={snapshot.id}>
-                      <TasksContext.Consumer>
-                        {({ tasks }) => {
-                          const task =
-                            snapshot &&
-                            tasks.filter((e) => e.id === snapshot.tid);
-                          if (!task || !task.length) {
-                            return null;
-                          }
-                          const snapshotUrl = new URL(window.location.origin);
-                          snapshotUrl.pathname = `/tasks/${task[0].task_code}/s/${snapshot.id}`;
-                          return (
-                            <>
-                              <td>
-                                <Link to={snapshotUrl}>
-                                  {snapshotUrl.toString()}
-                                </Link>
-                              </td>
-                              <td>
-                                <Link to={`/tasks/${task[0].task_code}`}>
-                                  {task[0].shortname}
-                                </Link>
-                              </td>
-                            </>
-                          );
-                        }}
-                      </TasksContext.Consumer>
-                      <td>{snapshot.desc}</td>
-                      <td className="text-nowrap">
-                        <Moment utc format={"DD-MMM-YYYY HH:mm:ss"}>
-                          {snapshot.create_datetime}
-                        </Moment>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </Table>
-          </Card.Body>
-          <Card.Footer className="text-center">
-            <Pagination className="mb-0 float-right" size="sm">
-              <Pagination.Item
-                disabled={!snapshotsPage}
-                onClick={() => paginateSnapshots("prev")}
-              >
-                Previous
-              </Pagination.Item>
-              <Pagination.Item
-                disabled={isEndOfSnapshotsPage}
-                onClick={() => paginateSnapshots("next")}
-              >
-                Next
-              </Pagination.Item>
-            </Pagination>
-          </Card.Footer>
-        </Card>
-      </Col>
+      <ForkOrSnapshotTable
+        data={userSnapshots}
+        isForkList={false}
+        page={snapshotsPage}
+        paginate={paginateSnapshots}
+        isEndOfPage={isEndOfSnapshotsPage}
+      />
     </Container>
   );
 };
