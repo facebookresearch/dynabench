@@ -105,43 +105,43 @@ def validate_example(credentials, eid):
     rm.updateLastActivity(context.r_realid)
 
     if example.model_wrong:
-        if label_counts["correct"] >= num_matching_validations or (
-            mode == "owner" and label == "correct"
-        ):
-            rm.incrementVerifiedFooledCount(context.r_realid)
-            um.incrementVerifiedFooledCount(example.uid)
-        elif (
-            label_counts["incorrect"] >= num_matching_validations
-            or label_counts["flagged"] >= num_matching_validations
-            or (mode == "owner" and label != "correct")
-        ):
+        user = um.get(example.uid)
+        if user:
+            if label_counts["correct"] >= num_matching_validations or (
+                mode == "owner" and label == "correct"
+            ):
+                rm.incrementVerifiedFooledCount(context.r_realid)
+                um.incrementVerifiedFooledCount(example.uid)
+            elif (
+                label_counts["incorrect"] >= num_matching_validations
+                or label_counts["flagged"] >= num_matching_validations
+                or (mode == "owner" and label != "correct")
+            ):
 
-            um.incrementVerifiedNotCorrectFooledCount(example.uid)
-            if credentials["id"] != "turk":
-                info = RoundUserExampleInfoModel()
-                info.incrementVerifiedNotCorrectFooledCount(
-                    example.uid, context.r_realid
-                )
-            user = um.get(example.uid)
-            if user:
+                um.incrementVerifiedNotCorrectFooledCount(example.uid)
+                if credentials["id"] != "turk":
+                    info = RoundUserExampleInfoModel()
+                    info.incrementVerifiedNotCorrectFooledCount(
+                        example.uid, context.r_realid
+                    )
                 if user.metadata_json:
                     metadata = json.loads(user.metadata_json)
                     if (
-                        task.shortname + "_fooling_no_verified_incorrect_or_flagged"
+                        task.task_code + "_fooling_no_verified_incorrect_or_flagged"
                         in metadata
                     ):
                         metadata[
-                            task.shortname + "_fooling_no_verified_incorrect_or_flagged"
+                            task.task_code + "_fooling_no_verified_incorrect_or_flagged"
                         ] -= 1
                     else:
                         # Start recording this field now
                         metadata[
-                            task.shortname + "_fooling_no_verified_incorrect_or_flagged"
+                            task.task_code + "_fooling_no_verified_incorrect_or_flagged"
                         ] = 0
                 else:
                     # Start recording this field now
                     metadata = {
-                        task.shortname + "_fooling_no_verified_incorrect_or_flagged": 0
+                        task.task_code + "_fooling_no_verified_incorrect_or_flagged": 0
                     }
                 user.metadata_json = json.dumps(metadata)
                 um.dbs.commit()

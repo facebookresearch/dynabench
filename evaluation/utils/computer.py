@@ -3,20 +3,17 @@
 import functools
 import json
 import logging
-import os
 import pickle
-import tempfile
 from typing import Optional
 
-import boto3
 from enum import Enum
 
-from metrics import get_job_metrics
+from metrics.metric_getters import get_job_metrics
 from models.dataset import DatasetModel
 from models.round import RoundModel
-from models.score import Score, ScoreModel
+from models.score import ScoreModel
 from utils.evaluator import Job
-from utils.helpers import parse_s3_uri, update_metadata_json_string
+from utils.helpers import update_metadata_json_string
 
 
 logger = logging.getLogger("computer")

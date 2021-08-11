@@ -15,7 +15,7 @@ class Context(Base):
     r_realid = db.Column(db.Integer, db.ForeignKey("rounds.id"), nullable=False)
     round = db.orm.relationship("Round", foreign_keys="Context.r_realid")
 
-    context = db.Column(db.Text)
+    context_io = db.Column(db.Text)
 
     tag = db.Column(db.Text)
 
@@ -26,7 +26,7 @@ class Context(Base):
     last_used = db.Column(db.DateTime, nullable=True)
 
     def __repr__(self):
-        return f"<Context {self.context}>"
+        return f"<Context {self.context_io}>"
 
     def to_dict(self, safe=True):
         d = {}

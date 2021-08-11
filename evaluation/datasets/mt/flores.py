@@ -12,8 +12,6 @@ import time
 from pathlib import Path
 from typing import Dict, List, TextIO, Tuple
 
-from datasets.common import logger
-from metrics.task_config import get_task_config_safe
 from utils import helpers
 from utils.evaluator import Job
 
@@ -37,7 +35,7 @@ FLORES101_FULL_LANGS = (
 class Flores101Base(MTBase):
     def __init__(
         self,
-        task: str,
+        task_code: str,
         name: str,
         round_id: int,
         local_path: str,
@@ -49,14 +47,16 @@ class Flores101Base(MTBase):
         self.partition = partition
         self.shard_by_lang = shard_by_lang
         self.languages = languages
-        super().__init__(task=task, name=name, round_id=round_id)
+        super().__init__(task_code=task_code, name=name, round_id=round_id)
 
     def _get_data_s3_path(self, perturb_prefix=None):
         # filename has the .jsonl extension.
         # When the dataset is sharded we don't put the extension
         # because AWS will match files by prefix.
         name = self.name + "-" if self.shard_by_lang else self.filename
-        return helpers.get_data_s3_path("flores/" + self.task, name, perturb_prefix)
+        return helpers.get_data_s3_path(
+            "flores/" + self.task.task_code, name, perturb_prefix
+        )
 
     def dataset_available_on_s3(self, perturb_prefix=None) -> bool:
         if not self.shard_by_lang:
@@ -94,7 +94,7 @@ class Flores101Base(MTBase):
                 prepare(
                     folder=Path(self.local_path),
                     outdir=Path(tmp.name),
-                    task=self.task,
+                    task_code=self.task.task_code,
                     langs=self.languages,
                     split=self.partition,
                     shard=self.shard_by_lang,
@@ -134,7 +134,7 @@ class Flores101Base(MTBase):
                 src_perfs = self.eval_src_lang(job, src)
                 perf_by_tag.extend(src_perfs)
 
-        perf_metric = get_task_config_safe(self.task)["perf_metric"]
+        perf_metric = self.task.perf_metric
         return compute_averages(perf_metric, perf_by_tag), {}
 
     def eval_src_lang(self, job: Job, src: str) -> dict:
@@ -144,12 +144,15 @@ class Flores101Base(MTBase):
         predictions = helpers.parse_s3_outfile(
             self.s3_client,
             self.s3_path(
-                f"predictions/{job.endpoint_name}/raw/{self.task}/{self.name}-{src}.jsonl.out"
+                f"predictions/{job.endpoint_name}/raw/"
+                + f"{self.task.task_code}/{self.name}-{src}.jsonl.out"
             ),
         )
         targets = helpers.parse_s3_outfile(
             self.s3_client,
-            self.s3_path(f"datasets/flores/{self.task}/{self.name}-{src}.jsonl"),
+            self.s3_path(
+                f"datasets/flores/{self.task.task_code}/{self.name}-{src}.jsonl"
+            ),
         )
         duration = (time.time() - start) / 60
         logger.debug(f"downloaded {src}-xx predictions, took {duration:.1f} minutes")
@@ -172,7 +175,7 @@ class Flores101FullDev(Flores101Base):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "evaluation/data", "mt/flores101")
         super().__init__(
-            task="flores_full",
+            task_code="flores_full",
             name="flores101-full-dev",
             round_id=1,
             local_path=local_path,
@@ -187,7 +190,7 @@ class Flores101FullDevTest(Flores101Base):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "evaluation/data", "mt/flores101")
         super().__init__(
-            task="flores_full",
+            task_code="flores_full",
             name="flores101-full-devtest",
             round_id=1,
             local_path=local_path,
@@ -202,7 +205,7 @@ class Flores101FullTest(Flores101Base):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "evaluation/data", "mt/flores101")
         super().__init__(
-            task="flores_full",
+            task_code="flores_full",
             name="flores101-full-test",
             round_id=1,
             local_path=local_path,
@@ -217,7 +220,7 @@ class Flores101Small1Dev(Flores101Base):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "evaluation/data", "mt/flores101")
         super().__init__(
-            task="flores_small1",
+            task_code="flores_small1",
             name="flores101-small1-dev",
             round_id=1,
             local_path=local_path,
@@ -231,7 +234,7 @@ class Flores101Small1DevTest(Flores101Base):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "evaluation/data", "mt/flores101")
         super().__init__(
-            task="flores_small1",
+            task_code="flores_small1",
             name="flores101-small1-devtest",
             round_id=1,
             local_path=local_path,
@@ -245,7 +248,7 @@ class Flores101Small1Test(Flores101Base):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "evaluation/data", "mt/flores101")
         super().__init__(
-            task="flores_small1",
+            task_code="flores_small1",
             name="flores101-small1-test",
             round_id=1,
             local_path=local_path,
@@ -259,7 +262,7 @@ class Flores101Small2Dev(Flores101Base):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "evaluation/data", "mt/flores101")
         super().__init__(
-            task="flores_small2",
+            task_code="flores_small2",
             name="flores101-small2-dev",
             round_id=1,
             local_path=local_path,
@@ -273,7 +276,7 @@ class Flores101Small2DevTest(Flores101Base):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "evaluation/data", "mt/flores101")
         super().__init__(
-            task="flores_small2",
+            task_code="flores_small2",
             name="flores101-small2-devtest",
             round_id=1,
             local_path=local_path,
@@ -287,7 +290,7 @@ class Flores101Small2Test(Flores101Base):
         rootpath = os.path.dirname(sys.path[0])
         local_path = os.path.join(rootpath, "evaluation/data", "mt/flores101")
         super().__init__(
-            task="flores_small2",
+            task_code="flores_small2",
             name="flores101-small2-test",
             round_id=1,
             local_path=local_path,
@@ -311,8 +314,8 @@ def write_json(sample: Dict[str, str], o: TextIO) -> None:
     print(json.dumps(sample, ensure_ascii=False), file=o)
 
 
-def output_file(task: str, partition: str, outdir: Path, lang: str = None) -> Path:
-    filename = f"flores101-{task}-{partition}"
+def output_file(task_code: str, partition: str, outdir: Path, lang: str = None) -> Path:
+    filename = f"flores101-{task_code}-{partition}"
     if lang:
         filename += f"-{lang}"
     return outdir / f"{filename}.jsonl"
@@ -321,7 +324,7 @@ def output_file(task: str, partition: str, outdir: Path, lang: str = None) -> Pa
 def prepare(
     folder: Path,
     outdir: Path,
-    task: str,
+    task_code: str,
     langs: List[str],
     partition: str,
     shard: bool = False,
@@ -333,14 +336,14 @@ def prepare(
         writers: Dict[str, Tuple[Path, TextIO]] = {}
     else:
         # We only have one file
-        outfile = output_file(task, partition, outdir)
+        outfile = output_file(task_code, partition, outdir)
         shared_writer = open(outfile, "w", encoding="utf-8")
 
     def _get_writer(lang: str) -> TextIO:
         if not shard:
             return shared_writer
         if lang not in writers:
-            outfile = output_file(task, partition, outdir, lang)
+            outfile = output_file(task_code, partition, outdir, lang)
             writers[lang] = (outfile, open(outfile, "w", encoding="utf-8"))
 
         outfile, writer = writers[lang]
@@ -388,22 +391,23 @@ def prepare(
         logger.info(f"Wrote dataset. {lines:_d} lines, {files:_d} files.")
         for outfile, o in writers.values():
             o.close()
-            _upload_file(task, partition, outfile)
+            _upload_file(task_code, partition, outfile)
     else:
         logger.info(
-            f"Wrote dataset {outfile}. {lines:_d} lines. Total size: {outfile.stat().st_size / 1024 / 1024:.1f}Mb"
+            f"Wrote dataset {outfile}. {lines:_d} lines. Total size: "
+            + f"{outfile.stat().st_size / 1024 / 1024:.1f}Mb"
         )
         o.close()
-        _upload_file(task, partition, outfile)
+        _upload_file(task_code, partition, outfile)
 
 
-def _upload_file(task: str, partition: str, outfile: Path) -> None:
+def _upload_file(task_code: str, partition: str, outfile: Path) -> None:
     s3_buckets = [
         "s3://evaluation-us-west-2/datasets",
         "s3://evaluation-us-west-1-096166425824/datasets",
     ]
     for s3_bucket in s3_buckets:
-        s3_path = "/".join([s3_bucket, "flores", f"flores_{task}", outfile.name])
+        s3_path = "/".join([s3_bucket, "flores", f"flores_{task_code}", outfile.name])
         logger.info(f"Copying {outfile} to {s3_path}")
         cmd = ["s3cmd", "put", "--force", str(outfile), s3_path]
         logger.info(" ".join(cmd))

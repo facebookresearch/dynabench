@@ -11,11 +11,7 @@ import { Container, Row, Col, Spinner } from "react-bootstrap";
 import UserContext from "./UserContext";
 import FloresModelLeaderBoard from "../components/FloresComponents/FloresModelLeaderboard";
 
-const FLORES_TASK_SHORT_NAMES = [
-  "FLORES-FULL",
-  "FLORES-SMALL1",
-  "FLORES-SMALL2",
-];
+const FLORES_TASK_NAMES = ["FLORES-FULL", "FLORES-SMALL1", "FLORES-SMALL2"];
 
 const FloresTop5Page = (props) => {
   const context = useContext(UserContext); // for API
@@ -23,7 +19,7 @@ const FloresTop5Page = (props) => {
   const [task, setTask] = useState(null); // Current Task ID
   const [isLoading, setIsLoading] = useState(false);
 
-  let { taskShortName } = useParams();
+  let { taskName } = useParams();
 
   // Call api only once
   useEffect(() => {
@@ -38,19 +34,19 @@ const FloresTop5Page = (props) => {
       api.getSubmittableTasks().then(
         (result) => {
           const floresTasks = result.filter((t) =>
-            FLORES_TASK_SHORT_NAMES.includes(t.shortname)
+            FLORES_TASK_NAMES.includes(t.name)
           );
           const taskLookup = floresTasks.reduce(
-            (map, obj) => ((map[obj.shortname] = obj), map),
+            (map, obj) => ((map[obj.name] = obj), map),
             {}
           );
 
           setTaskLookup(taskLookup);
 
-          if (FLORES_TASK_SHORT_NAMES.includes(taskShortName)) {
-            setTask(taskLookup[taskShortName]); // set the task from Arguments
+          if (FLORES_TASK_NAMES.includes(taskName)) {
+            setTask(taskLookup[taskName]); // set the task from Arguments
           } else {
-            setTask(taskLookup[FLORES_TASK_SHORT_NAMES[0]]); // set default task
+            setTask(taskLookup[FLORES_TASK_NAMES[0]]); // set default task
           }
 
           setIsLoading(false);
@@ -65,7 +61,7 @@ const FloresTop5Page = (props) => {
     fetchFloresTasks(context.api);
 
     return () => {};
-  }, [context.api]);
+  }, [context.api, taskName]);
 
   if (isLoading || !task) {
     return (
@@ -79,7 +75,7 @@ const FloresTop5Page = (props) => {
     <Container fluid>
       <Row className="px-4 px-lg-5">
         <a
-          href={`/flores/${task.shortname}`}
+          href={`/flores/${task.name}`}
           target="_blank"
           style={{ width: "100%", textDecorationLine: "none" }}
         >

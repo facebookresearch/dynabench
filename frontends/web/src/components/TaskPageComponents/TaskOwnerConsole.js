@@ -19,8 +19,9 @@ import DragAndDrop from "../DragAndDrop/DragAndDrop";
 const TaskOwnerConsole = (props) => {
   const context = useContext(UserContext);
 
-  const [showTaskOwnerSettingsModal, setShowTaskOwnerSettingsModal] =
-    useState(false);
+  const [showTaskOwnerSettingsModal, setShowTaskOwnerSettingsModal] = useState(
+    false
+  );
   const [validateNonFooling, setValidateNonFooling] = useState(false);
   const [numMatchingValidations, setNumMatchingValidations] = useState(3);
 
@@ -188,7 +189,9 @@ const TaskOwnerConsole = (props) => {
           <hr />
           Add new contexts to the current round by uploading them here, as a
           jsonl where each datum has three fields: <br /> <br />
-          <b>text</b>: a string representation of the context <br />
+          <b>context_io</b>: a json with keys and values for each of the context
+          io components
+          <br />
           <b>tag</b>: a string that associates this context with a set of other
           contexts <br />
           <b>metadata</b>: a dictionary in json format representing any other

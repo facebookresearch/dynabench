@@ -1,6 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
-from metrics import metrics
+import metrics.metrics as metrics
 
 
 # all eval_metrics takes predictions and targets as input, and output a metric number

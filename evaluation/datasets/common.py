@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 import boto3
 
 from eval_config import eval_config
-from metrics import get_delta_metrics, get_eval_metrics, get_task_config_safe
+from metrics.metric_getters import get_delta_metrics, get_eval_metrics
 from models.dataset import AccessTypeEnum, DatasetModel
 from models.task import TaskModel
 from utils.helpers import (
@@ -28,7 +28,7 @@ logger = logging.getLogger("datasets")
 class BaseDataset(ABC):
     def __init__(
         self,
-        task,
+        task_code,
         name,
         round_id,
         access_type=AccessTypeEnum.scoring,
@@ -37,14 +37,13 @@ class BaseDataset(ABC):
         longdesc=None,
         source_url=None,
     ):
-        self.task = task
         self.name = name
         self.round_id = round_id
         self.access_type = access_type
         self.filename = self.name + ext
         self._n_examples = {}  # will be get through API
-        self.task_config = get_task_config_safe(self.task)
-        self.s3_bucket = self.task_config["s3_bucket"]
+        self.task = TaskModel().getByTaskCode(task_code)
+        self.s3_bucket = self.task.s3_bucket
         self.s3_url = self._get_data_s3_url()
         self.longdesc = longdesc
         self.source_url = source_url
@@ -91,16 +90,16 @@ class BaseDataset(ABC):
         return f"s3://{self.s3_bucket}/" + "/".join(parts)
 
     def _get_data_s3_path(self, perturb_prefix=None):
-        return get_data_s3_path(self.task, self.filename, perturb_prefix)
+        return get_data_s3_path(self.task.task_code, self.filename, perturb_prefix)
 
     def _get_data_s3_url(self, perturb_prefix=None):
         return self.s3_path(self._get_data_s3_path(perturb_prefix))
 
     def _get_output_s3_url_prefix(self, endpoint_name):
-        return self.s3_path("predictions", endpoint_name, self.task)
+        return self.s3_path("predictions", endpoint_name, self.task.task_code)
 
     def _get_raw_output_s3_url_prefix(self, endpoint_name):
-        return self.s3_path("predictions", endpoint_name, "raw", self.task)
+        return self.s3_path("predictions", endpoint_name, "raw", self.task.task_code)
 
     def dataset_available_on_s3(self, perturb_prefix=None) -> bool:
         path = self._get_data_s3_path(perturb_prefix)
@@ -108,7 +107,7 @@ class BaseDataset(ABC):
 
     def _register_dataset_in_db_and_eval(self, eval_config) -> bool:
         t = TaskModel()
-        task_id = t.getByTaskCode(self.task).id
+        task_id = t.getByTaskCode(self.task.task_code).id
         d = DatasetModel()
         if not d.getByName(self.name):  # avoid id increment for unsuccessful creation
             if d.create(
@@ -124,7 +123,7 @@ class BaseDataset(ABC):
                     model_id="*",
                     dataset_name=self.name,
                     config=eval_config,
-                    eval_server_id=self.task_config["eval_server_id"],
+                    eval_server_id=self.task.eval_server_id,
                     logger=logger,
                 )
 
@@ -140,8 +139,9 @@ class BaseDataset(ABC):
         self, sagemaker_client, endpoint_name, job_name, perturb_prefix=None
     ) -> bool:
         """Submit an evaluation job"""
-        task_config = get_task_config_safe(self.task)
-        logger.debug(f"Will create transform job {job_name} with config: {task_config}")
+        logger.debug(
+            f"Will create transform job {job_name} with task: {self.task.task_code}"
+        )
         batch_transform_config = self.get_batch_transform_config(
             sagemaker_client, endpoint_name, job_name, perturb_prefix
         )
@@ -151,7 +151,13 @@ class BaseDataset(ABC):
     def get_batch_transform_config(
         self, sagemaker_client, endpoint_name, job_name, perturb_prefix=None
     ) -> dict:
-        task_config = get_task_config_safe(self.task)
+        inputs = list(
+            filter(
+                lambda key: json.loads(self.task.io_definition)[key]["location"]
+                == "input",
+                [key for key in json.loads(self.task.io_definition).keys()],
+            )
+        )
         return dict(
             ModelName=endpoint_name,
             TransformJobName=job_name,
@@ -174,10 +180,10 @@ class BaseDataset(ABC):
                 "AssembleWith": "Line",
             },
             TransformResources={
-                "InstanceType": task_config["instance_config"]["instance_type"],
-                "InstanceCount": task_config["instance_count"],
+                "InstanceType": self.task.instance_type,
+                "InstanceCount": self.task.instance_count,
             },
-            DataProcessing={"InputFilter": f"${task_config['input_keys']}"},
+            DataProcessing={"InputFilter": f"${inputs}"},
             ModelClientConfig={
                 # Max value for sagemaker, we rely on the timeout of torchserve
                 "InvocationsTimeoutInSeconds": 3600
@@ -205,9 +211,11 @@ class BaseDataset(ABC):
         return self._n_examples[perturb_prefix]
 
     def compute_job_metrics(self, job) -> tuple:
-        """Fetches the predictions for the given job, and compute the metrics (accuracy, ...).
+        """Fetches the predictions for the given job, and compute the metrics
+        (accuracy, ...).
 
-        This can be used by tasks to have a better control on how the metrics are computed.
+        This can be used by tasks to have a better control on how the metrics are
+        computed.
         """
         predictions = self.parse_outfile_and_upload(job)
         eval_metrics_dict = self.eval(predictions, perturb_prefix=job.perturb_prefix)

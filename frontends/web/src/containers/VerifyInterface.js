@@ -14,79 +14,55 @@ import {
   Dropdown,
   Modal,
   Form,
+  Button,
+  Spinner,
   InputGroup,
 } from "react-bootstrap";
 import UserContext from "./UserContext";
-import { TokenAnnotator } from "react-text-annotate";
 import { OverlayProvider, BadgeOverlay, Annotation } from "./Overlay";
-import { ExampleValidationActions } from "./ExampleValidationActions.js";
-import AtomicImage from "./AtomicImage.js";
-
-function ContextInfo({
-  needAnswer,
-  taskShortname,
-  text,
-  answer,
-  updateAnswer,
-}) {
-  return taskShortname === "VQA" ? (
-    <AtomicImage src={text} maxHeight={400} maxWidth={700} />
-  ) : needAnswer ? (
-    <TokenAnnotator
-      className="mb-1 p-3 light-gray-bg qa-context"
-      tokens={text.split(/\b/)}
-      value={answer}
-      onChange={updateAnswer}
-      getSpan={(span) => ({
-        ...span,
-        tag: "ANS",
-      })}
-    />
-  ) : (
-    <div className="mb-1 p-3 light-gray-bg">{text.replace("<br>", "\n")}</div>
-  );
-}
+import IO from "./IO.js";
 
 class VerifyInterface extends React.Component {
   static contextType = UserContext;
   constructor(props) {
     super(props);
-    this.VALIDATION_STATES = {
-      CORRECT: "correct",
-      INCORRECT: "incorrect",
-      VALID: "valid",
-      INVALID: "invalid",
-      FLAGGED: "flagged",
-      UNKNOWN: "unknown",
-    };
     this.state = {
       taskCode: null,
       task: {},
-
+      example: {},
       owner_mode: false,
       ownerValidationFlagFilter: "Any",
       ownerValidationDisagreementFilter: "Any",
-
-      questionValState: this.VALIDATION_STATES.UNKNOWN,
-      responseValState: this.VALIDATION_STATES.UNKNOWN,
-      validatorLabel: "",
+      correctSelected: false,
+      incorrectSelected: false,
+      flaggedSelected: false,
       flagReason: null,
       labelExplanation: null,
       creatorAttemptExplanation: null,
-      validatorHateType: null,
+      hide_by_key: new Set(),
+      input_io_def: [],
+      output_io_def: [],
+      context_io_def: [],
+      model_metadata_io_def: [],
+      user_metadata_model_correct_io_def: [],
+      user_metadata_model_wrong_io_def: [],
+      example_io: {},
+      validator_io: {},
+      loading: true,
     };
     this.getNewExample = this.getNewExample.bind(this);
-    this.updateValidatorSelection = this.updateValidatorSelection.bind(this);
-    this.getActionLabel = this.getActionLabel.bind(this);
-    this.updateAnswer = this.updateAnswer.bind(this);
+    this.resetValidatorSelections = this.resetValidatorSelections.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
-    this.setRangesAndGetRandomFilteredExample =
-      this.setRangesAndGetRandomFilteredExample.bind(this);
+    this.setRangesAndGetRandomFilteredExample = this.setRangesAndGetRandomFilteredExample.bind(
+      this
+    );
     this.updateUserSettings = this.updateUserSettings.bind(this);
-    this.updateOwnerValidationFlagFilter =
-      this.updateOwnerValidationFlagFilter.bind(this);
-    this.updateOwnerValidationDisagreementFilter =
-      this.updateOwnerValidationDisagreementFilter.bind(this);
+    this.updateOwnerValidationFlagFilter = this.updateOwnerValidationFlagFilter.bind(
+      this
+    );
+    this.updateOwnerValidationDisagreementFilter = this.updateOwnerValidationDisagreementFilter.bind(
+      this
+    );
   }
   componentDidMount() {
     const {
@@ -99,7 +75,7 @@ class VerifyInterface extends React.Component {
             "Please log in or sign up so that you can get credit for your generated examples."
           ) +
           "&src=" +
-          encodeURIComponent(`/tasks/${params.taskCode}/create`)
+          encodeURIComponent(`/tasks/${params.taskCode}/validate`)
       );
     }
 
@@ -124,7 +100,6 @@ class VerifyInterface extends React.Component {
     this.setState({ taskCode: params.taskCode }, function () {
       this.context.api.getTask(this.state.taskCode).then(
         (result) => {
-          result.targets = result.targets.split("|"); // split targets
           this.setState(
             { task: result, taskCode: result.task_code },
             function () {
@@ -152,140 +127,115 @@ class VerifyInterface extends React.Component {
     });
   }
 
-  getResetState() {
-    return {
-      responseValState: this.VALIDATION_STATES.UNKNOWN,
-      validatorLabel: "",
-      flagReason: null,
-      labelExplanation: null,
-      creatorAttemptExplanation: null,
-      validatorHateType: null,
-    };
-  }
-
-  updateValidatorSelection(updatedValues) {
-    this.setState({
-      ...this.getResetState(),
-      ...updatedValues,
-    });
-  }
-
-  getNewExample() {
-    (this.state.owner_mode
-      ? this.setRangesAndGetRandomFilteredExample()
-      : this.context.api.getRandomExample(
-          this.state.task.id,
-          this.state.task.selected_round
-        )
-    ).then(
-      (result) => {
-        this.setState(function (prevState, _) {
-          if (prevState.task.type !== "extract") {
-            result.target =
-              prevState.task.targets[parseInt(result.target_pred)];
-          }
-          return {
-            ...this.getResetState(),
-            example: result,
-            questionValState: this.VALIDATION_STATES.UNKNOWN,
-          };
-        });
+  resetValidatorSelections(callback) {
+    return this.setState(
+      {
+        correctSelected: false,
+        flaggedSelected: false,
+        incorrectSelected: false,
+        flagReason: null,
+        labelExplanation: null,
+        creatorAttemptExplanation: null,
       },
-      (error) => {
-        console.log(error);
-        this.setState({
-          example: false,
-        });
-      }
+      callback
     );
   }
 
-  shouldDiscardValidatingExample() {
-    const taskShortname = this.state.task.shortname;
+  getNewExample() {
+    this.setState({ loading: true });
+    this.setState(
+      { validator_io: {}, example_io: {} },
+      this.resetValidatorSelections(() =>
+        (this.state.owner_mode
+          ? this.setRangesAndGetRandomFilteredExample()
+          : this.context.api.getRandomExample(
+              this.state.task.id,
+              this.state.task.selected_round
+            )
+        ).then(
+          (result) => {
+            const input_io_def = JSON.parse(this.state.task.input_io_def);
+            const output_io_def = JSON.parse(this.state.task.output_io_def);
+            const context_io_def = JSON.parse(this.state.task.context_io_def);
+            const model_metadata_io_def = JSON.parse(
+              this.state.task.model_metadata_io_def
+            );
+            const user_metadata_model_wrong_io_def = JSON.parse(
+              this.state.task.user_metadata_model_wrong_io_def
+            );
+            const user_metadata_model_correct_io_def = JSON.parse(
+              this.state.task.user_metadata_model_correct_io_def
+            );
 
-    const questionValState = this.state.questionValState;
-    const responseValState = this.state.responseValState;
-    const validatorLabel = this.state.validatorLabel;
-    const flagReason = this.state.flagReason;
+            const example_io = {};
+            const validator_io = {};
+            const context_io = JSON.parse(result.context.context_io);
+            for (const key in context_io) {
+              example_io[key] = context_io[key];
+            }
+            const input_io = JSON.parse(result.input_io);
+            for (const key in input_io) {
+              example_io[key] = input_io[key];
+            }
+            const user_output_io = JSON.parse(result.user_output_io);
+            for (const key in user_output_io) {
+              example_io[key] = user_output_io[key];
+              validator_io[key] = null;
+            }
+            const user_metadata_io = JSON.parse(result.user_metadata_io);
+            for (const key in user_metadata_io) {
+              example_io[key] = user_metadata_io[key];
+            }
 
-    const UNKNOWN = this.VALIDATION_STATES.UNKNOWN;
-    const VALID = this.VALIDATION_STATES.VALID;
-    const INCORRECT = this.VALIDATION_STATES.INCORRECT;
-    const CORRECT = this.VALIDATION_STATES.CORRECT;
-    const FLAGGED = this.VALIDATION_STATES.FLAGGED;
-
-    if (questionValState === FLAGGED || responseValState === FLAGGED) {
-      return !flagReason || flagReason.trim().length === 0;
-    }
-    if (taskShortname === "VQA") {
-      return (
-        questionValState === UNKNOWN ||
-        (questionValState === VALID && responseValState === UNKNOWN)
-      );
-    } else {
-      return !(
-        responseValState === CORRECT ||
-        (responseValState === INCORRECT &&
-          (taskShortname === "Sentiment" || taskShortname === "Hate Speech")) ||
-        (responseValState === INCORRECT && validatorLabel !== "")
-      );
-    }
+            this.setState({
+              validator_io: validator_io,
+              example: result,
+              example_io: example_io,
+              input_io_def: input_io_def,
+              output_io_def: output_io_def,
+              context_io_def: context_io_def,
+              model_metadata_io_def: model_metadata_io_def,
+              user_metadata_model_wrong_io_def: user_metadata_model_wrong_io_def,
+              user_metadata_model_correct_io_def: user_metadata_model_correct_io_def,
+              loading: false,
+            });
+          },
+          (error) => {
+            console.log(error);
+            this.setState({
+              loading: false,
+              example: false,
+            });
+          }
+        )
+      )
+    );
   }
-
-  getActionLabel() {
-    const questionValState = this.state.questionValState;
-    const responseValState = this.state.responseValState;
-
-    const VALID = this.VALIDATION_STATES.VALID;
-    const INVALID = this.VALIDATION_STATES.INVALID;
-    const FLAGGED = this.VALIDATION_STATES.FLAGGED;
-    const INCORRECT = this.VALIDATION_STATES.INCORRECT;
-
-    if (questionValState === FLAGGED || responseValState === FLAGGED) {
-      return "flagged";
-    } else if (questionValState === VALID) {
-      return responseValState === INCORRECT ? "correct" : "incorrect";
-    } else if (questionValState === INVALID) {
-      return "incorrect";
-    } else {
-      return responseValState === INCORRECT ? "incorrect" : "correct";
-    }
-  }
-
   handleResponse() {
-    if (this.shouldDiscardValidatingExample()) {
-      return;
+    var action;
+    var metadata = {};
+    if (this.state.correctSelected) {
+      action = "correct";
+    } else if (this.state.incorrectSelected) {
+      action = "incorrect";
+      metadata["validator_io"] = this.state.validator_io;
+    } else if (this.state.flaggedSelected) {
+      action = "flagged";
     }
     const mode = this.state.owner_mode ? "owner" : "user";
-    const action = this.getActionLabel();
-    var metadata = {};
 
-    if (this.state.validatorLabel !== "") {
-      metadata["validator_label"] = this.state.validatorLabel;
+    if (this.state.flagReason !== null) {
+      metadata["flag_reason"] = this.state.flagReason;
     }
 
-    if (this.state.flagReason && this.state.flagReason.trim().length > 0) {
-      metadata["flag_reason"] = this.state.flagReason.trim();
+    if (this.state.labelExplanation !== null) {
+      metadata["example_explanation"] = this.state.labelExplanation;
     }
 
-    if (
-      this.state.labelExplanation &&
-      this.state.labelExplanation.trim().length > 0
-    ) {
-      metadata["example_explanation"] = this.state.labelExplanation.trim();
+    if (this.state.creatorAttemptExplanation !== null) {
+      metadata["model_explanation"] = this.state.creatorAttemptExplanation;
     }
 
-    if (
-      this.state.creatorAttemptExplanation &&
-      this.state.creatorAttemptExplanation.trim().length > 0
-    ) {
-      metadata["model_explanation"] =
-        this.state.creatorAttemptExplanation.trim();
-    }
-
-    if (this.state.validatorHateType !== null) {
-      metadata["validator_hate_type"] = this.state.validatorHateType;
-    }
     this.context.api
       .validateExample(this.state.example.id, action, mode, metadata)
       .then(
@@ -359,35 +309,82 @@ class VerifyInterface extends React.Component {
     });
   }
 
-  updateAnswer(value) {
-    // Only keep the last answer annotated
-    if (value.length > 0) {
-      this.setState({
-        validatorLabel: [value[value.length - 1]],
-      });
-    } else {
-      this.setState({ validatorLabel: value });
-    }
-  }
-
   render() {
-    const VALID = this.VALIDATION_STATES.VALID;
-    const INVALID = this.VALIDATION_STATES.INVALID;
-    const FLAGGED = this.VALIDATION_STATES.FLAGGED;
-    const CORRECT = this.VALIDATION_STATES.CORRECT;
-    const INCORRECT = this.VALIDATION_STATES.INCORRECT;
+    const inputOutputUserMetadataIO = this.state.input_io_def
+      .concat(this.state.output_io_def)
+      .concat(
+        this.state.example.model_wrong
+          ? this.state.user_metadata_model_wrong_io_def
+          : this.state.user_metadata_model_correct_io_def
+      )
+      .filter(
+        (io_obj) =>
+          ![undefined, null].includes(this.state.example_io[io_obj.name])
+      )
+      .map((io_obj, _) => (
+        <div className="mb-3">
+          <IO
+            className="name-display-primary"
+            key={io_obj.name}
+            create={false}
+            name={io_obj.name}
+            example_io={this.state.example_io}
+            set_example_io={() => {}}
+            type={io_obj.type}
+            constructor_args={io_obj.constructor_args}
+          />
+        </div>
+      ));
 
-    const taskShortname = this.state.task.shortname;
-    const taskType = this.state.task.type;
-    const questionValState = this.state.questionValState;
-    const responseValState = this.state.responseValState;
-    const validatorLabel = this.state.validatorLabel;
-    const validatorHateType = this.state.validatorHateType;
-    const creatorAttemptExplanation = this.state.creatorAttemptExplanation;
+    const contextIO = this.state.context_io_def
+      .filter(
+        (io_obj) =>
+          ![undefined, null].includes(this.state.example_io[io_obj.name])
+      )
+      .map((io_obj, _) => (
+        <IO
+          className="name-display-primary"
+          key={io_obj.name}
+          create={false}
+          name={io_obj.name}
+          example_io={this.state.example_io}
+          set_example_io={() => {}}
+          type={io_obj.type}
+          constructor_args={io_obj.constructor_args}
+        />
+      ));
 
-    const shouldQuestionBeValidated = taskShortname === "VQA";
-    const shouldResponseBeValidated =
-      taskShortname !== "VQA" || questionValState === VALID;
+    const validatorOutputIO = this.state.output_io_def
+      .filter(
+        (io_obj) =>
+          ![undefined, null].includes(this.state.example_io[io_obj.name])
+      )
+      .map((io_obj, _) => (
+        <IO
+          className="user-input-secondary"
+          key={io_obj.name}
+          create={true}
+          name={io_obj.name}
+          example_io={this.state.validator_io}
+          set_example_io={(example_io) =>
+            this.setState({ validator_io: example_io })
+          }
+          type={
+            io_obj.type === "goal_message_multiple_choice"
+              ? "multiple_choice"
+              : io_obj.type
+          }
+          constructor_args={
+            io_obj.type === "goal_message_multiple_choice"
+              ? Object.assign(
+                  {},
+                  { placeholder: "Enter " + io_obj.name },
+                  io_obj.constructor_args
+                )
+              : io_obj.constructor_args
+          }
+        />
+      ));
 
     return (
       <OverlayProvider initiallyHide={true}>
@@ -497,7 +494,7 @@ class VerifyInterface extends React.Component {
             ) : (
               ""
             )}
-            <div className="mt-4 mb-5 pt-3">
+            <div className="mt-4 pt-3">
               <p className="text-uppercase mb-0 spaced-header">
                 {this.state.task.name}
               </p>
@@ -509,282 +506,227 @@ class VerifyInterface extends React.Component {
                 correct.
               </p>
             </div>
-            {this.state.task.shortname === "Hate Speech" ? (
+            {this.state.task.warning_message ? (
               <p className="mt-3 p-3 light-red-bg rounded white-color">
-                <strong>WARNING</strong>: This is sensitive content! If you do
-                not want to see any hateful examples, please switch to another
-                task.
+                <strong>WARNING</strong>: {this.state.task.warning_message}
               </p>
             ) : null}
-            <Card className="profile-card overflow-hidden">
-              {this.state.example ? (
-                <>
-                  <div className="mb-1 p-3 light-gray-bg">
-                    {taskShortname !== "VQA" && (
-                      <h6 className="text-uppercase dark-blue-color spaced-header">
-                        Context:
-                      </h6>
+            <Card className="profile-card">
+              {!this.state.loading ? (
+                this.state.example ? (
+                  <>
+                    {contextIO && contextIO.length > 0 ? (
+                      <div className="mb-1 p-3 rounded light-gray-bg">
+                        {contextIO}
+                      </div>
+                    ) : (
+                      ""
                     )}
-                    {this.state.example.context &&
-                      this.state.example.context.context && (
-                        <ContextInfo
-                          text={this.state.example.context.context}
-                          taskShortname={taskShortname}
-                          needAnswer={
-                            responseValState === INCORRECT &&
-                            taskShortname === "QA"
-                          }
-                          answer={this.state.validatorLabel}
-                          updateAnswer={this.updateAnswer}
-                        />
-                      )}
-                  </div>
-                  <Card.Body
-                    className="overflow-auto pt-2"
-                    style={{ height: 400 }}
-                  >
-                    <Card
-                      className="hypothesis rounded border m-3 card"
-                      style={{ minHeight: 120 }}
-                    >
-                      <Card.Body className="p-3">
-                        <Row>
-                          <Col xs={12} md={7}>
-                            {shouldQuestionBeValidated && (
-                              <>
-                                <h6 className="text-uppercase dark-blue-color spaced-header">
-                                  Is the question below valid? (see instructions
-                                  above to see what we mean by "valid")
-                                </h6>
-                                <p>{this.state.example.text}</p>
-                                <ExampleValidationActions
-                                  correctSelected={questionValState === VALID}
-                                  incorrectSelected={
-                                    questionValState === INVALID
-                                  }
-                                  flaggedSelected={questionValState === FLAGGED}
-                                  setCorrectSelected={() =>
-                                    this.updateValidatorSelection({
-                                      questionValState: VALID,
-                                    })
-                                  }
-                                  setIncorrectSelected={() =>
-                                    this.updateValidatorSelection({
-                                      questionValState: INVALID,
-                                    })
-                                  }
-                                  setFlagSelected={() =>
-                                    this.updateValidatorSelection({
-                                      questionValState: FLAGGED,
-                                    })
-                                  }
-                                  setFlagReason={(flagReason) =>
-                                    this.setState({ flagReason })
-                                  }
-                                  isQuestion={true}
-                                  isFlaggingAllowed={true}
-                                  isExplainingAllowed={false}
-                                  userMode={
-                                    this.state.owner_mode ? "owner" : "user"
-                                  }
-                                  task={this.state.task}
-                                />
-                              </>
-                            )}
-                            {shouldResponseBeValidated && (
-                              <>
-                                {taskType === "extract" ? (
-                                  <>
-                                    <h6 className="text-uppercase dark-blue-color spaced-header">
-                                      Question:
-                                    </h6>
-                                    <p>{this.state.example.text}</p>
-                                    <h6 className="text-uppercase dark-blue-color spaced-header">
-                                      Answer:
-                                    </h6>
-                                    <p>{this.state.example.target_pred}</p>
-                                  </>
-                                ) : taskType === "VQA" ? (
-                                  <>
-                                    <h6 className="text-uppercase dark-blue-color spaced-header">
-                                      Determine if the answer is correct:
-                                    </h6>
-                                    <p>
-                                      {
-                                        this.state.example.model_preds.split(
-                                          "|"
-                                        )[0]
-                                      }
-                                    </p>
-                                  </>
-                                ) : (
-                                  <>
-                                    <h6 className="text-uppercase dark-blue-color spaced-header">
-                                      {taskShortname === "NLI"
-                                        ? "Hypothesis"
-                                        : "Statement"}
-                                      :
-                                    </h6>
-                                    <p>{this.state.example.text}</p>
-                                    <h6 className="text-uppercase dark-blue-color spaced-header">
-                                      Label:
-                                    </h6>
-                                    <p>{this.state.example.target}</p>
-                                    {this.state.example.example_explanation && (
-                                      <>
-                                        <h6 className="text-uppercase dark-blue-color spaced-header">
-                                          Example explanation{" "}
-                                          <small>
-                                            (why target label is correct)
-                                          </small>
-                                        </h6>
-                                        <p>
-                                          {
-                                            this.state.example
-                                              .example_explanation
-                                          }
-                                        </p>
-                                      </>
-                                    )}
-                                    {this.state.example.model_explanation && (
-                                      <>
-                                        <h6 className="text-uppercase dark-blue-color spaced-header">
-                                          Model explanation{" "}
-                                          <small>
-                                            (
-                                            {this.state.example.model_wrong
-                                              ? "why model was fooled"
-                                              : "how they tried to trick the model"}
-                                            )
-                                          </small>
-                                        </h6>
-                                        <p>
-                                          {this.state.example.model_explanation}
-                                        </p>
-                                      </>
-                                    )}
-                                    {this.state.example.metadata_json &&
-                                      JSON.parse(
-                                        this.state.example.metadata_json
-                                      ).hasOwnProperty("hate_type") && (
-                                        <>
-                                          <h6 className="text-uppercase dark-blue-color spaced-header">
-                                            Hate Target:
-                                          </h6>
-                                          <p>
-                                            {
-                                              JSON.parse(
-                                                this.state.example.metadata_json
-                                              ).hate_type
-                                            }
-                                          </p>
-                                        </>
-                                      )}
-                                  </>
-                                )}
-                                <ExampleValidationActions
-                                  correctSelected={responseValState === CORRECT}
-                                  incorrectSelected={
-                                    responseValState === INCORRECT
-                                  }
-                                  flaggedSelected={responseValState === FLAGGED}
-                                  validatorLabel={validatorLabel}
-                                  validatorHateType={validatorHateType}
-                                  creatorAttemptExplanation={
-                                    creatorAttemptExplanation
-                                  }
-                                  example={this.state.example}
-                                  task={this.state.task}
-                                  userMode={
-                                    this.state.owner_mode ? "owner" : "user"
-                                  }
-                                  isFlaggingAllowed={taskShortname !== "VQA"}
-                                  isExplainingAllowed={taskShortname !== "VQA"}
-                                  isQuestion={false}
-                                  setCorrectSelected={() =>
-                                    this.updateValidatorSelection({
-                                      responseValState: CORRECT,
-                                    })
-                                  }
-                                  setIncorrectSelected={() =>
-                                    this.updateValidatorSelection({
-                                      responseValState: INCORRECT,
-                                    })
-                                  }
-                                  setFlagSelected={() =>
-                                    this.updateValidatorSelection({
-                                      responseValState: FLAGGED,
-                                    })
-                                  }
-                                  setFlagReason={(flagReason) =>
-                                    this.setState({ flagReason })
-                                  }
-                                  setValidatorLabel={(validatorLabel) =>
-                                    this.setState({ validatorLabel })
-                                  }
-                                  setValidatorHateType={(validatorHateType) =>
-                                    this.setState({ validatorHateType })
-                                  }
-                                  setLabelExplanation={(labelExplanation) =>
-                                    this.setState({ labelExplanation })
-                                  }
-                                  setCreatorAttemptExplanation={(
-                                    creatorAttemptExplanation
-                                  ) =>
-                                    this.setState({ creatorAttemptExplanation })
-                                  }
-                                />
-                              </>
-                            )}
-                          </Col>
-                        </Row>
-                      </Card.Body>
-                      <Card.Footer>
-                        <InputGroup className="align-items-center">
-                          <button
-                            type="button"
-                            className="btn btn-primary t btn-sm"
-                            onClick={() => this.handleResponse()}
-                          >
-                            {" "}
-                            Submit{" "}
-                          </button>
-                          {taskShortname !== "VQA" && (
-                            <button
-                              data-index={this.props.index}
-                              onClick={this.getNewExample}
-                              type="button"
-                              className="btn btn-light btn-sm pull-right"
-                            >
-                              <i className="fas fa-undo-alt"></i> Skip and load
-                              new example
-                            </button>
+                    <Card.Body className="p-3">
+                      <Row>
+                        <Col xs={12} md={7}>
+                          {inputOutputUserMetadataIO}
+                          {this.state.example.example_explanation ? (
+                            <>
+                              <h6 className="text-uppercase dark-blue-color spaced-header">
+                                Example explanation{" "}
+                                <small>(why target label is correct)</small>
+                              </h6>
+                              <p>{this.state.example.example_explanation}</p>
+                            </>
+                          ) : (
+                            ""
                           )}
-                        </InputGroup>
-                      </Card.Footer>
-                    </Card>
-                    <div className="p-2">
-                      {this.state.owner_mode ? (
-                        <p style={{ color: "red" }}>
-                          WARNING: You are in "Task owner mode." You can verify
-                          examples as correct or incorrect without input from
-                          anyone else!!
+                          {this.state.example.model_explanation ? (
+                            <>
+                              <h6 className="text-uppercase dark-blue-color spaced-header">
+                                Model explanation{" "}
+                                <small>
+                                  (
+                                  {this.state.example.model_wrong
+                                    ? "why model was fooled"
+                                    : "how they tried to trick the model"}
+                                  )
+                                </small>
+                              </h6>
+                              <p>{this.state.example.model_explanation}</p>
+                            </>
+                          ) : (
+                            ""
+                          )}
+                          <h6 className="text-uppercase dark-blue-color spaced-header">
+                            Actions:
+                          </h6>
+                          <p>
+                            <InputGroup className="align-items-center">
+                              <Form.Check
+                                checked={this.state.correctSelected}
+                                type="radio"
+                                onChange={() =>
+                                  this.resetValidatorSelections(() =>
+                                    this.setState({ correctSelected: true })
+                                  )
+                                }
+                              />
+                              <i className="fas fa-thumbs-up"></i> &nbsp;{" "}
+                              {this.state.owner_mode ? "Verified " : ""} Correct
+                            </InputGroup>
+                            <InputGroup className="align-items-center">
+                              <Form.Check
+                                checked={this.state.incorrectSelected}
+                                type="radio"
+                                onChange={() =>
+                                  this.resetValidatorSelections(() =>
+                                    this.setState({ incorrectSelected: true })
+                                  )
+                                }
+                              />
+                              <i className="fas fa-thumbs-down"></i> &nbsp;{" "}
+                              {this.state.owner_mode ? "Verified " : ""}{" "}
+                              Incorrect
+                            </InputGroup>
+                            {this.state.incorrectSelected ? (
+                              <>
+                                <b>Enter the correct output</b>
+                                {validatorOutputIO}
+                              </>
+                            ) : (
+                              ""
+                            )}
+                            {this.state.owner_mode ? (
+                              ""
+                            ) : (
+                              <InputGroup className="align-items-center">
+                                <Form.Check
+                                  checked={this.state.flaggedSelected}
+                                  type="radio"
+                                  onChange={() =>
+                                    this.resetValidatorSelections(() =>
+                                      this.setState({ flaggedSelected: true })
+                                    )
+                                  }
+                                />
+                                <i className="fas fa-flag"></i> &nbsp; Flag
+                              </InputGroup>
+                            )}
+                            <InputGroup className="ml-3">
+                              {this.state.flaggedSelected ? (
+                                <Col sm="12 p-1">
+                                  <Form.Control
+                                    type="text"
+                                    placeholder="Reason for flagging"
+                                    onChange={(e) =>
+                                      this.setState({
+                                        flagReason: e.target.value,
+                                      })
+                                    }
+                                  />
+                                </Col>
+                              ) : (
+                                ""
+                              )}
+                            </InputGroup>
+                          </p>
+                          {this.state.incorrectSelected ||
+                          this.state.correctSelected ||
+                          this.state.flaggedSelected ? (
+                            <div>
+                              <h6 className="text-uppercase dark-blue-color spaced-header">
+                                Optionally, provide an explanation for this
+                                example:
+                              </h6>
+                              <p>
+                                <div className="mt-3">
+                                  {this.state.incorrectSelected ||
+                                  this.state.correctSelected ? (
+                                    <div>
+                                      <Form.Control
+                                        type="text"
+                                        placeholder={
+                                          "Explain why the given example is " +
+                                          (this.state.correctSelected
+                                            ? "correct"
+                                            : "incorrect")
+                                        }
+                                        onChange={(e) =>
+                                          this.setState({
+                                            labelExplanation: e.target.value,
+                                          })
+                                        }
+                                      />
+                                    </div>
+                                  ) : (
+                                    ""
+                                  )}
+                                  <div>
+                                    <Form.Control
+                                      type="text"
+                                      placeholder="Explain what you think the creator did to try to trick the model"
+                                      onChange={(e) =>
+                                        this.setState({
+                                          creatorAttemptExplanation:
+                                            e.target.value,
+                                        })
+                                      }
+                                    />
+                                  </div>
+                                </div>
+                              </p>
+                            </div>
+                          ) : (
+                            ""
+                          )}
+                        </Col>
+                      </Row>
+                      <InputGroup className="align-items-center">
+                        <Button
+                          type="button"
+                          className="font-weight-bold blue-bg border-0 task-action-btn"
+                          onClick={() => this.handleResponse()}
+                        >
+                          {" "}
+                          Submit{" "}
+                        </Button>
+                        <Button
+                          data-index={this.props.index}
+                          onClick={this.getNewExample}
+                          type="button"
+                          className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"
+                        >
+                          <i className="fas fa-undo-alt"></i> Skip and load new
+                          example
+                        </Button>
+                      </InputGroup>
+                    </Card.Body>
+                  </>
+                ) : (
+                  <Card.Body className="p-3">
+                    <Row>
+                      <Col xs={12} md={7}>
+                        <p>
+                          No more examples to be verified. Please create more
+                          examples!
                         </p>
-                      ) : (
-                        ""
-                      )}
-                    </div>
+                      </Col>
+                    </Row>
                   </Card.Body>
-                </>
+                )
               ) : (
-                <Card.Body className="p-3">
-                  <Row>
-                    <Col xs={12} md={7}>
-                      <p>Loading Examples...</p>
-                    </Col>
-                  </Row>
-                </Card.Body>
+                <div className="mx-auto my-3">
+                  <Spinner animation="border" />{" "}
+                </div>
               )}
+              <div className="p-2">
+                {this.state.owner_mode ? (
+                  <p style={{ color: "red" }}>
+                    WARNING: You are in "Task owner mode." You can verify
+                    examples as correct or incorrect without input from anyone
+                    else!!
+                  </p>
+                ) : (
+                  ""
+                )}
+              </div>
             </Card>
           </Col>
         </Container>

@@ -113,7 +113,7 @@ def do_upload(credentials):
         ]
         for context_info in parsed_upload_data:
             if (
-                "text" not in context_info
+                "context_io" not in context_info
                 or "tag" not in context_info
                 or "metadata" not in context_info
             ):
@@ -132,7 +132,7 @@ def do_upload(credentials):
     for context_info in parsed_upload_data:
         c = Context(
             r_realid=r_realid,
-            context=context_info["text"],
+            context_io=json.dumps(context_info["context_io"]),
             metadata_json=json.dumps(context_info["metadata"]),
             tag=context_info["tag"],
         )

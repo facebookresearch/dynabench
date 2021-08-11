@@ -3,14 +3,13 @@
 import hashlib
 import json
 
-import numpy as np
-import sqlalchemy as db
-from sqlalchemy import JSON, case
-
 import dynalab.tasks.hs
 import dynalab.tasks.nli
 import dynalab.tasks.qa
 import dynalab.tasks.sentiment
+import sqlalchemy as db
+from sqlalchemy import case
+
 from common.logging import logger
 from models.context import Context
 from models.model import Model
@@ -19,6 +18,7 @@ from models.validation import LabelEnum, ModeEnum, Validation
 
 from .base import Base, BaseModel
 from .context import ContextModel
+from .task import TaskModel
 from .user import UserModel
 
 
@@ -35,17 +35,15 @@ class Example(Base):
     user = db.orm.relationship("User", foreign_keys="Example.uid")
     tag = db.Column(db.Text)
 
-    text = db.Column(db.Text)
-    # why is X the label for this example
-    example_explanation = db.Column(db.Text)
-    # why do you think the model got it wrong
-    model_explanation = db.Column(db.Text)
+    input_io = db.Column(db.Text)
+    user_output_io = db.Column(db.Text)
+    model_output_io = db.Column(db.Text)
+    model_metadata_io = db.Column(db.Text)
+    user_metadata_io = db.Column(db.Text)
 
     metadata_json = db.Column(db.Text)
 
-    target_pred = db.Column(db.Text)
-    model_preds = db.Column(db.Text)
-    target_model = db.Column(db.Text)
+    model_endpoint_name = db.Column(db.Text)
 
     split = db.Column(db.String(length=255), default="undecided")
 
@@ -83,15 +81,17 @@ class ExampleModel(BaseModel):
         rid,
         uid,
         cid,
-        hypothesis,
-        tgt,
-        response,
+        input_io,
+        user_output_io,
+        model_output_io,
+        model_metadata_io,
+        model_signature,
         metadata,
+        model_wrong,
         tag=None,
-        dynalab_model=False,
-        dynalab_model_input_data=None,
-        dynalab_model_endpoint_name=None,
+        model_endpoint_name=None,
     ):
+
         if uid == "turk" and "annotator_id" not in metadata:
             logger.error("Annotator id not specified but received Turk example")
             return False
@@ -105,103 +105,146 @@ class ExampleModel(BaseModel):
             )
             return False
 
-        # If task has_answer, handle here (specifically target_pred and
-        # model_wrong)
-        if c.round.task.has_answer:
-            if (
-                c.round.task.shortname == "VQA"
-                and "answer" in response
-                and "prob" in response
-            ):
-                model_wrong = False
-                pred = str(response["answer"]) + "|" + str(float(response["prob"][0]))
-            elif "model_is_correct" in response and "text" in response:
-                pred = str(response["model_is_correct"]) + "|" + str(response["text"])
-                model_wrong = not response["model_is_correct"]
-            else:
-                return False
-            if "model_id" in response:
-                pred += "|" + str(response["model_id"])
-        else:
-            if "prob" not in response:
-                return False
-            pred = response["prob"]
-            model_wrong = tgt != np.argmax(pred)
+        context_io = json.loads(c.context_io)
 
-        if isinstance(pred, list):
-            pred_str = "|".join([str(x) for x in pred])
-        else:
-            pred_str = pred
+        # Make sure that we aren't accepting any corrupted example io
+        all_model_io = {}
+        all_model_io.update(context_io)
+        all_model_io.update(input_io)
+        all_model_io.update(model_output_io)
+        all_model_io.update(model_metadata_io)
+        if not TaskModel().get(tid).verify_io(all_model_io, None):
+            logger.error("Improper formatting in model io")
+            return False
+
+        all_user_io = {}
+        all_user_io.update(context_io)
+        all_user_io.update(input_io)
+        all_user_io.update(user_output_io)
+        if not TaskModel().get(tid).verify_io(all_user_io, None):
+            logger.error("Improper formatting in user io")
+            return False
 
         if uid == "turk" and "model" in metadata and metadata["model"] == "no-model":
             pass  # ignore signature when we don't have a model in the loop with turkers
         else:
-            if dynalab_model:
-                if "signed" in response:
-                    if c.round.task.shortname == "Hate Speech":
-                        dynalab_task = dynalab.tasks.hs
-                    elif c.round.task.shortname == "NLI":
-                        dynalab_task = dynalab.tasks.nli
-                    elif c.round.task.shortname == "Sentiment":
-                        dynalab_task = dynalab.tasks.sentiment
-                    elif c.round.task.shortname == "QA":
-                        dynalab_task = dynalab.tasks.qa
-                    else:
-                        logger.error(
-                            "This is a Dynalab model but a Dynalab signature "
-                            + "verification method has not been included for this task."
-                        )
-                        return False
-
-                    model_secret = (
-                        self.dbs.query(Model)
-                        .filter(Model.endpoint_name == dynalab_model_endpoint_name)
-                        .one()
-                        .secret
-                    )
-                    if response[
-                        "signed"
-                    ] != dynalab_task.TaskIO().generate_response_signature(
-                        response, dynalab_model_input_data, model_secret
-                    ):
-                        logger.error(
-                            "Signature does not match (received %s, expected %s)"
-                            % (
-                                response["signed"],
-                                dynalab_task.TaskIO().generate_response_signature(
-                                    response, dynalab_model_input_data, model_secret
-                                ),
-                            )
-                        )
-                        return False
-                    else:
-                        logger.info(
-                            "Signature matches(received %s, expected %s)"
-                            % (
-                                response["signed"],
-                                dynalab_task.TaskIO().generate_response_signature(
-                                    response, dynalab_model_input_data, model_secret
-                                ),
-                            )
-                        )
+            # TODO: can remove this when the dynalab part of dynatask is done
+            if model_endpoint_name.startswith(
+                "ts"
+            ):  # This means that we have a dynalab model
+                if c.round.task.name == "Hate Speech":
+                    dynalab_task = dynalab.tasks.hs
+                elif c.round.task.name == "Natural Language Inference":
+                    dynalab_task = dynalab.tasks.nli
+                elif c.round.task.name == "Sentiment Analysis":
+                    dynalab_task = dynalab.tasks.sentiment
+                elif c.round.task.name == "Question Answering":
+                    dynalab_task = dynalab.tasks.qa
                 else:
+                    logger.error(
+                        "This is a Dynalab model but a Dynalab signature "
+                        + "verification method has not been included for this task."
+                    )
                     return False
 
+                model_secret = (
+                    self.dbs.query(Model)
+                    .filter(Model.endpoint_name == model_endpoint_name)
+                    .one()
+                    .secret
+                )
+                all_model_io["signed"] = model_signature
+                if model_signature != dynalab_task.TaskIO().generate_response_signature(
+                    all_model_io, all_model_io, model_secret
+                ):
+                    logger.error(
+                        "Signature does not match (received %s, expected %s)"
+                        % (
+                            all_model_io["signed"],
+                            dynalab_task.TaskIO().generate_response_signature(
+                                all_model_io, all_model_io, model_secret
+                            ),
+                        )
+                    )
+                    return False
+                else:
+                    logger.info(
+                        "Signature matches(received %s, expected %s)"
+                        % (
+                            all_model_io["signed"],
+                            dynalab_task.TaskIO().generate_response_signature(
+                                all_model_io, all_model_io, model_secret
+                            ),
+                        )
+                    )
             else:
-                # TODO: remove this old verify method when all target models are
-                # reuploaded via dynalab. We can also clean up the arguments to
-                # this create function.
-                if "signed" not in response or not self.verify_signature(
-                    response["signed"], c, hypothesis, pred_str
+                # Begin hack that can be removed upon full dynalab integration
+                if c.round.task.task_code in ("qa", "vqa"):
+                    if (
+                        c.round.task.task_code == "vqa"
+                        and "answer" in model_output_io
+                        and "prob" in model_output_io
+                    ):
+                        model_wrong = False
+                        pred = (
+                            str(model_output_io["answer"])
+                            + "|"
+                            + str(float(model_output_io["prob"]))
+                        )
+                    elif (
+                        "model_is_correct" in model_output_io
+                        and "text" in model_output_io
+                    ):
+                        pred = (
+                            str(model_output_io["model_is_correct"])
+                            + "|"
+                            + str(model_output_io["text"])
+                        )
+                        model_wrong = not model_output_io["model_is_correct"]
+                    else:
+                        return False
+                    if "model_id" in model_output_io:
+                        pred += "|" + str(model_output_io["model_id"])
+                else:
+                    if "prob" not in model_output_io:
+                        return False
+                    if c.round.task.task_code == "nli":
+                        pred = "|".join(
+                            [
+                                str(model_output_io["prob"]["entailed"]),
+                                str(model_output_io["prob"]["neutral"]),
+                                str(model_output_io["prob"]["contradictory"]),
+                            ]
+                        )
+                    if c.round.task.task_code == "sentiment":
+                        pred = "|".join(
+                            [
+                                str(model_output_io["prob"]["negative"]),
+                                str(model_output_io["prob"]["positive"]),
+                                str(model_output_io["prob"]["neutral"]),
+                            ]
+                        )
+                    if c.round.task.task_code == "hs":
+                        pred = "|".join(
+                            [
+                                str(model_output_io["prob"]["not-hateful"]),
+                                str(model_output_io["prob"]["hateful"]),
+                            ]
+                        )
+
+                if not self.verify_signature(
+                    model_signature, c, list(input_io.values())[0], pred
                 ):
                     return False
+                # End hack that can be removed upon full dynalab integration
 
         try:
             e = Example(
                 context=c,
-                text=hypothesis,
-                target_pred=tgt,
-                model_preds=pred_str,
+                input_io=json.dumps(input_io),
+                user_output_io=json.dumps(user_output_io),
+                model_output_io=json.dumps(model_output_io),
+                model_metadata_io=json.dumps(model_metadata_io),
                 model_wrong=model_wrong,
                 generated_datetime=db.sql.func.now(),
                 metadata_json=json.dumps(metadata),
@@ -223,18 +266,16 @@ class ExampleModel(BaseModel):
             return False
         return e
 
+    # Begin hack that can be removed upon full dynalab integration
     def verify_signature(self, signature, context, hypothesis, pred_str):
         tid = context.round.task.id
         rid = context.round.rid
         secret = context.round.secret
-        context_str = context.context
+        context_str = list(json.loads(context.context_io).values())[0]
 
         fields_to_sign = []
         fields_to_sign.append(pred_str.encode("utf-8"))
-        if (
-            context.round.task.has_context
-            and context.round.task.shortname != "Sentiment"
-        ):
+        if context.round.task.task_code not in ("sentiment", "hs"):
             fields_to_sign.append(context_str.encode("utf-8"))
         fields_to_sign.append(hypothesis.encode("utf-8"))
         fields_to_sign.append(f"{tid}{rid}{secret}".encode("utf-8"))
@@ -256,6 +297,8 @@ class ExampleModel(BaseModel):
             )
 
         return True
+
+    # End hack that can be removed upon full dynalab integration
 
     def get_anon_uid(self, secret, uid):
         anon_uid = hashlib.sha1()
@@ -371,134 +414,6 @@ class ExampleModel(BaseModel):
         result = result_partially_validated.union(result_not_validated)
         if my_uid is not None:
             result = result.filter(Example.uid != my_uid)
-        result = (
-            result.order_by(
-                db.not_(Example.model_wrong),
-                Example.total_verified.asc(),
-                db.sql.func.rand(),
-            )
-            .limit(n)
-            .all()
-        )
-        return result
-
-    def getRandomVQA(
-        self,
-        rid,
-        validate_non_fooling,
-        num_matching_validations,
-        n=1,
-        mode="owner",
-        my_uid=None,
-        tags=None,
-        context_tags=None,
-    ):
-        cnt_owner_validated = db.sql.func.sum(
-            case([(Validation.mode == ModeEnum.owner, 1)], else_=0)
-        ).label("cnt_owner_validated")
-
-        if context_tags:
-            result = (
-                self.dbs.query(Example)
-                .join(Context, Example.cid == Context.id)
-                .filter(Context.r_realid == rid)
-                .filter(Example.retracted == False)  # noqa
-                .filter(Context.tag.in_(context_tags))
-            )
-        else:
-            result = (
-                self.dbs.query(Example)
-                .join(Context, Example.cid == Context.id)
-                .filter(Context.r_realid == rid)
-                .filter(Example.retracted == False)  # noqa
-            )
-
-        if tags:
-            result = result.filter(Example.tag.in_(tags))  # noqa
-
-        if not validate_non_fooling:
-            result = result.filter(Example.model_wrong == True)  # noqa
-
-        cm = ContextModel()
-        (
-            contexts_with_example_stats,
-            examples_with_validation_stats,
-            # contexts stats:
-            # how many examples passed, failed, inflight, pre-validation per context
-            (
-                cnt_correct_examples,
-                cnt_failed_examples,
-                cnt_inflight_examples,
-                cnt_pre_val_examples,
-            ),
-            # example stats:
-            # how many validations correct, incorrect, flagged, total per example
-            (cnt_correct_val, cnt_incorrect_val, cnt_flagged_val, cnt_total_val),
-        ) = cm.getContextValidationResults(
-            num_matching_validations,
-            validate_non_fooling=validate_non_fooling,
-            example_tags=tags,
-        )
-
-        if my_uid is not None:
-            if mode == "owner":
-                cnt_uid = db.sql.func.sum(
-                    case([(Validation.uid == my_uid, 1)], else_=0)
-                ).label("cnt_uid")
-            elif mode == "user":
-                examples_with_validation_stats = examples_with_validation_stats.filter(
-                    db.cast(Example.metadata_json, JSON)["annotator_id"] != my_uid
-                )
-                cnt_uid = db.sql.func.sum(
-                    case(
-                        [
-                            (
-                                db.cast(Validation.metadata_json, JSON)["annotator_id"]
-                                == my_uid,
-                                1,
-                            )
-                        ],
-                        else_=0,
-                    )
-                ).label("cnt_uid")
-            examples_with_validation_stats = examples_with_validation_stats.having(
-                cnt_uid == 0
-            )
-
-        # partially validated
-        examples_partially_validated = examples_with_validation_stats.having(
-            db.and_(
-                cnt_correct_val < num_matching_validations,
-                cnt_flagged_val < num_matching_validations,
-                cnt_incorrect_val < num_matching_validations,
-                cnt_total_val > 0,
-                cnt_owner_validated == 0,
-            )
-        )
-        examples_partially_validated = examples_partially_validated.subquery()
-        result_partially_validated = result.join(
-            examples_partially_validated,
-            examples_partially_validated.c.id == Example.id,
-        )
-
-        # not validated
-        examples_not_validated = examples_with_validation_stats.having(
-            db.and_(cnt_total_val == 0, cnt_owner_validated == 0)
-        )
-        examples_not_validated = examples_not_validated.subquery()
-        contexts_with_example_stats = contexts_with_example_stats.having(
-            cnt_correct_examples == 0
-        )
-        contexts_with_example_stats = contexts_with_example_stats.subquery()
-        result_not_validated = result.join(
-            contexts_with_example_stats,
-            contexts_with_example_stats.c.cid == Example.cid,
-        ).join(examples_not_validated, examples_not_validated.c.id == Example.id)
-
-        result = result_partially_validated.union(result_not_validated)
-        if my_uid is not None and mode == "owner":
-            result = result.filter(Example.uid != my_uid)
-
         result = (
             result.order_by(
                 db.not_(Example.model_wrong),

@@ -72,16 +72,13 @@ export default class ApiService {
     });
   }
 
-  updateExample(id, target, fooled, uid = null) {
-    var obj = {};
-    obj.target_pred = target;
-    obj.model_wrong = fooled;
+  updateExample(id, data, uid = null) {
     if (this.mode === "mturk") {
-      obj.uid = uid;
+      data.uid = uid;
     }
     return this.fetch(`${this.domain}/examples/${id}`, {
       method: "PUT",
-      body: JSON.stringify(obj),
+      body: JSON.stringify(data),
     });
   }
 
@@ -365,11 +362,9 @@ export default class ApiService {
     );
   }
 
-  getModelResponse(
-    modelUrl,
-    { context, hypothesis, answer, image_url, question, insight, statement }
-  ) {
-    const uid = "0"; //A requied field for dynalab uploaded models
+  getModelResponse(modelUrl, example_io) {
+    example_io["uid"] = "0"; //A requied field for dynalab uploaded models. TODO: fix
+    example_io["insight"] = false; //TODO: an artifact of old models
     const trialAuthToken = localStorage.getItem("trial_auth_token");
     const customHeader =
       this.loggedIn() || this.mode === "mturk" || trialAuthToken == null
@@ -381,16 +376,7 @@ export default class ApiService {
           };
     return this.fetch(modelUrl, {
       method: "POST",
-      body: JSON.stringify({
-        uid,
-        context,
-        hypothesis,
-        answer,
-        image_url,
-        question,
-        insight,
-        statement,
-      }),
+      body: JSON.stringify(example_io),
       ...(customHeader == null ? {} : { headers: customHeader }),
     });
   }
@@ -424,22 +410,6 @@ export default class ApiService {
   setExampleMetadata(id, metadata_json) {
     var obj = {};
     obj.metadata_json = JSON.stringify(metadata_json);
-    return this.fetch(`${this.domain}/examples/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(obj),
-    });
-  }
-
-  explainExample(id, type, explanation, uid = null) {
-    var obj = {};
-    if (type === "example") {
-      obj.example_explanation = explanation;
-    } else if (type === "model") {
-      obj.model_explanation = explanation;
-    }
-    if (this.mode === "mturk") {
-      obj.uid = uid;
-    }
     return this.fetch(`${this.domain}/examples/${id}`, {
       method: "PUT",
       body: JSON.stringify(obj),
@@ -499,35 +469,48 @@ export default class ApiService {
     );
   }
 
+  getModelWrong(tid, user_output_io, model_output_io) {
+    return this.fetch(`${this.domain}/examples/get-model-wrong`, {
+      method: "POST",
+      body: JSON.stringify({
+        user_output_io: user_output_io,
+        tid: tid,
+        model_output_io: model_output_io,
+      }),
+    });
+  }
+
   storeExample(
     tid,
     rid,
     uid,
     cid,
-    hypothesis,
-    target,
-    response,
+    input_io,
+    user_output_io,
+    model_output_io,
+    model_metadata_io,
+    model_signature,
     metadata,
+    model_wrong,
     tag = null,
-    dynalab_model = false,
-    dynalab_model_input_data = null,
-    dynalab_model_endpoint_name = null
+    model_endpoint_name = null
   ) {
     return this.fetch(`${this.domain}/examples`, {
       method: "POST",
       body: JSON.stringify({
-        hypothesis: hypothesis,
         tid: tid,
         rid: rid,
         cid: cid,
         uid: uid,
-        target: target,
-        response: response,
+        input_io: input_io,
+        user_output_io: user_output_io,
+        model_output_io: model_output_io,
+        model_metadata_io: model_metadata_io,
+        model_signature: model_signature,
         metadata: metadata,
+        model_wrong: model_wrong,
         tag: tag,
-        dynalab_model: dynalab_model,
-        dynalab_model_input_data: JSON.stringify(dynalab_model_input_data),
-        dynalab_model_endpoint_name: dynalab_model_endpoint_name,
+        model_endpoint_name: model_endpoint_name,
       }),
     });
   }

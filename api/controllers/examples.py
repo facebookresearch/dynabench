@@ -13,7 +13,7 @@ from models.context import ContextModel
 from models.example import ExampleModel
 from models.round import RoundModel
 from models.round_user_example_info import RoundUserExampleInfoModel
-from models.task import TaskModel
+from models.task import TaskModel, model_wrong_metrics
 from models.user import UserModel
 
 
@@ -58,57 +58,6 @@ def get_random_filtered_example(
     if not example:
         bottle.abort(500, f"No examples available ({round.id})")
     example = example[0].to_dict()
-    return util.json_encode(example)
-
-
-@bottle.get("/examples/vqa/<tid:int>/<rid:int>")
-@_auth.requires_auth_or_turk
-def get_random_example_vqa(credentials, tid, rid):
-    query_dict = parse_qs(bottle.request.query_string)
-    tags = None
-    if "tags" in query_dict and len(query_dict["tags"]) > 0:
-        tags = query_dict["tags"][0].split("|")
-
-    context_tags = None
-    if "context_tags" in query_dict and len(query_dict["context_tags"]) > 0:
-        context_tags = query_dict["context_tags"][0].split("|")
-
-    tm = TaskModel()
-    task = tm.get(tid)
-    validate_non_fooling = False
-    num_matching_validations = 3
-    if task.settings_json:
-        settings = json.loads(task.settings_json)
-        validate_non_fooling = settings["validate_non_fooling"]
-        num_matching_validations = settings["num_matching_validations"]
-    rm = RoundModel()
-    round = rm.getByTidAndRid(tid, rid)
-    em = ExampleModel()
-
-    annotator_id = None
-    if "annotator_id" in query_dict and len(query_dict["annotator_id"]) > 0:
-        annotator_id = query_dict["annotator_id"][0]
-
-    uid = credentials["id"] if credentials["id"] != "turk" else annotator_id
-    mode = "owner" if credentials["id"] != "turk" else "user"
-    example = em.getRandomVQA(
-        round.id,
-        validate_non_fooling,
-        num_matching_validations,
-        mode=mode,
-        n=1,
-        my_uid=uid,
-        tags=tags,
-        context_tags=context_tags,
-    )
-    if not example:
-        bottle.abort(500, f"No examples available ({round.id})")
-
-    example = example[0]
-    if example not in em.dbs:
-        example = em.dbs.merge(example)
-
-    example = example.to_dict()
     return util.json_encode(example)
 
 
@@ -197,6 +146,12 @@ def update_example(credentials, eid):
                 bottle.abort(403, "Access denied")
             del data["uid"]  # don't store this
 
+        for field in data:
+            if field not in ("model_wrong", "flagged", "retracted", "user_metadata_io"):
+                bottle.abort(
+                    403, "Can only modify  model_wrong, retracted, and user_metadata_io"
+                )
+
         if (
             "model_wrong" in data
             and data["model_wrong"] is True
@@ -212,6 +167,27 @@ def update_example(credentials, eid):
                 info = RoundUserExampleInfoModel()
                 um.incrementFooledCount(example.uid)
                 info.incrementFooledCount(example.uid, context.r_realid)
+
+        if "user_metadata_io" in data:
+            cm = ContextModel()
+            context = cm.get(example.cid)
+            all_user_io = {}
+            all_user_io.update(json.loads(context.context_io))
+            all_user_io.update(json.loads(example.input_io))
+            all_user_io.update(json.loads(example.user_output_io))
+            all_user_io.update(data["user_metadata_io"])
+            if (
+                not TaskModel()
+                .get(example.context.round.tid)
+                .verify_io(
+                    all_user_io,
+                    data["model_wrong"]
+                    if ("model_wrong" in data)
+                    else example.model_wrong,
+                )
+            ):
+                bottle.abort(403, "user_metadata_io is not properly formatted")
+            data["user_metadata_io"] = json.dumps(data["user_metadata_io"])
 
         logger.info(f"Updating example {example.id} with {data}")
         em.update(example.id, data)
@@ -232,14 +208,63 @@ def update_example(credentials, eid):
         bottle.abort(500, {"error": str(e)})
 
 
+@bottle.post("/examples/get-model-wrong")
+def controller_get_model_wrong():
+    data = bottle.request.json
+
+    if not util.check_fields(data, ["tid", "user_output_io", "model_output_io"]):
+        bottle.abort(400, "Missing data")
+
+    model_wrong, missing_keys = get_model_wrong(
+        data["tid"], data["user_output_io"], data["model_output_io"]
+    )
+    if missing_keys:
+        bottle.abort(400, "Missing keys")
+
+    return util.json_encode({"success": "ok", "model_wrong": model_wrong})
+
+
+def get_model_wrong(tid, example_io, model_response_io):
+    tm = TaskModel()
+    task = tm.get(tid)
+    model_wrong_metric = model_wrong_metrics[task.model_wrong_metric.name]
+    output_keys = set(map(lambda item: item["name"], json.loads(task.output_io_def)))
+    model_output = {}
+    human_output = {}
+    for key, value in example_io.items():
+        if key in output_keys:
+            human_output[key] = value
+    for key, value in model_response_io.items():
+        if key in output_keys:
+            model_output[key] = value
+
+    return (
+        model_wrong_metric(model_output, human_output),
+        len(model_output.keys()) != len(output_keys)
+        or len(human_output.keys()) != len(output_keys),
+    )
+
+
 @bottle.post("/examples")
 @_auth.requires_auth_or_turk
 def post_example(credentials):
     data = bottle.request.json
-
     if not util.check_fields(
         data,
-        ["tid", "rid", "uid", "cid", "hypothesis", "target", "response", "metadata"],
+        [
+            "tid",
+            "rid",
+            "uid",
+            "cid",
+            "input_io",
+            "user_output_io",
+            "model_output_io",
+            "model_metadata_io",
+            "model_signature",
+            "metadata",
+            "model_endpoint_name",
+            "model_wrong",
+        ],
     ):
         bottle.abort(400, "Missing data")
 
@@ -253,30 +278,21 @@ def post_example(credentials):
     if "tag" in data:
         tag = data["tag"]
 
-    dynalab_model = False
-    if "dynalab_model" in data:
-        dynalab_model = data["dynalab_model"]
-
-    dynalab_model_input_data = None
-    dynalab_model_endpoint_name = None
-    if dynalab_model:
-        dynalab_model_input_data = json.loads(data["dynalab_model_input_data"])
-        dynalab_model_endpoint_name = data["dynalab_model_endpoint_name"]
-
     em = ExampleModel()
     example = em.create(
         tid=data["tid"],
         rid=data["rid"],
         uid=data["uid"] if credentials["id"] != "turk" else "turk",
         cid=data["cid"],
-        hypothesis=data["hypothesis"],
-        tgt=data["target"],
-        response=data["response"],
+        input_io=data["input_io"],
+        user_output_io=data["user_output_io"],
+        model_output_io=data["model_output_io"],
+        model_metadata_io=data["model_metadata_io"],
+        model_signature=data["model_signature"],
         metadata=data["metadata"],
+        model_wrong=data["model_wrong"],
         tag=tag,
-        dynalab_model=dynalab_model,
-        dynalab_model_input_data=dynalab_model_input_data,
-        dynalab_model_endpoint_name=dynalab_model_endpoint_name,
+        model_endpoint_name=data["model_endpoint_name"],
     )
     if not example:
         bottle.abort(400, "Could not create example")

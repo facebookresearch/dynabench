@@ -5,10 +5,10 @@ from pathlib import Path
 
 import sacrebleu
 import sentencepiece
+from sklearn.metrics import f1_score
 from transformers.data.metrics.squad_metrics import compute_f1
 
-from metrics.task_config import get_task_config_safe
-from sklearn.metrics import f1_score
+from metrics.instance_property import instance_property
 
 
 # perf functions. propose to move to dynalab
@@ -146,7 +146,7 @@ def get_memory_utilization(job, dataset):
     mem = (
         sum(job.aws_metrics["MemoryUtilization"])
         / 100
-        * get_task_config_safe(dataset.task)["instance_config"]["memory_gb"]
+        * instance_property[dataset.task.instance_type]["memory_gb"]
     )
     return round(mem, 2)
 
@@ -156,7 +156,7 @@ def get_memory_utilization_meta(task):
         "unit": "GiB",
         "pretty_name": "Memory",
         "utility_direction": -1,
-        "offset": get_task_config_safe(task)["instance_config"]["memory_gb"],
+        "offset": instance_property[task.instance_type]["memory_gb"],
     }
 
 
