@@ -27,11 +27,11 @@ const TaskOwnerConsole = (props) => {
 
   useEffect(() => {
     getSavedTaskSettings();
-  }, [getSavedTaskSettings, props.task]);
+  }, [props.task]);
 
   useEffect(() => {
     updateTaskSettings();
-  }, [validateNonFooling, numMatchingValidations, updateTaskSettings]);
+  }, [validateNonFooling, numMatchingValidations]);
 
   const getSavedTaskSettings = () => {
     if (props.task.settings_json) {
