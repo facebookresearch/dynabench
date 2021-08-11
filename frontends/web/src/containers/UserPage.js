@@ -402,7 +402,7 @@ class UserPage extends React.Component {
                                         return (
                                           task &&
                                           task.length &&
-                                          task[0].shortname
+                                          task[0].task_code
                                         );
                                       }}
                                     </TasksContext.Consumer>

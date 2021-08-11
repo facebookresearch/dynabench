@@ -30,11 +30,7 @@ import { OverlayProvider, BadgeOverlay } from "./Overlay";
 import { useState } from "react";
 import FloresGrid from "../components/FloresComponents/FloresGrid";
 
-const FLORES_TASK_SHORT_NAMES = [
-  "FLORES-FULL",
-  "FLORES-SMALL1",
-  "FLORES-SMALL2",
-];
+const FLORES_TASK_CODES = ["flores_full", "flores_small1", "flores_small2"];
 
 const ChevronExpandButton = ({ expanded }) => {
   return (
@@ -341,8 +337,11 @@ ${latexTableContent}
   };
 
   downloadCsv = () => {
-    const { leaderboard_scores, non_leaderboard_scores, name } =
-      this.state.model;
+    const {
+      leaderboard_scores,
+      non_leaderboard_scores,
+      name,
+    } = this.state.model;
     const { task } = this.state;
     const taskName = task.name;
 
@@ -372,7 +371,7 @@ ${latexTableContent}
 
   render() {
     const { model, task, taskCode } = this.state;
-    const isFlores = FLORES_TASK_SHORT_NAMES.includes(task.shortname);
+    const isFlores = FLORES_TASK_CODES.includes(task.task_code);
     const isModelOwner =
       parseInt(this.state.model.user_id) === parseInt(this.state.ctxUserId);
     const { leaderboard_scores } = this.state.model;
@@ -518,7 +517,7 @@ ${latexTableContent}
                                       model &&
                                       tasks.filter((e) => e.id === model.tid);
                                     return (
-                                      task && task.length && task[0].shortname
+                                      task && task.length && task[0].task_code
                                     );
                                   }}
                                 </TasksContext.Consumer>

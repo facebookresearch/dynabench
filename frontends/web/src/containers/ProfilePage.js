@@ -280,7 +280,7 @@ const ModelSubPage = (props) => {
                           {({ tasks }) => {
                             const task =
                               model && tasks.filter((e) => e.id === model.tid);
-                            return task && task.length && task[0].shortname;
+                            return task && task.length && task[0].task_code;
                           }}
                         </TasksContext.Consumer>
                       </td>

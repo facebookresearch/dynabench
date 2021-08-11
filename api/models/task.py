@@ -177,6 +177,9 @@ class Task(Base):
         db.Text, default="evaluation-us-west-1-096166425824", nullable=False
     )
     eval_server_id = db.Column(db.Text, default="default", nullable=False)
+    create_endpoint = db.Column(db.Boolean, default=True)
+    gpu = db.Column(db.Boolean, default=False)
+    torchserve_config = db.Column(db.Text)
 
     def __repr__(self):
         return f"<Task {self.name}>"
@@ -209,7 +212,8 @@ class Task(Base):
         for name, obj in io_objs.items():
             if (
                 name in name_to_type
-            ):  # TODO This check is necessary for non-dynalab models. Can be removed when dynatask-dynalab integration is complete.
+            ):  # TODO This check is necessary for non-dynalab models.
+                # Can be removed when dynatask-dynalab integration is complete.
                 try:
                     io_type_verifiers[name_to_type[name]](
                         obj,
