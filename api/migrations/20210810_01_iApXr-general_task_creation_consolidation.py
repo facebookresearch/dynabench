@@ -361,7 +361,6 @@ steps = [
     step(
         """UPDATE examples SET output_io=JSON_OBJECT("label", "entailed", "prob", JSON_OBJECT("entailed", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "contradictory", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
-    step("ALTER TABLE examples ADD COLUMN output_io TEXT"),
     step(
         """UPDATE examples SET output_io=JSON_OBJECT("label", "neutral", "prob", JSON_OBJECT("entailed", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "contradictory", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
@@ -393,7 +392,6 @@ steps = [
     step(
         """UPDATE examples SET metadata_io=JSON_OBJECT("example explanation", example_explanation, "model explanation", model_explanation)"""
     ),
-    step("ALTER TABLE examples ADD COLUMN metadata_io TEXT"),
     step(
         """UPDATE examples SET metadata_io=JSON_OBJECT("target_answer", target_pred) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('VQA', 'VQA-VAL')))))"""
     ),
