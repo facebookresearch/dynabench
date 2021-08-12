@@ -571,7 +571,8 @@ class VerifyInterface extends React.Component {
                             <i className="fas fa-thumbs-down"></i> &nbsp;{" "}
                             {this.state.owner_mode ? "Verified " : ""} Incorrect
                           </InputGroup>
-                          {this.state.incorrectSelected ? (
+                          {this.state.incorrectSelected &&
+                          validatorTarget.length > 0 ? (
                             <>
                               <b>Enter the correct target</b>
                               {validatorTarget}

@@ -227,7 +227,8 @@ def controller_get_model_wrong():
 def get_model_wrong(tid, target_io, output_io):
     tm = TaskModel()
     task = tm.get(tid)
-    model_wrong_metric = model_wrong_metrics[task.model_wrong_metric.name]
+    model_wrong_metric_def = json.loads(task.model_wrong_metric)
+    model_wrong_metric = model_wrong_metrics[model_wrong_metric_def["type"]]
     target_keys = set(map(lambda item: item["name"], json.loads(task.io_def)["target"]))
     pruned_target = {}
     pruned_output = {}
@@ -239,7 +240,9 @@ def get_model_wrong(tid, target_io, output_io):
             pruned_output[key] = value
 
     return (
-        model_wrong_metric(pruned_output, pruned_target),
+        model_wrong_metric(
+            pruned_output, pruned_target, model_wrong_metric_def["constructor_args"]
+        ),
         len(pruned_target.keys()) != len(target_keys)
         or len(pruned_output.keys()) != len(target_keys),
     )

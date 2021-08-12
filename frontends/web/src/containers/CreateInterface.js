@@ -44,7 +44,9 @@ const Explainer = (props) => (
       </h2>
     ) : (
       <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
-        Find examples that fool the model
+        {props.randomTargetModel
+          ? "Find examples that fool the model"
+          : "Find examples"}
       </h2>
     )}
   </div>
@@ -207,42 +209,46 @@ class ResponseInfo extends React.Component {
       />
     ));
 
-    const outputToCompareToTarget = this.props.io_def.target.map(
-      (io_def_obj) => (
-        <IO
-          display_name={io_def_obj.display_name}
-          className="name-display-secondary"
-          key={io_def_obj.name}
-          create={false}
-          name={io_def_obj.name}
-          example_io={this.props.obj.output_io}
-          set_example_io={() => {}}
-          type={io_def_obj.type}
-          constructor_args={io_def_obj.constructor_args}
-        />
-      )
-    );
+    const outputToCompareToTarget =
+      this.props.obj.url === null
+        ? null
+        : this.props.io_def.target.map((io_def_obj) => (
+            <IO
+              display_name={io_def_obj.display_name}
+              className="name-display-secondary"
+              key={io_def_obj.name}
+              create={false}
+              name={io_def_obj.name}
+              example_io={this.props.obj.output_io}
+              set_example_io={() => {}}
+              type={io_def_obj.type}
+              constructor_args={io_def_obj.constructor_args}
+            />
+          ));
 
-    const otherModelOutput = this.props.io_def.output
-      .filter(
-        (io_def_obj) =>
-          !this.props.io_def.target
-            .map((io_def_obj_t) => io_def_obj_t.name)
-            .includes(io_def_obj.name)
-      )
-      .map((io_def_obj) => (
-        <IO
-          display_name={io_def_obj.display_name}
-          className="name-display-secondary"
-          key={io_def_obj.name}
-          create={false}
-          name={io_def_obj.name}
-          example_io={this.props.obj.output_io}
-          set_example_io={() => {}}
-          type={io_def_obj.type}
-          constructor_args={io_def_obj.constructor_args}
-        />
-      ));
+    const otherModelOutput =
+      this.props.obj.url === null
+        ? null
+        : this.props.io_def.output
+            .filter(
+              (io_def_obj) =>
+                !this.props.io_def.target
+                  .map((io_def_obj_t) => io_def_obj_t.name)
+                  .includes(io_def_obj.name)
+            )
+            .map((io_def_obj) => (
+              <IO
+                display_name={io_def_obj.display_name}
+                className="name-display-secondary"
+                key={io_def_obj.name}
+                create={false}
+                name={io_def_obj.name}
+                example_io={this.props.obj.output_io}
+                set_example_io={() => {}}
+                type={io_def_obj.type}
+                constructor_args={io_def_obj.constructor_args}
+              />
+            ));
 
     const metadata = this.props.io_def.metadata
       .filter(
@@ -271,7 +277,8 @@ class ResponseInfo extends React.Component {
     var userFeedback = (
       <>
         {this.props.obj.livemode ? (
-          this.state.model_wrong !== null ? (
+          (this.state.model_wrong !== null || this.props.obj.url === null) &&
+          metadata.length > 0 ? (
             <div className="mt-3">
               <span>You can enter more info for your example:</span>
               <button
@@ -316,47 +323,55 @@ class ResponseInfo extends React.Component {
         </span>
       );
     } else {
-      if (this.state.model_wrong === null) {
-        classNames += " light-gray-bg";
-        modelCorrectQuestion = (
+      if (this.props.obj.url === null) {
+        title = (
           <span>
-            <strong>Is the model correct?</strong>
-            <br />
-            <div className="btn-group" role="group" aria-label="model wrong">
-              <button
-                data-index={this.props.index}
-                onClick={() => this.updateModelWrong(false)}
-                type="button"
-                className="btn btn-outline-primary btn-sm"
-              >
-                Correct
-              </button>
-              <button
-                data-index={this.props.index}
-                onClick={() => this.updateModelWrong(true)}
-                type="button"
-                className="btn btn-outline-primary btn-sm"
-              >
-                Incorrect
-              </button>
-            </div>
+            <strong>Thank you for your example</strong>
           </span>
         );
       } else {
-        if (this.state.model_wrong) {
-          classNames += " light-green-bg";
-          title = (
+        if (this.state.model_wrong === null) {
+          classNames += " light-gray-bg";
+          modelCorrectQuestion = (
             <span>
-              <strong>You fooled the model!</strong>
+              <strong>Is the model correct?</strong>
+              <br />
+              <div className="btn-group" role="group" aria-label="model wrong">
+                <button
+                  data-index={this.props.index}
+                  onClick={() => this.updateModelWrong(false)}
+                  type="button"
+                  className="btn btn-outline-primary btn-sm"
+                >
+                  Correct
+                </button>
+                <button
+                  data-index={this.props.index}
+                  onClick={() => this.updateModelWrong(true)}
+                  type="button"
+                  className="btn btn-outline-primary btn-sm"
+                >
+                  Incorrect
+                </button>
+              </div>
             </span>
           );
         } else {
-          classNames += " response-warning";
-          title = (
-            <span>
-              <strong>You didn't fool the model. Please try again!</strong>
-            </span>
-          );
+          if (this.state.model_wrong) {
+            classNames += " light-green-bg";
+            title = (
+              <span>
+                <strong>You fooled the model!</strong>
+              </span>
+            );
+          } else {
+            classNames += " response-warning";
+            title = (
+              <span>
+                <strong>You didn't fool the model. Please try again!</strong>
+              </span>
+            );
+          }
         }
       }
     }
@@ -378,10 +393,54 @@ class ResponseInfo extends React.Component {
       </Row>
     );
 
+    const submissionResultsNoModel = (
+      <Row>
+        <Col>
+          <nobr>You say</nobr>
+        </Col>
+        <Col className="text-center">
+          <strong>{target}</strong>
+        </Col>
+        <Col>
+          <nobr>given the input</nobr>
+        </Col>
+        <Col className="text-center">
+          <strong>{input}</strong>
+        </Col>
+      </Row>
+    );
+
+    const submissionResultsNoTarget = (
+      <Row>
+        <Col>
+          <nobr>The model predicted</nobr>
+        </Col>
+        <Col className="text-center">
+          <strong>{otherModelOutput}</strong>
+        </Col>
+        <Col>
+          <nobr>given the input</nobr>
+        </Col>
+        <Col className="text-center">
+          <strong>{input}</strong>
+        </Col>
+      </Row>
+    );
+
     return (
       <Card className={classNames} style={{ minHeight: 120 }}>
         <Card.Body className="p-3">
-          {target.length > 0 ? (
+          {this.props.obj.url === null ? (
+            <Row>
+              <Col xs={12} md={9}>
+                {title !== null ? <div className="mb-3">{title}</div> : null}
+                {submissionResultsNoModel}
+                {userFeedback}
+                {sandboxContent}
+              </Col>
+              <Col className="text-center" xs={12} md={3}></Col>
+            </Row>
+          ) : target.length > 0 ? (
             <Row>
               <Col xs={12} md={9}>
                 {title !== null ? <div className="mb-3">{title}</div> : null}
@@ -403,20 +462,7 @@ class ResponseInfo extends React.Component {
             <Row>
               <Col xs={12} md={9}>
                 {title !== null ? <div className="mb-3">{title}</div> : null}
-                <Row>
-                  <Col>
-                    <nobr>The model predicted</nobr>
-                  </Col>
-                  <Col className="text-center">
-                    <strong>{otherModelOutput}</strong>
-                  </Col>
-                  <Col>
-                    <nobr>given the input</nobr>
-                  </Col>
-                  <Col className="text-center">
-                    <strong>{input}</strong>
-                  </Col>
-                </Row>
+                {submissionResultsNoTarget}
                 {modelCorrectQuestion !== null ? (
                   <div className="mb-3">{modelCorrectQuestion}</div>
                 ) : null}
@@ -511,6 +557,9 @@ class CreateInterface extends React.Component {
     this.updateRetainInput = this.updateRetainInput.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
     this.clearUserInput = this.clearUserInput.bind(this);
+    this.handleStoreExampleAndResponseInfo = this.handleStoreExampleAndResponseInfo.bind(
+      this
+    );
     this.disentangleAndSetInputAndTargetIO = this.disentangleAndSetInputAndTargetIO.bind(
       this
     );
@@ -525,7 +574,10 @@ class CreateInterface extends React.Component {
         .getRandomContext(this.state.task.id, this.state.task.selected_round)
         .then(
           (result) => {
-            const randomTargetModel = this.pickModel(this.state.task.round.url);
+            const randomTargetModel =
+              this.state.task.round.url !== null
+                ? this.pickModel(this.state.task.round.url)
+                : null;
             const io_def = JSON.parse(this.state.task.io_def);
             const input_io = {};
             for (const io_def_obj of io_def.input) {
@@ -626,6 +678,90 @@ class CreateInterface extends React.Component {
     this.setState({ target_io: target_io, input_io: input_io });
   }
 
+  handleStoreExampleAndResponseInfo(
+    signature,
+    model_wrong,
+    output_io,
+    endpoint,
+    metadata
+  ) {
+    this.setState(
+      {
+        content: [
+          ...this.state.content,
+          {
+            livemode: this.state.livemode,
+            model_wrong: model_wrong,
+            input_io: JSON.parse(JSON.stringify(this.state.input_io)),
+            target_io: JSON.parse(JSON.stringify(this.state.target_io)),
+            output_io: output_io,
+            url: this.state.randomTargetModel,
+            retracted: false,
+          },
+        ],
+      },
+      () => {
+        if (!this.state.livemode) {
+          if (!this.state.retainInput) {
+            this.clearUserInput();
+          }
+        }
+        this.setState({
+          submitDisabled: false,
+          refreshDisabled: false,
+        });
+        return;
+      }
+    );
+
+    // Save examples.
+    return this.context.api
+      .storeExample(
+        this.state.task.id,
+        this.state.task.selected_round,
+        this.context.user.id,
+        this.state.context.id,
+        this.state.input_io,
+        this.state.target_io,
+        output_io,
+        signature,
+        metadata,
+        model_wrong,
+        null,
+        endpoint
+      )
+      .then(
+        (store_example_result) => {
+          var key = this.state.content.length;
+          // Reset state variables and store example id.
+          this.setState({
+            submitDisabled: false,
+            refreshDisabled: false,
+            mapKeyToExampleId: {
+              ...this.state.mapKeyToExampleId,
+              [key]: store_example_result.id,
+            },
+          });
+
+          if (!!store_example_result.badges) {
+            this.setState({
+              showBadges: store_example_result.badges,
+            });
+          }
+          if (!this.state.retainInput) {
+            this.clearUserInput();
+          }
+        },
+        (error) => {
+          console.log(error);
+          this.setState({
+            submitDisabled: false,
+            refreshDisabled: false,
+          });
+        }
+      );
+  }
+
   handleResponse(e) {
     e.preventDefault();
     var incomplete_example = false;
@@ -651,6 +787,18 @@ class CreateInterface extends React.Component {
       const url = this.state.selectedModel
         ? this.state.selectedModel.endpointUrl
         : this.state.randomTargetModel;
+
+      if (url === null) {
+        // In this case, there is no target model. Just store the example without model data.
+        this.handleStoreExampleAndResponseInfo(
+          null,
+          null,
+          null,
+          null,
+          null
+        ).then(() => this.smoothlyAnimateToBottom());
+        return;
+      }
       const endpoint = url.split("predict?model=")[1];
 
       // Begin hack that can be removed upon full dynalab integration
@@ -762,87 +910,14 @@ class CreateInterface extends React.Component {
                   output_io
                 )
                 .then(
-                  (model_wrong_result) => {
-                    this.setState(
-                      {
-                        content: [
-                          ...this.state.content,
-                          {
-                            livemode: this.state.livemode,
-                            model_wrong: model_wrong_result.model_wrong,
-                            input_io: JSON.parse(
-                              JSON.stringify(this.state.input_io)
-                            ),
-                            target_io: JSON.parse(
-                              JSON.stringify(this.state.target_io)
-                            ),
-                            output_io: output_io,
-                            url: this.state.randomTargetModel,
-                            retracted: false,
-                          },
-                        ],
-                      },
-                      () => {
-                        if (!this.state.livemode) {
-                          if (!this.state.retainInput) {
-                            this.clearUserInput();
-                          }
-                        }
-                        this.setState({
-                          submitDisabled: false,
-                          refreshDisabled: false,
-                        });
-                        return;
-                      }
-                    );
-
-                    // Save examples.
-                    this.context.api
-                      .storeExample(
-                        this.state.task.id,
-                        this.state.task.selected_round,
-                        this.context.user.id,
-                        this.state.context.id,
-                        this.state.input_io,
-                        this.state.target_io,
-                        output_io,
-                        model_response_result["signed"],
-                        metadata,
-                        model_wrong_result.model_wrong,
-                        null,
-                        endpoint
-                      )
-                      .then(
-                        (store_example_result) => {
-                          var key = this.state.content.length;
-                          // Reset state variables and store example id.
-                          this.setState({
-                            submitDisabled: false,
-                            refreshDisabled: false,
-                            mapKeyToExampleId: {
-                              ...this.state.mapKeyToExampleId,
-                              [key]: store_example_result.id,
-                            },
-                          });
-
-                          if (!!store_example_result.badges) {
-                            this.setState({
-                              showBadges: store_example_result.badges,
-                            });
-                          }
-                          if (!this.state.retainInput) {
-                            this.clearUserInput();
-                          }
-                        },
-                        (error) => {
-                          console.log(error);
-                          this.setState({
-                            submitDisabled: false,
-                            refreshDisabled: false,
-                          });
-                        }
-                      );
-                  },
+                  (model_wrong_result) =>
+                    this.handleStoreExampleAndResponseInfo(
+                      model_response_result["signed"],
+                      model_wrong_result.model_wrong,
+                      output_io,
+                      endpoint,
+                      metadata
+                    ),
                   (error) => {
                     console.log(error);
                     this.setState({
@@ -1248,6 +1323,7 @@ class CreateInterface extends React.Component {
             <Explainer
               taskName={this.state.task.name}
               selectedModel={this.state.selectedModel}
+              randomTargetModel={this.state.randomTargetModel}
             />
             <div className={"mb-3"}>
               {this.state.task.goal_message ||
