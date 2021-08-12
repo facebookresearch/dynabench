@@ -26,19 +26,20 @@ class ModelWrongMetricEnum(enum.Enum):
     ask_user = "ask_user"
 
 
-def exact_match(model_output, human_output):
-    return model_output != human_output
+def exact_match(output, target, constructor_args):
+    return output != target
 
 
-def string_f1(model_output, human_output):
-    assert len(model_output.values()) == 1
-    assert len(human_output.values()) == 1
+def string_f1(output, target, constructor_args):
+    assert len(output.values()) == 1
+    assert len(target.values()) == 1
     return (
-        compute_f1(list(model_output.values())[0], list(human_output.values())[0]) < 0.9
+        compute_f1(list(output.values())[0], list(target.values())[0])
+        < constructor_args["threshold"]
     )
 
 
-def ask_user(model_output, human_output):
+def ask_user(output, target, constructor_args):
     return None  # The frontend is supposed to see the None and then ask the user
 
 
@@ -143,11 +144,7 @@ class Task(Base):
         default=AggregationMetricEnum.dynascore,
         nullable=False,
     )
-    model_wrong_metric = db.Column(
-        db.Enum(ModelWrongMetricEnum),
-        default=ModelWrongMetricEnum.exact_match,
-        nullable=False,
-    )
+    model_wrong_metric = db.Column(db.Text, nullable=False)
     instructions = db.Column(db.Text)
     goal_message = db.Column(db.Text)
     warning_message = db.Column(db.Text)

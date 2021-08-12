@@ -105,15 +105,6 @@ class ExampleModel(BaseModel):
 
         context_io = json.loads(c.context_io)
 
-        # Make sure that we aren't accepting any corrupted example io
-        all_model_io = {}
-        all_model_io.update(context_io)
-        all_model_io.update(input_io)
-        all_model_io.update(output_io)
-        if not TaskModel().get(tid).verify_io(all_model_io, None):
-            logger.error("Improper formatting in model io")
-            return False
-
         all_user_io = {}
         all_user_io.update(context_io)
         all_user_io.update(input_io)
@@ -122,9 +113,23 @@ class ExampleModel(BaseModel):
             logger.error("Improper formatting in user io")
             return False
 
-        if uid == "turk" and "model" in metadata and metadata["model"] == "no-model":
+        if (
+            model_signature is None
+            and model_wrong is None
+            and model_endpoint_name is None
+            and output_io is None
+        ):
             pass  # ignore signature when we don't have a model in the loop with turkers
         else:
+            # Make sure that we aren't accepting any corrupted example io
+            all_model_io = {}
+            all_model_io.update(context_io)
+            all_model_io.update(input_io)
+            all_model_io.update(output_io)
+            if not TaskModel().get(tid).verify_io(all_model_io, None):
+                logger.error("Improper formatting in model io")
+                return False
+
             # TODO: can remove this when the dynalab part of dynatask is done
             if model_endpoint_name.startswith(
                 "ts"
@@ -242,6 +247,7 @@ class ExampleModel(BaseModel):
                 generated_datetime=db.sql.func.now(),
                 metadata_json=json.dumps(metadata),
                 tag=tag,
+                model_endpoint_name=model_endpoint_name,
             )
 
             # store uid/annotator_id

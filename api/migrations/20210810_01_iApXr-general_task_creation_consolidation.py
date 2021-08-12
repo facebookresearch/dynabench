@@ -213,13 +213,13 @@ steps = [
     step("ALTER TABLE tasks ADD COLUMN aggregation_metric ENUM('dynascore')"),
     step("ALTER TABLE tasks ADD COLUMN model_wrong_metric TEXT"),
     step(
-        "UPDATE tasks SET model_wrong_metric='exact_match' WHERE shortname not in ('QA','DK_QA', 'UCL_QA', 'VQA', 'VQA-VAL')"
+        """UPDATE tasks SET model_wrong_metric='{"type": "exact_match", "constructor_args": {}}' WHERE shortname not in ('QA','DK_QA', 'UCL_QA', 'VQA', 'VQA-VAL')"""
     ),
     step(
-        "UPDATE tasks SET model_wrong_metric='string_f1' WHERE shortname in ('QA','DK_QA', 'UCL_QA')"
+        """UPDATE tasks SET model_wrong_metric='{"type": "string_f1", "constructor_args": {"threshold": 0.9}}' WHERE shortname in ('QA','DK_QA', 'UCL_QA')"""
     ),
     step(
-        "UPDATE tasks SET model_wrong_metric='ask_user' WHERE shortname in ('VQA', 'VQA-VAL')"
+        """UPDATE tasks SET model_wrong_metric='{"type": "ask_user", "constructor_args": {}}' WHERE shortname in ('VQA', 'VQA-VAL')"""
     ),
     step("ALTER TABLE tasks ADD COLUMN instructions TEXT"),
     step(
