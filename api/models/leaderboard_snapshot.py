@@ -57,6 +57,7 @@ class LeaderboardSnapshotModel(BaseModel):
         query_res = self.dbs.query(LeaderboardSnapshot).filter(
             LeaderboardSnapshot.uid == uid
         )
-        return query_res.limit(limit).offset(offset * limit), util.get_query_count(
-            query_res
+        return (
+            query_res.limit(limit).offset(offset * limit),
+            util.get_query_count(query_res),
         )

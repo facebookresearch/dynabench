@@ -68,6 +68,7 @@ class LeaderboardConfigurationModel(BaseModel):
         query_res = self.dbs.query(LeaderboardConfiguration).filter(
             LeaderboardConfiguration.uid == uid
         )
-        return query_res.limit(limit).offset(offset * limit), util.get_query_count(
-            query_res
+        return (
+            query_res.limit(limit).offset(offset * limit),
+            util.get_query_count(query_res),
         )
