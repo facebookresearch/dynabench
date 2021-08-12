@@ -10,6 +10,7 @@ import {
 import TasksContext from "../../containers/TasksContext";
 import { Link } from "react-router-dom";
 import Moment from "react-moment";
+import ChevronExpandButton from "../Buttons/ChevronExpandButton";
 
 const ForkOrSnapshotTable = (props) => {
   const { data, isForkList, page, paginate, isEndOfPage } = props;
@@ -56,16 +57,17 @@ const ForkOrSnapshotTable = (props) => {
           <Table className="mb-0">
             <thead className="blue-color border-bottom">
               <tr>
-                <td className="col-4">
+                <td>
                   <b>Link to {isForkList ? "Fork" : "Snapshot"}</b>
                 </td>
-                <td className="col-1">
+                <td>
                   <b>Task</b>
                 </td>
-                <td className="col-5">
+                <td>
                   <b>Description</b>
                 </td>
-                <td className="col-2">
+                <td />
+                <td>
                   <b>Created</b>
                 </td>
               </tr>
@@ -121,21 +123,22 @@ const ForkOrSnapshotTable = (props) => {
                     </TasksContext.Consumer>
                     <td
                       id={descriptionId}
-                      className={`${
+                      className={`long-text ${
                         isDescriptionExpanded ? "" : "text-truncate"
-                      } long-text col`}
+                      }`}
+                      onClick={() => toggleDescriptionEllipsis(descriptionId)}
                     >
-                      <span>{datum.desc}</span>
+                      <span style={{ maxWidth: "280px" }}>{datum.desc}</span>
+                    </td>
+                    <td
+                      className="px-0"
+                      onClick={() => toggleDescriptionEllipsis(descriptionId)}
+                    >
                       {usesEllipsis && (
-                        <Button
-                          className="btn-xs float-right p-1 mt-1"
-                          variant="outline-primary"
-                          onClick={() =>
-                            toggleDescriptionEllipsis(descriptionId)
-                          }
-                        >
-                          {isDescriptionExpanded ? "show less" : "show more"}
-                        </Button>
+                        <ChevronExpandButton
+                          expanded={isDescriptionExpanded}
+                          containerClassName={"d-inline-block"}
+                        />
                       )}
                     </td>
                     <td className="text-nowrap">

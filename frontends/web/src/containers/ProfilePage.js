@@ -264,8 +264,6 @@ class ProfilePage extends React.Component {
       this.fetchNotifications(0);
     } else if (this.props.location.hash === "#stats") {
       this.fetchUser();
-    } else if (this.props.location.hash === "#forks-and-snapshots") {
-      // TODO: Fetch forks and snapshots
     }
   }
 
