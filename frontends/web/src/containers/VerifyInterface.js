@@ -40,14 +40,12 @@ class VerifyInterface extends React.Component {
       labelExplanation: null,
       creatorAttemptExplanation: null,
       hide_by_key: new Set(),
-      input_io_def: [],
-      output_io_def: [],
-      context_io_def: [],
-      model_metadata_io_def: [],
-      user_metadata_model_correct_io_def: [],
-      user_metadata_model_wrong_io_def: [],
-      example_io: {},
-      validator_io: {},
+      io_def: { input: [], target: [], context: [], metadata: [] },
+      input_io: {},
+      target_io: {},
+      context_io: {},
+      metadata_io: {},
+      validator_target_io: {},
       loading: true,
     };
     this.getNewExample = this.getNewExample.bind(this);
@@ -142,9 +140,16 @@ class VerifyInterface extends React.Component {
   }
 
   getNewExample() {
-    this.setState({ loading: true });
     this.setState(
-      { validator_io: {}, example_io: {} },
+      {
+        input_io: {},
+        target_io: {},
+        context_io: {},
+        output_io: {},
+        metadata_io: {},
+        validator_target_io: {},
+        loading: true,
+      },
       this.resetValidatorSelections(() =>
         (this.state.owner_mode
           ? this.setRangesAndGetRandomFilteredExample()
@@ -154,49 +159,24 @@ class VerifyInterface extends React.Component {
             )
         ).then(
           (result) => {
-            const input_io_def = JSON.parse(this.state.task.input_io_def);
-            const output_io_def = JSON.parse(this.state.task.output_io_def);
-            const context_io_def = JSON.parse(this.state.task.context_io_def);
-            const model_metadata_io_def = JSON.parse(
-              this.state.task.model_metadata_io_def
-            );
-            const user_metadata_model_wrong_io_def = JSON.parse(
-              this.state.task.user_metadata_model_wrong_io_def
-            );
-            const user_metadata_model_correct_io_def = JSON.parse(
-              this.state.task.user_metadata_model_correct_io_def
-            );
-
-            const example_io = {};
-            const validator_io = {};
+            const io_def = JSON.parse(this.state.task.io_def);
             const context_io = JSON.parse(result.context.context_io);
-            for (const key in context_io) {
-              example_io[key] = context_io[key];
-            }
             const input_io = JSON.parse(result.input_io);
-            for (const key in input_io) {
-              example_io[key] = input_io[key];
-            }
-            const user_output_io = JSON.parse(result.user_output_io);
-            for (const key in user_output_io) {
-              example_io[key] = user_output_io[key];
-              validator_io[key] = null;
-            }
-            const user_metadata_io = JSON.parse(result.user_metadata_io);
-            for (const key in user_metadata_io) {
-              example_io[key] = user_metadata_io[key];
+            const target_io = JSON.parse(result.target_io);
+            const metadata_io = JSON.parse(result.metadata_io);
+            const validator_target_io = {};
+            for (const key in target_io) {
+              validator_target_io[key] = null;
             }
 
             this.setState({
-              validator_io: validator_io,
               example: result,
-              example_io: example_io,
-              input_io_def: input_io_def,
-              output_io_def: output_io_def,
-              context_io_def: context_io_def,
-              model_metadata_io_def: model_metadata_io_def,
-              user_metadata_model_wrong_io_def: user_metadata_model_wrong_io_def,
-              user_metadata_model_correct_io_def: user_metadata_model_correct_io_def,
+              io_def: io_def,
+              input_io: input_io,
+              target_io: target_io,
+              context_io: context_io,
+              metadata_io: metadata_io,
+              validator_target_io: {},
               loading: false,
             });
           },
@@ -310,81 +290,88 @@ class VerifyInterface extends React.Component {
   }
 
   render() {
-    const inputOutputUserMetadataIO = this.state.input_io_def
-      .concat(this.state.output_io_def)
+    const inputTargetMetadata = this.state.io_def.input
+      .concat(this.state.io_def.target)
       .concat(
-        this.state.example.model_wrong
-          ? this.state.user_metadata_model_wrong_io_def
-          : this.state.user_metadata_model_correct_io_def
+        this.state.io_def.metadata.filter(
+          (io_def_obj) =>
+            io_def_obj.model_wrong === undefined ||
+            io_def_obj.model_wrong === this.state.example.model_wrong
+        )
       )
       .filter(
-        (io_obj) =>
-          ![undefined, null].includes(this.state.example_io[io_obj.name])
+        (io_def_obj) =>
+          ![undefined, null].includes(
+            Object.assign(
+              {},
+              this.state.input_io,
+              this.state.target_io,
+              this.state.metadata_io
+            )[io_def_obj.name]
+          )
       )
-      .map((io_obj, _) => (
-        <div className="mb-3">
+      .map((io_def_obj) => (
+        <div key={io_def_obj.name} className="mb-3">
           <IO
+            display_name={io_def_obj.display_name}
             className="name-display-primary"
-            key={io_obj.name}
+            key={io_def_obj.name}
             create={false}
-            name={io_obj.name}
-            example_io={this.state.example_io}
+            name={io_def_obj.name}
+            example_io={Object.assign(
+              {},
+              this.state.input_io,
+              this.state.target_io,
+              this.state.metadata_io
+            )}
             set_example_io={() => {}}
-            type={io_obj.type}
-            constructor_args={io_obj.constructor_args}
+            type={io_def_obj.type}
+            constructor_args={io_def_obj.constructor_args}
           />
         </div>
       ));
 
-    const contextIO = this.state.context_io_def
-      .filter(
-        (io_obj) =>
-          ![undefined, null].includes(this.state.example_io[io_obj.name])
-      )
-      .map((io_obj, _) => (
-        <IO
-          className="name-display-primary"
-          key={io_obj.name}
-          create={false}
-          name={io_obj.name}
-          example_io={this.state.example_io}
-          set_example_io={() => {}}
-          type={io_obj.type}
-          constructor_args={io_obj.constructor_args}
-        />
-      ));
+    const context = this.state.io_def.context.map((io_def_obj) => (
+      <IO
+        display_name={io_def_obj.display_name}
+        className="name-display-primary"
+        key={io_def_obj.name}
+        create={false}
+        name={io_def_obj.name}
+        example_io={this.state.context_io}
+        set_example_io={() => {}}
+        type={io_def_obj.type}
+        constructor_args={io_def_obj.constructor_args}
+      />
+    ));
 
-    const validatorOutputIO = this.state.output_io_def
-      .filter(
-        (io_obj) =>
-          ![undefined, null].includes(this.state.example_io[io_obj.name])
-      )
-      .map((io_obj, _) => (
-        <IO
-          className="user-input-secondary"
-          key={io_obj.name}
-          create={true}
-          name={io_obj.name}
-          example_io={this.state.validator_io}
-          set_example_io={(example_io) =>
-            this.setState({ validator_io: example_io })
-          }
-          type={
-            io_obj.type === "goal_message_multiple_choice"
-              ? "multiple_choice"
-              : io_obj.type
-          }
-          constructor_args={
-            io_obj.type === "goal_message_multiple_choice"
-              ? Object.assign(
-                  {},
-                  { placeholder: "Enter " + io_obj.name },
-                  io_obj.constructor_args
-                )
-              : io_obj.constructor_args
-          }
-        />
-      ));
+    const validatorTarget = this.state.io_def.target.map((io_def_obj) => (
+      <IO
+        display_name={io_def_obj.display_name}
+        className="user-input-secondary"
+        key={io_def_obj.name}
+        create={true}
+        name={io_def_obj.name}
+        example_io={this.state.validator_target_io}
+        set_example_io={(example_io) =>
+          this.setState({ validator_target_io: example_io })
+        }
+        type={
+          io_def_obj.type === "goal_message_multiple_choice"
+            ? "multiple_choice"
+            : io_def_obj.type
+        }
+        constructor_args={
+          io_def_obj.type === "goal_message_multiple_choice"
+            ? Object.assign(
+                {},
+                { placeholder: "Enter " + io_def_obj.name },
+                io_def_obj.constructor_args
+              )
+            : io_def_obj.constructor_args
+        }
+      />
+    ));
 
     return (
       <OverlayProvider initiallyHide={true}>
@@ -515,9 +502,9 @@ class VerifyInterface extends React.Component {
               {!this.state.loading ? (
                 this.state.example ? (
                   <>
-                    {contextIO && contextIO.length > 0 ? (
+                    {context && context.length > 0 ? (
                       <div className="mb-1 p-3 rounded light-gray-bg">
-                        {contextIO}
+                        {context}
                       </div>
                     ) : (
                       ""
@@ -525,7 +512,7 @@ class VerifyInterface extends React.Component {
                     <Card.Body className="p-3">
                       <Row>
                         <Col xs={12} md={7}>
-                          {inputOutputUserMetadataIO}
+                          {inputTargetMetadata}
                           {this.state.example.example_explanation ? (
                             <>
                               <h6 className="text-uppercase dark-blue-color spaced-header">
@@ -557,76 +544,75 @@ class VerifyInterface extends React.Component {
                           <h6 className="text-uppercase dark-blue-color spaced-header">
                             Actions:
                           </h6>
-                          <p>
+
+                          <InputGroup className="align-items-center">
+                            <Form.Check
+                              checked={this.state.correctSelected}
+                              type="radio"
+                              onChange={() =>
+                                this.resetValidatorSelections(() =>
+                                  this.setState({ correctSelected: true })
+                                )
+                              }
+                            />
+                            <i className="fas fa-thumbs-up"></i> &nbsp;{" "}
+                            {this.state.owner_mode ? "Verified " : ""} Correct
+                          </InputGroup>
+                          <InputGroup className="align-items-center">
+                            <Form.Check
+                              checked={this.state.incorrectSelected}
+                              type="radio"
+                              onChange={() =>
+                                this.resetValidatorSelections(() =>
+                                  this.setState({ incorrectSelected: true })
+                                )
+                              }
+                            />
+                            <i className="fas fa-thumbs-down"></i> &nbsp;{" "}
+                            {this.state.owner_mode ? "Verified " : ""} Incorrect
+                          </InputGroup>
+                          {this.state.incorrectSelected ? (
+                            <>
+                              <b>Enter the correct target</b>
+                              {validatorTarget}
+                            </>
+                          ) : (
+                            ""
+                          )}
+                          {this.state.owner_mode ? (
+                            ""
+                          ) : (
                             <InputGroup className="align-items-center">
                               <Form.Check
-                                checked={this.state.correctSelected}
+                                checked={this.state.flaggedSelected}
                                 type="radio"
                                 onChange={() =>
                                   this.resetValidatorSelections(() =>
-                                    this.setState({ correctSelected: true })
+                                    this.setState({ flaggedSelected: true })
                                   )
                                 }
                               />
-                              <i className="fas fa-thumbs-up"></i> &nbsp;{" "}
-                              {this.state.owner_mode ? "Verified " : ""} Correct
+                              <i className="fas fa-flag"></i> &nbsp; Flag
                             </InputGroup>
-                            <InputGroup className="align-items-center">
-                              <Form.Check
-                                checked={this.state.incorrectSelected}
-                                type="radio"
-                                onChange={() =>
-                                  this.resetValidatorSelections(() =>
-                                    this.setState({ incorrectSelected: true })
-                                  )
-                                }
-                              />
-                              <i className="fas fa-thumbs-down"></i> &nbsp;{" "}
-                              {this.state.owner_mode ? "Verified " : ""}{" "}
-                              Incorrect
-                            </InputGroup>
-                            {this.state.incorrectSelected ? (
-                              <>
-                                <b>Enter the correct output</b>
-                                {validatorOutputIO}
-                              </>
-                            ) : (
-                              ""
-                            )}
-                            {this.state.owner_mode ? (
-                              ""
-                            ) : (
-                              <InputGroup className="align-items-center">
-                                <Form.Check
-                                  checked={this.state.flaggedSelected}
-                                  type="radio"
-                                  onChange={() =>
-                                    this.resetValidatorSelections(() =>
-                                      this.setState({ flaggedSelected: true })
-                                    )
+                          )}
+                          <InputGroup className="ml-3">
+                            {this.state.flaggedSelected ? (
+                              <Col sm="12 p-1">
+                                <Form.Control
+                                  type="text"
+                                  placeholder="Reason for flagging"
+                                  onChange={(e) =>
+                                    this.setState({
+                                      flagReason: e.target.value,
+                                    })
                                   }
                                 />
-                                <i className="fas fa-flag"></i> &nbsp; Flag
-                              </InputGroup>
+                              </Col>
+                            ) : (
+                              ""
                             )}
-                            <InputGroup className="ml-3">
-                              {this.state.flaggedSelected ? (
-                                <Col sm="12 p-1">
-                                  <Form.Control
-                                    type="text"
-                                    placeholder="Reason for flagging"
-                                    onChange={(e) =>
-                                      this.setState({
-                                        flagReason: e.target.value,
-                                      })
-                                    }
-                                  />
-                                </Col>
-                              ) : (
-                                ""
-                              )}
-                            </InputGroup>
-                          </p>
+                          </InputGroup>
+                          <br />
                           {this.state.incorrectSelected ||
                           this.state.correctSelected ||
                           this.state.flaggedSelected ? (
@@ -635,43 +621,42 @@ class VerifyInterface extends React.Component {
                                 Optionally, provide an explanation for this
                                 example:
                               </h6>
-                              <p>
-                                <div className="mt-3">
-                                  {this.state.incorrectSelected ||
-                                  this.state.correctSelected ? (
-                                    <div>
-                                      <Form.Control
-                                        type="text"
-                                        placeholder={
-                                          "Explain why the given example is " +
-                                          (this.state.correctSelected
-                                            ? "correct"
-                                            : "incorrect")
-                                        }
-                                        onChange={(e) =>
-                                          this.setState({
-                                            labelExplanation: e.target.value,
-                                          })
-                                        }
-                                      />
-                                    </div>
-                                  ) : (
-                                    ""
-                                  )}
+                              <div className="mt-3">
+                                {this.state.incorrectSelected ||
+                                this.state.correctSelected ? (
                                   <div>
                                     <Form.Control
                                       type="text"
-                                      placeholder="Explain what you think the creator did to try to trick the model"
+                                      placeholder={
+                                        "Explain why the given example is " +
+                                        (this.state.correctSelected
+                                          ? "correct"
+                                          : "incorrect")
+                                      }
                                       onChange={(e) =>
                                         this.setState({
-                                          creatorAttemptExplanation:
-                                            e.target.value,
+                                          labelExplanation: e.target.value,
                                         })
                                       }
                                     />
                                   </div>
+                                ) : (
+                                  ""
+                                )}
+                                <div>
+                                  <Form.Control
+                                    type="text"
+                                    placeholder="Explain what you think the creator did to try to trick the model"
+                                    onChange={(e) =>
+                                      this.setState({
+                                        creatorAttemptExplanation:
+                                          e.target.value,
+                                      })
+                                    }
+                                  />
                                 </div>
-                              </p>
+                              </div>
+                              <br />
                             </div>
                           ) : (
                             ""

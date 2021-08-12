@@ -147,9 +147,9 @@ def update_example(credentials, eid):
             del data["uid"]  # don't store this
 
         for field in data:
-            if field not in ("model_wrong", "flagged", "retracted", "user_metadata_io"):
+            if field not in ("model_wrong", "flagged", "retracted", "metadata_io"):
                 bottle.abort(
-                    403, "Can only modify  model_wrong, retracted, and user_metadata_io"
+                    403, "Can only modify  model_wrong, retracted, and metadata_io"
                 )
 
         if (
@@ -168,14 +168,14 @@ def update_example(credentials, eid):
                 um.incrementFooledCount(example.uid)
                 info.incrementFooledCount(example.uid, context.r_realid)
 
-        if "user_metadata_io" in data:
+        if "metadata_io" in data:
             cm = ContextModel()
             context = cm.get(example.cid)
             all_user_io = {}
             all_user_io.update(json.loads(context.context_io))
             all_user_io.update(json.loads(example.input_io))
-            all_user_io.update(json.loads(example.user_output_io))
-            all_user_io.update(data["user_metadata_io"])
+            all_user_io.update(json.loads(example.target_io))
+            all_user_io.update(data["metadata_io"])
             if (
                 not TaskModel()
                 .get(example.context.round.tid)
@@ -186,8 +186,8 @@ def update_example(credentials, eid):
                     else example.model_wrong,
                 )
             ):
-                bottle.abort(403, "user_metadata_io is not properly formatted")
-            data["user_metadata_io"] = json.dumps(data["user_metadata_io"])
+                bottle.abort(403, "metadata_io is not properly formatted")
+            data["metadata_io"] = json.dumps(data["metadata_io"])
 
         logger.info(f"Updating example {example.id} with {data}")
         em.update(example.id, data)
@@ -212,11 +212,11 @@ def update_example(credentials, eid):
 def controller_get_model_wrong():
     data = bottle.request.json
 
-    if not util.check_fields(data, ["tid", "user_output_io", "model_output_io"]):
+    if not util.check_fields(data, ["tid", "target_io", "output_io"]):
         bottle.abort(400, "Missing data")
 
     model_wrong, missing_keys = get_model_wrong(
-        data["tid"], data["user_output_io"], data["model_output_io"]
+        data["tid"], data["target_io"], data["output_io"]
     )
     if missing_keys:
         bottle.abort(400, "Missing keys")
@@ -224,24 +224,24 @@ def controller_get_model_wrong():
     return util.json_encode({"success": "ok", "model_wrong": model_wrong})
 
 
-def get_model_wrong(tid, example_io, model_response_io):
+def get_model_wrong(tid, target_io, output_io):
     tm = TaskModel()
     task = tm.get(tid)
     model_wrong_metric = model_wrong_metrics[task.model_wrong_metric.name]
-    output_keys = set(map(lambda item: item["name"], json.loads(task.output_io_def)))
-    model_output = {}
-    human_output = {}
-    for key, value in example_io.items():
-        if key in output_keys:
-            human_output[key] = value
-    for key, value in model_response_io.items():
-        if key in output_keys:
-            model_output[key] = value
+    target_keys = set(map(lambda item: item["name"], json.loads(task.io_def)["target"]))
+    pruned_target = {}
+    pruned_output = {}
+    for key, value in target_io.items():
+        if key in target_keys:
+            pruned_target[key] = value
+    for key, value in output_io.items():
+        if key in target_keys:
+            pruned_output[key] = value
 
     return (
-        model_wrong_metric(model_output, human_output),
-        len(model_output.keys()) != len(output_keys)
-        or len(human_output.keys()) != len(output_keys),
+        model_wrong_metric(pruned_output, pruned_target),
+        len(pruned_target.keys()) != len(target_keys)
+        or len(pruned_output.keys()) != len(target_keys),
     )
 
 
@@ -257,9 +257,8 @@ def post_example(credentials):
             "uid",
             "cid",
             "input_io",
-            "user_output_io",
-            "model_output_io",
-            "model_metadata_io",
+            "output_io",
+            "target_io",
             "model_signature",
             "metadata",
             "model_endpoint_name",
@@ -285,9 +284,8 @@ def post_example(credentials):
         uid=data["uid"] if credentials["id"] != "turk" else "turk",
         cid=data["cid"],
         input_io=data["input_io"],
-        user_output_io=data["user_output_io"],
-        model_output_io=data["model_output_io"],
-        model_metadata_io=data["model_metadata_io"],
+        target_io=data["target_io"],
+        output_io=data["output_io"],
         model_signature=data["model_signature"],
         metadata=data["metadata"],
         model_wrong=data["model_wrong"],

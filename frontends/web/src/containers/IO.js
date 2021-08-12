@@ -13,6 +13,7 @@ import AtomicImage from "./AtomicImage";
 import "./IO.css";
 
 const MultipleChoiceIO = ({
+  display_name,
   className,
   create,
   example_io,
@@ -30,7 +31,9 @@ const MultipleChoiceIO = ({
     <div className="mb-1 mt-1">
       {!create ? (
         <>
-          <h6 className={"spaced-header " + className}>{name}:</h6>
+          <h6 className={"spaced-header " + className}>
+            {display_name ? display_name : name}:
+          </h6>
           {example_io[name]}
         </>
       ) : (
@@ -40,6 +43,7 @@ const MultipleChoiceIO = ({
               .filter((label, _) => label !== choice)
               .map((label, index) => (
                 <Dropdown.Item
+                  key={index}
                   onClick={() => {
                     setChoice(label);
                     example_io[name] = label;
@@ -59,6 +63,7 @@ const MultipleChoiceIO = ({
 };
 
 const GoalMessageMultipleChoiceIO = ({
+  display_name,
   className,
   create,
   example_io,
@@ -88,7 +93,9 @@ const GoalMessageMultipleChoiceIO = ({
     <div className="mb-1 mt-1">
       {!create ? (
         <>
-          <h6 className={"spaced-header " + className}>{name}:</h6>
+          <h6 className={"spaced-header " + className}>
+            {display_name ? display_name : name}:
+          </h6>
           {example_io[name]}
         </>
       ) : (
@@ -101,6 +108,7 @@ const GoalMessageMultipleChoiceIO = ({
                 .filter((label, _) => label !== choice)
                 .map((label, index) => (
                   <Dropdown.Item
+                    key={index}
                     onClick={() => {
                       setChoice(label);
                       example_io[name] = label;
@@ -122,6 +130,7 @@ const GoalMessageMultipleChoiceIO = ({
 };
 
 const StringIO = ({
+  display_name,
   className,
   create,
   example_io,
@@ -133,7 +142,9 @@ const StringIO = ({
     <div className="mb-1 mt-1">
       {!create ? (
         <>
-          <h6 className={"spaced-header " + className}>{name}:</h6>
+          <h6 className={"spaced-header " + className}>
+            {display_name ? display_name : name}:
+          </h6>
           {example_io[name]}
         </>
       ) : (
@@ -155,6 +166,7 @@ const StringIO = ({
 };
 
 const ContextStringSelectionIO = ({
+  display_name,
   className,
   create,
   example_io,
@@ -171,14 +183,17 @@ const ContextStringSelectionIO = ({
     <div className="mb-1 mt-1">
       {!create ? (
         <>
-          <h6 className={"spaced-header " + className}>{name}:</h6>
+          <h6 className={"spaced-header " + className}>
+            {display_name ? display_name : name}:
+          </h6>
           {example_io[name]}
         </>
       ) : (
         <>
           <Badge variant="primary">
             {" "}
-            Select {name} in {constructor_args.reference_key}
+            Select {display_name ? display_name : name} in{" "}
+            {constructor_args.reference_key}
           </Badge>
           <br />
           <TokenAnnotator
@@ -234,6 +249,8 @@ const ConfIO = ({
 };
 
 const ImageUrlIO = ({
+  display_name,
+  className,
   create,
   example_io,
   set_example_io,
@@ -242,14 +259,16 @@ const ImageUrlIO = ({
 }) => {
   return (
     <div className="mb-1 mt-1">
-      <Badge variant="primary"> {name} </Badge>
-      <br />
+      <h6 className={"spaced-header " + className}>
+        {display_name ? display_name : name}:
+      </h6>
       <AtomicImage src={example_io[name]} />
     </div>
   );
 };
 
 const IO = ({
+  display_name,
   className,
   create,
   example_io,
@@ -262,6 +281,8 @@ const IO = ({
     case "image_url":
       return (
         <ImageUrlIO
+          display_name={display_name}
+          className={className}
           create={create}
           name={name}
           example_io={example_io}
@@ -272,6 +293,7 @@ const IO = ({
     case "string":
       return (
         <StringIO
+          display_name={display_name}
           className={className}
           create={create}
           name={name}
@@ -283,6 +305,7 @@ const IO = ({
     case "multiple_choice":
       return (
         <MultipleChoiceIO
+          display_name={display_name}
           className={className}
           create={create}
           name={name}
@@ -294,6 +317,7 @@ const IO = ({
     case "goal_message_multiple_choice":
       return (
         <GoalMessageMultipleChoiceIO
+          display_name={display_name}
           className={className}
           create={create}
           name={name}
@@ -305,6 +329,7 @@ const IO = ({
     case "context_string_selection":
       return (
         <ContextStringSelectionIO
+          display_name={display_name}
           className={className}
           create={create}
           name={name}

@@ -36,10 +36,9 @@ class Example(Base):
     tag = db.Column(db.Text)
 
     input_io = db.Column(db.Text)
-    user_output_io = db.Column(db.Text)
-    model_output_io = db.Column(db.Text)
-    model_metadata_io = db.Column(db.Text)
-    user_metadata_io = db.Column(db.Text)
+    target_io = db.Column(db.Text)
+    output_io = db.Column(db.Text)
+    metadata_io = db.Column(db.Text)
 
     metadata_json = db.Column(db.Text)
 
@@ -82,9 +81,8 @@ class ExampleModel(BaseModel):
         uid,
         cid,
         input_io,
-        user_output_io,
-        model_output_io,
-        model_metadata_io,
+        target_io,
+        output_io,
         model_signature,
         metadata,
         model_wrong,
@@ -111,8 +109,7 @@ class ExampleModel(BaseModel):
         all_model_io = {}
         all_model_io.update(context_io)
         all_model_io.update(input_io)
-        all_model_io.update(model_output_io)
-        all_model_io.update(model_metadata_io)
+        all_model_io.update(output_io)
         if not TaskModel().get(tid).verify_io(all_model_io, None):
             logger.error("Improper formatting in model io")
             return False
@@ -120,7 +117,7 @@ class ExampleModel(BaseModel):
         all_user_io = {}
         all_user_io.update(context_io)
         all_user_io.update(input_io)
-        all_user_io.update(user_output_io)
+        all_user_io.update(target_io)
         if not TaskModel().get(tid).verify_io(all_user_io, None):
             logger.error("Improper formatting in user io")
             return False
@@ -182,53 +179,50 @@ class ExampleModel(BaseModel):
                 if c.round.task.task_code in ("qa", "vqa"):
                     if (
                         c.round.task.task_code == "vqa"
-                        and "answer" in model_output_io
-                        and "prob" in model_output_io
+                        and "answer" in output_io
+                        and "prob" in output_io
                     ):
                         model_wrong = False
                         pred = (
-                            str(model_output_io["answer"])
+                            str(output_io["answer"])
                             + "|"
-                            + str(float(model_output_io["prob"]))
+                            + str(float(output_io["prob"]))
                         )
-                    elif (
-                        "model_is_correct" in model_output_io
-                        and "text" in model_output_io
-                    ):
+                    elif "model_is_correct" in output_io and "text" in output_io:
                         pred = (
-                            str(model_output_io["model_is_correct"])
+                            str(output_io["model_is_correct"])
                             + "|"
-                            + str(model_output_io["text"])
+                            + str(output_io["text"])
                         )
-                        model_wrong = not model_output_io["model_is_correct"]
+                        model_wrong = not output_io["model_is_correct"]
                     else:
                         return False
-                    if "model_id" in model_output_io:
-                        pred += "|" + str(model_output_io["model_id"])
+                    if "model_id" in output_io:
+                        pred += "|" + str(output_io["model_id"])
                 else:
-                    if "prob" not in model_output_io:
+                    if "prob" not in output_io:
                         return False
                     if c.round.task.task_code == "nli":
                         pred = "|".join(
                             [
-                                str(model_output_io["prob"]["entailed"]),
-                                str(model_output_io["prob"]["neutral"]),
-                                str(model_output_io["prob"]["contradictory"]),
+                                str(output_io["prob"]["entailed"]),
+                                str(output_io["prob"]["neutral"]),
+                                str(output_io["prob"]["contradictory"]),
                             ]
                         )
                     if c.round.task.task_code == "sentiment":
                         pred = "|".join(
                             [
-                                str(model_output_io["prob"]["negative"]),
-                                str(model_output_io["prob"]["positive"]),
-                                str(model_output_io["prob"]["neutral"]),
+                                str(output_io["prob"]["negative"]),
+                                str(output_io["prob"]["positive"]),
+                                str(output_io["prob"]["neutral"]),
                             ]
                         )
                     if c.round.task.task_code == "hs":
                         pred = "|".join(
                             [
-                                str(model_output_io["prob"]["not-hateful"]),
-                                str(model_output_io["prob"]["hateful"]),
+                                str(output_io["prob"]["not-hateful"]),
+                                str(output_io["prob"]["hateful"]),
                             ]
                         )
 
@@ -242,9 +236,8 @@ class ExampleModel(BaseModel):
             e = Example(
                 context=c,
                 input_io=json.dumps(input_io),
-                user_output_io=json.dumps(user_output_io),
-                model_output_io=json.dumps(model_output_io),
-                model_metadata_io=json.dumps(model_metadata_io),
+                target_io=json.dumps(target_io),
+                output_io=json.dumps(output_io),
                 model_wrong=model_wrong,
                 generated_datetime=db.sql.func.now(),
                 metadata_json=json.dumps(metadata),
