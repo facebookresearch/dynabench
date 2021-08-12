@@ -142,7 +142,8 @@ const ForkOrSnapshotTable = (props) => {
                       )}
                     </td>
                     <td className="text-nowrap">
-                      <Moment utc format={"DD-MMM-YYYY HH:mm:ss"}>
+                      Created{" "}
+                      <Moment utc fromNow>
                         {datum.create_datetime}
                       </Moment>
                     </td>
