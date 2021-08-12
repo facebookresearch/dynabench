@@ -233,6 +233,10 @@ def recover_password():
 @_auth.requires_auth
 def get_user_forks(credentials, uid):
 
+    if not util.is_current_user(uid=uid, credentials=credentials):
+        logger.error("Not authorized to view forks")
+        bottle.abort(403, "Not authorized to view forks")
+
     limit, offset = util.get_limit_and_offset_from_request()
     lcm = LeaderboardConfigurationModel()
 
@@ -246,6 +250,10 @@ def get_user_forks(credentials, uid):
 @bottle.get("/users/<uid:int>/snapshots")
 @_auth.requires_auth
 def get_user_snapshots(credentials, uid):
+
+    if not util.is_current_user(uid=uid, credentials=credentials):
+        logger.error("Not authorized to view snapshots")
+        bottle.abort(403, "Not authorized to view snapshots")
 
     limit, offset = util.get_limit_and_offset_from_request()
     lsm = LeaderboardSnapshotModel()
