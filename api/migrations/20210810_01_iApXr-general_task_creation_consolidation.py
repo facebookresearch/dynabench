@@ -10,77 +10,205 @@ from yoyo import step
 __depends__ = {"20210806_01_0LQae-adding-limiting-behavior-of-adc-task"}
 
 steps = [
-    step("ALTER TABLE tasks ADD COLUMN create_endpoint Boolean"),  # TODO
-    step("ALTER TABLE tasks ADD COLUMN gpu Boolean"),  # TODO
-    step("ALTER TABLE tasks ADD COLUMN torchserve_config TEXT"),  # TODO
-    step("ALTER TABLE tasks ADD COLUMN input_io_def TEXT"),
+    step("ALTER TABLE tasks ADD COLUMN create_endpoint Boolean"),
     step(
-        """UPDATE tasks SET input_io_def='[{"name": "hypothesis", "type": "string", "constructor_args": {"placeholder": "Enter hypothesis..."}}]' WHERE shortname in ('DK_NLI', 'NLI', 'LADC')"""
+        "UPDATE tasks SET create_endpoint=false WHERE shortname IN ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"
     ),
     step(
-        """UPDATE tasks SET input_io_def='[{"name": "statement", "type": "string", "constructor_args": {"placeholder": "Enter statement..."}}]' WHERE shortname in ('Sentiment', 'Hate Speech')"""
+        "UPDATE tasks SET create_endpoint=true WHERE shortname NOT IN ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"
+    ),
+    step("ALTER TABLE tasks ADD COLUMN gpu Boolean"),
+    step(
+        "UPDATE tasks SET gpu=true WHERE shortname IN ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"
     ),
     step(
-        """UPDATE tasks SET input_io_def='[{"name": "question", "type": "string", "constructor_args": {"placeholder": "Enter question..."}}]' WHERE shortname in ('QA', 'DK_QA', 'UCL_QA', 'VQA', 'VQA-VAL')"""
+        "UPDATE tasks SET gpu=false WHERE shortname NOT IN ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"
+    ),
+    step("ALTER TABLE tasks ADD COLUMN torchserve_config TEXT"),
+    step(
+        """UPDATE tasks SET torchserve_config='{
+            "default_response_timeout": 1200,
+            "decode_input_request": False,
+            "max_request_size": 12853500,
+            "max_response_size": 12853500,
+        }' WHERE shortname IN ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
     step(
-        """UPDATE tasks SET input_io_def='[{"name": "sourceText", "type": "string", "constructor_args": {"placeholder": "Enter source text..."}}]' WHERE shortname in ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
+        """UPDATE tasks SET torchserve_config="{}" WHERE shortname NOT IN ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
-    step("ALTER TABLE tasks ADD COLUMN output_io_def TEXT"),
+    step("ALTER TABLE tasks ADD COLUMN io_def TEXT"),
     step(
-        """UPDATE tasks SET output_io_def='[{"name": "label", "type": "goal_message_multiple_choice", "constructor_args": {"labels": ["entailed", "neutral", "contradictory"]}}]' WHERE shortname in ('DK_NLI', 'NLI', 'LADC')"""
-    ),
-    step(
-        """UPDATE tasks SET output_io_def='[{"name": "label", "type": "goal_message_multiple_choice", "constructor_args": {"labels": ["hateful", "not-hateful"]}}]' WHERE shortname in ('Hate Speech')"""
-    ),
-    step(
-        """UPDATE tasks SET output_io_def='[{"name": "label", "type": "goal_message_multiple_choice", "constructor_args": {"labels": ["positive", "negative", "neutral"]}}]' WHERE shortname in ('Sentiment')"""
-    ),
-    step(
-        """UPDATE tasks SET output_io_def='[{"name": "answer", "type": "string", "constructor_args": {"placeholder": "Enter answer..."}}]' WHERE shortname in ('VQA', 'VQA-VAL')"""
-    ),
-    step(
-        """UPDATE tasks SET output_io_def='[{"name": "answer", "type": "context_string_selection", "constructor_args": {"reference_key": "context"}}]' WHERE shortname in ('QA', 'DK_QA', 'UCL_QA')"""
-    ),
-    step(
-        """UPDATE tasks SET output_io_def='[{"name": "targetText", "type": "string", "constructor_args": {"placeholder": "Enter target text..."}}]' WHERE shortname in ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
-    ),
-    step("ALTER TABLE tasks ADD COLUMN context_io_def TEXT"),
-    step(
-        """UPDATE tasks SET context_io_def='[{"name": "context", "type": "string", "constructor_args": {"placeholder": "Enter context..."}}]' WHERE shortname not in ('VQA', 'VQA-VAL', 'FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
-    ),
-    step(
-        """UPDATE tasks SET context_io_def='[{"name": "image_url", "type": "image_url", "constructor_args": {}}]' WHERE shortname in ('VQA', 'VQA-VAL')"""
-    ),
-    step(
-        """UPDATE tasks SET context_io_def='[
-        {"name": "sourceLanguage", "type": "string", "constructor_args": {"placeholder": "Enter source language..."}},
-        {"name": "targetLanguage", "type": "string", "constructor_args": {"placeholder": "Enter target language..."}}
-    ]' WHERE shortname in ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
-    ),
-    step("ALTER TABLE tasks ADD COLUMN user_metadata_model_correct_io_def TEXT"),
-    step(
-        """UPDATE tasks SET user_metadata_model_correct_io_def='[
-        {"name": "example explanation", "type": "string", "constructor_args": {"placeholder": "Explain why your example is correct..."}},
-        {"name": "model explanation", "type": "string", "constructor_args": {"placeholder": "Explain why you thought the model would make a mistake..."}}
-    ]'"""
-    ),
-    step("ALTER TABLE tasks ADD COLUMN user_metadata_model_wrong_io_def TEXT"),
-    step(
-        """UPDATE tasks SET user_metadata_model_wrong_io_def='[
-        {"name": "example explanation", "type": "string", "constructor_args": {"placeholder": "Explain why your example is correct..."}},
-        {"name": "model explanation", "type": "string", "constructor_args": {"placeholder": "Explain why you think the model made a mistake..."}}
-    ]'"""
-    ),
-    step("ALTER TABLE tasks ADD COLUMN model_metadata_io_def TEXT"),
-    step(
-        """UPDATE tasks SET model_metadata_io_def='[{"name": "prob", "type": "multiple_choice_probs", "constructor_args": {"reference_key": "label"}}]' WHERE shortname not in ('QA','DK_QA', 'UCL_QA', 'VQA', 'VQA-VAL', 'FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
+        """UPDATE tasks SET io_def='
+            {
+                "context": [{"name": "context", "type": "string",
+                    "constructor_args": {"placeholder": "Enter context..."}}],
+                "input": [{"name": "hypothesis", "type": "string",
+                    "constructor_args": {"placeholder": "Enter hypothesis..."}}],
+                "target": [{"name": "label", "type": "goal_message_multiple_choice",
+                    "constructor_args": {
+                        "labels": ["entailed", "neutral", "contradictory"]}}],
+                "output": [
+                    {"name": "label", "type": "goal_message_multiple_choice",
+                        "constructor_args": {
+                            "labels": ["entailed", "neutral", "contradictory"]}},
+                    {"name": "prob", "type": "multiple_choice_probs",
+                        "constructor_args": {"reference_key": "label"}}
+                ],
+                "metadata": [
+                    {"name": "example_explanation", "type": "string",
+                        "constructor_args":
+                            {"placeholder": "Explain why your example is correct..."}},
+                    {"name": "model_explanation_right", "type": "string",
+                        "constructor_args": {"placeholder":
+                        "Explain why you thought the model would make a mistake..."},
+                        "model_wrong": false},
+                    {"name": "model_explanation_wrong", "type": "string",
+                        "constructor_args": {"placeholder":
+                            "Explain why you think the model made a mistake..."},
+                            "model_wrong": true}
+                ]
+            }
+            ' WHERE shortname in ('DK_NLI', 'NLI', 'LADC')"""
     ),
     step(
-        """UPDATE tasks SET model_metadata_io_def='[{"name": "conf", "type": "conf", "constructor_args": {}}]' WHERE shortname in ('QA','DK_QA', 'UCL_QA')"""
+        """UPDATE tasks SET io_def='
+            {
+                "context": [{"name": "context", "type": "string",
+                    "constructor_args": {"placeholder": "Enter context..."}}],
+                "input": [{"name": "statement", "type": "string",
+                    "constructor_args": {"placeholder": "Enter statement..."}}],
+                "target": [{"name": "label", "type": "goal_message_multiple_choice",
+                    "constructor_args": {
+                        "labels": ["not-hateful", "hateful"]}}],
+                "output": [
+                    {"name": "label", "type": "goal_message_multiple_choice",
+                        "constructor_args": {
+                            "labels": ["not-hateful", "hateful"]}},
+                    {"name": "prob", "type": "multiple_choice_probs",
+                        "constructor_args": {"reference_key": "label"}}
+                ],
+                "metadata": [
+                    {"name": "example_explanation", "type": "string",
+                        "constructor_args":
+                            {"placeholder": "Explain why your example is correct..."}},
+                    {"name": "model_explanation_right", "type": "string",
+                        "constructor_args": {"placeholder":
+                        "Explain why you thought the model would make a mistake..."},
+                        "model_wrong": false},
+                    {"name": "model_explanation_wrong", "type": "string",
+                        "constructor_args": {"placeholder":
+                            "Explain why you think the model made a mistake..."},
+                            "model_wrong": true}
+                ]
+            }
+            ' WHERE shortname in ('Hate Speech')"""
     ),
     step(
-        """UPDATE tasks SET model_metadata_io_def='[]' WHERE shortname in ('VQA', 'VQA-VAL', 'FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
+        """UPDATE tasks SET io_def='
+            {
+                "context": [{"name": "context", "type": "string",
+                    "constructor_args": {"placeholder": "Enter context..."}}],
+                "input": [{"name": "statement", "type": "string",
+                    "constructor_args": {"placeholder": "Enter statement..."}}],
+                "target": [{"name": "label", "type": "goal_message_multiple_choice",
+                    "constructor_args": {
+                        "labels": ["negative", "positive", "neutral"]}}],
+                "output": [
+                    {"name": "label", "type": "goal_message_multiple_choice",
+                        "constructor_args": {
+                            "labels": ["negative", "positive", "neutral"]}},
+                    {"name": "prob", "type": "multiple_choice_probs",
+                        "constructor_args": {"reference_key": "label"}}
+                ],
+                "metadata": [
+                    {"name": "example_explanation", "type": "string",
+                        "constructor_args":
+                            {"placeholder": "Explain why your example is correct..."}},
+                    {"name": "model_explanation_right", "type": "string",
+                        "constructor_args": {"placeholder":
+                        "Explain why you thought the model would make a mistake..."},
+                        "model_wrong": false},
+                    {"name": "model_explanation_wrong", "type": "string",
+                        "constructor_args": {"placeholder":
+                            "Explain why you think the model made a mistake..."},
+                            "model_wrong": true}
+                ]
+            }
+            ' WHERE shortname in ('Sentiment')"""
+    ),
+    step(
+        """UPDATE tasks SET io_def='
+            {
+                "context": [{"name": "context", "type": "string",
+                    "constructor_args": {"placeholder": "Enter context..."}}],
+                "input": [{"name": "question", "type": "string",
+                    "constructor_args": {"placeholder": "Enter question..."}}],
+                "target": [{"name": "answer", "type": "context_string_selection",
+                    "constructor_args": {
+                        "reference_key": "context"}}],
+                "output": [
+                    {"name": "answer", "type": "context_string_selection",
+                        "constructor_args": {
+                            "reference_key": "context"}},
+                    {"name": "conf", "type": "conf",
+                        "constructor_args": {}}
+                ],
+                "metadata": [
+                    {"name": "example_explanation", "type": "string",
+                        "constructor_args":
+                            {"placeholder": "Explain why your example is correct..."}},
+                    {"name": "model_explanation_right", "type": "string",
+                        "constructor_args": {"placeholder":
+                        "Explain why you thought the model would make a mistake..."},
+                        "model_wrong": false},
+                    {"name": "model_explanation_wrong", "type": "string",
+                        "constructor_args": {"placeholder":
+                            "Explain why you think the model made a mistake..."},
+                            "model_wrong": true}
+                ]
+            }
+            ' WHERE shortname in ('QA','DK_QA', 'UCL_QA')"""
+    ),
+    step(
+        """UPDATE tasks SET io_def='
+            {
+                "context": [{"name": "image_url", "type": "image_url",
+                    "constructor_args": {}, "display_name": "image"}],
+                "input": [{"name": "question", "type": "string",
+                    "constructor_args": {"placeholder": "Enter question..."}}],
+                "target": [],
+                "output": [
+                    {"name": "answer", "type": "string",
+                        "constructor_args": {"placeholder": "Enter answer..."}}
+                ],
+                "metadata": [
+                    {"name": "target_answer", "type": "string",
+                        "constructor_args": {"placeholder":
+                            "The model was wrong, so enter the correct answer..."},
+                            "model_wrong": true}
+                ]
+            }
+            ' WHERE shortname in ('VQA', 'VQA-VAL')"""
+    ),
+    step(
+        """UPDATE tasks SET io_def='
+            {
+                "context": [
+                    {"name": "sourceLanguage", "type": "string",
+                    "constructor_args": {"placeholder": "Enter source language..."}},
+                    {"name": "targetLanguage", "type": "string",
+                    "constructor_args": {"placeholder": "Enter target language..."}}],
+                "input": [{"name": "sourceText", "type": "string",
+                    "constructor_args": {"placeholder": "Enter source text..."}}],
+                "target": [
+                    {"name": "targetText", "type": "string",
+                        "constructor_args": {"placeholder": "Enter target text"}}],
+                "output": [
+                    {"name": "targetText", "type": "string",
+                        "constructor_args": {"placeholder": "Enter target text"}}],
+                "metadata": []
+            }
+            ' WHERE shortname in ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
     step("ALTER TABLE tasks ADD COLUMN aggregation_metric ENUM('dynascore')"),
     step("ALTER TABLE tasks ADD COLUMN model_wrong_metric TEXT"),
@@ -200,81 +328,68 @@ steps = [
     step(
         """UPDATE examples SET input_io=JSON_OBJECT("statement", text) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
     ),
-    step("ALTER TABLE examples ADD COLUMN user_output_io TEXT"),
+    step("ALTER TABLE examples ADD COLUMN target_io TEXT"),
     step(
-        """UPDATE examples SET user_output_io=JSON_OBJECT("label", "entailed") WHERE target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
+        """UPDATE examples SET target_io=JSON_OBJECT("label", "entailed") WHERE target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
     step(
-        """UPDATE examples SET user_output_io=JSON_OBJECT("label", "neutral") WHERE target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
+        """UPDATE examples SET target_io=JSON_OBJECT("label", "neutral") WHERE target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
     step(
-        """UPDATE examples SET user_output_io=JSON_OBJECT("label", "contradictory") WHERE target_pred=2 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
+        """UPDATE examples SET target_io=JSON_OBJECT("label", "contradictory") WHERE target_pred=2 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
     step(
-        """UPDATE examples SET user_output_io=JSON_OBJECT("answer", target_pred) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('VQA', 'VQA-VAL', 'QA', 'UCL_QA')))))"""
+        """UPDATE examples SET target_io=JSON_OBJECT("answer", target_pred) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('VQA', 'VQA-VAL', 'QA', 'UCL_QA')))))"""
     ),
     step(
-        """UPDATE examples SET user_output_io=JSON_OBJECT("label", "not-hateful") WHERE target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
+        """UPDATE examples SET target_io=JSON_OBJECT("label", "not-hateful") WHERE target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
     ),
     step(
-        """UPDATE examples SET user_output_io=JSON_OBJECT("label", "hateful") WHERE target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
+        """UPDATE examples SET target_io=JSON_OBJECT("label", "hateful") WHERE target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
     ),
     step(
-        """UPDATE examples SET user_output_io=JSON_OBJECT("label", "negative") WHERE target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
+        """UPDATE examples SET target_io=JSON_OBJECT("label", "negative") WHERE target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
     ),
     step(
-        """UPDATE examples SET user_output_io=JSON_OBJECT("label", "positive") WHERE target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
+        """UPDATE examples SET target_io=JSON_OBJECT("label", "positive") WHERE target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
     ),
     step(
-        """UPDATE examples SET user_output_io=JSON_OBJECT("label", "neutral") WHERE target_pred=2 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
+        """UPDATE examples SET target_io=JSON_OBJECT("label", "neutral") WHERE target_pred=2 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
     ),
-    step("ALTER TABLE examples ADD COLUMN model_output_io TEXT"),
+    step("ALTER TABLE examples ADD COLUMN output_io TEXT"),
     step(
-        """UPDATE examples SET user_output_io=JSON_OBJECT("label", "entailed") WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
-    ),
-    step(
-        """UPDATE examples SET user_output_io=JSON_OBJECT("label", "neutral") WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("label", "entailed", "prob", JSON_OBJECT("entailed", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "contradictory", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
     step(
-        """UPDATE examples SET user_output_io=JSON_OBJECT("label", "contradictory") WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("label", "neutral", "prob", JSON_OBJECT("entailed", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "contradictory", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
     step(
-        """UPDATE examples SET user_output_io=JSON_OBJECT("answer", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1))) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('QA', 'UCL_QA')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("label", "contradictory", "prob", JSON_OBJECT("entailed", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "contradictory", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
     step(
-        """UPDATE examples SET user_output_io=JSON_OBJECT("answer", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1))) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('VQA', 'VQA-VAL')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("answer", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1))) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('QA', 'UCL_QA')))))"""
     ),
     step(
-        """UPDATE examples SET user_output_io=JSON_OBJECT("label", "not-hateful") WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("answer", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "prob", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1))) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('VQA', 'VQA-VAL')))))"""
     ),
     step(
-        """UPDATE examples SET user_output_io=JSON_OBJECT("label", "hateful") WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) <= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("label", "not-hateful", "prob", JSON_OBJECT("not-hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
     ),
     step(
-        """UPDATE examples SET user_output_io=JSON_OBJECT("label", "negative") WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("label", "hateful", "prob", JSON_OBJECT("not-hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) <= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
     ),
     step(
-        """UPDATE examples SET user_output_io=JSON_OBJECT("label", "positive") WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("label", "negative", "prob", JSON_OBJECT("negative", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "positive", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
     ),
     step(
-        """UPDATE examples SET user_output_io=JSON_OBJECT("label", "neutral") WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
-    ),
-    step("ALTER TABLE examples ADD COLUMN user_metadata_io TEXT"),
-    step(
-        """UPDATE examples SET user_metadata_io=JSON_OBJECT("example explanation", example_explanation, "model explanation", model_explanation)"""
-    ),
-    step("ALTER TABLE examples ADD COLUMN model_metadata_io TEXT"),
-    step(
-        """UPDATE examples SET model_metadata_io=JSON_OBJECT("prob", JSON_OBJECT("entailed", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "contradictory", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("label", "positive", "prob", JSON_OBJECT("negative", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "positive", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
     ),
     step(
-        """UPDATE examples SET model_metadata_io=JSON_OBJECT("conf", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1))) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('VQA', 'VQA-VAL')))))"""
-    ),  # The 'QA' and 'UCL_QA' tasks never actually saved the model conf
-    step(
-        """UPDATE examples SET model_metadata_io=JSON_OBJECT("prob", JSON_OBJECT("not-hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)))) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("label", "neutral", "prob", JSON_OBJECT("negative", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "positive", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
     ),
+    step("ALTER TABLE examples ADD COLUMN metadata_io TEXT"),
     step(
-        """UPDATE examples SET input_io=JSON_OBJECT("prob", JSON_OBJECT("negative", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "positive", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
+        """UPDATE examples SET metadata_io=JSON_OBJECT("example explanation", example_explanation, "model explanation", model_explanation)"""
     ),
     step("ALTER TABLE tasks DROP shortname"),
     step("ALTER TABLE tasks DROP type"),

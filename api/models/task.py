@@ -1,5 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
+import itertools
 import json
 import sys
 
@@ -87,8 +88,8 @@ def verify_context_string_selection(
 
 def verify_conf(obj, obj_constructor_args, name_to_constructor_args, example_io):
     assert isinstance(obj, float)
-    assert obj >= 0
-    assert obj <= 1
+    assert obj > -0.001
+    assert obj < 1.001
 
 
 def verify_multiple_choice_probs(
@@ -136,12 +137,7 @@ class Task(Base):
     task_code = db.Column(db.String(length=255), unique=True, nullable=False)
 
     name = db.Column(db.String(length=255), nullable=False, unique=True)
-    input_io_def = db.Column(db.Text, nullable=False)
-    output_io_def = db.Column(db.Text, nullable=False)
-    context_io_def = db.Column(db.Text, nullable=False)
-    user_metadata_model_correct_io_def = db.Column(db.Text, nullable=False)
-    user_metadata_model_wrong_io_def = db.Column(db.Text, nullable=False)
-    model_metadata_io_def = db.Column(db.Text, nullable=False)
+    io_def = db.Column(db.Text, nullable=False)
     aggregation_metric = db.Column(
         db.Enum(AggregationMetricEnum),
         default=AggregationMetricEnum.dynascore,
@@ -193,20 +189,7 @@ class Task(Base):
     def verify_io(self, io_objs, model_wrong):
         name_to_constructor_args = {}
         name_to_type = {}
-        user_metadata_io_def = []
-        if model_wrong is not None:
-            user_metadata_io_def = (
-                json.loads(self.user_metadata_model_wrong_io_def)
-                if model_wrong
-                else json.loads(self.user_metadata_model_correct_io_def)
-            )
-        for item in (
-            json.loads(self.input_io_def)
-            + json.loads(self.output_io_def)
-            + json.loads(self.context_io_def)
-            + user_metadata_io_def
-            + json.loads(self.model_metadata_io_def)
-        ):
+        for item in itertools.chain.from_iterable(json.loads(self.io_def).values()):
             name_to_constructor_args[item["name"]] = item["constructor_args"]
             name_to_type[item["name"]] = item["type"]
         for name, obj in io_objs.items():

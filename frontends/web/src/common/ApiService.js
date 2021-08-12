@@ -469,13 +469,13 @@ export default class ApiService {
     );
   }
 
-  getModelWrong(tid, user_output_io, model_output_io) {
+  getModelWrong(tid, target_io, output_io) {
     return this.fetch(`${this.domain}/examples/get-model-wrong`, {
       method: "POST",
       body: JSON.stringify({
-        user_output_io: user_output_io,
+        target_io: target_io,
         tid: tid,
-        model_output_io: model_output_io,
+        output_io: output_io,
       }),
     });
   }
@@ -486,9 +486,8 @@ export default class ApiService {
     uid,
     cid,
     input_io,
-    user_output_io,
-    model_output_io,
-    model_metadata_io,
+    target_io,
+    output_io,
     model_signature,
     metadata,
     model_wrong,
@@ -503,9 +502,8 @@ export default class ApiService {
         cid: cid,
         uid: uid,
         input_io: input_io,
-        user_output_io: user_output_io,
-        model_output_io: model_output_io,
-        model_metadata_io: model_metadata_io,
+        target_io: target_io,
+        output_io: output_io,
         model_signature: model_signature,
         metadata: metadata,
         model_wrong: model_wrong,
