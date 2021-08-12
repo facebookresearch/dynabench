@@ -277,7 +277,8 @@ class ResponseInfo extends React.Component {
     var userFeedback = (
       <>
         {this.props.obj.livemode ? (
-          this.state.model_wrong !== null || this.props.obj.url === null ? (
+          (this.state.model_wrong !== null || this.props.obj.url === null) &&
+          metadata.length > 0 ? (
             <div className="mt-3">
               <span>You can enter more info for your example:</span>
               <button

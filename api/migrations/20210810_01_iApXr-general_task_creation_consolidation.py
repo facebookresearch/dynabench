@@ -185,6 +185,7 @@ steps = [
                     {"name": "target_answer", "type": "string",
                         "constructor_args": {"placeholder":
                             "The model was wrong, so enter the correct answer..."},
+                            "display_name": "answer",
                             "model_wrong": true}
                 ]
             }
@@ -339,7 +340,7 @@ steps = [
         """UPDATE examples SET target_io=JSON_OBJECT("label", "contradictory") WHERE target_pred=2 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
     step(
-        """UPDATE examples SET target_io=JSON_OBJECT("answer", target_pred) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('VQA', 'VQA-VAL', 'QA', 'UCL_QA')))))"""
+        """UPDATE examples SET target_io=JSON_OBJECT("answer", target_pred) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('QA', 'UCL_QA')))))"""
     ),
     step(
         """UPDATE examples SET target_io=JSON_OBJECT("label", "not-hateful") WHERE target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
@@ -390,6 +391,9 @@ steps = [
     step("ALTER TABLE examples ADD COLUMN metadata_io TEXT"),
     step(
         """UPDATE examples SET metadata_io=JSON_OBJECT("example explanation", example_explanation, "model explanation", model_explanation)"""
+    ),
+    step(
+        """UPDATE examples SET metadata_io=JSON_OBJECT("target_answer", target_pred) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('VQA', 'VQA-VAL')))))"""
     ),
     step("ALTER TABLE tasks DROP shortname"),
     step("ALTER TABLE tasks DROP type"),
