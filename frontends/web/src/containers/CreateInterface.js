@@ -40,6 +40,7 @@ import {
 } from "./Overlay";
 import { HateSpeechDropdown } from "./HateSpeechDropdown.js";
 import "./CreateInterface.css";
+import { FoolingExamplesCarousel } from "./FoolingExamplesCarousel.js";
 
 const Explainer = (props) => (
   <div className="mt-4 mb-1 pt-3">
@@ -898,6 +899,7 @@ class CreateInterface extends React.Component {
       submitDisabled: true,
       refreshDisabled: true,
       mapKeyToExampleId: {},
+      roundFoolingExamples: {},
     };
     this.getNewContext = this.getNewContext.bind(this);
     this.handleGoalMessageTargetChange =
@@ -971,6 +973,7 @@ class CreateInterface extends React.Component {
           task.selected_round = selected;
           this.setState({ task: task }, function () {
             this.getNewContext();
+            this.getVerifiedModelFoolingExamples();
           });
         },
         (error) => {
@@ -1018,6 +1021,23 @@ class CreateInterface extends React.Component {
       target: parseInt(e.target.getAttribute("index")),
       content: [this.state.content[0]],
     });
+  }
+
+  getVerifiedModelFoolingExamples() {
+    this.context.api
+      .getVerifiedModelFoolingExamples(
+        this.state.task.id,
+        this.state.task.selected_round
+      )
+      .then(
+        (examples) => {
+          this.setState({ roundFoolingExamples: examples });
+        },
+        (error) => {
+          console.log(error);
+          this.setState({ roundFoolingExamples: [] });
+        }
+      );
   }
 
   handleResponse(e) {
@@ -1305,6 +1325,7 @@ class CreateInterface extends React.Component {
             function () {
               this.state.task.selected_round = this.state.task.cur_round;
               this.getNewContext();
+              this.getVerifiedModelFoolingExamples();
               if (params.taskCode !== this.state.taskCode) {
                 this.props.history.replace({
                   pathname: this.props.location.pathname.replace(
@@ -1587,7 +1608,7 @@ class CreateInterface extends React.Component {
                 </Annotation>
 
                 <Row className="p-3">
-                  <Col xs={6}>
+                  <Col xs={7}>
                     <InputGroup>
                       {this.state.selectedModel ? (
                         ""
@@ -1625,7 +1646,7 @@ class CreateInterface extends React.Component {
                           overlay={renderSwitchRoundTooltip}
                         >
                           <Annotation
-                            placement="right"
+                            placement="top"
                             tooltip="Want to try talking to previous rounds? You can switch here."
                           >
                             <DropdownButton
@@ -1647,9 +1668,44 @@ class CreateInterface extends React.Component {
                           </Annotation>
                         </OverlayTrigger>
                       ) : null}
+                      {this.state.roundFoolingExamples.length > 0 && (
+                        <Annotation
+                          placement="bottom"
+                          tooltip="Click it to see some verified model fooling examples and inspire yourself."
+                        >
+                          <Button
+                            type="button"
+                            variant="info"
+                            onClick={() =>
+                              this.setState({ showRoundFoolingExamples: true })
+                            }
+                          >
+                            <i className="fa fa-lightbulb" />
+                            &nbsp; Inspiration
+                          </Button>
+                        </Annotation>
+                      )}
+                      <Modal
+                        centered
+                        size="lg"
+                        show={
+                          this.state.showRoundFoolingExamples &&
+                          this.state.roundFoolingExamples.length > 0
+                        }
+                        onHide={() =>
+                          this.setState({ showRoundFoolingExamples: false })
+                        }
+                      >
+                        <Modal.Body>
+                          <FoolingExamplesCarousel
+                            examples={this.state.roundFoolingExamples}
+                            task={this.state.task}
+                          />
+                        </Modal.Body>
+                      </Modal>
                     </InputGroup>
                   </Col>
-                  <Col xs={6}>
+                  <Col xs={5}>
                     <InputGroup className="d-flex justify-content-end">
                       <OverlayTrigger
                         placement="bottom"
@@ -1657,7 +1713,7 @@ class CreateInterface extends React.Component {
                         overlay={renderSwitchContextTooltip}
                       >
                         <Annotation
-                          placement="left"
+                          placement="bottom"
                           tooltip="Don’t like this context, or this goal label? Try another one."
                         >
                           <Button

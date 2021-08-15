@@ -278,6 +278,12 @@ export default class ApiService {
     });
   }
 
+  getVerifiedModelFoolingExamples(tid, rid) {
+    return this.fetch(`${this.domain}/examples/${tid}/${rid}/inspiration`, {
+      method: "GET",
+    });
+  }
+
   getRandomContext(tid, rid, tags = [], method = "min") {
     return this.fetch(
       `${
