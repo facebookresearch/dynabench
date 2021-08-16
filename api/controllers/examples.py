@@ -61,23 +61,6 @@ def get_random_filtered_example(
     return util.json_encode(example)
 
 
-@bottle.get("/examples/<tid:int>/<rid:int>/inspiration")
-def get_verified_fooling_examples(tid, rid):
-    tm = TaskModel()
-    task = tm.get(tid)
-    num_matching_validations = 3
-    if task.settings_json:
-        settings = json.loads(task.settings_json)
-        num_matching_validations = settings["num_matching_validations"]
-
-    em = ExampleModel()
-    examples = em.getRandomVerifiedCorrect(tid, rid, num_matching_validations)
-    if not examples or len(examples) == 0:
-        bottle.abort(500, f"No examples available ({rid})")
-    example_dicts = [e.to_dict() for e in examples]
-    return util.json_encode(example_dicts)
-
-
 @bottle.get("/examples/vqa/<tid:int>/<rid:int>")
 @_auth.requires_auth_or_turk
 def get_random_example_vqa(credentials, tid, rid):
