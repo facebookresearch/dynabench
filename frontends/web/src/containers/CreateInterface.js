@@ -67,7 +67,7 @@ class ResponseInfo extends React.Component {
   }
   componentDidMount() {
     const metadata_io = {};
-    this.props.io_def.metadata
+    this.props.io_def.metadata.create
       .filter(
         (io_def_obj) =>
           io_def_obj.model_wrong === undefined ||
@@ -85,7 +85,7 @@ class ResponseInfo extends React.Component {
 
   updateUserMetadataIO() {
     const non_null_metadata_io = {};
-    this.props.io_def.metadata
+    this.props.io_def.metadata.create
       .filter(
         (io_def_obj) =>
           io_def_obj.model_wrong === undefined ||
@@ -250,7 +250,7 @@ class ResponseInfo extends React.Component {
               />
             ));
 
-    const metadata = this.props.io_def.metadata
+    const metadata = this.props.io_def.metadata.create
       .filter(
         (io_def_obj) =>
           io_def_obj.model_wrong === undefined ||
@@ -546,7 +546,13 @@ class CreateInterface extends React.Component {
       refreshDisabled: true,
       mapKeyToExampleId: {},
       submitWithoutFullExample: false,
-      io_def: { input: [], target: [], output: [], context: [], metadata: [] },
+      io_def: {
+        input: [],
+        target: [],
+        output: [],
+        context: [],
+        metadata: { create: [] },
+      },
       input_io: {},
       target_io: {},
       context_io: {},

@@ -10,6 +10,7 @@ from yoyo import step
 __depends__ = {"20210806_01_0LQae-adding-limiting-behavior-of-adc-task"}
 
 steps = [
+    step("ALTER TABLE validations ADD COLUMN metadata_io TEXT"),
     step("ALTER TABLE tasks ADD COLUMN create_endpoint Boolean"),
     step(
         "UPDATE tasks SET create_endpoint=false WHERE shortname IN ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"
@@ -54,7 +55,9 @@ steps = [
                     {"name": "prob", "type": "multiple_choice_probs",
                         "constructor_args": {"reference_key": "label"}}
                 ],
-                "metadata": [
+                "metadata": {
+                "create":
+                [
                     {"name": "example_explanation", "type": "string",
                         "constructor_args":
                             {"placeholder": "Explain why your example is correct..."}},
@@ -66,7 +69,34 @@ steps = [
                         "constructor_args": {"placeholder":
                             "Explain why you think the model made a mistake..."},
                             "model_wrong": true}
+                ],
+                "validate":
+                [
+                    {"name": "corrected_label",
+                        "type": "multiple_choice",
+                        "constructor_args": {
+                            "labels": ["entailed", "neutral", "contradictory"],
+                            "placeholder": "Enter corrected label"
+                            },
+                        "validated_as": "incorrect"},
+                    {"name": "target_explanation", "type": "string",
+                        "constructor_args":
+                            {"placeholder":
+                                "Explain why your proposed target is correct..."},
+                        "validated_as": "incorrect"},
+                    {"name": "flag_reason", "type": "string",
+                        "constructor_args":
+                            {"placeholder": "Enter the reason for flagging..."},
+                        "validated_as": "flagged"},
+                    {"name": "validator_example_explanation", "type": "string",
+                        "constructor_args":
+                            {"placeholder": "Explain why the example is correct..."},
+                        "validated_as": "correct"},
+                    {"name": "validator_model_explanation", "type": "string",
+                        "constructor_args": {"placeholder":
+                        "Enter what you think was done to try to trick the model..."}}
                 ]
+                }
             }
             ' WHERE shortname in ('DK_NLI', 'NLI', 'LADC')"""
     ),
@@ -87,7 +117,9 @@ steps = [
                     {"name": "prob", "type": "multiple_choice_probs",
                         "constructor_args": {"reference_key": "label"}}
                 ],
-                "metadata": [
+                "metadata": {
+                "create":
+                [
                     {"name": "example_explanation", "type": "string",
                         "constructor_args":
                             {"placeholder": "Explain why your example is correct..."}},
@@ -99,7 +131,34 @@ steps = [
                         "constructor_args": {"placeholder":
                             "Explain why you think the model made a mistake..."},
                             "model_wrong": true}
+                ],
+                "validate":
+                [
+                    {"name": "corrected_label",
+                        "type": "multiple_choice",
+                        "constructor_args": {
+                            "labels": ["not-hateful", "hateful"],
+                            "placeholder": "Enter corrected label"
+                            },
+                        "validated_as": "incorrect"},
+                    {"name": "target_explanation", "type": "string",
+                        "constructor_args":
+                            {"placeholder":
+                                "Explain why your proposed target is correct..."},
+                        "validated_as": "incorrect"},
+                    {"name": "flag_reason", "type": "string",
+                        "constructor_args":
+                            {"placeholder": "Enter the reason for flagging..."},
+                        "validated_as": "flagged"},
+                    {"name": "validator_example_explanation", "type": "string",
+                        "constructor_args":
+                            {"placeholder": "Explain why the example is correct..."},
+                        "validated_as": "correct"},
+                    {"name": "validator_model_explanation", "type": "string",
+                        "constructor_args": {"placeholder":
+                        "Enter what you think was done to try to trick the model..."}}
                 ]
+                }
             }
             ' WHERE shortname in ('Hate Speech')"""
     ),
@@ -120,7 +179,9 @@ steps = [
                     {"name": "prob", "type": "multiple_choice_probs",
                         "constructor_args": {"reference_key": "label"}}
                 ],
-                "metadata": [
+                "metadata": {
+                "create":
+                [
                     {"name": "example_explanation", "type": "string",
                         "constructor_args":
                             {"placeholder": "Explain why your example is correct..."}},
@@ -132,7 +193,34 @@ steps = [
                         "constructor_args": {"placeholder":
                             "Explain why you think the model made a mistake..."},
                             "model_wrong": true}
+                ],
+                "validate":
+                [
+                    {"name": "corrected_label",
+                        "type": "multiple_choice",
+                        "constructor_args": {
+                            "labels": ["negative", "positive", "entailed"],
+                            "placeholder": "Enter corrected label"
+                            },
+                        "validated_as": "incorrect"},
+                    {"name": "target_explanation", "type": "string",
+                        "constructor_args":
+                            {"placeholder":
+                                "Explain why your proposed target is correct..."},
+                        "validated_as": "incorrect"},
+                    {"name": "flag_reason", "type": "string",
+                        "constructor_args":
+                            {"placeholder": "Enter the reason for flagging..."},
+                        "validated_as": "flagged"},
+                    {"name": "validator_example_explanation", "type": "string",
+                        "constructor_args":
+                            {"placeholder": "Explain why the example is correct..."},
+                        "validated_as": "correct"},
+                    {"name": "validator_model_explanation", "type": "string",
+                        "constructor_args": {"placeholder":
+                        "Enter what you think was done to try to trick the model..."}}
                 ]
+                }
             }
             ' WHERE shortname in ('Sentiment')"""
     ),

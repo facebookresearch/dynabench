@@ -436,8 +436,20 @@ export default class ApiService {
     );
   }
 
-  validateExample(id, label, mode, metadata = {}, uid = null) {
-    let obj = { label: label, mode: mode, metadata: metadata };
+  validateExample(
+    id,
+    label,
+    mode,
+    metadata_io = {},
+    metadata = {},
+    uid = null
+  ) {
+    let obj = {
+      label: label,
+      mode: mode,
+      metadata: metadata,
+      metadata_io: metadata_io,
+    };
     if (this.mode === "mturk") {
       obj.uid = uid;
     }

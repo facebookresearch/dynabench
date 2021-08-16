@@ -68,6 +68,11 @@ def validate_example(credentials, eid):
     else:
         current_validation_metadata = {}
 
+    if "metadata_io" in data:
+        current_validation_metadata_io = data["metadata_io"]
+    else:
+        current_validation_metadata_io = {}
+
     if credentials["id"] == "turk":
         if not util.check_fields(data, ["uid"]):
             bottle.abort(400, "Missing data")
@@ -89,7 +94,14 @@ def validate_example(credentials, eid):
     elif credentials["id"] == example.uid and mode != "owner":
         bottle.abort(403, "Access denied (cannot validate your own example)")
 
-    vm.create(credentials["id"], eid, label, mode, current_validation_metadata)
+    vm.create(
+        credentials["id"],
+        eid,
+        label,
+        mode,
+        current_validation_metadata_io,
+        current_validation_metadata,
+    )
 
     em.update(example.id, {"total_verified": example.total_verified + 1})
 
