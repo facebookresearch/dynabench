@@ -3,8 +3,9 @@
 # LICENSE file in the root directory of this source tree.
 from pathlib import Path
 
-from utils import deployer
 from models.task import TaskModel, Task
+from utils import deployer
+
 
 DOCKERFILES = Path(__file__).parent.parent / "dockerfiles"
 TORCHSERVE_CONFIG = DOCKERFILES / "config.properties"
