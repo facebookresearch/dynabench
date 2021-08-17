@@ -312,48 +312,6 @@ class ExampleModel(BaseModel):
         except db.orm.exc.NoResultFound:
             return False
 
-    def getRandomVerifiedCorrect(self, tid, rid, num_matching_validations, n=5):
-        cnt_correct = db.sql.func.sum(
-            case([(Validation.label == LabelEnum.correct, 1)], else_=0)
-        ).label("cnt_correct")
-        cnt_owner_correct_validated = db.sql.func.sum(
-            case(
-                [
-                    (
-                        db.and_(
-                            Validation.mode == ModeEnum.owner,
-                            Validation.label == LabelEnum.correct,
-                        ),
-                        1,
-                    )
-                ],
-                else_=0,
-            )
-        ).label("cnt_owner_correct_validated")
-        try:
-            return (
-                self.dbs.query(Example)
-                .join(Context, Example.cid == Context.id)
-                .join(Round, Context.r_realid == Round.id)
-                .filter(Round.tid == tid)
-                .filter(Round.rid == rid)
-                .filter(Example.retracted == False)  # noqa
-                .filter(Example.model_wrong == True)
-                .join(Validation, Example.id == Validation.eid)
-                .group_by(Validation.eid)
-                .having(
-                    db.or_(
-                        cnt_correct >= num_matching_validations,
-                        cnt_owner_correct_validated > 0,
-                    )
-                )
-                .order_by(db.sql.func.rand())
-                .limit(n)
-                .all()
-            )
-        except db.orm.exc.NoResultFound:
-            return False
-
     def getRandom(
         self,
         rid,
