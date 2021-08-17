@@ -584,7 +584,7 @@ steps = [
     ),
     step(
         "ALTER TABLE contexts CHANGE context context_io TEXT",
-        "ALTER TABLE contexts CHANGE context context_io TEXT",
+        "ALTER TABLE contexts CHANGE context_io context TEXT",
     ),
     step(
         "ALTER TABLE examples ADD COLUMN input_io TEXT",
@@ -828,8 +828,8 @@ steps = [
         ('Sentiment')))))"""
     ),
     step(
-        "ALTER TABLE examples ADD COLUMN metadata_io TEXT"
-        "ALTER TABLE examples DROP metadata_io"
+        "ALTER TABLE examples ADD COLUMN metadata_io TEXT",
+        "ALTER TABLE examples DROP metadata_io",
     ),
     step(
         """UPDATE examples SET metadata_io=JSON_OBJECT("example explanation",
@@ -857,7 +857,7 @@ steps = [
     step("", "UPDATE tasks SET shortname='VQA' where task_code='flores_full'"),
     step(
         "ALTER TABLE tasks DROP shortname",
-        "ALTER TABLE tasks ADD COLUMN shortname STRING(255)",
+        "ALTER TABLE tasks ADD COLUMN shortname VARCHAR(255)",
     ),
     step("", "UPDATE tasks SET type='clf' where task_code='placeholder'"),
     step("", "UPDATE tasks SET type='clf' where task_code='nli'"),
@@ -874,7 +874,7 @@ steps = [
     step("", "UPDATE tasks SET type='seq2seq' where task_code='flores_small2'"),
     step("", "UPDATE tasks SET type='seq2seq' where task_code='flores_full'"),
     step(
-        "ALTER TABLE tasks DROP type", "ALTER TABLE tasks ADD COLUMN type STRING(255)"
+        "ALTER TABLE tasks DROP type", "ALTER TABLE tasks ADD COLUMN type VARCHAR(255)"
     ),
     step(
         "ALTER TABLE tasks DROP owner_str",
@@ -885,22 +885,22 @@ steps = [
     ),
     step(
         "",
-        """UPDATE tasks SET target='na' where task_code in ('flores_full',
+        """UPDATE tasks SET targets='na' where task_code in ('flores_full',
          'flores_small1', 'flores_small2', 'vqa_val', 'ucl_qa', 'vqa', 'yn',
          'dkqa', 'qa')""",
     ),
     step(
         "",
-        """UPDATE tasks SET target='entailed|neutral|contradictory'
+        """UPDATE tasks SET targets='entailed|neutral|contradictory'
          where task_code in ('nli', 'dk_nli')""",
     ),
     step(
         "",
-        """UPDATE tasks SET target='negative|positive|neutral' where
+        """UPDATE tasks SET targets='negative|positive|neutral' where
         task_code='sentiment'""",
     ),
-    step("", "UPDATE tasks SET target='not-hateful|hateful' where task_code='hs'"),
-    step("ALTER TABLE tasks DROP targets", "ALTER TABLE tasks ADD COLUMN targets"),
+    step("", "UPDATE tasks SET targets='not-hateful|hateful' where task_code='hs'"),
+    step("ALTER TABLE tasks DROP targets", "ALTER TABLE tasks ADD COLUMN targets TEXT"),
     step(
         "ALTER TABLE tasks DROP score_progression",
         "ALTER TABLE tasks ADD COLUMN score_progression TEXT",
@@ -962,7 +962,7 @@ steps = [
     step(
         "",
         """UPDATE examples SET model_preds=CONCAT(JSON_EXTRACT(JSON_EXTRACT(output_io,
-        "$.prob"), "$.not-hateful"), "|", JSON_EXTRACT(JSON_EXTRACT(output_io,
+        "$.prob"), '$."not-hateful"'), "|", JSON_EXTRACT(JSON_EXTRACT(output_io,
         "$.prob"), "$.hateful")) WHERE cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code in
         ('hs'))))""",
@@ -998,7 +998,7 @@ steps = [
     ),
     step(
         """UPDATE examples SET example_explanation=JSON_EXTRACT(metadata_io,
-        "$.example explanation")"""
+        '$."example explanation"')"""
     ),
     step(
         "ALTER TABLE examples DROP example_explanation",
@@ -1006,7 +1006,7 @@ steps = [
     ),
     step(
         """UPDATE examples SET model_explanation=JSON_EXTRACT(metadata_io,
-        "$.model explanation")"""
+        '$."model explanation"')"""
     ),
     step(
         "ALTER TABLE examples DROP model_explanation",
