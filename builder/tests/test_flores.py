@@ -6,7 +6,6 @@ from pathlib import Path
 from utils import deployer
 from models.task import TaskModel, Task
 
-
 DOCKERFILES = Path(__file__).parent.parent / "dockerfiles"
 TORCHSERVE_CONFIG = DOCKERFILES / "config.properties"
 
