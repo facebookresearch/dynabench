@@ -176,16 +176,7 @@ def update_example(credentials, eid):
             all_user_io.update(json.loads(example.input_io))
             all_user_io.update(json.loads(example.target_io))
             all_user_io.update(data["metadata_io"])
-            if (
-                not TaskModel()
-                .get(example.context.round.tid)
-                .verify_io(
-                    all_user_io,
-                    data["model_wrong"]
-                    if ("model_wrong" in data)
-                    else example.model_wrong,
-                )
-            ):
+            if not TaskModel().get(example.context.round.tid).verify_io(all_user_io):
                 bottle.abort(403, "metadata_io is not properly formatted")
             data["metadata_io"] = json.dumps(data["metadata_io"])
 

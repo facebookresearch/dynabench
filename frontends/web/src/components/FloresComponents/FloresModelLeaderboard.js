@@ -73,8 +73,6 @@ const ModelLeaderBoard = ({ taskId, history, isTop5 }) => {
       ) // No weights.
       .then(
         (result) => {
-          console.log(taskId);
-          console.log(result);
           setTotal(result.count);
           setData(result.data);
         },

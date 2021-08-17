@@ -1,6 +1,5 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
-import itertools
 import json
 import sys
 
@@ -84,7 +83,7 @@ def verify_context_string_selection(
     obj, constructor_args, name_to_constructor_args, example_io
 ):
     assert isinstance(obj, str)
-    assert obj in example_io[constructor_args["reference_key"]]
+    assert obj in example_io[constructor_args["reference_name"]]
 
 
 def verify_conf(obj, obj_constructor_args, name_to_constructor_args, example_io):
@@ -98,7 +97,7 @@ def verify_multiple_choice_probs(
 ):
     assert isinstance(obj, dict)
     assert set(obj.keys()) == set(
-        name_to_constructor_args[obj_constructor_args["reference_key"]]["labels"]
+        name_to_constructor_args[obj_constructor_args["reference_name"]]["labels"]
     )
     assert sum(obj.values()) < 1.001
     assert sum(obj.values()) > 0.999
@@ -183,12 +182,25 @@ class Task(Base):
             d[column.name] = getattr(self, column.name)
         return d
 
-    def verify_io(self, io_objs, model_wrong):
+    def verify_io(self, io_objs):
         name_to_constructor_args = {}
         name_to_type = {}
-        for item in itertools.chain.from_iterable(json.loads(self.io_def).values()):
-            name_to_constructor_args[item["name"]] = item["constructor_args"]
-            name_to_type[item["name"]] = item["type"]
+        io_def = json.loads(self.io_def)
+        io_def_objs = (
+            io_def["context"]
+            + io_def["output"]
+            + io_def["target"]
+            + io_def["input"]
+            + io_def["metadata"]["validate"]
+            + io_def["metadata"]["validate"]
+        )
+
+        for io_def_obj in io_def_objs:
+            name_to_constructor_args[io_def_obj["name"]] = io_def_obj[
+                "constructor_args"
+            ]
+            name_to_type[io_def_obj["name"]] = io_def_obj["type"]
+
         for name, obj in io_objs.items():
             if (
                 name in name_to_type

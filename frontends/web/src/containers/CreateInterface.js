@@ -33,6 +33,18 @@ import Markdown from "react-markdown";
 import "./CreateInterface.css";
 import IO from "./IO.js";
 
+function initializeIO(ioDict, ioDefObj) {
+  if (ioDefObj.type === "goal_message_multiple_choice") {
+    const random =
+      ioDefObj.constructor_args.labels[
+        Math.floor(Math.random() * ioDefObj.constructor_args.labels.length)
+      ];
+    ioDict[ioDefObj.name] = random;
+  } else {
+    ioDict[ioDefObj.name] = null;
+  }
+}
+
 const Explainer = (props) => (
   <div className="mt-4 mb-1 pt-3">
     <p className="text-uppercase mb-0 spaced-header">
@@ -61,62 +73,60 @@ class ResponseInfo extends React.Component {
     this.updateUserMetadataIO = this.updateUserMetadataIO.bind(this);
     this.updateModelWrong = this.updateModelWrong.bind(this);
     this.state = {
-      metadata_io: {},
-      model_wrong: this.props.obj.model_wrong,
+      metadataIO: {},
+      modelWrong: this.props.obj.modelWrong,
     };
   }
   componentDidMount() {
-    const metadata_io = {};
-    this.props.io_def.metadata.create
+    const metadataIO = {};
+    this.props.ioDef.metadata.create
       .filter(
-        (io_def_obj) =>
-          io_def_obj.model_wrong === undefined ||
-          io_def_obj.model_wrong === this.state.model_wrong
+        (ioDefObj) =>
+          ioDefObj.model_wrong === undefined ||
+          ioDefObj.model_wrong === this.state.modelWrong
       )
-      .forEach((io_def_obj) => {
-        metadata_io[io_def_obj.name] = null;
+      .forEach((ioDefObj) => {
+        initializeIO(metadataIO, ioDefObj);
       });
     this.setState({
-      metadata_io: metadata_io,
+      metadataIO: metadataIO,
       exampleUpdated: null,
       feedbackSaved: null,
     });
   }
 
   updateUserMetadataIO() {
-    const non_null_metadata_io = {};
-    this.props.io_def.metadata.create
+    const nonNullMetadataIO = {};
+    this.props.ioDef.metadata.create
       .filter(
-        (io_def_obj) =>
-          io_def_obj.model_wrong === undefined ||
-          io_def_obj.model_wrong === this.state.model_wrong
+        (ioDefObj) =>
+          ioDefObj.model_wrong === undefined ||
+          ioDefObj.model_wrong === this.state.modelWrong
       )
-      .forEach((io_obj) => {
-        if (this.state.metadata_io[io_obj.name] !== null) {
-          non_null_metadata_io[io_obj.name] = this.state.metadata_io[
-            io_obj.name
-          ];
+      .forEach((ioObj) => {
+        if (this.state.metadataIO[ioObj.name] !== null) {
+          nonNullMetadataIO[ioObj.name] = this.state.metadataIO[ioObj.name];
         }
       });
     this.context.api.updateExample(this.props.exampleId, {
-      metadata_io: non_null_metadata_io,
+      metadata_io: nonNullMetadataIO,
     });
   }
 
-  updateModelWrong(model_wrong) {
+  updateModelWrong(modelWrong) {
     if (this.props.obj.livemode) {
       this.context.api
         .updateExample(this.props.exampleId, {
-          model_wrong: model_wrong,
+          model_wrong: modelWrong,
         })
         .then(
-          (result) => this.setState({ model_wrong: model_wrong }),
+          (result) => this.setState({ modelWrong: modelWrong }),
           (error) => {
             console.log(error);
           }
         );
     } else {
-      this.setState({ model_wrong: model_wrong });
+      this.setState({ modelWrong: modelWrong });
     }
   }
 
@@ -181,94 +191,94 @@ class ResponseInfo extends React.Component {
       );
     }
 
-    const input = this.props.io_def.input.map((io_def_obj) => (
+    const input = this.props.ioDef.input.map((ioDefObj) => (
       <IO
-        display_name={io_def_obj.display_name}
+        displayName={ioDefObj.display_name}
         className="name-display-secondary"
-        key={io_def_obj.name}
+        key={ioDefObj.name}
         create={false}
-        name={io_def_obj.name}
-        example_io={this.props.obj.input_io}
-        set_example_io={() => {}}
-        type={io_def_obj.type}
-        constructor_args={io_def_obj.constructor_args}
+        name={ioDefObj.name}
+        exampleIO={this.props.obj.inputIO}
+        setExampleIO={() => {}}
+        type={ioDefObj.type}
+        constructorArgs={ioDefObj.constructor_args}
       />
     ));
 
-    const target = this.props.io_def.target.map((io_def_obj) => (
+    const target = this.props.ioDef.target.map((ioDefObj) => (
       <IO
-        display_name={io_def_obj.display_name}
+        displayName={ioDefObj.display_name}
         className="name-display-secondary"
-        key={io_def_obj.name}
+        key={ioDefObj.name}
         create={false}
-        name={io_def_obj.name}
-        example_io={this.props.obj.target_io}
-        set_example_io={() => {}}
-        type={io_def_obj.type}
-        constructor_args={io_def_obj.constructor_args}
+        name={ioDefObj.name}
+        exampleIO={this.props.obj.targetIO}
+        setExampleIO={() => {}}
+        type={ioDefObj.type}
+        constructorArgs={ioDefObj.constructor_args}
       />
     ));
 
     const outputToCompareToTarget =
       this.props.obj.url === null
         ? null
-        : this.props.io_def.target.map((io_def_obj) => (
+        : this.props.ioDef.target.map((ioDefObj) => (
             <IO
-              display_name={io_def_obj.display_name}
+              displayName={ioDefObj.display_name}
               className="name-display-secondary"
-              key={io_def_obj.name}
+              key={ioDefObj.name}
               create={false}
-              name={io_def_obj.name}
-              example_io={this.props.obj.output_io}
-              set_example_io={() => {}}
-              type={io_def_obj.type}
-              constructor_args={io_def_obj.constructor_args}
+              name={ioDefObj.name}
+              exampleIO={this.props.obj.outputIO}
+              setExampleIO={() => {}}
+              type={ioDefObj.type}
+              constructorArgs={ioDefObj.constructor_args}
             />
           ));
 
     const otherModelOutput =
       this.props.obj.url === null
         ? null
-        : this.props.io_def.output
+        : this.props.ioDef.output
             .filter(
-              (io_def_obj) =>
-                !this.props.io_def.target
-                  .map((io_def_obj_t) => io_def_obj_t.name)
-                  .includes(io_def_obj.name)
+              (ioDefObj) =>
+                !this.props.ioDef.target
+                  .map((ioDefObjT) => ioDefObjT.name)
+                  .includes(ioDefObj.name)
             )
-            .map((io_def_obj) => (
+            .map((ioDefObj) => (
               <IO
-                display_name={io_def_obj.display_name}
+                displayName={ioDefObj.display_name}
                 className="name-display-secondary"
-                key={io_def_obj.name}
+                key={ioDefObj.name}
                 create={false}
-                name={io_def_obj.name}
-                example_io={this.props.obj.output_io}
-                set_example_io={() => {}}
-                type={io_def_obj.type}
-                constructor_args={io_def_obj.constructor_args}
+                name={ioDefObj.name}
+                exampleIO={this.props.obj.outputIO}
+                setExampleIO={() => {}}
+                type={ioDefObj.type}
+                constructorArgs={ioDefObj.constructor_args}
               />
             ));
 
-    const metadata = this.props.io_def.metadata.create
+    const metadata = this.props.ioDef.metadata.create
       .filter(
-        (io_def_obj) =>
-          io_def_obj.model_wrong === undefined ||
-          io_def_obj.model_wrong === this.state.model_wrong
+        (ioDefObj) =>
+          ioDefObj.model_wrong === undefined ||
+          ioDefObj.model_wrong === this.state.modelWrong
       )
-      .map((io_def_obj) => (
+      .map((ioDefObj) => (
         <IO
-          display_name={io_def_obj.display_name}
+          displayName={ioDefObj.display_name}
           className="user-input-secondary"
-          key={io_def_obj.name}
+          key={ioDefObj.name}
           create={true}
-          name={io_def_obj.name}
-          example_io={this.state.metadata_io}
-          set_example_io={(example_io) =>
-            this.setState({ metadata_io: example_io, exampleUpdated: false })
+          name={ioDefObj.name}
+          exampleIO={this.state.metadataIO}
+          setExampleIO={(exampleIO) =>
+            this.setState({ metadataIO: exampleIO, exampleUpdated: false })
           }
-          type={io_def_obj.type}
-          constructor_args={io_def_obj.constructor_args}
+          type={ioDefObj.type}
+          constructorArgs={ioDefObj.constructor_args}
         />
       ));
 
@@ -277,7 +287,7 @@ class ResponseInfo extends React.Component {
     var userFeedback = (
       <>
         {this.props.obj.livemode ? (
-          (this.state.model_wrong !== null || this.props.obj.url === null) &&
+          (this.state.modelWrong !== null || this.props.obj.url === null) &&
           metadata.length > 0 ? (
             <div className="mt-3">
               <span>You can enter more info for your example:</span>
@@ -330,7 +340,7 @@ class ResponseInfo extends React.Component {
           </span>
         );
       } else {
-        if (this.state.model_wrong === null) {
+        if (this.state.modelWrong === null) {
           classNames += " light-gray-bg";
           modelCorrectQuestion = (
             <span>
@@ -357,7 +367,7 @@ class ResponseInfo extends React.Component {
             </span>
           );
         } else {
-          if (this.state.model_wrong) {
+          if (this.state.modelWrong) {
             classNames += " light-green-bg";
             title = (
               <span>
@@ -546,16 +556,16 @@ class CreateInterface extends React.Component {
       refreshDisabled: true,
       mapKeyToExampleId: {},
       submitWithoutFullExample: false,
-      io_def: {
+      ioDef: {
         input: [],
         target: [],
         output: [],
         context: [],
         metadata: { create: [] },
       },
-      input_io: {},
-      target_io: {},
-      context_io: {},
+      inputIO: {},
+      targetIO: {},
+      contextIO: {},
     };
     this.getNewContext = this.getNewContext.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
@@ -584,20 +594,20 @@ class CreateInterface extends React.Component {
               this.state.task.round.url !== null
                 ? this.pickModel(this.state.task.round.url)
                 : null;
-            const io_def = JSON.parse(this.state.task.io_def);
-            const input_io = {};
-            for (const io_def_obj of io_def.input) {
-              input_io[io_def_obj.name] = null;
+            const ioDef = JSON.parse(this.state.task.io_def);
+            const inputIO = {};
+            for (const ioDefObj of ioDef.input) {
+              initializeIO(inputIO, ioDefObj);
             }
-            const target_io = {};
-            for (const io_def_obj of io_def.target) {
-              target_io[io_def_obj.name] = null;
+            const targetIO = {};
+            for (const ioDefObj of ioDef.target) {
+              initializeIO(targetIO, ioDefObj);
             }
             this.setState({
-              io_def: io_def,
-              input_io: input_io,
-              target_io: target_io,
-              context_io: JSON.parse(result.context_io),
+              ioDef: ioDef,
+              inputIO: inputIO,
+              targetIO: targetIO,
+              contextIO: JSON.parse(result.context_io),
               randomTargetModel: randomTargetModel,
               context: result,
               content: [],
@@ -615,14 +625,14 @@ class CreateInterface extends React.Component {
   updateRetainInput(e) {
     const retainInput = e.target.checked;
     if (this.context.api.loggedIn()) {
-      var settings_json;
+      var settingsJSON;
       if (this.context.user.settings_json) {
-        settings_json = JSON.parse(this.context.user.settings_json);
-        settings_json["retain_input"] = retainInput;
+        settingsJSON = JSON.parse(this.context.user.settings_json);
+        settingsJSON["retain_input"] = retainInput;
       } else {
-        settings_json = { retain_input: retainInput };
+        settingsJSON = { retain_input: retainInput };
       }
-      this.context.user.settings_json = JSON.stringify(settings_json);
+      this.context.user.settings_json = JSON.stringify(settingsJSON);
       this.context.api.updateUser(this.context.user.id, this.context.user);
     }
     this.setState({ retainInput: retainInput });
@@ -673,21 +683,21 @@ class CreateInterface extends React.Component {
   }
 
   clearUserInput() {
-    const input_io = JSON.parse(JSON.stringify(this.state.input_io));
-    const target_io = JSON.parse(JSON.stringify(this.state.target_io));
-    this.state.io_def.input.forEach((io_def_obj) => {
-      input_io[io_def_obj.name] = null;
+    const inputIO = JSON.parse(JSON.stringify(this.state.inputIO));
+    const targetIO = JSON.parse(JSON.stringify(this.state.targetIO));
+    this.state.ioDef.input.forEach((ioDefObj) => {
+      initializeIO(inputIO, ioDefObj);
     });
-    this.state.io_def.target.forEach((io_def_obj) => {
-      target_io[io_def_obj.name] = null;
+    this.state.ioDef.target.forEach((ioDefObj) => {
+      initializeIO(targetIO, ioDefObj);
     });
-    this.setState({ target_io: target_io, input_io: input_io });
+    this.setState({ targetIO: targetIO, inputIO: inputIO });
   }
 
   handleStoreExampleAndResponseInfo(
     signature,
-    model_wrong,
-    output_io,
+    modelWrong,
+    outputIO,
     endpoint,
     metadata
   ) {
@@ -697,10 +707,10 @@ class CreateInterface extends React.Component {
           ...this.state.content,
           {
             livemode: this.state.livemode,
-            model_wrong: model_wrong,
-            input_io: JSON.parse(JSON.stringify(this.state.input_io)),
-            target_io: JSON.parse(JSON.stringify(this.state.target_io)),
-            output_io: output_io,
+            modelWrong: modelWrong,
+            inputIO: JSON.parse(JSON.stringify(this.state.inputIO)),
+            targetIO: JSON.parse(JSON.stringify(this.state.targetIO)),
+            outputIO: outputIO,
             url: this.state.randomTargetModel,
             retracted: false,
           },
@@ -727,17 +737,17 @@ class CreateInterface extends React.Component {
         this.state.task.selected_round,
         this.context.user.id,
         this.state.context.id,
-        this.state.input_io,
-        this.state.target_io,
-        output_io,
+        this.state.inputIO,
+        this.state.targetIO,
+        outputIO,
         signature,
         metadata,
-        model_wrong,
+        modelWrong,
         null,
         endpoint
       )
       .then(
-        (store_example_result) => {
+        (storeExampleResult) => {
           var key = this.state.content.length;
           // Reset state variables and store example id.
           this.setState({
@@ -745,13 +755,13 @@ class CreateInterface extends React.Component {
             refreshDisabled: false,
             mapKeyToExampleId: {
               ...this.state.mapKeyToExampleId,
-              [key]: store_example_result.id,
+              [key]: storeExampleResult.id,
             },
           });
 
-          if (!!store_example_result.badges) {
+          if (!!storeExampleResult.badges) {
             this.setState({
-              showBadges: store_example_result.badges,
+              showBadges: storeExampleResult.badges,
             });
           }
           if (!this.state.retainInput) {
@@ -770,20 +780,20 @@ class CreateInterface extends React.Component {
 
   handleResponse(e) {
     e.preventDefault();
-    var incomplete_example = false;
-    this.state.io_def.input.forEach((io_def_obj) => {
-      if (this.state.input_io[io_def_obj.name] === null) {
+    var incompleteExample = false;
+    this.state.ioDef.input.forEach((ioDefObj) => {
+      if (this.state.inputIO[ioDefObj.name] === null) {
         this.setState({ submitWithoutFullExample: true });
-        incomplete_example = true;
+        incompleteExample = true;
       }
     });
-    this.state.io_def.target.forEach((io_def_obj) => {
-      if (this.state.target_io[io_def_obj.name] === null) {
+    this.state.ioDef.target.forEach((ioDefObj) => {
+      if (this.state.targetIO[ioDefObj.name] === null) {
         this.setState({ submitWithoutFullExample: true });
-        incomplete_example = true;
+        incompleteExample = true;
       }
     });
-    if (incomplete_example) {
+    if (incompleteExample) {
       return;
     }
 
@@ -813,85 +823,82 @@ class CreateInterface extends React.Component {
         (this.state.task.task_code === "hs" ||
           this.state.task.task_code === "sentiment")
       ) {
-        this.state.input_io["hypothesis"] = this.state.input_io["statement"];
+        this.state.inputIO["hypothesis"] = this.state.inputIO["statement"];
       }
       if (!endpoint.startsWith("ts") && this.state.task.task_code === "qa") {
-        this.state.input_io["hypothesis"] = this.state.input_io["question"];
+        this.state.inputIO["hypothesis"] = this.state.inputIO["question"];
       }
       // End hack that can be removed upon full dynalab integration
 
       this.context.api
         .getModelResponse(
           url,
-          Object.assign({}, this.state.input_io, this.state.context_io)
+          Object.assign({}, this.state.inputIO, this.state.contextIO)
         )
         .then(
-          (model_response_result) => {
+          (modelResponseResult) => {
             // Begin hack that can be removed upon full dynalab integration
             if (
               !endpoint.startsWith("ts") &&
               this.state.task.task_code === "hs"
             ) {
-              model_response_result["label"] =
-                model_response_result["prob"][0] >
-                model_response_result["prob"][1]
+              modelResponseResult["label"] =
+                modelResponseResult["prob"][0] > modelResponseResult["prob"][1]
                   ? "not-hateful"
                   : "hateful";
-              model_response_result["prob"] = {
-                "not-hateful": model_response_result["prob"][0],
-                hateful: model_response_result["prob"][1],
+              modelResponseResult["prob"] = {
+                "not-hateful": modelResponseResult["prob"][0],
+                hateful: modelResponseResult["prob"][1],
               };
             }
             if (
               !endpoint.startsWith("ts") &&
               this.state.task.task_code === "sentiment"
             ) {
-              model_response_result["label"] =
-                model_response_result["prob"][0] >
-                  model_response_result["prob"][1] &&
-                model_response_result["prob"][0] >
-                  model_response_result["prob"][2]
+              modelResponseResult["label"] =
+                modelResponseResult["prob"][0] >
+                  modelResponseResult["prob"][1] &&
+                modelResponseResult["prob"][0] > modelResponseResult["prob"][2]
                   ? "negative"
-                  : model_response_result["prob"][1] >
-                    model_response_result["prob"][2]
+                  : modelResponseResult["prob"][1] >
+                    modelResponseResult["prob"][2]
                   ? "positive"
                   : "neutral";
-              model_response_result["prob"] = {
-                negative: model_response_result["prob"][0],
-                positive: model_response_result["prob"][1],
-                neutral: model_response_result["prob"][2],
+              modelResponseResult["prob"] = {
+                negative: modelResponseResult["prob"][0],
+                positive: modelResponseResult["prob"][1],
+                neutral: modelResponseResult["prob"][2],
               };
             }
             if (
               !endpoint.startsWith("ts") &&
               this.state.task.task_code === "nli"
             ) {
-              model_response_result["label"] =
-                model_response_result["prob"][0] >
-                  model_response_result["prob"][1] &&
-                model_response_result["prob"][0] >
-                  model_response_result["prob"][2]
+              modelResponseResult["label"] =
+                modelResponseResult["prob"][0] >
+                  modelResponseResult["prob"][1] &&
+                modelResponseResult["prob"][0] > modelResponseResult["prob"][2]
                   ? "entailed"
-                  : model_response_result["prob"][1] >
-                    model_response_result["prob"][2]
+                  : modelResponseResult["prob"][1] >
+                    modelResponseResult["prob"][2]
                   ? "neutral"
                   : "contradictory";
-              model_response_result["prob"] = {
-                entailed: model_response_result["prob"][0],
-                neutral: model_response_result["prob"][1],
-                contradictory: model_response_result["prob"][2],
+              modelResponseResult["prob"] = {
+                entailed: modelResponseResult["prob"][0],
+                neutral: modelResponseResult["prob"][1],
+                contradictory: modelResponseResult["prob"][2],
               };
             }
             if (
               !endpoint.startsWith("ts") &&
               this.state.task.task_code === "qa"
             ) {
-              model_response_result["answer"] = model_response_result["text"];
-              model_response_result["conf"] = model_response_result["prob"];
+              modelResponseResult["answer"] = modelResponseResult["text"];
+              modelResponseResult["conf"] = modelResponseResult["prob"];
             }
             // End hack that can be removed upon full dynalab integration
 
-            if (model_response_result.errorMessage) {
+            if (modelResponseResult.errorMessage) {
               this.setState({
                 submitDisabled: false,
                 refreshDisabled: false,
@@ -904,23 +911,21 @@ class CreateInterface extends React.Component {
                 });
               }
 
-              const output_io = JSON.parse(
-                JSON.stringify(model_response_result)
-              );
+              const outputIO = JSON.parse(JSON.stringify(modelResponseResult));
 
               const metadata = { model: this.state.randomTargetModel };
               this.context.api
                 .getModelWrong(
                   this.state.task.id,
-                  this.state.target_io,
-                  output_io
+                  this.state.targetIO,
+                  outputIO
                 )
                 .then(
-                  (model_wrong_result) =>
+                  (modelWrongResult) =>
                     this.handleStoreExampleAndResponseInfo(
-                      model_response_result["signed"],
-                      model_wrong_result.model_wrong,
-                      output_io,
+                      modelResponseResult["signed"],
+                      modelWrongResult.model_wrong,
+                      outputIO,
                       endpoint,
                       metadata
                     ),
@@ -987,9 +992,9 @@ class CreateInterface extends React.Component {
       this.context.api.getUser(user.id, true).then(
         (result) => {
           if (result.settings_json) {
-            var settings_json = JSON.parse(result.settings_json);
-            if (settings_json["retain_input"]) {
-              this.setState({ retainInput: settings_json["retain_input"] });
+            var settingsJSON = JSON.parse(result.settings_json);
+            if (settingsJSON["retain_input"]) {
+              this.setState({ retainInput: settingsJSON["retain_input"] });
             }
           }
         },
@@ -1029,29 +1034,29 @@ class CreateInterface extends React.Component {
     });
   }
 
-  disentangleAndSetInputAndTargetIO(example_io) {
-    const input_io = this.state.input_io;
-    for (const io_def_obj of this.state.io_def.input) {
-      if (example_io.hasOwnProperty(io_def_obj.name)) {
-        input_io[io_def_obj.name] = example_io[io_def_obj.name];
+  disentangleAndSetInputAndTargetIO(exampleIO) {
+    const inputIO = this.state.inputIO;
+    for (const ioDefObj of this.state.ioDef.input) {
+      if (exampleIO.hasOwnProperty(ioDefObj.name)) {
+        inputIO[ioDefObj.name] = exampleIO[ioDefObj.name];
       }
     }
 
-    const target_io = this.state.target_io;
-    for (const io_def_obj of this.state.io_def.target) {
-      if (example_io.hasOwnProperty(io_def_obj.name)) {
-        target_io[io_def_obj.name] = example_io[io_def_obj.name];
+    const targetIO = this.state.targetIO;
+    for (const ioDefObj of this.state.ioDef.target) {
+      if (exampleIO.hasOwnProperty(ioDefObj.name)) {
+        targetIO[ioDefObj.name] = exampleIO[ioDefObj.name];
       }
     }
 
-    this.setState({ input_io: input_io, target_io: target_io });
+    this.setState({ inputIO: inputIO, targetIO: targetIO });
   }
 
   render() {
     const responseContent = this.state.content
       .map((item, index) => (
         <ResponseInfo
-          io_def={this.state.io_def}
+          ioDef={this.state.ioDef}
           key={index}
           index={index}
           exampleId={this.state.mapKeyToExampleId[index + 1]}
@@ -1110,39 +1115,37 @@ class CreateInterface extends React.Component {
 
     // The goal_message_multiple_choice type is special. We want this object to
     // appear in a special place in the interface.
-    const goalMessageIO = this.state.io_def.input
-      .concat(this.state.io_def.target)
-      .filter(
-        (io_def_obj) => io_def_obj.type === "goal_message_multiple_choice"
-      )
-      .map((io_def_obj) => (
+    const goalMessageIO = this.state.ioDef.input
+      .concat(this.state.ioDef.target)
+      .filter((ioDefObj) => ioDefObj.type === "goal_message_multiple_choice")
+      .map((ioDefObj) => (
         <div
-          key={io_def_obj.name}
+          key={ioDefObj.name}
           className={
-            this.state.input_io[io_def_obj.name] === null &&
-            this.state.target_io[io_def_obj.name] === null &&
+            this.state.inputIO[ioDefObj.name] === null &&
+            this.state.targetIO[ioDefObj.name] === null &&
             this.state.submitWithoutFullExample
               ? "border rounded border-danger"
               : ""
           }
         >
           <IO
-            display_name={io_def_obj.display_name}
+            displayName={ioDefObj.display_name}
             className="user-input-primary"
-            key={io_def_obj.name}
+            key={ioDefObj.name}
             create={true}
-            name={io_def_obj.name}
-            example_io={Object.assign(
+            name={ioDefObj.name}
+            exampleIO={Object.assign(
               {},
-              this.state.input_io,
-              this.state.target_io,
-              this.state.context_io
+              this.state.inputIO,
+              this.state.targetIO,
+              this.state.contextIO
             )}
-            set_example_io={(example_io) =>
-              this.disentangleAndSetInputAndTargetIO(example_io)
+            setExampleIO={(exampleIO) =>
+              this.disentangleAndSetInputAndTargetIO(exampleIO)
             }
-            type={io_def_obj.type}
-            constructor_args={io_def_obj.constructor_args}
+            type={ioDefObj.type}
+            constructorArgs={ioDefObj.constructor_args}
           />
         </div>
       ));
@@ -1150,93 +1153,91 @@ class CreateInterface extends React.Component {
     // The context_string_selection type is special. When it is present, we want
     // to remove the context string from view and put the context_string_selection
     // in its place
-    const contextStringSelectionGroup = this.state.io_def.input
-      .concat(this.state.io_def.target)
-      .filter((io_def_obj) => io_def_obj.type === "context_string_selection");
+    const contextStringSelectionGroup = this.state.ioDef.input
+      .concat(this.state.ioDef.target)
+      .filter((ioDefObj) => ioDefObj.type === "context_string_selection");
     const selectableContexts = contextStringSelectionGroup.map(
-      (io_def_obj) => io_def_obj.constructor_args.reference_key
+      (ioDefObj) => ioDefObj.constructor_args.reference_name
     );
-    const tooTallForResponseInfoPlaceholder = this.state.io_def.context
-      .map((io_def_obj) => io_def_obj.type)
+    const tooTallForResponseInfoPlaceholder = this.state.ioDef.context
+      .map((ioDefObj) => ioDefObj.type)
       .includes("image_url");
-    const contextIO = this.state.io_def.context
+    const contextIO = this.state.ioDef.context
       .concat(contextStringSelectionGroup)
-      .filter((io_def_obj) => !selectableContexts.includes(io_def_obj.name))
-      .map((io_def_obj) => (
+      .filter((ioDefObj) => !selectableContexts.includes(ioDefObj.name))
+      .map((ioDefObj) => (
         <div
-          key={io_def_obj.name}
+          key={ioDefObj.name}
           className={
-            this.state.input_io[io_def_obj.name] === null &&
-            this.state.target_io[io_def_obj.name] === null &&
+            this.state.inputIO[ioDefObj.name] === null &&
+            this.state.targetIO[ioDefObj.name] === null &&
             this.state.submitWithoutFullExample
               ? "border rounded border-danger"
               : ""
           }
         >
           <IO
-            display_name={io_def_obj.display_name}
+            displayName={ioDefObj.display_name}
             className={
-              io_def_obj.type === "context_string_selection"
+              ioDefObj.type === "context_string_selection"
                 ? "user-input-primary"
                 : "name-display-primary"
             }
-            key={io_def_obj.name}
-            create={
-              io_def_obj.type === "context_string_selection" ? true : false
-            }
-            name={io_def_obj.name}
-            example_io={Object.assign(
+            key={ioDefObj.name}
+            create={ioDefObj.type === "context_string_selection" ? true : false}
+            name={ioDefObj.name}
+            exampleIO={Object.assign(
               {},
-              this.state.input_io,
-              this.state.target_io,
-              this.state.context_io
+              this.state.inputIO,
+              this.state.targetIO,
+              this.state.contextIO
             )}
-            set_example_io={(example_io) =>
-              this.disentangleAndSetInputAndTargetIO(example_io)
+            setExampleIO={(exampleIO) =>
+              this.disentangleAndSetInputAndTargetIO(exampleIO)
             }
-            type={io_def_obj.type}
-            constructor_args={io_def_obj.constructor_args}
+            type={ioDefObj.type}
+            constructorArgs={ioDefObj.constructor_args}
           />
         </div>
       ));
 
-    const belowModelResponseIO = this.state.io_def.input
-      .concat(this.state.io_def.target)
+    const belowModelResponseIO = this.state.ioDef.input
+      .concat(this.state.ioDef.target)
       .filter(
-        (io_def_obj) =>
+        (ioDefObj) =>
           ![
             "goal_message_multiple_choice",
             "context_string_selection",
-          ].includes(io_def_obj.type)
+          ].includes(ioDefObj.type)
       )
-      .map((io_def_obj) => (
+      .map((ioDefObj) => (
         <div
-          key={io_def_obj.name}
+          key={ioDefObj.name}
           className={
-            this.state.input_io[io_def_obj.name] === null &&
-            this.state.target_io[io_def_obj.name] === null &&
+            this.state.inputIO[ioDefObj.name] === null &&
+            this.state.targetIO[ioDefObj.name] === null &&
             this.state.submitWithoutFullExample
               ? "border rounded border-danger"
               : ""
           }
         >
           <IO
-            display_name={io_def_obj.display_name}
+            displayName={ioDefObj.display_name}
             className="user-input-primary"
-            key={io_def_obj.name}
+            key={ioDefObj.name}
             create={true}
-            name={io_def_obj.name}
-            example_io={Object.assign(
+            name={ioDefObj.name}
+            exampleIO={Object.assign(
               {},
-              this.state.input_io,
-              this.state.target_io,
-              this.state.context_io
+              this.state.inputIO,
+              this.state.targetIO,
+              this.state.contextIO
             )}
-            set_example_io={(example_io) =>
-              this.disentangleAndSetInputAndTargetIO(example_io)
+            setExampleIO={(exampleIO) =>
+              this.disentangleAndSetInputAndTargetIO(exampleIO)
             }
-            type={io_def_obj.type}
-            constructor_args={io_def_obj.constructor_args}
+            type={ioDefObj.type}
+            constructorArgs={ioDefObj.constructor_args}
           />
         </div>
       ));

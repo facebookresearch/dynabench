@@ -362,9 +362,9 @@ export default class ApiService {
     );
   }
 
-  getModelResponse(modelUrl, example_io) {
-    example_io["uid"] = "0"; //A requied field for dynalab uploaded models. TODO: fix
-    example_io["insight"] = false; //TODO: an artifact of old models
+  getModelResponse(modelUrl, exampleIO) {
+    exampleIO["uid"] = "0"; //A requied field for dynalab uploaded models. TODO: fix
+    exampleIO["insight"] = false; //TODO: an artifact of old models
     const trialAuthToken = localStorage.getItem("trial_auth_token");
     const customHeader =
       this.loggedIn() || this.mode === "mturk" || trialAuthToken == null
@@ -376,7 +376,7 @@ export default class ApiService {
           };
     return this.fetch(modelUrl, {
       method: "POST",
-      body: JSON.stringify(example_io),
+      body: JSON.stringify(exampleIO),
       ...(customHeader == null ? {} : { headers: customHeader }),
     });
   }
@@ -407,9 +407,9 @@ export default class ApiService {
     });
   }
 
-  setExampleMetadata(id, metadata_json) {
+  setExampleMetadata(id, metadataJSON) {
     var obj = {};
-    obj.metadata_json = JSON.stringify(metadata_json);
+    obj.metadata_json = JSON.stringify(metadataJSON);
     return this.fetch(`${this.domain}/examples/${id}`, {
       method: "PUT",
       body: JSON.stringify(obj),
@@ -436,19 +436,12 @@ export default class ApiService {
     );
   }
 
-  validateExample(
-    id,
-    label,
-    mode,
-    metadata_io = {},
-    metadata = {},
-    uid = null
-  ) {
+  validateExample(id, label, mode, metadataIO = {}, metadata = {}, uid = null) {
     let obj = {
       label: label,
       mode: mode,
       metadata: metadata,
-      metadata_io: metadata_io,
+      metadata_io: metadataIO,
     };
     if (this.mode === "mturk") {
       obj.uid = uid;
@@ -481,13 +474,13 @@ export default class ApiService {
     );
   }
 
-  getModelWrong(tid, target_io, output_io) {
+  getModelWrong(tid, targetIO, outputIO) {
     return this.fetch(`${this.domain}/examples/get-model-wrong`, {
       method: "POST",
       body: JSON.stringify({
-        target_io: target_io,
+        target_io: targetIO,
         tid: tid,
-        output_io: output_io,
+        output_io: outputIO,
       }),
     });
   }
@@ -497,14 +490,14 @@ export default class ApiService {
     rid,
     uid,
     cid,
-    input_io,
-    target_io,
-    output_io,
-    model_signature,
+    inputIO,
+    targetIO,
+    outputIO,
+    modelSignature,
     metadata,
-    model_wrong,
+    modelWrong,
     tag = null,
-    model_endpoint_name = null
+    modelEndpointName = null
   ) {
     return this.fetch(`${this.domain}/examples`, {
       method: "POST",
@@ -513,14 +506,14 @@ export default class ApiService {
         rid: rid,
         cid: cid,
         uid: uid,
-        input_io: input_io,
-        target_io: target_io,
-        output_io: output_io,
-        model_signature: model_signature,
+        input_io: inputIO,
+        target_io: targetIO,
+        output_io: outputIO,
+        model_signature: modelSignature,
         metadata: metadata,
-        model_wrong: model_wrong,
+        model_wrong: modelWrong,
         tag: tag,
-        model_endpoint_name: model_endpoint_name,
+        model_endpoint_name: modelEndpointName,
       }),
     });
   }

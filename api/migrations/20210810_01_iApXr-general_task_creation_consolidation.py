@@ -53,22 +53,25 @@ steps = [
                         "constructor_args": {
                             "labels": ["entailed", "neutral", "contradictory"]}},
                     {"name": "prob", "type": "multiple_choice_probs",
-                        "constructor_args": {"reference_key": "label"}}
+                        "constructor_args": {"reference_name": "label"}}
                 ],
                 "metadata": {
                 "create":
                 [
                     {"name": "example_explanation", "type": "string",
                         "constructor_args":
-                            {"placeholder": "Explain why your example is correct..."}},
+                            {"placeholder": "Explain why your example is correct..."},
+                        "display_name": "example explanation"},
                     {"name": "model_explanation_right", "type": "string",
                         "constructor_args": {"placeholder":
                         "Explain why you thought the model would make a mistake..."},
-                        "model_wrong": false},
+                        "model_wrong": false,
+                        "display_name": "model explanation"},
                     {"name": "model_explanation_wrong", "type": "string",
                         "constructor_args": {"placeholder":
                             "Explain why you think the model made a mistake..."},
-                            "model_wrong": true}
+                            "model_wrong": true,
+                            "display_name": "model explanation"}
                 ],
                 "validate":
                 [
@@ -115,22 +118,25 @@ steps = [
                         "constructor_args": {
                             "labels": ["not-hateful", "hateful"]}},
                     {"name": "prob", "type": "multiple_choice_probs",
-                        "constructor_args": {"reference_key": "label"}}
+                        "constructor_args": {"reference_name": "label"}}
                 ],
                 "metadata": {
                 "create":
                 [
                     {"name": "example_explanation", "type": "string",
                         "constructor_args":
-                            {"placeholder": "Explain why your example is correct..."}},
+                            {"placeholder": "Explain why your example is correct..."},
+                        "display_name": "example explanation"},
                     {"name": "model_explanation_right", "type": "string",
                         "constructor_args": {"placeholder":
                         "Explain why you thought the model would make a mistake..."},
-                        "model_wrong": false},
+                        "model_wrong": false,
+                        "display_name": "model explanation"},
                     {"name": "model_explanation_wrong", "type": "string",
                         "constructor_args": {"placeholder":
                             "Explain why you think the model made a mistake..."},
-                            "model_wrong": true}
+                            "model_wrong": true,
+                            "display_name": "model explanation"}
                 ],
                 "validate":
                 [
@@ -177,22 +183,25 @@ steps = [
                         "constructor_args": {
                             "labels": ["negative", "positive", "neutral"]}},
                     {"name": "prob", "type": "multiple_choice_probs",
-                        "constructor_args": {"reference_key": "label"}}
+                        "constructor_args": {"reference_name": "label"}}
                 ],
                 "metadata": {
                 "create":
                 [
                     {"name": "example_explanation", "type": "string",
                         "constructor_args":
-                            {"placeholder": "Explain why your example is correct..."}},
+                            {"placeholder": "Explain why your example is correct..."},
+                        "display_name": "example explanation"},
                     {"name": "model_explanation_right", "type": "string",
                         "constructor_args": {"placeholder":
                         "Explain why you thought the model would make a mistake..."},
-                        "model_wrong": false},
+                        "model_wrong": false,
+                        "display_name": "model explanation"},
                     {"name": "model_explanation_wrong", "type": "string",
                         "constructor_args": {"placeholder":
                             "Explain why you think the model made a mistake..."},
-                            "model_wrong": true}
+                            "model_wrong": true,
+                            "display_name": "model explanation"}
                 ],
                 "validate":
                 [
@@ -233,27 +242,56 @@ steps = [
                     "constructor_args": {"placeholder": "Enter question..."}}],
                 "target": [{"name": "answer", "type": "context_string_selection",
                     "constructor_args": {
-                        "reference_key": "context"}}],
+                        "reference_name": "context"}}],
                 "output": [
                     {"name": "answer", "type": "context_string_selection",
                         "constructor_args": {
-                            "reference_key": "context"}},
+                            "reference_name": "context"}},
                     {"name": "conf", "type": "conf",
                         "constructor_args": {}}
                 ],
-                "metadata": [
+                "metadata": {
+                "create":
+                [
                     {"name": "example_explanation", "type": "string",
                         "constructor_args":
-                            {"placeholder": "Explain why your example is correct..."}},
+                            {"placeholder": "Explain why your example is correct..."},
+                        "display_name": "example explanation"},
                     {"name": "model_explanation_right", "type": "string",
                         "constructor_args": {"placeholder":
                         "Explain why you thought the model would make a mistake..."},
-                        "model_wrong": false},
+                        "model_wrong": false,
+                        "display_name": "model explanation"},
                     {"name": "model_explanation_wrong", "type": "string",
                         "constructor_args": {"placeholder":
                             "Explain why you think the model made a mistake..."},
-                            "model_wrong": true}
+                            "model_wrong": true,
+                            "display_name": "model explanation"}
+                ],
+                "validate":
+                [
+                    {"name": "corrected_answer",
+                        "type": "context_string_selection",
+                        "constructor_args": {"reference_name": "context"},
+                        "validated_as": "incorrect"},
+                    {"name": "target_explanation", "type": "string",
+                        "constructor_args":
+                            {"placeholder":
+                                "Explain why your proposed target is correct..."},
+                        "validated_as": "incorrect"},
+                    {"name": "flag_reason", "type": "string",
+                        "constructor_args":
+                            {"placeholder": "Enter the reason for flagging..."},
+                        "validated_as": "flagged"},
+                    {"name": "validator_example_explanation", "type": "string",
+                        "constructor_args":
+                            {"placeholder": "Explain why the example is correct..."},
+                        "validated_as": "correct"},
+                    {"name": "validator_model_explanation", "type": "string",
+                        "constructor_args": {"placeholder":
+                        "Enter what you think was done to try to trick the model..."}}
                 ]
+                }
             }
             ' WHERE shortname in ('QA','DK_QA', 'UCL_QA')"""
     ),
@@ -269,13 +307,27 @@ steps = [
                     {"name": "answer", "type": "string",
                         "constructor_args": {"placeholder": "Enter answer..."}}
                 ],
-                "metadata": [
-                    {"name": "target_answer", "type": "string",
-                        "constructor_args": {"placeholder":
-                            "The model was wrong, so enter the correct answer..."},
-                            "display_name": "answer",
-                            "model_wrong": true}
-                ]
+                "metadata": {
+                    "create":
+                    [
+                        {"name": "target_answer", "type": "string",
+                            "constructor_args": {"placeholder":
+                                "The model was wrong, so enter the correct answer..."},
+                                "display_name": "answer",
+                                "model_wrong": true,
+                                "display_name": "answer"}
+                    ],
+                    "validate":
+                    [
+                        {"name": "is_question_valid",
+                        "type": "multiple_choice",
+                        "constructor_args": {
+                            "labels": ["yes", "no"],
+                            "placeholder": "Is the question even valid?"
+                            },
+                        "validated_as": "incorrect"}
+                    ]
+                }
             }
             ' WHERE shortname in ('VQA', 'VQA-VAL')"""
     ),
@@ -295,7 +347,7 @@ steps = [
                 "output": [
                     {"name": "targetText", "type": "string",
                         "constructor_args": {"placeholder": "Enter target text"}}],
-                "metadata": []
+                "metadata": {"create": [], "validate": []}
             }
             ' WHERE shortname in ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),

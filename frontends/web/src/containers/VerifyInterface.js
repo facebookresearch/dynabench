@@ -22,6 +22,18 @@ import UserContext from "./UserContext";
 import { OverlayProvider, BadgeOverlay, Annotation } from "./Overlay";
 import IO from "./IO.js";
 
+function initializeIO(ioDict, ioDefObj) {
+  if (ioDefObj.type === "goal_message_multiple_choice") {
+    const random =
+      ioDefObj.constructor_args.labels[
+        Math.floor(Math.random() * ioDefObj.constructor_args.labels.length)
+      ];
+    ioDict[ioDefObj.name] = random;
+  } else {
+    ioDict[ioDefObj.name] = null;
+  }
+}
+
 class VerifyInterface extends React.Component {
   static contextType = UserContext;
   constructor(props) {
@@ -30,21 +42,21 @@ class VerifyInterface extends React.Component {
       taskCode: null,
       task: {},
       example: {},
-      owner_mode: false,
+      ownerMode: false,
       ownerValidationFlagFilter: "Any",
       ownerValidationDisagreementFilter: "Any",
       validatorAction: null,
-      io_def: {
+      ioDef: {
         input: [],
         target: [],
         context: [],
         metadata: { create: [], validate: [] },
       },
-      input_io: {},
-      target_io: {},
-      context_io: {},
-      metadata_io: {},
-      validator_metadata_io: {},
+      inputIO: {},
+      targetIO: {},
+      contextIO: {},
+      metadataIO: {},
+      validatorMetadataIO: {},
       loading: true,
     };
     this.getNewExample = this.getNewExample.bind(this);
@@ -76,19 +88,17 @@ class VerifyInterface extends React.Component {
     }
 
     if (this.context.user.settings_json) {
-      const settings_json = JSON.parse(this.context.user.settings_json);
-      if (settings_json.hasOwnProperty("owner_validation_flag_filter")) {
+      const settingsJSON = JSON.parse(this.context.user.settings_json);
+      if (settingsJSON.hasOwnProperty("owner_validation_flag_filter")) {
         this.setState({
           ownerValidationFlagFilter:
-            settings_json["owner_validation_flag_filter"],
+            settingsJSON["owner_validation_flag_filter"],
         });
       }
-      if (
-        settings_json.hasOwnProperty("owner_validation_disagreement_filter")
-      ) {
+      if (settingsJSON.hasOwnProperty("owner_validation_disagreement_filter")) {
         this.setState({
           ownerValidationDisagreementFilter:
-            settings_json["owner_validation_disagreement_filter"],
+            settingsJSON["owner_validation_disagreement_filter"],
         });
       }
     }
@@ -126,16 +136,16 @@ class VerifyInterface extends React.Component {
   getNewExample() {
     this.setState(
       {
-        input_io: {},
-        target_io: {},
-        context_io: {},
-        output_io: {},
-        metadata_io: {},
-        validator_metadata_io: {},
+        inputIO: {},
+        targetIO: {},
+        contextIO: {},
+        metadataIO: {},
+        validatorMetadataIO: {},
+        validatorAction: null,
         loading: true,
       },
       () =>
-        (this.state.owner_mode
+        (this.state.ownerMode
           ? this.setRangesAndGetRandomFilteredExample()
           : this.context.api.getRandomExample(
               this.state.task.id,
@@ -143,24 +153,24 @@ class VerifyInterface extends React.Component {
             )
         ).then(
           (result) => {
-            const io_def = JSON.parse(this.state.task.io_def);
-            const context_io = JSON.parse(result.context.context_io);
-            const input_io = JSON.parse(result.input_io);
-            const target_io = JSON.parse(result.target_io);
-            const metadata_io = JSON.parse(result.metadata_io);
-            const validator_metadata_io = {};
-            for (const io_def_obj of io_def.metadata.validate) {
-              validator_metadata_io[io_def_obj.name] = null;
+            const ioDef = JSON.parse(this.state.task.io_def);
+            const contextIO = JSON.parse(result.context.context_io);
+            const inputIO = JSON.parse(result.input_io);
+            const targetIO = JSON.parse(result.target_io);
+            const metadataIO = JSON.parse(result.metadata_io);
+            const validatorMetadataIO = {};
+            for (const ioDefObj of ioDef.metadata.validate) {
+              initializeIO(validatorMetadataIO, ioDefObj);
             }
 
             this.setState({
               example: result,
-              io_def: io_def,
-              input_io: input_io,
-              target_io: target_io,
-              context_io: context_io,
-              metadata_io: metadata_io,
-              validator_metadata_io: validator_metadata_io,
+              ioDef: ioDef,
+              inputIO: inputIO,
+              targetIO: targetIO,
+              contextIO: contextIO,
+              metadataIO: metadataIO,
+              validatorMetadataIO: validatorMetadataIO,
               loading: false,
             });
           },
@@ -176,14 +186,22 @@ class VerifyInterface extends React.Component {
   }
 
   handleResponse() {
-    const mode = this.state.owner_mode ? "owner" : "user";
+    const mode = this.state.ownerMode ? "owner" : "user";
+    const filteredValidatorMetadataIO = {};
+    for (const ioDefObj of this.state.ioDef.metadata.validate) {
+      if (this.state.validatorMetadataIO[ioDefObj.name] !== null) {
+        filteredValidatorMetadataIO[
+          ioDefObj.name
+        ] = this.state.validatorMetadataIO[ioDefObj.name];
+      }
+    }
 
     this.context.api
       .validateExample(
         this.state.example.id,
         this.state.validatorAction,
         mode,
-        this.state.validator_metadata_io
+        filteredValidatorMetadataIO
       )
       .then(
         (result) => {
@@ -231,14 +249,14 @@ class VerifyInterface extends React.Component {
   }
 
   updateUserSettings(key, value) {
-    var settings_json;
+    var settingsJSON;
     if (this.context.user.settings_json) {
-      settings_json = JSON.parse(this.context.user.settings_json);
+      settingsJSON = JSON.parse(this.context.user.settings_json);
     } else {
-      settings_json = {};
+      settingsJSON = {};
     }
-    settings_json[key] = value;
-    this.context.user.settings_json = JSON.stringify(settings_json);
+    settingsJSON[key] = value;
+    this.context.user.settings_json = JSON.stringify(settingsJSON);
     this.context.api.updateUser(this.context.user.id, this.context.user);
   }
 
@@ -257,80 +275,84 @@ class VerifyInterface extends React.Component {
   }
 
   render() {
-    const inputTargetMetadata = this.state.io_def.input
-      .concat(this.state.io_def.target)
+    const inputTargetMetadata = this.state.ioDef.input
+      .concat(this.state.ioDef.target)
       .concat(
-        this.state.io_def.metadata.create.filter(
-          (io_def_obj) =>
-            io_def_obj.model_wrong === undefined ||
-            io_def_obj.model_wrong === this.state.example.model_wrong
+        this.state.ioDef.metadata.create.filter(
+          (ioDefObj) =>
+            ioDefObj.model_wrong === undefined ||
+            ioDefObj.model_wrong === this.state.example.model_wrong
         )
       )
       .filter(
-        (io_def_obj) =>
+        (ioDefObj) =>
           ![undefined, null].includes(
             Object.assign(
               {},
-              this.state.input_io,
-              this.state.target_io,
-              this.state.metadata_io
-            )[io_def_obj.name]
+              this.state.inputIO,
+              this.state.targetIO,
+              this.state.metadataIO
+            )[ioDefObj.name]
           )
       )
-      .map((io_def_obj) => (
-        <div key={io_def_obj.name} className="mb-3">
+      .map((ioDefObj) => (
+        <div key={ioDefObj.name} className="mb-3">
           <IO
-            display_name={io_def_obj.display_name}
+            displayName={ioDefObj.display_name}
             className="name-display-primary"
-            key={io_def_obj.name}
+            key={ioDefObj.name}
             create={false}
-            name={io_def_obj.name}
-            example_io={Object.assign(
+            name={ioDefObj.name}
+            exampleIO={Object.assign(
               {},
-              this.state.input_io,
-              this.state.target_io,
-              this.state.metadata_io
+              this.state.inputIO,
+              this.state.targetIO,
+              this.state.metadataIO
             )}
-            set_example_io={() => {}}
-            type={io_def_obj.type}
-            constructor_args={io_def_obj.constructor_args}
+            setExampleIO={() => {}}
+            type={ioDefObj.type}
+            constructorArgs={ioDefObj.constructor_args}
           />
         </div>
       ));
 
-    const context = this.state.io_def.context.map((io_def_obj) => (
+    const context = this.state.ioDef.context.map((ioDefObj) => (
       <IO
-        display_name={io_def_obj.display_name}
+        displayName={ioDefObj.display_name}
         className="name-display-primary"
-        key={io_def_obj.name}
+        key={ioDefObj.name}
         create={false}
-        name={io_def_obj.name}
-        example_io={this.state.context_io}
-        set_example_io={() => {}}
-        type={io_def_obj.type}
-        constructor_args={io_def_obj.constructor_args}
+        name={ioDefObj.name}
+        exampleIO={this.state.contextIO}
+        setExampleIO={() => {}}
+        type={ioDefObj.type}
+        constructorArgs={ioDefObj.constructor_args}
       />
     ));
 
-    const validatorMetadata = this.state.io_def.metadata.validate
+    const validatorMetadata = this.state.ioDef.metadata.validate
       .filter(
-        (io_def_obj) =>
-          io_def_obj.validated_as === undefined ||
-          io_def_obj.validated_as === this.state.validatorAction
+        (ioDefObj) =>
+          ioDefObj.validated_as === undefined ||
+          ioDefObj.validated_as === this.state.validatorAction
       )
-      .map((io_def_obj) => (
+      .map((ioDefObj) => (
         <IO
-          display_name={io_def_obj.display_name}
+          displayName={ioDefObj.display_name}
           className="user-input-secondary"
-          key={io_def_obj.name}
+          key={ioDefObj.name}
           create={true}
-          name={io_def_obj.name}
-          example_io={this.state.validator_metadata_io}
-          set_example_io={(example_io) =>
-            this.setState({ validator_metadata_io: example_io })
+          name={ioDefObj.name}
+          exampleIO={Object.assign(
+            {},
+            this.state.validatorMetadataIO,
+            this.state.contextIO
+          )}
+          setExampleIO={(exampleIO) =>
+            this.setState({ validatorMetadataIO: exampleIO })
           }
-          type={io_def_obj.type}
-          constructor_args={io_def_obj.constructor_args}
+          type={ioDefObj.type}
+          constructorArgs={ioDefObj.constructor_args}
         />
       ));
 
@@ -373,16 +395,16 @@ class VerifyInterface extends React.Component {
                   </Modal.Header>
                   <Modal.Body>
                     <Form.Check
-                      checked={this.state.owner_mode}
+                      checked={this.state.ownerMode}
                       label="Enter task owner mode?"
                       onChange={() => {
                         this.setState(
-                          { owner_mode: !this.state.owner_mode },
+                          { ownerMode: !this.state.ownerMode },
                           this.componentDidMount()
                         );
                       }}
                     />
-                    {this.state.owner_mode ? (
+                    {this.state.ownerMode ? (
                       <div>
                         <DropdownButton
                           variant="light"
@@ -484,7 +506,7 @@ class VerifyInterface extends React.Component {
                               }
                             />
                             <i className="fas fa-thumbs-up"></i> &nbsp;{" "}
-                            {this.state.owner_mode ? "Verified " : ""} Correct
+                            {this.state.ownerMode ? "Verified " : ""} Correct
                           </InputGroup>
                           <InputGroup className="align-items-center">
                             <Form.Check
@@ -497,9 +519,9 @@ class VerifyInterface extends React.Component {
                               }
                             />
                             <i className="fas fa-thumbs-down"></i> &nbsp;{" "}
-                            {this.state.owner_mode ? "Verified " : ""} Incorrect
+                            {this.state.ownerMode ? "Verified " : ""} Incorrect
                           </InputGroup>
-                          {this.state.owner_mode ? null : (
+                          {this.state.ownerMode ? null : (
                             <InputGroup className="align-items-center">
                               <Form.Check
                                 checked={
@@ -567,7 +589,7 @@ class VerifyInterface extends React.Component {
                 </div>
               )}
               <div className="p-2">
-                {this.state.owner_mode ? (
+                {this.state.ownerMode ? (
                   <p style={{ color: "red" }}>
                     WARNING: You are in "Task owner mode." You can verify
                     examples as correct or incorrect without input from anyone
