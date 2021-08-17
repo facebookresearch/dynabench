@@ -73,7 +73,6 @@ const FloresTaskPage = (props) => {
      */
     const fetchFloresTasks = (api) => {
       setIsLoading(true);
-      console.log("yo");
       api.getSubmittableTasks().then(
         (result) => {
           const floresTasks = result.filter((t) =>
@@ -83,17 +82,13 @@ const FloresTaskPage = (props) => {
             (map, obj) => ((map[obj.name] = obj), map),
             {}
           );
-          console.log("yo");
           setTaskLookup(taskLookup);
-          console.log("yo");
           if (FLORES_TASK_NAMES.includes(taskName)) {
             setTask(taskLookup[taskName]); // set the task from Arguments
           } else {
             setTask(taskLookup[FLORES_TASK_NAMES[0]]); // set default task
           }
-          console.log("yo");
           setIsLoading(false);
-          console.log("yo");
         },
         (error) => {
           console.log(error);
