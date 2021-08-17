@@ -10,8 +10,14 @@ from yoyo import step
 __depends__ = {"20210806_01_0LQae-adding-limiting-behavior-of-adc-task"}
 
 steps = [
-    step("ALTER TABLE validations ADD COLUMN metadata_io TEXT"),
-    step("ALTER TABLE tasks ADD COLUMN create_endpoint Boolean"),
+    step(
+        "ALTER TABLE validations ADD COLUMN metadata_io TEXT",
+        "ALTER TABLE validations DROP metadata_io",
+    ),
+    step(
+        "ALTER TABLE tasks ADD COLUMN create_endpoint Boolean",
+        "ALTER TABLE tasks DROP create_endpoint",
+    ),
     step(
         """UPDATE tasks SET create_endpoint=false WHERE shortname IN
         ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
@@ -20,7 +26,7 @@ steps = [
         """UPDATE tasks SET create_endpoint=true WHERE shortname NOT IN
         ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
-    step("ALTER TABLE tasks ADD COLUMN gpu Boolean"),
+    step("ALTER TABLE tasks ADD COLUMN gpu Boolean", "ALTER TABLE tasks DROP gpu"),
     step(
         """UPDATE tasks SET gpu=true WHERE shortname IN
         ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
@@ -29,7 +35,10 @@ steps = [
         """UPDATE tasks SET gpu=false WHERE shortname NOT IN
         ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
-    step("ALTER TABLE tasks ADD COLUMN torchserve_config TEXT"),
+    step(
+        "ALTER TABLE tasks ADD COLUMN torchserve_config TEXT",
+        "ALTER TABLE tasks DROP torchserve_config",
+    ),
     step(
         """UPDATE tasks SET torchserve_config='{
             "default_response_timeout": 1200,
@@ -42,7 +51,7 @@ steps = [
         """UPDATE tasks SET torchserve_config="{}" WHERE shortname NOT IN
         ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
-    step("ALTER TABLE tasks ADD COLUMN io_def TEXT"),
+    step("ALTER TABLE tasks ADD COLUMN io_def TEXT", "ALTER TABLE tasks DROP io_def"),
     step(
         """UPDATE tasks SET io_def='
             {
@@ -356,8 +365,14 @@ steps = [
             }
             ' WHERE shortname in ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
-    step("ALTER TABLE tasks ADD COLUMN aggregation_metric ENUM('dynascore')"),
-    step("ALTER TABLE tasks ADD COLUMN model_wrong_metric TEXT"),
+    step(
+        "ALTER TABLE tasks ADD COLUMN aggregation_metric ENUM('dynascore')",
+        "ALTER TABLE tasks DROP aggregation_metric",
+    ),
+    step(
+        "ALTER TABLE tasks ADD COLUMN model_wrong_metric TEXT",
+        "ALTER TABLE tasks DROP model_wrong_metric",
+    ),
     step(
         """UPDATE tasks SET model_wrong_metric='{"type": "exact_match", "constructor_args": {}}'
         WHERE shortname not in ('QA','DK_QA', 'UCL_QA', 'VQA', 'VQA-VAL')"""
@@ -371,7 +386,10 @@ steps = [
         """UPDATE tasks SET model_wrong_metric='{"type": "ask_user",
         "constructor_args": {}}' WHERE shortname in ('VQA', 'VQA-VAL')"""
     ),
-    step("ALTER TABLE tasks ADD COLUMN instructions TEXT"),
+    step(
+        "ALTER TABLE tasks ADD COLUMN instructions TEXT",
+        "ALTER TABLE tasks DROP instructions",
+    ),
     step(
         """
     UPDATE tasks SET instructions='Find an example that the model gets wrong but
@@ -449,7 +467,10 @@ steps = [
         + """correct.' WHERE shortname IN ('NLI', 'LADC', 'DK_NLI')
         """
     ),
-    step("ALTER TABLE tasks ADD COLUMN goal_message TEXT"),
+    step(
+        "ALTER TABLE tasks ADD COLUMN goal_message TEXT",
+        "ALTER TABLE tasks DROP goal_message",
+    ),
     step(
         """UPDATE tasks SET goal_message='enter a question and answer based on
             the image, such that the model is fooled.' WHERE shortname in
@@ -460,25 +481,40 @@ steps = [
         in the context, such that the model is fooled.' WHERE shortname in
         ('QA', 'DK_QA', 'UCL_QA')"""
     ),
-    step("ALTER TABLE tasks ADD COLUMN warning_message TEXT"),
+    step(
+        "ALTER TABLE tasks ADD COLUMN warning_message TEXT",
+        "ALTER TABLE tasks DROP warning_message",
+    ),
     step(
         """UPDATE tasks SET warning_message='This is sensitive content! If you
         do not want to see any hateful examples, please switch to another task.'
         WHERE shortname in ('Hate Speech')"""
     ),
-    step("ALTER TABLE tasks ADD COLUMN instance_type TEXT"),
+    step(
+        "ALTER TABLE tasks ADD COLUMN instance_type TEXT",
+        "ALTER TABLE tasks DROP instance_type",
+    ),
     step("UPDATE tasks SET instance_type='ml.m5.2xlarge'"),
     step(
         """UPDATE tasks SET instance_type='ml.p2.xlarge' where shortname IN
         ('FLORES-FULL','FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
-    step("ALTER TABLE tasks ADD COLUMN instance_count INT(11) DEFAULT 1"),
+    step(
+        "ALTER TABLE tasks ADD COLUMN instance_count INT(11) DEFAULT 1",
+        "ALTER TABLE tasks DROP instance_count",
+    ),
     step(
         """UPDATE tasks SET instance_count=16 WHERE shortname IN
         ('FLORES-FULL')"""
     ),
-    step("ALTER TABLE tasks ADD COLUMN eval_metrics TEXT"),
-    step("ALTER TABLE tasks ADD COLUMN perf_metric TEXT"),
+    step(
+        "ALTER TABLE tasks ADD COLUMN eval_metrics TEXT",
+        "ALTER TABLE tasks DROP eval_metrics",
+    ),
+    step(
+        "ALTER TABLE tasks ADD COLUMN perf_metric TEXT",
+        "ALTER TABLE tasks DROP perf_metric",
+    ),
     step(
         """UPDATE tasks SET perf_metric='macro_f1', eval_metrics='macro_f1'
         WHERE shortname IN ('Sentiment', 'Hate Speech')"""
@@ -495,24 +531,36 @@ steps = [
         """UPDATE tasks SET perf_metric='sp_bleu', eval_metrics='sp_bleu' WHERE
         shortname IN ('FLORES-FULL','FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
-    step("ALTER TABLE tasks ADD COLUMN delta_metrics TEXT"),
+    step(
+        "ALTER TABLE tasks ADD COLUMN delta_metrics TEXT",
+        "ALTER TABLE tasks DROP delta_metrics",
+    ),
     step(
         """UPDATE tasks SET delta_metrics='fairness|robustness' WHERE shortname NOT
         IN ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
-    step("ALTER TABLE tasks ADD COLUMN aws_region TEXT"),
+    step(
+        "ALTER TABLE tasks ADD COLUMN aws_region TEXT",
+        "ALTER TABLE tasks DROP aws_region",
+    ),
     step("UPDATE tasks SET aws_region='us-west-1'"),
     step(
         """UPDATE tasks SET aws_region='us-west-2' where shortname IN
         ('FLORES-FULL','FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
-    step("ALTER TABLE tasks ADD COLUMN s3_bucket TEXT"),
+    step(
+        "ALTER TABLE tasks ADD COLUMN s3_bucket TEXT",
+        "ALTER TABLE tasks DROP s3_bucket",
+    ),
     step("UPDATE tasks SET s3_bucket='evaluation-us-west-1-096166425824'"),
     step(
         """UPDATE tasks SET s3_bucket='evaluation-us-west-2' where shortname IN
         ('FLORES-FULL','FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
-    step("ALTER TABLE tasks ADD COLUMN eval_server_id TEXT"),
+    step(
+        "ALTER TABLE tasks ADD COLUMN eval_server_id TEXT",
+        "ALTER TABLE tasks DROP eval_server_id",
+    ),
     step("UPDATE tasks SET eval_server_id='default'"),
     step(
         """UPDATE tasks SET eval_server_id='flores101' where shortname IN
@@ -521,15 +569,27 @@ steps = [
     step(
         """UPDATE contexts SET context=JSON_OBJECT("context", context) WHERE
         r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks
-        WHERE shortname not in ('VQA', 'VQA-VAL')))"""
+        WHERE shortname not in ('VQA', 'VQA-VAL')))""",
+        """UPDATE contexts SET context=JSON_EXTRACT(context, '$.context') WHERE
+        r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks
+        WHERE shortname not in ('VQA', 'VQA-VAL')))""",
     ),
     step(
         """UPDATE contexts SET context=JSON_OBJECT("image_url", context) WHERE
         r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE
-        shortname in ('VQA', 'VQA-VAL')))"""
+        shortname in ('VQA', 'VQA-VAL')))""",
+        """UPDATE contexts SET context=JSON_EXTRACT(context, '$.image_url') WHERE
+        r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE
+        shortname in ('VQA', 'VQA-VAL')))""",
     ),
-    step("ALTER TABLE contexts CHANGE context context_io TEXT"),
-    step("ALTER TABLE examples ADD COLUMN input_io TEXT"),
+    step(
+        "ALTER TABLE contexts CHANGE context context_io TEXT",
+        "ALTER TABLE contexts CHANGE context context_io TEXT",
+    ),
+    step(
+        "ALTER TABLE examples ADD COLUMN input_io TEXT",
+        "ALTER TABLE examples DROP input_io",
+    ),
     step(
         """UPDATE examples SET input_io=JSON_OBJECT("hypothesis", text) WHERE
         (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
@@ -552,61 +612,104 @@ steps = [
         (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
         WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
     ),
-    step("ALTER TABLE examples ADD COLUMN target_io TEXT"),
+    step(
+        "ALTER TABLE examples ADD COLUMN target_io TEXT",
+        "ALTER TABLE examples DROP target_io",
+    ),
     step(
         """UPDATE examples SET target_io=JSON_OBJECT("label", "entailed") WHERE
         target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
-        in ('NLI', 'LADC', 'DK_NLI')))))"""
+        in ('NLI', 'LADC', 'DK_NLI')))))""",
+        """UPDATE examples SET target_pred=0 WHERE target_io=JSON_OBJECT("label", "entailed")
+        AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
+        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code
+        in ('nli', 'ladc', 'dk_nli')))))""",
     ),
     step(
         """UPDATE examples SET target_io=JSON_OBJECT("label", "neutral") WHERE
         target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
-        in ('NLI', 'LADC', 'DK_NLI')))))"""
+        in ('NLI', 'LADC', 'DK_NLI')))))""",
+        """UPDATE examples SET target_pred=1 WHERE target_io=JSON_OBJECT("label", "neutral")
+        AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
+        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code
+        in ('nli', 'ladc', 'dk_nli')))))""",
     ),
     step(
         """UPDATE examples SET target_io=JSON_OBJECT("label", "contradictory")
         WHERE target_pred=2 AND (cid IN (SELECT id FROM contexts WHERE r_realid
         IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
-        in ('NLI', 'LADC', 'DK_NLI')))))"""
+        in ('NLI', 'LADC', 'DK_NLI')))))""",
+        """UPDATE examples SET target_pred=2 WHERE target_io=JSON_OBJECT("label",
+        "contradictory") AND (cid IN (SELECT id FROM contexts WHERE r_realid
+        IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code
+        in ('nli', 'ladc', 'dk_nli')))))""",
     ),
     step(
         """UPDATE examples SET target_io=JSON_OBJECT("answer", target_pred) WHERE
         (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
-        WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('QA', 'UCL_QA')))))"""
+        WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('QA', 'UCL_QA', 'VQA',
+        'VQA-VAL')))))""",
+        """UPDATE examples SET target_pred=JSON_EXTRACT(target_io, '$.answer') WHERE
+        (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
+        WHERE tid IN (SELECT id FROM tasks WHERE task_code in ('qa', 'ucl_qa',
+        'vqa', 'vqa_val')))))""",
     ),
     step(
         """UPDATE examples SET target_io=JSON_OBJECT("label", "not-hateful") WHERE
         target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT
         id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in
-        ('Hate Speech')))))"""
+        ('Hate Speech')))))""",
+        """UPDATE examples SET target_pred=0 WHERE target_io=JSON_OBJECT("label", "not-hateful")
+        AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT
+        id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code in
+        ('hs')))))""",
     ),
     step(
         """UPDATE examples SET target_io=JSON_OBJECT("label", "hateful") WHERE
         target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
-        in ('Hate Speech')))))"""
+        in ('Hate Speech')))))""",
+        """UPDATE examples SET target_pred=1 WHERE target_io=JSON_OBJECT("label", "hateful")
+        AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
+        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code
+        in ('hs')))))""",
     ),
     step(
         """UPDATE examples SET target_io=JSON_OBJECT("label", "negative") WHERE
         target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
-        in ('Sentiment')))))"""
+        in ('Sentiment')))))""",
+        """UPDATE examples SET target_pred=0 WHERE target_io=JSON_OBJECT("label", "negative")
+        AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
+        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code
+        in ('sentiment')))))""",
     ),
     step(
         """UPDATE examples SET target_io=JSON_OBJECT("label", "positive") WHERE
         target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE
-        shortname in ('Sentiment')))))"""
+        shortname in ('Sentiment')))))""",
+        """UPDATE examples SET target_pred=1 WHERE target_io=JSON_OBJECT("label",
+        "positive") AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
+        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE
+        task_code in ('sentiment')))))""",
     ),
     step(
         """UPDATE examples SET target_io=JSON_OBJECT("label", "neutral") WHERE
         target_pred=2 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
-        in ('Sentiment')))))"""
+        in ('Sentiment')))))""",
+        """UPDATE examples SET target_pred=2 WHERE target_io=JSON_OBJECT("label", "neutral")
+        AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
+        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code
+        in ('sentiment')))))""",
     ),
-    step("ALTER TABLE examples ADD COLUMN output_io TEXT"),
+    step(
+        "ALTER TABLE examples ADD COLUMN output_io TEXT",
+        "ALTER TABLE examples DROP output_io",
+    ),
     step(
         """UPDATE examples SET output_io=JSON_OBJECT("label", "entailed", "prob",
         JSON_OBJECT("entailed", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds,
@@ -724,7 +827,10 @@ steps = [
         rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in
         ('Sentiment')))))"""
     ),
-    step("ALTER TABLE examples ADD COLUMN metadata_io TEXT"),
+    step(
+        "ALTER TABLE examples ADD COLUMN metadata_io TEXT"
+        "ALTER TABLE examples DROP metadata_io"
+    ),
     step(
         """UPDATE examples SET metadata_io=JSON_OBJECT("example explanation",
         example_explanation, "model explanation", model_explanation)"""
@@ -735,19 +841,175 @@ steps = [
         rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in
         ('VQA', 'VQA-VAL')))))"""
     ),
-    step("ALTER TABLE tasks DROP shortname"),
-    step("ALTER TABLE tasks DROP type"),
-    step("ALTER TABLE tasks DROP owner_str"),
-    step("ALTER TABLE tasks DROP longdesc"),
-    step("ALTER TABLE tasks DROP targets"),
-    step("ALTER TABLE tasks DROP score_progression"),
-    step("ALTER TABLE tasks DROP total_verified"),
-    step("ALTER TABLE tasks DROP total_collected"),
-    step("ALTER TABLE tasks DROP has_context"),
-    step("ALTER TABLE tasks DROP has_answer"),
-    step("ALTER TABLE examples CHANGE target_model model_endpoint_name TEXT"),
-    step("ALTER TABLE examples DROP target_pred"),
-    step("ALTER TABLE examples DROP model_preds"),
-    step("ALTER TABLE examples DROP example_explanation"),
-    step("ALTER TABLE examples DROP model_explanation"),
+    step("", "UPDATE tasks SET shortname='placeholder' where task_code='placeholder'"),
+    step("", "UPDATE tasks SET shortname='NLI' where task_code='nli'"),
+    step("", "UPDATE tasks SET shortname='QA' where task_code='qa'"),
+    step("", "UPDATE tasks SET shortname='Sentiment' where task_code='sentiment'"),
+    step("", "UPDATE tasks SET shortname='Hate Speech' where task_code='hs'"),
+    step("", "UPDATE tasks SET shortname='DK_NLI' where task_code='dk_nli'"),
+    step("", "UPDATE tasks SET shortname='DK_QA' where task_code='dkqa'"),
+    step("", "UPDATE tasks SET shortname='YN' where task_code='yn'"),
+    step("", "UPDATE tasks SET shortname='VQA' where task_code='vqa'"),
+    step("", "UPDATE tasks SET shortname='UCL_QA' where task_code='ucl_qa'"),
+    step("", "UPDATE tasks SET shortname='VQA-VAL' where task_code='vqa_val'"),
+    step("", "UPDATE tasks SET shortname='VQA' where task_code='flores_small1'"),
+    step("", "UPDATE tasks SET shortname='VQA' where task_code='flores_small2'"),
+    step("", "UPDATE tasks SET shortname='VQA' where task_code='flores_full'"),
+    step(
+        "ALTER TABLE tasks DROP shortname",
+        "ALTER TABLE tasks ADD COLUMN shortname STRING(255)",
+    ),
+    step("", "UPDATE tasks SET type='clf' where task_code='placeholder'"),
+    step("", "UPDATE tasks SET type='clf' where task_code='nli'"),
+    step("", "UPDATE tasks SET type='extract' where task_code='qa'"),
+    step("", "UPDATE tasks SET type='clf' where task_code='sentiment'"),
+    step("", "UPDATE tasks SET type='clf' where task_code='hs'"),
+    step("", "UPDATE tasks SET type='clf' where task_code='dk_nli'"),
+    step("", "UPDATE tasks SET type='extract' where task_code='dkqa'"),
+    step("", "UPDATE tasks SET type='clf' where task_code='yn'"),
+    step("", "UPDATE tasks SET type='VQA' where task_code='vqa'"),
+    step("", "UPDATE tasks SET type='extract' where task_code='ucl_qa'"),
+    step("", "UPDATE tasks SET type='clf' where task_code='vqa_val'"),
+    step("", "UPDATE tasks SET type='seq2seq' where task_code='flores_small1'"),
+    step("", "UPDATE tasks SET type='seq2seq' where task_code='flores_small2'"),
+    step("", "UPDATE tasks SET type='seq2seq' where task_code='flores_full'"),
+    step(
+        "ALTER TABLE tasks DROP type", "ALTER TABLE tasks ADD COLUMN type STRING(255)"
+    ),
+    step(
+        "ALTER TABLE tasks DROP owner_str",
+        "ALTER TABLE tasks ADD COLUMN owner_str TEXT",
+    ),
+    step(
+        "ALTER TABLE tasks DROP longdesc", "ALTER TABLE tasks ADD COLUMN longdesc TEXT"
+    ),
+    step(
+        "",
+        """UPDATE tasks SET target='na' where task_code in ('flores_full',
+         'flores_small1', 'flores_small2', 'vqa_val', 'ucl_qa', 'vqa', 'yn',
+         'dkqa', 'qa')""",
+    ),
+    step(
+        "",
+        """UPDATE tasks SET target='entailed|neutral|contradictory'
+         where task_code in ('nli', 'dk_nli')""",
+    ),
+    step(
+        "",
+        """UPDATE tasks SET target='negative|positive|neutral' where
+        task_code='sentiment'""",
+    ),
+    step("", "UPDATE tasks SET target='not-hateful|hateful' where task_code='hs'"),
+    step("ALTER TABLE tasks DROP targets", "ALTER TABLE tasks ADD COLUMN targets"),
+    step(
+        "ALTER TABLE tasks DROP score_progression",
+        "ALTER TABLE tasks ADD COLUMN score_progression TEXT",
+    ),
+    step(
+        "ALTER TABLE tasks DROP total_verified",
+        "ALTER TABLE tasks ADD COLUMN total_verified INT(11) DEFAULT 0",
+    ),
+    step(
+        "ALTER TABLE tasks DROP total_collected",
+        "ALTER TABLE tasks ADD COLUMN total_collected INT(11) DEFAULT 0",
+    ),
+    step(
+        "",
+        """UPDATE tasks SET has_context=0 where task_code in ('hs', 'sentiment',
+         'vqa_val', 'flores_small1', 'flores_small2', 'flores_full', 'yn')""",
+    ),
+    step(
+        "",
+        """UPDATE tasks SET has_context=1
+         where task_code in ('nli', 'qa', 'sentiment', 'dk_nli', 'dkqa', 'vqa',
+         'ucl_qa')""",
+    ),
+    step(
+        "ALTER TABLE tasks DROP has_context",
+        "ALTER TABLE tasks ADD COLUMN has_context BOOL",
+    ),
+    step(
+        "",
+        """UPDATE tasks SET has_answer=0 where task_code not in
+            ('qa', 'dkqa', 'vqa', 'ucl_qa')""",
+    ),
+    step(
+        "",
+        """UPDATE tasks SET has_answer=1 where task_code in
+            ('qa', 'dkqa', 'vqa', 'ucl_qa')""",
+    ),
+    step(
+        "ALTER TABLE tasks DROP has_answer",
+        "ALTER TABLE tasks ADD COLUMN has_answer BOOL",
+    ),
+    step(
+        "ALTER TABLE examples CHANGE target_model model_endpoint_name TEXT",
+        "ALTER TABLE examples CHANGE model_endpoint_name model_endpoint_name TEXT",
+    ),
+    step(
+        "ALTER TABLE examples DROP target_pred",
+        "ALTER TABLE examples ADD COLUMN target_pred TEXT",
+    ),
+    step(
+        "",
+        """UPDATE examples SET model_preds=CONCAT(JSON_EXTRACT(JSON_EXTRACT(output_io,
+        "$.prob"), "$.entailed"), "|", JSON_EXTRACT(JSON_EXTRACT(output_io, "$.prob"),
+        "$.neutral"), "|", JSON_EXTRACT(JSON_EXTRACT(output_io, "$.prob"),
+        "$.contradictory")) WHERE cid IN (SELECT id FROM contexts WHERE r_realid IN
+        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code in
+        ('nli', 'ladc', 'dk_nli'))))""",
+    ),
+    step(
+        "",
+        """UPDATE examples SET model_preds=CONCAT(JSON_EXTRACT(JSON_EXTRACT(output_io,
+        "$.prob"), "$.not-hateful"), "|", JSON_EXTRACT(JSON_EXTRACT(output_io,
+        "$.prob"), "$.hateful")) WHERE cid IN (SELECT id FROM contexts WHERE r_realid IN
+        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code in
+        ('hs'))))""",
+    ),
+    step(
+        "",
+        """UPDATE examples SET model_preds=CONCAT(JSON_EXTRACT(JSON_EXTRACT(output_io,
+        "$.prob"), "$.negative"), "|", JSON_EXTRACT(JSON_EXTRACT(output_io, "$.prob"),
+        "$.positive"), "|", JSON_EXTRACT(JSON_EXTRACT(output_io, "$.prob"),
+        "$.neutral")) WHERE cid IN (SELECT id FROM contexts WHERE r_realid IN
+        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code in
+        ('sentiment'))))""",
+    ),
+    step(
+        "",
+        """UPDATE examples SET model_preds=CONCAT(JSON_EXTRACT(output_io, "$.conf"),
+        "|", JSON_EXTRACT(output_io, "$.answer")) WHERE cid IN (SELECT id FROM
+        contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT
+        id FROM tasks WHERE task_code in ('qa', 'ucl_qa'))))
+        """,
+    ),
+    step(
+        "",
+        """UPDATE examples SET model_preds=CONCAT(JSON_EXTRACT(output_io, "$.answer"),
+        "|", JSON_EXTRACT(output_io, "$.prob")) WHERE cid IN (SELECT id FROM
+        contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT
+        id FROM tasks WHERE task_code in ('vqa', 'vqa_val'))))
+        """,
+    ),
+    step(
+        "ALTER TABLE examples DROP model_preds",
+        "ALTER TABLE examples ADD COLUMN model_preds TEXT",
+    ),
+    step(
+        """UPDATE examples SET example_explanation=JSON_EXTRACT(metadata_io,
+        "$.example explanation")"""
+    ),
+    step(
+        "ALTER TABLE examples DROP example_explanation",
+        "ALTER TABLE examples ADD COLUMN example_explanation TEXT",
+    ),
+    step(
+        """UPDATE examples SET model_explanation=JSON_EXTRACT(metadata_io,
+        "$.model explanation")"""
+    ),
+    step(
+        "ALTER TABLE examples DROP model_explanation",
+        "ALTER TABLE examples ADD COLUMN model_explanation TEXT",
+    ),
 ]
