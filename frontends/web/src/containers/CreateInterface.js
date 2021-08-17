@@ -34,7 +34,7 @@ import "./CreateInterface.css";
 import IO from "./IO.js";
 
 function initializeIO(ioDict, ioDefObj) {
-  if (ioDefObj.type === "goal_message_multiple_choice") {
+  if (ioDefObj.type === "target_label") {
     const random =
       ioDefObj.constructor_args.labels[
         Math.floor(Math.random() * ioDefObj.constructor_args.labels.length)
@@ -1113,11 +1113,11 @@ class CreateInterface extends React.Component {
       return renderTooltip(props, "Don't like this context? Try another one.");
     }
 
-    // The goal_message_multiple_choice type is special. We want this object to
+    // The target_label type is special. We want this object to
     // appear in a special place in the interface.
     const goalMessageIO = this.state.ioDef.input
       .concat(this.state.ioDef.target)
-      .filter((ioDefObj) => ioDefObj.type === "goal_message_multiple_choice")
+      .filter((ioDefObj) => ioDefObj.type === "target_label")
       .map((ioDefObj) => (
         <div
           key={ioDefObj.name}
@@ -1205,10 +1205,7 @@ class CreateInterface extends React.Component {
       .concat(this.state.ioDef.target)
       .filter(
         (ioDefObj) =>
-          ![
-            "goal_message_multiple_choice",
-            "context_string_selection",
-          ].includes(ioDefObj.type)
+          !["target_label", "context_string_selection"].includes(ioDefObj.type)
       )
       .map((ioDefObj) => (
         <div

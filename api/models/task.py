@@ -68,7 +68,7 @@ class IOTypeEnum(enum.Enum):
     conf = "conf"
     multiple_choice_probs = "multiple_choice_probs"
     multiple_choice = "multiple_choice"
-    goal_message_multiple_choice = "goal_message_multiple_choice"
+    target_label = "target_label"
 
 
 def verify_image_url(obj, obj_constructor_args, name_to_constructor_args, example_io):
@@ -110,7 +110,7 @@ def verify_multiple_choice(
     assert obj in obj_constructor_args["labels"]
 
 
-def verify_goal_message_multiple_choice(
+def verify_target_label(
     obj, obj_constructor_args, name_to_constructor_args, example_io
 ):
     assert isinstance(obj, str)
@@ -124,7 +124,7 @@ io_type_verifiers = {
     IOTypeEnum.conf.name: verify_conf,
     IOTypeEnum.multiple_choice_probs.name: verify_multiple_choice_probs,
     IOTypeEnum.multiple_choice.name: verify_multiple_choice,
-    IOTypeEnum.goal_message_multiple_choice.name: verify_goal_message_multiple_choice,
+    IOTypeEnum.target_label.name: verify_target_label,
 }
 
 

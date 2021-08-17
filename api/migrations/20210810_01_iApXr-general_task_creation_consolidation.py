@@ -59,11 +59,11 @@ steps = [
                     "constructor_args": {"placeholder": "Enter context..."}}],
                 "input": [{"name": "hypothesis", "type": "string",
                     "constructor_args": {"placeholder": "Enter hypothesis..."}}],
-                "target": [{"name": "label", "type": "goal_message_multiple_choice",
+                "target": [{"name": "label", "type": "target_label",
                     "constructor_args": {
                         "labels": ["entailed", "neutral", "contradictory"]}}],
                 "output": [
-                    {"name": "label", "type": "goal_message_multiple_choice",
+                    {"name": "label", "type": "target_label",
                         "constructor_args": {
                             "labels": ["entailed", "neutral", "contradictory"]}},
                     {"name": "prob", "type": "multiple_choice_probs",
@@ -124,11 +124,11 @@ steps = [
                     "constructor_args": {"placeholder": "Enter context..."}}],
                 "input": [{"name": "statement", "type": "string",
                     "constructor_args": {"placeholder": "Enter statement..."}}],
-                "target": [{"name": "label", "type": "goal_message_multiple_choice",
+                "target": [{"name": "label", "type": "target_label",
                     "constructor_args": {
                         "labels": ["not-hateful", "hateful"]}}],
                 "output": [
-                    {"name": "label", "type": "goal_message_multiple_choice",
+                    {"name": "label", "type": "target_label",
                         "constructor_args": {
                             "labels": ["not-hateful", "hateful"]}},
                     {"name": "prob", "type": "multiple_choice_probs",
@@ -189,11 +189,11 @@ steps = [
                     "constructor_args": {"placeholder": "Enter context..."}}],
                 "input": [{"name": "statement", "type": "string",
                     "constructor_args": {"placeholder": "Enter statement..."}}],
-                "target": [{"name": "label", "type": "goal_message_multiple_choice",
+                "target": [{"name": "label", "type": "target_label",
                     "constructor_args": {
                         "labels": ["negative", "positive", "neutral"]}}],
                 "output": [
-                    {"name": "label", "type": "goal_message_multiple_choice",
+                    {"name": "label", "type": "target_label",
                         "constructor_args": {
                             "labels": ["negative", "positive", "neutral"]}},
                     {"name": "prob", "type": "multiple_choice_probs",
@@ -570,7 +570,7 @@ steps = [
         """UPDATE contexts SET context=JSON_OBJECT("context", context) WHERE
         r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks
         WHERE shortname not in ('VQA', 'VQA-VAL')))""",
-        """UPDATE contexts SET context=JSON_EXTRACT(context, '$.context') WHERE
+        """UPDATE contexts SET context=JSON_UNQUOTE(JSON_EXTRACT(context, '$.context')) WHERE
         r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks
         WHERE shortname not in ('VQA', 'VQA-VAL')))""",
     ),
@@ -578,7 +578,7 @@ steps = [
         """UPDATE contexts SET context=JSON_OBJECT("image_url", context) WHERE
         r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE
         shortname in ('VQA', 'VQA-VAL')))""",
-        """UPDATE contexts SET context=JSON_EXTRACT(context, '$.image_url') WHERE
+        """UPDATE contexts SET context=JSON_UNQUOTE(JSON_EXTRACT(context, '$.image_url')) WHERE
         r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE
         shortname in ('VQA', 'VQA-VAL')))""",
     ),
@@ -621,18 +621,18 @@ steps = [
         target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
         in ('NLI', 'LADC', 'DK_NLI')))))""",
-        """UPDATE examples SET target_pred=0 WHERE target_io=JSON_OBJECT("label", "entailed")
-        AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
-        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code
-        in ('nli', 'ladc', 'dk_nli')))))""",
+        """UPDATE examples SET target_pred=0 WHERE JSON_UNQUOTE(JSON_EXTRACT(
+        target_io, "$.label"))="entailed" AND (cid IN (SELECT id FROM contexts WHERE
+        r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE
+        task_code in ('nli', 'ladc', 'dk_nli')))))""",
     ),
     step(
         """UPDATE examples SET target_io=JSON_OBJECT("label", "neutral") WHERE
         target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
         in ('NLI', 'LADC', 'DK_NLI')))))""",
-        """UPDATE examples SET target_pred=1 WHERE target_io=JSON_OBJECT("label", "neutral")
-        AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
+        """UPDATE examples SET target_pred=1 WHERE JSON_UNQUOTE(JSON_EXTRACT(target_io,
+        "$.label"))="neutral" AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code
         in ('nli', 'ladc', 'dk_nli')))))""",
     ),
@@ -641,8 +641,8 @@ steps = [
         WHERE target_pred=2 AND (cid IN (SELECT id FROM contexts WHERE r_realid
         IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
         in ('NLI', 'LADC', 'DK_NLI')))))""",
-        """UPDATE examples SET target_pred=2 WHERE target_io=JSON_OBJECT("label",
-        "contradictory") AND (cid IN (SELECT id FROM contexts WHERE r_realid
+        """UPDATE examples SET target_pred=2 WHERE JSON_UNQUOTE(JSON_EXTRACT(target_io,
+        "$.label"))="contradictory" AND (cid IN (SELECT id FROM contexts WHERE r_realid
         IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code
         in ('nli', 'ladc', 'dk_nli')))))""",
     ),
@@ -651,60 +651,60 @@ steps = [
         (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
         WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('QA', 'UCL_QA', 'VQA',
         'VQA-VAL')))))""",
-        """UPDATE examples SET target_pred=JSON_EXTRACT(target_io, '$.answer') WHERE
-        (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
-        WHERE tid IN (SELECT id FROM tasks WHERE task_code in ('qa', 'ucl_qa',
-        'vqa', 'vqa_val')))))""",
+        """UPDATE examples SET target_pred=JSON_UNQUOTE(JSON_EXTRACT(target_io,
+        '$.answer')) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT
+        id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code in ('qa',
+        'ucl_qa', 'vqa', 'vqa_val')))))""",
     ),
     step(
         """UPDATE examples SET target_io=JSON_OBJECT("label", "not-hateful") WHERE
         target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT
         id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in
         ('Hate Speech')))))""",
-        """UPDATE examples SET target_pred=0 WHERE target_io=JSON_OBJECT("label", "not-hateful")
-        AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT
-        id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code in
-        ('hs')))))""",
+        """UPDATE examples SET target_pred=0 WHERE JSON_UNQUOTE(JSON_EXTRACT(
+        target_io, "$.label"))="not-hateful" AND (cid IN (SELECT id FROM contexts
+        WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks
+        WHERE task_code in ('hs')))))""",
     ),
     step(
         """UPDATE examples SET target_io=JSON_OBJECT("label", "hateful") WHERE
         target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
         in ('Hate Speech')))))""",
-        """UPDATE examples SET target_pred=1 WHERE target_io=JSON_OBJECT("label", "hateful")
-        AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
-        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code
-        in ('hs')))))""",
+        """UPDATE examples SET target_pred=1 WHERE JSON_UNQUOTE(JSON_EXTRACT(
+        target_io, "$.label"))="hateful" AND (cid IN (SELECT id FROM contexts WHERE
+        r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE
+        task_code in ('hs')))))""",
     ),
     step(
         """UPDATE examples SET target_io=JSON_OBJECT("label", "negative") WHERE
         target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
         in ('Sentiment')))))""",
-        """UPDATE examples SET target_pred=0 WHERE target_io=JSON_OBJECT("label", "negative")
-        AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
-        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code
-        in ('sentiment')))))""",
+        """UPDATE examples SET target_pred=0 WHERE JSON_UNQUOTE(JSON_EXTRACT(
+        target_io, "$.label"))="negative" AND (cid IN (SELECT id FROM contexts WHERE
+        r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE
+        task_code in ('sentiment')))))""",
     ),
     step(
         """UPDATE examples SET target_io=JSON_OBJECT("label", "positive") WHERE
         target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE
         shortname in ('Sentiment')))))""",
-        """UPDATE examples SET target_pred=1 WHERE target_io=JSON_OBJECT("label",
-        "positive") AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
-        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE
-        task_code in ('sentiment')))))""",
+        """UPDATE examples SET target_pred=1 WHERE JSON_UNQUOTE(JSON_EXTRACT(
+        target_io, "$.label"))="positive" AND (cid IN (SELECT id FROM contexts
+        WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks
+        WHERE task_code in ('sentiment')))))""",
     ),
     step(
         """UPDATE examples SET target_io=JSON_OBJECT("label", "neutral") WHERE
         target_pred=2 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
         in ('Sentiment')))))""",
-        """UPDATE examples SET target_pred=2 WHERE target_io=JSON_OBJECT("label", "neutral")
-        AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
-        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code
-        in ('sentiment')))))""",
+        """UPDATE examples SET target_pred=2 WHERE JSON_UNQUOTE(JSON_EXTRACT(
+        target_io, "$.label"))="neutral" AND (cid IN (SELECT id FROM contexts
+        WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM
+        tasks WHERE task_code in ('sentiment')))))""",
     ),
     step(
         "ALTER TABLE examples ADD COLUMN output_io TEXT",
@@ -788,6 +788,20 @@ steps = [
         IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
     ),
     step(
+        """UPDATE examples SET output_io=JSON_OBJECT("label", "neutral", "prob",
+        JSON_OBJECT("negative", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds,
+        '|', 1), '|', -1)), "positive", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
+        model_preds, '|', 2), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(
+        SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT
+        SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1) >=
+        SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)) AND
+        (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)
+        >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND
+        (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM
+        rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in
+        ('Sentiment')))))"""
+    ),
+    step(
         """UPDATE examples SET output_io=JSON_OBJECT("label", "negative", "prob",
         JSON_OBJECT("negative", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds,
         '|', 1), '|', -1)), "positive", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
@@ -814,19 +828,20 @@ steps = [
         WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("label", "neutral", "prob",
+        """UPDATE examples SET output_io=JSON_OBJECT("label", "positive", "prob",
         JSON_OBJECT("negative", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds,
         '|', 1), '|', -1)), "positive", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
-        model_preds, '|', 2), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(
-        SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT
-        SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1) >=
+        model_preds, '|', 2), '|', -1)), "neutral", 0)) WHERE (SELECT
+        SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1) >=
         SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)) AND
-        (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)
-        >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND
-        (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM
-        rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in
-        ('Sentiment')))))"""
-    ),
+        (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)
+        = SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)) AND
+        (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
+        WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
+    ),  # This command is needed because some of the sentiment examples don't have a
+    # neutral entry. In cases where there is no neutral entry, the previous sql
+    # statements make the neutral prob the same as the positive prob.
+    # This command makes the neutral prob 0 instead of the same as the positive prob.
     step(
         "ALTER TABLE examples ADD COLUMN metadata_io TEXT",
         "ALTER TABLE examples DROP metadata_io",
@@ -952,44 +967,47 @@ steps = [
     ),
     step(
         "",
-        """UPDATE examples SET model_preds=CONCAT(JSON_EXTRACT(JSON_EXTRACT(output_io,
-        "$.prob"), "$.entailed"), "|", JSON_EXTRACT(JSON_EXTRACT(output_io, "$.prob"),
-        "$.neutral"), "|", JSON_EXTRACT(JSON_EXTRACT(output_io, "$.prob"),
-        "$.contradictory")) WHERE cid IN (SELECT id FROM contexts WHERE r_realid IN
-        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code in
-        ('nli', 'ladc', 'dk_nli'))))""",
+        """UPDATE examples SET model_preds=CONCAT(JSON_UNQUOTE(JSON_EXTRACT(
+        JSON_UNQUOTE(JSON_EXTRACT(output_io, "$.prob")), "$.entailed")), "|",
+        JSON_UNQUOTE(JSON_EXTRACT(JSON_UNQUOTE(JSON_EXTRACT(output_io, "$.prob")),
+        "$.neutral")), "|", JSON_UNQUOTE(JSON_EXTRACT(JSON_UNQUOTE(JSON_EXTRACT(
+        output_io, "$.prob")), "$.contradictory"))) WHERE cid IN (SELECT id FROM
+        contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT
+        id FROM tasks WHERE task_code in ('nli', 'ladc', 'dk_nli'))))""",
     ),
     step(
         "",
-        """UPDATE examples SET model_preds=CONCAT(JSON_EXTRACT(JSON_EXTRACT(output_io,
-        "$.prob"), '$."not-hateful"'), "|", JSON_EXTRACT(JSON_EXTRACT(output_io,
-        "$.prob"), "$.hateful")) WHERE cid IN (SELECT id FROM contexts WHERE r_realid IN
+        """UPDATE examples SET model_preds=CONCAT(JSON_UNQUOTE(JSON_EXTRACT(
+        JSON_UNQUOTE(JSON_EXTRACT(output_io, "$.prob")), '$."not-hateful"')), "|",
+        JSON_UNQUOTE(JSON_EXTRACT(JSON_UNQUOTE(JSON_EXTRACT(output_io, "$.prob")),
+        "$.hateful"))) WHERE cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code in
         ('hs'))))""",
     ),
     step(
         "",
-        """UPDATE examples SET model_preds=CONCAT(JSON_EXTRACT(JSON_EXTRACT(output_io,
-        "$.prob"), "$.negative"), "|", JSON_EXTRACT(JSON_EXTRACT(output_io, "$.prob"),
-        "$.positive"), "|", JSON_EXTRACT(JSON_EXTRACT(output_io, "$.prob"),
-        "$.neutral")) WHERE cid IN (SELECT id FROM contexts WHERE r_realid IN
-        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code in
-        ('sentiment'))))""",
+        """UPDATE examples SET model_preds=CONCAT(JSON_UNQUOTE(JSON_EXTRACT(
+        JSON_UNQUOTE(JSON_EXTRACT(output_io, "$.prob")), "$.negative")), "|",
+        JSON_UNQUOTE(JSON_EXTRACT(JSON_UNQUOTE(JSON_EXTRACT(output_io, "$.prob")),
+        "$.positive")), "|", JSON_UNQUOTE(JSON_EXTRACT(JSON_UNQUOTE(JSON_EXTRACT(
+        output_io, "$.prob")), "$.neutral"))) WHERE cid IN (SELECT id FROM contexts
+        WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM
+        tasks WHERE task_code in ('sentiment'))))""",
     ),
     step(
         "",
-        """UPDATE examples SET model_preds=CONCAT(JSON_EXTRACT(output_io, "$.conf"),
-        "|", JSON_EXTRACT(output_io, "$.answer")) WHERE cid IN (SELECT id FROM
-        contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT
-        id FROM tasks WHERE task_code in ('qa', 'ucl_qa'))))
+        """UPDATE examples SET model_preds=CONCAT(JSON_UNQUOTE(JSON_EXTRACT(output_io,
+        "$.conf")), "|", JSON_UNQUOTE(JSON_EXTRACT(output_io, "$.answer"))) WHERE
+        cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
+        WHERE tid IN (SELECT id FROM tasks WHERE task_code in ('qa', 'ucl_qa'))))
         """,
     ),
     step(
         "",
-        """UPDATE examples SET model_preds=CONCAT(JSON_EXTRACT(output_io, "$.answer"),
-        "|", JSON_EXTRACT(output_io, "$.prob")) WHERE cid IN (SELECT id FROM
-        contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT
-        id FROM tasks WHERE task_code in ('vqa', 'vqa_val'))))
+        """UPDATE examples SET model_preds=CONCAT(JSON_UNQUOTE(JSON_EXTRACT(output_io,
+        "$.answer")), "|", JSON_UNQUOTE(JSON_EXTRACT(output_io, "$.prob"))) WHERE cid
+        IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE
+        tid IN (SELECT id FROM tasks WHERE task_code in ('vqa', 'vqa_val'))))
         """,
     ),
     step(
@@ -997,16 +1015,16 @@ steps = [
         "ALTER TABLE examples ADD COLUMN model_preds TEXT",
     ),
     step(
-        """UPDATE examples SET example_explanation=JSON_EXTRACT(metadata_io,
-        '$."example explanation"')"""
+        """UPDATE examples SET example_explanation=JSON_UNQUOTE(JSON_EXTRACT(metadata_io,
+        '$."example explanation"'))"""
     ),
     step(
         "ALTER TABLE examples DROP example_explanation",
         "ALTER TABLE examples ADD COLUMN example_explanation TEXT",
     ),
     step(
-        """UPDATE examples SET model_explanation=JSON_EXTRACT(metadata_io,
-        '$."model explanation"')"""
+        """UPDATE examples SET model_explanation=JSON_UNQUOTE(JSON_EXTRACT(metadata_io,
+        '$."model explanation"'))"""
     ),
     step(
         "ALTER TABLE examples DROP model_explanation",

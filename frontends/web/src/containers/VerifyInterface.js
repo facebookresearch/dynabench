@@ -23,7 +23,7 @@ import { OverlayProvider, BadgeOverlay, Annotation } from "./Overlay";
 import IO from "./IO.js";
 
 function initializeIO(ioDict, ioDefObj) {
-  if (ioDefObj.type === "goal_message_multiple_choice") {
+  if (ioDefObj.type === "target_label") {
     const random =
       ioDefObj.constructor_args.labels[
         Math.floor(Math.random() * ioDefObj.constructor_args.labels.length)

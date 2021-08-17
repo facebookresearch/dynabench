@@ -62,7 +62,7 @@ const MultipleChoiceIO = ({
   );
 };
 
-const GoalMessageMultipleChoiceIO = ({
+const TargetLabelIO = ({
   displayName,
   className,
   create,
@@ -304,9 +304,9 @@ const IO = ({
           constructorArgs={constructorArgs}
         />
       );
-    case "goal_message_multiple_choice":
+    case "target_label":
       return (
-        <GoalMessageMultipleChoiceIO
+        <TargetLabelIO
           displayName={displayName}
           className={className}
           create={create}
