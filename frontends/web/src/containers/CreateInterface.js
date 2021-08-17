@@ -573,12 +573,10 @@ class CreateInterface extends React.Component {
     this.updateRetainInput = this.updateRetainInput.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
     this.clearUserInput = this.clearUserInput.bind(this);
-    this.handleStoreExampleAndResponseInfo = this.handleStoreExampleAndResponseInfo.bind(
-      this
-    );
-    this.disentangleAndSetInputAndTargetIO = this.disentangleAndSetInputAndTargetIO.bind(
-      this
-    );
+    this.handleStoreExampleAndResponseInfo =
+      this.handleStoreExampleAndResponseInfo.bind(this);
+    this.disentangleAndSetInputAndTargetIO =
+      this.disentangleAndSetInputAndTargetIO.bind(this);
     this.chatContainerRef = React.createRef();
     this.bottomAnchorRef = React.createRef();
     this.inputRef = React.createRef();

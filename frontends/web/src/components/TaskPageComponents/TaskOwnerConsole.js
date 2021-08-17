@@ -19,9 +19,8 @@ import DragAndDrop from "../DragAndDrop/DragAndDrop";
 const TaskOwnerConsole = (props) => {
   const context = useContext(UserContext);
 
-  const [showTaskOwnerSettingsModal, setShowTaskOwnerSettingsModal] = useState(
-    false
-  );
+  const [showTaskOwnerSettingsModal, setShowTaskOwnerSettingsModal] =
+    useState(false);
   const [validateNonFooling, setValidateNonFooling] = useState(false);
   const [numMatchingValidations, setNumMatchingValidations] = useState(3);
 
