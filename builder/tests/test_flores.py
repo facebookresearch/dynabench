@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 from pathlib import Path
 
-from models.task import TaskModel, Task
+from models.task import Task, TaskModel
 from utils import deployer
 
 
