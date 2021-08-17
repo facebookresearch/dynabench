@@ -13,17 +13,21 @@ steps = [
     step("ALTER TABLE validations ADD COLUMN metadata_io TEXT"),
     step("ALTER TABLE tasks ADD COLUMN create_endpoint Boolean"),
     step(
-        "UPDATE tasks SET create_endpoint=false WHERE shortname IN ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"
+        """UPDATE tasks SET create_endpoint=false WHERE shortname IN
+        ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
     step(
-        "UPDATE tasks SET create_endpoint=true WHERE shortname NOT IN ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"
+        """UPDATE tasks SET create_endpoint=true WHERE shortname NOT IN
+        ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
     step("ALTER TABLE tasks ADD COLUMN gpu Boolean"),
     step(
-        "UPDATE tasks SET gpu=true WHERE shortname IN ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"
+        """UPDATE tasks SET gpu=true WHERE shortname IN
+        ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
     step(
-        "UPDATE tasks SET gpu=false WHERE shortname NOT IN ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"
+        """UPDATE tasks SET gpu=false WHERE shortname NOT IN
+        ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
     step("ALTER TABLE tasks ADD COLUMN torchserve_config TEXT"),
     step(
@@ -35,7 +39,8 @@ steps = [
         }' WHERE shortname IN ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
     step(
-        """UPDATE tasks SET torchserve_config="{}" WHERE shortname NOT IN ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
+        """UPDATE tasks SET torchserve_config="{}" WHERE shortname NOT IN
+        ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
     step("ALTER TABLE tasks ADD COLUMN io_def TEXT"),
     step(
@@ -354,50 +359,112 @@ steps = [
     step("ALTER TABLE tasks ADD COLUMN aggregation_metric ENUM('dynascore')"),
     step("ALTER TABLE tasks ADD COLUMN model_wrong_metric TEXT"),
     step(
-        """UPDATE tasks SET model_wrong_metric='{"type": "exact_match", "constructor_args": {}}' WHERE shortname not in ('QA','DK_QA', 'UCL_QA', 'VQA', 'VQA-VAL')"""
+        """UPDATE tasks SET model_wrong_metric='{"type": "exact_match", "constructor_args": {}}'
+        WHERE shortname not in ('QA','DK_QA', 'UCL_QA', 'VQA', 'VQA-VAL')"""
     ),
     step(
-        """UPDATE tasks SET model_wrong_metric='{"type": "string_f1", "constructor_args": {"threshold": 0.9}}' WHERE shortname in ('QA','DK_QA', 'UCL_QA')"""
+        """UPDATE tasks SET model_wrong_metric='{"type": "string_f1",
+        "constructor_args": {"threshold": 0.9}}' WHERE shortname in
+        ('QA','DK_QA', 'UCL_QA')"""
     ),
     step(
-        """UPDATE tasks SET model_wrong_metric='{"type": "ask_user", "constructor_args": {}}' WHERE shortname in ('VQA', 'VQA-VAL')"""
+        """UPDATE tasks SET model_wrong_metric='{"type": "ask_user",
+        "constructor_args": {}}' WHERE shortname in ('VQA', 'VQA-VAL')"""
     ),
     step("ALTER TABLE tasks ADD COLUMN instructions TEXT"),
     step(
         """
-    UPDATE tasks SET instructions='Find an example that the model gets wrong but that another person would get right.'
+    UPDATE tasks SET instructions='Find an example that the model gets wrong but
+    that another person would get right.'
     """
     ),
     step(
         """
-    UPDATE tasks SET instructions='You will be presented with a passage of text, for which you should ask questions that the AI cannot answer correctly but that another person would get right. After entering the question, select the answer by highlighting the words that best answer the question in the passage.\n\nTry to come up with creative ways to beat the AI, and if you notice any consistent failure modes, please be sure to let us know in the explanation section!\n\nTry to ensure that:\n1. Questions must have only one valid answer in the passage\n2. The shortest span which correctly answers the question is selected\n3. Questions can be correctly answered from a span in the passage and DO NOT require a Yes or No answer\n4. Questions can be answered from the content of the passage and DO NOT rely on expert external knowledge\n5. DO NOT ask questions about the passage structure such as "What is the third word in the passage?"' WHERE shortname IN ('QA')
-    """
+        UPDATE tasks SET instructions='You will be presented with a passage of text,"""
+        + """ for which you should ask questions that the AI cannot answer correctly """
+        + """but that another person would get right. After entering the question, """
+        + """select the answer by highlighting the words that best answer the """
+        + """question in the passage.\n\nTry to come up with creative ways to beat """
+        + """the AI, and if you notice any consistent failure modes, please be """
+        + """sure to let us know in the explanation section!\n\nTry to ensure """
+        + """that:\n1. Questions must have only one valid answer in the passage\n2. """
+        + """The shortest span which correctly answers the question is selected\n3. """
+        + """Questions can be correctly answered from a span in the passage and DO """
+        + """NOT require a Yes or No answer\n4. Questions can be answered from the """
+        + """content of the passage and DO NOT rely on expert external """
+        + """knowledge\n5. DO NOT ask questions about the passage structure such """
+        + """as "What is the third word in the passage?"' WHERE shortname IN ('QA')
+        """
     ),
     step(
         """
-    UPDATE tasks SET instructions='For the purposes of this task we define hate speech as follows:\n\nA direct or indirect attack on people based on characteristics, including ethnicity, race, nationality, immigration status, religion, caste, sex, gender identity, sexual orientation, and disability or disease. We define attack as violent or dehumanizing (comparing people to non-human things, e.g. animals) speech, statements of inferiority, and calls for exclusion or segregation. Mocking hate crime is also considered hate speech. Attacking individuals/famous people is allowed if the attack is not based on any of the protected characteristics listed in the definition. Attacking groups perpetrating hate (e.g. terrorist groups) is also not considered hate.\n\nNote that, if this wasn\\'t already abundantly clear: this hate speech definition, and the hate speech model used in the loop, do not in any way reflect Facebook\\'s (or anyone else\\'s) policy on hate speech.' WHERE shortname IN ('Hate Speech')
-    """
+        UPDATE tasks SET instructions='For the purposes of this task we define """
+        + """hate speech as follows:\n\nA direct or indirect attack on people """
+        + """based on characteristics, including ethnicity, race, nationality, """
+        + """immigration status, religion, caste, sex, gender identity, sexual """
+        + """orientation, and disability or disease. We define attack as """
+        + """violent or dehumanizing (comparing people to non-human things, """
+        + """e.g. animals) speech, statements of inferiority, and calls for """
+        + """exclusion or segregation. Mocking hate crime is also considered """
+        + """hate speech. Attacking individuals/famous people is allowed if the """
+        + """attack is not based on any of the protected characteristics listed """
+        + """in the definition. Attacking groups perpetrating hate (e.g. """
+        + """terrorist groups) is also not considered hate.\n\nNote that, if """
+        + """this wasn\\'t already abundantly clear: this hate speech """
+        + """definition, and the hate speech model used in the loop, do not in """
+        + """any way reflect Facebook\\'s (or anyone else\\'s) policy on hate """
+        + """speech.' WHERE shortname IN ('Hate Speech')
+        """
     ),
     step(
         """
-    UPDATE tasks SET instructions='Your objective is to come up with a statement that is either positive, neutral or negative, in such a way that you fool the model. Your statement should be classified correctly by another person!\n\nTry to come up with creative ways to fool the model. The prompt is meant as a starting point to give you inspiration.' WHERE shortname IN ('Sentiment')
-    """
+        UPDATE tasks SET instructions='Your objective is to come up with a """
+        + """statement that is either positive, neutral or negative, in such a """
+        + """way that you fool the model. Your statement should be classified """
+        + """correctly by another person!\n\nTry to come up with creative ways """
+        + """to fool the model. The prompt is meant as a starting point to give """
+        + """you inspiration.' WHERE shortname IN ('Sentiment')
+        """
     ),
     step(
         """
-    UPDATE tasks SET instructions='You will be presented with a label and a passage of text. Assuming the passage is true, please write another passage that is paired with the first via the label (either "entailment", "neutral", or "contradiction").\n\nWrite your passage so another person will be able to guess the correct label, but the AI will be fooled!\n\nTry to come up with creative ways to beat the AI! If you notice any consistent AI failure modes, please share them in the "explanation of model failure" field! If you would like to explain why you are right and the model is wrong, please add that information in the "explanation of label" field!\n\nTry to ensure that:\n1. Your passage contains at least one complete sentence.\n2. Your passage cannot be related to the provided text by any label other than the provided one (remember, you can always retract mistakes!).\n3. You do not refer to the passage structure itself, such as "the third word of the passage is \\'the\\'".\n4. You do not refer to or speculate about the author of the passage, but instead focus only on its content.\n5. Your passage does not require any expert external knowledge not provided.\n6. Your spelling is correct.' WHERE shortname IN ('NLI', 'LADC', 'DK_NLI')
-    """
+        UPDATE tasks SET instructions='You will be presented with a label and a """
+        + """passage of text. Assuming the passage is true, please write another """
+        + """passage that is paired with the first via the label (either """
+        + """"entailment", "neutral", or "contradiction").\n\nWrite your passage """
+        + """so another person will be able to guess the correct label, but the """
+        + """AI will be fooled!\n\nTry to come up with creative ways to beat the """
+        + """AI! If you notice any consistent AI failure modes, please share them """
+        + """in the "explanation of model failure" field! If you would like to """
+        + """explain why you are right and the model is wrong, please add that """
+        + """information in the "explanation of label" field!\n\nTry to ensure """
+        + """that:\n1. Your passage contains at least one complete sentence.\n2. """
+        + """Your passage cannot be related to the provided text by any label """
+        + """other than the provided one (remember, you can always retract """
+        + """mistakes!).\n3. You do not refer to the passage structure itself, """
+        + """such as "the third word of the passage is \\'the\\'".\n4. You do not """
+        + """refer to or speculate about the author of the passage, but instead """
+        + """focus only on its content.\n5. Your passage does not require any """
+        + """expert external knowledge not provided.\n6. Your spelling is """
+        + """correct.' WHERE shortname IN ('NLI', 'LADC', 'DK_NLI')
+        """
     ),
     step("ALTER TABLE tasks ADD COLUMN goal_message TEXT"),
     step(
-        "UPDATE tasks SET goal_message='enter a question and answer based on the image, such that the model is fooled.' WHERE shortname in ('VQA', 'VQA-VAL')"
+        """UPDATE tasks SET goal_message='enter a question and answer based on
+            the image, such that the model is fooled.' WHERE shortname in
+            ('VQA', 'VQA-VAL')"""
     ),
     step(
-        "UPDATE tasks SET goal_message='enter a question and select an answer in the context, such that the model is fooled.' WHERE shortname in ('QA', 'DK_QA', 'UCL_QA')"
+        """UPDATE tasks SET goal_message='enter a question and select an answer
+        in the context, such that the model is fooled.' WHERE shortname in
+        ('QA', 'DK_QA', 'UCL_QA')"""
     ),
     step("ALTER TABLE tasks ADD COLUMN warning_message TEXT"),
     step(
-        "UPDATE tasks SET warning_message='This is sensitive content! If you do not want to see any hateful examples, please switch to another task.' WHERE shortname in ('Hate Speech')"
+        """UPDATE tasks SET warning_message='This is sensitive content! If you
+        do not want to see any hateful examples, please switch to another task.'
+        WHERE shortname in ('Hate Speech')"""
     ),
     step("ALTER TABLE tasks ADD COLUMN instance_type TEXT"),
     step("UPDATE tasks SET instance_type='ml.m5.2xlarge'"),
@@ -413,23 +480,25 @@ steps = [
     step("ALTER TABLE tasks ADD COLUMN eval_metrics TEXT"),
     step("ALTER TABLE tasks ADD COLUMN perf_metric TEXT"),
     step(
-        """UPDATE tasks SET perf_metric='macro_f1', eval_metrics='macro_f1' WHERE shortname IN
-        ('Sentiment', 'Hate Speech')"""
+        """UPDATE tasks SET perf_metric='macro_f1', eval_metrics='macro_f1'
+        WHERE shortname IN ('Sentiment', 'Hate Speech')"""
     ),
     step(
-        """UPDATE tasks SET perf_metric='squad_f1', eval_metrics='squad_f1' WHERE shortname IN
-        ('QA', 'UCL_QA', 'DK_QA', 'VQA', 'VQA-VAL')"""
+        """UPDATE tasks SET perf_metric='squad_f1', eval_metrics='squad_f1'
+        WHERE shortname IN ('QA', 'UCL_QA', 'DK_QA', 'VQA', 'VQA-VAL')"""
     ),
     step(
-        "UPDATE tasks SET perf_metric='accuracy', eval_metrics='accuracy' WHERE shortname IN ('DK_NLI', 'NLI', 'LADC')"
+        """UPDATE tasks SET perf_metric='accuracy', eval_metrics='accuracy' WHERE
+        shortname IN ('DK_NLI', 'NLI', 'LADC')"""
     ),
     step(
-        """UPDATE tasks SET perf_metric='sp_bleu', eval_metrics='sp_bleu' WHERE shortname IN
-        ('FLORES-FULL','FLORES-SMALL1', 'FLORES-SMALL2')"""
+        """UPDATE tasks SET perf_metric='sp_bleu', eval_metrics='sp_bleu' WHERE
+        shortname IN ('FLORES-FULL','FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
     step("ALTER TABLE tasks ADD COLUMN delta_metrics TEXT"),
     step(
-        "UPDATE tasks SET delta_metrics='fairness|robustness' WHERE shortname NOT IN ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"
+        """UPDATE tasks SET delta_metrics='fairness|robustness' WHERE shortname NOT
+        IN ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
     step("ALTER TABLE tasks ADD COLUMN aws_region TEXT"),
     step("UPDATE tasks SET aws_region='us-west-1'"),
@@ -450,90 +519,221 @@ steps = [
         ('FLORES-FULL','FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
     step(
-        """UPDATE contexts SET context=JSON_OBJECT("context", context) WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname not in ('VQA', 'VQA-VAL')))"""
+        """UPDATE contexts SET context=JSON_OBJECT("context", context) WHERE
+        r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks
+        WHERE shortname not in ('VQA', 'VQA-VAL')))"""
     ),
     step(
-        """UPDATE contexts SET context=JSON_OBJECT("image_url", context) WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('VQA', 'VQA-VAL')))"""
+        """UPDATE contexts SET context=JSON_OBJECT("image_url", context) WHERE
+        r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE
+        shortname in ('VQA', 'VQA-VAL')))"""
     ),
     step("ALTER TABLE contexts CHANGE context context_io TEXT"),
     step("ALTER TABLE examples ADD COLUMN input_io TEXT"),
     step(
-        """UPDATE examples SET input_io=JSON_OBJECT("hypothesis", text) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
+        """UPDATE examples SET input_io=JSON_OBJECT("hypothesis", text) WHERE
+        (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
+        WHERE tid IN (SELECT id FROM tasks WHERE shortname in
+        ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
     step(
-        """UPDATE examples SET input_io=JSON_OBJECT("question", text) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('VQA', 'VQA-VAL', 'QA', 'UCL_QA')))))"""
+        """UPDATE examples SET input_io=JSON_OBJECT("question", text) WHERE
+        (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
+        WHERE tid IN (SELECT id FROM tasks WHERE shortname in
+        ('VQA', 'VQA-VAL', 'QA', 'UCL_QA')))))"""
     ),
     step(
-        """UPDATE examples SET input_io=JSON_OBJECT("statement", text) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
+        """UPDATE examples SET input_io=JSON_OBJECT("statement", text) WHERE
+        (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
+        WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
     ),
     step(
-        """UPDATE examples SET input_io=JSON_OBJECT("statement", text) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
+        """UPDATE examples SET input_io=JSON_OBJECT("statement", text) WHERE
+        (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
+        WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
     ),
     step("ALTER TABLE examples ADD COLUMN target_io TEXT"),
     step(
-        """UPDATE examples SET target_io=JSON_OBJECT("label", "entailed") WHERE target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
+        """UPDATE examples SET target_io=JSON_OBJECT("label", "entailed") WHERE
+        target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
+        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
+        in ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
     step(
-        """UPDATE examples SET target_io=JSON_OBJECT("label", "neutral") WHERE target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
+        """UPDATE examples SET target_io=JSON_OBJECT("label", "neutral") WHERE
+        target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
+        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
+        in ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
     step(
-        """UPDATE examples SET target_io=JSON_OBJECT("label", "contradictory") WHERE target_pred=2 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
+        """UPDATE examples SET target_io=JSON_OBJECT("label", "contradictory")
+        WHERE target_pred=2 AND (cid IN (SELECT id FROM contexts WHERE r_realid
+        IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
+        in ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
     step(
-        """UPDATE examples SET target_io=JSON_OBJECT("answer", target_pred) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('QA', 'UCL_QA')))))"""
+        """UPDATE examples SET target_io=JSON_OBJECT("answer", target_pred) WHERE
+        (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
+        WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('QA', 'UCL_QA')))))"""
     ),
     step(
-        """UPDATE examples SET target_io=JSON_OBJECT("label", "not-hateful") WHERE target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
+        """UPDATE examples SET target_io=JSON_OBJECT("label", "not-hateful") WHERE
+        target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT
+        id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in
+        ('Hate Speech')))))"""
     ),
     step(
-        """UPDATE examples SET target_io=JSON_OBJECT("label", "hateful") WHERE target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
+        """UPDATE examples SET target_io=JSON_OBJECT("label", "hateful") WHERE
+        target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
+        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
+        in ('Hate Speech')))))"""
     ),
     step(
-        """UPDATE examples SET target_io=JSON_OBJECT("label", "negative") WHERE target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
+        """UPDATE examples SET target_io=JSON_OBJECT("label", "negative") WHERE
+        target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
+        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
+        in ('Sentiment')))))"""
     ),
     step(
-        """UPDATE examples SET target_io=JSON_OBJECT("label", "positive") WHERE target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
+        """UPDATE examples SET target_io=JSON_OBJECT("label", "positive") WHERE
+        target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
+        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE
+        shortname in ('Sentiment')))))"""
     ),
     step(
-        """UPDATE examples SET target_io=JSON_OBJECT("label", "neutral") WHERE target_pred=2 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
+        """UPDATE examples SET target_io=JSON_OBJECT("label", "neutral") WHERE
+        target_pred=2 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
+        (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
+        in ('Sentiment')))))"""
     ),
     step("ALTER TABLE examples ADD COLUMN output_io TEXT"),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("label", "entailed", "prob", JSON_OBJECT("entailed", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "contradictory", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("label", "entailed", "prob",
+        JSON_OBJECT("entailed", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds,
+        '|', 1), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
+        model_preds, '|', 2), '|', -1)), "contradictory", (SELECT SUBSTRING_INDEX(
+        SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT
+        SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >=
+        SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND
+        (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)
+        >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)) AND
+        (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
+        WHERE tid IN (SELECT id FROM tasks WHERE shortname in
+        ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("label", "neutral", "prob", JSON_OBJECT("entailed", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "contradictory", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("label", "neutral", "prob",
+        JSON_OBJECT("entailed", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds,
+        '|', 1), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
+        model_preds, '|', 2), '|', -1)), "contradictory", (SELECT SUBSTRING_INDEX(
+        SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT
+        SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1) >=
+        SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)) AND
+        (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)
+        >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)) AND
+        (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM
+        rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in
+        ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("label", "contradictory", "prob", JSON_OBJECT("entailed", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "contradictory", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('NLI', 'LADC', 'DK_NLI')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("label", "contradictory",
+        "prob", JSON_OBJECT("entailed", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
+        model_preds, '|', 1), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(
+        SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "contradictory", (SELECT
+        SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE
+        (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)
+        >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)) AND
+        (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)
+        >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND
+        (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM
+        rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in
+        ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("answer", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1))) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('QA', 'UCL_QA')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("answer", (SELECT
+        SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)))
+        WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id
+        FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in
+        ('QA', 'UCL_QA')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("answer", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "prob", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1))) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('VQA', 'VQA-VAL')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("answer", (SELECT
+        SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "prob",
+        (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)))
+        WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM
+        rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in
+        ('VQA', 'VQA-VAL')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("label", "not-hateful", "prob", JSON_OBJECT("not-hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("label", "not-hateful", "prob",
+        JSON_OBJECT("not-hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds,
+        '|', 1), '|', -1)), "hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
+        model_preds, '|', 2), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(
+        SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >= SUBSTRING_INDEX(
+        SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (cid IN (SELECT
+        id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid
+        IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("label", "hateful", "prob", JSON_OBJECT("not-hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) <= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("label", "hateful", "prob",
+        JSON_OBJECT("not-hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds,
+        '|', 1), '|', -1)), "hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
+        model_preds, '|', 2), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(
+        SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) <= SUBSTRING_INDEX(
+        SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (cid IN (SELECT
+        id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid
+        IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("label", "negative", "prob", JSON_OBJECT("negative", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "positive", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("label", "negative", "prob",
+        JSON_OBJECT("negative", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds,
+        '|', 1), '|', -1)), "positive", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
+        model_preds, '|', 2), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(
+        SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT
+        SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1) >=
+        SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND
+        (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)
+        >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)) AND
+        (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
+        WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("label", "positive", "prob", JSON_OBJECT("negative", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "positive", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("label", "positive", "prob",
+        JSON_OBJECT("negative", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds,
+        '|', 1), '|', -1)), "positive", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
+        model_preds, '|', 2), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(
+        SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT
+        SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1) >=
+        SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)) AND
+        (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)
+        >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)) AND
+        (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
+        WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("label", "neutral", "prob", JSON_OBJECT("negative", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "positive", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)) AND (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1) >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
+        """UPDATE examples SET output_io=JSON_OBJECT("label", "neutral", "prob",
+        JSON_OBJECT("negative", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds,
+        '|', 1), '|', -1)), "positive", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
+        model_preds, '|', 2), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(
+        SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)))) WHERE (SELECT
+        SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1) >=
+        SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)) AND
+        (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 3), '|', -1)
+        >= SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)) AND
+        (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM
+        rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in
+        ('Sentiment')))))"""
     ),
     step("ALTER TABLE examples ADD COLUMN metadata_io TEXT"),
     step(
-        """UPDATE examples SET metadata_io=JSON_OBJECT("example explanation", example_explanation, "model explanation", model_explanation)"""
+        """UPDATE examples SET metadata_io=JSON_OBJECT("example explanation",
+        example_explanation, "model explanation", model_explanation)"""
     ),
     step(
-        """UPDATE examples SET metadata_io=JSON_OBJECT("target_answer", target_pred) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('VQA', 'VQA-VAL')))))"""
+        """UPDATE examples SET metadata_io=JSON_OBJECT("target_answer", target_pred)
+        WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM
+        rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in
+        ('VQA', 'VQA-VAL')))))"""
     ),
     step("ALTER TABLE tasks DROP shortname"),
     step("ALTER TABLE tasks DROP type"),
