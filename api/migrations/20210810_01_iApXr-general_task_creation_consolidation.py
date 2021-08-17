@@ -959,7 +959,7 @@ steps = [
     ),
     step(
         "ALTER TABLE examples CHANGE target_model model_endpoint_name TEXT",
-        "ALTER TABLE examples CHANGE model_endpoint_name model_endpoint_name TEXT",
+        "ALTER TABLE examples CHANGE model_endpoint_name target_model TEXT",
     ),
     step(
         "ALTER TABLE examples DROP target_pred",
