@@ -188,7 +188,9 @@ class ModelDeployer:
 
         torchserve_config_file = os.path.join(self.root_dir, "config.properties")
         config = get_torchserve_config(
-            torchserve_config_file, self.model.task.task_code, self.model.task.torchserve_config
+            torchserve_config_file,
+            self.model.task.task_code,
+            self.model.task.torchserve_config,
         )
         Path(torchserve_config_file).write_text(config)
 
@@ -414,9 +416,7 @@ class ModelDeployer:
             if delayed:
                 status = "delayed"
             elif deployed:
-                status = (
-                    "deployed" if self.model.task.create_endpoint else "created"
-                )
+                status = "deployed" if self.model.task.create_endpoint else "created"
             else:
                 status = "failed"
             response = {"status": status, "ex_msg": ex_msg}
@@ -475,7 +475,9 @@ def docker_build_cmd(
     return f"docker build --network host -t {repository_name} -f {docker_file} {docker_build_args} ."
 
 
-def get_torchserve_config(base_file: Path, task_code: str, torchserve_config_str: str) -> str:
+def get_torchserve_config(
+    base_file: Path, task_code: str, torchserve_config_str: str
+) -> str:
     base_content = Path(base_file).read_text()
     config = torchserve_config_str
     if not config:

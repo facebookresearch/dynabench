@@ -12,7 +12,9 @@ TORCHSERVE_CONFIG = DOCKERFILES / "config.properties"
 
 def test_torchserve_config_is_valid():
     for task in TaskModel.dbs.query(Task):
-        deployer.get_torchserve_config(TORCHSERVE_CONFIG, task.task_code, task.torchserve_config)
+        deployer.get_torchserve_config(
+            TORCHSERVE_CONFIG, task.task_code, task.torchserve_config
+        )
 
 
 def test_flores_config():
