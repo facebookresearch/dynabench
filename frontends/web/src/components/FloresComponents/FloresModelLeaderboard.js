@@ -187,6 +187,9 @@ const FloresModelLeaderboard = (props) => {
               history={history}
               sort={sort}
               total={total}
+              customDescription={`Save leaderboard standings and share with 
+              anyone using a permanent link. Results shown in the snapshot 
+              table will be frozen and will not change over time.`}
             />
             {!props.disableSnapshot && (
               <OverlayTrigger
