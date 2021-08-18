@@ -2,6 +2,8 @@ import datetime
 
 import sqlalchemy as db
 
+from common import helpers as util
+
 from .base import Base, BaseModel
 
 
@@ -60,4 +62,13 @@ class LeaderboardConfigurationModel(BaseModel):
             .filter_by(tid=tid, name=name)
             .scalar()
             is not None
+        )
+
+    def getUserForksByUid(self, uid, limit=5, offset=0):
+        query_res = self.dbs.query(LeaderboardConfiguration).filter(
+            LeaderboardConfiguration.uid == uid
+        )
+        return (
+            query_res.limit(limit).offset(offset * limit),
+            util.get_query_count(query_res),
         )

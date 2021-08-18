@@ -11,6 +11,8 @@ import common.helpers as util
 import common.mail_service as mail
 from common.logging import logger
 from models.badge import BadgeModel
+from models.leaderboard_configuration import LeaderboardConfigurationModel
+from models.leaderboard_snapshot import LeaderboardSnapshotModel
 from models.model import ModelModel
 from models.notification import NotificationModel
 from models.refresh_token import RefreshTokenModel
@@ -225,6 +227,42 @@ def recover_password():
             "Reset password failure ({}): ({})".format(data["email"], error_message)
         )
         bottle.abort(403, "Reset password failed")
+
+
+@bottle.get("/users/<uid:int>/forks")
+@_auth.requires_auth
+def get_user_forks(credentials, uid):
+
+    if not util.is_current_user(uid=uid, credentials=credentials):
+        logger.error("Not authorized to view forks")
+        bottle.abort(403, "Not authorized to view forks")
+
+    limit, offset = util.get_limit_and_offset_from_request()
+    lcm = LeaderboardConfigurationModel()
+
+    results, total_count = lcm.getUserForksByUid(uid, limit=limit, offset=offset)
+    dicts = [fork_obj.to_dict() for fork_obj in results]
+    if dicts:
+        return util.json_encode({"count": total_count, "data": dicts})
+    return util.json_encode({"count": 0, "data": []})
+
+
+@bottle.get("/users/<uid:int>/snapshots")
+@_auth.requires_auth
+def get_user_snapshots(credentials, uid):
+
+    if not util.is_current_user(uid=uid, credentials=credentials):
+        logger.error("Not authorized to view snapshots")
+        bottle.abort(403, "Not authorized to view snapshots")
+
+    limit, offset = util.get_limit_and_offset_from_request()
+    lsm = LeaderboardSnapshotModel()
+
+    results, total_count = lsm.getUserSnapshotsByUid(uid, limit=limit, offset=offset)
+    dicts = [snapshot_obj.to_dict() for snapshot_obj in results]
+    if dicts:
+        return util.json_encode({"count": total_count, "data": dicts})
+    return util.json_encode({"count": 0, "data": []})
 
 
 @bottle.get("/users/<uid:int>/models")
