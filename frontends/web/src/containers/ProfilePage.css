@@ -13,3 +13,8 @@ form.profileForm input[disabled] {
 .modelTable tr:hover {
     background-color: #f7f7f7;
 }
+
+.long-text {
+    max-width: 300px;
+    min-width: 300px;
+}

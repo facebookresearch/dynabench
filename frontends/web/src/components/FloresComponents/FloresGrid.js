@@ -78,6 +78,7 @@ const FloresGrid = ({ model }) => {
   const [categories, setCategories] = useState([]);
   const [minScore, setMinScore] = useState();
   const [maxScore, setMaxScore] = useState();
+  const [datasetTitle, setDatasetTitle] = useState("");
 
   useEffect(() => {
     const perf_by_tag =
@@ -93,6 +94,9 @@ const FloresGrid = ({ model }) => {
     setMinScore(min);
     setMaxScore(max);
     setCategories(getDict(perf_by_tag).map((a) => a.tag));
+    setDatasetTitle(
+      model.leaderboard_scores[0] && model.leaderboard_scores[0].dataset_name
+    );
   }, [model]);
 
   const getPointCategoryName = (point, dimension) => {
@@ -160,7 +164,7 @@ const FloresGrid = ({ model }) => {
     },
 
     title: {
-      text: "FLORES Devtest Performance Grid (BLEU Score)",
+      text: `${datasetTitle} Performance Grid (BLEU Score)`,
     },
     legend: {
       enabled: true,

@@ -11,22 +11,7 @@ import { useState, useRef } from "react";
 import { Table } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import WeightIndicator from "./WeightIndicator";
-
-/**
- * Render an expanded / collapsed state chevron.
- * @param {bool} props.expanded
- */
-const ChevronExpandButton = ({ expanded }) => {
-  return (
-    <span type="button" className="position-absolute start-100">
-      {expanded ? (
-        <i className="fas fa-chevron-down"></i>
-      ) : (
-        <i className="fas fa-chevron-right"></i>
-      )}
-    </span>
-  );
-};
+import ChevronExpandButton from "../Buttons/ChevronExpandButton";
 
 /**
  * Weight Slider UI
@@ -206,7 +191,10 @@ const TaskModelLeaderboardRow = ({ model, metrics, datasetWeights }) => {
             ({model.username})
           </Link>
           <div style={{ float: "right" }}>
-            <ChevronExpandButton expanded={expanded} />
+            <ChevronExpandButton
+              expanded={expanded}
+              containerClassName={"position-absolute start-100"}
+            />
           </div>
         </td>
 

@@ -362,6 +362,24 @@ export default class ApiService {
     );
   }
 
+  getUserForks(userId, limit, offset) {
+    return this.fetch(
+      `${this.domain}/users/${userId}/forks?limit=${limit}&offset=${offset}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  getUserSnapshots(userId, limit, offset) {
+    return this.fetch(
+      `${this.domain}/users/${userId}/snapshots?limit=${limit}&offset=${offset}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
   getModelResponse(modelUrl, exampleIO) {
     exampleIO["uid"] = "0"; //A requied field for dynalab uploaded models. TODO: fix
     exampleIO["insight"] = false; //TODO: an artifact of old models
