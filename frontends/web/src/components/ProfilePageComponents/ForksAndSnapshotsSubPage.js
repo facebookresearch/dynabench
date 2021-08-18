@@ -114,7 +114,7 @@ const ForkOrSnapshotTable = (props) => {
                             </td>
                             <td>
                               <Link to={`/tasks/${task[0].task_code}`}>
-                                {task[0].shortname}
+                                {task[0].task_code}
                               </Link>
                             </td>
                           </>

@@ -14,8 +14,14 @@ const ModelSubPage = (props) => {
   const [page, setPage] = useState(0);
   const [isEndOfPage, setIsEndOfPage] = useState(true);
 
-  const { api, userId, pageLimit, history, pageTitle, isSelfModelsTable } =
-    props;
+  const {
+    api,
+    userId,
+    pageLimit,
+    history,
+    pageTitle,
+    isSelfModelsTable,
+  } = props;
 
   useEffect(() => {
     api.getUserModels(userId, pageLimit, page).then(
@@ -28,7 +34,7 @@ const ModelSubPage = (props) => {
         console.log(error);
       }
     );
-  }, [userId, page]);
+  }, [userId, page, api, pageLimit]);
 
   const paginate = (state) => {
     const is_next = state === "next";
@@ -79,7 +85,7 @@ const ModelSubPage = (props) => {
                           {({ tasks }) => {
                             const task =
                               model && tasks.filter((e) => e.id === model.tid);
-                            return task && task.length && task[0].shortname;
+                            return task && task.length && task[0].task_code;
                           }}
                         </TasksContext.Consumer>
                       </td>
