@@ -46,11 +46,15 @@ const TaskModelLeaderboardSnapshotPage = (props) => {
             });
           }
 
+          const newPathname = isFlores
+            ? `/flores/${taskData.shortname}`
+            : `/tasks/${taskCode}`;
+
           context.api.getLeaderboardSnapshot(snapshotId).then(
             (snapshotWithCreatorData) => {
               if (snapshotWithCreatorData?.snapshot.tid !== taskData.id) {
                 props.history.replace({
-                  pathname: `/tasks/${taskCode}`,
+                  pathname: newPathname,
                 });
               } else {
                 setSnapshotWithCreator(snapshotWithCreatorData);
@@ -60,9 +64,6 @@ const TaskModelLeaderboardSnapshotPage = (props) => {
             (error) => {
               console.log(error);
               if (error && error.status_code === 404) {
-                const newPathname = isFlores
-                  ? `/flores/${taskData.shortname}`
-                  : `/tasks/${taskCode}`;
                 props.history.replace({
                   pathname: newPathname,
                 });
