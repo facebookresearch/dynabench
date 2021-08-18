@@ -13,14 +13,7 @@ import UserContext from "../../containers/UserContext";
 import TaskModelLeaderboardTable from "./TaskModelLeaderboardTable";
 import ForkModal from "./ForkModal";
 import SnapshotModal from "./SnapshotModal";
-
-const SortDirection = {
-  ASC: "asc",
-  DESC: "desc",
-  getOppositeDirection(direction) {
-    return direction === this.ASC ? this.DESC : this.ASC;
-  },
-};
+import { SortDirection } from "./SortContainer";
 
 /**
  * Represents the leader board for a task. i.e. Dynaboard
