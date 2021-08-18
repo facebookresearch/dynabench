@@ -332,7 +332,7 @@ const TaskModelLeaderboardCard = (props) => {
                           encodeURIComponent(
                             "You need to login to create a leaderboard snapshot."
                           ) +
-                          `&src=/tasks/${taskId}`
+                          `&src=/tasks/${taskCode}`
                       );
                     }
                   }}

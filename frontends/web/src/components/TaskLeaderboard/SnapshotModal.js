@@ -60,9 +60,7 @@ const SnapshotModal = (props) => {
       )
       .then(
         (result) => {
-          const snapshotUrl = new URL(window.location.href);
-          snapshotUrl.pathname = `/tasks/${taskCode}/${result.id}`;
-          setSnapshotUrl(snapshotUrl.toString());
+          setSnapshotUrl(`https://ldbd.ly/${taskCode}/${result.id}`);
           setSnapshotCreatedSuccessfully(true);
         },
         (error) => {

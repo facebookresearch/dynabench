@@ -190,8 +190,8 @@ const FloresTaskPage = (props) => {
               >
                 <FloresModelLeaderBoard
                   {...props}
-                  taskTitle={task?.name}
                   taskId={task.id}
+                  taskCode={task.task_code}
                 />
               </Annotation>
               <Annotation

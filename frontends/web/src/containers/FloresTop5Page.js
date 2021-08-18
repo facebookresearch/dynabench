@@ -85,9 +85,10 @@ const FloresTop5Page = (props) => {
         >
           <FloresModelLeaderBoard
             {...props}
-            taskTitle={task?.name}
             taskId={task.id}
+            taskCode={task.task_code}
             isTop5={true}
+            disableSnapshot={true}
           />
         </a>
       </Row>
