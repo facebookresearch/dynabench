@@ -167,7 +167,7 @@ const ForkModal = (props) => {
         <Modal.Body>
           {forkCreatedSuccessfully ? (
             <div>
-              <p>{`Your fork is ready. Permanent link to your fork is:`}</p>
+              <p>{`Your fork is ready. The permanent link to your fork is:`}</p>
               <p className="text-break" id="forkLink">
                 {forkUrl}
               </p>

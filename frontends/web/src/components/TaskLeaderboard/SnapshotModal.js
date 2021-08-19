@@ -120,7 +120,7 @@ const SnapshotModal = (props) => {
         <Modal.Body>
           {snapshotCreatedSuccessfully ? (
             <div>
-              <p>{`Your snapshot is ready. Permanent link to your snapshot is:`}</p>
+              <p>{`Your snapshot is ready. The permanent link to your snapshot is:`}</p>
               <p className="text-break" id="snapshotUrl">
                 {snapshotUrl}
               </p>
