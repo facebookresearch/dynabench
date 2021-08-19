@@ -124,10 +124,23 @@ const SnapshotModal = (props) => {
               <p className="text-break" id="snapshotUrl">
                 {snapshotUrl}
               </p>
-              <div className="flex text-center flex-column">
-                <Button variant="primary" onClick={copyToClipboard}>
-                  Copy
-                </Button>
+              <div className="d-flex text-center flex-column align-items-center">
+                <Row className="justify-content-between">
+                  <Button
+                    className="mx-1"
+                    variant="primary"
+                    onClick={copyToClipboard}
+                  >
+                    Copy
+                  </Button>
+                  <Button
+                    className="mx-1"
+                    variant="primary"
+                    onClick={() => window.open(snapshotUrl, "_blank")}
+                  >
+                    Go to URL
+                  </Button>
+                </Row>
                 <p className="my-0">{copySuccess}</p>
               </div>
             </div>
@@ -139,6 +152,7 @@ const SnapshotModal = (props) => {
           )}
         </Modal.Body>
       )}
+      <Modal.Footer />
     </Modal>
   );
 };

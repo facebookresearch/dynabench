@@ -1,7 +1,14 @@
 import React, { useEffect } from "react";
 import { useContext, useState } from "react";
 import UserContext from "../../containers/UserContext";
-import { Button, Form, FormControl, InputGroup, Modal } from "react-bootstrap";
+import {
+  Button,
+  Form,
+  FormControl,
+  InputGroup,
+  Modal,
+  Row,
+} from "react-bootstrap";
 
 const ForkModal = (props) => {
   const context = useContext(UserContext);
@@ -171,10 +178,23 @@ const ForkModal = (props) => {
               <p className="text-break" id="forkLink">
                 {forkUrl}
               </p>
-              <div className="flex text-center flex-column">
-                <Button variant="primary" onClick={copyToClipboard}>
-                  Copy
-                </Button>
+              <div className="d-flex text-center flex-column align-items-center">
+                <Row className="justify-content-between">
+                  <Button
+                    className="mx-1"
+                    variant="primary"
+                    onClick={copyToClipboard}
+                  >
+                    Copy
+                  </Button>
+                  <Button
+                    className="mx-1"
+                    variant="primary"
+                    onClick={() => window.open(forkUrl, "_blank")}
+                  >
+                    Go to URL
+                  </Button>
+                </Row>
                 <p className="my-0">{copySuccess}</p>
               </div>
             </div>
