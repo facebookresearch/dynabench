@@ -15,6 +15,7 @@ const SnapshotModal = (props) => {
     taskCode,
     showSnapshotModal,
     setShowSnapshotModal,
+    customDescription,
   } = props;
 
   const [snapshotCreatedSuccessfully, setSnapshotCreatedSuccessfully] =
@@ -60,9 +61,7 @@ const SnapshotModal = (props) => {
       )
       .then(
         (result) => {
-          const snapshotUrl = new URL(window.location.href);
-          snapshotUrl.pathname = `/tasks/${taskCode}/${result.id}`;
-          setSnapshotUrl(snapshotUrl.toString());
+          setSnapshotUrl(`https://ldbd.ly/${taskCode}/${result.id}`);
           setSnapshotCreatedSuccessfully(true);
         },
         (error) => {
@@ -94,9 +93,10 @@ const SnapshotModal = (props) => {
       {snapshotCreatedSuccessfully === null ? (
         <Modal.Body>
           <p>
-            Save leaderboard standings along with weights for metrics and
-            datasets and share with anyone using a link. Results shown in the
-            snapshot table will be frozen and will not change over time.
+            {customDescription ||
+              `Save leaderboard standings along with weights for metrics and 
+              datasets and share with anyone using a link. Results shown in the 
+              snapshot table will be frozen and will not change over time.`}
           </p>
           <p className="mt-4">Enter a description for your snapshot:</p>
           <InputGroup>

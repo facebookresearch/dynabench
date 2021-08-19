@@ -22,7 +22,7 @@ import FloresModelLeaderBoard from "../components/FloresComponents/FloresModelLe
 import FloresTaskDescription from "../components/FloresComponents/FloresTaskDescription";
 import FloresPairsLeaderBoard from "../components/FloresComponents/FloresPairsLeaderboard";
 
-const FLORES_TASK_SHORT_NAMES = [
+export const FLORES_TASK_SHORT_NAMES = [
   "FLORES-FULL",
   "FLORES-SMALL1",
   "FLORES-SMALL2",
@@ -190,8 +190,8 @@ const FloresTaskPage = (props) => {
               >
                 <FloresModelLeaderBoard
                   {...props}
-                  taskTitle={task?.name}
                   taskId={task.id}
+                  taskCode={task.task_code}
                 />
               </Annotation>
               <Annotation

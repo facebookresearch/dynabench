@@ -10,12 +10,7 @@ import "./TaskPage.css";
 import { Container, Row, Col, Spinner } from "react-bootstrap";
 import UserContext from "./UserContext";
 import FloresModelLeaderBoard from "../components/FloresComponents/FloresModelLeaderboard";
-
-const FLORES_TASK_SHORT_NAMES = [
-  "FLORES-FULL",
-  "FLORES-SMALL1",
-  "FLORES-SMALL2",
-];
+import { FLORES_TASK_SHORT_NAMES } from "./FloresTaskPage";
 
 const FloresTop5Page = (props) => {
   const context = useContext(UserContext); // for API
@@ -85,9 +80,10 @@ const FloresTop5Page = (props) => {
         >
           <FloresModelLeaderBoard
             {...props}
-            taskTitle={task?.name}
             taskId={task.id}
+            taskCode={task.task_code}
             isTop5={true}
+            disableSnapshot={true}
           />
         </a>
       </Row>

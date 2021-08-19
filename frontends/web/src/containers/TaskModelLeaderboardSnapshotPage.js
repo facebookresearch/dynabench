@@ -11,12 +11,14 @@ import { Col, Container, Row, Spinner, Table } from "react-bootstrap";
 import UserContext from "./UserContext";
 import { TaskModelSnapshotLeaderboard } from "../components/TaskLeaderboard/TaskModelLeaderboardCardWrapper";
 import Moment from "react-moment";
+import FloresModelLeaderBoard from "../components/FloresComponents/FloresModelLeaderboard";
 
 const TaskModelLeaderboardSnapshotPage = (props) => {
   const context = useContext(UserContext); // for API
   const [task, setTask] = useState(null); // Current task data
   const [snapshotWithCreator, setSnapshotWithCreator] = useState(null); // Current snapshot data
   const [isLoading, setIsLoading] = useState(false);
+  const [isFlores, setIsFlores] = useState(false);
 
   const { taskCode, snapshotId } = useParams();
 
@@ -32,21 +34,27 @@ const TaskModelLeaderboardSnapshotPage = (props) => {
       api.getTask(taskCode).then(
         (taskData) => {
           setTask(taskData);
+          const isFlores = taskData.task_code.indexOf("flores") > -1;
+          setIsFlores(isFlores);
           if (taskCode !== taskData.task_code) {
             props.history.replace({
               pathname: props.location.pathname.replace(
-                `/tasks/${taskCode}`,
-                `/tasks/${taskData.task_code}`
+                `${taskCode}/${snapshotId}`,
+                `${taskData.task_code}/${snapshotId}`
               ),
               search: props.location.search,
             });
           }
 
+          const newPathname = isFlores
+            ? `/flores/${taskData.shortname}`
+            : `/tasks/${taskCode}`;
+
           context.api.getLeaderboardSnapshot(snapshotId).then(
             (snapshotWithCreatorData) => {
               if (snapshotWithCreatorData?.snapshot.tid !== taskData.id) {
                 props.history.replace({
-                  pathname: `/tasks/${taskCode}`,
+                  pathname: newPathname,
                 });
               } else {
                 setSnapshotWithCreator(snapshotWithCreatorData);
@@ -57,7 +65,7 @@ const TaskModelLeaderboardSnapshotPage = (props) => {
               console.log(error);
               if (error && error.status_code === 404) {
                 props.history.replace({
-                  pathname: `/tasks/${taskCode}`,
+                  pathname: newPathname,
                 });
               }
               setSnapshotWithCreator(null);
@@ -126,15 +134,26 @@ const TaskModelLeaderboardSnapshotPage = (props) => {
       </Row>
       <Row className="px-4 px-lg-5">
         <Col xs={12}>
-          <TaskModelSnapshotLeaderboard
-            {...props}
-            task={task}
-            taskCode={taskCode}
-            snapshotData={JSON.parse(snapshot.data_json)}
-            disableToggleSort={true}
-            disableAdjustWeights={true}
-            disableForkAndSnapshot={true}
-          />
+          {isFlores ? (
+            <FloresModelLeaderBoard
+              {...props}
+              taskId={task.id}
+              taskCode={taskCode}
+              snapshotData={JSON.parse(snapshot.data_json)}
+              disableSnapshot={true}
+              disableToggleSort={true}
+            />
+          ) : (
+            <TaskModelSnapshotLeaderboard
+              {...props}
+              task={task}
+              taskCode={taskCode}
+              snapshotData={JSON.parse(snapshot.data_json)}
+              disableToggleSort={true}
+              disableAdjustWeights={true}
+              disableForkAndSnapshot={true}
+            />
+          )}
         </Col>
       </Row>
     </Container>
