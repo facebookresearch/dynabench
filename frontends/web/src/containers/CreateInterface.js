@@ -573,12 +573,10 @@ class CreateInterface extends React.Component {
     this.updateRetainInput = this.updateRetainInput.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
     this.clearUserInput = this.clearUserInput.bind(this);
-    this.handleStoreExampleAndResponseInfo = this.handleStoreExampleAndResponseInfo.bind(
-      this
-    );
-    this.disentangleAndSetInputAndTargetIO = this.disentangleAndSetInputAndTargetIO.bind(
-      this
-    );
+    this.handleStoreExampleAndResponseInfo =
+      this.handleStoreExampleAndResponseInfo.bind(this);
+    this.disentangleAndSetInputAndTargetIO =
+      this.disentangleAndSetInputAndTargetIO.bind(this);
     this.chatContainerRef = React.createRef();
     this.bottomAnchorRef = React.createRef();
     this.inputRef = React.createRef();
@@ -1330,13 +1328,13 @@ class CreateInterface extends React.Component {
               randomTargetModel={this.state.randomTargetModel}
             />
             <div className={"mb-3"}>
-              {this.state.io_def.goal_message ||
+              {this.state.ioDef.goal_message ||
               (goalMessageIO && goalMessageIO.length) > 0 ? (
                 <div className="mb-1 p-3 rounded light-gray-bg">
-                  {this.state.io_def.goal_message ? (
+                  {this.state.ioDef.goal_message ? (
                     <InputGroup className="align-items-center">
                       <i className="fas fa-flag-checkered mr-1"></i>
-                      Your goal: {this.state.io_def.goal_message}
+                      Your goal: {this.state.ioDef.goal_message}
                     </InputGroup>
                   ) : null}
                   {goalMessageIO}

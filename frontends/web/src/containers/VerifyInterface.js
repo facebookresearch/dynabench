@@ -61,16 +61,13 @@ class VerifyInterface extends React.Component {
     };
     this.getNewExample = this.getNewExample.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
-    this.setRangesAndGetRandomFilteredExample = this.setRangesAndGetRandomFilteredExample.bind(
-      this
-    );
+    this.setRangesAndGetRandomFilteredExample =
+      this.setRangesAndGetRandomFilteredExample.bind(this);
     this.updateUserSettings = this.updateUserSettings.bind(this);
-    this.updateOwnerValidationFlagFilter = this.updateOwnerValidationFlagFilter.bind(
-      this
-    );
-    this.updateOwnerValidationDisagreementFilter = this.updateOwnerValidationDisagreementFilter.bind(
-      this
-    );
+    this.updateOwnerValidationFlagFilter =
+      this.updateOwnerValidationFlagFilter.bind(this);
+    this.updateOwnerValidationDisagreementFilter =
+      this.updateOwnerValidationDisagreementFilter.bind(this);
   }
   componentDidMount() {
     const {
@@ -195,9 +192,8 @@ class VerifyInterface extends React.Component {
     const filteredValidatorMetadataIO = {};
     for (const ioDefObj of this.state.ioDef.metadata.validate) {
       if (this.state.validatorMetadataIO[ioDefObj.name] !== null) {
-        filteredValidatorMetadataIO[
-          ioDefObj.name
-        ] = this.state.validatorMetadataIO[ioDefObj.name];
+        filteredValidatorMetadataIO[ioDefObj.name] =
+          this.state.validatorMetadataIO[ioDefObj.name];
       }
     }
 
@@ -481,9 +477,9 @@ class VerifyInterface extends React.Component {
                 correct.
               </p>
             </div>
-            {this.state.io_def.content_warning ? (
+            {this.state.ioDef.content_warning ? (
               <p className="mt-3 p-3 light-red-bg rounded white-color">
-                <strong>WARNING</strong>: {this.state.io_def.content_warning}
+                <strong>WARNING</strong>: {this.state.ioDef.content_warning}
               </p>
             ) : null}
             <Card className="profile-card">

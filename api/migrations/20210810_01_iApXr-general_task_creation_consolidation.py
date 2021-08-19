@@ -116,8 +116,11 @@ steps = [
     step(
         """UPDATE tasks SET io_def='
             {
-                "content_warning": "This is sensitive content! If you do not want to
-                    see any hateful examples, please switch to another task.",
+                "content_warning":
+        """
+        + '"This is sensitive content! If you do not want to see any hateful '
+        + 'examples, please switch to another task.", '
+        + """
                 "context": [{"name": "context", "type": "string",
                     "constructor_args": {"placeholder": "Enter context..."}}],
                 "input": [{"name": "statement", "type": "string",

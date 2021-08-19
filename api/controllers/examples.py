@@ -147,9 +147,9 @@ def update_example(credentials, eid):
             del data["uid"]  # don't store this
 
         for field in data:
-            if field not in ("model_wrong", "flagged", "retracted", "metadata_json"):
+            if field not in ("model_wrong", "flagged", "retracted", "metadata"):
                 bottle.abort(
-                    403, "Can only modify  model_wrong, retracted, and metadata_json"
+                    403, "Can only modify  model_wrong, retracted, and metadata"
                 )
 
         if (
@@ -184,7 +184,8 @@ def update_example(credentials, eid):
                 for key, value in json.loads(example.metadata_json).items():
                     if key not in data["metadata"]:
                         data["metadata"][key] = value
-            data["metadta_json"] = json.dumps(data["metadata"])
+            data["metadata_json"] = json.dumps(data["metadata"])
+            del data["metadata"]
 
         logger.info(f"Updating example {example.id} with {data}")
         em.update(example.id, data)
