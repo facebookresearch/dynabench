@@ -30,12 +30,7 @@ import { OverlayProvider, BadgeOverlay } from "./Overlay";
 import { useState } from "react";
 import FloresGrid from "../components/FloresComponents/FloresGrid";
 import ChevronExpandButton from "../components/Buttons/ChevronExpandButton";
-
-const FLORES_TASK_SHORT_NAMES = [
-  "FLORES-FULL",
-  "FLORES-SMALL1",
-  "FLORES-SMALL2",
-];
+import { FLORES_TASK_SHORT_NAMES } from "./FloresTaskPage";
 
 const ScoreRow = ({ score }) => {
   const [expanded, setExpanded] = useState(false);

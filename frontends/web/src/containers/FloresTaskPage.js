@@ -22,7 +22,7 @@ import FloresModelLeaderBoard from "../components/FloresComponents/FloresModelLe
 import FloresTaskDescription from "../components/FloresComponents/FloresTaskDescription";
 import FloresPairsLeaderBoard from "../components/FloresComponents/FloresPairsLeaderboard";
 
-const FLORES_TASK_SHORT_NAMES = [
+export const FLORES_TASK_SHORT_NAMES = [
   "FLORES-FULL",
   "FLORES-SMALL1",
   "FLORES-SMALL2",

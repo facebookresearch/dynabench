@@ -1,25 +1,37 @@
-import React, { useEffect, useState } from "react";
-import {
-  Button,
-  Card,
-  Col,
-  Container,
-  Pagination,
-  Table,
-} from "react-bootstrap";
-import TasksContext from "../../containers/TasksContext";
+import React, { useContext, useEffect, useState } from "react";
+import { Card, Col, Container, Pagination, Table } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import Moment from "react-moment";
 import ChevronExpandButton from "../Buttons/ChevronExpandButton";
+import UserContext from "../../containers/UserContext";
+import { FLORES_TASK_SHORT_NAMES } from "../../containers/FloresTaskPage";
 
 const ForkOrSnapshotTable = (props) => {
   const { data, isForkList, page, paginate, isEndOfPage } = props;
+  const [taskLookup, setTaskLookup] = useState({});
   const [descriptionConfiguration, setDescriptionConfiguration] = useState({});
+
+  const context = useContext(UserContext);
 
   const usesEllipsis = (elementId) => {
     const e = document.getElementById(elementId);
     return e == null ? false : e.offsetWidth < e.scrollWidth;
   };
+
+  useEffect(() => {
+    context.api.getSubmittableTasks().then(
+      (result) => {
+        const taskLookupObj = result.reduce(
+          (map, obj) => ((map[obj.id] = obj), map),
+          {}
+        );
+        setTaskLookup(taskLookupObj);
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
+  }, []);
 
   useEffect(() => {
     const newDescriptionConfiguration = {};
@@ -88,36 +100,30 @@ const ForkOrSnapshotTable = (props) => {
                 const isDescriptionExpanded =
                   descriptionConfiguration[descriptionId]?.isExpanded;
 
+                const task = taskLookup[datum.tid];
+                if (!task) {
+                  return null;
+                }
+
+                const forkOrSnapshotUrl = `https://ldbd.ly/${task?.task_code}/${
+                  isForkList ? datum.name : datum.id
+                }`;
+                const taskPageUrl = FLORES_TASK_SHORT_NAMES.includes(
+                  task.shortname
+                )
+                  ? `/flores/${task.shortname}`
+                  : `/tasks/${task.task_code}`;
+
                 return (
                   <tr key={rowKey}>
-                    <TasksContext.Consumer>
-                      {({ tasks }) => {
-                        const task =
-                          datum && tasks.filter((e) => e.id === datum.tid);
-                        if (!task || !task.length) {
-                          return null;
-                        }
-                        const forkOrSnapshotUrl = `https://ldbd.ly/${
-                          task[0].task_code
-                        }/${isForkList ? datum.name : datum.id}`;
-                        return (
-                          <>
-                            <td className="text-truncate long-text">
-                              <span>
-                                <a href={forkOrSnapshotUrl}>
-                                  {forkOrSnapshotUrl}
-                                </a>
-                              </span>
-                            </td>
-                            <td>
-                              <Link to={`/tasks/${task[0].task_code}`}>
-                                {task[0].shortname}
-                              </Link>
-                            </td>
-                          </>
-                        );
-                      }}
-                    </TasksContext.Consumer>
+                    <td className="text-truncate long-text">
+                      <span>
+                        <a href={forkOrSnapshotUrl}>{forkOrSnapshotUrl}</a>
+                      </span>
+                    </td>
+                    <td>
+                      <Link to={taskPageUrl}>{task.shortname}</Link>
+                    </td>
                     <td
                       id={descriptionId}
                       className={`long-text ${
