@@ -68,11 +68,6 @@ def validate_example(credentials, eid):
     else:
         current_validation_metadata = {}
 
-    if "metadata_io" in data:
-        current_validation_metadata_io = data["metadata_io"]
-    else:
-        current_validation_metadata_io = {}
-
     if credentials["id"] == "turk":
         if not util.check_fields(data, ["uid"]):
             bottle.abort(400, "Missing data")
@@ -94,14 +89,7 @@ def validate_example(credentials, eid):
     elif credentials["id"] == example.uid and mode != "owner":
         bottle.abort(403, "Access denied (cannot validate your own example)")
 
-    vm.create(
-        credentials["id"],
-        eid,
-        label,
-        mode,
-        current_validation_metadata_io,
-        current_validation_metadata,
-    )
+    vm.create(credentials["id"], eid, label, mode, current_validation_metadata)
 
     em.update(example.id, {"total_verified": example.total_verified + 1})
 
@@ -136,26 +124,26 @@ def validate_example(credentials, eid):
                     info.incrementVerifiedNotCorrectFooledCount(
                         example.uid, context.r_realid
                     )
-                if user.metadata_json:
-                    metadata = json.loads(user.metadata_json)
+                if user.metadata_json is not None:
+                    user_metadata = json.loads(user.metadata_json)
                     if (
                         task.task_code + "_fooling_no_verified_incorrect_or_flagged"
-                        in metadata
+                        in user_metadata
                     ):
-                        metadata[
+                        user_metadata[
                             task.task_code + "_fooling_no_verified_incorrect_or_flagged"
                         ] -= 1
                     else:
                         # Start recording this field now
-                        metadata[
+                        user_metadata[
                             task.task_code + "_fooling_no_verified_incorrect_or_flagged"
                         ] = 0
                 else:
                     # Start recording this field now
-                    metadata = {
+                    user_metadata = {
                         task.task_code + "_fooling_no_verified_incorrect_or_flagged": 0
                     }
-                user.metadata_json = json.dumps(metadata)
+                user.metadata_json = json.dumps(user_metadata)
                 um.dbs.commit()
 
     ret = example.to_dict()

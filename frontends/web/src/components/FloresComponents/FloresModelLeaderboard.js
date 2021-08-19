@@ -173,7 +173,7 @@ const ModelLeaderBoard = ({ taskId, history, isTop5 }) => {
                 <th>Model</th>
                 <th className="text-right">
                   <SortContainer
-                    sortKey={task.perf_metric_field_name}
+                    sortKey={"sp-BLEU"}
                     toggleSort={toggleSort}
                     currentSort={sort}
                   >

@@ -722,7 +722,7 @@ class BadgeModel(BaseModel):
 
     def handleValidateInterface(self, user, example):
         self.incrementUserMetadataField(
-            user, example.context.round.task.name + "_validated"
+            user, example.context.round.task.task_code + "_validated"
         )
         badge_names_to_add = []
         existing_badges = self.getByUid(user.id)

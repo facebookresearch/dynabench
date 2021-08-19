@@ -11,10 +11,6 @@ __depends__ = {"20210806_01_0LQae-adding-limiting-behavior-of-adc-task"}
 
 steps = [
     step(
-        "ALTER TABLE validations ADD COLUMN metadata_io TEXT",
-        "ALTER TABLE validations DROP metadata_io",
-    ),
-    step(
         "ALTER TABLE tasks ADD COLUMN create_endpoint Boolean",
         "ALTER TABLE tasks DROP create_endpoint",
     ),
@@ -36,11 +32,11 @@ steps = [
         ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
     step(
-        "ALTER TABLE tasks ADD COLUMN torchserve_config TEXT",
-        "ALTER TABLE tasks DROP torchserve_config",
+        "ALTER TABLE tasks ADD COLUMN extra_torchserve_config TEXT",
+        "ALTER TABLE tasks DROP extra_torchserve_config",
     ),
     step(
-        """UPDATE tasks SET torchserve_config='{
+        """UPDATE tasks SET extra_torchserve_config='{
             "default_response_timeout": 1200,
             "decode_input_request": False,
             "max_request_size": 12853500,
@@ -48,7 +44,7 @@ steps = [
         }' WHERE shortname IN ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
     step(
-        """UPDATE tasks SET torchserve_config="{}" WHERE shortname NOT IN
+        """UPDATE tasks SET extra_torchserve_config="{}" WHERE shortname NOT IN
         ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
     step("ALTER TABLE tasks ADD COLUMN io_def TEXT", "ALTER TABLE tasks DROP io_def"),
@@ -66,7 +62,7 @@ steps = [
                     {"name": "label", "type": "target_label",
                         "constructor_args": {
                             "labels": ["entailed", "neutral", "contradictory"]}},
-                    {"name": "prob", "type": "multiple_choice_probs",
+                    {"name": "prob", "type": "multiclass_probs",
                         "constructor_args": {"reference_name": "label"}}
                 ],
                 "metadata": {
@@ -79,36 +75,36 @@ steps = [
                     {"name": "model_explanation_right", "type": "string",
                         "constructor_args": {"placeholder":
                         "Explain why you thought the model would make a mistake..."},
-                        "model_wrong": false,
+                        "model_wrong_condition": false,
                         "display_name": "model explanation"},
                     {"name": "model_explanation_wrong", "type": "string",
                         "constructor_args": {"placeholder":
                             "Explain why you think the model made a mistake..."},
-                            "model_wrong": true,
+                            "model_wrong_condition": true,
                             "display_name": "model explanation"}
                 ],
                 "validate":
                 [
                     {"name": "corrected_label",
-                        "type": "multiple_choice",
+                        "type": "multiclass",
                         "constructor_args": {
                             "labels": ["entailed", "neutral", "contradictory"],
                             "placeholder": "Enter corrected label"
                             },
-                        "validated_as": "incorrect"},
+                        "validated_label_condition": "incorrect"},
                     {"name": "target_explanation", "type": "string",
                         "constructor_args":
                             {"placeholder":
                                 "Explain why your proposed target is correct..."},
-                        "validated_as": "incorrect"},
+                        "validated_label_condition": "incorrect"},
                     {"name": "flag_reason", "type": "string",
                         "constructor_args":
                             {"placeholder": "Enter the reason for flagging..."},
-                        "validated_as": "flagged"},
+                        "validated_label_condition": "flagged"},
                     {"name": "validator_example_explanation", "type": "string",
                         "constructor_args":
                             {"placeholder": "Explain why the example is correct..."},
-                        "validated_as": "correct"},
+                        "validated_label_condition": "correct"},
                     {"name": "validator_model_explanation", "type": "string",
                         "constructor_args": {"placeholder":
                         "Enter what you think was done to try to trick the model..."}}
@@ -120,6 +116,8 @@ steps = [
     step(
         """UPDATE tasks SET io_def='
             {
+                "content_warning": "This is sensitive content! If you do not want to
+                    see any hateful examples, please switch to another task.",
                 "context": [{"name": "context", "type": "string",
                     "constructor_args": {"placeholder": "Enter context..."}}],
                 "input": [{"name": "statement", "type": "string",
@@ -131,7 +129,7 @@ steps = [
                     {"name": "label", "type": "target_label",
                         "constructor_args": {
                             "labels": ["not-hateful", "hateful"]}},
-                    {"name": "prob", "type": "multiple_choice_probs",
+                    {"name": "prob", "type": "multiclass_probs",
                         "constructor_args": {"reference_name": "label"}}
                 ],
                 "metadata": {
@@ -144,36 +142,36 @@ steps = [
                     {"name": "model_explanation_right", "type": "string",
                         "constructor_args": {"placeholder":
                         "Explain why you thought the model would make a mistake..."},
-                        "model_wrong": false,
+                        "model_wrong_condition": false,
                         "display_name": "model explanation"},
                     {"name": "model_explanation_wrong", "type": "string",
                         "constructor_args": {"placeholder":
                             "Explain why you think the model made a mistake..."},
-                            "model_wrong": true,
+                            "model_wrong_condition": true,
                             "display_name": "model explanation"}
                 ],
                 "validate":
                 [
                     {"name": "corrected_label",
-                        "type": "multiple_choice",
+                        "type": "multiclass",
                         "constructor_args": {
                             "labels": ["not-hateful", "hateful"],
                             "placeholder": "Enter corrected label"
                             },
-                        "validated_as": "incorrect"},
+                        "validated_label_condition": "incorrect"},
                     {"name": "target_explanation", "type": "string",
                         "constructor_args":
                             {"placeholder":
                                 "Explain why your proposed target is correct..."},
-                        "validated_as": "incorrect"},
+                        "validated_label_condition": "incorrect"},
                     {"name": "flag_reason", "type": "string",
                         "constructor_args":
                             {"placeholder": "Enter the reason for flagging..."},
-                        "validated_as": "flagged"},
+                        "validated_label_condition": "flagged"},
                     {"name": "validator_example_explanation", "type": "string",
                         "constructor_args":
                             {"placeholder": "Explain why the example is correct..."},
-                        "validated_as": "correct"},
+                        "validated_label_condition": "correct"},
                     {"name": "validator_model_explanation", "type": "string",
                         "constructor_args": {"placeholder":
                         "Enter what you think was done to try to trick the model..."}}
@@ -196,7 +194,7 @@ steps = [
                     {"name": "label", "type": "target_label",
                         "constructor_args": {
                             "labels": ["negative", "positive", "neutral"]}},
-                    {"name": "prob", "type": "multiple_choice_probs",
+                    {"name": "prob", "type": "multiclass_probs",
                         "constructor_args": {"reference_name": "label"}}
                 ],
                 "metadata": {
@@ -209,36 +207,36 @@ steps = [
                     {"name": "model_explanation_right", "type": "string",
                         "constructor_args": {"placeholder":
                         "Explain why you thought the model would make a mistake..."},
-                        "model_wrong": false,
+                        "model_wrong_condition": false,
                         "display_name": "model explanation"},
                     {"name": "model_explanation_wrong", "type": "string",
                         "constructor_args": {"placeholder":
                             "Explain why you think the model made a mistake..."},
-                            "model_wrong": true,
+                            "model_wrong_condition": true,
                             "display_name": "model explanation"}
                 ],
                 "validate":
                 [
                     {"name": "corrected_label",
-                        "type": "multiple_choice",
+                        "type": "multiclass",
                         "constructor_args": {
                             "labels": ["negative", "positive", "entailed"],
                             "placeholder": "Enter corrected label"
                             },
-                        "validated_as": "incorrect"},
+                        "validated_label_condition": "incorrect"},
                     {"name": "target_explanation", "type": "string",
                         "constructor_args":
                             {"placeholder":
                                 "Explain why your proposed target is correct..."},
-                        "validated_as": "incorrect"},
+                        "validated_label_condition": "incorrect"},
                     {"name": "flag_reason", "type": "string",
                         "constructor_args":
                             {"placeholder": "Enter the reason for flagging..."},
-                        "validated_as": "flagged"},
+                        "validated_label_condition": "flagged"},
                     {"name": "validator_example_explanation", "type": "string",
                         "constructor_args":
                             {"placeholder": "Explain why the example is correct..."},
-                        "validated_as": "correct"},
+                        "validated_label_condition": "correct"},
                     {"name": "validator_model_explanation", "type": "string",
                         "constructor_args": {"placeholder":
                         "Enter what you think was done to try to trick the model..."}}
@@ -250,6 +248,8 @@ steps = [
     step(
         """UPDATE tasks SET io_def='
             {
+                "goal_message":
+"enter a question and select an answer in the context, such that the model is fooled.",
                 "context": [{"name": "context", "type": "string",
                     "constructor_args": {"placeholder": "Enter context..."}}],
                 "input": [{"name": "question", "type": "string",
@@ -274,12 +274,12 @@ steps = [
                     {"name": "model_explanation_right", "type": "string",
                         "constructor_args": {"placeholder":
                         "Explain why you thought the model would make a mistake..."},
-                        "model_wrong": false,
+                        "model_wrong_condition": false,
                         "display_name": "model explanation"},
                     {"name": "model_explanation_wrong", "type": "string",
                         "constructor_args": {"placeholder":
                             "Explain why you think the model made a mistake..."},
-                            "model_wrong": true,
+                            "model_wrong_condition": true,
                             "display_name": "model explanation"}
                 ],
                 "validate":
@@ -287,20 +287,20 @@ steps = [
                     {"name": "corrected_answer",
                         "type": "context_string_selection",
                         "constructor_args": {"reference_name": "context"},
-                        "validated_as": "incorrect"},
+                        "validated_label_condition": "incorrect"},
                     {"name": "target_explanation", "type": "string",
                         "constructor_args":
                             {"placeholder":
                                 "Explain why your proposed target is correct..."},
-                        "validated_as": "incorrect"},
+                        "validated_label_condition": "incorrect"},
                     {"name": "flag_reason", "type": "string",
                         "constructor_args":
                             {"placeholder": "Enter the reason for flagging..."},
-                        "validated_as": "flagged"},
+                        "validated_label_condition": "flagged"},
                     {"name": "validator_example_explanation", "type": "string",
                         "constructor_args":
                             {"placeholder": "Explain why the example is correct..."},
-                        "validated_as": "correct"},
+                        "validated_label_condition": "correct"},
                     {"name": "validator_model_explanation", "type": "string",
                         "constructor_args": {"placeholder":
                         "Enter what you think was done to try to trick the model..."}}
@@ -312,6 +312,8 @@ steps = [
     step(
         """UPDATE tasks SET io_def='
             {
+                "goal_message":
+    "enter a question and answer based on the image, such that the model is fooled.",
                 "context": [{"name": "image_url", "type": "image_url",
                     "constructor_args": {}, "display_name": "image"}],
                 "input": [{"name": "question", "type": "string",
@@ -328,18 +330,18 @@ steps = [
                             "constructor_args": {"placeholder":
                                 "The model was wrong, so enter the correct answer..."},
                                 "display_name": "answer",
-                                "model_wrong": true,
+                                "model_wrong_condition": true,
                                 "display_name": "answer"}
                     ],
                     "validate":
                     [
                         {"name": "is_question_valid",
-                        "type": "multiple_choice",
+                        "type": "multiclass",
                         "constructor_args": {
                             "labels": ["yes", "no"],
                             "placeholder": "Is the question even valid?"
                             },
-                        "validated_as": "incorrect"}
+                        "validated_label_condition": "incorrect"}
                     ]
                 }
             }
@@ -374,31 +376,33 @@ steps = [
         "ALTER TABLE tasks DROP model_wrong_metric",
     ),
     step(
-        """UPDATE tasks SET model_wrong_metric='{"type": "exact_match", "constructor_args": {}}'
+        """UPDATE tasks SET model_wrong_metric='{"type": "exact_match",
+        "constructor_args": {"reference_names": ["label"]}}'
         WHERE shortname not in ('QA','DK_QA', 'UCL_QA', 'VQA', 'VQA-VAL')"""
     ),
     step(
         """UPDATE tasks SET model_wrong_metric='{"type": "string_f1",
-        "constructor_args": {"threshold": 0.9}}' WHERE shortname in
-        ('QA','DK_QA', 'UCL_QA')"""
+        "constructor_args": {"threshold": 0.9, "reference_name": "answer"}}'
+        WHERE shortname in ('QA','DK_QA', 'UCL_QA')"""
     ),
     step(
         """UPDATE tasks SET model_wrong_metric='{"type": "ask_user",
         "constructor_args": {}}' WHERE shortname in ('VQA', 'VQA-VAL')"""
     ),
     step(
-        "ALTER TABLE tasks ADD COLUMN instructions TEXT",
-        "ALTER TABLE tasks DROP instructions",
+        "ALTER TABLE tasks ADD COLUMN instructions_md MEDIUMTEXT",
+        "ALTER TABLE tasks DROP instructions_md",
     ),
     step(
         """
-    UPDATE tasks SET instructions='Find an example that the model gets wrong but
+    UPDATE tasks SET instructions_md='Find an example that the model gets wrong but
     that another person would get right.'
     """
     ),
     step(
         """
-        UPDATE tasks SET instructions='You will be presented with a passage of text,"""
+        UPDATE tasks SET instructions_md='You will be presented with a passage of """
+        + """text,"""
         + """ for which you should ask questions that the AI cannot answer correctly """
         + """but that another person would get right. After entering the question, """
         + """select the answer by highlighting the words that best answer the """
@@ -416,7 +420,7 @@ steps = [
     ),
     step(
         """
-        UPDATE tasks SET instructions='For the purposes of this task we define """
+        UPDATE tasks SET instructions_md='For the purposes of this task we define """
         + """hate speech as follows:\n\nA direct or indirect attack on people """
         + """based on characteristics, including ethnicity, race, nationality, """
         + """immigration status, religion, caste, sex, gender identity, sexual """
@@ -436,7 +440,7 @@ steps = [
     ),
     step(
         """
-        UPDATE tasks SET instructions='Your objective is to come up with a """
+        UPDATE tasks SET instructions_md='Your objective is to come up with a """
         + """statement that is either positive, neutral or negative, in such a """
         + """way that you fool the model. Your statement should be classified """
         + """correctly by another person!\n\nTry to come up with creative ways """
@@ -446,7 +450,7 @@ steps = [
     ),
     step(
         """
-        UPDATE tasks SET instructions='You will be presented with a label and a """
+        UPDATE tasks SET instructions_md='You will be presented with a label and a """
         + """passage of text. Assuming the passage is true, please write another """
         + """passage that is paired with the first via the label (either """
         + """"entailment", "neutral", or "contradiction").\n\nWrite your passage """
@@ -466,29 +470,6 @@ steps = [
         + """expert external knowledge not provided.\n6. Your spelling is """
         + """correct.' WHERE shortname IN ('NLI', 'LADC', 'DK_NLI')
         """
-    ),
-    step(
-        "ALTER TABLE tasks ADD COLUMN goal_message TEXT",
-        "ALTER TABLE tasks DROP goal_message",
-    ),
-    step(
-        """UPDATE tasks SET goal_message='enter a question and answer based on
-            the image, such that the model is fooled.' WHERE shortname in
-            ('VQA', 'VQA-VAL')"""
-    ),
-    step(
-        """UPDATE tasks SET goal_message='enter a question and select an answer
-        in the context, such that the model is fooled.' WHERE shortname in
-        ('QA', 'DK_QA', 'UCL_QA')"""
-    ),
-    step(
-        "ALTER TABLE tasks ADD COLUMN warning_message TEXT",
-        "ALTER TABLE tasks DROP warning_message",
-    ),
-    step(
-        """UPDATE tasks SET warning_message='This is sensitive content! If you
-        do not want to see any hateful examples, please switch to another task.'
-        WHERE shortname in ('Hate Speech')"""
     ),
     step(
         "ALTER TABLE tasks ADD COLUMN instance_type TEXT",
@@ -583,135 +564,135 @@ steps = [
         shortname in ('VQA', 'VQA-VAL')))""",
     ),
     step(
-        "ALTER TABLE contexts CHANGE context context_io TEXT",
-        "ALTER TABLE contexts CHANGE context_io context TEXT",
+        "ALTER TABLE contexts CHANGE context context_json TEXT",
+        "ALTER TABLE contexts CHANGE context_json context TEXT",
     ),
     step(
-        "ALTER TABLE examples ADD COLUMN input_io TEXT",
-        "ALTER TABLE examples DROP input_io",
+        "ALTER TABLE examples ADD COLUMN input_json TEXT",
+        "ALTER TABLE examples DROP input_json",
     ),
     step(
-        """UPDATE examples SET input_io=JSON_OBJECT("hypothesis", text) WHERE
+        """UPDATE examples SET input_json=JSON_OBJECT("hypothesis", text) WHERE
         (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
         WHERE tid IN (SELECT id FROM tasks WHERE shortname in
         ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
     step(
-        """UPDATE examples SET input_io=JSON_OBJECT("question", text) WHERE
+        """UPDATE examples SET input_json=JSON_OBJECT("question", text) WHERE
         (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
         WHERE tid IN (SELECT id FROM tasks WHERE shortname in
         ('VQA', 'VQA-VAL', 'QA', 'UCL_QA')))))"""
     ),
     step(
-        """UPDATE examples SET input_io=JSON_OBJECT("statement", text) WHERE
+        """UPDATE examples SET input_json=JSON_OBJECT("statement", text) WHERE
         (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
         WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
     ),
     step(
-        """UPDATE examples SET input_io=JSON_OBJECT("statement", text) WHERE
+        """UPDATE examples SET input_json=JSON_OBJECT("statement", text) WHERE
         (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
         WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
     ),
     step(
-        "ALTER TABLE examples ADD COLUMN target_io TEXT",
-        "ALTER TABLE examples DROP target_io",
+        "ALTER TABLE examples ADD COLUMN target_json TEXT",
+        "ALTER TABLE examples DROP target_json",
     ),
     step(
-        """UPDATE examples SET target_io=JSON_OBJECT("label", "entailed") WHERE
+        """UPDATE examples SET target_json=JSON_OBJECT("label", "entailed") WHERE
         target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
         in ('NLI', 'LADC', 'DK_NLI')))))""",
         """UPDATE examples SET target_pred=0 WHERE JSON_UNQUOTE(JSON_EXTRACT(
-        target_io, "$.label"))="entailed" AND (cid IN (SELECT id FROM contexts WHERE
+        target_json, "$.label"))="entailed" AND (cid IN (SELECT id FROM contexts WHERE
         r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE
         task_code in ('nli', 'ladc', 'dk_nli')))))""",
     ),
     step(
-        """UPDATE examples SET target_io=JSON_OBJECT("label", "neutral") WHERE
+        """UPDATE examples SET target_json=JSON_OBJECT("label", "neutral") WHERE
         target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
         in ('NLI', 'LADC', 'DK_NLI')))))""",
-        """UPDATE examples SET target_pred=1 WHERE JSON_UNQUOTE(JSON_EXTRACT(target_io,
+        """UPDATE examples SET target_pred=1 WHERE JSON_UNQUOTE(JSON_EXTRACT(target_json,
         "$.label"))="neutral" AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code
         in ('nli', 'ladc', 'dk_nli')))))""",
     ),
     step(
-        """UPDATE examples SET target_io=JSON_OBJECT("label", "contradictory")
+        """UPDATE examples SET target_json=JSON_OBJECT("label", "contradictory")
         WHERE target_pred=2 AND (cid IN (SELECT id FROM contexts WHERE r_realid
         IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
         in ('NLI', 'LADC', 'DK_NLI')))))""",
-        """UPDATE examples SET target_pred=2 WHERE JSON_UNQUOTE(JSON_EXTRACT(target_io,
+        """UPDATE examples SET target_pred=2 WHERE JSON_UNQUOTE(JSON_EXTRACT(target_json,
         "$.label"))="contradictory" AND (cid IN (SELECT id FROM contexts WHERE r_realid
         IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code
         in ('nli', 'ladc', 'dk_nli')))))""",
     ),
     step(
-        """UPDATE examples SET target_io=JSON_OBJECT("answer", target_pred) WHERE
+        """UPDATE examples SET target_json=JSON_OBJECT("answer", target_pred) WHERE
         (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
         WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('QA', 'UCL_QA', 'VQA',
         'VQA-VAL')))))""",
-        """UPDATE examples SET target_pred=JSON_UNQUOTE(JSON_EXTRACT(target_io,
+        """UPDATE examples SET target_pred=JSON_UNQUOTE(JSON_EXTRACT(target_json,
         '$.answer')) WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT
         id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code in ('qa',
         'ucl_qa', 'vqa', 'vqa_val')))))""",
     ),
     step(
-        """UPDATE examples SET target_io=JSON_OBJECT("label", "not-hateful") WHERE
+        """UPDATE examples SET target_json=JSON_OBJECT("label", "not-hateful") WHERE
         target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT
         id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in
         ('Hate Speech')))))""",
         """UPDATE examples SET target_pred=0 WHERE JSON_UNQUOTE(JSON_EXTRACT(
-        target_io, "$.label"))="not-hateful" AND (cid IN (SELECT id FROM contexts
+        target_json, "$.label"))="not-hateful" AND (cid IN (SELECT id FROM contexts
         WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks
         WHERE task_code in ('hs')))))""",
     ),
     step(
-        """UPDATE examples SET target_io=JSON_OBJECT("label", "hateful") WHERE
+        """UPDATE examples SET target_json=JSON_OBJECT("label", "hateful") WHERE
         target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
         in ('Hate Speech')))))""",
         """UPDATE examples SET target_pred=1 WHERE JSON_UNQUOTE(JSON_EXTRACT(
-        target_io, "$.label"))="hateful" AND (cid IN (SELECT id FROM contexts WHERE
+        target_json, "$.label"))="hateful" AND (cid IN (SELECT id FROM contexts WHERE
         r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE
         task_code in ('hs')))))""",
     ),
     step(
-        """UPDATE examples SET target_io=JSON_OBJECT("label", "negative") WHERE
+        """UPDATE examples SET target_json=JSON_OBJECT("label", "negative") WHERE
         target_pred=0 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
         in ('Sentiment')))))""",
         """UPDATE examples SET target_pred=0 WHERE JSON_UNQUOTE(JSON_EXTRACT(
-        target_io, "$.label"))="negative" AND (cid IN (SELECT id FROM contexts WHERE
+        target_json, "$.label"))="negative" AND (cid IN (SELECT id FROM contexts WHERE
         r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE
         task_code in ('sentiment')))))""",
     ),
     step(
-        """UPDATE examples SET target_io=JSON_OBJECT("label", "positive") WHERE
+        """UPDATE examples SET target_json=JSON_OBJECT("label", "positive") WHERE
         target_pred=1 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE
         shortname in ('Sentiment')))))""",
         """UPDATE examples SET target_pred=1 WHERE JSON_UNQUOTE(JSON_EXTRACT(
-        target_io, "$.label"))="positive" AND (cid IN (SELECT id FROM contexts
+        target_json, "$.label"))="positive" AND (cid IN (SELECT id FROM contexts
         WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks
         WHERE task_code in ('sentiment')))))""",
     ),
     step(
-        """UPDATE examples SET target_io=JSON_OBJECT("label", "neutral") WHERE
+        """UPDATE examples SET target_json=JSON_OBJECT("label", "neutral") WHERE
         target_pred=2 AND (cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname
         in ('Sentiment')))))""",
         """UPDATE examples SET target_pred=2 WHERE JSON_UNQUOTE(JSON_EXTRACT(
-        target_io, "$.label"))="neutral" AND (cid IN (SELECT id FROM contexts
+        target_json, "$.label"))="neutral" AND (cid IN (SELECT id FROM contexts
         WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM
         tasks WHERE task_code in ('sentiment')))))""",
     ),
     step(
-        "ALTER TABLE examples ADD COLUMN output_io TEXT",
-        "ALTER TABLE examples DROP output_io",
+        "ALTER TABLE examples ADD COLUMN output_json TEXT",
+        "ALTER TABLE examples DROP output_json",
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("label", "entailed", "prob",
+        """UPDATE examples SET output_json=JSON_OBJECT("label", "entailed", "prob",
         JSON_OBJECT("entailed", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds,
         '|', 1), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
         model_preds, '|', 2), '|', -1)), "contradictory", (SELECT SUBSTRING_INDEX(
@@ -725,7 +706,7 @@ steps = [
         ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("label", "neutral", "prob",
+        """UPDATE examples SET output_json=JSON_OBJECT("label", "neutral", "prob",
         JSON_OBJECT("entailed", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds,
         '|', 1), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
         model_preds, '|', 2), '|', -1)), "contradictory", (SELECT SUBSTRING_INDEX(
@@ -739,7 +720,7 @@ steps = [
         ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("label", "contradictory",
+        """UPDATE examples SET output_json=JSON_OBJECT("label", "contradictory",
         "prob", JSON_OBJECT("entailed", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
         model_preds, '|', 1), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(
         SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)), "contradictory", (SELECT
@@ -753,14 +734,14 @@ steps = [
         ('NLI', 'LADC', 'DK_NLI')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("answer", (SELECT
+        """UPDATE examples SET output_json=JSON_OBJECT("answer", (SELECT
         SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)))
         WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id
         FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in
         ('QA', 'UCL_QA')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("answer", (SELECT
+        """UPDATE examples SET output_json=JSON_OBJECT("answer", (SELECT
         SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 1), '|', -1)), "prob",
         (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds, '|', 2), '|', -1)))
         WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM
@@ -768,7 +749,7 @@ steps = [
         ('VQA', 'VQA-VAL')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("label", "not-hateful", "prob",
+        """UPDATE examples SET output_json=JSON_OBJECT("label", "not-hateful", "prob",
         JSON_OBJECT("not-hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds,
         '|', 1), '|', -1)), "hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
         model_preds, '|', 2), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(
@@ -778,7 +759,7 @@ steps = [
         IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("label", "hateful", "prob",
+        """UPDATE examples SET output_json=JSON_OBJECT("label", "hateful", "prob",
         JSON_OBJECT("not-hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds,
         '|', 1), '|', -1)), "hateful", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
         model_preds, '|', 2), '|', -1)))) WHERE (SELECT SUBSTRING_INDEX(
@@ -788,7 +769,7 @@ steps = [
         IN (SELECT id FROM tasks WHERE shortname in ('Hate Speech')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("label", "neutral", "prob",
+        """UPDATE examples SET output_json=JSON_OBJECT("label", "neutral", "prob",
         JSON_OBJECT("negative", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds,
         '|', 1), '|', -1)), "positive", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
         model_preds, '|', 2), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(
@@ -802,7 +783,7 @@ steps = [
         ('Sentiment')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("label", "negative", "prob",
+        """UPDATE examples SET output_json=JSON_OBJECT("label", "negative", "prob",
         JSON_OBJECT("negative", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds,
         '|', 1), '|', -1)), "positive", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
         model_preds, '|', 2), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(
@@ -815,7 +796,7 @@ steps = [
         WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("label", "positive", "prob",
+        """UPDATE examples SET output_json=JSON_OBJECT("label", "positive", "prob",
         JSON_OBJECT("negative", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds,
         '|', 1), '|', -1)), "positive", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
         model_preds, '|', 2), '|', -1)), "neutral", (SELECT SUBSTRING_INDEX(
@@ -828,7 +809,7 @@ steps = [
         WHERE tid IN (SELECT id FROM tasks WHERE shortname in ('Sentiment')))))"""
     ),
     step(
-        """UPDATE examples SET output_io=JSON_OBJECT("label", "positive", "prob",
+        """UPDATE examples SET output_json=JSON_OBJECT("label", "positive", "prob",
         JSON_OBJECT("negative", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(model_preds,
         '|', 1), '|', -1)), "positive", (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(
         model_preds, '|', 2), '|', -1)), "neutral", 0)) WHERE (SELECT
@@ -843,18 +824,19 @@ steps = [
     # statements make the neutral prob the same as the positive prob.
     # This command makes the neutral prob 0 instead of the same as the positive prob.
     step(
-        "ALTER TABLE examples ADD COLUMN metadata_io TEXT",
-        "ALTER TABLE examples DROP metadata_io",
+        """UPDATE examples SET metadata_json=JSON_MERGE(JSON_OBJECT("example explanation",
+        example_explanation, "model explanation", model_explanation), metadata_json)""",
+        """UPDATE examples SET metadata_json=JSON_REMOVE(JSON_REMOVE(metadata_json,
+        '$."example explanation"'), '$."model explanation"')""",
     ),
     step(
-        """UPDATE examples SET metadata_io=JSON_OBJECT("example explanation",
-        example_explanation, "model explanation", model_explanation)"""
-    ),
-    step(
-        """UPDATE examples SET metadata_io=JSON_OBJECT("target_answer", target_pred)
+        """UPDATE examples SET metadata_json=JSON_MERGE(JSON_OBJECT("target_answer",
+        target_pred), metadata_json)
         WHERE (cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM
         rounds WHERE tid IN (SELECT id FROM tasks WHERE shortname in
-        ('VQA', 'VQA-VAL')))))"""
+        ('VQA', 'VQA-VAL')))))""",
+        """UPDATE examples SET metadata_json=JSON_REMOVE(metadata_json,
+        '$."target_answer")""",
     ),
     step("", "UPDATE tasks SET shortname='placeholder' where task_code='placeholder'"),
     step("", "UPDATE tasks SET shortname='NLI' where task_code='nli'"),
@@ -968,18 +950,18 @@ steps = [
     step(
         "",
         """UPDATE examples SET model_preds=CONCAT(JSON_UNQUOTE(JSON_EXTRACT(
-        JSON_UNQUOTE(JSON_EXTRACT(output_io, "$.prob")), "$.entailed")), "|",
-        JSON_UNQUOTE(JSON_EXTRACT(JSON_UNQUOTE(JSON_EXTRACT(output_io, "$.prob")),
+        JSON_UNQUOTE(JSON_EXTRACT(output_json, "$.prob")), "$.entailed")), "|",
+        JSON_UNQUOTE(JSON_EXTRACT(JSON_UNQUOTE(JSON_EXTRACT(output_json, "$.prob")),
         "$.neutral")), "|", JSON_UNQUOTE(JSON_EXTRACT(JSON_UNQUOTE(JSON_EXTRACT(
-        output_io, "$.prob")), "$.contradictory"))) WHERE cid IN (SELECT id FROM
+        output_json, "$.prob")), "$.contradictory"))) WHERE cid IN (SELECT id FROM
         contexts WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT
         id FROM tasks WHERE task_code in ('nli', 'ladc', 'dk_nli'))))""",
     ),
     step(
         "",
         """UPDATE examples SET model_preds=CONCAT(JSON_UNQUOTE(JSON_EXTRACT(
-        JSON_UNQUOTE(JSON_EXTRACT(output_io, "$.prob")), '$."not-hateful"')), "|",
-        JSON_UNQUOTE(JSON_EXTRACT(JSON_UNQUOTE(JSON_EXTRACT(output_io, "$.prob")),
+        JSON_UNQUOTE(JSON_EXTRACT(output_json, "$.prob")), '$."not-hateful"')), "|",
+        JSON_UNQUOTE(JSON_EXTRACT(JSON_UNQUOTE(JSON_EXTRACT(output_json, "$.prob")),
         "$.hateful"))) WHERE cid IN (SELECT id FROM contexts WHERE r_realid IN
         (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE task_code in
         ('hs'))))""",
@@ -987,25 +969,25 @@ steps = [
     step(
         "",
         """UPDATE examples SET model_preds=CONCAT(JSON_UNQUOTE(JSON_EXTRACT(
-        JSON_UNQUOTE(JSON_EXTRACT(output_io, "$.prob")), "$.negative")), "|",
-        JSON_UNQUOTE(JSON_EXTRACT(JSON_UNQUOTE(JSON_EXTRACT(output_io, "$.prob")),
+        JSON_UNQUOTE(JSON_EXTRACT(output_json, "$.prob")), "$.negative")), "|",
+        JSON_UNQUOTE(JSON_EXTRACT(JSON_UNQUOTE(JSON_EXTRACT(output_json, "$.prob")),
         "$.positive")), "|", JSON_UNQUOTE(JSON_EXTRACT(JSON_UNQUOTE(JSON_EXTRACT(
-        output_io, "$.prob")), "$.neutral"))) WHERE cid IN (SELECT id FROM contexts
+        output_json, "$.prob")), "$.neutral"))) WHERE cid IN (SELECT id FROM contexts
         WHERE r_realid IN (SELECT id FROM rounds WHERE tid IN (SELECT id FROM
         tasks WHERE task_code in ('sentiment'))))""",
     ),
     step(
         "",
-        """UPDATE examples SET model_preds=CONCAT(JSON_UNQUOTE(JSON_EXTRACT(output_io,
-        "$.conf")), "|", JSON_UNQUOTE(JSON_EXTRACT(output_io, "$.answer"))) WHERE
+        """UPDATE examples SET model_preds=CONCAT(JSON_UNQUOTE(JSON_EXTRACT(output_json,
+        "$.conf")), "|", JSON_UNQUOTE(JSON_EXTRACT(output_json, "$.answer"))) WHERE
         cid IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds
         WHERE tid IN (SELECT id FROM tasks WHERE task_code in ('qa', 'ucl_qa'))))
         """,
     ),
     step(
         "",
-        """UPDATE examples SET model_preds=CONCAT(JSON_UNQUOTE(JSON_EXTRACT(output_io,
-        "$.answer")), "|", JSON_UNQUOTE(JSON_EXTRACT(output_io, "$.prob"))) WHERE cid
+        """UPDATE examples SET model_preds=CONCAT(JSON_UNQUOTE(JSON_EXTRACT(output_json,
+        "$.answer")), "|", JSON_UNQUOTE(JSON_EXTRACT(output_json, "$.prob"))) WHERE cid
         IN (SELECT id FROM contexts WHERE r_realid IN (SELECT id FROM rounds WHERE
         tid IN (SELECT id FROM tasks WHERE task_code in ('vqa', 'vqa_val'))))
         """,
@@ -1015,16 +997,18 @@ steps = [
         "ALTER TABLE examples ADD COLUMN model_preds TEXT",
     ),
     step(
-        """UPDATE examples SET example_explanation=JSON_UNQUOTE(JSON_EXTRACT(metadata_io,
-        '$."example explanation"'))"""
+        "",
+        """UPDATE examples SET example_explanation=JSON_UNQUOTE(JSON_EXTRACT(metadata_json,
+         '$."example explanation"'))""",
     ),
     step(
         "ALTER TABLE examples DROP example_explanation",
         "ALTER TABLE examples ADD COLUMN example_explanation TEXT",
     ),
     step(
-        """UPDATE examples SET model_explanation=JSON_UNQUOTE(JSON_EXTRACT(metadata_io,
-        '$."model explanation"'))"""
+        "",
+        """UPDATE examples SET model_explanation=JSON_UNQUOTE(JSON_EXTRACT(metadata_json,
+        '$."model explanation"'))""",
     ),
     step(
         "ALTER TABLE examples DROP model_explanation",

@@ -12,7 +12,7 @@ import { TokenAnnotator } from "react-text-annotate";
 import AtomicImage from "./AtomicImage";
 import "./IO.css";
 
-const MultipleChoiceIO = ({
+const MulticlassIO = ({
   displayName,
   className,
   create,
@@ -214,7 +214,7 @@ const ContextStringSelectionIO = ({
   );
 };
 
-const MultipleChoiceProbsIO = ({
+const MulticlassProbsIO = ({
   create,
   exampleIO,
   setExampleIO,
@@ -292,9 +292,9 @@ const IO = ({
           constructorArgs={constructorArgs}
         />
       );
-    case "multiple_choice":
+    case "multiclass":
       return (
-        <MultipleChoiceIO
+        <MulticlassIO
           displayName={displayName}
           className={className}
           create={create}
@@ -328,9 +328,9 @@ const IO = ({
           constructorArgs={constructorArgs}
         />
       );
-    case "multiple_choice_probs":
+    case "multiclass_probs":
       return (
-        <MultipleChoiceProbsIO
+        <MulticlassProbsIO
           create={create}
           name={name}
           exampleIO={exampleIO}

@@ -30,7 +30,6 @@ class Validation(Base):
     eid = db.Column(db.Integer, db.ForeignKey("examples.id"), nullable=False)
     label = db.Column(db.Enum(LabelEnum))
     mode = db.Column(db.Enum(ModeEnum))
-    metadata_io = db.Column(db.Text)
     metadata_json = db.Column(db.Text)
 
     def __repr__(self):
@@ -49,15 +48,11 @@ class ValidationModel(BaseModel):
     def __init__(self):
         super().__init__(Validation)
 
-    def create(self, uid, eid, label, mode, metadata_io={}, metadata={}):
+    def create(self, uid, eid, label, mode, metadata={}):
         try:
             if uid == "turk":
                 validation = Validation(
-                    eid=eid,
-                    label=label,
-                    mode=mode,
-                    metadata_io=json.dumps(metadata_io),
-                    metadata_json=json.dumps(metadata),
+                    eid=eid, label=label, mode=mode, metadata_json=json.dumps(metadata)
                 )
             else:
                 validation = Validation(
@@ -65,7 +60,6 @@ class ValidationModel(BaseModel):
                     eid=eid,
                     label=label,
                     mode=mode,
-                    metadata_io=json.dumps(metadata_io),
                     metadata_json=json.dumps(metadata),
                 )
             self.dbs.add(validation)

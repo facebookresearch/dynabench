@@ -19,18 +19,19 @@ import DragAndDrop from "../DragAndDrop/DragAndDrop";
 const TaskOwnerConsole = (props) => {
   const context = useContext(UserContext);
 
-  const [showTaskOwnerSettingsModal, setShowTaskOwnerSettingsModal] =
-    useState(false);
+  const [showTaskOwnerSettingsModal, setShowTaskOwnerSettingsModal] = useState(
+    false
+  );
   const [validateNonFooling, setValidateNonFooling] = useState(false);
   const [numMatchingValidations, setNumMatchingValidations] = useState(3);
 
   useEffect(() => {
     getSavedTaskSettings();
-  }, [props.task]);
+  }, [getSavedTaskSettings, props.task]);
 
   useEffect(() => {
     updateTaskSettings();
-  }, [validateNonFooling, numMatchingValidations]);
+  }, [validateNonFooling, numMatchingValidations, updateTaskSettings]);
 
   const getSavedTaskSettings = () => {
     if (props.task.settings_json) {
@@ -188,8 +189,8 @@ const TaskOwnerConsole = (props) => {
           <hr />
           Add new contexts to the current round by uploading them here, as a
           jsonl where each datum has three fields: <br /> <br />
-          <b>context_io</b>: a json with keys and values for each of the context
-          io components
+          <b>context</b>: a json-style dict with keys and values for each of the
+          context io components
           <br />
           <b>tag</b>: a string that associates this context with a set of other
           contexts <br />

@@ -61,13 +61,16 @@ class VerifyInterface extends React.Component {
     };
     this.getNewExample = this.getNewExample.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
-    this.setRangesAndGetRandomFilteredExample =
-      this.setRangesAndGetRandomFilteredExample.bind(this);
+    this.setRangesAndGetRandomFilteredExample = this.setRangesAndGetRandomFilteredExample.bind(
+      this
+    );
     this.updateUserSettings = this.updateUserSettings.bind(this);
-    this.updateOwnerValidationFlagFilter =
-      this.updateOwnerValidationFlagFilter.bind(this);
-    this.updateOwnerValidationDisagreementFilter =
-      this.updateOwnerValidationDisagreementFilter.bind(this);
+    this.updateOwnerValidationFlagFilter = this.updateOwnerValidationFlagFilter.bind(
+      this
+    );
+    this.updateOwnerValidationDisagreementFilter = this.updateOwnerValidationDisagreementFilter.bind(
+      this
+    );
   }
   componentDidMount() {
     const {
@@ -85,17 +88,16 @@ class VerifyInterface extends React.Component {
     }
 
     if (this.context.user.settings_json) {
-      const settingsJSON = JSON.parse(this.context.user.settings_json);
-      if (settingsJSON.hasOwnProperty("owner_validation_flag_filter")) {
+      const settings = JSON.parse(this.context.user.settings_json);
+      if (settings.hasOwnProperty("owner_validation_flag_filter")) {
         this.setState({
-          ownerValidationFlagFilter:
-            settingsJSON["owner_validation_flag_filter"],
+          ownerValidationFlagFilter: settings["owner_validation_flag_filter"],
         });
       }
-      if (settingsJSON.hasOwnProperty("owner_validation_disagreement_filter")) {
+      if (settings.hasOwnProperty("owner_validation_disagreement_filter")) {
         this.setState({
           ownerValidationDisagreementFilter:
-            settingsJSON["owner_validation_disagreement_filter"],
+            settings["owner_validation_disagreement_filter"],
         });
       }
     }
@@ -151,10 +153,16 @@ class VerifyInterface extends React.Component {
         ).then(
           (result) => {
             const ioDef = JSON.parse(this.state.task.io_def);
-            const contextIO = JSON.parse(result.context.context_io);
-            const inputIO = JSON.parse(result.input_io);
-            const targetIO = JSON.parse(result.target_io);
-            const metadataIO = JSON.parse(result.metadata_io);
+            const contextIO = JSON.parse(result.context.context_json);
+            const inputIO = JSON.parse(result.input_json);
+            const targetIO = JSON.parse(result.target_json);
+            const metadataIO = {};
+            const metadata = JSON.parse(result.metadata_json);
+            for (const ioDefObj of ioDef.metadata.create) {
+              if (metadata.hasOwnProperty(ioDefObj.name)) {
+                metadataIO[ioDefObj.name] = metadata[ioDefObj.name];
+              }
+            }
             const validatorMetadataIO = {};
             for (const ioDefObj of ioDef.metadata.validate) {
               initializeIO(validatorMetadataIO, ioDefObj);
@@ -187,8 +195,9 @@ class VerifyInterface extends React.Component {
     const filteredValidatorMetadataIO = {};
     for (const ioDefObj of this.state.ioDef.metadata.validate) {
       if (this.state.validatorMetadataIO[ioDefObj.name] !== null) {
-        filteredValidatorMetadataIO[ioDefObj.name] =
-          this.state.validatorMetadataIO[ioDefObj.name];
+        filteredValidatorMetadataIO[
+          ioDefObj.name
+        ] = this.state.validatorMetadataIO[ioDefObj.name];
       }
     }
 
@@ -245,14 +254,14 @@ class VerifyInterface extends React.Component {
   }
 
   updateUserSettings(key, value) {
-    var settingsJSON;
+    var settings;
     if (this.context.user.settings_json) {
-      settingsJSON = JSON.parse(this.context.user.settings_json);
+      settings = JSON.parse(this.context.user.settings_json);
     } else {
-      settingsJSON = {};
+      settings = {};
     }
-    settingsJSON[key] = value;
-    this.context.user.settings_json = JSON.stringify(settingsJSON);
+    settings[key] = value;
+    this.context.user.settings_json = JSON.stringify(settings);
     this.context.api.updateUser(this.context.user.id, this.context.user);
   }
 
@@ -276,8 +285,8 @@ class VerifyInterface extends React.Component {
       .concat(
         this.state.ioDef.metadata.create.filter(
           (ioDefObj) =>
-            ioDefObj.model_wrong === undefined ||
-            ioDefObj.model_wrong === this.state.example.model_wrong
+            ioDefObj.model_wrong_condition === undefined ||
+            ioDefObj.model_wrong_condition === this.state.example.model_wrong
         )
       )
       .filter(
@@ -329,8 +338,8 @@ class VerifyInterface extends React.Component {
     const validatorMetadata = this.state.ioDef.metadata.validate
       .filter(
         (ioDefObj) =>
-          ioDefObj.validated_as === undefined ||
-          ioDefObj.validated_as === this.state.validatorAction
+          ioDefObj.validated_label_condition === undefined ||
+          ioDefObj.validated_label_condition === this.state.validatorAction
       )
       .map((ioDefObj) => (
         <IO
@@ -472,9 +481,9 @@ class VerifyInterface extends React.Component {
                 correct.
               </p>
             </div>
-            {this.state.task.warning_message ? (
+            {this.state.io_def.content_warning ? (
               <p className="mt-3 p-3 light-red-bg rounded white-color">
-                <strong>WARNING</strong>: {this.state.task.warning_message}
+                <strong>WARNING</strong>: {this.state.io_def.content_warning}
               </p>
             ) : null}
             <Card className="profile-card">

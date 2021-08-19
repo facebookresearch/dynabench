@@ -14,12 +14,12 @@ TORCHSERVE_CONFIG = DOCKERFILES / "config.properties"
 def test_torchserve_config_is_valid():
     for task in TaskModel.dbs.query(Task):
         deployer.get_torchserve_config(
-            TORCHSERVE_CONFIG, task.task_code, task.torchserve_config
+            TORCHSERVE_CONFIG, task.task_code, task.extra_torchserve_config
         )
 
 
 def test_flores_config():
-    flores_config = TaskModel().getByTaskCode("flores_small1").torchserve_config
+    flores_config = TaskModel().getByTaskCode("flores_small1").extra_torchserve_config
     expected_torchserve_config = """
 # Copyright (c) Facebook, Inc. and its affiliates.
 # This source code is licensed under the MIT license found in the

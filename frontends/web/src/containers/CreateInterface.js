@@ -82,8 +82,8 @@ class ResponseInfo extends React.Component {
     this.props.ioDef.metadata.create
       .filter(
         (ioDefObj) =>
-          ioDefObj.model_wrong === undefined ||
-          ioDefObj.model_wrong === this.state.modelWrong
+          ioDefObj.model_wrong_condition === undefined ||
+          ioDefObj.model_wrong_condition === this.state.modelWrong
       )
       .forEach((ioDefObj) => {
         initializeIO(metadataIO, ioDefObj);
@@ -100,8 +100,8 @@ class ResponseInfo extends React.Component {
     this.props.ioDef.metadata.create
       .filter(
         (ioDefObj) =>
-          ioDefObj.model_wrong === undefined ||
-          ioDefObj.model_wrong === this.state.modelWrong
+          ioDefObj.model_wrong_condition === undefined ||
+          ioDefObj.model_wrong_condition === this.state.modelWrong
       )
       .forEach((ioObj) => {
         if (this.state.metadataIO[ioObj.name] !== null) {
@@ -109,7 +109,7 @@ class ResponseInfo extends React.Component {
         }
       });
     this.context.api.updateExample(this.props.exampleId, {
-      metadata_io: nonNullMetadataIO,
+      metadata: nonNullMetadataIO,
     });
   }
 
@@ -263,8 +263,8 @@ class ResponseInfo extends React.Component {
     const metadata = this.props.ioDef.metadata.create
       .filter(
         (ioDefObj) =>
-          ioDefObj.model_wrong === undefined ||
-          ioDefObj.model_wrong === this.state.modelWrong
+          ioDefObj.model_wrong_condition === undefined ||
+          ioDefObj.model_wrong_condition === this.state.modelWrong
       )
       .map((ioDefObj) => (
         <IO
@@ -573,10 +573,12 @@ class CreateInterface extends React.Component {
     this.updateRetainInput = this.updateRetainInput.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
     this.clearUserInput = this.clearUserInput.bind(this);
-    this.handleStoreExampleAndResponseInfo =
-      this.handleStoreExampleAndResponseInfo.bind(this);
-    this.disentangleAndSetInputAndTargetIO =
-      this.disentangleAndSetInputAndTargetIO.bind(this);
+    this.handleStoreExampleAndResponseInfo = this.handleStoreExampleAndResponseInfo.bind(
+      this
+    );
+    this.disentangleAndSetInputAndTargetIO = this.disentangleAndSetInputAndTargetIO.bind(
+      this
+    );
     this.chatContainerRef = React.createRef();
     this.bottomAnchorRef = React.createRef();
     this.inputRef = React.createRef();
@@ -605,7 +607,7 @@ class CreateInterface extends React.Component {
               ioDef: ioDef,
               inputIO: inputIO,
               targetIO: targetIO,
-              contextIO: JSON.parse(result.context_io),
+              contextIO: JSON.parse(result.context_json),
               randomTargetModel: randomTargetModel,
               context: result,
               content: [],
@@ -623,14 +625,14 @@ class CreateInterface extends React.Component {
   updateRetainInput(e) {
     const retainInput = e.target.checked;
     if (this.context.api.loggedIn()) {
-      var settingsJSON;
+      var settings;
       if (this.context.user.settings_json) {
-        settingsJSON = JSON.parse(this.context.user.settings_json);
-        settingsJSON["retain_input"] = retainInput;
+        settings = JSON.parse(this.context.user.settings_json);
+        settings["retain_input"] = retainInput;
       } else {
-        settingsJSON = { retain_input: retainInput };
+        settings = { retain_input: retainInput };
       }
-      this.context.user.settings_json = JSON.stringify(settingsJSON);
+      this.context.user.settings_json = JSON.stringify(settings);
       this.context.api.updateUser(this.context.user.id, this.context.user);
     }
     this.setState({ retainInput: retainInput });
@@ -990,9 +992,9 @@ class CreateInterface extends React.Component {
       this.context.api.getUser(user.id, true).then(
         (result) => {
           if (result.settings_json) {
-            var settingsJSON = JSON.parse(result.settings_json);
-            if (settingsJSON["retain_input"]) {
-              this.setState({ retainInput: settingsJSON["retain_input"] });
+            var settings = JSON.parse(result.settings_json);
+            if (settings["retain_input"]) {
+              this.setState({ retainInput: settings["retain_input"] });
             }
           }
         },
@@ -1303,7 +1305,7 @@ class CreateInterface extends React.Component {
                   <Modal.Title>Instructions</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                  <Markdown>{this.state.task.instructions}</Markdown>
+                  <Markdown>{this.state.task.instructions_md}</Markdown>
                 </Modal.Body>
               </Modal>
               <Modal
@@ -1328,13 +1330,13 @@ class CreateInterface extends React.Component {
               randomTargetModel={this.state.randomTargetModel}
             />
             <div className={"mb-3"}>
-              {this.state.task.goal_message ||
+              {this.state.io_def.goal_message ||
               (goalMessageIO && goalMessageIO.length) > 0 ? (
                 <div className="mb-1 p-3 rounded light-gray-bg">
-                  {this.state.task.goal_message ? (
+                  {this.state.io_def.goal_message ? (
                     <InputGroup className="align-items-center">
                       <i className="fas fa-flag-checkered mr-1"></i>
-                      Your goal: {this.state.task.goal_message}
+                      Your goal: {this.state.io_def.goal_message}
                     </InputGroup>
                   ) : null}
                   {goalMessageIO}

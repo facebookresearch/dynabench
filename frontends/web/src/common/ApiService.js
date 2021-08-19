@@ -425,9 +425,9 @@ export default class ApiService {
     });
   }
 
-  setExampleMetadata(id, metadataJSON) {
+  setExampleMetadata(id, metadataIO) {
     var obj = {};
-    obj.metadata_json = JSON.stringify(metadataJSON);
+    obj.metadata_json = JSON.stringify(metadataIO);
     return this.fetch(`${this.domain}/examples/${id}`, {
       method: "PUT",
       body: JSON.stringify(obj),
@@ -454,12 +454,11 @@ export default class ApiService {
     );
   }
 
-  validateExample(id, label, mode, metadataIO = {}, metadata = {}, uid = null) {
+  validateExample(id, label, mode, metadata = {}, uid = null) {
     let obj = {
       label: label,
       mode: mode,
       metadata: metadata,
-      metadata_io: metadataIO,
     };
     if (this.mode === "mturk") {
       obj.uid = uid;
@@ -493,12 +492,12 @@ export default class ApiService {
   }
 
   getModelWrong(tid, targetIO, outputIO) {
-    return this.fetch(`${this.domain}/examples/get-model-wrong`, {
+    return this.fetch(`${this.domain}/examples/evaluate`, {
       method: "POST",
       body: JSON.stringify({
-        target_io: targetIO,
+        target: targetIO,
         tid: tid,
-        output_io: outputIO,
+        output: outputIO,
       }),
     });
   }
@@ -524,9 +523,9 @@ export default class ApiService {
         rid: rid,
         cid: cid,
         uid: uid,
-        input_io: inputIO,
-        target_io: targetIO,
-        output_io: outputIO,
+        input: inputIO,
+        target: targetIO,
+        output: outputIO,
         model_signature: modelSignature,
         metadata: metadata,
         model_wrong: modelWrong,

@@ -190,7 +190,7 @@ class ModelDeployer:
         config = get_torchserve_config(
             torchserve_config_file,
             self.model.task.task_code,
-            self.model.task.torchserve_config,
+            self.model.task.extra_torchserve_config,
         )
         Path(torchserve_config_file).write_text(config)
 
@@ -476,10 +476,10 @@ def docker_build_cmd(
 
 
 def get_torchserve_config(
-    base_file: Path, task_code: str, torchserve_config_str: str
+    base_file: Path, task_code: str, extra_torchserve_config_str: str
 ) -> str:
     base_content = Path(base_file).read_text()
-    config = torchserve_config_str
+    config = extra_torchserve_config_str
     if not config:
         return base_content
     config = json.loads(config)

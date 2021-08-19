@@ -107,15 +107,19 @@ def do_upload(credentials):
 
     upload = bottle.request.files.get("file")
 
+    tm = TaskModel()
+    task = tm.get(task_id)
+
     try:
         parsed_upload_data = [
             json.loads(line) for line in upload.file.read().decode("utf-8").splitlines()
         ]
         for context_info in parsed_upload_data:
             if (
-                "context_io" not in context_info
+                "context" not in context_info
                 or "tag" not in context_info
                 or "metadata" not in context_info
+                or not task.verify_io(context_info["context"])
             ):
                 bottle.abort(400, "Upload valid contexts file")
 
@@ -123,8 +127,6 @@ def do_upload(credentials):
         logger.exception(ex)
         bottle.abort(400, "Upload valid contexts file")
 
-    tm = TaskModel()
-    task = tm.get(task_id)
     rm = RoundModel()
     round = rm.getByTidAndRid(task_id, task.cur_round)
     r_realid = round.id
@@ -132,7 +134,7 @@ def do_upload(credentials):
     for context_info in parsed_upload_data:
         c = Context(
             r_realid=r_realid,
-            context_io=json.dumps(context_info["context_io"]),
+            context_json=json.dumps(context_info["context"]),
             metadata_json=json.dumps(context_info["metadata"]),
             tag=context_info["tag"],
         )

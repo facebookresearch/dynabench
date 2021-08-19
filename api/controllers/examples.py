@@ -147,9 +147,9 @@ def update_example(credentials, eid):
             del data["uid"]  # don't store this
 
         for field in data:
-            if field not in ("model_wrong", "flagged", "retracted", "metadata_io"):
+            if field not in ("model_wrong", "flagged", "retracted", "metadata_json"):
                 bottle.abort(
-                    403, "Can only modify  model_wrong, retracted, and metadata_io"
+                    403, "Can only modify  model_wrong, retracted, and metadata_json"
                 )
 
         if (
@@ -168,17 +168,23 @@ def update_example(credentials, eid):
                 um.incrementFooledCount(example.uid)
                 info.incrementFooledCount(example.uid, context.r_realid)
 
-        if "metadata_io" in data:
+        if "metadata" in data:
             cm = ContextModel()
             context = cm.get(example.cid)
             all_user_io = {}
-            all_user_io.update(json.loads(context.context_io))
-            all_user_io.update(json.loads(example.input_io))
-            all_user_io.update(json.loads(example.target_io))
-            all_user_io.update(data["metadata_io"])
+            all_user_io.update(json.loads(context.context_json))
+            all_user_io.update(json.loads(example.input_json))
+            all_user_io.update(json.loads(example.target_json))
+            all_user_io.update(data["metadata"])
             if not TaskModel().get(example.context.round.tid).verify_io(all_user_io):
-                bottle.abort(403, "metadata_io is not properly formatted")
-            data["metadata_io"] = json.dumps(data["metadata_io"])
+                bottle.abort(403, "metadata_jon is not properly formatted")
+            # Make sure to keep fields in the metadata_json from before if they aren't
+            # in the new metadata_json
+            if example.metadata_json is not None:
+                for key, value in json.loads(example.metadata_json).items():
+                    if key not in data["metadata"]:
+                        data["metadata"][key] = value
+            data["metadta_json"] = json.dumps(data["metadata"])
 
         logger.info(f"Updating example {example.id} with {data}")
         em.update(example.id, data)
@@ -199,44 +205,38 @@ def update_example(credentials, eid):
         bottle.abort(500, {"error": str(e)})
 
 
-@bottle.post("/examples/get-model-wrong")
-def controller_get_model_wrong():
+@bottle.post("/examples/evaluate")
+def evaluate_model_correctness():
     data = bottle.request.json
 
-    if not util.check_fields(data, ["tid", "target_io", "output_io"]):
+    if not util.check_fields(data, ["tid", "target", "output"]):
         bottle.abort(400, "Missing data")
 
-    model_wrong, missing_keys = get_model_wrong(
-        data["tid"], data["target_io"], data["output_io"]
-    )
-    if missing_keys:
-        bottle.abort(400, "Missing keys")
-
-    return util.json_encode({"success": "ok", "model_wrong": model_wrong})
-
-
-def get_model_wrong(tid, target_io, output_io):
     tm = TaskModel()
-    task = tm.get(tid)
+    task = tm.get(data["tid"])
     model_wrong_metric_def = json.loads(task.model_wrong_metric)
     model_wrong_metric = model_wrong_metrics[model_wrong_metric_def["type"]]
     target_keys = set(map(lambda item: item["name"], json.loads(task.io_def)["target"]))
     pruned_target = {}
     pruned_output = {}
-    for key, value in target_io.items():
+    for key, value in data["target"].items():
         if key in target_keys:
             pruned_target[key] = value
-    for key, value in output_io.items():
+    for key, value in data["output"].items():
         if key in target_keys:
             pruned_output[key] = value
 
-    return (
-        model_wrong_metric(
-            pruned_output, pruned_target, model_wrong_metric_def["constructor_args"]
-        ),
-        len(pruned_target.keys()) != len(target_keys)
-        or len(pruned_output.keys()) != len(target_keys),
+    model_wrong = model_wrong_metric(
+        pruned_output, pruned_target, model_wrong_metric_def["constructor_args"]
     )
+    missing_keys = len(pruned_target.keys()) != len(target_keys) or len(
+        pruned_output.keys()
+    ) != len(target_keys)
+
+    if missing_keys:
+        bottle.abort(400, "Missing keys")
+
+    return util.json_encode({"success": "ok", "model_wrong": model_wrong})
 
 
 @bottle.post("/examples")
@@ -250,9 +250,9 @@ def post_example(credentials):
             "rid",
             "uid",
             "cid",
-            "input_io",
-            "output_io",
-            "target_io",
+            "input",
+            "output",
+            "target",
             "model_signature",
             "metadata",
             "model_endpoint_name",
@@ -277,9 +277,9 @@ def post_example(credentials):
         rid=data["rid"],
         uid=data["uid"] if credentials["id"] != "turk" else "turk",
         cid=data["cid"],
-        input_io=data["input_io"],
-        target_io=data["target_io"],
-        output_io=data["output_io"],
+        input=data["input"],
+        target=data["target"],
+        output=data["output"],
         model_signature=data["model_signature"],
         metadata=data["metadata"],
         model_wrong=data["model_wrong"],

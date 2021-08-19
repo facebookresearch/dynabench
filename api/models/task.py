@@ -19,6 +19,9 @@ sys.path.append("../evaluation")  # noqa
 from metrics.metric_getters import get_task_metrics_meta  # isort:skip
 
 
+EPSILON_PREC = 1e-4
+
+
 class ModelWrongMetricEnum(enum.Enum):
     exact_match = "exact_match"
     string_f1 = "string_f1"
@@ -26,14 +29,20 @@ class ModelWrongMetricEnum(enum.Enum):
 
 
 def exact_match(output, target, constructor_args):
-    return output != target
+    results = []
+    for name in constructor_args["reference_names"]:
+        results.append(output[name] != target[name])
+    if True in results:
+        return True
+    return False
 
 
 def string_f1(output, target, constructor_args):
-    assert len(output.values()) == 1
-    assert len(target.values()) == 1
     return (
-        compute_f1(list(output.values())[0], list(target.values())[0])
+        compute_f1(
+            output[constructor_args["reference_name"]],
+            target[constructor_args["reference_name"]],
+        )
         < constructor_args["threshold"]
     )
 
@@ -66,8 +75,8 @@ class IOTypeEnum(enum.Enum):
     string = "string"
     context_string_selection = "context_string_selection"
     conf = "conf"
-    multiple_choice_probs = "multiple_choice_probs"
-    multiple_choice = "multiple_choice"
+    multiclass_probs = "multiclass_probs"
+    multiclass = "multiclass"
     target_label = "target_label"
 
 
@@ -88,24 +97,22 @@ def verify_context_string_selection(
 
 def verify_conf(obj, obj_constructor_args, name_to_constructor_args, example_io):
     assert isinstance(obj, float)
-    assert obj > -0.001
-    assert obj < 1.001
+    assert obj > 0 - EPSILON_PREC
+    assert obj < 1 + EPSILON_PREC
 
 
-def verify_multiple_choice_probs(
+def verify_multiclass_probs(
     obj, obj_constructor_args, name_to_constructor_args, example_io
 ):
     assert isinstance(obj, dict)
     assert set(obj.keys()) == set(
         name_to_constructor_args[obj_constructor_args["reference_name"]]["labels"]
     )
-    assert sum(obj.values()) < 1.001
-    assert sum(obj.values()) > 0.999
+    assert sum(obj.values()) < 1 + EPSILON_PREC
+    assert sum(obj.values()) > 1 - EPSILON_PREC
 
 
-def verify_multiple_choice(
-    obj, obj_constructor_args, name_to_constructor_args, example_io
-):
+def verify_multiclass(obj, obj_constructor_args, name_to_constructor_args, example_io):
     assert isinstance(obj, str)
     assert obj in obj_constructor_args["labels"]
 
@@ -122,8 +129,8 @@ io_type_verifiers = {
     IOTypeEnum.string.name: verify_string,
     IOTypeEnum.context_string_selection.name: verify_context_string_selection,
     IOTypeEnum.conf.name: verify_conf,
-    IOTypeEnum.multiple_choice_probs.name: verify_multiple_choice_probs,
-    IOTypeEnum.multiple_choice.name: verify_multiple_choice,
+    IOTypeEnum.multiclass_probs.name: verify_multiclass_probs,
+    IOTypeEnum.multiclass.name: verify_multiclass,
     IOTypeEnum.target_label.name: verify_target_label,
 }
 
@@ -144,9 +151,7 @@ class Task(Base):
         nullable=False,
     )
     model_wrong_metric = db.Column(db.Text, nullable=False)
-    instructions = db.Column(db.Text)
-    goal_message = db.Column(db.Text)
-    warning_message = db.Column(db.Text)
+    instructions_md = db.Column(db.Text)
 
     desc = db.Column(db.String(length=255))
 
@@ -171,7 +176,7 @@ class Task(Base):
     eval_server_id = db.Column(db.Text, default="default", nullable=False)
     create_endpoint = db.Column(db.Boolean, default=True)
     gpu = db.Column(db.Boolean, default=False)
-    torchserve_config = db.Column(db.Text)
+    extra_torchserve_config = db.Column(db.Text)
 
     def __repr__(self):
         return f"<Task {self.name}>"
@@ -333,7 +338,7 @@ class TaskModel(BaseModel):
             t_dict["ordered_scoring_datasets"] = scoring_dataset_list
             t_dict["ordered_datasets"] = dataset_list
             t_dict["perf_metric_field_name"] = t_dict["perf_metric"]
-            # TODO: make the frontend use pert_metric instead of perf_metric_field_name?
+            # TODO: make the frontend use perf_metric instead of perf_metric_field_name?
             metrics_meta, ordered_field_names = get_task_metrics_meta(t)
             ordered_metrics = [
                 dict(

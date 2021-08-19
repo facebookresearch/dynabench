@@ -35,11 +35,9 @@ class Example(Base):
     user = db.orm.relationship("User", foreign_keys="Example.uid")
     tag = db.Column(db.Text)
 
-    input_io = db.Column(db.Text)
-    target_io = db.Column(db.Text)
-    output_io = db.Column(db.Text)
-    metadata_io = db.Column(db.Text)
-
+    input_json = db.Column(db.Text)
+    target_json = db.Column(db.Text)
+    output_json = db.Column(db.Text)
     metadata_json = db.Column(db.Text)
 
     model_endpoint_name = db.Column(db.Text)
@@ -80,9 +78,9 @@ class ExampleModel(BaseModel):
         rid,
         uid,
         cid,
-        input_io,
-        target_io,
-        output_io,
+        input,
+        target,
+        output,
         model_signature,
         metadata,
         model_wrong,
@@ -103,13 +101,16 @@ class ExampleModel(BaseModel):
             )
             return False
 
-        context_io = json.loads(c.context_io)
+        tm = TaskModel()
+        task = tm.get(tid)
+
+        context = json.loads(c.context_json)
 
         all_user_io = {}
-        all_user_io.update(context_io)
-        all_user_io.update(input_io)
-        all_user_io.update(target_io)
-        if not TaskModel().get(tid).verify_io(all_user_io):
+        all_user_io.update(context)
+        all_user_io.update(input)
+        all_user_io.update(target)
+        if not task.verify_io(all_user_io):
             logger.error("Improper formatting in user io")
             return False
 
@@ -117,16 +118,16 @@ class ExampleModel(BaseModel):
             model_signature is None
             and model_wrong is None
             and model_endpoint_name is None
-            and output_io is None
+            and output is None
         ):
             pass  # ignore signature when we don't have a model in the loop with turkers
         else:
             # Make sure that we aren't accepting any corrupted example io
             all_model_io = {}
-            all_model_io.update(context_io)
-            all_model_io.update(input_io)
-            all_model_io.update(output_io)
-            if not TaskModel().get(tid).verify_io(all_model_io):
+            all_model_io.update(context)
+            all_model_io.update(input)
+            all_model_io.update(output)
+            if not task.verify_io(all_model_io):
                 logger.error("Improper formatting in model io")
                 return False
 
@@ -184,55 +185,49 @@ class ExampleModel(BaseModel):
                 if c.round.task.task_code in ("qa", "vqa"):
                     if (
                         c.round.task.task_code == "vqa"
-                        and "answer" in output_io
-                        and "prob" in output_io
+                        and "answer" in output
+                        and "prob" in output
                     ):
                         model_wrong = False
+                        pred = str(output["answer"]) + "|" + str(float(output["prob"]))
+                    elif "model_is_correct" in output and "text" in output:
                         pred = (
-                            str(output_io["answer"])
-                            + "|"
-                            + str(float(output_io["prob"]))
+                            str(output["model_is_correct"]) + "|" + str(output["text"])
                         )
-                    elif "model_is_correct" in output_io and "text" in output_io:
-                        pred = (
-                            str(output_io["model_is_correct"])
-                            + "|"
-                            + str(output_io["text"])
-                        )
-                        model_wrong = not output_io["model_is_correct"]
+                        model_wrong = not output["model_is_correct"]
                     else:
                         return False
-                    if "model_id" in output_io:
-                        pred += "|" + str(output_io["model_id"])
+                    if "model_id" in output:
+                        pred += "|" + str(output["model_id"])
                 else:
-                    if "prob" not in output_io:
+                    if "prob" not in output:
                         return False
                     if c.round.task.task_code == "nli":
                         pred = "|".join(
                             [
-                                str(output_io["prob"]["entailed"]),
-                                str(output_io["prob"]["neutral"]),
-                                str(output_io["prob"]["contradictory"]),
+                                str(output["prob"]["entailed"]),
+                                str(output["prob"]["neutral"]),
+                                str(output["prob"]["contradictory"]),
                             ]
                         )
                     if c.round.task.task_code == "sentiment":
                         pred = "|".join(
                             [
-                                str(output_io["prob"]["negative"]),
-                                str(output_io["prob"]["positive"]),
-                                str(output_io["prob"]["neutral"]),
+                                str(output["prob"]["negative"]),
+                                str(output["prob"]["positive"]),
+                                str(output["prob"]["neutral"]),
                             ]
                         )
                     if c.round.task.task_code == "hs":
                         pred = "|".join(
                             [
-                                str(output_io["prob"]["not-hateful"]),
-                                str(output_io["prob"]["hateful"]),
+                                str(output["prob"]["not-hateful"]),
+                                str(output["prob"]["hateful"]),
                             ]
                         )
 
                 if not self.verify_signature(
-                    model_signature, c, list(input_io.values())[0], pred
+                    model_signature, c, list(input.values())[0], pred
                 ):
                     return False
                 # End hack that can be removed upon full dynalab integration
@@ -240,9 +235,9 @@ class ExampleModel(BaseModel):
         try:
             e = Example(
                 context=c,
-                input_io=json.dumps(input_io),
-                target_io=json.dumps(target_io),
-                output_io=json.dumps(output_io),
+                input_json=json.dumps(input),
+                target_json=json.dumps(target),
+                output_json=json.dumps(output),
                 model_wrong=model_wrong,
                 generated_datetime=db.sql.func.now(),
                 metadata_json=json.dumps(metadata),
@@ -270,7 +265,7 @@ class ExampleModel(BaseModel):
         tid = context.round.task.id
         rid = context.round.rid
         secret = context.round.secret
-        context_str = list(json.loads(context.context_io).values())[0]
+        context_str = list(json.loads(context.context_json).values())[0]
 
         fields_to_sign = []
         fields_to_sign.append(pred_str.encode("utf-8"))
