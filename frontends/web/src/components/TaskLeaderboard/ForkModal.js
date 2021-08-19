@@ -1,14 +1,7 @@
 import React, { useEffect } from "react";
 import { useContext, useState } from "react";
 import UserContext from "../../containers/UserContext";
-import {
-  Button,
-  Form,
-  FormControl,
-  InputGroup,
-  Modal,
-  Table,
-} from "react-bootstrap";
+import { Button, Form, FormControl, InputGroup, Modal } from "react-bootstrap";
 
 const ForkModal = (props) => {
   const context = useContext(UserContext);
@@ -73,11 +66,10 @@ const ForkModal = (props) => {
       )
       .then(
         () => {
-          const forkUrl = new URL(window.location.href);
-          forkUrl.pathname = `/tasks/${taskCode}/${uriEncodedLeaderboardName}`;
+          const forkUrl = `https://ldbd.ly/${taskCode}/${uriEncodedLeaderboardName}`;
           setLeaderboardName("");
           setForkCreatedSuccessfully(true);
-          setForkUrl(forkUrl.toString());
+          setForkUrl(forkUrl);
         },
         (error) => {
           console.log(error);
