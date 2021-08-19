@@ -97,19 +97,16 @@ const ForkOrSnapshotTable = (props) => {
                         if (!task || !task.length) {
                           return null;
                         }
-                        const forkOrSnapshotUrl = new URL(
-                          window.location.origin
-                        );
-                        forkOrSnapshotUrl.pathname = `/tasks/${
+                        const forkOrSnapshotUrl = `https://ldbd.ly/${
                           task[0].task_code
                         }/${isForkList ? datum.name : datum.id}`;
                         return (
                           <>
                             <td className="text-truncate long-text">
                               <span>
-                                <Link to={forkOrSnapshotUrl}>
-                                  {forkOrSnapshotUrl.toString()}
-                                </Link>
+                                <a href={forkOrSnapshotUrl}>
+                                  {forkOrSnapshotUrl}
+                                </a>
                               </span>
                             </td>
                             <td>
