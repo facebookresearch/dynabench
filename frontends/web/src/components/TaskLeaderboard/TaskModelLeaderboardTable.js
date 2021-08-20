@@ -12,6 +12,7 @@ import { Table } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import WeightIndicator from "./WeightIndicator";
 import ChevronExpandButton from "../Buttons/ChevronExpandButton";
+import { SortContainer } from "./SortContainer";
 
 /**
  * Weight Slider UI
@@ -122,34 +123,6 @@ const WarningPopover = ({ warning, direction, children }) => {
     >
       {children}
     </OverlayTrigger>
-  );
-};
-
-/**
- * Container to show and toggle current sort by.
- *
- * @param {String} props.sortKey the sortBy key for this instance
- * @param {(String)=>void} props.toggleSort function to change the sortBy field.
- * @param {currentSort} props.currentSort the current sortBy field.
- */
-const SortContainer = ({
-  sortKey,
-  toggleSort,
-  currentSort,
-  className,
-  children,
-}) => {
-  return (
-    <div onClick={() => toggleSort(sortKey)} className={className}>
-      {currentSort.field === sortKey && currentSort.direction === "asc" && (
-        <i className="fas fa-sort-up">&nbsp;</i>
-      )}
-      {currentSort.field === sortKey && currentSort.direction === "desc" && (
-        <i className="fas fa-sort-down">&nbsp;</i>
-      )}
-
-      {children}
-    </div>
   );
 };
 

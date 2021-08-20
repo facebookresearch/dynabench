@@ -1,52 +1,34 @@
 import React, { Fragment, useState, useEffect, useContext } from "react";
-import { Card, Pagination, Col, Spinner } from "react-bootstrap";
+import {
+  Card,
+  Pagination,
+  Col,
+  Spinner,
+  Tooltip,
+  Button,
+  OverlayTrigger,
+} from "react-bootstrap";
 import { Table } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import UserContext from "../../containers/UserContext";
-
-const SortDirection = {
-  ASC: "asc",
-  DESC: "desc",
-  getOppositeDirection(direction) {
-    return direction === this.ASC ? this.DESC : this.ASC;
-  },
-};
+import SnapshotModal from "../TaskLeaderboard/SnapshotModal";
+import { getOrderedWeights } from "../TaskLeaderboard/TaskModelLeaderboardCardWrapper";
+import { SortContainer, SortDirection } from "../TaskLeaderboard/SortContainer";
 
 /**
- * Container to show and toggle current sort by.
+ * The Overall Flores Model Leaderboard component
  *
- * @param {String} props.sortKey the sortBy key for this instance
- * @param {(String)=>void} props.toggleSort function to change the sortBy field.
- * @param {currentSort} props.currentSort the current sortBy field.
- */
-const SortContainer = ({
-  sortKey,
-  toggleSort,
-  currentSort,
-  className,
-  children,
-}) => {
-  return (
-    <div onClick={() => toggleSort(sortKey)} className={className}>
-      {currentSort.field === sortKey && currentSort.direction === "asc" && (
-        <i className="fas fa-sort-up">&nbsp;</i>
-      )}
-      {currentSort.field === sortKey && currentSort.direction === "desc" && (
-        <i className="fas fa-sort-down">&nbsp;</i>
-      )}
-
-      {children}
-    </div>
-  );
-};
-
-/**
- * The Overall Model Leader board component
+ * @param {Object} props React props de-structured.
+ * @param {String} props.taskId the flores task id for the leader board.
+ * @param {String} props.taskCode the flores task code for the leader board.
+ * @param {string} props.history navigation API
+ * @param {boolean} props.isTop5 Whether or not component is in "view top 5" mode
+ * @param {boolean} props.disableToggleSort Whether or not changing sort field/direction is allowed
+ * @param {boolean} props.disableSnapshot Whether or not snapshotting is allowed
+ * @param {Object} props.snapshotData Static snapshot data if viewing a snapshot page
  *
- * @param {String} props.taskTitle title of track to show
- * @param {String} props.taskId the flores task for the leader board.
  */
-const ModelLeaderBoard = ({ taskId, history, isTop5 }) => {
+const FloresModelLeaderboard = (props) => {
   const context = useContext(UserContext);
   const [data, setData] = useState([]);
   const [task, setTask] = useState({});
@@ -58,34 +40,70 @@ const ModelLeaderBoard = ({ taskId, history, isTop5 }) => {
     field: "sp-BLEU",
     direction: SortDirection.DESC,
   });
+  const [showSnapshotModal, setShowSnapshotModal] = useState(false);
+
+  const { taskId, history, isTop5, taskCode, snapshotData } = props;
+
+  const dummyMetricWeights = [
+    { weight: 1 },
+    { weight: 0 },
+    { weight: 0 },
+    { weight: 0 },
+    { weight: 0 },
+  ];
+  const dummyDatasetWeights = [{ weight: 1 }];
+
+  const { orderedMetricWeights, orderedDatasetWeights } = getOrderedWeights(
+    dummyMetricWeights,
+    dummyDatasetWeights
+  );
 
   useEffect(() => {
     setIsLoading(true);
-    context.api
-      .getDynaboardScores(
-        taskId,
-        isTop5 ? 5 : pageLimit,
-        page * pageLimit,
-        sort.field,
-        sort.direction,
-        [1, 0, 0, 0, 0],
-        [1]
-      ) // No weights.
-      .then(
-        (result) => {
-          setTotal(result.count);
-          setData(result.data);
-        },
-        (error) => {
-          console.log(error);
-          if (error.status_code === 404 || error.status_code === 405) {
-            history.push("/");
+
+    if (snapshotData) {
+      setData(snapshotData.data);
+      setTotal(snapshotData.count);
+      setSort(snapshotData.miscInfoJson.sort);
+    } else {
+      context.api
+        .getDynaboardScores(
+          taskId,
+          isTop5 ? 5 : pageLimit,
+          page * pageLimit,
+          sort.field,
+          sort.direction,
+          orderedMetricWeights, // [1, 0, 0, 0, 0]
+          orderedDatasetWeights // [1]
+        )
+        .then(
+          (result) => {
+            setTotal(result.count);
+            setData(result.data);
+          },
+          (error) => {
+            console.log(error);
+            if (error.status_code === 404 || error.status_code === 405) {
+              history.push("/");
+            }
           }
-        }
-      );
+        );
+    }
+
     setIsLoading(false);
     return () => {};
-  }, [taskId, context.api, page, pageLimit, sort, history, isTop5]);
+  }, [
+    taskId,
+    context.api,
+    page,
+    pageLimit,
+    sort,
+    history,
+    isTop5,
+    snapshotData,
+    orderedMetricWeights,
+    orderedDatasetWeights,
+  ]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -108,6 +126,10 @@ const ModelLeaderBoard = ({ taskId, history, isTop5 }) => {
    * @param {string} field
    */
   const toggleSort = (field) => {
+    if (props.disableToggleSort) {
+      return;
+    }
+
     const currentDirection = sort.direction;
 
     const newDirection =
@@ -161,10 +183,53 @@ const ModelLeaderBoard = ({ taskId, history, isTop5 }) => {
   return (
     <Col className="ml-auto mr-auto" md={isTop5 ? "12" : "5"}>
       <Card className="my-4">
-        <Card.Header className="light-gray-bg">
+        <Card.Header className="light-gray-bg d-flex align-items-center">
           <h2 className="text-uppercase m-0 text-reset">
             Model Leaderboard - {task.name}
           </h2>
+          <div className="d-flex justify-content-end flex-fill">
+            <SnapshotModal
+              metricWeights={dummyMetricWeights}
+              datasetWeights={dummyDatasetWeights}
+              taskId={taskId}
+              taskCode={taskCode}
+              showSnapshotModal={showSnapshotModal}
+              setShowSnapshotModal={setShowSnapshotModal}
+              history={history}
+              sort={sort}
+              total={total}
+              customDescription={`Save leaderboard standings and share with
+              anyone using a permanent link. Results shown in the snapshot
+              table will be frozen and will not change over time.`}
+            />
+            {!props.disableSnapshot && (
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip id="tip-leaderboard-fork">Snapshot</Tooltip>}
+              >
+                <Button
+                  className="btn bg-transparent border-0"
+                  onClick={() => {
+                    if (context.api.loggedIn()) {
+                      setShowSnapshotModal(true);
+                    } else {
+                      props.history.push(
+                        "/login?msg=" +
+                          encodeURIComponent(
+                            "You need to login to create a leaderboard snapshot."
+                          ) +
+                          `&src=/flores/${task.task_code}`
+                      );
+                    }
+                  }}
+                >
+                  <span className="text-black-50">
+                    <i className="fas fa-camera"></i>
+                  </span>
+                </Button>
+              </OverlayTrigger>
+            )}
+          </div>
         </Card.Header>
         <Card.Body className="p-0 leaderboard-container">
           <Table hover className="mb-0">
@@ -218,4 +283,4 @@ const ModelLeaderBoard = ({ taskId, history, isTop5 }) => {
   );
 };
 
-export default ModelLeaderBoard;
+export default FloresModelLeaderboard;

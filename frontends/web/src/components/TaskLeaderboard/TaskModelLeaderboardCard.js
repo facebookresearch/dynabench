@@ -13,14 +13,7 @@ import UserContext from "../../containers/UserContext";
 import TaskModelLeaderboardTable from "./TaskModelLeaderboardTable";
 import ForkModal from "./ForkModal";
 import SnapshotModal from "./SnapshotModal";
-
-const SortDirection = {
-  ASC: "asc",
-  DESC: "desc",
-  getOppositeDirection(direction) {
-    return direction === this.ASC ? this.DESC : this.ASC;
-  },
-};
+import { SortDirection } from "./SortContainer";
 
 /**
  * Represents the leader board for a task. i.e. Dynaboard
@@ -60,7 +53,7 @@ const TaskModelLeaderboardCard = (props) => {
       setDatasetWeights(result.orderedDatasetWeights);
       setDescription(result.description);
     });
-  }, [props, task]);
+  }, [context.api, props, task]);
 
   const [sort, setSort] = useState({
     field: "dynascore",
@@ -333,7 +326,7 @@ const TaskModelLeaderboardCard = (props) => {
                           encodeURIComponent(
                             "You need to login to create a leaderboard snapshot."
                           ) +
-                          `&src=/tasks/${taskId}`
+                          `&src=/tasks/${taskCode}`
                       );
                     }
                   }}

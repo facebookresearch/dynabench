@@ -7,7 +7,7 @@ import {
   FormControl,
   InputGroup,
   Modal,
-  Table,
+  Row,
 } from "react-bootstrap";
 
 const ForkModal = (props) => {
@@ -73,11 +73,10 @@ const ForkModal = (props) => {
       )
       .then(
         () => {
-          const forkUrl = new URL(window.location.href);
-          forkUrl.pathname = `/tasks/${taskCode}/${uriEncodedLeaderboardName}`;
+          const forkUrl = `https://ldbd.ly/${taskCode}/${uriEncodedLeaderboardName}`;
           setLeaderboardName("");
           setForkCreatedSuccessfully(true);
-          setForkUrl(forkUrl.toString());
+          setForkUrl(forkUrl);
         },
         (error) => {
           console.log(error);
@@ -175,14 +174,27 @@ const ForkModal = (props) => {
         <Modal.Body>
           {forkCreatedSuccessfully ? (
             <div>
-              <p>{`Your fork is ready. Permanent link to your fork is:`}</p>
+              <p>{`Your fork is ready. The permanent link to your fork is:`}</p>
               <p className="text-break" id="forkLink">
                 {forkUrl}
               </p>
-              <div className="flex text-center flex-column">
-                <Button variant="primary" onClick={copyToClipboard}>
-                  Copy
-                </Button>
+              <div className="d-flex text-center flex-column align-items-center">
+                <Row className="justify-content-between">
+                  <Button
+                    className="mx-1"
+                    variant="primary"
+                    onClick={copyToClipboard}
+                  >
+                    Copy
+                  </Button>
+                  <Button
+                    className="mx-1"
+                    variant="primary"
+                    onClick={() => window.open(forkUrl, "_blank")}
+                  >
+                    Go to URL
+                  </Button>
+                </Row>
                 <p className="my-0">{copySuccess}</p>
               </div>
             </div>

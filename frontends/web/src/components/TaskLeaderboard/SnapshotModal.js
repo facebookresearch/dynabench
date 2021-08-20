@@ -15,6 +15,7 @@ const SnapshotModal = (props) => {
     taskCode,
     showSnapshotModal,
     setShowSnapshotModal,
+    customDescription,
   } = props;
 
   const [snapshotCreatedSuccessfully, setSnapshotCreatedSuccessfully] =
@@ -60,9 +61,7 @@ const SnapshotModal = (props) => {
       )
       .then(
         (result) => {
-          const snapshotUrl = new URL(window.location.href);
-          snapshotUrl.pathname = `/tasks/${taskCode}/${result.id}`;
-          setSnapshotUrl(snapshotUrl.toString());
+          setSnapshotUrl(`https://ldbd.ly/${taskCode}/${result.id}`);
           setSnapshotCreatedSuccessfully(true);
         },
         (error) => {
@@ -94,9 +93,10 @@ const SnapshotModal = (props) => {
       {snapshotCreatedSuccessfully === null ? (
         <Modal.Body>
           <p>
-            Save leaderboard standings along with weights for metrics and
-            datasets and share with anyone using a link. Results shown in the
-            snapshot table will be frozen and will not change over time.
+            {customDescription ||
+              `Save leaderboard standings along with weights for metrics and 
+              datasets and share with anyone using a link. Results shown in the 
+              snapshot table will be frozen and will not change over time.`}
           </p>
           <p className="mt-4">Enter a description for your snapshot:</p>
           <InputGroup>
@@ -120,14 +120,27 @@ const SnapshotModal = (props) => {
         <Modal.Body>
           {snapshotCreatedSuccessfully ? (
             <div>
-              <p>{`Your snapshot is ready. Permanent link to your snapshot is:`}</p>
+              <p>{`Your snapshot is ready. The permanent link to your snapshot is:`}</p>
               <p className="text-break" id="snapshotUrl">
                 {snapshotUrl}
               </p>
-              <div className="flex text-center flex-column">
-                <Button variant="primary" onClick={copyToClipboard}>
-                  Copy
-                </Button>
+              <div className="d-flex text-center flex-column align-items-center">
+                <Row className="justify-content-between">
+                  <Button
+                    className="mx-1"
+                    variant="primary"
+                    onClick={copyToClipboard}
+                  >
+                    Copy
+                  </Button>
+                  <Button
+                    className="mx-1"
+                    variant="primary"
+                    onClick={() => window.open(snapshotUrl, "_blank")}
+                  >
+                    Go to URL
+                  </Button>
+                </Row>
                 <p className="my-0">{copySuccess}</p>
               </div>
             </div>
@@ -139,6 +152,7 @@ const SnapshotModal = (props) => {
           )}
         </Modal.Body>
       )}
+      <Modal.Footer />
     </Modal>
   );
 };

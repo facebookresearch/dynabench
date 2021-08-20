@@ -30,8 +30,7 @@ import { OverlayProvider, BadgeOverlay } from "./Overlay";
 import { useState } from "react";
 import FloresGrid from "../components/FloresComponents/FloresGrid";
 import ChevronExpandButton from "../components/Buttons/ChevronExpandButton";
-
-const FLORES_TASK_CODES = ["flores_full", "flores_small1", "flores_small2"];
+import { FLORES_TASK_CODES } from "./FloresTaskPage";
 
 const ScoreRow = ({ score }) => {
   const [expanded, setExpanded] = useState(false);
@@ -329,8 +328,11 @@ ${latexTableContent}
   };
 
   downloadCsv = () => {
-    const { leaderboard_scores, non_leaderboard_scores, name } =
-      this.state.model;
+    const {
+      leaderboard_scores,
+      non_leaderboard_scores,
+      name,
+    } = this.state.model;
     const { task } = this.state;
     const taskName = task.name;
 

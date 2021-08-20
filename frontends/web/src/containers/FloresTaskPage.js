@@ -28,6 +28,12 @@ const FLORES_TASK_NAMES = [
   "Flores MT Evaluation (Small task 2)",
 ];
 
+export const FLORES_TASK_CODES = [
+  "flores_full",
+  "flores_small1",
+  "flores_small2",
+];
+
 const TaskNav = ({ location, taskLookup, taskId, setTask }) => {
   return (
     <Nav className="sidebar-wrapper sticky-top">
@@ -189,8 +195,8 @@ const FloresTaskPage = (props) => {
               >
                 <FloresModelLeaderBoard
                   {...props}
-                  taskTitle={task?.name}
                   taskId={task.id}
+                  taskCode={task.task_code}
                 />
               </Annotation>
               <Annotation

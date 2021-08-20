@@ -10,8 +10,7 @@ import "./TaskPage.css";
 import { Container, Row, Col, Spinner } from "react-bootstrap";
 import UserContext from "./UserContext";
 import FloresModelLeaderBoard from "../components/FloresComponents/FloresModelLeaderboard";
-
-const FLORES_TASK_NAMES = ["FLORES-FULL", "FLORES-SMALL1", "FLORES-SMALL2"];
+import { FLORES_TASK_CODES } from "./FloresTaskPage";
 
 const FloresTop5Page = (props) => {
   const context = useContext(UserContext); // for API
@@ -19,7 +18,7 @@ const FloresTop5Page = (props) => {
   const [task, setTask] = useState(null); // Current Task ID
   const [isLoading, setIsLoading] = useState(false);
 
-  let { taskName } = useParams();
+  let { taskCode } = useParams();
 
   // Call api only once
   useEffect(() => {
@@ -34,19 +33,19 @@ const FloresTop5Page = (props) => {
       api.getSubmittableTasks().then(
         (result) => {
           const floresTasks = result.filter((t) =>
-            FLORES_TASK_NAMES.includes(t.name)
+            FLORES_TASK_CODES.includes(t.task_code)
           );
           const taskLookup = floresTasks.reduce(
-            (map, obj) => ((map[obj.name] = obj), map),
+            (map, obj) => ((map[obj.task_code] = obj), map),
             {}
           );
 
           setTaskLookup(taskLookup);
 
-          if (FLORES_TASK_NAMES.includes(taskName)) {
-            setTask(taskLookup[taskName]); // set the task from Arguments
+          if (FLORES_TASK_CODES.includes(taskCode)) {
+            setTask(taskLookup[taskCode]); // set the task from Arguments
           } else {
-            setTask(taskLookup[FLORES_TASK_NAMES[0]]); // set default task
+            setTask(taskLookup[FLORES_TASK_CODES[0]]); // set default task
           }
 
           setIsLoading(false);
@@ -61,7 +60,7 @@ const FloresTop5Page = (props) => {
     fetchFloresTasks(context.api);
 
     return () => {};
-  }, [context.api, taskName]);
+  }, [context.api, taskCode]);
 
   if (isLoading || !task) {
     return (
@@ -81,9 +80,10 @@ const FloresTop5Page = (props) => {
         >
           <FloresModelLeaderBoard
             {...props}
-            taskTitle={task?.name}
             taskId={task.id}
+            taskCode={task.task_code}
             isTop5={true}
+            disableSnapshot={true}
           />
         </a>
       </Row>
