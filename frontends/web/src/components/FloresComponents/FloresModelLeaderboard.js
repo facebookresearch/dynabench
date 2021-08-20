@@ -92,18 +92,7 @@ const FloresModelLeaderboard = (props) => {
 
     setIsLoading(false);
     return () => {};
-  }, [
-    taskId,
-    context.api,
-    page,
-    pageLimit,
-    sort,
-    history,
-    isTop5,
-    snapshotData,
-    orderedMetricWeights,
-    orderedDatasetWeights,
-  ]);
+  }, [taskId, context.api, page, pageLimit, sort, history, isTop5]);
 
   useEffect(() => {
     setIsLoading(true);

@@ -31,7 +31,7 @@ const ForkOrSnapshotTable = (props) => {
         console.log(error);
       }
     );
-  }, [context.api]);
+  }, []);
 
   useEffect(() => {
     const newDescriptionConfiguration = {};

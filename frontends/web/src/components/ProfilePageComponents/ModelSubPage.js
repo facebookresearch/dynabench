@@ -28,7 +28,7 @@ const ModelSubPage = (props) => {
         console.log(error);
       }
     );
-  }, [userId, page, api, pageLimit]);
+  }, [userId, page]);
 
   const paginate = (state) => {
     const is_next = state === "next";
