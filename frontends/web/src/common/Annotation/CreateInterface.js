@@ -86,12 +86,10 @@ class CreateInterface extends React.Component {
     this.updateRetainInput = this.updateRetainInput.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
     this.clearUserInput = this.clearUserInput.bind(this);
-    this.handleStoreExampleAndResponseInfo = this.handleStoreExampleAndResponseInfo.bind(
-      this
-    );
-    this.disentangleAndSetInputAndTarget = this.disentangleAndSetInputAndTarget.bind(
-      this
-    );
+    this.handleStoreExampleAndResponseInfo =
+      this.handleStoreExampleAndResponseInfo.bind(this);
+    this.disentangleAndSetInputAndTarget =
+      this.disentangleAndSetInputAndTarget.bind(this);
     this.chatContainerRef = React.createRef();
     this.bottomAnchorRef = React.createRef();
     this.inputRef = React.createRef();
@@ -673,9 +671,10 @@ class CreateInterface extends React.Component {
       (annotationConfigObj) =>
         annotationConfigObj.constructor_args.reference_name
     );
-    const tooTallForResponseInfoPlaceholder = this.state.annotationConfig.context
-      .map((annotationConfigObj) => annotationConfigObj.type)
-      .includes("image_url");
+    const tooTallForResponseInfoPlaceholder =
+      this.state.annotationConfig.context
+        .map((annotationConfigObj) => annotationConfigObj.type)
+        .includes("image_url");
     const contextInterface = this.state.annotationConfig.context
       .concat(contextStringSelectionGroup)
       .filter(

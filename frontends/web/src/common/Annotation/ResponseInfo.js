@@ -53,9 +53,8 @@ class ResponseInfo extends React.Component {
       )
       .forEach((annotationConfigObj) => {
         if (this.state.metadata[annotationConfigObj.name] !== null) {
-          nonNullMetadata[annotationConfigObj.name] = this.state.metadata[
-            annotationConfigObj.name
-          ];
+          nonNullMetadata[annotationConfigObj.name] =
+            this.state.metadata[annotationConfigObj.name];
         }
       });
     this.context.api.updateExample(this.props.exampleId, {

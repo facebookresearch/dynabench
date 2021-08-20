@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import Moment from "react-moment";
 import ChevronExpandButton from "../Buttons/ChevronExpandButton";
 import UserContext from "../../containers/UserContext";
-import { FLORES_TASK_SHORT_NAMES } from "../../containers/FloresTaskPage";
+import { FLORES_TASK_CODES } from "../../containers/FloresTaskPage";
 
 const ForkOrSnapshotTable = (props) => {
   const { data, isForkList, page, paginate, isEndOfPage } = props;
@@ -57,9 +57,8 @@ const ForkOrSnapshotTable = (props) => {
     const dupDescriptionConfiguration = {
       ...descriptionConfiguration,
     };
-    dupDescriptionConfiguration[
-      descriptionId
-    ].isExpanded = !dupDescriptionConfiguration[descriptionId].isExpanded;
+    dupDescriptionConfiguration[descriptionId].isExpanded =
+      !dupDescriptionConfiguration[descriptionId].isExpanded;
     setDescriptionConfiguration(dupDescriptionConfiguration);
   };
 
@@ -109,9 +108,7 @@ const ForkOrSnapshotTable = (props) => {
                 const forkOrSnapshotUrl = `https://ldbd.ly/${task?.task_code}/${
                   isForkList ? datum.name : datum.id
                 }`;
-                const taskPageUrl = FLORES_TASK_SHORT_NAMES.includes(
-                  task.task_code
-                )
+                const taskPageUrl = FLORES_TASK_CODES.includes(task.task_code)
                   ? `/flores/${task.task_code}`
                   : `/tasks/${task.task_code}`;
 
