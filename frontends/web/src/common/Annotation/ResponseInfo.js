@@ -181,7 +181,7 @@ class ResponseInfo extends React.Component {
       ));
 
     const otherModelOutputInterface =
-      this.props.obj.url === null &&
+      this.props.obj.url !== null &&
       this.props.annotationConfig.output
         .filter(
           (annotationConfigObj) =>
