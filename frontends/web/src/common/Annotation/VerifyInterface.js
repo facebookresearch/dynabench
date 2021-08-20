@@ -18,21 +18,14 @@ import {
   Spinner,
   InputGroup,
 } from "react-bootstrap";
-import UserContext from "./UserContext";
-import { OverlayProvider, BadgeOverlay, Annotation } from "./Overlay";
-import IO from "./IO.js";
-
-function initializeIO(ioDict, ioDefObj) {
-  if (ioDefObj.type === "target_label") {
-    const random =
-      ioDefObj.constructor_args.labels[
-        Math.floor(Math.random() * ioDefObj.constructor_args.labels.length)
-      ];
-    ioDict[ioDefObj.name] = random;
-  } else {
-    ioDict[ioDefObj.name] = null;
-  }
-}
+import UserContext from "../../containers/UserContext";
+import {
+  OverlayProvider,
+  BadgeOverlay,
+  Annotation,
+} from "../../containers/Overlay";
+import AnnotationComponent from "./AnnotationComponent.js";
+import initializeData from "./InitializeAnnotationData.js";
 
 class VerifyInterface extends React.Component {
   static contextType = UserContext;
@@ -46,28 +39,31 @@ class VerifyInterface extends React.Component {
       ownerValidationFlagFilter: "Any",
       ownerValidationDisagreementFilter: "Any",
       validatorAction: null,
-      ioDef: {
+      annotationConfig: {
         input: [],
         target: [],
         context: [],
         metadata: { create: [], validate: [] },
       },
-      inputIO: {},
-      targetIO: {},
-      contextIO: {},
-      metadataIO: {},
-      validatorMetadataIO: {},
+      input: {},
+      target: {},
+      contextData: {},
+      metadata: {},
+      validatorMetadata: {},
       loading: true,
     };
     this.getNewExample = this.getNewExample.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
-    this.setRangesAndGetRandomFilteredExample =
-      this.setRangesAndGetRandomFilteredExample.bind(this);
+    this.setRangesAndGetRandomFilteredExample = this.setRangesAndGetRandomFilteredExample.bind(
+      this
+    );
     this.updateUserSettings = this.updateUserSettings.bind(this);
-    this.updateOwnerValidationFlagFilter =
-      this.updateOwnerValidationFlagFilter.bind(this);
-    this.updateOwnerValidationDisagreementFilter =
-      this.updateOwnerValidationDisagreementFilter.bind(this);
+    this.updateOwnerValidationFlagFilter = this.updateOwnerValidationFlagFilter.bind(
+      this
+    );
+    this.updateOwnerValidationDisagreementFilter = this.updateOwnerValidationDisagreementFilter.bind(
+      this
+    );
   }
   componentDidMount() {
     const {
@@ -132,11 +128,11 @@ class VerifyInterface extends React.Component {
   getNewExample() {
     this.setState(
       {
-        inputIO: {},
-        targetIO: {},
-        contextIO: {},
-        metadataIO: {},
-        validatorMetadataIO: {},
+        input: {},
+        target: {},
+        contextData: {},
+        metadata: {},
+        validatorMetadata: {},
         validatorAction: null,
         loading: true,
       },
@@ -149,30 +145,27 @@ class VerifyInterface extends React.Component {
             )
         ).then(
           (result) => {
-            const ioDef = JSON.parse(this.state.task.io_def);
-            const contextIO = JSON.parse(result.context.context_json);
-            const inputIO = JSON.parse(result.input_json);
-            const targetIO = JSON.parse(result.target_json);
-            const metadataIO = {};
+            const annotationConfig = JSON.parse(
+              this.state.task.annotation_config_json
+            );
+            const contextData = JSON.parse(result.context.context_json);
+            const input = JSON.parse(result.input_json);
+            const target = JSON.parse(result.target_json);
             const metadata = JSON.parse(result.metadata_json);
-            for (const ioDefObj of ioDef.metadata.create) {
-              if (metadata.hasOwnProperty(ioDefObj.name)) {
-                metadataIO[ioDefObj.name] = metadata[ioDefObj.name];
-              }
-            }
-            const validatorMetadataIO = {};
-            for (const ioDefObj of ioDef.metadata.validate) {
-              initializeIO(validatorMetadataIO, ioDefObj);
+            const validatorMetadata = {};
+            for (const annotationConfigObj of annotationConfig.metadata
+              .validate) {
+              initializeData(validatorMetadata, annotationConfigObj);
             }
 
             this.setState({
               example: result,
-              ioDef: ioDef,
-              inputIO: inputIO,
-              targetIO: targetIO,
-              contextIO: contextIO,
-              metadataIO: metadataIO,
-              validatorMetadataIO: validatorMetadataIO,
+              annotationConfig: annotationConfig,
+              input: input,
+              target: target,
+              contextData: contextData,
+              metadata: metadata,
+              validatorMetadata: validatorMetadata,
               loading: false,
             });
           },
@@ -189,11 +182,13 @@ class VerifyInterface extends React.Component {
 
   handleResponse() {
     const mode = this.state.ownerMode ? "owner" : "user";
-    const filteredValidatorMetadataIO = {};
-    for (const ioDefObj of this.state.ioDef.metadata.validate) {
-      if (this.state.validatorMetadataIO[ioDefObj.name] !== null) {
-        filteredValidatorMetadataIO[ioDefObj.name] =
-          this.state.validatorMetadataIO[ioDefObj.name];
+    const filteredValidatorMetadata = {};
+    for (const annotationConfigObj of this.state.annotationConfig.metadata
+      .validate) {
+      if (this.state.validatorMetadata[annotationConfigObj.name] !== null) {
+        filteredValidatorMetadata[
+          annotationConfigObj.name
+        ] = this.state.validatorMetadata[annotationConfigObj.name];
       }
     }
 
@@ -202,7 +197,7 @@ class VerifyInterface extends React.Component {
         this.state.example.id,
         this.state.validatorAction,
         mode,
-        filteredValidatorMetadataIO
+        filteredValidatorMetadata
       )
       .then(
         (result) => {
@@ -276,84 +271,82 @@ class VerifyInterface extends React.Component {
   }
 
   render() {
-    const inputTargetMetadata = this.state.ioDef.input
-      .concat(this.state.ioDef.target)
+    const inputTargetMetadataInterface = this.state.annotationConfig.input
+      .concat(this.state.annotationConfig.target)
       .concat(
-        this.state.ioDef.metadata.create.filter(
-          (ioDefObj) =>
-            ioDefObj.model_wrong_condition === undefined ||
-            ioDefObj.model_wrong_condition === this.state.example.model_wrong
+        this.state.annotationConfig.metadata.create.filter(
+          (annotationConfigObj) =>
+            annotationConfigObj.model_wrong_condition === undefined ||
+            annotationConfigObj.model_wrong_condition ===
+              this.state.example.model_wrong
         )
       )
       .filter(
-        (ioDefObj) =>
+        (annotationConfigObj) =>
           ![undefined, null].includes(
             Object.assign(
               {},
-              this.state.inputIO,
-              this.state.targetIO,
-              this.state.metadataIO
-            )[ioDefObj.name]
+              this.state.input,
+              this.state.target,
+              this.state.metadata
+            )[annotationConfigObj.name]
           )
       )
-      .map((ioDefObj) => (
-        <div key={ioDefObj.name} className="mb-3">
-          <IO
-            displayName={ioDefObj.display_name}
+      .map((annotationConfigObj) => (
+        <div key={annotationConfigObj.name} className="mb-3">
+          <AnnotationComponent
+            displayName={annotationConfigObj.display_name}
             className="name-display-primary"
-            key={ioDefObj.name}
-            create={false}
-            name={ioDefObj.name}
-            exampleIO={Object.assign(
+            key={annotationConfigObj.name}
+            name={annotationConfigObj.name}
+            data={Object.assign(
               {},
-              this.state.inputIO,
-              this.state.targetIO,
-              this.state.metadataIO
+              this.state.input,
+              this.state.target,
+              this.state.metadata
             )}
-            setExampleIO={() => {}}
-            type={ioDefObj.type}
-            constructorArgs={ioDefObj.constructor_args}
+            type={annotationConfigObj.type}
+            constructorArgs={annotationConfigObj.constructor_args}
           />
         </div>
       ));
 
-    const context = this.state.ioDef.context.map((ioDefObj) => (
-      <IO
-        displayName={ioDefObj.display_name}
-        className="name-display-primary"
-        key={ioDefObj.name}
-        create={false}
-        name={ioDefObj.name}
-        exampleIO={this.state.contextIO}
-        setExampleIO={() => {}}
-        type={ioDefObj.type}
-        constructorArgs={ioDefObj.constructor_args}
-      />
-    ));
-
-    const validatorMetadata = this.state.ioDef.metadata.validate
-      .filter(
-        (ioDefObj) =>
-          ioDefObj.validated_label_condition === undefined ||
-          ioDefObj.validated_label_condition === this.state.validatorAction
+    const contextInterface = this.state.annotationConfig.context.map(
+      (annotationConfigObj) => (
+        <AnnotationComponent
+          displayName={annotationConfigObj.display_name}
+          className="name-display-primary"
+          key={annotationConfigObj.name}
+          name={annotationConfigObj.name}
+          data={this.state.contextData}
+          type={annotationConfigObj.type}
+          constructorArgs={annotationConfigObj.constructor_args}
+        />
       )
-      .map((ioDefObj) => (
-        <IO
-          displayName={ioDefObj.display_name}
+    );
+
+    const validatorMetadataInterface = this.state.annotationConfig.metadata.validate
+      .filter(
+        (annotationConfigObj) =>
+          annotationConfigObj.validated_label_condition === undefined ||
+          annotationConfigObj.validated_label_condition ===
+            this.state.validatorAction
+      )
+      .map((annotationConfigObj) => (
+        <AnnotationComponent
+          displayName={annotationConfigObj.display_name}
           className="user-input-secondary"
-          key={ioDefObj.name}
+          key={annotationConfigObj.name}
           create={true}
-          name={ioDefObj.name}
-          exampleIO={Object.assign(
+          name={annotationConfigObj.name}
+          data={Object.assign(
             {},
-            this.state.validatorMetadataIO,
-            this.state.contextIO
+            this.state.validatorMetadata,
+            this.state.contextData
           )}
-          setExampleIO={(exampleIO) =>
-            this.setState({ validatorMetadataIO: exampleIO })
-          }
-          type={ioDefObj.type}
-          constructorArgs={ioDefObj.constructor_args}
+          setData={(data) => this.setState({ validatorMetadata: data })}
+          type={annotationConfigObj.type}
+          constructorArgs={annotationConfigObj.constructor_args}
         />
       ));
 
@@ -366,10 +359,11 @@ class VerifyInterface extends React.Component {
         ></BadgeOverlay>
         <Container className="mb-5 pb-5">
           <Col className="m-auto" lg={12}>
-            {this.context.api.isTaskOwner(
+            {(this.context.api.isTaskOwner(
               this.context.user,
               this.state.task.id
-            ) || this.context.user.admin ? (
+            ) ||
+              this.context.user.admin) && (
               <div style={{ float: "right" }}>
                 <Annotation
                   placement="top"
@@ -405,7 +399,7 @@ class VerifyInterface extends React.Component {
                         );
                       }}
                     />
-                    {this.state.ownerMode ? (
+                    {this.state.ownerMode && (
                       <div>
                         <DropdownButton
                           variant="light"
@@ -413,9 +407,9 @@ class VerifyInterface extends React.Component {
                           title={
                             this.state.ownerValidationFlagFilter.toString() +
                             " flag" +
-                            (this.state.ownerValidationFlagFilter === 1
-                              ? ""
-                              : "s")
+                            (this.state.ownerValidationFlagFilter !== 1
+                              ? "s"
+                              : "")
                           }
                         >
                           {["Any", 0, 1, 2, 3, 4, 5].map((target, index) => (
@@ -436,9 +430,9 @@ class VerifyInterface extends React.Component {
                           title={
                             this.state.ownerValidationDisagreementFilter.toString() +
                             " correct/incorrect disagreement" +
-                            (this.state.ownerValidationDisagreementFilter === 1
-                              ? ""
-                              : "s")
+                            (this.state.ownerValidationDisagreementFilter !== 1
+                              ? "s"
+                              : "")
                           }
                         >
                           {["Any", 0, 1, 2, 3, 4].map((target, index) => (
@@ -456,14 +450,10 @@ class VerifyInterface extends React.Component {
                           ))}
                         </DropdownButton>
                       </div>
-                    ) : (
-                      ""
                     )}
                   </Modal.Body>
                 </Modal>
               </div>
-            ) : (
-              ""
             )}
             <div className="mt-4 pt-3">
               <p className="text-uppercase mb-0 spaced-header">
@@ -477,24 +467,25 @@ class VerifyInterface extends React.Component {
                 correct.
               </p>
             </div>
-            {this.state.ioDef.content_warning ? (
+            {this.state.annotationConfig.content_warning && (
               <p className="mt-3 p-3 light-red-bg rounded white-color">
-                <strong>WARNING</strong>: {this.state.ioDef.content_warning}
+                <strong>WARNING</strong>:{" "}
+                {this.state.annotationConfig.content_warning}
               </p>
-            ) : null}
+            )}
             <Card className="profile-card">
               {!this.state.loading ? (
                 this.state.example ? (
                   <>
-                    {context && context.length > 0 ? (
+                    {contextInterface && contextInterface.length > 0 && (
                       <div className="mb-1 p-3 rounded light-gray-bg">
-                        {context}
+                        {contextInterface}
                       </div>
-                    ) : null}
+                    )}
                     <Card.Body className="p-3">
                       <Row>
                         <Col xs={12} md={7}>
-                          {inputTargetMetadata}
+                          {inputTargetMetadataInterface}
                           <h6 className="text-uppercase dark-blue-color spaced-header">
                             Actions:
                           </h6>
@@ -507,7 +498,7 @@ class VerifyInterface extends React.Component {
                               }
                             />
                             <i className="fas fa-thumbs-up"></i> &nbsp;{" "}
-                            {this.state.ownerMode ? "Verified " : ""} Correct
+                            {this.state.ownerMode && "Verified "} Correct
                           </InputGroup>
                           <InputGroup className="align-items-center">
                             <Form.Check
@@ -520,9 +511,9 @@ class VerifyInterface extends React.Component {
                               }
                             />
                             <i className="fas fa-thumbs-down"></i> &nbsp;{" "}
-                            {this.state.ownerMode ? "Verified " : ""} Incorrect
+                            {this.state.ownerMode && "Verified "} Incorrect
                           </InputGroup>
-                          {this.state.ownerMode ? null : (
+                          {!this.state.ownerMode && (
                             <InputGroup className="align-items-center">
                               <Form.Check
                                 checked={
@@ -538,17 +529,17 @@ class VerifyInterface extends React.Component {
                           )}
                           <br />
                           {this.state.validatorAction !== null &&
-                          validatorMetadata.length > 0 ? (
-                            <>
-                              <div>
-                                <h6 className="text-uppercase dark-blue-color spaced-header">
-                                  You can enter more information:
-                                </h6>
-                                {validatorMetadata}
-                              </div>
-                              <br />
-                            </>
-                          ) : null}
+                            validatorMetadataInterface.length > 0 && (
+                              <>
+                                <div>
+                                  <h6 className="text-uppercase dark-blue-color spaced-header">
+                                    You can enter more information:
+                                  </h6>
+                                  {validatorMetadataInterface}
+                                </div>
+                                <br />
+                              </>
+                            )}
                         </Col>
                       </Row>
                       <InputGroup className="align-items-center">
@@ -590,13 +581,13 @@ class VerifyInterface extends React.Component {
                 </div>
               )}
               <div className="p-2">
-                {this.state.ownerMode ? (
+                {this.state.ownerMode && (
                   <p style={{ color: "red" }}>
                     WARNING: You are in "Task owner mode." You can verify
                     examples as correct or incorrect without input from anyone
                     else!!
                   </p>
-                ) : null}
+                )}
               </div>
             </Card>
           </Col>

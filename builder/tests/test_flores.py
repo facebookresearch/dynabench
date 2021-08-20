@@ -19,7 +19,8 @@ def test_torchserve_config_is_valid():
 
 
 def test_flores_config():
-    flores_config = TaskModel().getByTaskCode("flores_small1").extra_torchserve_config
+    tm = TaskModel()
+    flores_config = tm.getByTaskCode("flores_small1").extra_torchserve_config
     expected_torchserve_config = """
 # Copyright (c) Facebook, Inc. and its affiliates.
 # This source code is licensed under the MIT license found in the

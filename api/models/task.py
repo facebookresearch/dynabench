@@ -70,7 +70,7 @@ class AggregationMetricEnum(enum.Enum):
     dynascore = "dynascore"
 
 
-class IOTypeEnum(enum.Enum):
+class AnnotationTypeEnum(enum.Enum):
     image_url = "image_url"
     string = "string"
     context_string_selection = "context_string_selection"
@@ -80,30 +80,28 @@ class IOTypeEnum(enum.Enum):
     target_label = "target_label"
 
 
-def verify_image_url(obj, obj_constructor_args, name_to_constructor_args, example_io):
+def verify_image_url(obj, obj_constructor_args, name_to_constructor_args, data):
     assert isinstance(obj, str)
 
 
-def verify_string(obj, obj_constructor_args, name_to_constructor_args, example_io):
+def verify_string(obj, obj_constructor_args, name_to_constructor_args, data):
     assert isinstance(obj, str)
 
 
 def verify_context_string_selection(
-    obj, constructor_args, name_to_constructor_args, example_io
+    obj, constructor_args, name_to_constructor_args, data
 ):
     assert isinstance(obj, str)
-    assert obj in example_io[constructor_args["reference_name"]]
+    assert obj in data[constructor_args["reference_name"]]
 
 
-def verify_conf(obj, obj_constructor_args, name_to_constructor_args, example_io):
+def verify_conf(obj, obj_constructor_args, name_to_constructor_args, data):
     assert isinstance(obj, float)
     assert obj > 0 - EPSILON_PREC
     assert obj < 1 + EPSILON_PREC
 
 
-def verify_multiclass_probs(
-    obj, obj_constructor_args, name_to_constructor_args, example_io
-):
+def verify_multiclass_probs(obj, obj_constructor_args, name_to_constructor_args, data):
     assert isinstance(obj, dict)
     assert set(obj.keys()) == set(
         name_to_constructor_args[obj_constructor_args["reference_name"]]["labels"]
@@ -112,26 +110,24 @@ def verify_multiclass_probs(
     assert sum(obj.values()) > 1 - EPSILON_PREC
 
 
-def verify_multiclass(obj, obj_constructor_args, name_to_constructor_args, example_io):
+def verify_multiclass(obj, obj_constructor_args, name_to_constructor_args, data):
     assert isinstance(obj, str)
     assert obj in obj_constructor_args["labels"]
 
 
-def verify_target_label(
-    obj, obj_constructor_args, name_to_constructor_args, example_io
-):
+def verify_target_label(obj, obj_constructor_args, name_to_constructor_args, data):
     assert isinstance(obj, str)
     assert obj in obj_constructor_args["labels"]
 
 
-io_type_verifiers = {
-    IOTypeEnum.image_url.name: verify_image_url,
-    IOTypeEnum.string.name: verify_string,
-    IOTypeEnum.context_string_selection.name: verify_context_string_selection,
-    IOTypeEnum.conf.name: verify_conf,
-    IOTypeEnum.multiclass_probs.name: verify_multiclass_probs,
-    IOTypeEnum.multiclass.name: verify_multiclass,
-    IOTypeEnum.target_label.name: verify_target_label,
+annotation_type_verifiers = {
+    AnnotationTypeEnum.image_url.name: verify_image_url,
+    AnnotationTypeEnum.string.name: verify_string,
+    AnnotationTypeEnum.context_string_selection.name: verify_context_string_selection,
+    AnnotationTypeEnum.conf.name: verify_conf,
+    AnnotationTypeEnum.multiclass_probs.name: verify_multiclass_probs,
+    AnnotationTypeEnum.multiclass.name: verify_multiclass,
+    AnnotationTypeEnum.target_label.name: verify_target_label,
 }
 
 
@@ -144,7 +140,7 @@ class Task(Base):
     task_code = db.Column(db.String(length=255), unique=True, nullable=False)
 
     name = db.Column(db.String(length=255), nullable=False, unique=True)
-    io_def = db.Column(db.Text, nullable=False)
+    annotation_config_json = db.Column(db.Text, nullable=False)
     aggregation_metric = db.Column(
         db.Enum(AggregationMetricEnum),
         default=AggregationMetricEnum.dynascore,
@@ -187,36 +183,36 @@ class Task(Base):
             d[column.name] = getattr(self, column.name)
         return d
 
-    def verify_io(self, io_objs):
+    def verify_annotation(self, data):
         name_to_constructor_args = {}
         name_to_type = {}
-        io_def = json.loads(self.io_def)
-        io_def_objs = (
-            io_def["context"]
-            + io_def["output"]
-            + io_def["target"]
-            + io_def["input"]
-            + io_def["metadata"]["validate"]
-            + io_def["metadata"]["validate"]
+        annotation_config = json.loads(self.annotation_config_json)
+        annotation_config_objs = (
+            annotation_config["context"]
+            + annotation_config["output"]
+            + annotation_config["target"]
+            + annotation_config["input"]
+            + annotation_config["metadata"]["validate"]
+            + annotation_config["metadata"]["validate"]
         )
 
-        for io_def_obj in io_def_objs:
-            name_to_constructor_args[io_def_obj["name"]] = io_def_obj[
-                "constructor_args"
-            ]
-            name_to_type[io_def_obj["name"]] = io_def_obj["type"]
+        for annotation_config_obj in annotation_config_objs:
+            name_to_constructor_args[
+                annotation_config_obj["name"]
+            ] = annotation_config_obj["constructor_args"]
+            name_to_type[annotation_config_obj["name"]] = annotation_config_obj["type"]
 
-        for name, obj in io_objs.items():
+        for name, datum in data.items():
             if (
                 name in name_to_type
             ):  # TODO This check is necessary for non-dynalab models.
                 # Can be removed when dynatask-dynalab integration is complete.
                 try:
-                    io_type_verifiers[name_to_type[name]](
-                        obj,
+                    annotation_type_verifiers[name_to_type[name]](
+                        datum,
                         name_to_constructor_args[name],
                         name_to_constructor_args,
-                        io_objs,
+                        data,
                     )
                 except Exception:
                     logger.error(name + " is improperly formatted")

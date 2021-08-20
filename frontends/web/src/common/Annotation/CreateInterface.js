@@ -20,30 +20,19 @@ import {
   Tooltip,
   Modal,
 } from "react-bootstrap";
-import { Link } from "react-router-dom";
-import UserContext from "./UserContext";
+import UserContext from "../../containers/UserContext";
 import BootstrapSwitchButton from "bootstrap-switch-button-react";
 import {
   OverlayProvider,
   Annotation,
   OverlayContext,
   BadgeOverlay,
-} from "./Overlay";
+} from "../../containers/Overlay";
 import Markdown from "react-markdown";
 import "./CreateInterface.css";
-import IO from "./IO.js";
-
-function initializeIO(ioDict, ioDefObj) {
-  if (ioDefObj.type === "target_label") {
-    const random =
-      ioDefObj.constructor_args.labels[
-        Math.floor(Math.random() * ioDefObj.constructor_args.labels.length)
-      ];
-    ioDict[ioDefObj.name] = random;
-  } else {
-    ioDict[ioDefObj.name] = null;
-  }
-}
+import AnnotationComponent from "./AnnotationComponent.js";
+import initializeData from "./InitializeAnnotationData.js";
+import ResponseInfo from "./ResponseInfo.js";
 
 const Explainer = (props) => (
   <div className="mt-4 mb-1 pt-3">
@@ -64,482 +53,6 @@ const Explainer = (props) => (
   </div>
 );
 
-class ResponseInfo extends React.Component {
-  static contextType = UserContext;
-  constructor(props) {
-    super(props);
-    this.retractExample = this.retractExample.bind(this);
-    this.flagExample = this.flagExample.bind(this);
-    this.updateUserMetadataIO = this.updateUserMetadataIO.bind(this);
-    this.updateModelWrong = this.updateModelWrong.bind(this);
-    this.state = {
-      metadataIO: {},
-      modelWrong: this.props.obj.modelWrong,
-    };
-  }
-  componentDidMount() {
-    const metadataIO = {};
-    this.props.ioDef.metadata.create
-      .filter(
-        (ioDefObj) =>
-          ioDefObj.model_wrong_condition === undefined ||
-          ioDefObj.model_wrong_condition === this.state.modelWrong
-      )
-      .forEach((ioDefObj) => {
-        initializeIO(metadataIO, ioDefObj);
-      });
-    this.setState({
-      metadataIO: metadataIO,
-      exampleUpdated: null,
-      feedbackSaved: null,
-    });
-  }
-
-  updateUserMetadataIO() {
-    const nonNullMetadataIO = {};
-    this.props.ioDef.metadata.create
-      .filter(
-        (ioDefObj) =>
-          ioDefObj.model_wrong_condition === undefined ||
-          ioDefObj.model_wrong_condition === this.state.modelWrong
-      )
-      .forEach((ioObj) => {
-        if (this.state.metadataIO[ioObj.name] !== null) {
-          nonNullMetadataIO[ioObj.name] = this.state.metadataIO[ioObj.name];
-        }
-      });
-    this.context.api.updateExample(this.props.exampleId, {
-      metadata: nonNullMetadataIO,
-    });
-  }
-
-  updateModelWrong(modelWrong) {
-    if (this.props.obj.livemode) {
-      this.context.api
-        .updateExample(this.props.exampleId, {
-          model_wrong: modelWrong,
-        })
-        .then(
-          (result) => this.setState({ modelWrong: modelWrong }),
-          (error) => {
-            console.log(error);
-          }
-        );
-    } else {
-      this.setState({ modelWrong: modelWrong });
-    }
-  }
-
-  retractExample(e) {
-    e.preventDefault();
-    var idx = e.target.getAttribute("data-index");
-    this.context.api.retractExample(this.props.exampleId).then(
-      (result) => {
-        const newContent = this.props.content.slice();
-        newContent[idx].cls = "retracted";
-        newContent[idx].retracted = true;
-        this.setState({ content: newContent });
-      },
-      (error) => {
-        console.log(error);
-      }
-    );
-  }
-  flagExample(e) {
-    e.preventDefault();
-    var idx = e.target.getAttribute("data-index");
-    this.context.api.flagExample(this.props.exampleId).then(
-      (result) => {
-        const newContent = this.props.content.slice();
-        newContent[idx].cls = "flagged";
-        newContent[idx].flagged = true;
-        this.setState({ content: newContent });
-      },
-      (error) => {
-        console.log(error);
-      }
-    );
-  }
-
-  render() {
-    let sandboxContent = null;
-    if (!this.props.obj.livemode) {
-      sandboxContent = (
-        <div className="mt-3">
-          This example was not stored because you are in sandbox mode.
-          {this.context.api.loggedIn() ? (
-            ""
-          ) : (
-            <div>
-              <Link
-                to={
-                  "/register?msg=" +
-                  encodeURIComponent(
-                    "Please sign up or log in so that you can get credit for your generated examples."
-                  ) +
-                  "&src=" +
-                  encodeURIComponent(`/tasks/${this.props.taskCode}/create`)
-                }
-              >
-                Sign up now
-              </Link>{" "}
-              to make sure your examples are stored and you get credit for your
-              examples!
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    const input = this.props.ioDef.input.map((ioDefObj) => (
-      <IO
-        displayName={ioDefObj.display_name}
-        className="name-display-secondary"
-        key={ioDefObj.name}
-        create={false}
-        name={ioDefObj.name}
-        exampleIO={this.props.obj.inputIO}
-        setExampleIO={() => {}}
-        type={ioDefObj.type}
-        constructorArgs={ioDefObj.constructor_args}
-      />
-    ));
-
-    const target = this.props.ioDef.target.map((ioDefObj) => (
-      <IO
-        displayName={ioDefObj.display_name}
-        className="name-display-secondary"
-        key={ioDefObj.name}
-        create={false}
-        name={ioDefObj.name}
-        exampleIO={this.props.obj.targetIO}
-        setExampleIO={() => {}}
-        type={ioDefObj.type}
-        constructorArgs={ioDefObj.constructor_args}
-      />
-    ));
-
-    const outputToCompareToTarget =
-      this.props.obj.url === null
-        ? null
-        : this.props.ioDef.target.map((ioDefObj) => (
-            <IO
-              displayName={ioDefObj.display_name}
-              className="name-display-secondary"
-              key={ioDefObj.name}
-              create={false}
-              name={ioDefObj.name}
-              exampleIO={this.props.obj.outputIO}
-              setExampleIO={() => {}}
-              type={ioDefObj.type}
-              constructorArgs={ioDefObj.constructor_args}
-            />
-          ));
-
-    const otherModelOutput =
-      this.props.obj.url === null
-        ? null
-        : this.props.ioDef.output
-            .filter(
-              (ioDefObj) =>
-                !this.props.ioDef.target
-                  .map((ioDefObjT) => ioDefObjT.name)
-                  .includes(ioDefObj.name)
-            )
-            .map((ioDefObj) => (
-              <IO
-                displayName={ioDefObj.display_name}
-                className="name-display-secondary"
-                key={ioDefObj.name}
-                create={false}
-                name={ioDefObj.name}
-                exampleIO={this.props.obj.outputIO}
-                setExampleIO={() => {}}
-                type={ioDefObj.type}
-                constructorArgs={ioDefObj.constructor_args}
-              />
-            ));
-
-    const metadata = this.props.ioDef.metadata.create
-      .filter(
-        (ioDefObj) =>
-          ioDefObj.model_wrong_condition === undefined ||
-          ioDefObj.model_wrong_condition === this.state.modelWrong
-      )
-      .map((ioDefObj) => (
-        <IO
-          displayName={ioDefObj.display_name}
-          className="user-input-secondary"
-          key={ioDefObj.name}
-          create={true}
-          name={ioDefObj.name}
-          exampleIO={this.state.metadataIO}
-          setExampleIO={(exampleIO) =>
-            this.setState({ metadataIO: exampleIO, exampleUpdated: false })
-          }
-          type={ioDefObj.type}
-          constructorArgs={ioDefObj.constructor_args}
-        />
-      ));
-
-    var classNames = this.props.obj.cls + " rounded border m-3";
-
-    var userFeedback = (
-      <>
-        {this.props.obj.livemode ? (
-          (this.state.modelWrong !== null || this.props.obj.url === null) &&
-          metadata.length > 0 ? (
-            <div className="mt-3">
-              <span>You can enter more info for your example:</span>
-              <button
-                onClick={() => {
-                  this.updateUserMetadataIO();
-                  this.setState({ exampleUpdated: true });
-                }}
-                type="button"
-                style={{ float: "right", margin: "5px" }}
-                className="btn btn-outline-primary btn-sm "
-                disabled={this.state.exampleUpdated}
-              >
-                {this.state.exampleUpdated ? "Saved!" : "Save Info"}
-              </button>
-              {metadata}
-            </div>
-          ) : (
-            ""
-          )
-        ) : (
-          ""
-        )}
-      </>
-    );
-
-    var title = null;
-    var modelCorrectQuestion = null;
-    if (this.props.obj.retracted) {
-      classNames += " response-warning";
-      userFeedback = null;
-      title = (
-        <span>
-          <strong>Example retracted</strong> - thanks
-        </span>
-      );
-    } else if (this.props.obj.flagged) {
-      classNames += " response-warning";
-      userFeedback = null;
-      title = (
-        <span>
-          <strong>Example flagged</strong> - thanks
-        </span>
-      );
-    } else {
-      if (this.props.obj.url === null) {
-        title = (
-          <span>
-            <strong>Thank you for your example</strong>
-          </span>
-        );
-      } else {
-        if (this.state.modelWrong === null) {
-          classNames += " light-gray-bg";
-          modelCorrectQuestion = (
-            <span>
-              <strong>Is the model correct?</strong>
-              <br />
-              <div className="btn-group" role="group" aria-label="model wrong">
-                <button
-                  data-index={this.props.index}
-                  onClick={() => this.updateModelWrong(false)}
-                  type="button"
-                  className="btn btn-outline-primary btn-sm"
-                >
-                  Correct
-                </button>
-                <button
-                  data-index={this.props.index}
-                  onClick={() => this.updateModelWrong(true)}
-                  type="button"
-                  className="btn btn-outline-primary btn-sm"
-                >
-                  Incorrect
-                </button>
-              </div>
-            </span>
-          );
-        } else {
-          if (this.state.modelWrong) {
-            classNames += " light-green-bg";
-            title = (
-              <span>
-                <strong>You fooled the model!</strong>
-              </span>
-            );
-          } else {
-            classNames += " response-warning";
-            title = (
-              <span>
-                <strong>You didn't fool the model. Please try again!</strong>
-              </span>
-            );
-          }
-        }
-      }
-    }
-
-    const submissionResults = (
-      <Row>
-        <Col>
-          <nobr>The model predicted</nobr>
-        </Col>
-        <Col className="text-center">
-          <strong>{outputToCompareToTarget}</strong>
-        </Col>
-        <Col>
-          <nobr>and you say</nobr>
-        </Col>
-        <Col className="text-center">
-          <strong>{target}</strong>
-        </Col>
-      </Row>
-    );
-
-    const submissionResultsNoModel = (
-      <Row>
-        <Col>
-          <nobr>You say</nobr>
-        </Col>
-        <Col className="text-center">
-          <strong>{target}</strong>
-        </Col>
-        <Col>
-          <nobr>given the input</nobr>
-        </Col>
-        <Col className="text-center">
-          <strong>{input}</strong>
-        </Col>
-      </Row>
-    );
-
-    const submissionResultsNoTarget = (
-      <Row>
-        <Col>
-          <nobr>The model predicted</nobr>
-        </Col>
-        <Col className="text-center">
-          <strong>{otherModelOutput}</strong>
-        </Col>
-        <Col>
-          <nobr>given the input</nobr>
-        </Col>
-        <Col className="text-center">
-          <strong>{input}</strong>
-        </Col>
-      </Row>
-    );
-
-    return (
-      <Card className={classNames} style={{ minHeight: 120 }}>
-        <Card.Body className="p-3">
-          {this.props.obj.url === null ? (
-            <Row>
-              <Col xs={12} md={9}>
-                {title !== null ? <div className="mb-3">{title}</div> : null}
-                {submissionResultsNoModel}
-                {userFeedback}
-                {sandboxContent}
-              </Col>
-              <Col className="text-center" xs={12} md={3}></Col>
-            </Row>
-          ) : target.length > 0 ? (
-            <Row>
-              <Col xs={12} md={9}>
-                {title !== null ? <div className="mb-3">{title}</div> : null}
-                {modelCorrectQuestion !== null ? (
-                  <div className="mb-3">{modelCorrectQuestion}</div>
-                ) : null}
-                <div className="mb-3">
-                  <strong>{input}</strong>
-                </div>
-                {submissionResults}
-                {userFeedback}
-                {sandboxContent}
-              </Col>
-              <Col className="text-center" xs={12} md={3}>
-                {otherModelOutput}
-              </Col>
-            </Row>
-          ) : (
-            <Row>
-              <Col xs={12} md={9}>
-                {title !== null ? <div className="mb-3">{title}</div> : null}
-                {submissionResultsNoTarget}
-                {modelCorrectQuestion !== null ? (
-                  <div className="mb-3">{modelCorrectQuestion}</div>
-                ) : null}
-                {userFeedback}
-                {sandboxContent}
-              </Col>
-              <Col className="text-center" xs={12} md={3}></Col>
-            </Row>
-          )}
-        </Card.Body>
-        {this.props.obj.retracted ||
-        this.props.obj.flagged ||
-        !this.props.obj.livemode ? null : (
-          <Card.Footer>
-            {
-              <div
-                className="btn-group"
-                role="group"
-                aria-label="response actions"
-              >
-                <OverlayTrigger
-                  placement="top"
-                  delay={{ show: 250, hide: 400 }}
-                  overlay={(props) => (
-                    <Tooltip {...props}>
-                      If you made a mistake, you can retract this entry from the
-                      dataset.
-                    </Tooltip>
-                  )}
-                >
-                  <button
-                    data-index={this.props.index}
-                    onClick={this.retractExample}
-                    type="button"
-                    className="btn btn-light btn-sm"
-                  >
-                    <i className="fas fa-undo-alt"></i> Retract
-                  </button>
-                </OverlayTrigger>
-                <OverlayTrigger
-                  placement="top"
-                  delay={{ show: 250, hide: 400 }}
-                  overlay={(props) => (
-                    <Tooltip {...props}>
-                      Something wrong? Flag this example and we will take a
-                      look.
-                    </Tooltip>
-                  )}
-                >
-                  <button
-                    data-index={this.props.index}
-                    onClick={this.flagExample}
-                    type="button"
-                    className="btn btn-light btn-sm"
-                  >
-                    <i className="fas fa-flag"></i> Flag
-                  </button>
-                </OverlayTrigger>
-              </div>
-            }
-          </Card.Footer>
-        )}
-      </Card>
-    );
-  }
-}
-
 class CreateInterface extends React.Component {
   static contextType = UserContext;
   constructor(props) {
@@ -556,16 +69,16 @@ class CreateInterface extends React.Component {
       refreshDisabled: true,
       mapKeyToExampleId: {},
       submitWithoutFullExample: false,
-      ioDef: {
+      annotationConfig: {
         input: [],
         target: [],
         output: [],
         context: [],
         metadata: { create: [] },
       },
-      inputIO: {},
-      targetIO: {},
-      contextIO: {},
+      input: {},
+      target: {},
+      contextData: {},
     };
     this.getNewContext = this.getNewContext.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
@@ -573,10 +86,12 @@ class CreateInterface extends React.Component {
     this.updateRetainInput = this.updateRetainInput.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
     this.clearUserInput = this.clearUserInput.bind(this);
-    this.handleStoreExampleAndResponseInfo =
-      this.handleStoreExampleAndResponseInfo.bind(this);
-    this.disentangleAndSetInputAndTargetIO =
-      this.disentangleAndSetInputAndTargetIO.bind(this);
+    this.handleStoreExampleAndResponseInfo = this.handleStoreExampleAndResponseInfo.bind(
+      this
+    );
+    this.disentangleAndSetInputAndTarget = this.disentangleAndSetInputAndTarget.bind(
+      this
+    );
     this.chatContainerRef = React.createRef();
     this.bottomAnchorRef = React.createRef();
     this.inputRef = React.createRef();
@@ -592,20 +107,22 @@ class CreateInterface extends React.Component {
               this.state.task.round.url !== null
                 ? this.pickModel(this.state.task.round.url)
                 : null;
-            const ioDef = JSON.parse(this.state.task.io_def);
-            const inputIO = {};
-            for (const ioDefObj of ioDef.input) {
-              initializeIO(inputIO, ioDefObj);
+            const annotationConfig = JSON.parse(
+              this.state.task.annotation_config_json
+            );
+            const input = {};
+            for (const annotationConfigObj of annotationConfig.input) {
+              initializeData(input, annotationConfigObj);
             }
-            const targetIO = {};
-            for (const ioDefObj of ioDef.target) {
-              initializeIO(targetIO, ioDefObj);
+            const target = {};
+            for (const annotationConfigObj of annotationConfig.target) {
+              initializeData(target, annotationConfigObj);
             }
             this.setState({
-              ioDef: ioDef,
-              inputIO: inputIO,
-              targetIO: targetIO,
-              contextIO: JSON.parse(result.context_json),
+              annotationConfig: annotationConfig,
+              input: input,
+              target: target,
+              contextData: JSON.parse(result.context_json),
               randomTargetModel: randomTargetModel,
               context: result,
               content: [],
@@ -681,21 +198,21 @@ class CreateInterface extends React.Component {
   }
 
   clearUserInput() {
-    const inputIO = JSON.parse(JSON.stringify(this.state.inputIO));
-    const targetIO = JSON.parse(JSON.stringify(this.state.targetIO));
-    this.state.ioDef.input.forEach((ioDefObj) => {
-      initializeIO(inputIO, ioDefObj);
+    const input = JSON.parse(JSON.stringify(this.state.input));
+    const target = JSON.parse(JSON.stringify(this.state.target));
+    this.state.annotationConfig.input.forEach((annotationConfigObj) => {
+      initializeData(input, annotationConfigObj);
     });
-    this.state.ioDef.target.forEach((ioDefObj) => {
-      initializeIO(targetIO, ioDefObj);
+    this.state.annotationConfig.target.forEach((annotationConfigObj) => {
+      initializeData(target, annotationConfigObj);
     });
-    this.setState({ targetIO: targetIO, inputIO: inputIO });
+    this.setState({ target: target, input: input });
   }
 
   handleStoreExampleAndResponseInfo(
     signature,
     modelWrong,
-    outputIO,
+    output,
     endpoint,
     metadata
   ) {
@@ -706,9 +223,9 @@ class CreateInterface extends React.Component {
           {
             livemode: this.state.livemode,
             modelWrong: modelWrong,
-            inputIO: JSON.parse(JSON.stringify(this.state.inputIO)),
-            targetIO: JSON.parse(JSON.stringify(this.state.targetIO)),
-            outputIO: outputIO,
+            input: JSON.parse(JSON.stringify(this.state.input)),
+            target: JSON.parse(JSON.stringify(this.state.target)),
+            output: output,
             url: this.state.randomTargetModel,
             retracted: false,
           },
@@ -735,9 +252,9 @@ class CreateInterface extends React.Component {
         this.state.task.selected_round,
         this.context.user.id,
         this.state.context.id,
-        this.state.inputIO,
-        this.state.targetIO,
-        outputIO,
+        this.state.input,
+        this.state.target,
+        output,
         signature,
         metadata,
         modelWrong,
@@ -779,14 +296,14 @@ class CreateInterface extends React.Component {
   handleResponse(e) {
     e.preventDefault();
     var incompleteExample = false;
-    this.state.ioDef.input.forEach((ioDefObj) => {
-      if (this.state.inputIO[ioDefObj.name] === null) {
+    this.state.annotationConfig.input.forEach((annotationConfigObj) => {
+      if (this.state.input[annotationConfigObj.name] === null) {
         this.setState({ submitWithoutFullExample: true });
         incompleteExample = true;
       }
     });
-    this.state.ioDef.target.forEach((ioDefObj) => {
-      if (this.state.targetIO[ioDefObj.name] === null) {
+    this.state.annotationConfig.target.forEach((annotationConfigObj) => {
+      if (this.state.target[annotationConfigObj.name] === null) {
         this.setState({ submitWithoutFullExample: true });
         incompleteExample = true;
       }
@@ -821,17 +338,17 @@ class CreateInterface extends React.Component {
         (this.state.task.task_code === "hs" ||
           this.state.task.task_code === "sentiment")
       ) {
-        this.state.inputIO["hypothesis"] = this.state.inputIO["statement"];
+        this.state.input["hypothesis"] = this.state.input["statement"];
       }
       if (!endpoint.startsWith("ts") && this.state.task.task_code === "qa") {
-        this.state.inputIO["hypothesis"] = this.state.inputIO["question"];
+        this.state.input["hypothesis"] = this.state.input["question"];
       }
       // End hack that can be removed upon full dynalab integration
 
       this.context.api
         .getModelResponse(
           url,
-          Object.assign({}, this.state.inputIO, this.state.contextIO)
+          Object.assign({}, this.state.input, this.state.contextData)
         )
         .then(
           (modelResponseResult) => {
@@ -909,23 +426,18 @@ class CreateInterface extends React.Component {
                 });
               }
 
-              const outputIO = JSON.parse(JSON.stringify(modelResponseResult));
+              const output = JSON.parse(JSON.stringify(modelResponseResult));
 
-              const metadata = { model: this.state.randomTargetModel };
               this.context.api
-                .getModelWrong(
-                  this.state.task.id,
-                  this.state.targetIO,
-                  outputIO
-                )
+                .getModelWrong(this.state.task.id, this.state.target, output)
                 .then(
                   (modelWrongResult) =>
                     this.handleStoreExampleAndResponseInfo(
                       modelResponseResult["signed"],
                       modelWrongResult.model_wrong,
-                      outputIO,
+                      output,
                       endpoint,
-                      metadata
+                      {}
                     ),
                   (error) => {
                     console.log(error);
@@ -1032,29 +544,29 @@ class CreateInterface extends React.Component {
     });
   }
 
-  disentangleAndSetInputAndTargetIO(exampleIO) {
-    const inputIO = this.state.inputIO;
-    for (const ioDefObj of this.state.ioDef.input) {
-      if (exampleIO.hasOwnProperty(ioDefObj.name)) {
-        inputIO[ioDefObj.name] = exampleIO[ioDefObj.name];
+  disentangleAndSetInputAndTarget(data) {
+    const input = this.state.input;
+    for (const annotationConfigObj of this.state.annotationConfig.input) {
+      if (data.hasOwnProperty(annotationConfigObj.name)) {
+        input[annotationConfigObj.name] = data[annotationConfigObj.name];
       }
     }
 
-    const targetIO = this.state.targetIO;
-    for (const ioDefObj of this.state.ioDef.target) {
-      if (exampleIO.hasOwnProperty(ioDefObj.name)) {
-        targetIO[ioDefObj.name] = exampleIO[ioDefObj.name];
+    const target = this.state.target;
+    for (const annotationConfigObj of this.state.annotationConfig.target) {
+      if (data.hasOwnProperty(annotationConfigObj.name)) {
+        target[annotationConfigObj.name] = data[annotationConfigObj.name];
       }
     }
 
-    this.setState({ inputIO: inputIO, targetIO: targetIO });
+    this.setState({ input: input, target: target });
   }
 
   render() {
     const responseContent = this.state.content
       .map((item, index) => (
         <ResponseInfo
-          ioDef={this.state.ioDef}
+          annotationConfig={this.state.annotationConfig}
           key={index}
           index={index}
           exampleId={this.state.mapKeyToExampleId[index + 1]}
@@ -1113,37 +625,37 @@ class CreateInterface extends React.Component {
 
     // The target_label type is special. We want this object to
     // appear in a special place in the interface.
-    const goalMessageIO = this.state.ioDef.input
-      .concat(this.state.ioDef.target)
-      .filter((ioDefObj) => ioDefObj.type === "target_label")
-      .map((ioDefObj) => (
+    const goalMessageInterface = this.state.annotationConfig.input
+      .concat(this.state.annotationConfig.target)
+      .filter(
+        (annotationConfigObj) => annotationConfigObj.type === "target_label"
+      )
+      .map((annotationConfigObj) => (
         <div
-          key={ioDefObj.name}
+          key={annotationConfigObj.name}
           className={
-            this.state.inputIO[ioDefObj.name] === null &&
-            this.state.targetIO[ioDefObj.name] === null &&
+            (this.state.input[annotationConfigObj.name] === null ||
+              this.state.target[annotationConfigObj.name] === null) &&
             this.state.submitWithoutFullExample
               ? "border rounded border-danger"
               : ""
           }
         >
-          <IO
-            displayName={ioDefObj.display_name}
+          <AnnotationComponent
+            displayName={annotationConfigObj.display_name}
             className="user-input-primary"
-            key={ioDefObj.name}
+            key={annotationConfigObj.name}
             create={true}
-            name={ioDefObj.name}
-            exampleIO={Object.assign(
+            name={annotationConfigObj.name}
+            data={Object.assign(
               {},
-              this.state.inputIO,
-              this.state.targetIO,
-              this.state.contextIO
+              this.state.input,
+              this.state.target,
+              this.state.contextData
             )}
-            setExampleIO={(exampleIO) =>
-              this.disentangleAndSetInputAndTargetIO(exampleIO)
-            }
-            type={ioDefObj.type}
-            constructorArgs={ioDefObj.constructor_args}
+            setData={(data) => this.disentangleAndSetInputAndTarget(data)}
+            type={annotationConfigObj.type}
+            constructorArgs={annotationConfigObj.constructor_args}
           />
         </div>
       ));
@@ -1151,88 +663,93 @@ class CreateInterface extends React.Component {
     // The context_string_selection type is special. When it is present, we want
     // to remove the context string from view and put the context_string_selection
     // in its place
-    const contextStringSelectionGroup = this.state.ioDef.input
-      .concat(this.state.ioDef.target)
-      .filter((ioDefObj) => ioDefObj.type === "context_string_selection");
+    const contextStringSelectionGroup = this.state.annotationConfig.input
+      .concat(this.state.annotationConfig.target)
+      .filter(
+        (annotationConfigObj) =>
+          annotationConfigObj.type === "context_string_selection"
+      );
     const selectableContexts = contextStringSelectionGroup.map(
-      (ioDefObj) => ioDefObj.constructor_args.reference_name
+      (annotationConfigObj) =>
+        annotationConfigObj.constructor_args.reference_name
     );
-    const tooTallForResponseInfoPlaceholder = this.state.ioDef.context
-      .map((ioDefObj) => ioDefObj.type)
+    const tooTallForResponseInfoPlaceholder = this.state.annotationConfig.context
+      .map((annotationConfigObj) => annotationConfigObj.type)
       .includes("image_url");
-    const contextIO = this.state.ioDef.context
+    const contextInterface = this.state.annotationConfig.context
       .concat(contextStringSelectionGroup)
-      .filter((ioDefObj) => !selectableContexts.includes(ioDefObj.name))
-      .map((ioDefObj) => (
+      .filter(
+        (annotationConfigObj) =>
+          !selectableContexts.includes(annotationConfigObj.name)
+      )
+      .map((annotationConfigObj) => (
         <div
-          key={ioDefObj.name}
+          key={annotationConfigObj.name}
           className={
-            this.state.inputIO[ioDefObj.name] === null &&
-            this.state.targetIO[ioDefObj.name] === null &&
+            (this.state.input[annotationConfigObj.name] === null ||
+              this.state.target[annotationConfigObj.name] === null) &&
             this.state.submitWithoutFullExample
               ? "border rounded border-danger"
               : ""
           }
         >
-          <IO
-            displayName={ioDefObj.display_name}
-            className={
-              ioDefObj.type === "context_string_selection"
-                ? "user-input-primary"
-                : "name-display-primary"
+          <AnnotationComponent
+            displayName={annotationConfigObj.display_name}
+            className={"name-display-primary"}
+            key={annotationConfigObj.name}
+            create={
+              annotationConfigObj.type === "context_string_selection"
+                ? true
+                : false
             }
-            key={ioDefObj.name}
-            create={ioDefObj.type === "context_string_selection" ? true : false}
-            name={ioDefObj.name}
-            exampleIO={Object.assign(
+            name={annotationConfigObj.name}
+            data={Object.assign(
               {},
-              this.state.inputIO,
-              this.state.targetIO,
-              this.state.contextIO
+              this.state.input,
+              this.state.target,
+              this.state.contextData
             )}
-            setExampleIO={(exampleIO) =>
-              this.disentangleAndSetInputAndTargetIO(exampleIO)
-            }
-            type={ioDefObj.type}
-            constructorArgs={ioDefObj.constructor_args}
+            setData={(data) => this.disentangleAndSetInputAndTarget(data)}
+            type={annotationConfigObj.type}
+            constructorArgs={annotationConfigObj.constructor_args}
           />
         </div>
       ));
 
-    const belowModelResponseIO = this.state.ioDef.input
-      .concat(this.state.ioDef.target)
+    const belowModelResponseInterface = this.state.annotationConfig.input
+      .concat(this.state.annotationConfig.target)
       .filter(
-        (ioDefObj) =>
-          !["target_label", "context_string_selection"].includes(ioDefObj.type)
+        (annotationConfigObj) =>
+          !["target_label", "context_string_selection"].includes(
+            annotationConfigObj.type
+          )
       )
-      .map((ioDefObj) => (
+      .map((annotationConfigObj) => (
         <div
-          key={ioDefObj.name}
+          key={annotationConfigObj.name}
           className={
-            this.state.inputIO[ioDefObj.name] === null &&
-            this.state.targetIO[ioDefObj.name] === null &&
+            (this.state.input[annotationConfigObj.name] === null ||
+              this.state.target[annotationConfigObj.name] === null) &&
             this.state.submitWithoutFullExample
               ? "border rounded border-danger"
               : ""
           }
         >
-          <IO
-            displayName={ioDefObj.display_name}
+          <AnnotationComponent
+            displayName={annotationConfigObj.display_name}
             className="user-input-primary"
-            key={ioDefObj.name}
+            key={annotationConfigObj.name}
             create={true}
-            name={ioDefObj.name}
-            exampleIO={Object.assign(
+            name={annotationConfigObj.name}
+            data={Object.assign(
               {},
-              this.state.inputIO,
-              this.state.targetIO,
-              this.state.contextIO
+              this.state.input,
+              this.state.target,
+              this.state.contextData
             )}
-            setExampleIO={(exampleIO) =>
-              this.disentangleAndSetInputAndTargetIO(exampleIO)
-            }
-            type={ioDefObj.type}
-            constructorArgs={ioDefObj.constructor_args}
+            setData={(data) => this.disentangleAndSetInputAndTarget(data)}
+            type={annotationConfigObj.type}
+            constructorArgs={annotationConfigObj.constructor_args}
           />
         </div>
       ));
@@ -1328,26 +845,24 @@ class CreateInterface extends React.Component {
               randomTargetModel={this.state.randomTargetModel}
             />
             <div className={"mb-3"}>
-              {this.state.ioDef.goal_message ||
-              (goalMessageIO && goalMessageIO.length) > 0 ? (
-                <div className="mb-1 p-3 rounded light-gray-bg">
-                  {this.state.ioDef.goal_message ? (
-                    <InputGroup className="align-items-center">
-                      <i className="fas fa-flag-checkered mr-1"></i>
-                      Your goal: {this.state.ioDef.goal_message}
-                    </InputGroup>
-                  ) : null}
-                  {goalMessageIO}
-                </div>
-              ) : null}
+              {this.state.annotationConfig.goal_message ||
+                ((goalMessageInterface && goalMessageInterface.length) > 0 && (
+                  <div className="mb-1 p-3 rounded light-gray-bg">
+                    {this.state.annotationConfig.goal_message && (
+                      <InputGroup className="align-items-center">
+                        <i className="fas fa-flag-checkered mr-1"></i>
+                        Your goal: {this.state.annotationConfig.goal_message}
+                      </InputGroup>
+                    )}
+                    {goalMessageInterface}
+                  </div>
+                ))}
             </div>
             <Card className="profile-card overflow-hidden">
-              {contextIO && contextIO.length > 0 ? (
+              {contextInterface && contextInterface.length > 0 && (
                 <div className="mb-1 p-3 rounded light-gray-bg">
-                  {contextIO}
+                  {contextInterface}
                 </div>
-              ) : (
-                ""
               )}
               <Card.Body
                 className="overflow-auto pt-2"
@@ -1359,14 +874,12 @@ class CreateInterface extends React.Component {
                 {responseContent}
                 <div className="bottom-anchor" ref={this.bottomAnchorRef} />
               </Card.Body>
-              <div className="mb-1 p-3">{belowModelResponseIO}</div>
+              <div className="mb-1 p-3">{belowModelResponseInterface}</div>
               <Form>
                 <Row className="p-3">
                   <Col xs={6}>
                     <InputGroup>
-                      {this.state.selectedModel ? (
-                        ""
-                      ) : (
+                      {!this.state.selectedModel && (
                         <OverlayTrigger
                           placement="bottom"
                           delay={{ show: 250, hide: 400 }}
@@ -1393,7 +906,7 @@ class CreateInterface extends React.Component {
                         </OverlayTrigger>
                       )}
 
-                      {this.state.task.cur_round > 1 ? (
+                      {this.state.task.cur_round > 1 && (
                         <OverlayTrigger
                           placement="bottom"
                           delay={{ show: 250, hide: 400 }}
@@ -1421,7 +934,7 @@ class CreateInterface extends React.Component {
                             </DropdownButton>
                           </Annotation>
                         </OverlayTrigger>
-                      ) : null}
+                      )}
                     </InputGroup>
                   </Col>
                   <Col xs={6}>
@@ -1470,35 +983,25 @@ class CreateInterface extends React.Component {
               </Form>
               <div className="p-2">
                 {this.state.task.cur_round !== this.state.task.selected_round &&
-                !this.state.selectedModel ? (
-                  <p style={{ color: "red" }}>
-                    WARNING: You are talking to an outdated model for a round
-                    that is no longer active. Examples you generate may be less
-                    useful.
-                  </p>
-                ) : (
-                  ""
-                )}
-                {!this.state.livemode ? (
+                  !this.state.selectedModel && (
+                    <p style={{ color: "red" }}>
+                      WARNING: You are talking to an outdated model for a round
+                      that is no longer active. Examples you generate may be
+                      less useful.
+                    </p>
+                  )}
+                {!this.state.livemode && (
                   <p style={{ color: "red" }}>
                     WARNING: You are in "just playing" sandbox mode. Your
                     examples are not saved.
                   </p>
-                ) : (
-                  ""
                 )}
-                {this.state.selectedModel ? (
+                {this.state.selectedModel && (
                   <p style={{ color: "red" }}>
                     WARNING: You are talking to a user-uploaded model. You
                     cannot switch out of sandbox mode.
                   </p>
-                ) : (
-                  ""
                 )}
-
-                {this.state.answerNotSelected === true
-                  ? "*Please select an answer in the context"
-                  : null}
                 {this.state.fetchPredictionError && (
                   <span style={{ color: "#e65959" }}>
                     *Unable to fetch results. Please try again after sometime.

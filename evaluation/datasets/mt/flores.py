@@ -64,14 +64,15 @@ class Flores101Base(MTBase):
         basepath = self._get_data_s3_path()
         required_paths = {basepath + f"{lang}.jsonl" for lang in self.languages}
         response = self.s3_client.list_objects_v2(
-            Bucket=self.s3_bucket, Prefix=basepath
+            Bucket=self.task.s3_bucket, Prefix=basepath
         )
         available_paths = {obj["Key"] for obj in response.get("Contents", [])}
         missing_paths = required_paths - available_paths
         if missing_paths and missing_paths != required_paths:
             logging.warning(
                 "Sharded dataset is missing some parts."
-                f"Bucket {self.s3_bucket}/{basepath}. Missing parts: {missing_paths}"
+                f"Bucket {self.task.s3_bucket}/{basepath}. Missing parts: "
+                + f"{missing_paths}"
             )
 
         return not missing_paths
@@ -97,6 +98,7 @@ class Flores101Base(MTBase):
                     task_code=self.task.task_code,
                     langs=self.languages,
                     split=self.partition,
+                    s3_bucket=self.task.s3_bucket,
                     shard=self.shard_by_lang,
                 )
                 return True
@@ -327,6 +329,7 @@ def prepare(
     task_code: str,
     langs: List[str],
     partition: str,
+    s3_bucket: str,
     shard: bool = False,
 ):
     assert folder.exists()
@@ -391,27 +394,22 @@ def prepare(
         logger.info(f"Wrote dataset. {lines:_d} lines, {files:_d} files.")
         for outfile, o in writers.values():
             o.close()
-            _upload_file(task_code, partition, outfile)
+            _upload_file(task_code, partition, outfile, s3_bucket)
     else:
         logger.info(
             f"Wrote dataset {outfile}. {lines:_d} lines. Total size: "
             + f"{outfile.stat().st_size / 1024 / 1024:.1f}Mb"
         )
         o.close()
-        _upload_file(task_code, partition, outfile)
+        _upload_file(task_code, partition, outfile, s3_bucket)
 
 
-def _upload_file(task_code: str, partition: str, outfile: Path) -> None:
-    s3_buckets = [
-        "s3://evaluation-us-west-2/datasets",
-        "s3://evaluation-us-west-1-096166425824/datasets",
-    ]
-    for s3_bucket in s3_buckets:
-        s3_path = "/".join([s3_bucket, "flores", f"flores_{task_code}", outfile.name])
-        logger.info(f"Copying {outfile} to {s3_path}")
-        cmd = ["s3cmd", "put", "--force", str(outfile), s3_path]
-        logger.info(" ".join(cmd))
-        logger.info(subprocess.check_output(cmd, text=True))
+def _upload_file(task_code: str, partition: str, outfile: Path, s3_bucket: str) -> None:
+    s3_path = "/".join([s3_bucket, "flores", f"flores_{task_code}", outfile.name])
+    logger.info(f"Copying {outfile} to {s3_path}")
+    cmd = ["s3cmd", "put", "--force", str(outfile), s3_path]
+    logger.info(" ".join(cmd))
+    logger.info(subprocess.check_output(cmd, text=True))
 
 
 def compute_averages(perf_metric: str, perf_by_tag: List[dict]) -> dict:

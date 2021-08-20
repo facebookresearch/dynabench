@@ -106,12 +106,12 @@ class ExampleModel(BaseModel):
 
         context = json.loads(c.context_json)
 
-        all_user_io = {}
-        all_user_io.update(context)
-        all_user_io.update(input)
-        all_user_io.update(target)
-        if not task.verify_io(all_user_io):
-            logger.error("Improper formatting in user io")
+        all_user_annotation_data = {}
+        all_user_annotation_data.update(context)
+        all_user_annotation_data.update(input)
+        all_user_annotation_data.update(target)
+        if not task.verify_annotation(all_user_annotation_data):
+            logger.error("Improper formatting in user annotation components")
             return False
 
         if (
@@ -123,12 +123,12 @@ class ExampleModel(BaseModel):
             pass  # ignore signature when we don't have a model in the loop with turkers
         else:
             # Make sure that we aren't accepting any corrupted example io
-            all_model_io = {}
-            all_model_io.update(context)
-            all_model_io.update(input)
-            all_model_io.update(output)
-            if not task.verify_io(all_model_io):
-                logger.error("Improper formatting in model io")
+            all_model_annotation_data = {}
+            all_model_annotation_data.update(context)
+            all_model_annotation_data.update(input)
+            all_model_annotation_data.update(output)
+            if not task.verify_annotation(all_model_annotation_data):
+                logger.error("Improper formatting in model annotation components")
                 return False
 
             # TODO: can remove this when the dynalab part of dynatask is done
@@ -156,16 +156,18 @@ class ExampleModel(BaseModel):
                     .one()
                     .secret
                 )
-                all_model_io["signed"] = model_signature
+                all_model_annotation_data["signed"] = model_signature
                 if model_signature != dynalab_task.TaskIO().generate_response_signature(
-                    all_model_io, all_model_io, model_secret
+                    all_model_annotation_data, all_model_annotation_data, model_secret
                 ):
                     logger.error(
                         "Signature does not match (received %s, expected %s)"
                         % (
-                            all_model_io["signed"],
+                            all_model_annotation_data["signed"],
                             dynalab_task.TaskIO().generate_response_signature(
-                                all_model_io, all_model_io, model_secret
+                                all_model_annotation_data,
+                                all_model_annotation_data,
+                                model_secret,
                             ),
                         )
                     )
@@ -174,9 +176,11 @@ class ExampleModel(BaseModel):
                     logger.info(
                         "Signature matches(received %s, expected %s)"
                         % (
-                            all_model_io["signed"],
+                            all_model_annotation_data["signed"],
                             dynalab_task.TaskIO().generate_response_signature(
-                                all_model_io, all_model_io, model_secret
+                                all_model_annotation_data,
+                                all_model_annotation_data,
+                                model_secret,
                             ),
                         )
                     )

@@ -47,9 +47,12 @@ steps = [
         """UPDATE tasks SET extra_torchserve_config="{}" WHERE shortname NOT IN
         ('FLORES-FULL', 'FLORES-SMALL1', 'FLORES-SMALL2')"""
     ),
-    step("ALTER TABLE tasks ADD COLUMN io_def TEXT", "ALTER TABLE tasks DROP io_def"),
     step(
-        """UPDATE tasks SET io_def='
+        "ALTER TABLE tasks ADD COLUMN annotation_config_json TEXT",
+        "ALTER TABLE tasks DROP annotation_config_json",
+    ),
+    step(
+        """UPDATE tasks SET annotation_config_json='
             {
                 "context": [{"name": "context", "type": "string",
                     "constructor_args": {"placeholder": "Enter context..."}}],
@@ -114,7 +117,7 @@ steps = [
             ' WHERE shortname in ('DK_NLI', 'NLI', 'LADC')"""
     ),
     step(
-        """UPDATE tasks SET io_def='
+        """UPDATE tasks SET annotation_config_json='
             {
                 "content_warning":
         """
@@ -184,7 +187,7 @@ steps = [
             ' WHERE shortname in ('Hate Speech')"""
     ),
     step(
-        """UPDATE tasks SET io_def='
+        """UPDATE tasks SET annotation_config_json='
             {
                 "context": [{"name": "context", "type": "string",
                     "constructor_args": {"placeholder": "Enter context..."}}],
@@ -249,7 +252,7 @@ steps = [
             ' WHERE shortname in ('Sentiment')"""
     ),
     step(
-        """UPDATE tasks SET io_def='
+        """UPDATE tasks SET annotation_config_json='
             {
                 "goal_message":
 "enter a question and select an answer in the context, such that the model is fooled.",
@@ -313,7 +316,7 @@ steps = [
             ' WHERE shortname in ('QA','DK_QA', 'UCL_QA')"""
     ),
     step(
-        """UPDATE tasks SET io_def='
+        """UPDATE tasks SET annotation_config_json='
             {
                 "goal_message":
     "enter a question and answer based on the image, such that the model is fooled.",
@@ -351,7 +354,7 @@ steps = [
             ' WHERE shortname in ('VQA', 'VQA-VAL')"""
     ),
     step(
-        """UPDATE tasks SET io_def='
+        """UPDATE tasks SET annotation_config_json='
             {
                 "context": [
                     {"name": "sourceLanguage", "type": "string",

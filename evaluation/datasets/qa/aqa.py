@@ -32,7 +32,7 @@ class AqaBase(QaBase):
                     tmp.write(json.dumps(tmp_jl) + "\n")
                 tmp.close()
                 response = self.s3_client.upload_file(
-                    tmp.name, self.s3_bucket, self._get_data_s3_path()
+                    tmp.name, self.task.s3_bucket, self._get_data_s3_path()
                 )
                 os.remove(tmp.name)
                 if response:

@@ -380,9 +380,9 @@ export default class ApiService {
     );
   }
 
-  getModelResponse(modelUrl, exampleIO) {
-    exampleIO["uid"] = "0"; //A requied field for dynalab uploaded models. TODO: fix
-    exampleIO["insight"] = false; //TODO: an artifact of old models
+  getModelResponse(modelUrl, data) {
+    data["uid"] = "0"; // A required field for dynalab uploaded models. TODO: fix
+    data["insight"] = false; // TODO: an artifact of old models
     const trialAuthToken = localStorage.getItem("trial_auth_token");
     const customHeader =
       this.loggedIn() || this.mode === "mturk" || trialAuthToken == null
@@ -394,7 +394,7 @@ export default class ApiService {
           };
     return this.fetch(modelUrl, {
       method: "POST",
-      body: JSON.stringify(exampleIO),
+      body: JSON.stringify(data),
       ...(customHeader == null ? {} : { headers: customHeader }),
     });
   }
@@ -425,9 +425,9 @@ export default class ApiService {
     });
   }
 
-  setExampleMetadata(id, metadataIO) {
+  setExampleMetadata(id, metadata) {
     var obj = {};
-    obj.metadata_json = JSON.stringify(metadataIO);
+    obj.metadata_json = JSON.stringify(metadata);
     return this.fetch(`${this.domain}/examples/${id}`, {
       method: "PUT",
       body: JSON.stringify(obj),
@@ -491,14 +491,15 @@ export default class ApiService {
     );
   }
 
-  getModelWrong(tid, targetIO, outputIO) {
+  getModelWrong(tid, target, output) {
+    let obj = {
+      target: target,
+      tid: tid,
+      output: output,
+    };
     return this.fetch(`${this.domain}/examples/evaluate`, {
       method: "POST",
-      body: JSON.stringify({
-        target: targetIO,
-        tid: tid,
-        output: outputIO,
-      }),
+      body: JSON.stringify(obj),
     });
   }
 
@@ -507,9 +508,9 @@ export default class ApiService {
     rid,
     uid,
     cid,
-    inputIO,
-    targetIO,
-    outputIO,
+    input,
+    target,
+    output,
     modelSignature,
     metadata,
     modelWrong,
@@ -523,9 +524,9 @@ export default class ApiService {
         rid: rid,
         cid: cid,
         uid: uid,
-        input: inputIO,
-        target: targetIO,
-        output: outputIO,
+        input: input,
+        target: target,
+        output: output,
         model_signature: modelSignature,
         metadata: metadata,
         model_wrong: modelWrong,

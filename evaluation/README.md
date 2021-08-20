@@ -58,7 +58,7 @@ Standard dataset files are normally `.jsonl` files where each line is an input e
     The S3 path information can be obtained from pre-defined base attributes and methods:
     ```
     {
-        s3_bucket: self.s3_bucket,
+        s3_bucket: self.task.s3_bucket,
         s3_path: self._get_data_s3_path()
     }
     ```

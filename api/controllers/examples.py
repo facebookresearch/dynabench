@@ -171,12 +171,16 @@ def update_example(credentials, eid):
         if "metadata" in data:
             cm = ContextModel()
             context = cm.get(example.cid)
-            all_user_io = {}
-            all_user_io.update(json.loads(context.context_json))
-            all_user_io.update(json.loads(example.input_json))
-            all_user_io.update(json.loads(example.target_json))
-            all_user_io.update(data["metadata"])
-            if not TaskModel().get(example.context.round.tid).verify_io(all_user_io):
+            all_user_annotation_data = {}
+            all_user_annotation_data.update(json.loads(context.context_json))
+            all_user_annotation_data.update(json.loads(example.input_json))
+            all_user_annotation_data.update(json.loads(example.target_json))
+            all_user_annotation_data.update(data["metadata"])
+            if (
+                not TaskModel()
+                .get(example.context.round.tid)
+                .verify_annotation(all_user_annotation_data)
+            ):
                 bottle.abort(403, "metadata_jon is not properly formatted")
             # Make sure to keep fields in the metadata_json from before if they aren't
             # in the new metadata_json
@@ -217,7 +221,11 @@ def evaluate_model_correctness():
     task = tm.get(data["tid"])
     model_wrong_metric_def = json.loads(task.model_wrong_metric)
     model_wrong_metric = model_wrong_metrics[model_wrong_metric_def["type"]]
-    target_keys = set(map(lambda item: item["name"], json.loads(task.io_def)["target"]))
+    target_keys = set(
+        map(
+            lambda item: item["name"], json.loads(task.annotation_config_json)["target"]
+        )
+    )
     pruned_target = {}
     pruned_output = {}
     for key, value in data["target"].items():

@@ -1,30 +1,35 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import React from "react";
 import {
   FormControl,
   DropdownButton,
   Dropdown,
-  Badge,
   InputGroup,
 } from "react-bootstrap";
-import { PieRechart } from "../components/Rechart";
+import { PieRechart } from "../../components/Rechart.js";
 import { useState } from "react";
 import { TokenAnnotator } from "react-text-annotate";
 import AtomicImage from "./AtomicImage";
-import "./IO.css";
+import "./AnnotationComponent.css";
 
-const MulticlassIO = ({
+const Multiclass = ({
   displayName,
   className,
   create,
-  exampleIO,
-  setExampleIO,
+  data,
+  setData,
   name,
   constructorArgs,
 }) => {
   const [choice, setChoice] = useState(constructorArgs.placeholder);
   const labels = constructorArgs.labels;
   // This ensures that the UI resets when the value goes back to null
-  if (exampleIO[name] === null && choice !== constructorArgs.placeholder) {
+  if (data[name] === null && choice !== constructorArgs.placeholder) {
     setChoice(constructorArgs.placeholder);
   }
   return (
@@ -34,7 +39,7 @@ const MulticlassIO = ({
           <h6 className={"spaced-header " + className}>
             {displayName ? displayName : name}:
           </h6>
-          {exampleIO[name]}
+          {data[name]}
         </>
       ) : (
         <>
@@ -46,8 +51,8 @@ const MulticlassIO = ({
                   key={index}
                   onClick={() => {
                     setChoice(label);
-                    exampleIO[name] = label;
-                    setExampleIO(exampleIO);
+                    data[name] = label;
+                    setData(data);
                   }}
                   name={index}
                   index={index}
@@ -62,21 +67,21 @@ const MulticlassIO = ({
   );
 };
 
-const TargetLabelIO = ({
+const TargetLabel = ({
   displayName,
   className,
   create,
-  exampleIO,
-  setExampleIO,
+  data,
+  setData,
   name,
   constructorArgs,
 }) => {
   const labels = constructorArgs.labels;
-  const [choice, setChoice] = useState(exampleIO[name]);
+  const [choice, setChoice] = useState(data[name]);
 
   // This ensures that the UI resets when the value externally changes
-  if (choice !== exampleIO[name]) {
-    setChoice(exampleIO[name]);
+  if (choice !== data[name]) {
+    setChoice(data[name]);
   }
 
   const vowels = ["a", "e", "i", "o", "u"];
@@ -92,7 +97,7 @@ const TargetLabelIO = ({
           <h6 className={"spaced-header " + className}>
             {displayName ? displayName : name}:
           </h6>
-          {exampleIO[name]}
+          {data[name]}
         </>
       ) : (
         <>
@@ -107,8 +112,8 @@ const TargetLabelIO = ({
                     key={index}
                     onClick={() => {
                       setChoice(label);
-                      exampleIO[name] = label;
-                      setExampleIO(exampleIO);
+                      data[name] = label;
+                      setData(data);
                     }}
                     name={index}
                     index={index}
@@ -125,12 +130,12 @@ const TargetLabelIO = ({
   );
 };
 
-const StringIO = ({
+const String = ({
   displayName,
   className,
   create,
-  exampleIO,
-  setExampleIO,
+  data,
+  setData,
   name,
   constructorArgs,
 }) => {
@@ -141,17 +146,17 @@ const StringIO = ({
           <h6 className={"spaced-header " + className}>
             {displayName ? displayName : name}:
           </h6>
-          {exampleIO[name]}
+          {data[name]}
         </>
       ) : (
         <>
           <FormControl
             className={"rounded-1 thick-border p-3 " + className}
             placeholder={constructorArgs.placeholder}
-            value={exampleIO[name] ? exampleIO[name] : ""}
+            value={data[name] ? data[name] : ""}
             onChange={(event) => {
-              exampleIO[name] = event.target.value;
-              setExampleIO(exampleIO);
+              data[name] = event.target.value;
+              setData(data);
             }}
             required={true}
           />
@@ -161,18 +166,18 @@ const StringIO = ({
   );
 };
 
-const ContextStringSelectionIO = ({
+const ContextStringSelection = ({
   displayName,
   className,
   create,
-  exampleIO,
-  setExampleIO,
+  data,
+  setData,
   name,
   constructorArgs,
 }) => {
   const [selectionInfo, setSelectionInfo] = useState("");
   // This ensures that the UI resets when the value goes back to null
-  if (exampleIO[name] === null && selectionInfo !== "") {
+  if (data[name] === null && selectionInfo !== "") {
     setSelectionInfo("");
   }
   return (
@@ -182,25 +187,23 @@ const ContextStringSelectionIO = ({
           <h6 className={"spaced-header " + className}>
             {displayName ? displayName : name}:
           </h6>
-          {exampleIO[name]}
+          {data[name]}
         </>
       ) : (
         <>
-          <Badge variant="primary">
-            {" "}
+          <h6 className={"spaced-header " + className}>
             Select {displayName ? displayName : name} in{" "}
-            {constructorArgs.reference_name}
-          </Badge>
-          <br />
+            {constructorArgs.reference_name}:
+          </h6>
           <TokenAnnotator
             className="mb-1 p-3 light-gray-bg qa-context"
-            tokens={exampleIO[constructorArgs.reference_name].split(/\b/)}
+            tokens={data[constructorArgs.reference_name].split(/\b/)}
             value={selectionInfo}
             onChange={(value) => {
               if (value.length > 0) {
                 setSelectionInfo([value[value.length - 1]]);
-                exampleIO[name] = value[value.length - 1].tokens.join("");
-                setExampleIO(exampleIO);
+                data[name] = value[value.length - 1].tokens.join("");
+                setData(data);
               }
             }}
             getSpan={(span) => ({
@@ -214,36 +217,30 @@ const ContextStringSelectionIO = ({
   );
 };
 
-const MulticlassProbsIO = ({
-  create,
-  exampleIO,
-  setExampleIO,
-  name,
-  constructorArgs,
-}) => {
-  if (exampleIO[name]) {
-    const labels = Object.keys(exampleIO[name]);
-    const probs = labels.map((key) => exampleIO[name][key]);
+const MulticlassProbs = ({ create, data, setData, name, constructorArgs }) => {
+  if (data[name]) {
+    const labels = Object.keys(data[name]);
+    const probs = labels.map((key) => data[name][key]);
     return <PieRechart data={probs} labels={labels} />;
   }
   return null;
 };
 
-const ConfIO = ({ create, exampleIO, setExampleIO, name, constructorArgs }) => {
-  if (exampleIO[name]) {
+const Conf = ({ create, data, setData, name, constructorArgs }) => {
+  if (data[name]) {
     const labels = ["confidence", "uncertianty"];
-    const probs = [exampleIO[name], 1 - exampleIO[name]];
+    const probs = [data[name], 1 - data[name]];
     return <PieRechart data={probs} labels={labels} />;
   }
   return null;
 };
 
-const ImageUrlIO = ({
+const ImageUrl = ({
   displayName,
   className,
   create,
-  exampleIO,
-  setExampleIO,
+  data,
+  setData,
   name,
   constructorArgs,
 }) => {
@@ -252,17 +249,17 @@ const ImageUrlIO = ({
       <h6 className={"spaced-header " + className}>
         {displayName ? displayName : name}:
       </h6>
-      <AtomicImage src={exampleIO[name]} />
+      <AtomicImage src={data[name]} />
     </div>
   );
 };
 
-const IO = ({
+const AnnotationComponent = ({
   displayName,
   className,
   create,
-  exampleIO,
-  setExampleIO,
+  data,
+  setData,
   name,
   type,
   constructorArgs,
@@ -270,81 +267,81 @@ const IO = ({
   switch (type) {
     case "image_url":
       return (
-        <ImageUrlIO
+        <ImageUrl
           displayName={displayName}
           className={className}
           create={create}
           name={name}
-          exampleIO={exampleIO}
-          setExampleIO={setExampleIO}
+          data={data}
+          setData={setData}
           constructorArgs={constructorArgs}
         />
       );
     case "string":
       return (
-        <StringIO
+        <String
           displayName={displayName}
           className={className}
           create={create}
           name={name}
-          exampleIO={exampleIO}
-          setExampleIO={setExampleIO}
+          data={data}
+          setData={setData}
           constructorArgs={constructorArgs}
         />
       );
     case "multiclass":
       return (
-        <MulticlassIO
+        <Multiclass
           displayName={displayName}
           className={className}
           create={create}
           name={name}
-          exampleIO={exampleIO}
-          setExampleIO={setExampleIO}
+          data={data}
+          setData={setData}
           constructorArgs={constructorArgs}
         />
       );
     case "target_label":
       return (
-        <TargetLabelIO
+        <TargetLabel
           displayName={displayName}
           className={className}
           create={create}
           name={name}
-          exampleIO={exampleIO}
-          setExampleIO={setExampleIO}
+          data={data}
+          setData={setData}
           constructorArgs={constructorArgs}
         />
       );
     case "context_string_selection":
       return (
-        <ContextStringSelectionIO
+        <ContextStringSelection
           displayName={displayName}
           className={className}
           create={create}
           name={name}
-          exampleIO={exampleIO}
-          setExampleIO={setExampleIO}
+          data={data}
+          setData={setData}
           constructorArgs={constructorArgs}
         />
       );
     case "multiclass_probs":
       return (
-        <MulticlassProbsIO
+        <MulticlassProbs
           create={create}
           name={name}
-          exampleIO={exampleIO}
-          setExampleIO={setExampleIO}
+          data={data}
+          setData={setData}
           constructorArgs={constructorArgs}
         />
       );
     case "conf":
       return (
-        <ConfIO
+        <Conf
           create={create}
           name={name}
-          exampleIO={exampleIO}
-          setExampleIO={setExampleIO}
+          data={data}
+          setData={setData}
           constructorArgs={constructorArgs}
         />
       );
@@ -353,4 +350,4 @@ const IO = ({
   }
 };
 
-export default IO;
+export default AnnotationComponent;

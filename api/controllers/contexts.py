@@ -119,7 +119,7 @@ def do_upload(credentials):
                 "context" not in context_info
                 or "tag" not in context_info
                 or "metadata" not in context_info
-                or not task.verify_io(context_info["context"])
+                or not task.verify_annotation(context_info["context"])
             ):
                 bottle.abort(400, "Upload valid contexts file")
 

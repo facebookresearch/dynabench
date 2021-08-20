@@ -42,8 +42,8 @@ class BaseDataset(ABC):
         self.access_type = access_type
         self.filename = self.name + ext
         self._n_examples = {}  # will be get through API
-        self.task = TaskModel().getByTaskCode(task_code)
-        self.s3_bucket = self.task.s3_bucket
+        tm = TaskModel()
+        self.task = tm.getByTaskCode(task_code)
         self.s3_url = self._get_data_s3_url()
         self.longdesc = longdesc
         self.source_url = source_url
@@ -87,7 +87,7 @@ class BaseDataset(ABC):
         return self.__dict__
 
     def s3_path(self, *parts: str) -> str:
-        return f"s3://{self.s3_bucket}/" + "/".join(parts)
+        return f"s3://{self.task.s3_bucket}/" + "/".join(parts)
 
     def _get_data_s3_path(self, perturb_prefix=None):
         return get_data_s3_path(self.task.task_code, self.filename, perturb_prefix)
@@ -103,7 +103,7 @@ class BaseDataset(ABC):
 
     def dataset_available_on_s3(self, perturb_prefix=None) -> bool:
         path = self._get_data_s3_path(perturb_prefix)
-        return path_available_on_s3(self.s3_client, self.s3_bucket, path, path)
+        return path_available_on_s3(self.s3_client, self.task.s3_bucket, path, path)
 
     def _register_dataset_in_db_and_eval(self, eval_config) -> bool:
         t = TaskModel()
@@ -153,9 +153,11 @@ class BaseDataset(ABC):
     ) -> dict:
         inputs = list(
             filter(
-                lambda key: json.loads(self.task.io_definition)[key]["location"]
+                lambda key: json.loads(self.task.annotation_config_json)[key][
+                    "location"
+                ]
                 == "input",
-                [key for key in json.loads(self.task.io_definition).keys()],
+                [key for key in json.loads(self.task.annotation_config_json).keys()],
             )
         )
         return dict(
@@ -193,7 +195,7 @@ class BaseDataset(ABC):
     def read_labels(self, perturb_prefix=None):
         tf = tempfile.mkstemp(prefix=self.name)[1]
         self.s3_client.download_file(
-            self.s3_bucket, self._get_data_s3_path(perturb_prefix), tf
+            self.task.s3_bucket, self._get_data_s3_path(perturb_prefix), tf
         )
         data = [json.loads(l) for l in open(tf).readlines()]
         if perturb_prefix:
