@@ -11,9 +11,8 @@ import {
 } from "react-bootstrap";
 import UserContext from "../../containers/UserContext";
 import TaskModelLeaderboardTable from "./TaskModelLeaderboardTable";
-import ForkModal from "./ForkModal";
-import SnapshotModal from "./SnapshotModal";
 import { SortDirection } from "./SortContainer";
+import { ForkModal, SnapshotModal } from "./ForkAndSnapshotModalWrapper";
 
 /**
  * Represents the leader board for a task. i.e. Dynaboard
@@ -207,8 +206,8 @@ const TaskModelLeaderboardCard = (props) => {
             datasetWeights={datasetWeights}
             taskId={taskId}
             taskCode={taskCode}
-            showForkModal={showForkModal}
-            setShowForkModal={setShowForkModal}
+            showModal={showForkModal}
+            setShowModal={setShowForkModal}
             history={props.history}
           />
           <SnapshotModal
@@ -216,8 +215,8 @@ const TaskModelLeaderboardCard = (props) => {
             datasetWeights={datasetWeights}
             taskId={taskId}
             taskCode={taskCode}
-            showSnapshotModal={showSnapshotModal}
-            setShowSnapshotModal={setShowSnapshotModal}
+            showModal={showSnapshotModal}
+            setShowModal={setShowSnapshotModal}
             history={props.history}
             sort={sort}
             total={total}

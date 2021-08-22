@@ -452,7 +452,7 @@ class TaskPage extends React.Component {
                   placement="left"
                   tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
                 >
-                  {this.props.match.params.leaderboardName ? (
+                  {this.props.match?.params.forkOrSnapshotName ? (
                     <TaskModelForkLeaderboard
                       {...this.props}
                       task={this.state.task}

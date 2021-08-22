@@ -4,6 +4,7 @@ import json
 from urllib.parse import parse_qs
 
 import bottle
+import uuid
 
 import common.auth as _auth
 import common.helpers as util
@@ -11,6 +12,7 @@ from common.logging import logger
 from models.dataset import Dataset
 from models.example import ExampleModel
 from models.leaderboard_configuration import LeaderboardConfigurationModel
+from models.leaderboard_snapshot import LeaderboardSnapshotModel
 from models.model import Model
 from models.round import RoundModel
 from models.round_user_example_info import RoundUserExampleInfoModel
@@ -515,11 +517,13 @@ def create_leaderboard_configuration(credentials, tid):
     if not util.check_fields(data, ["name", "configuration_json"]):
         bottle.abort(400, "Missing data")
 
-    lcm = LeaderboardConfigurationModel()
-
     name = data["name"]
-    if lcm.exists(tid=tid, name=name):
-        bottle.abort(409, "A fork with the same name already exists for this task.")
+    if not is_valid_fork_or_snapshot_name(tid, name):
+        bottle.abort(
+            409, "A fork or a snapshot with the same name already exists for this task."
+        )
+
+    lcm = LeaderboardConfigurationModel()
 
     leaderboard_configuration = lcm.create(
         tid,
@@ -529,6 +533,101 @@ def create_leaderboard_configuration(credentials, tid):
         desc=data.get("description", None),
     )
     return util.json_encode(leaderboard_configuration)
+
+
+@bottle.get("/tasks/<tid:int>/leaderboard_snapshot/<name>")
+def get_leaderboard_snapshot(tid, name):
+    lsm = LeaderboardSnapshotModel()
+    snapshot_with_creator = lsm.getByTidAndNameWithCreatorData(tid, name)
+
+    if not snapshot_with_creator:
+        bottle.abort(404, "Not found")
+
+    ls, u = snapshot_with_creator
+
+    return util.json_encode({"snapshot": ls.to_dict(), "creator": u.to_dict()})
+
+
+@bottle.put("/tasks/<tid:int>/leaderboard_snapshot")
+@_auth.requires_auth
+def create_leaderboard_snapshot(credentials, tid):
+    data = bottle.request.json
+    if not util.check_fields(
+        data,
+        [
+            "sort",
+            "metricWeights",
+            "datasetWeights",
+            "orderedMetricWeights",
+            "orderedDatasetWeights",
+            "totalCount",
+        ],
+    ):
+        bottle.abort(400, "Missing data")
+
+    name = data.get("name", None)
+    if name is None:
+        while not is_valid_fork_or_snapshot_name(tid, name):
+            name = str(uuid.uuid4())[:8]
+    elif not is_valid_fork_or_snapshot_name(tid, name):
+        bottle.abort(
+            409, "A fork or a snapshot with the same name already exists for this task."
+        )
+
+    lsm = LeaderboardSnapshotModel()
+
+    dynaboard_info = get_dynaboard_info_for_params(
+        tid,
+        data["orderedMetricWeights"],
+        data["orderedDatasetWeights"],
+        data["sort"]["field"],
+        data["sort"]["direction"],
+        data["totalCount"],
+        0,
+    )
+    dynaboard_info = json.loads(dynaboard_info)
+    dynaboard_info["metricWeights"] = data["metricWeights"]
+    dynaboard_info["datasetWeights"] = data["datasetWeights"]
+    dynaboard_info["miscInfoJson"] = {"sort": data["sort"]}
+
+    dynaboard_info = util.json_encode(dynaboard_info)
+
+    leaderboard_snapshot = lsm.create(
+        tid,
+        name,
+        credentials["id"],
+        data_json=dynaboard_info,
+        desc=data.get("description", None),
+    )
+
+    return util.json_encode(leaderboard_snapshot.to_dict())
+
+
+@bottle.get("/tasks/<task_code>/disambiguate_forks_and_snapshots/<name>")
+def disambiguate_forks_and_snapshots(task_code, name):
+
+    tm = TaskModel()
+    tid = tm.getByTaskCode(task_code).id
+
+    lcm = LeaderboardConfigurationModel()
+    if lcm.exists(tid, name):
+        return util.json_encode({"type": "fork"})
+
+    lsm = LeaderboardSnapshotModel()
+    if lsm.exists(tid, name):
+        return util.json_encode({"type": "snapshot"})
+
+    bottle.abort(404, "Not found")
+
+
+def is_valid_fork_or_snapshot_name(tid, name):
+    if name is None:
+        return False
+
+    lcm = LeaderboardConfigurationModel()
+    lsm = LeaderboardSnapshotModel()
+
+    return not lcm.exists(tid, name) and not lsm.exists(tid, name)
 
 
 def construct_model_board_response_json(query_result, total_count):
