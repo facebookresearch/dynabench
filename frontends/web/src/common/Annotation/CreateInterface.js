@@ -29,29 +29,14 @@ import {
   BadgeOverlay,
 } from "../../containers/Overlay";
 import Markdown from "react-markdown";
-import "./CreateInterface.css";
 import AnnotationComponent from "./AnnotationComponent.js";
 import initializeData from "./InitializeAnnotationData.js";
 import ResponseInfo from "./ResponseInfo.js";
+import Explainer from "./Explainer.js";
 
-const Explainer = (props) => (
-  <div className="mt-4 mb-1 pt-3">
-    <p className="text-uppercase mb-0 spaced-header">
-      {props.taskName || <span>&nbsp;</span>}
-    </p>
-    {props.selectedModel ? (
-      <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
-        Find examples that fool <i>{props.selectedModel.name}</i>
-      </h2>
-    ) : (
-      <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
-        {props.randomTargetModel
-          ? "Find examples that fool the model"
-          : "Find examples"}
-      </h2>
-    )}
-  </div>
-);
+function deepCopyJSON(obj) {
+  return JSON.parse(JSON.stringify(obj));
+}
 
 class CreateInterface extends React.Component {
   static contextType = UserContext;
@@ -71,28 +56,43 @@ class CreateInterface extends React.Component {
       submitWithoutFullExample: false,
       annotationConfig: {
         input: [],
-        target: [],
         output: [],
         context: [],
         metadata: { create: [] },
       },
-      input: {},
-      target: {},
-      contextData: {},
+      data: {},
     };
     this.getNewContext = this.getNewContext.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
     this.switchLiveMode = this.switchLiveMode.bind(this);
     this.updateRetainInput = this.updateRetainInput.bind(this);
     this.updateSelectedRound = this.updateSelectedRound.bind(this);
-    this.clearUserInput = this.clearUserInput.bind(this);
-    this.handleStoreExampleAndResponseInfo =
-      this.handleStoreExampleAndResponseInfo.bind(this);
-    this.disentangleAndSetInputAndTarget =
-      this.disentangleAndSetInputAndTarget.bind(this);
+    this.initializeDataWrapper = this.initializeDataWrapper.bind(this);
+    this.getInputData = this.getInputData.bind(this);
+    this.storeExampleWrapper = this.storeExampleWrapper.bind(this);
     this.chatContainerRef = React.createRef();
     this.bottomAnchorRef = React.createRef();
     this.inputRef = React.createRef();
+  }
+
+  getInputData() {
+    const inputData = {};
+    for (const annotationConfigObj of this.state.annotationConfig.input) {
+      inputData[annotationConfigObj.name] = this.state.data[
+        annotationConfigObj.name
+      ];
+    }
+    return inputData;
+  }
+
+  initializeDataWrapper() {
+    this.setState({
+      data: Object.assign(
+        {},
+        initializeData(this.state.annotationConfig.input),
+        JSON.parse(this.state.context.context_json)
+      ),
+    });
   }
 
   getNewContext() {
@@ -108,20 +108,15 @@ class CreateInterface extends React.Component {
             const annotationConfig = JSON.parse(
               this.state.task.annotation_config_json
             );
-            const input = {};
-            for (const annotationConfigObj of annotationConfig.input) {
-              initializeData(input, annotationConfigObj);
-            }
-            const target = {};
-            for (const annotationConfigObj of annotationConfig.target) {
-              initializeData(target, annotationConfigObj);
-            }
+
             this.setState({
               annotationConfig: annotationConfig,
-              input: input,
-              target: target,
-              contextData: JSON.parse(result.context_json),
               randomTargetModel: randomTargetModel,
+              data: Object.assign(
+                {},
+                initializeData(annotationConfig.input),
+                JSON.parse(result.context_json)
+              ),
               context: result,
               content: [],
               submitDisabled: false,
@@ -195,24 +190,12 @@ class CreateInterface extends React.Component {
     }
   }
 
-  clearUserInput() {
-    const input = JSON.parse(JSON.stringify(this.state.input));
-    const target = JSON.parse(JSON.stringify(this.state.target));
-    this.state.annotationConfig.input.forEach((annotationConfigObj) => {
-      initializeData(input, annotationConfigObj);
-    });
-    this.state.annotationConfig.target.forEach((annotationConfigObj) => {
-      initializeData(target, annotationConfigObj);
-    });
-    this.setState({ target: target, input: input });
-  }
-
-  handleStoreExampleAndResponseInfo(
-    signature,
-    modelWrong,
-    output,
-    endpoint,
-    metadata
+  storeExampleWrapper(
+    signature = null,
+    modelWrong = null,
+    output = null,
+    endpoint = null,
+    metadata = {}
   ) {
     this.setState(
       {
@@ -221,8 +204,7 @@ class CreateInterface extends React.Component {
           {
             livemode: this.state.livemode,
             modelWrong: modelWrong,
-            input: JSON.parse(JSON.stringify(this.state.input)),
-            target: JSON.parse(JSON.stringify(this.state.target)),
+            input: this.getInputData(),
             output: output,
             url: this.state.randomTargetModel,
             retracted: false,
@@ -232,7 +214,7 @@ class CreateInterface extends React.Component {
       () => {
         if (!this.state.livemode) {
           if (!this.state.retainInput) {
-            this.clearUserInput();
+            this.initializeDataWrapper();
           }
         }
         this.setState({
@@ -250,8 +232,7 @@ class CreateInterface extends React.Component {
         this.state.task.selected_round,
         this.context.user.id,
         this.state.context.id,
-        this.state.input,
-        this.state.target,
+        this.getInputData(),
         output,
         signature,
         metadata,
@@ -278,7 +259,7 @@ class CreateInterface extends React.Component {
             });
           }
           if (!this.state.retainInput) {
-            this.clearUserInput();
+            this.initializeDataWrapper();
           }
         },
         (error) => {
@@ -295,13 +276,7 @@ class CreateInterface extends React.Component {
     e.preventDefault();
     var incompleteExample = false;
     this.state.annotationConfig.input.forEach((annotationConfigObj) => {
-      if (this.state.input[annotationConfigObj.name] === null) {
-        this.setState({ submitWithoutFullExample: true });
-        incompleteExample = true;
-      }
-    });
-    this.state.annotationConfig.target.forEach((annotationConfigObj) => {
-      if (this.state.target[annotationConfigObj.name] === null) {
+      if (this.state.data[annotationConfigObj.name] === null) {
         this.setState({ submitWithoutFullExample: true });
         incompleteExample = true;
       }
@@ -319,13 +294,7 @@ class CreateInterface extends React.Component {
 
       if (url === null) {
         // In this case, there is no target model. Just store the example without model data.
-        this.handleStoreExampleAndResponseInfo(
-          null,
-          null,
-          null,
-          null,
-          null
-        ).then(() => this.smoothlyAnimateToBottom());
+        this.storeExampleWrapper().then(() => this.smoothlyAnimateToBottom());
         return;
       }
       const endpoint = url.split("predict?model=")[1];
@@ -336,135 +305,139 @@ class CreateInterface extends React.Component {
         (this.state.task.task_code === "hs" ||
           this.state.task.task_code === "sentiment")
       ) {
-        this.state.input["hypothesis"] = this.state.input["statement"];
+        this.state.data["hypothesis"] = this.state.data["statement"];
       }
       if (!endpoint.startsWith("ts") && this.state.task.task_code === "qa") {
-        this.state.input["hypothesis"] = this.state.input["question"];
+        this.state.data["hypothesis"] = this.state.data["question"];
       }
       // End hack that can be removed upon full dynalab integration
 
-      this.context.api
-        .getModelResponse(
-          url,
-          Object.assign({}, this.state.input, this.state.contextData)
-        )
-        .then(
-          (modelResponseResult) => {
-            // Begin hack that can be removed upon full dynalab integration
-            if (
-              !endpoint.startsWith("ts") &&
-              this.state.task.task_code === "hs"
-            ) {
-              modelResponseResult["label"] =
-                modelResponseResult["prob"][0] > modelResponseResult["prob"][1]
-                  ? "not-hateful"
-                  : "hateful";
-              modelResponseResult["prob"] = {
-                "not-hateful": modelResponseResult["prob"][0],
-                hateful: modelResponseResult["prob"][1],
-              };
-            }
-            if (
-              !endpoint.startsWith("ts") &&
-              this.state.task.task_code === "sentiment"
-            ) {
-              modelResponseResult["label"] =
-                modelResponseResult["prob"][0] >
-                  modelResponseResult["prob"][1] &&
-                modelResponseResult["prob"][0] > modelResponseResult["prob"][2]
-                  ? "negative"
-                  : modelResponseResult["prob"][1] >
-                    modelResponseResult["prob"][2]
-                  ? "positive"
-                  : "neutral";
-              modelResponseResult["prob"] = {
-                negative: modelResponseResult["prob"][0],
-                positive: modelResponseResult["prob"][1],
-                neutral: modelResponseResult["prob"][2],
-              };
-            }
-            if (
-              !endpoint.startsWith("ts") &&
-              this.state.task.task_code === "nli"
-            ) {
-              modelResponseResult["label"] =
-                modelResponseResult["prob"][0] >
-                  modelResponseResult["prob"][1] &&
-                modelResponseResult["prob"][0] > modelResponseResult["prob"][2]
-                  ? "entailed"
-                  : modelResponseResult["prob"][1] >
-                    modelResponseResult["prob"][2]
-                  ? "neutral"
-                  : "contradictory";
-              modelResponseResult["prob"] = {
-                entailed: modelResponseResult["prob"][0],
-                neutral: modelResponseResult["prob"][1],
-                contradictory: modelResponseResult["prob"][2],
-              };
-            }
-            if (
-              !endpoint.startsWith("ts") &&
-              this.state.task.task_code === "qa"
-            ) {
-              modelResponseResult["answer"] = modelResponseResult["text"];
-              modelResponseResult["conf"] = modelResponseResult["prob"];
-            }
-            // End hack that can be removed upon full dynalab integration
+      this.context.api.getModelResponse(url, this.state.data).then(
+        (modelResponseResult) => {
+          // Begin hack that can be removed upon full dynalab integration
+          if (
+            !endpoint.startsWith("ts") &&
+            this.state.task.task_code === "hs"
+          ) {
+            modelResponseResult["label"] =
+              modelResponseResult["prob"][0] > modelResponseResult["prob"][1]
+                ? "not-hateful"
+                : "hateful";
+            modelResponseResult["prob"] = {
+              "not-hateful": modelResponseResult["prob"][0],
+              hateful: modelResponseResult["prob"][1],
+            };
+          }
+          if (
+            !endpoint.startsWith("ts") &&
+            this.state.task.task_code === "sentiment"
+          ) {
+            modelResponseResult["label"] =
+              modelResponseResult["prob"][0] > modelResponseResult["prob"][1] &&
+              modelResponseResult["prob"][0] > modelResponseResult["prob"][2]
+                ? "negative"
+                : modelResponseResult["prob"][1] >
+                  modelResponseResult["prob"][2]
+                ? "positive"
+                : "neutral";
+            modelResponseResult["prob"] = {
+              negative: modelResponseResult["prob"][0],
+              positive: modelResponseResult["prob"][1],
+              neutral: modelResponseResult["prob"][2],
+            };
+          }
+          if (
+            !endpoint.startsWith("ts") &&
+            this.state.task.task_code === "nli"
+          ) {
+            modelResponseResult["label"] =
+              modelResponseResult["prob"][0] > modelResponseResult["prob"][1] &&
+              modelResponseResult["prob"][0] > modelResponseResult["prob"][2]
+                ? "entailed"
+                : modelResponseResult["prob"][1] >
+                  modelResponseResult["prob"][2]
+                ? "neutral"
+                : "contradictory";
+            modelResponseResult["prob"] = {
+              entailed: modelResponseResult["prob"][0],
+              neutral: modelResponseResult["prob"][1],
+              contradictory: modelResponseResult["prob"][2],
+            };
+          }
+          if (
+            !endpoint.startsWith("ts") &&
+            this.state.task.task_code === "qa"
+          ) {
+            modelResponseResult["answer"] = modelResponseResult["text"];
+            modelResponseResult["conf"] = modelResponseResult["prob"];
+          }
+          // End hack that can be removed upon full dynalab integration
 
-            if (modelResponseResult.errorMessage) {
-              this.setState({
-                submitDisabled: false,
-                refreshDisabled: false,
-                fetchPredictionError: true,
-              });
-            } else {
-              if (this.state.fetchPredictionError) {
-                this.setState({
-                  fetchPredictionError: false,
-                });
-              }
-
-              const output = JSON.parse(JSON.stringify(modelResponseResult));
-
-              this.context.api
-                .getModelWrong(this.state.task.id, this.state.target, output)
-                .then(
-                  (modelWrongResult) =>
-                    this.handleStoreExampleAndResponseInfo(
-                      modelResponseResult["signed"],
-                      modelWrongResult.model_wrong,
-                      output,
-                      endpoint,
-                      {}
-                    ),
-                  (error) => {
-                    console.log(error);
-                    this.setState({
-                      submitDisabled: false,
-                      refreshDisabled: false,
-                      fetchPredictionError: true,
-                    });
-                  }
-                )
-                .then(() => this.smoothlyAnimateToBottom());
-            }
-          },
-          (error) => {
-            console.log(error);
-            if (error && error.message && error.message === "Unauthorized") {
-              this.props.history.push(
-                "/login?msg=" +
-                  encodeURIComponent("You need to login to use this feature.") +
-                  "&src=" +
-                  encodeURIComponent(`/tasks/${this.state.taskCode}/create`)
-              );
-            }
+          if (modelResponseResult.errorMessage) {
             this.setState({
               submitDisabled: false,
               refreshDisabled: false,
+              fetchPredictionError: true,
             });
+          } else {
+            if (this.state.fetchPredictionError) {
+              this.setState({
+                fetchPredictionError: false,
+              });
+            }
+
+            const output = deepCopyJSON(modelResponseResult);
+
+            // Get the target, which is the user input that is expected to
+            // be in the model's output.
+            const target = {};
+            for (const annotationConfigObj of this.state.annotationConfig
+              .output) {
+              if (this.state.data.hasOwnProperty(annotationConfigObj.name)) {
+                target[annotationConfigObj.name] = this.state.data[
+                  annotationConfigObj.name
+                ];
+              }
+            }
+
+            this.context.api
+              .getModelWrong(this.state.task.id, target, output)
+              .then(
+                (modelWrongResult) =>
+                  this.storeExampleWrapper(
+                    modelResponseResult["signed"],
+                    modelWrongResult.model_wrong,
+                    output,
+                    endpoint
+                  ),
+                (error) => {
+                  console.log(error);
+                  this.setState({
+                    submitDisabled: false,
+                    refreshDisabled: false,
+                    fetchPredictionError: true,
+                  });
+                }
+              )
+              .then(() => this.smoothlyAnimateToBottom());
           }
-        );
+        },
+        (error) => {
+          console.log(error);
+          if (error && error.message && error.message === "Unauthorized") {
+            this.props.history.push(
+              "/login?msg=" +
+                encodeURIComponent("You need to login to use this feature.") +
+                "&src=" +
+                encodeURIComponent(`/tasks/${this.state.taskCode}/create`)
+            );
+          }
+          this.setState({
+            submitDisabled: false,
+            refreshDisabled: false,
+          });
+        }
+      );
     });
   }
 
@@ -542,24 +515,6 @@ class CreateInterface extends React.Component {
     });
   }
 
-  disentangleAndSetInputAndTarget(data) {
-    const input = this.state.input;
-    for (const annotationConfigObj of this.state.annotationConfig.input) {
-      if (data.hasOwnProperty(annotationConfigObj.name)) {
-        input[annotationConfigObj.name] = data[annotationConfigObj.name];
-      }
-    }
-
-    const target = this.state.target;
-    for (const annotationConfigObj of this.state.annotationConfig.target) {
-      if (data.hasOwnProperty(annotationConfigObj.name)) {
-        target[annotationConfigObj.name] = data[annotationConfigObj.name];
-      }
-    }
-
-    this.setState({ input: input, target: target });
-  }
-
   render() {
     const responseContent = this.state.content
       .map((item, index) => (
@@ -624,36 +579,25 @@ class CreateInterface extends React.Component {
     // The target_label type is special. We want this object to
     // appear in a special place in the interface.
     const goalMessageInterface = this.state.annotationConfig.input
-      .concat(this.state.annotationConfig.target)
       .filter(
         (annotationConfigObj) => annotationConfigObj.type === "target_label"
       )
       .map((annotationConfigObj) => (
-        <div
-          key={annotationConfigObj.name}
-          className={
-            (this.state.input[annotationConfigObj.name] === null ||
-              this.state.target[annotationConfigObj.name] === null) &&
-            this.state.submitWithoutFullExample
-              ? "border rounded border-danger"
-              : ""
-          }
-        >
+        <div key={annotationConfigObj.name} className="mb-1 mt-1">
           <AnnotationComponent
             displayName={annotationConfigObj.display_name}
             className="user-input-primary"
             key={annotationConfigObj.name}
             create={true}
             name={annotationConfigObj.name}
-            data={Object.assign(
-              {},
-              this.state.input,
-              this.state.target,
-              this.state.contextData
-            )}
-            setData={(data) => this.disentangleAndSetInputAndTarget(data)}
+            data={this.state.data}
+            setData={(data) => this.setState({ data: data })}
             type={annotationConfigObj.type}
             constructorArgs={annotationConfigObj.constructor_args}
+            inputReminder={
+              this.state.data[annotationConfigObj.name] === null &&
+              this.state.submitWithoutFullExample
+            }
           />
         </div>
       ));
@@ -661,20 +605,17 @@ class CreateInterface extends React.Component {
     // The context_string_selection type is special. When it is present, we want
     // to remove the context string from view and put the context_string_selection
     // in its place
-    const contextStringSelectionGroup = this.state.annotationConfig.input
-      .concat(this.state.annotationConfig.target)
-      .filter(
-        (annotationConfigObj) =>
-          annotationConfigObj.type === "context_string_selection"
-      );
+    const contextStringSelectionGroup = this.state.annotationConfig.input.filter(
+      (annotationConfigObj) =>
+        annotationConfigObj.type === "context_string_selection"
+    );
     const selectableContexts = contextStringSelectionGroup.map(
       (annotationConfigObj) =>
         annotationConfigObj.constructor_args.reference_name
     );
-    const tooTallForResponseInfoPlaceholder =
-      this.state.annotationConfig.context
-        .map((annotationConfigObj) => annotationConfigObj.type)
-        .includes("image_url");
+    const tooTallForResponseInfoPlaceholder = this.state.annotationConfig.context
+      .map((annotationConfigObj) => annotationConfigObj.type)
+      .includes("image_url");
     const contextInterface = this.state.annotationConfig.context
       .concat(contextStringSelectionGroup)
       .filter(
@@ -682,16 +623,7 @@ class CreateInterface extends React.Component {
           !selectableContexts.includes(annotationConfigObj.name)
       )
       .map((annotationConfigObj) => (
-        <div
-          key={annotationConfigObj.name}
-          className={
-            (this.state.input[annotationConfigObj.name] === null ||
-              this.state.target[annotationConfigObj.name] === null) &&
-            this.state.submitWithoutFullExample
-              ? "border rounded border-danger"
-              : ""
-          }
-        >
+        <div key={annotationConfigObj.name} className="mb-1 mt-1">
           <AnnotationComponent
             displayName={annotationConfigObj.display_name}
             className={"name-display-primary"}
@@ -702,21 +634,19 @@ class CreateInterface extends React.Component {
                 : false
             }
             name={annotationConfigObj.name}
-            data={Object.assign(
-              {},
-              this.state.input,
-              this.state.target,
-              this.state.contextData
-            )}
-            setData={(data) => this.disentangleAndSetInputAndTarget(data)}
+            data={this.state.data}
+            setData={(data) => this.setState({ data: data })}
             type={annotationConfigObj.type}
             constructorArgs={annotationConfigObj.constructor_args}
+            inputReminder={
+              this.state.data[annotationConfigObj.name] === null &&
+              this.state.submitWithoutFullExample
+            }
           />
         </div>
       ));
 
     const belowModelResponseInterface = this.state.annotationConfig.input
-      .concat(this.state.annotationConfig.target)
       .filter(
         (annotationConfigObj) =>
           !["target_label", "context_string_selection"].includes(
@@ -724,31 +654,21 @@ class CreateInterface extends React.Component {
           )
       )
       .map((annotationConfigObj) => (
-        <div
-          key={annotationConfigObj.name}
-          className={
-            (this.state.input[annotationConfigObj.name] === null ||
-              this.state.target[annotationConfigObj.name] === null) &&
-            this.state.submitWithoutFullExample
-              ? "border rounded border-danger"
-              : ""
-          }
-        >
+        <div key={annotationConfigObj.name} className="mb-1 mt-1">
           <AnnotationComponent
             displayName={annotationConfigObj.display_name}
             className="user-input-primary"
             key={annotationConfigObj.name}
             create={true}
             name={annotationConfigObj.name}
-            data={Object.assign(
-              {},
-              this.state.input,
-              this.state.target,
-              this.state.contextData
-            )}
-            setData={(data) => this.disentangleAndSetInputAndTarget(data)}
+            data={this.state.data}
+            setData={(data) => this.setState({ data: data })}
             type={annotationConfigObj.type}
             constructorArgs={annotationConfigObj.constructor_args}
+            inputReminder={
+              this.state.data[annotationConfigObj.name] === null &&
+              this.state.submitWithoutFullExample
+            }
           />
         </div>
       ));

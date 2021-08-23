@@ -25,6 +25,8 @@ const Multiclass = ({
   setData,
   name,
   constructorArgs,
+  showName = true,
+  inputReminder = false,
 }) => {
   const [choice, setChoice] = useState(constructorArgs.placeholder);
   const labels = constructorArgs.labels;
@@ -33,16 +35,20 @@ const Multiclass = ({
     setChoice(constructorArgs.placeholder);
   }
   return (
-    <div className="mb-1 mt-1">
+    <>
       {!create ? (
         <>
-          <h6 className={"spaced-header " + className}>
-            {displayName ? displayName : name}:
-          </h6>
+          {showName && (
+            <h6 className={"spaced-header " + className}>
+              {displayName ? displayName : name}:
+            </h6>
+          )}
           {data[name]}
         </>
       ) : (
-        <>
+        <div
+          className={inputReminder ? "p-2 border rounded border-danger" : ""}
+        >
           <DropdownButton variant="light" className="p-1" title={choice}>
             {labels
               .filter((label) => label !== choice)
@@ -61,9 +67,9 @@ const Multiclass = ({
                 </Dropdown.Item>
               ))}
           </DropdownButton>
-        </>
+        </div>
       )}
-    </div>
+    </>
   );
 };
 
@@ -75,6 +81,8 @@ const TargetLabel = ({
   setData,
   name,
   constructorArgs,
+  showName = true,
+  inputReminder = false,
 }) => {
   const labels = constructorArgs.labels;
   const [choice, setChoice] = useState(data[name]);
@@ -91,16 +99,20 @@ const TargetLabel = ({
     otherLabels.slice(0, otherLabels.length - 2).join(", ") +
     otherLabels.slice(otherLabels.length - 2, otherLabels.length).join(" or ");
   return (
-    <div className="mb-1 mt-1">
+    <>
       {!create ? (
         <>
-          <h6 className={"spaced-header " + className}>
-            {displayName ? displayName : name}:
-          </h6>
+          {showName && (
+            <h6 className={"spaced-header " + className}>
+              {displayName ? displayName : name}:
+            </h6>
+          )}
           {data[name]}
         </>
       ) : (
-        <>
+        <div
+          className={inputReminder ? "p-2 border rounded border-danger" : ""}
+        >
           <InputGroup className="align-items-center">
             <i className="fas fa-flag-checkered mr-1"></i>
             Your goal: enter {indefiniteArticle}
@@ -124,9 +136,9 @@ const TargetLabel = ({
             </DropdownButton>
             example that fools the model into predicting {otherLabelsStr}.
           </InputGroup>
-        </>
+        </div>
       )}
-    </div>
+    </>
   );
 };
 
@@ -138,18 +150,24 @@ const String = ({
   setData,
   name,
   constructorArgs,
+  showName = true,
+  inputReminder = false,
 }) => {
   return (
-    <div className="mb-1 mt-1">
+    <>
       {!create ? (
         <>
-          <h6 className={"spaced-header " + className}>
-            {displayName ? displayName : name}:
-          </h6>
+          {showName && (
+            <h6 className={"spaced-header " + className}>
+              {displayName ? displayName : name}:
+            </h6>
+          )}
           {data[name]}
         </>
       ) : (
-        <>
+        <div
+          className={inputReminder ? "p-2 border rounded border-danger" : ""}
+        >
           <FormControl
             className={"rounded-1 thick-border p-3 " + className}
             placeholder={constructorArgs.placeholder}
@@ -160,9 +178,9 @@ const String = ({
             }}
             required={true}
           />
-        </>
+        </div>
       )}
-    </div>
+    </>
   );
 };
 
@@ -174,6 +192,8 @@ const ContextStringSelection = ({
   setData,
   name,
   constructorArgs,
+  showName = true,
+  inputReminder = false,
 }) => {
   const [selectionInfo, setSelectionInfo] = useState("");
   // This ensures that the UI resets when the value goes back to null
@@ -181,22 +201,26 @@ const ContextStringSelection = ({
     setSelectionInfo("");
   }
   return (
-    <div className="mb-1 mt-1">
+    <>
       {!create ? (
         <>
-          <h6 className={"spaced-header " + className}>
-            {displayName ? displayName : name}:
-          </h6>
+          {showName && (
+            <h6 className={"spaced-header " + className}>
+              {displayName ? displayName : name}:
+            </h6>
+          )}
           {data[name]}
         </>
       ) : (
-        <>
+        <div
+          className={inputReminder ? "p-2 border rounded border-danger" : ""}
+        >
           <h6 className={"spaced-header " + className}>
             Select {displayName ? displayName : name} in{" "}
             {constructorArgs.reference_name}:
           </h6>
           <TokenAnnotator
-            className="mb-1 p-3 light-gray-bg qa-context"
+            className="mb-1 p-3 light-gray-bg"
             tokens={data[constructorArgs.reference_name].split(/\b/)}
             value={selectionInfo}
             onChange={(value) => {
@@ -211,9 +235,9 @@ const ContextStringSelection = ({
               tag: name,
             })}
           />
-        </>
+        </div>
       )}
-    </div>
+    </>
   );
 };
 
@@ -245,12 +269,12 @@ const ImageUrl = ({
   constructorArgs,
 }) => {
   return (
-    <div className="mb-1 mt-1">
+    <>
       <h6 className={"spaced-header " + className}>
         {displayName ? displayName : name}:
       </h6>
       <AtomicImage src={data[name]} />
-    </div>
+    </>
   );
 };
 
@@ -263,6 +287,8 @@ const AnnotationComponent = ({
   name,
   type,
   constructorArgs,
+  showName = true,
+  inputReminder = false,
 }) => {
   switch (type) {
     case "image_url":
@@ -275,6 +301,8 @@ const AnnotationComponent = ({
           data={data}
           setData={setData}
           constructorArgs={constructorArgs}
+          showName={showName}
+          inputReminder={inputReminder}
         />
       );
     case "string":
@@ -287,6 +315,8 @@ const AnnotationComponent = ({
           data={data}
           setData={setData}
           constructorArgs={constructorArgs}
+          showName={showName}
+          inputReminder={inputReminder}
         />
       );
     case "multiclass":
@@ -299,6 +329,8 @@ const AnnotationComponent = ({
           data={data}
           setData={setData}
           constructorArgs={constructorArgs}
+          showName={showName}
+          inputReminder={inputReminder}
         />
       );
     case "target_label":
@@ -311,6 +343,8 @@ const AnnotationComponent = ({
           data={data}
           setData={setData}
           constructorArgs={constructorArgs}
+          showName={showName}
+          inputReminder={inputReminder}
         />
       );
     case "context_string_selection":
@@ -323,6 +357,8 @@ const AnnotationComponent = ({
           data={data}
           setData={setData}
           constructorArgs={constructorArgs}
+          showName={showName}
+          inputReminder={inputReminder}
         />
       );
     case "multiclass_probs":
@@ -333,6 +369,8 @@ const AnnotationComponent = ({
           data={data}
           setData={setData}
           constructorArgs={constructorArgs}
+          showName={showName}
+          inputReminder={inputReminder}
         />
       );
     case "conf":
@@ -343,6 +381,8 @@ const AnnotationComponent = ({
           data={data}
           setData={setData}
           constructorArgs={constructorArgs}
+          showName={showName}
+          inputReminder={inputReminder}
         />
       );
     default:

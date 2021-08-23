@@ -36,7 +36,6 @@ class Example(Base):
     tag = db.Column(db.Text)
 
     input_json = db.Column(db.Text)
-    target_json = db.Column(db.Text)
     output_json = db.Column(db.Text)
     metadata_json = db.Column(db.Text)
 
@@ -79,7 +78,6 @@ class ExampleModel(BaseModel):
         uid,
         cid,
         input,
-        target,
         output,
         model_signature,
         metadata,
@@ -109,7 +107,6 @@ class ExampleModel(BaseModel):
         all_user_annotation_data = {}
         all_user_annotation_data.update(context)
         all_user_annotation_data.update(input)
-        all_user_annotation_data.update(target)
         if not task.verify_annotation(all_user_annotation_data):
             logger.error("Improper formatting in user annotation components")
             return False
@@ -126,7 +123,8 @@ class ExampleModel(BaseModel):
             all_model_annotation_data = {}
             all_model_annotation_data.update(context)
             all_model_annotation_data.update(input)
-            all_model_annotation_data.update(output)
+            all_model_annotation_data.update(output)  # this overwrites any user
+            # inputs that are also model outputs
             if not task.verify_annotation(all_model_annotation_data):
                 logger.error("Improper formatting in model annotation components")
                 return False
@@ -240,7 +238,6 @@ class ExampleModel(BaseModel):
             e = Example(
                 context=c,
                 input_json=json.dumps(input),
-                target_json=json.dumps(target),
                 output_json=json.dumps(output),
                 model_wrong=model_wrong,
                 generated_datetime=db.sql.func.now(),

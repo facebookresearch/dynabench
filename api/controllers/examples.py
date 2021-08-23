@@ -174,7 +174,6 @@ def update_example(credentials, eid):
             all_user_annotation_data = {}
             all_user_annotation_data.update(json.loads(context.context_json))
             all_user_annotation_data.update(json.loads(example.input_json))
-            all_user_annotation_data.update(json.loads(example.target_json))
             all_user_annotation_data.update(data["metadata"])
             if (
                 not TaskModel()
@@ -221,11 +220,15 @@ def evaluate_model_correctness():
     task = tm.get(data["tid"])
     model_wrong_metric_def = json.loads(task.model_wrong_metric)
     model_wrong_metric = model_wrong_metrics[model_wrong_metric_def["type"]]
-    target_keys = set(
+    output_keys = set(
         map(
-            lambda item: item["name"], json.loads(task.annotation_config_json)["target"]
+            lambda item: item["name"], json.loads(task.annotation_config_json)["output"]
         )
     )
+    input_keys = set(
+        map(lambda item: item["name"], json.loads(task.annotation_config_json)["input"])
+    )
+    target_keys = input_keys.intersection(output_keys)
     pruned_target = {}
     pruned_output = {}
     for key, value in data["target"].items():
@@ -261,7 +264,6 @@ def post_example(credentials):
             "cid",
             "input",
             "output",
-            "target",
             "model_signature",
             "metadata",
             "model_endpoint_name",
@@ -287,7 +289,6 @@ def post_example(credentials):
         uid=data["uid"] if credentials["id"] != "turk" else "turk",
         cid=data["cid"],
         input=data["input"],
-        target=data["target"],
         output=data["output"],
         model_signature=data["model_signature"],
         metadata=data["metadata"],

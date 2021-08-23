@@ -8,7 +8,6 @@ import React from "react";
 import { Row, Col, Card, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import UserContext from "../../containers/UserContext";
-import "./CreateInterface.css";
 import AnnotationComponent from "./AnnotationComponent.js";
 import initializeData from "./InitializeAnnotationData.js";
 
@@ -26,16 +25,13 @@ class ResponseInfo extends React.Component {
     };
   }
   componentDidMount() {
-    const metadata = {};
-    this.props.annotationConfig.metadata.create
-      .filter(
+    const metadata = initializeData(
+      this.props.annotationConfig.metadata.create.filter(
         (annotationConfigObj) =>
           annotationConfigObj.model_wrong_condition === undefined ||
           annotationConfigObj.model_wrong_condition === this.state.modelWrong
       )
-      .forEach((annotationConfigObj) => {
-        initializeData(metadata, annotationConfigObj);
-      });
+    );
     this.setState({
       metadata: metadata,
       exampleUpdated: null,
@@ -53,8 +49,9 @@ class ResponseInfo extends React.Component {
       )
       .forEach((annotationConfigObj) => {
         if (this.state.metadata[annotationConfigObj.name] !== null) {
-          nonNullMetadata[annotationConfigObj.name] =
-            this.state.metadata[annotationConfigObj.name];
+          nonNullMetadata[annotationConfigObj.name] = this.state.metadata[
+            annotationConfigObj.name
+          ];
         }
       });
     this.context.api.updateExample(this.props.exampleId, {
@@ -138,8 +135,18 @@ class ResponseInfo extends React.Component {
       );
     }
 
-    const inputInterface = this.props.annotationConfig.input.map(
-      (annotationConfigObj) => (
+    const outputNames = this.props.annotationConfig.output.map(
+      (annotationConfObj) => annotationConfObj.name
+    );
+    const targetNames = this.props.annotationConfig.input
+      .map((annotationConfObj) => annotationConfObj.name)
+      .filter((name) => outputNames.includes(name));
+
+    const modelInputInterface = this.props.annotationConfig.input
+      .filter(
+        (annotatorConfigObj) => !outputNames.includes(annotatorConfigObj.name)
+      )
+      .map((annotationConfigObj) => (
         <AnnotationComponent
           displayName={annotationConfigObj.display_name}
           className="name-display-secondary"
@@ -148,46 +155,34 @@ class ResponseInfo extends React.Component {
           data={this.props.obj.input}
           type={annotationConfigObj.type}
           constructorArgs={annotationConfigObj.constructor_args}
-        />
-      )
-    );
-
-    const targetInterface = this.props.annotationConfig.target.map(
-      (annotationConfigObj) => (
-        <AnnotationComponent
-          displayName={annotationConfigObj.display_name}
-          className="name-display-secondary"
-          key={annotationConfigObj.name}
-          name={annotationConfigObj.name}
-          data={this.props.obj.target}
-          type={annotationConfigObj.type}
-          constructorArgs={annotationConfigObj.constructor_args}
-        />
-      )
-    );
-
-    const outputToCompareToTargetInterface =
-      this.props.obj.url !== null &&
-      this.props.annotationConfig.target.map((annotationConfigObj) => (
-        <AnnotationComponent
-          displayName={annotationConfigObj.display_name}
-          className="name-display-secondary"
-          key={annotationConfigObj.name}
-          name={annotationConfigObj.name}
-          data={this.props.obj.output}
-          type={annotationConfigObj.type}
-          constructorArgs={annotationConfigObj.constructor_args}
+          showName={
+            this.props.annotationConfig.input.length - targetNames.lengh > 1
+          }
         />
       ));
 
-    const otherModelOutputInterface =
+    const targetInterface = this.props.annotationConfig.input
+      .filter((annotatorConfigObj) =>
+        outputNames.includes(annotatorConfigObj.name)
+      )
+      .map((annotationConfigObj) => (
+        <AnnotationComponent
+          displayName={annotationConfigObj.display_name}
+          className="name-display-secondary"
+          key={annotationConfigObj.name}
+          name={annotationConfigObj.name}
+          data={this.props.obj.input}
+          type={annotationConfigObj.type}
+          constructorArgs={annotationConfigObj.constructor_args}
+          showName={targetNames.lengh > 1}
+        />
+      ));
+
+    const outputToCompareToTargetInterface =
       this.props.obj.url !== null &&
-      this.props.annotationConfig.output
-        .filter(
-          (annotationConfigObj) =>
-            !this.props.annotationConfig.target
-              .map((annotationConfigObjT) => annotationConfigObjT.name)
-              .includes(annotationConfigObj.name)
+      this.props.annotationConfig.input
+        .filter((annotatorConfigObj) =>
+          targetNames.includes(annotatorConfigObj.name)
         )
         .map((annotationConfigObj) => (
           <AnnotationComponent
@@ -198,6 +193,26 @@ class ResponseInfo extends React.Component {
             data={this.props.obj.output}
             type={annotationConfigObj.type}
             constructorArgs={annotationConfigObj.constructor_args}
+            showName={targetNames.lengh > 1}
+          />
+        ));
+
+    const otherModelOutputInterface =
+      this.props.obj.url !== null &&
+      this.props.annotationConfig.output
+        .filter(
+          (annotatorConfigObj) => !targetNames.includes(annotatorConfigObj.name)
+        )
+        .map((annotationConfigObj) => (
+          <AnnotationComponent
+            displayName={annotationConfigObj.display_name}
+            className="name-display-secondary"
+            key={annotationConfigObj.name}
+            name={annotationConfigObj.name}
+            data={this.props.obj.output}
+            type={annotationConfigObj.type}
+            constructorArgs={annotationConfigObj.constructor_args}
+            showName={outputNames.length - targetNames.lengh > 1}
           />
         ));
 
@@ -208,19 +223,21 @@ class ResponseInfo extends React.Component {
           annotationConfigObj.model_wrong_condition === this.state.modelWrong
       )
       .map((annotationConfigObj) => (
-        <AnnotationComponent
-          displayName={annotationConfigObj.display_name}
-          className="user-input-secondary"
-          key={annotationConfigObj.name}
-          create={true}
-          name={annotationConfigObj.name}
-          data={this.state.metadata}
-          setData={(data) =>
-            this.setState({ metadata: data, exampleUpdated: false })
-          }
-          type={annotationConfigObj.type}
-          constructorArgs={annotationConfigObj.constructor_args}
-        />
+        <div key={annotationConfigObj.name} className="mb-1 mt-1">
+          <AnnotationComponent
+            displayName={annotationConfigObj.display_name}
+            className="user-input-secondary"
+            key={annotationConfigObj.name}
+            create={true}
+            name={annotationConfigObj.name}
+            data={this.state.metadata}
+            setData={(data) =>
+              this.setState({ metadata: data, exampleUpdated: false })
+            }
+            type={annotationConfigObj.type}
+            constructorArgs={annotationConfigObj.constructor_args}
+          />
+        </div>
       ));
 
     var classNames = this.props.obj.cls + " rounded border m-3";
@@ -351,7 +368,7 @@ class ResponseInfo extends React.Component {
           <nobr>given the input</nobr>
         </Col>
         <Col className="text-center">
-          <strong>{inputInterface}</strong>
+          <strong>{modelInputInterface}</strong>
         </Col>
       </Row>
     );
@@ -368,7 +385,7 @@ class ResponseInfo extends React.Component {
           <nobr>given the input</nobr>
         </Col>
         <Col className="text-center">
-          <strong>{inputInterface}</strong>
+          <strong>{modelInputInterface}</strong>
         </Col>
       </Row>
     );
@@ -394,7 +411,7 @@ class ResponseInfo extends React.Component {
                   <div className="mb-3">{modelCorrectQuestion}</div>
                 )}
                 <div className="mb-3">
-                  <strong>{inputInterface}</strong>
+                  <strong>{modelInputInterface}</strong>
                 </div>
                 {submissionResults}
                 {userFeedback}

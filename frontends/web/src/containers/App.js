@@ -28,7 +28,7 @@ import ModelPage from "./ModelPage";
 import ApiService from "../common/ApiService";
 import ScrollToTop from "./ScrollToTop.js";
 import CreateInterface from "../common/Annotation/CreateInterface.js";
-import VerifyInterface from "../common/Annotation/VerifyInterface.js";
+import ValidateInterface from "../common/Annotation/ValidateInterface.js";
 import UpdateModelInfoInterface from "./UpdateModelInfoInterface.js";
 import GenerateAPITokenPage from "./GenerateAPITokenPage.js";
 import TaskModelLeaderboardPage from "./TaskModelLeaderboardPage.js";
@@ -274,7 +274,7 @@ class App extends React.Component {
                 />
                 <Route
                   path="/tasks/:taskCode/validate"
-                  component={VerifyInterface}
+                  component={ValidateInterface}
                 />
                 <Route
                   path="/tasks/:taskCode/models/:modelId/updateModelInfo"

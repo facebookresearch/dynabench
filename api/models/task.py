@@ -190,7 +190,6 @@ class Task(Base):
         annotation_config_objs = (
             annotation_config["context"]
             + annotation_config["output"]
-            + annotation_config["target"]
             + annotation_config["input"]
             + annotation_config["metadata"]["validate"]
             + annotation_config["metadata"]["validate"]

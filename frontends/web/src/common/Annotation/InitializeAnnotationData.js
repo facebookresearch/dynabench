@@ -4,16 +4,20 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-export default function initializeData(data, annotationConfigObj) {
-  if (annotationConfigObj.type === "target_label") {
-    const random =
-      annotationConfigObj.constructor_args.labels[
-        Math.floor(
-          Math.random() * annotationConfigObj.constructor_args.labels.length
-        )
-      ];
-    data[annotationConfigObj.name] = random;
-  } else {
-    data[annotationConfigObj.name] = null;
+export default function initializeData(annotationConfigObjs) {
+  const data = {};
+  for (const annotationConfigObj of annotationConfigObjs) {
+    if (annotationConfigObj.type === "target_label") {
+      const random =
+        annotationConfigObj.constructor_args.labels[
+          Math.floor(
+            Math.random() * annotationConfigObj.constructor_args.labels.length
+          )
+        ];
+      data[annotationConfigObj.name] = random;
+    } else {
+      data[annotationConfigObj.name] = null;
+    }
   }
+  return data;
 }

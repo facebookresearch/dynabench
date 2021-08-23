@@ -27,7 +27,7 @@ import {
 import AnnotationComponent from "./AnnotationComponent.js";
 import initializeData from "./InitializeAnnotationData.js";
 
-class VerifyInterface extends React.Component {
+class ValidateInterface extends React.Component {
   static contextType = UserContext;
   constructor(props) {
     super(props);
@@ -41,26 +41,24 @@ class VerifyInterface extends React.Component {
       validatorAction: null,
       annotationConfig: {
         input: [],
-        target: [],
         context: [],
         metadata: { create: [], validate: [] },
       },
-      input: {},
-      target: {},
-      contextData: {},
-      metadata: {},
-      validatorMetadata: {},
+      data: {},
       loading: true,
     };
     this.getNewExample = this.getNewExample.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
-    this.setRangesAndGetRandomFilteredExample =
-      this.setRangesAndGetRandomFilteredExample.bind(this);
+    this.setRangesAndGetRandomFilteredExample = this.setRangesAndGetRandomFilteredExample.bind(
+      this
+    );
     this.updateUserSettings = this.updateUserSettings.bind(this);
-    this.updateOwnerValidationFlagFilter =
-      this.updateOwnerValidationFlagFilter.bind(this);
-    this.updateOwnerValidationDisagreementFilter =
-      this.updateOwnerValidationDisagreementFilter.bind(this);
+    this.updateOwnerValidationFlagFilter = this.updateOwnerValidationFlagFilter.bind(
+      this
+    );
+    this.updateOwnerValidationDisagreementFilter = this.updateOwnerValidationDisagreementFilter.bind(
+      this
+    );
   }
   componentDidMount() {
     const {
@@ -125,11 +123,6 @@ class VerifyInterface extends React.Component {
   getNewExample() {
     this.setState(
       {
-        input: {},
-        target: {},
-        contextData: {},
-        metadata: {},
-        validatorMetadata: {},
         validatorAction: null,
         loading: true,
       },
@@ -145,24 +138,22 @@ class VerifyInterface extends React.Component {
             const annotationConfig = JSON.parse(
               this.state.task.annotation_config_json
             );
-            const contextData = JSON.parse(result.context.context_json);
+            const context = JSON.parse(result.context.context_json);
             const input = JSON.parse(result.input_json);
-            const target = JSON.parse(result.target_json);
-            const metadata = JSON.parse(result.metadata_json);
-            const validatorMetadata = {};
-            for (const annotationConfigObj of annotationConfig.metadata
-              .validate) {
-              initializeData(validatorMetadata, annotationConfigObj);
-            }
-
+            const createMetadata = JSON.parse(result.metadata_json);
+            const validateMetadata = initializeData(
+              annotationConfig.metadata.validate
+            );
             this.setState({
               example: result,
               annotationConfig: annotationConfig,
-              input: input,
-              target: target,
-              contextData: contextData,
-              metadata: metadata,
-              validatorMetadata: validatorMetadata,
+              data: Object.assign(
+                {},
+                input,
+                createMetadata,
+                context,
+                validateMetadata
+              ),
               loading: false,
             });
           },
@@ -182,9 +173,10 @@ class VerifyInterface extends React.Component {
     const filteredValidatorMetadata = {};
     for (const annotationConfigObj of this.state.annotationConfig.metadata
       .validate) {
-      if (this.state.validatorMetadata[annotationConfigObj.name] !== null) {
-        filteredValidatorMetadata[annotationConfigObj.name] =
-          this.state.validatorMetadata[annotationConfigObj.name];
+      if (this.state.data[annotationConfigObj.name] !== null) {
+        filteredValidatorMetadata[annotationConfigObj.name] = this.state.data[
+          annotationConfigObj.name
+        ];
       }
     }
 
@@ -267,8 +259,7 @@ class VerifyInterface extends React.Component {
   }
 
   render() {
-    const inputTargetMetadataInterface = this.state.annotationConfig.input
-      .concat(this.state.annotationConfig.target)
+    const inputMetadataInterface = this.state.annotationConfig.input
       .concat(
         this.state.annotationConfig.metadata.create.filter(
           (annotationConfigObj) =>
@@ -279,14 +270,7 @@ class VerifyInterface extends React.Component {
       )
       .filter(
         (annotationConfigObj) =>
-          ![undefined, null].includes(
-            Object.assign(
-              {},
-              this.state.input,
-              this.state.target,
-              this.state.metadata
-            )[annotationConfigObj.name]
-          )
+          ![undefined, null].includes(this.state.data[annotationConfigObj.name])
       )
       .map((annotationConfigObj) => (
         <div key={annotationConfigObj.name} className="mb-3">
@@ -295,12 +279,7 @@ class VerifyInterface extends React.Component {
             className="name-display-primary"
             key={annotationConfigObj.name}
             name={annotationConfigObj.name}
-            data={Object.assign(
-              {},
-              this.state.input,
-              this.state.target,
-              this.state.metadata
-            )}
+            data={this.state.data}
             type={annotationConfigObj.type}
             constructorArgs={annotationConfigObj.constructor_args}
           />
@@ -314,38 +293,35 @@ class VerifyInterface extends React.Component {
           className="name-display-primary"
           key={annotationConfigObj.name}
           name={annotationConfigObj.name}
-          data={this.state.contextData}
+          data={this.state.data}
           type={annotationConfigObj.type}
           constructorArgs={annotationConfigObj.constructor_args}
         />
       )
     );
 
-    const validatorMetadataInterface =
-      this.state.annotationConfig.metadata.validate
-        .filter(
-          (annotationConfigObj) =>
-            annotationConfigObj.validated_label_condition === undefined ||
-            annotationConfigObj.validated_label_condition ===
-              this.state.validatorAction
-        )
-        .map((annotationConfigObj) => (
+    const validatorMetadataInterface = this.state.annotationConfig.metadata.validate
+      .filter(
+        (annotationConfigObj) =>
+          annotationConfigObj.validated_label_condition === undefined ||
+          annotationConfigObj.validated_label_condition ===
+            this.state.validatorAction
+      )
+      .map((annotationConfigObj) => (
+        <div key={annotationConfigObj.name} className="mb-1 mt-1">
           <AnnotationComponent
             displayName={annotationConfigObj.display_name}
             className="user-input-secondary"
             key={annotationConfigObj.name}
             create={true}
             name={annotationConfigObj.name}
-            data={Object.assign(
-              {},
-              this.state.validatorMetadata,
-              this.state.contextData
-            )}
-            setData={(data) => this.setState({ validatorMetadata: data })}
+            data={this.state.data}
+            setData={(data) => this.setState({ data: data })}
             type={annotationConfigObj.type}
             constructorArgs={annotationConfigObj.constructor_args}
           />
-        ));
+        </div>
+      ));
 
     return (
       <OverlayProvider initiallyHide={true}>
@@ -482,7 +458,7 @@ class VerifyInterface extends React.Component {
                     <Card.Body className="p-3">
                       <Row>
                         <Col xs={12} md={7}>
-                          {inputTargetMetadataInterface}
+                          {inputMetadataInterface}
                           <h6 className="text-uppercase dark-blue-color spaced-header">
                             Actions:
                           </h6>
@@ -594,4 +570,4 @@ class VerifyInterface extends React.Component {
   }
 }
 
-export default VerifyInterface;
+export default ValidateInterface;
