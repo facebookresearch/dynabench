@@ -566,7 +566,7 @@ def create_leaderboard_snapshot(credentials, tid):
         bottle.abort(400, "Missing data")
 
     name = data.get("name", None)
-    if name is None:
+    if name is None or len(name) == 0:
         while not is_valid_fork_or_snapshot_name(tid, name):
             name = str(uuid.uuid4())[:8]
     elif not is_valid_fork_or_snapshot_name(tid, name):
@@ -621,7 +621,7 @@ def disambiguate_forks_and_snapshots(task_code, name):
 
 
 def is_valid_fork_or_snapshot_name(tid, name):
-    if name is None:
+    if name is None or len(name) == 0:
         return False
 
     lcm = LeaderboardConfigurationModel()

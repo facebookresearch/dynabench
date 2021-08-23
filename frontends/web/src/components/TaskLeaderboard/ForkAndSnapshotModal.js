@@ -61,7 +61,7 @@ const ForkAndSnapshotModal = (props) => {
 
     promise.then(
       (result) => {
-        const url = `https://ldbd.ly/${taskCode}/${uriEncodedName}`;
+        const url = `https://ldbd.ly/${taskCode}/${result.name}`;
         setName("");
         setCreatedSuccessfully(true);
         setUrl(url);
