@@ -470,21 +470,25 @@ class TaskPage extends React.Component {
           )}
           <Row>
             <Col xs={12} md={6}>
-              <UserLeaderboardCard
-                taskId={this.state.task.id}
-                round={this.state.task.round}
-                cur_round={this.state.task.cur_round}
-              />
+              {this.state.task.id &&
+                this.state.task.round &&
+                this.state.task.cur_round && (
+                  <UserLeaderboardCard
+                    taskId={this.state.task.id}
+                    round={this.state.task.round}
+                    cur_round={this.state.task.cur_round}
+                  />
+                )}
             </Col>
             <Col xs={12} md={6}>
-              {this.state.trendScore.length ? (
+              {this.state.trendScore.length > 0 && (
                 <Annotation
                   placement="top-end"
                   tooltip="As tasks progress over time, we can follow their trend, which is shown here"
                 >
                   <TaskTrend data={this.state.trendScore} />
                 </Annotation>
-              ) : null}
+              )}
             </Col>
           </Row>
         </Container>
