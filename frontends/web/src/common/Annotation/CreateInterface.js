@@ -75,9 +75,8 @@ class CreateInterface extends React.Component {
   getInputData() {
     const inputData = {};
     for (const annotationConfigObj of this.state.annotationConfig.input) {
-      inputData[annotationConfigObj.name] = this.state.data[
-        annotationConfigObj.name
-      ];
+      inputData[annotationConfigObj.name] =
+        this.state.data[annotationConfigObj.name];
     }
     return inputData;
   }
@@ -395,9 +394,8 @@ class CreateInterface extends React.Component {
             for (const annotationConfigObj of this.state.annotationConfig
               .output) {
               if (this.state.data.hasOwnProperty(annotationConfigObj.name)) {
-                target[annotationConfigObj.name] = this.state.data[
-                  annotationConfigObj.name
-                ];
+                target[annotationConfigObj.name] =
+                  this.state.data[annotationConfigObj.name];
               }
             }
 
@@ -606,17 +604,19 @@ class CreateInterface extends React.Component {
     // The context_string_selection type is special. When it is present, we want
     // to remove the context string from view and put the context_string_selection
     // in its place
-    const contextStringSelectionGroup = this.state.annotationConfig?.input.filter(
-      (annotationConfigObj) =>
-        annotationConfigObj.type === "context_string_selection"
-    );
+    const contextStringSelectionGroup =
+      this.state.annotationConfig?.input.filter(
+        (annotationConfigObj) =>
+          annotationConfigObj.type === "context_string_selection"
+      );
     const selectableContexts = contextStringSelectionGroup?.map(
       (annotationConfigObj) =>
         annotationConfigObj.constructor_args.reference_name
     );
-    const tooTallForResponseInfoPlaceholder = this.state.annotationConfig?.context
-      .map((annotationConfigObj) => annotationConfigObj.type)
-      .includes("image_url");
+    const tooTallForResponseInfoPlaceholder =
+      this.state.annotationConfig?.context
+        .map((annotationConfigObj) => annotationConfigObj.type)
+        .includes("image_url");
     const contextInterface = this.state.annotationConfig?.context
       .concat(contextStringSelectionGroup)
       .filter(

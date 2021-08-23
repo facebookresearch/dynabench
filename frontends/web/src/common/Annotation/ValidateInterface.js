@@ -45,16 +45,13 @@ class ValidateInterface extends React.Component {
     };
     this.getNewExample = this.getNewExample.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
-    this.setRangesAndGetRandomFilteredExample = this.setRangesAndGetRandomFilteredExample.bind(
-      this
-    );
+    this.setRangesAndGetRandomFilteredExample =
+      this.setRangesAndGetRandomFilteredExample.bind(this);
     this.updateUserSettings = this.updateUserSettings.bind(this);
-    this.updateOwnerValidationFlagFilter = this.updateOwnerValidationFlagFilter.bind(
-      this
-    );
-    this.updateOwnerValidationDisagreementFilter = this.updateOwnerValidationDisagreementFilter.bind(
-      this
-    );
+    this.updateOwnerValidationFlagFilter =
+      this.updateOwnerValidationFlagFilter.bind(this);
+    this.updateOwnerValidationDisagreementFilter =
+      this.updateOwnerValidationDisagreementFilter.bind(this);
   }
   componentDidMount() {
     const {
@@ -170,9 +167,8 @@ class ValidateInterface extends React.Component {
     for (const annotationConfigObj of this.state.annotationConfig.metadata
       .validate) {
       if (this.state.data[annotationConfigObj.name] !== null) {
-        filteredValidatorMetadata[annotationConfigObj.name] = this.state.data[
-          annotationConfigObj.name
-        ];
+        filteredValidatorMetadata[annotationConfigObj.name] =
+          this.state.data[annotationConfigObj.name];
       }
     }
 
@@ -296,28 +292,29 @@ class ValidateInterface extends React.Component {
       )
     );
 
-    const validatorMetadataInterface = this.state.annotationConfig?.metadata.validate
-      ?.filter(
-        (annotationConfigObj) =>
-          annotationConfigObj.validated_label_condition === undefined ||
-          annotationConfigObj.validated_label_condition ===
-            this.state.validatorAction
-      )
-      .map((annotationConfigObj) => (
-        <div key={annotationConfigObj.name} className="mb-1 mt-1">
-          <AnnotationComponent
-            displayName={annotationConfigObj.display_name}
-            className="user-input-secondary"
-            key={annotationConfigObj.name}
-            create={true}
-            name={annotationConfigObj.name}
-            data={this.state.data}
-            setData={(data) => this.setState({ data: data })}
-            type={annotationConfigObj.type}
-            constructorArgs={annotationConfigObj.constructor_args}
-          />
-        </div>
-      ));
+    const validatorMetadataInterface =
+      this.state.annotationConfig?.metadata.validate
+        ?.filter(
+          (annotationConfigObj) =>
+            annotationConfigObj.validated_label_condition === undefined ||
+            annotationConfigObj.validated_label_condition ===
+              this.state.validatorAction
+        )
+        .map((annotationConfigObj) => (
+          <div key={annotationConfigObj.name} className="mb-1 mt-1">
+            <AnnotationComponent
+              displayName={annotationConfigObj.display_name}
+              className="user-input-secondary"
+              key={annotationConfigObj.name}
+              create={true}
+              name={annotationConfigObj.name}
+              data={this.state.data}
+              setData={(data) => this.setState({ data: data })}
+              type={annotationConfigObj.type}
+              constructorArgs={annotationConfigObj.constructor_args}
+            />
+          </div>
+        ));
 
     return (
       <OverlayProvider initiallyHide={true}>
