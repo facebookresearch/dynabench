@@ -532,7 +532,8 @@ def create_leaderboard_configuration(credentials, tid):
         configuration_json=data["configuration_json"],
         desc=data.get("description", None),
     )
-    return util.json_encode(leaderboard_configuration)
+
+    return util.json_encode(leaderboard_configuration.to_dict())
 
 
 @bottle.get("/tasks/<tid:int>/leaderboard_snapshot/<name>")

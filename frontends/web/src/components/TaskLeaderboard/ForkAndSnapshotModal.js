@@ -56,8 +56,7 @@ const ForkAndSnapshotModal = (props) => {
     }
 
     const uriEncodedName = encodeURIComponent(trimmedName);
-
-    const promise = handleSave(name, description, context.api);
+    const promise = handleSave(uriEncodedName, description, context.api);
 
     promise.then(
       (result) => {
