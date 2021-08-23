@@ -39,11 +39,7 @@ class ValidateInterface extends React.Component {
       ownerValidationFlagFilter: "Any",
       ownerValidationDisagreementFilter: "Any",
       validatorAction: null,
-      annotationConfig: {
-        input: [],
-        context: [],
-        metadata: { create: [], validate: [] },
-      },
+      annotationConfig: null,
       data: {},
       loading: true,
     };
@@ -259,7 +255,7 @@ class ValidateInterface extends React.Component {
   }
 
   render() {
-    const inputMetadataInterface = this.state.annotationConfig.input
+    const inputMetadataInterface = this.state.annotationConfig?.input
       .concat(
         this.state.annotationConfig.metadata.create.filter(
           (annotationConfigObj) =>
@@ -286,7 +282,7 @@ class ValidateInterface extends React.Component {
         </div>
       ));
 
-    const contextInterface = this.state.annotationConfig.context.map(
+    const contextInterface = this.state.annotationConfig?.context.map(
       (annotationConfigObj) => (
         <AnnotationComponent
           displayName={annotationConfigObj.display_name}
@@ -300,8 +296,8 @@ class ValidateInterface extends React.Component {
       )
     );
 
-    const validatorMetadataInterface = this.state.annotationConfig.metadata.validate
-      .filter(
+    const validatorMetadataInterface = this.state.annotationConfig?.metadata.validate
+      ?.filter(
         (annotationConfigObj) =>
           annotationConfigObj.validated_label_condition === undefined ||
           annotationConfigObj.validated_label_condition ===
@@ -440,7 +436,7 @@ class ValidateInterface extends React.Component {
                 correct.
               </p>
             </div>
-            {this.state.annotationConfig.content_warning && (
+            {this.state.annotationConfig?.content_warning && (
               <p className="mt-3 p-3 light-red-bg rounded white-color">
                 <strong>WARNING</strong>:{" "}
                 {this.state.annotationConfig.content_warning}

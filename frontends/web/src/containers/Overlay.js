@@ -70,7 +70,7 @@ function BadgeOverlay({ children, badgeTypes, ...props }) {
           src={"/badges/"+badge+".png"}
           style={{margin: "0 10px", animationDelay: 0.4 + 0.3 * idx + "s"}} />
         */
-            <>
+            <div key={badge + "-div-" + idx}>
               <Badge
                 key={badge + "-" + idx}
                 name={badge}
@@ -89,7 +89,7 @@ function BadgeOverlay({ children, badgeTypes, ...props }) {
                 format="text"
               />
               <br />
-            </>
+            </div>
           ))}
         </div>
       ) : null}

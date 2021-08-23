@@ -19,6 +19,7 @@ import {
   OverlayTrigger,
   Tooltip,
   Modal,
+  Spinner,
 } from "react-bootstrap";
 import UserContext from "../../containers/UserContext";
 import BootstrapSwitchButton from "bootstrap-switch-button-react";
@@ -54,13 +55,9 @@ class CreateInterface extends React.Component {
       refreshDisabled: true,
       mapKeyToExampleId: {},
       submitWithoutFullExample: false,
-      annotationConfig: {
-        input: [],
-        output: [],
-        context: [],
-        metadata: { create: [] },
-      },
+      annotationConfig: null,
       data: {},
+      loading: true,
     };
     this.getNewContext = this.getNewContext.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
@@ -96,38 +93,42 @@ class CreateInterface extends React.Component {
   }
 
   getNewContext() {
-    this.setState({ submitDisabled: true, refreshDisabled: true }, () => {
-      this.context.api
-        .getRandomContext(this.state.task.id, this.state.task.selected_round)
-        .then(
-          (result) => {
-            const randomTargetModel =
-              this.state.task.round.url !== null
-                ? this.pickModel(this.state.task.round.url)
-                : null;
-            const annotationConfig = JSON.parse(
-              this.state.task.annotation_config_json
-            );
+    this.setState(
+      { loading: true, submitDisabled: true, refreshDisabled: true },
+      () => {
+        this.context.api
+          .getRandomContext(this.state.task.id, this.state.task.selected_round)
+          .then(
+            (result) => {
+              const randomTargetModel =
+                this.state.task.round.url !== null
+                  ? this.pickModel(this.state.task.round.url)
+                  : null;
+              const annotationConfig = JSON.parse(
+                this.state.task.annotation_config_json
+              );
 
-            this.setState({
-              annotationConfig: annotationConfig,
-              randomTargetModel: randomTargetModel,
-              data: Object.assign(
-                {},
-                initializeData(annotationConfig.input),
-                JSON.parse(result.context_json)
-              ),
-              context: result,
-              content: [],
-              submitDisabled: false,
-              refreshDisabled: false,
-            });
-          },
-          (error) => {
-            console.log(error);
-          }
-        );
-    });
+              this.setState({
+                annotationConfig: annotationConfig,
+                randomTargetModel: randomTargetModel,
+                data: Object.assign(
+                  {},
+                  initializeData(annotationConfig.input),
+                  JSON.parse(result.context_json)
+                ),
+                context: result,
+                content: [],
+                submitDisabled: false,
+                refreshDisabled: false,
+                loading: false,
+              });
+            },
+            (error) => {
+              console.log(error);
+            }
+          );
+      }
+    );
   }
 
   updateRetainInput(e) {
@@ -578,7 +579,7 @@ class CreateInterface extends React.Component {
 
     // The target_label type is special. We want this object to
     // appear in a special place in the interface.
-    const goalMessageInterface = this.state.annotationConfig.input
+    const goalMessageInterface = this.state.annotationConfig?.input
       .filter(
         (annotationConfigObj) => annotationConfigObj.type === "target_label"
       )
@@ -605,18 +606,18 @@ class CreateInterface extends React.Component {
     // The context_string_selection type is special. When it is present, we want
     // to remove the context string from view and put the context_string_selection
     // in its place
-    const contextStringSelectionGroup = this.state.annotationConfig.input.filter(
+    const contextStringSelectionGroup = this.state.annotationConfig?.input.filter(
       (annotationConfigObj) =>
         annotationConfigObj.type === "context_string_selection"
     );
-    const selectableContexts = contextStringSelectionGroup.map(
+    const selectableContexts = contextStringSelectionGroup?.map(
       (annotationConfigObj) =>
         annotationConfigObj.constructor_args.reference_name
     );
-    const tooTallForResponseInfoPlaceholder = this.state.annotationConfig.context
+    const tooTallForResponseInfoPlaceholder = this.state.annotationConfig?.context
       .map((annotationConfigObj) => annotationConfigObj.type)
       .includes("image_url");
-    const contextInterface = this.state.annotationConfig.context
+    const contextInterface = this.state.annotationConfig?.context
       .concat(contextStringSelectionGroup)
       .filter(
         (annotationConfigObj) =>
@@ -646,7 +647,7 @@ class CreateInterface extends React.Component {
         </div>
       ));
 
-    const belowModelResponseInterface = this.state.annotationConfig.input
+    const belowModelResponseInterface = this.state.annotationConfig?.input
       .filter(
         (annotationConfigObj) =>
           !["target_label", "context_string_selection"].includes(
@@ -764,169 +765,179 @@ class CreateInterface extends React.Component {
               randomTargetModel={this.state.randomTargetModel}
             />
             <div className={"mb-3"}>
-              {this.state.annotationConfig.goal_message ||
-                ((goalMessageInterface && goalMessageInterface.length) > 0 && (
-                  <div className="mb-1 p-3 rounded light-gray-bg">
-                    {this.state.annotationConfig.goal_message && (
-                      <InputGroup className="align-items-center">
-                        <i className="fas fa-flag-checkered mr-1"></i>
-                        Your goal: {this.state.annotationConfig.goal_message}
-                      </InputGroup>
-                    )}
-                    {goalMessageInterface}
-                  </div>
-                ))}
-            </div>
-            <Card className="profile-card overflow-hidden">
-              {contextInterface && contextInterface.length > 0 && (
+              {(this.state.annotationConfig?.goal_message ||
+                (goalMessageInterface && goalMessageInterface.length) > 0) && (
                 <div className="mb-1 p-3 rounded light-gray-bg">
-                  {contextInterface}
+                  {this.state.annotationConfig.goal_message && (
+                    <InputGroup className="align-items-center">
+                      <i className="fas fa-flag-checkered mr-1"></i>
+                      Your goal: {this.state.annotationConfig.goal_message}
+                    </InputGroup>
+                  )}
+                  {goalMessageInterface}
                 </div>
               )}
-              <Card.Body
-                className="overflow-auto pt-2"
-                style={{
-                  height: tooTallForResponseInfoPlaceholder ? "auto" : 385,
-                }}
-                ref={this.chatContainerRef}
-              >
-                {responseContent}
-                <div className="bottom-anchor" ref={this.bottomAnchorRef} />
-              </Card.Body>
-              <div className="mb-1 p-3">{belowModelResponseInterface}</div>
-              <Form>
-                <Row className="p-3">
-                  <Col xs={6}>
-                    <InputGroup>
-                      {!this.state.selectedModel && (
-                        <OverlayTrigger
-                          placement="bottom"
-                          delay={{ show: 250, hide: 400 }}
-                          overlay={renderSandboxTooltip}
-                        >
-                          <span style={{ marginRight: 10 }}>
+            </div>
+            <Card className="profile-card overflow-hidden">
+              {this.state.loading ? (
+                <div className="mx-auto my-3">
+                  <Spinner animation="border" />{" "}
+                </div>
+              ) : (
+                <>
+                  {contextInterface && contextInterface.length > 0 && (
+                    <div className="mb-1 p-3 rounded light-gray-bg">
+                      {contextInterface}
+                    </div>
+                  )}
+                  <Card.Body
+                    className="overflow-auto pt-2"
+                    style={{
+                      height: tooTallForResponseInfoPlaceholder ? "auto" : 385,
+                    }}
+                    ref={this.chatContainerRef}
+                  >
+                    {responseContent}
+                    <div className="bottom-anchor" ref={this.bottomAnchorRef} />
+                  </Card.Body>
+                  <div className="mb-1 p-3">{belowModelResponseInterface}</div>
+                  <Form>
+                    <Row className="p-3">
+                      <Col xs={6}>
+                        <InputGroup>
+                          {!this.state.selectedModel && (
+                            <OverlayTrigger
+                              placement="bottom"
+                              delay={{ show: 250, hide: 400 }}
+                              overlay={renderSandboxTooltip}
+                            >
+                              <span style={{ marginRight: 10 }}>
+                                <Annotation
+                                  placement="left"
+                                  tooltip="If you want to just play around without storing your examples, you can switch to Sandbox mode here."
+                                >
+                                  <BootstrapSwitchButton
+                                    checked={this.state.livemode}
+                                    onlabel="Live Mode"
+                                    onstyle="primary blue-bg"
+                                    offstyle="warning"
+                                    offlabel="Sandbox"
+                                    width={120}
+                                    onChange={(checked) => {
+                                      this.switchLiveMode(checked);
+                                    }}
+                                  />
+                                </Annotation>
+                              </span>
+                            </OverlayTrigger>
+                          )}
+
+                          {this.state.task.cur_round > 1 && (
+                            <OverlayTrigger
+                              placement="bottom"
+                              delay={{ show: 250, hide: 400 }}
+                              overlay={renderSwitchRoundTooltip}
+                            >
+                              <Annotation
+                                placement="right"
+                                tooltip="Want to try talking to previous rounds? You can switch here."
+                              >
+                                <DropdownButton
+                                  variant="light"
+                                  className="border-0 blue-color font-weight-bold light-gray-bg"
+                                  style={{ marginRight: 10 }}
+                                  id="dropdown-basic-button"
+                                  title={
+                                    "Round " +
+                                    this.state.task.selected_round +
+                                    (this.state.task.selected_round ===
+                                    this.state.task.cur_round
+                                      ? " (active)"
+                                      : "")
+                                  }
+                                >
+                                  {roundNavs}
+                                </DropdownButton>
+                              </Annotation>
+                            </OverlayTrigger>
+                          )}
+                        </InputGroup>
+                      </Col>
+                      <Col xs={6}>
+                        <InputGroup className="d-flex justify-content-end">
+                          <OverlayTrigger
+                            placement="bottom"
+                            delay={{ show: 250, hide: 400 }}
+                            overlay={renderSwitchContextTooltip}
+                          >
                             <Annotation
                               placement="left"
-                              tooltip="If you want to just play around without storing your examples, you can switch to Sandbox mode here."
+                              tooltip="Don’t like this context? Try another one."
                             >
-                              <BootstrapSwitchButton
-                                checked={this.state.livemode}
-                                onlabel="Live Mode"
-                                onstyle="primary blue-bg"
-                                offstyle="warning"
-                                offlabel="Sandbox"
-                                width={120}
-                                onChange={(checked) => {
-                                  this.switchLiveMode(checked);
-                                }}
-                              />
+                              <Button
+                                className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"
+                                onClick={this.getNewContext}
+                                disabled={this.state.refreshDisabled}
+                              >
+                                Switch to next context
+                              </Button>
                             </Annotation>
-                          </span>
-                        </OverlayTrigger>
-                      )}
-
-                      {this.state.task.cur_round > 1 && (
-                        <OverlayTrigger
-                          placement="bottom"
-                          delay={{ show: 250, hide: 400 }}
-                          overlay={renderSwitchRoundTooltip}
-                        >
+                          </OverlayTrigger>
                           <Annotation
-                            placement="right"
-                            tooltip="Want to try talking to previous rounds? You can switch here."
+                            placement="top"
+                            tooltip="When you’re done, you can submit the example and we’ll find out what the model thinks!"
                           >
-                            <DropdownButton
-                              variant="light"
-                              className="border-0 blue-color font-weight-bold light-gray-bg"
-                              style={{ marginRight: 10 }}
-                              id="dropdown-basic-button"
-                              title={
-                                "Round " +
-                                this.state.task.selected_round +
-                                (this.state.task.selected_round ===
-                                this.state.task.cur_round
-                                  ? " (active)"
-                                  : "")
-                              }
+                            <Button
+                              type="submit"
+                              className="font-weight-bold blue-bg border-0 task-action-btn"
+                              onClick={this.handleResponse}
+                              disabled={this.state.submitDisabled}
                             >
-                              {roundNavs}
-                            </DropdownButton>
+                              {"Submit "}
+                              <i
+                                className={
+                                  this.state.submitDisabled
+                                    ? "fa fa-cog fa-spin"
+                                    : ""
+                                }
+                              />
+                            </Button>
                           </Annotation>
-                        </OverlayTrigger>
+                        </InputGroup>
+                      </Col>
+                    </Row>
+                  </Form>
+                  <div className="p-2">
+                    {this.state.task.cur_round !==
+                      this.state.task.selected_round &&
+                      !this.state.selectedModel && (
+                        <p style={{ color: "red" }}>
+                          WARNING: You are talking to an outdated model for a
+                          round that is no longer active. Examples you generate
+                          may be less useful.
+                        </p>
                       )}
-                    </InputGroup>
-                  </Col>
-                  <Col xs={6}>
-                    <InputGroup className="d-flex justify-content-end">
-                      <OverlayTrigger
-                        placement="bottom"
-                        delay={{ show: 250, hide: 400 }}
-                        overlay={renderSwitchContextTooltip}
-                      >
-                        <Annotation
-                          placement="left"
-                          tooltip="Don’t like this context? Try another one."
-                        >
-                          <Button
-                            className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"
-                            onClick={this.getNewContext}
-                            disabled={this.state.refreshDisabled}
-                          >
-                            Switch to next context
-                          </Button>
-                        </Annotation>
-                      </OverlayTrigger>
-                      <Annotation
-                        placement="top"
-                        tooltip="When you’re done, you can submit the example and we’ll find out what the model thinks!"
-                      >
-                        <Button
-                          type="submit"
-                          className="font-weight-bold blue-bg border-0 task-action-btn"
-                          onClick={this.handleResponse}
-                          disabled={this.state.submitDisabled}
-                        >
-                          {"Submit "}
-                          <i
-                            className={
-                              this.state.submitDisabled
-                                ? "fa fa-cog fa-spin"
-                                : ""
-                            }
-                          />
-                        </Button>
-                      </Annotation>
-                    </InputGroup>
-                  </Col>
-                </Row>
-              </Form>
-              <div className="p-2">
-                {this.state.task.cur_round !== this.state.task.selected_round &&
-                  !this.state.selectedModel && (
-                    <p style={{ color: "red" }}>
-                      WARNING: You are talking to an outdated model for a round
-                      that is no longer active. Examples you generate may be
-                      less useful.
-                    </p>
-                  )}
-                {!this.state.livemode && (
-                  <p style={{ color: "red" }}>
-                    WARNING: You are in "just playing" sandbox mode. Your
-                    examples are not saved.
-                  </p>
-                )}
-                {this.state.selectedModel && (
-                  <p style={{ color: "red" }}>
-                    WARNING: You are talking to a user-uploaded model. You
-                    cannot switch out of sandbox mode.
-                  </p>
-                )}
-                {this.state.fetchPredictionError && (
-                  <span style={{ color: "#e65959" }}>
-                    *Unable to fetch results. Please try again after sometime.
-                  </span>
-                )}
-              </div>
+                    {!this.state.livemode && (
+                      <p style={{ color: "red" }}>
+                        WARNING: You are in "just playing" sandbox mode. Your
+                        examples are not saved.
+                      </p>
+                    )}
+                    {this.state.selectedModel && (
+                      <p style={{ color: "red" }}>
+                        WARNING: You are talking to a user-uploaded model. You
+                        cannot switch out of sandbox mode.
+                      </p>
+                    )}
+                    {this.state.fetchPredictionError && (
+                      <span style={{ color: "#e65959" }}>
+                        *Unable to fetch results. Please try again after
+                        sometime.
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
             </Card>
           </Col>
         </Container>
