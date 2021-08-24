@@ -1,5 +1,6 @@
 import React from "react";
 import TaskModelLeaderboardCard from "./TaskModelLeaderboardCard";
+import { useParams } from "react-router-dom";
 
 /**
  *
@@ -17,8 +18,9 @@ const taskModelLeaderboardCardWrapper = (
   fetchLeaderboardData
 ) => {
   return (props) => {
+    const { forkOrSnapshotName } = useParams();
     const dataFromProps = {
-      leaderboardName: props.match?.params.leaderboardName,
+      leaderboardName: forkOrSnapshotName,
       history: props.history,
       snapshotData: props.snapshotData,
     };

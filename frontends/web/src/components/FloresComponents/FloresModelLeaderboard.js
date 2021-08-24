@@ -11,9 +11,9 @@ import {
 import { Table } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import UserContext from "../../containers/UserContext";
-import SnapshotModal from "../TaskLeaderboard/SnapshotModal";
 import { getOrderedWeights } from "../TaskLeaderboard/TaskModelLeaderboardCardWrapper";
 import { SortContainer, SortDirection } from "../TaskLeaderboard/SortContainer";
+import { FloresSnapshotModal } from "../TaskLeaderboard/ForkAndSnapshotModalWrapper";
 
 /**
  * The Overall Flores Model Leaderboard component
@@ -62,7 +62,9 @@ const FloresModelLeaderboard = (props) => {
     setIsLoading(true);
 
     if (snapshotData) {
-      setData(snapshotData.data);
+      setData(
+        snapshotData.data.slice(page * pageLimit, (page + 1) * pageLimit)
+      );
       setTotal(snapshotData.count);
       setSort(snapshotData.miscInfoJson.sort);
     } else {
@@ -177,19 +179,16 @@ const FloresModelLeaderboard = (props) => {
             Model Leaderboard - {task.name}
           </h2>
           <div className="d-flex justify-content-end flex-fill">
-            <SnapshotModal
+            <FloresSnapshotModal
               metricWeights={dummyMetricWeights}
               datasetWeights={dummyDatasetWeights}
               taskId={taskId}
               taskCode={taskCode}
-              showSnapshotModal={showSnapshotModal}
-              setShowSnapshotModal={setShowSnapshotModal}
+              showModal={showSnapshotModal}
+              setShowModal={setShowSnapshotModal}
               history={history}
               sort={sort}
               total={total}
-              customDescription={`Save leaderboard standings and share with
-              anyone using a permanent link. Results shown in the snapshot
-              table will be frozen and will not change over time.`}
             />
             {!props.disableSnapshot && (
               <OverlayTrigger

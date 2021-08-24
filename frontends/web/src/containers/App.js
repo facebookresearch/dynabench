@@ -32,7 +32,7 @@ import ValidateInterface from "../common/Annotation/ValidateInterface.js";
 import UpdateModelInfoInterface from "./UpdateModelInfoInterface.js";
 import GenerateAPITokenPage from "./GenerateAPITokenPage.js";
 import TaskModelLeaderboardPage from "./TaskModelLeaderboardPage.js";
-import TaskModelLeaderboardSnapshotPage from "./TaskModelLeaderboardSnapshotPage";
+import ForkAndSnapshotRouter from "../components/TaskLeaderboard/ForkAndSnapshotRouter";
 import { Avatar } from "../components/Avatar/Avatar";
 import ReactGA from "react-ga";
 
@@ -289,12 +289,8 @@ class App extends React.Component {
                   component={TaskPage}
                 />
                 <Route
-                  path="/tasks/:taskCode/:snapshotId(\d+)"
-                  component={TaskModelLeaderboardSnapshotPage}
-                />
-                <Route
-                  path="/tasks/:taskCode/:leaderboardName"
-                  component={TaskPage}
+                  path="/tasks/:taskCode/:forkOrSnapshotName"
+                  component={ForkAndSnapshotRouter}
                 />
                 <Route path="/tasks/:taskCode" component={TaskPage} />
                 <Route

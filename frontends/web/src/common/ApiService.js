@@ -562,12 +562,12 @@ export default class ApiService {
     orderedMetricWeights,
     orderedDatasetWeights,
     totalCount,
-    description
+    description,
+    name
   ) {
-    return this.fetch(`${this.domain}/leaderboard_snapshot`, {
+    return this.fetch(`${this.domain}/tasks/${tid}/leaderboard_snapshot`, {
       method: "PUT",
       body: JSON.stringify({
-        tid: tid,
         sort: sort,
         metricWeights: metricWeights,
         datasetWeights: datasetWeights,
@@ -575,14 +575,27 @@ export default class ApiService {
         orderedDatasetWeights: orderedDatasetWeights,
         totalCount: totalCount,
         description: description,
+        name: name,
       }),
     });
   }
 
-  getLeaderboardSnapshot(sid) {
-    return this.fetch(`${this.domain}/leaderboard_snapshot/${sid}`, {
-      method: "GET",
-    });
+  getLeaderboardSnapshot(tid, name) {
+    return this.fetch(
+      `${this.domain}/tasks/${tid}/leaderboard_snapshot/${name}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  disambiguateForkAndSnapshot(tid, name) {
+    return this.fetch(
+      `${this.domain}/tasks/${tid}/disambiguate_forks_and_snapshots/${name}`,
+      {
+        method: "GET",
+      }
+    );
   }
 
   loggedIn() {

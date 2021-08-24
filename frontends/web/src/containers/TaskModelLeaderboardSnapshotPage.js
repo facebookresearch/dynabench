@@ -20,7 +20,7 @@ const TaskModelLeaderboardSnapshotPage = (props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFlores, setIsFlores] = useState(false);
 
-  const { taskCode, snapshotId } = useParams();
+  const { taskCode, forkOrSnapshotName } = useParams();
 
   // Call api only once
   useEffect(() => {
@@ -39,8 +39,8 @@ const TaskModelLeaderboardSnapshotPage = (props) => {
           if (taskCode !== taskData.task_code) {
             props.history.replace({
               pathname: props.location.pathname.replace(
-                `${taskCode}/${snapshotId}`,
-                `${taskData.task_code}/${snapshotId}`
+                `${taskCode}/${forkOrSnapshotName}`,
+                `${taskData.task_code}/${forkOrSnapshotName}`
               ),
               search: props.location.search,
             });
@@ -50,28 +50,30 @@ const TaskModelLeaderboardSnapshotPage = (props) => {
             ? `/flores/${taskData.shortname}`
             : `/tasks/${taskCode}`;
 
-          context.api.getLeaderboardSnapshot(snapshotId).then(
-            (snapshotWithCreatorData) => {
-              if (snapshotWithCreatorData?.snapshot.tid !== taskData.id) {
-                props.history.replace({
-                  pathname: newPathname,
-                });
-              } else {
-                setSnapshotWithCreator(snapshotWithCreatorData);
+          context.api
+            .getLeaderboardSnapshot(taskData.id, forkOrSnapshotName)
+            .then(
+              (snapshotWithCreatorData) => {
+                if (snapshotWithCreatorData?.snapshot.tid !== taskData.id) {
+                  props.history.replace({
+                    pathname: newPathname,
+                  });
+                } else {
+                  setSnapshotWithCreator(snapshotWithCreatorData);
+                }
+                setIsLoading(false);
+              },
+              (error) => {
+                console.log(error);
+                if (error && error.status_code === 404) {
+                  props.history.replace({
+                    pathname: newPathname,
+                  });
+                }
+                setSnapshotWithCreator(null);
+                setIsLoading(false);
               }
-              setIsLoading(false);
-            },
-            (error) => {
-              console.log(error);
-              if (error && error.status_code === 404) {
-                props.history.replace({
-                  pathname: newPathname,
-                });
-              }
-              setSnapshotWithCreator(null);
-              setIsLoading(false);
-            }
-          );
+            );
         },
         (error) => {
           console.log(error);
@@ -83,7 +85,7 @@ const TaskModelLeaderboardSnapshotPage = (props) => {
     fetchTaskAndSnapshot(context.api);
 
     return () => {};
-  }, [taskCode, snapshotId]);
+  }, [taskCode, forkOrSnapshotName]);
 
   if (isLoading || !task || !snapshotWithCreator) {
     return (
