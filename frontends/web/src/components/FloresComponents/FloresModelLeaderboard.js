@@ -62,7 +62,9 @@ const FloresModelLeaderboard = (props) => {
     setIsLoading(true);
 
     if (snapshotData) {
-      setData(snapshotData.data);
+      setData(
+        snapshotData.data.slice(page * pageLimit, (page + 1) * pageLimit)
+      );
       setTotal(snapshotData.count);
       setSort(snapshotData.miscInfoJson.sort);
     } else {

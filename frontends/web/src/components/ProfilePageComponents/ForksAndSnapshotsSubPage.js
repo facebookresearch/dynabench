@@ -105,9 +105,7 @@ const ForkOrSnapshotTable = (props) => {
                   return null;
                 }
 
-                const forkOrSnapshotUrl = `https://ldbd.ly/${task?.task_code}/${
-                  isForkList ? datum.name : datum.id
-                }`;
+                const forkOrSnapshotUrl = `https://ldbd.ly/${task?.task_code}/${datum.name}`;
                 const taskPageUrl = FLORES_TASK_SHORT_NAMES.includes(
                   task.shortname
                 )
