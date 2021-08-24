@@ -17,7 +17,8 @@ const ForkAndSnapshotRouter = (props) => {
   };
 
   useEffect(() => {
-    context.api.disambiguateForkAndSnapshot(taskCode, forkOrSnapshotName).then(
+    const uriEncodedName = encodeURIComponent(forkOrSnapshotName);
+    context.api.disambiguateForkAndSnapshot(taskCode, uriEncodedName).then(
       (result) => {
         setType(result.type);
       },

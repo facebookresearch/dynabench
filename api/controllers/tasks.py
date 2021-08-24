@@ -1,7 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, quote
 
 import bottle
 import uuid
@@ -500,6 +500,7 @@ def get_task_trends(tid):
 
 @bottle.get("/tasks/<tid:int>/leaderboard_configuration/<name>")
 def get_leaderboard_configuration(tid, name):
+    name = quote(name)
     lcm = LeaderboardConfigurationModel()
     leaderboard_configuration = lcm.getByTaskIdAndLeaderboardName(tid, name)
 
@@ -538,6 +539,7 @@ def create_leaderboard_configuration(credentials, tid):
 
 @bottle.get("/tasks/<tid:int>/leaderboard_snapshot/<name>")
 def get_leaderboard_snapshot(tid, name):
+    name = quote(name)
     lsm = LeaderboardSnapshotModel()
     snapshot_with_creator = lsm.getByTidAndNameWithCreatorData(tid, name)
 
@@ -609,7 +611,7 @@ def disambiguate_forks_and_snapshots(task_code, name):
 
     tm = TaskModel()
     tid = tm.getByTaskCode(task_code).id
-
+    name = quote(name)
     lcm = LeaderboardConfigurationModel()
     if lcm.exists(tid, name):
         return util.json_encode({"type": "fork"})
