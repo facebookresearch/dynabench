@@ -106,9 +106,7 @@ const ForkOrSnapshotTable = (props) => {
                 }
 
                 const forkOrSnapshotUrl = `https://ldbd.ly/${task?.task_code}/${datum.name}`;
-                const taskPageUrl = FLORES_TASK_CODES.includes(
-                  task.task_code
-                )
+                const taskPageUrl = FLORES_TASK_CODES.includes(task.task_code)
                   ? `/flores/${task.task_code}`
                   : `/tasks/${task.task_code}`;
 
