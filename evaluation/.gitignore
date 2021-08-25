@@ -1,2 +1,2 @@
-/evaluation/*.dump
-/evaluation/eval_config.py
+*.dump
+eval_config.py
