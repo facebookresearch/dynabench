@@ -29,16 +29,6 @@ class TaskIO(BaseTaskIO):
         assert "pred" in response and isinstance(response["pred"], dict)
         assert "prob" in response, "prob must be in response"
 ```
-Now that we've defined the task I/O, let's go back to dynabench and sync these requirements. In dynabench, you need to add / update the task config at
-```
-evaluation/metrics/task_config.py
-```
-See the existing configs there for how to add / update configs. Specifically, the `input_keys` field is usually the list of keys in the test example provided in dynalab, but can exclude keys that are not directly involved in evaluation, e.g. request insights when talking to an endpoint, if your model supports that. In our examples you should set
-```
-{
-    "input_keys": ["uid", "context", "hypothesis"]
-}
-```
 
 ## Datasets
 A dataset is identified by a unique string (dataset name) that consists of lower case letters, numbers and dash (-) only. Registered new datasets will be uploaded to our S3 bucket and written into prod database, which will then trigger evaluations on all models belong to the dataset's task. For standard datasets, you only need to take care of the sending to S3 and field conversions, and all the rest are shared pipelines. It's also possible to implement non-standard datasets, but you will need to implement the evaluation functions to make it compatible with upstream uploaded models and downstream APIs.
@@ -107,11 +97,7 @@ The evaluation metrics, such as accuracy, f1, etc. are implemented in the metric
    ```
    Your metric should have a unique name as a key, and the pointer to the metric implementation as the value.
 
-3. Start to use the metric in tasks, by adding your metric in
-   ```
-   metrics.task_config
-   ```
-   for your task. You can either add your metric as one of the `eval_metrics`, whose value will be stored as an entry in the metric json object for query, or use it as the `perf_metric` to sort models. Note that the changes will only take effect on new evaluations requested after the codebase has been deployed. Computing a new metric on retrospective evaluations is yet to be supported.
+3. Start to use the metric in tasks, by adding your metric in the tasks table for your task. You can either add your metric as one of the `eval_metrics`, whose value will be stored as an entry in the metric json object for query, or use it as the `perf_metric` to sort models. Note that the changes will only take effect on new evaluations requested after the codebase has been deployed. Computing a new metric on retrospective evaluations is yet to be supported.
 
 ## Perturb datasets
 Use the scripts in scripts folder to perturb datasets and request evaluation.

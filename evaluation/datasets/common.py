@@ -369,7 +369,7 @@ class BaseDataset(ABC):
         """
         This function loads the full dataset, including both input keys and labels keys,
         to s3 and return True if succcessful. Implemented on dataset level.
-        The input keys must be consistent with the task config at metrics.task_config,
+        The input keys must be consistent with the task i/o,
         the label keys will be consistent with those in self.label_field_converter,
         i.e. you can think of this function as a input_field_converter + send to S3
         """

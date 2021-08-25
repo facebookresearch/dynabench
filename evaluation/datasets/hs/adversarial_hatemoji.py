@@ -27,6 +27,7 @@ class AdversarialHatemojiBase(HsBase):
                 for _, row in pd.read_csv(self.local_path).iterrows():
                     tmp_jl = {
                         "uid": row["eid"],
+                        "context": "",
                         "statement": row["sentence"],
                         "label": {0: "not-hateful", 1: "hateful"}[row["label"]],
                         "tags": [{0: "not-hateful", 1: "hateful"}[row["label"]]]
