@@ -1,4 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+# isort:skip_file
 
 import json
 import sys
@@ -10,8 +13,7 @@ from yoyo import step
 
 
 sys.path.append(".")
-from common.config import config  # isort:skip
-
+from common.config import config  # noqa
 
 __depends__ = {}
 
