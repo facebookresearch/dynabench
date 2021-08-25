@@ -97,7 +97,7 @@ The evaluation metrics, such as accuracy, f1, etc. are implemented in the metric
    ```
    Your metric should have a unique name as a key, and the pointer to the metric implementation as the value.
 
-3. 3. Start to use the metric in tasks, by adding your metric in the tasks table for your task. You can either add your metric as one of the `eval_metrics`, whose value will be stored as an entry in the metric json object for query, or use it as the `perf_metric` to sort models. Note that the changes will only take effect on new evaluations requested after the codebase has been deployed. Computing a new metric on retrospective evaluations is yet to be supported.
+3. Start to use the metric in tasks, by adding your metric in the tasks table for your task. You can either add your metric as one of the `eval_metrics`, whose value will be stored as an entry in the metric json object for query, or use it as the `perf_metric` to sort models. Note that the changes will only take effect on new evaluations requested after the codebase has been deployed. Computing a new metric on retrospective evaluations is yet to be supported.
 
 ## Perturb datasets
 Use the scripts in scripts folder to perturb datasets and request evaluation.
