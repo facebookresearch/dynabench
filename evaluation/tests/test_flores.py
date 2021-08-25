@@ -2,10 +2,10 @@
 
 import json
 
-import sacrebleu
-
 import datasets.mt.flores
+import sacrebleu
 from datasets.mt.flores import Flores101Base, Flores101Small1Dev, compute_averages
+
 from metrics import metrics
 from metrics.task_config import tasks_config
 

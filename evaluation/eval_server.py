@@ -1,6 +1,5 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
-import contextlib
 import json
 import logging
 import multiprocessing
@@ -8,10 +7,9 @@ import time
 
 import boto3
 import uuid
-
 from datasets import load_datasets
+
 from eval_config import eval_config
-from utils.evaluator import Job
 from utils.logging import init_logger
 from utils.requester import Requester
 

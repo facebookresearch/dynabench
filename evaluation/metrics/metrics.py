@@ -5,10 +5,10 @@ from pathlib import Path
 
 import sacrebleu
 import sentencepiece
+from sklearn.metrics import f1_score
 from transformers.data.metrics.squad_metrics import compute_f1
 
 from metrics.instance_property import instance_property
-from sklearn.metrics import f1_score
 
 
 # perf functions. propose to move to dynalab

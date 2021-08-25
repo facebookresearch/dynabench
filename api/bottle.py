@@ -21,8 +21,6 @@ import email.utils
 import functools
 import hashlib
 import hmac
-import importlib
-import types
 import itertools
 import mimetypes
 import os
@@ -31,6 +29,7 @@ import sys
 import tempfile
 import threading
 import time
+import types
 import warnings
 import weakref
 from datetime import date as datedate, datetime, timedelta
@@ -2266,7 +2265,7 @@ class _ImportRedirect:
         """ Create a virtual package that redirects imports (see PEP 302). """
         self.name = name
         self.impmask = impmask
-        #self.module = sys.modules.setdefault(name, imp.new_module(name))
+        # self.module = sys.modules.setdefault(name, imp.new_module(name))
         self.module = sys.modules.setdefault(name, types.ModuleType(name))
         self.module.__dict__.update(
             {"__file__": __file__, "__path__": [], "__all__": [], "__loader__": self}

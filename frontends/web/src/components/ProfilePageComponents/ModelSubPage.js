@@ -20,14 +20,8 @@ const ModelSubPage = (props) => {
   const [page, setPage] = useState(0);
   const [isEndOfPage, setIsEndOfPage] = useState(true);
 
-  const {
-    api,
-    userId,
-    pageLimit,
-    history,
-    pageTitle,
-    isSelfModelsTable,
-  } = props;
+  const { api, userId, pageLimit, history, pageTitle, isSelfModelsTable } =
+    props;
 
   useEffect(() => {
     api.getUserModels(userId, pageLimit, page).then(

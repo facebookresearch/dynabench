@@ -85,7 +85,14 @@ const TaskModelLeaderboardSnapshotPage = (props) => {
     fetchTaskAndSnapshot(context.api);
 
     return () => {};
-  }, [taskCode, forkOrSnapshotName]);
+  }, [
+    taskCode,
+    forkOrSnapshotName,
+    context.api,
+    props.history,
+    props.location.pathname,
+    props.location.search,
+  ]);
 
   if (isLoading || !task || !snapshotWithCreator) {
     return (

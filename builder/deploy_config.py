@@ -7,6 +7,5 @@ deploy_config = {
     "sagemaker_role": "AmazonSageMaker-ExecutionRole-20200629T161149",
     "gateway_url": "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict",
     "instance_type": "ml.m5.xlarge",
-    "queue_dump": "queue.dump"
+    "queue_dump": "queue.dump",
 }
-

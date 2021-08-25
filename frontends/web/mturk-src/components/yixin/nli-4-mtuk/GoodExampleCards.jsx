@@ -62,9 +62,7 @@ class ExampleGoodCards extends React.Component {
           "In 2014, the Blue Air Race happened in Texas. In 2015, the Red Bull Air Race happened in Texas. What a coincidence!",
         targetLabel: 1,
         modelPrediction: [
-          0.9782385826,
-          0.0136522576212883,
-          0.008109178394079208,
+          0.9782385826, 0.0136522576212883, 0.008109178394079208,
         ],
         labelExplanation:
           "The passage doesn’t say anything about what happened in 2014 and doesn’t mention any Blue Air Race. It is possible though that there was a Blue Air Race in 2014 and it is also possible it took place in Texas. But since we don’t know for sure, the statement cannot be correct or incorrect.",
@@ -77,9 +75,7 @@ class ExampleGoodCards extends React.Component {
         hypothesis: "People will look up to the sky during the event.",
         targetLabel: 0,
         modelPrediction: [
-          0.007144447881728411,
-          0.9927288889884949,
-          0.00012666970724239945,
+          0.007144447881728411, 0.9927288889884949, 0.00012666970724239945,
         ],
         labelExplanation:
           "When people go to see an Air Race, they plan  to watch airplanes. Since airplanes fly in the sky, people watching them will definitely look up to the sky.",

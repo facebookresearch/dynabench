@@ -3,13 +3,12 @@
 import json
 import logging
 import multiprocessing
-import time
 import weakref
-from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, NamedTuple, Tuple
 
 from datasets.nli.mnli import MnliBase
+
 from utils.computer import MetricsComputer
 
 
@@ -179,7 +178,7 @@ def test_compute_one_async_terminate(tmp_path: Path):
     nli_dataset.register_job_output(job, SOME_NLI_MODEL_OUTPUT)
 
     with multiprocessing.pool.Pool() as pool:
-        task = computer.compute_one_async(pool, job)
+        computer.compute_one_async(pool, job)
         # immediately exit this will terminate the pool and kill the processes
 
     # There is nothing in the computer results.

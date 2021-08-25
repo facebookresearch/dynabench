@@ -60,7 +60,7 @@ const FloresTop5Page = (props) => {
     fetchFloresTasks(context.api);
 
     return () => {};
-  }, [context.api]);
+  }, [context.api, taskCode]);
 
   if (isLoading || !task) {
     return (

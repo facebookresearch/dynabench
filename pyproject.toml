@@ -6,7 +6,7 @@ known_third_party = [
     "numpy", "sqlalchemy", "pymysql", "requests", "six", "SQLAlchemy", "sagemaker",
     "torch", "tqdm", "werkzeug", "cryptography", "mephisto", "omegaconf", "hydra",
     "mmf", "PIL", "ts", "captum", "dateutil", "uuid", "pandas", "enum", "botocore",
-    "sacrebleu", "sentencepiece"
+    "sacrebleu", "sentencepiece", "sklearn", "dynalab", "datasets", "dynalab_cli",
 ]
 skip_glob = "**/build/**,frontends/**"
 combine_as_imports = true

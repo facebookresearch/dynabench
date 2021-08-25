@@ -21,8 +21,7 @@ const VQAQuizExamples = {
       question: "Where is the man staring?",
       modelAns: "at camera",
       isModelCorrect: true,
-      hint:
-        "HINT: You can assume that the man is aware that he is being photographed.",
+      hint: "HINT: You can assume that the man is aware that he is being photographed.",
       isAnswer: true,
     },
     {
@@ -69,8 +68,7 @@ const VQAQuizExamples = {
       question: "How many people are in the picture?",
       modelAns: "11",
       isModelCorrect: false,
-      hint:
-        "HINT: There is a kid in front of the woman with the striped shirt.",
+      hint: "HINT: There is a kid in front of the woman with the striped shirt.",
       isAnswer: true,
     },
     {
@@ -104,8 +102,7 @@ const VQAQuizExamples = {
       question: "What is the distance from London to Paris?",
       isModelCorrect: false,
       isAnswer: false,
-      hint:
-        "HINT: Does this distance depend on something going on in the image?",
+      hint: "HINT: Does this distance depend on something going on in the image?",
     },
     {
       question: "What is the kid holding in her left hand?",

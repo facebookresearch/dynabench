@@ -3,8 +3,6 @@
 """
 Hide Flores task until June 4th, 2021.
 """
-from datetime import datetime, timezone
-
 from yoyo import step
 
 

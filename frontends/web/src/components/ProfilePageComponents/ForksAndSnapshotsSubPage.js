@@ -4,7 +4,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import React, { useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import { Card, Col, Container, Pagination, Table } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import Moment from "react-moment";
@@ -63,9 +63,8 @@ const ForkOrSnapshotTable = (props) => {
     const dupDescriptionConfiguration = {
       ...descriptionConfiguration,
     };
-    dupDescriptionConfiguration[
-      descriptionId
-    ].isExpanded = !dupDescriptionConfiguration[descriptionId].isExpanded;
+    dupDescriptionConfiguration[descriptionId].isExpanded =
+      !dupDescriptionConfiguration[descriptionId].isExpanded;
     setDescriptionConfiguration(dupDescriptionConfiguration);
   };
 
