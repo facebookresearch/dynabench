@@ -792,11 +792,12 @@ class CreateInterface extends React.Component {
                   <Row>
                     <Col>
                       <p>
-                        There are no contexts available. Reach out to the owner of this task.
+                        There are no contexts available. Reach out to the owner
+                        of this task.
                       </p>
-                      </Col>
-                    </Row>
-                  </Card.Body>
+                    </Col>
+                  </Row>
+                </Card.Body>
               ) : (
                 <>
                   {contextInterface && contextInterface.length > 0 && (
