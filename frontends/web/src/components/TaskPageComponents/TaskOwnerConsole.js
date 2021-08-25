@@ -30,14 +30,6 @@ const TaskOwnerConsole = (props) => {
   const [validateNonFooling, setValidateNonFooling] = useState(false);
   const [numMatchingValidations, setNumMatchingValidations] = useState(3);
 
-  useEffect(() => {
-    getSavedTaskSettings();
-  }, [getSavedTaskSettings, props.task]);
-
-  useEffect(() => {
-    updateTaskSettings();
-  }, [validateNonFooling, numMatchingValidations, updateTaskSettings]);
-
   const getSavedTaskSettings = () => {
     if (props.task.settings_json) {
       const settings_json = JSON.parse(props.task.settings_json);
@@ -66,6 +58,14 @@ const TaskOwnerConsole = (props) => {
       num_matching_validations: numMatchingValidations,
     });
   };
+
+  useEffect(() => {
+    getSavedTaskSettings();
+  }, [getSavedTaskSettings, props.task]);
+
+  useEffect(() => {
+    updateTaskSettings();
+  }, [validateNonFooling, numMatchingValidations, updateTaskSettings]);
 
   const exportAllTaskData = () => {
     return context.api.exportData(props.task.id);

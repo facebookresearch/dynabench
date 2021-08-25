@@ -51,15 +51,6 @@ const TaskModelLeaderboardCard = (props) => {
   // Dataset Weights Array of a set of dataset id and corresponding weight.
   const [datasetWeights, setDatasetWeights] = useState();
 
-  // Update weights on task change
-  useEffect(() => {
-    props.getInitialWeights(task, context.api, (result) => {
-      setMetrics(result.orderedMetricWeights);
-      setDatasetWeights(result.orderedDatasetWeights);
-      setDescription(result.description);
-    });
-  }, [context.api, props, task]);
-
   const [sort, setSort] = useState({
     field: "dynascore",
     direction: SortDirection.DESC,
@@ -140,6 +131,15 @@ const TaskModelLeaderboardCard = (props) => {
   };
 
   const context = useContext(UserContext);
+
+  // Update weights on task change
+  useEffect(() => {
+    props.getInitialWeights(task, context.api, (result) => {
+      setMetrics(result.orderedMetricWeights);
+      setDatasetWeights(result.orderedDatasetWeights);
+      setDescription(result.description);
+    });
+  }, [context.api, props, task]);
 
   // Call api on sort, page and weights changed.
   useEffect(() => {
