@@ -24,7 +24,13 @@ repos:
         args:
         - --license-filepath
         - docs/license_header.txt
-
+    -   id: insert-license
+        files: \.js$|\.jsx$
+        args:
+        - --license-filepath
+        - docs/license_header.txt
+        - --comment-style
+        - /*| *| */
 -   repo: https://gitlab.com/pycqa/flake8
     rev: 3.7.9
     hooks:

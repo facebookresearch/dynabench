@@ -1,4 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
 
 MTURK_LOCALE_REQUIREMENT = "00000000000000000071"
 MTURK_NUMHITSAPPROVED_REQUIREMENT = "00000000000000000040"

@@ -1,4 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
 
 """
 add-name-to-leaderboard-snapshot
@@ -18,7 +20,8 @@ steps = [
         "ALTER TABLE leaderboard_snapshots DROP COLUMN name",
     ),
     step(
-        "ALTER TABLE leaderboard_snapshots ADD CONSTRAINT unique_tid_name_pair UNIQUE (tid, name)",
+        "ALTER TABLE leaderboard_snapshots ADD CONSTRAINT "
+        + "unique_tid_name_pair UNIQUE (tid, name)",
         "ALTER TABLE leaderboard_snapshots DROP INDEX unique_tid_name_pair",
     ),
 ]
