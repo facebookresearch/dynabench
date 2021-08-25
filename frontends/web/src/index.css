@@ -1,0 +1,84 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+body {
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    color: #6e6e6e;
+    font-family:
+        'OpenSansRegular',
+        'Segoe UI',
+        'Roboto',
+        'Oxygen',
+        'Ubuntu',
+        'Cantarell',
+        'Fira Sans',
+        'Droid Sans',
+        'Helvetica Neue',
+        sans-serif;
+}
+
+code {
+    font-family:
+        source-code-pro,
+        Menlo,
+        Monaco,
+        Consolas,
+        'Courier New',
+        monospace;
+}
+
+@font-face {
+    font-family: 'OpenSansSemiBold';
+    src: url(./fonts/OpenSans-SemiBold.ttf);
+}
+
+@font-face {
+    font-family: 'OpenSansLight';
+    src: url(./fonts/OpenSans-Light.ttf);
+}
+
+@font-face {
+    font-family: 'OpenSansRegular';
+    src: url(./fonts/OpenSans-Regular.ttf);
+}
+
+*:focus {
+    outline: none;
+}
+
+h1 {
+    font-family: OpenSansLight;
+    font-size: 32px;
+    line-height: 44px;
+}
+
+h2 {
+    color: #ccc;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 40px 8px 10px;
+}
+
+a {
+    color: #1283d8;
+}
+
+#icon {
+    width: 60%;
+}
+
+/* TABS */
+
+h2.inactive {
+    color: #ccc;
+}
+
+h2.active {
+    color: #0d0d0d;
+    border-bottom: 2px solid #5fbae9;
+}

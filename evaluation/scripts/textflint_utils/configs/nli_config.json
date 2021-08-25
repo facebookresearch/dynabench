@@ -1,0 +1,14 @@
+{
+  "task": "NLI",
+  "out_dir": "./tmp/nli",
+  "trans_methods": [
+    "Contraction",
+    "Keyboard",
+    "Ocr",
+    "Punctuation",
+    "SpellingError",
+    "Typos",
+    "WordCase"
+  ],
+  "sub_methods": []
+}

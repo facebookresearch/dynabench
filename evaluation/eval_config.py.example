@@ -1,0 +1,15 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+#
+eval_config = {
+    "aws_access_key_id": "",
+    "aws_secret_access_key": "",
+    "aws_region": "",
+    "sagemaker_role": "",
+    "dataset_s3_bucket": "",
+    "evaluation_sqs_queue": "",
+    "scheduler_status_dump": "scheduler.dump",
+    "computer_status_dump": "computer.dump",
+    "max_submission": 20
+    "eval_server_id": "default",
+    "compute_metric_processes": 4,
+}
