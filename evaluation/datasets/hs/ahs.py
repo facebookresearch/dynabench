@@ -30,6 +30,7 @@ class AhsBase(HsBase):
                     ):
                         tmp_jl = {
                             "uid": row["acl.id"],
+                            "context": "",
                             "statement": row["text"],
                             "label": {"nothate": "not-hateful", "hate": "hateful"}[
                                 row["label"]

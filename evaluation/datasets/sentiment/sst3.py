@@ -26,6 +26,7 @@ class Sst3Base(SentimentBase):
                     jl = json.loads(line)
                     tmp_jl = {
                         "uid": jl["text_id"],
+                        "context": "",
                         "statement": jl["sentence"],
                         "label": jl["gold_label"],
                     }

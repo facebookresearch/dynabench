@@ -9,7 +9,6 @@ import sacrebleu
 from datasets.mt.flores import Flores101Base, Flores101Small1Dev, compute_averages
 
 from metrics import metrics
-from metrics.task_config import tasks_config
 
 
 DATASET = Flores101Small1Dev()
@@ -183,5 +182,3 @@ def test_flores_dataset():
         dataset_cls = getattr(datasets.mt.flores, name)
         if not isinstance(dataset_cls, Flores101Base):
             continue
-
-        assert dataset_cls().task in tasks_config

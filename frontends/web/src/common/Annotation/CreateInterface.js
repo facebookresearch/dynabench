@@ -123,6 +123,10 @@ class CreateInterface extends React.Component {
               });
             },
             (error) => {
+              this.setState({
+                contextLoadError: true,
+                loading: false,
+              });
               console.log(error);
             }
           );
@@ -783,6 +787,16 @@ class CreateInterface extends React.Component {
                 <div className="mx-auto my-3">
                   <Spinner animation="border" />{" "}
                 </div>
+              ) : this.state.contextLoadError ? (
+                <Card.Body className="p-3">
+                  <Row>
+                    <Col>
+                      <p>
+                        There are no contexts available. Reach out to the owner of this task.
+                      </p>
+                      </Col>
+                    </Row>
+                  </Card.Body>
               ) : (
                 <>
                   {contextInterface && contextInterface.length > 0 && (
