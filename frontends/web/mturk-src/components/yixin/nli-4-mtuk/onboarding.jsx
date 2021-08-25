@@ -221,8 +221,7 @@ class NLIR4TaskOnboarder extends React.Component {
           "A melee weapon is any weapon used in direct hand-to-hand combat; by contrast with ranged weapons which act at a distance.",
         hypothesis: "Melee weapons are good for ranged combat at a distance.",
         true_answer: 2,
-        tip:
-          "A melee weapon is used in direct hand-to-hand combat, not range combat.",
+        tip: "A melee weapon is used in direct hand-to-hand combat, not range combat.",
       },
       {
         eid: 2, //  example id
@@ -231,8 +230,7 @@ class NLIR4TaskOnboarder extends React.Component {
         hypothesis:
           "Kota Ramakrishna Karanth has a brother who was both a novelist and a politician.",
         true_answer: 1,
-        tip:
-          "Kota Ramakrishna Karanth has a brother who was a novelist. But we’re not sure whether he is a politician or not.",
+        tip: "Kota Ramakrishna Karanth has a brother who was a novelist. But we’re not sure whether he is a politician or not.",
       },
       {
         eid: 3, //  example id
@@ -241,8 +239,7 @@ class NLIR4TaskOnboarder extends React.Component {
         hypothesis:
           "It was never confirmed that Bernardo Provenzano was the leader of the Corleonesi.",
         true_answer: 0,
-        tip:
-          "Bernardo Provenzano was suspected of being the head of Corleonesi.",
+        tip: "Bernardo Provenzano was suspected of being the head of Corleonesi.",
       },
       {
         eid: 4, //  example id
@@ -251,8 +248,7 @@ class NLIR4TaskOnboarder extends React.Component {
         hypothesis:
           "The company will not be able to make payroll on October 19th and will instead dispense it on October 26th.",
         true_answer: 1,
-        tip:
-          "The company said \"if\" they can't make it on the 19th they will do it on the 26th, they didn't definitely say they won't make it on the 19th.",
+        tip: "The company said \"if\" they can't make it on the 19th they will do it on the 26th, they didn't definitely say they won't make it on the 19th.",
       },
       {
         eid: 5, //  example id
@@ -261,8 +257,7 @@ class NLIR4TaskOnboarder extends React.Component {
         hypothesis:
           "Eduard Schulte is the only person to warn the Allies of the atrocities of the Nazis.",
         true_answer: 2,
-        tip:
-          "Eduard Schulte is one of the first to warn the Allies. There are others who also warn the Allies.",
+        tip: "Eduard Schulte is one of the first to warn the Allies. There are others who also warn the Allies.",
       },
     ];
 

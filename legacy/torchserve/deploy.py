@@ -132,7 +132,7 @@ def archive_model(config):
 def setup_model(config):
     os.makedirs(config["model_dir"], exist_ok=True)
     if not os.path.exists(config["model_path"]):
-        #return # skipping for now
+        # return # skipping for now
         print(f"Downloading model from {config['model_url_path']}")
         r = requests.get(config["model_url_path"], stream=True)
         if config["url_extension"].lower() == ".tgz":

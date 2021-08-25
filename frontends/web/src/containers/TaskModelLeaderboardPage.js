@@ -52,7 +52,13 @@ const TaskModelLeaderboardPage = (props) => {
     fetchTask(context.api);
 
     return () => {};
-  }, [context.api, taskCode]);
+  }, [
+    context.api,
+    props.history,
+    props.location.pathname,
+    props.location.search,
+    taskCode,
+  ]);
 
   if (isLoading || !task) {
     return (

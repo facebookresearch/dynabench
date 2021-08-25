@@ -1,9 +1,9 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import boto3
+from datasets.common import BaseDataset
 
 import eval_config
-from datasets.common import BaseDataset
 
 
 # Makes sure to not use AWS secrets when running unit tests.

@@ -14,11 +14,11 @@ from pathlib import Path
 import boto3
 import botocore
 import sagemaker
+from dynalab_cli.utils import SetupConfigHandler
 from sagemaker.model import Model
 from sagemaker.predictor import Predictor
 
 from deploy_config import deploy_config
-from dynalab_cli.utils import SetupConfigHandler
 from utils.logging import logger
 
 

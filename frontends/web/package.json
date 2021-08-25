@@ -64,7 +64,7 @@
     "eject": "react-scripts eject",
     "mturk": "npm run webpack -- --mode development",
     "stylelint": "stylelint **/*.css",
-    "prettier": "prettier **/*.{js,jsx} --check",
+    "prettier": "prettier -v && prettier **/*.{js,jsx} --check",
     "eslint": "eslint **/*.{js,jsx} --ignore-path .gitignore --quiet"
   },
   "browserslist": {
