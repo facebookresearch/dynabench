@@ -39,6 +39,20 @@ const ForkOrSnapshotTable = (props) => {
     );
   }, [context.api]);
 
+  const getRowKey = useCallback(
+    (datum) => {
+      return isForkList ? datum.tid + "-" + datum.name : datum.id;
+    },
+    [isForkList]
+  );
+
+  const getDescriptionId = useCallback(
+    (datum) => {
+      return getRowKey(datum) + "-desc";
+    },
+    [getRowKey]
+  );
+
   useEffect(() => {
     const newDescriptionConfiguration = {};
     data.forEach((datum) => {
@@ -50,14 +64,6 @@ const ForkOrSnapshotTable = (props) => {
     });
     setDescriptionConfiguration(newDescriptionConfiguration);
   }, [data, getDescriptionId]);
-
-  const getRowKey = (datum) => {
-    return isForkList ? datum.tid + "-" + datum.name : datum.id;
-  };
-
-  const getDescriptionId = useCallback((datum) => {
-    return getRowKey(datum) + "-desc";
-  });
 
   const toggleDescriptionEllipsis = (descriptionId) => {
     const dupDescriptionConfiguration = {

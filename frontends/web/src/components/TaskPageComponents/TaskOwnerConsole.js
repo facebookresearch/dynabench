@@ -30,42 +30,44 @@ const TaskOwnerConsole = (props) => {
   const [validateNonFooling, setValidateNonFooling] = useState(false);
   const [numMatchingValidations, setNumMatchingValidations] = useState(3);
 
-  const getSavedTaskSettings = () => {
-    if (props.task.settings_json) {
-      const settings_json = JSON.parse(props.task.settings_json);
-      setValidateNonFooling(
-        settings_json.hasOwnProperty("validate_non_fooling")
-          ? settings_json["validate_non_fooling"]
-          : false
-      );
-      setNumMatchingValidations(
-        settings_json.hasOwnProperty("num_matching_validations")
-          ? settings_json["num_matching_validations"]
-          : 3
-      );
-    } else {
-      setValidateNonFooling(false);
-      setNumMatchingValidations(3);
-    }
-  };
-
-  const updateTaskSettings = () => {
-    if (!props.task.id) {
-      return;
-    }
-    context.api.updateTaskSettings(props.task.id, {
-      validate_non_fooling: validateNonFooling,
-      num_matching_validations: numMatchingValidations,
-    });
-  };
-
   useEffect(() => {
+    const getSavedTaskSettings = () => {
+      if (props.task.settings_json) {
+        const settings_json = JSON.parse(props.task.settings_json);
+        setValidateNonFooling(
+          settings_json.hasOwnProperty("validate_non_fooling")
+            ? settings_json["validate_non_fooling"]
+            : false
+        );
+        setNumMatchingValidations(
+          settings_json.hasOwnProperty("num_matching_validations")
+            ? settings_json["num_matching_validations"]
+            : 3
+        );
+      } else {
+        setValidateNonFooling(false);
+        setNumMatchingValidations(3);
+      }
+    };
+
     getSavedTaskSettings();
-  }, [getSavedTaskSettings, props.task]);
+    return () => {};
+  }, [props.task]);
 
   useEffect(() => {
+    const updateTaskSettings = () => {
+      if (!props.task.id) {
+        return;
+      }
+      context.api.updateTaskSettings(props.task.id, {
+        validate_non_fooling: validateNonFooling,
+        num_matching_validations: numMatchingValidations,
+      });
+    };
+
     updateTaskSettings();
-  }, [validateNonFooling, numMatchingValidations, updateTaskSettings]);
+    return () => {};
+  }, [validateNonFooling, numMatchingValidations, props.task.id, context.api]);
 
   const exportAllTaskData = () => {
     return context.api.exportData(props.task.id);

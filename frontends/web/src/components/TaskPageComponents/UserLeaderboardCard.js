@@ -4,7 +4,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import UserContext from "../../containers/UserContext";
 import {
   Card,
@@ -27,40 +27,39 @@ const UserLeaderboardCard = (props) => {
   const [displayRound, setDisplayRound] = useState("overall");
   const [userLeaderBoardPage, setUserLeaderBoardPage] = useState(0);
 
-  const fetchOverallUserLeaderboard = useCallback((page, displayRound) => {
-    context.api
-      .getOverallUserLeaderboard(props.taskId, displayRound, pageLimit, page)
-      .then(
-        (result) => {
-          const isEndOfPage = (page + 1) * pageLimit >= result.count;
-          setIsEndOfUserLeaderPage(isEndOfPage);
-          setUserLeaderBoardData(result.data);
-          setDisplayRound(displayRound);
-          setUserLeaderBoardPage(page);
-        },
-        (error) => {
-          console.log(error);
-        }
-      );
-  });
-
-  const paginate = (state, round) => {
-    const page =
-      state === "next" ? userLeaderBoardPage + 1 : userLeaderBoardPage - 1;
-    fetchOverallUserLeaderboard(page, round);
-  };
+  useEffect(() => {
+    setIsEndOfUserLeaderPage(true);
+    setUserLeaderBoardData([]);
+    setDisplayRound("overall");
+    setUserLeaderBoardPage(0);
+  }, [props.taskId]);
 
   useEffect(() => {
-    setUserLeaderBoardPage(0);
-    setDisplayRound("overall");
-    setIsEndOfUserLeaderPage(true);
-    fetchOverallUserLeaderboard(userLeaderBoardPage, displayRound);
-  }, [
-    displayRound,
-    fetchOverallUserLeaderboard,
-    props.taskId,
-    userLeaderBoardPage,
-  ]);
+    const fetchOverallUserLeaderboard = () => {
+      context.api
+        .getOverallUserLeaderboard(
+          props.taskId,
+          displayRound,
+          pageLimit,
+          userLeaderBoardPage
+        )
+        .then(
+          (result) => {
+            const isEndOfPage =
+              (userLeaderBoardPage + 1) * pageLimit >= result.count;
+            setIsEndOfUserLeaderPage(isEndOfPage);
+            setUserLeaderBoardData(result.data);
+            setUserLeaderBoardPage(userLeaderBoardPage);
+          },
+          (error) => {
+            console.log(error);
+          }
+        );
+    };
+
+    fetchOverallUserLeaderboard();
+    return () => {};
+  }, [displayRound, pageLimit, userLeaderBoardPage, context.api, props.taskId]);
 
   const rounds = (props.round && props.cur_round) || 0;
   const roundNavs = [];
@@ -78,7 +77,7 @@ const UserLeaderboardCard = (props) => {
       <Dropdown.Item
         key={dropDownRound}
         index={dropDownRound}
-        onClick={() => fetchOverallUserLeaderboard(0, dropDownRound)}
+        onClick={() => setDisplayRound(dropDownRound)}
         active={active}
       >
         {dropDownRound === "overall" ? "Overall" : "Round " + dropDownRound}
@@ -159,13 +158,13 @@ const UserLeaderboardCard = (props) => {
           <Pagination className="mb-0 float-right" size="sm">
             <Pagination.Item
               disabled={!userLeaderBoardPage}
-              onClick={() => paginate("previous", displayRound)}
+              onClick={() => setUserLeaderBoardPage(userLeaderBoardPage - 1)}
             >
               Previous
             </Pagination.Item>
             <Pagination.Item
               disabled={isEndOfUserLeaderPage}
-              onClick={() => paginate("next", displayRound)}
+              onClick={() => setUserLeaderBoardPage(userLeaderBoardPage + 1)}
             >
               Next
             </Pagination.Item>
