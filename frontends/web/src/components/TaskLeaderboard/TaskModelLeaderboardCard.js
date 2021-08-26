@@ -37,7 +37,7 @@ import { ForkModal, SnapshotModal } from "./ForkAndSnapshotModalWrapper";
  * @param {string} props.title Override the table title
  */
 const TaskModelLeaderboardCard = (props) => {
-  const { task, taskCode } = props;
+  const { task, taskCode, getInitialWeights, fetchLeaderboardData } = props;
   const taskId = task.id;
 
   const [data, setData] = useState([]);
@@ -134,17 +134,17 @@ const TaskModelLeaderboardCard = (props) => {
 
   // Update weights on task change
   useEffect(() => {
-    props.getInitialWeights(task, context.api, (result) => {
+    getInitialWeights(task, context.api, (result) => {
       setMetrics(result.orderedMetricWeights);
       setDatasetWeights(result.orderedDatasetWeights);
       setDescription(result.description);
     });
-  }, [context.api, props, task]);
+  }, [context.api, task, getInitialWeights]);
 
   // Call api on sort, page and weights changed.
   useEffect(() => {
     setIsLoading(true);
-    props.fetchLeaderboardData(
+    fetchLeaderboardData(
       context.api,
       taskId,
       pageLimit,
@@ -177,7 +177,7 @@ const TaskModelLeaderboardCard = (props) => {
     taskCode,
     pageLimit,
     taskId,
-    props,
+    fetchLeaderboardData,
   ]);
 
   const isEndOfPage = (page + 1) * pageLimit >= total;

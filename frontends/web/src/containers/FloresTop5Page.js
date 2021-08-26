@@ -7,14 +7,13 @@
 import React, { useContext, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import "./TaskPage.css";
-import { Container, Row, Col, Spinner } from "react-bootstrap";
+import { Container, Row, Spinner } from "react-bootstrap";
 import UserContext from "./UserContext";
 import FloresModelLeaderBoard from "../components/FloresComponents/FloresModelLeaderboard";
 import { FLORES_TASK_CODES } from "./FloresTaskPage";
 
 const FloresTop5Page = (props) => {
   const context = useContext(UserContext); // for API
-  const [taskLookup, setTaskLookup] = useState({}); // All Flores Tasks
   const [task, setTask] = useState(null); // Current Task ID
   const [isLoading, setIsLoading] = useState(false);
 
@@ -26,7 +25,6 @@ const FloresTop5Page = (props) => {
      * Invoke APIService to fetch Flores Tasks
      *
      * @param {*} api instance of @see APIService
-     * @param {number} page
      */
     const fetchFloresTasks = (api) => {
       setIsLoading(true);
@@ -39,8 +37,6 @@ const FloresTop5Page = (props) => {
             (map, obj) => ((map[obj.task_code] = obj), map),
             {}
           );
-
-          setTaskLookup(taskLookup);
 
           if (FLORES_TASK_CODES.includes(taskCode)) {
             setTask(taskLookup[taskCode]); // set the task from Arguments

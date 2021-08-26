@@ -75,7 +75,6 @@ const FloresTaskPage = (props) => {
      * Invoke APIService to fetch Flores Tasks
      *
      * @param {*} api instance of @see APIService
-     * @param {number} page
      */
     const fetchFloresTasks = (api) => {
       setIsLoading(true);

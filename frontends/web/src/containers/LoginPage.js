@@ -108,7 +108,6 @@ class LoginPage extends React.Component {
                           <Button
                             type="submit"
                             variant="primary"
-                            type="submit"
                             className="fade-in third submit-btn button-ellipse text-uppercase my-4"
                             disabled={isSubmitting}
                           >
