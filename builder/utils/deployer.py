@@ -18,8 +18,12 @@ from dynalab_cli.utils import SetupConfigHandler
 from sagemaker.model import Model
 from sagemaker.predictor import Predictor
 
+from api.models.task import TaskModel
 from deploy_config import deploy_config
 from utils.logging import logger
+
+
+sys.path.append("../api")  # noqa
 
 
 class ModelDeployer:
@@ -57,6 +61,7 @@ class ModelDeployer:
             logger.info("Load the model setup config")
             config_handler = SetupConfigHandler(self.name)
             config = config_handler.load_config()
+            self._save_task_info_json(config["task"])
             return config_handler, config, s3_dir
         except AssertionError as ex:
             logger.exception(ex)
@@ -75,6 +80,18 @@ class ModelDeployer:
 
         subprocess.run(shlex.split(f"tar xf {shlex.quote(save_tarball)}"))
         os.remove(save_tarball)
+
+    def _save_task_info_json(self, task_code):
+        tm = TaskModel()
+        task = tm.getByTaskCode(task_code)
+        annotation_config_json = json.loads(task.annotation_config_json)
+        task_info = {
+            "annotation_config_json": annotation_config_json,
+            "task": task_code,
+        }
+        task_info_path = os.path.join(self.root_dir, "task_info.json")
+        with open(task_info_path, "w+") as f:
+            f.write(json.dumps(task_info, indent=4))
 
     def setup_sagemaker_env(self):
         env = {}
