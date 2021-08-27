@@ -39,6 +39,13 @@ def exact_match(output, target, constructor_args):
     return False
 
 
+def verify_exact_match(constructor_args):
+    assert "reference_names" in constructor_args
+    assert isinstance(constructor_args["reference_names"], list)
+    for name in constructor_args["reference_names"]:
+        isinstance(name, str)
+
+
 def string_f1(output, target, constructor_args):
     return (
         compute_f1(
@@ -49,14 +56,29 @@ def string_f1(output, target, constructor_args):
     )
 
 
+def verify_string_f1(constructor_args):
+    assert "reference_name" in constructor_args
+    assert isinstance(constructor_args["reference_name"], str)
+
+
 def ask_user(output, target, constructor_args):
     return None  # The frontend is supposed to see the None and then ask the user
+
+
+def verify_ask_user(constructor_args):
+    pass
 
 
 model_wrong_metrics = {
     ModelWrongMetricEnum.exact_match.name: exact_match,
     ModelWrongMetricEnum.string_f1.name: string_f1,
     ModelWrongMetricEnum.ask_user.name: ask_user,
+}
+
+model_wrong_metric_verifiers = {
+    ModelWrongMetricEnum.exact_match.name: verify_exact_match,
+    ModelWrongMetricEnum.string_f1.name: verify_string_f1,
+    ModelWrongMetricEnum.ask_user.name: verify_ask_user,
 }
 
 
@@ -82,12 +104,26 @@ class AnnotationTypeEnum(enum.Enum):
     target_label = "target_label"
 
 
+def verify_config_obj_base(obj):
+    assert "name" in obj
+    assert "type" in obj
+    assert "constructor_args" in obj
+
+
 def verify_image_url(obj, obj_constructor_args, name_to_constructor_args, data):
     assert isinstance(obj, str)
 
 
+def verify_image_url_config(obj, annotation_config):
+    pass
+
+
 def verify_string(obj, obj_constructor_args, name_to_constructor_args, data):
     assert isinstance(obj, str)
+
+
+def verify_string_config(obj, annotation_config):
+    pass
 
 
 def verify_context_string_selection(
@@ -97,10 +133,20 @@ def verify_context_string_selection(
     assert obj in data[constructor_args["reference_name"]]
 
 
+def verify_context_string_selection_config(obj, annotation_config):
+    assert "reference_name" in obj["constructor_args"]
+    reference_obj = filter(lambda other_obj: other_obj["name"] == obj["constructor_args"]["reference_name"], annotation_config["context"])[0]
+    assert reference_obj["type"] == AnnotationTypeEnum.string.name
+
+
 def verify_conf(obj, obj_constructor_args, name_to_constructor_args, data):
     assert isinstance(obj, float)
     assert obj > 0 - EPSILON_PREC
     assert obj < 1 + EPSILON_PREC
+
+
+def verify_conf_config(obj, annotation_config):
+    pass
 
 
 def verify_multiclass_probs(obj, obj_constructor_args, name_to_constructor_args, data):
@@ -112,14 +158,34 @@ def verify_multiclass_probs(obj, obj_constructor_args, name_to_constructor_args,
     assert sum(obj.values()) > 1 - EPSILON_PREC
 
 
+def verify_multiclass_probs_config(obj, annotation_config):
+    assert "reference_name" in obj["constructor_args"]
+    reference_obj = filter(lambda other_obj: other_obj["name"] == obj["constructor_args"]["reference_name"], annotation_config["context"])[0]
+    assert reference_obj["type"] in (AnnotationTypeEnum.multiclass_probs.name, AnnotationTypeEnum.target_label.name)
+
+
 def verify_multiclass(obj, obj_constructor_args, name_to_constructor_args, data):
     assert isinstance(obj, str)
     assert obj in obj_constructor_args["labels"]
 
 
+def verify_multiclass_config(obj, annotation_config):
+    assert "labels" in obj["constructor_args"]
+    assert isinstance(obj["constructor_args"]["labels"], list)
+    for item in obj["constructor_args"]["labels"]:
+        assert isinstance(item, str)
+
+
 def verify_target_label(obj, obj_constructor_args, name_to_constructor_args, data):
     assert isinstance(obj, str)
     assert obj in obj_constructor_args["labels"]
+
+
+def verify_target_label_config(obj, annotation_config):
+    assert "labels" in obj["constructor_args"]
+    assert isinstance(obj["constructor_args"]["labels"], list)
+    for item in obj["constructor_args"]["labels"]:
+        assert isinstance(item, str)
 
 
 annotation_type_verifiers = {
@@ -131,6 +197,62 @@ annotation_type_verifiers = {
     AnnotationTypeEnum.multiclass.name: verify_multiclass,
     AnnotationTypeEnum.target_label.name: verify_target_label,
 }
+
+annotation_type_config_verifiers = {
+    AnnotationTypeEnum.image_url.name: verify_image_url_config,
+    AnnotationTypeEnum.string.name: verify_string_config,
+    AnnotationTypeEnum.context_string_selection.name: verify_context_string_selection_config,
+    AnnotationTypeEnum.conf.name: verify_conf_config,
+    AnnotationTypeEnum.multiclass_probs.name: verify_multiclass_probs_config,
+    AnnotationTypeEnum.multiclass.name: verify_multiclass_config,
+    AnnotationTypeEnum.target_label.name: verify_target_label_config,
+}
+
+
+class TaskProposal(Base):
+    __tablename__ = "task_proposals"
+    __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_general_ci"}
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    uid = db.Column(db.Integer, db.ForeignKey("users.id"))
+
+    task_code = db.Column(db.String(length=255), unique=True, nullable=False)
+
+    name = db.Column(db.String(length=255), unique=True, nullable=False)
+    annotation_config_json = db.Column(db.Text, nullable=False)
+    aggregation_metric = db.Column(
+        db.Enum(AggregationMetricEnum),
+        default=AggregationMetricEnum.dynascore,
+        nullable=False,
+    )
+    model_wrong_metric = db.Column(db.Text, nullable=False)
+    instructions_md = db.Column(db.Text)
+
+    desc = db.Column(db.String(length=255))
+
+    hidden = db.Column(db.Boolean, default=False)
+    submitable = db.Column(db.Boolean, default=False)
+
+    settings_json = db.Column(db.Text)
+
+    instance_type = db.Column(db.Text, default="ml.m5.2xlarge", nullable=False)
+    instance_count = db.Column(db.Integer, default=1, nullable=False)
+    eval_metrics = db.Column(db.Text, default="macro_f1", nullable=False)
+    perf_metric = db.Column(db.Text, default="macro_f1", nullable=False)
+    delta_metrics = db.Column(db.Text, default="fairness|robustness", nullable=True)
+    create_endpoint = db.Column(db.Boolean, default=True)
+    gpu = db.Column(db.Boolean, default=False)
+    extra_torchserve_config = db.Column(db.Text)
+
+    def __repr__(self):
+        return f"<Task {self.name}>"
+
+    def to_dict(self, safe=True):
+        d = {}
+        for column in self.__table__.columns:
+            d[column.name] = getattr(self, column.name)
+        return d
 
 
 class Task(Base):
@@ -185,6 +307,36 @@ class Task(Base):
             d[column.name] = getattr(self, column.name)
         return d
 
+    @staticmethod
+    def verify_model_wrong_metric(model_wrong_metric):
+        assert "type" in model_wrong_metric
+        assert "constructor_args" in model_wrong_metric
+        model_wrong_metric_verifiers[model_wrong_metric["type"]](model_wrong_metric["constructor_args"])
+
+    @staticmethod
+    def verify_annotation_config(annotation_config):
+        assert "context" in annotation_config
+        assert "input" in annotation_config
+        assert "output" in annotation_config
+        assert "metadata" in annotation_config
+        assert ["create"] in annotation_config["metadata"]
+        assert ["validate"] in annotation_config["metadata"]
+        annotation_config_objs = (
+            annotation_config["context"]
+            + annotation_config["output"]
+            + annotation_config["input"]
+            + annotation_config["metadata"]["create"]
+            + annotation_config["metadata"]["validate"]
+        )
+        for obj in annotation_config_objs:
+            assert "name" in obj
+            assert isinstance(obj["name"], str)
+            assert "constructor_args" in obj
+            assert isinstance(obj["constructor_args"], dict)
+            assert "type" in obj
+            assert isinstance(obj["type"], str)
+            annotation_type_config_verifiers[obj["type"]](obj, annotation_config)
+
     def verify_annotation(self, data):
         name_to_constructor_args = {}
         name_to_type = {}
@@ -193,7 +345,7 @@ class Task(Base):
             annotation_config["context"]
             + annotation_config["output"]
             + annotation_config["input"]
-            + annotation_config["metadata"]["validate"]
+            + annotation_config["metadata"]["create"]
             + annotation_config["metadata"]["validate"]
         )
 
@@ -251,6 +403,12 @@ class TaskModel(BaseModel):
     def getByTaskCode(self, task_code):
         try:
             return self.dbs.query(Task).filter(Task.task_code == task_code).one()
+        except db.orm.exc.NoResultFound:
+            return False
+
+    def getByName(self, name):
+        try:
+            return self.dbs.query(Task).filter(Task.name == name).one()
         except db.orm.exc.NoResultFound:
             return False
 

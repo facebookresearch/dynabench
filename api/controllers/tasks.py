@@ -8,6 +8,8 @@ from urllib.parse import parse_qs, quote
 import bottle
 import uuid
 
+import secrets
+
 import common.auth as _auth
 import common.helpers as util
 from common.logging import logger
@@ -16,12 +18,96 @@ from models.example import ExampleModel
 from models.leaderboard_configuration import LeaderboardConfigurationModel
 from models.leaderboard_snapshot import LeaderboardSnapshotModel
 from models.model import Model
-from models.round import RoundModel
+from models.round import RoundModel, Round
 from models.round_user_example_info import RoundUserExampleInfoModel
 from models.score import ScoreModel
-from models.task import TaskModel
+from models.task import TaskModel, TaskProposal, Task, TaskUserPermission
 from models.user import UserModel
 from models.validation import Validation, ValidationModel
+
+
+@bottle.post("/task/process_proposal/<accept:bool>")
+@_auth.requires_auth
+def process_proposal(credentials, accept):
+
+    um = UserModel()
+    user = um.get(credentials["id"])
+    if not user.admin:
+        bottle.abort(403, "Access denied")
+
+    data = bottle.request.json
+    if not util.check_fields(
+        data,
+        [
+            "task_proposal_id"
+        ],
+    ):
+        bottle.abort(400, "Missing data")
+    tm = TaskModel()
+    tp = tm.dbs.query(TaskProposal).filter(self.id == data["task_proposal_id"]).one()
+
+    if accept:
+        t = Task(
+            task_code=tp.task_code,
+            name=tp.name,
+            annotation_config_json=tp.annotation_config,
+            aggregation_metric=tp.aggregation_metric,
+            model_wrong_metric=tp.model_wrong_metric,
+            instructions_md=tp.instructions_md,
+            desc=tp.desc,
+            hidden=tp.hidden,
+            submitable=tp.submitable,
+            settings_json=tp.settings_json,
+            instance_type=tp.instance_typs,
+            instance_count=tp.instance_count,
+            eval_metrics=tp.eval_metrics,
+            perf_metric=tp.perf_metric,
+            delta_metrics=tp.delta_metrics,
+            create_endpoint=tp.create_endpoint,
+            gpu=tp.gpu,
+            extra_torchserve_config=tp.extra_torchserve_config,
+            cur_round=1,
+        )
+
+        t.dbs.add(t)
+        t.dbs.flush()
+        t.dbs.commit()
+        logger.info("Added task (%s)" % (t.id))
+
+        tup = TaskUserPermission(
+            uid=tp.uid,
+            type="owner",
+            tid=t.id,
+        )
+        tup.dbs.add(tup)
+        tup.dbs.flush()
+        tup.dbs.commit()
+        logger.info("Added task owner")
+
+        r = Round(
+            tid=t.id,
+            rid=1,
+            secret=secrets.token_hex(),
+            url=None,
+            desc=None,
+            longdesc=None,
+        )
+
+        r.dbs.add(r)
+        r.dbs.flush()
+        r.dbs.commit()
+        logger.info("Added round (%s)" % (r.id))
+
+    TaskProposal.query.filter(TaskProposal.id == data["task_proposal_id"]).delete()
+    tm.dbs.flush()
+    tm.dbs.commit()
+    logger.info("Deleted task proposal")
+
+    return util.json_encode(
+        {
+            "success": "ok",
+        }
+    )
 
 
 @bottle.get("/tasks")
