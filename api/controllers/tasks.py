@@ -3,12 +3,11 @@
 # LICENSE file in the root directory of this source tree.
 
 import json
+import secrets
 from urllib.parse import parse_qs, quote
 
 import bottle
 import uuid
-
-import secrets
 
 import common.auth as _auth
 import common.helpers as util
@@ -18,10 +17,10 @@ from models.example import ExampleModel
 from models.leaderboard_configuration import LeaderboardConfigurationModel
 from models.leaderboard_snapshot import LeaderboardSnapshotModel
 from models.model import Model
-from models.round import RoundModel, Round
+from models.round import Round, RoundModel
 from models.round_user_example_info import RoundUserExampleInfoModel
 from models.score import ScoreModel
-from models.task import TaskModel, TaskProposal, Task, TaskUserPermission
+from models.task import Task, TaskModel, TaskProposal, TaskUserPermission
 from models.user import UserModel
 from models.validation import Validation, ValidationModel
 
@@ -36,15 +35,14 @@ def process_proposal(credentials, accept):
         bottle.abort(403, "Access denied")
 
     data = bottle.request.json
-    if not util.check_fields(
-        data,
-        [
-            "task_proposal_id"
-        ],
-    ):
+    if not util.check_fields(data, ["task_proposal_id"]):
         bottle.abort(400, "Missing data")
     tm = TaskModel()
-    tp = tm.dbs.query(TaskProposal).filter(self.id == data["task_proposal_id"]).one()
+    tp = (
+        tm.dbs.query(TaskProposal)
+        .filter(TaskProposal.id == data["task_proposal_id"])
+        .one()
+    )
 
     if accept:
         t = Task(
@@ -74,11 +72,7 @@ def process_proposal(credentials, accept):
         t.dbs.commit()
         logger.info("Added task (%s)" % (t.id))
 
-        tup = TaskUserPermission(
-            uid=tp.uid,
-            type="owner",
-            tid=t.id,
-        )
+        tup = TaskUserPermission(uid=tp.uid, type="owner", tid=t.id)
         tup.dbs.add(tup)
         tup.dbs.flush()
         tup.dbs.commit()
@@ -103,11 +97,7 @@ def process_proposal(credentials, accept):
     tm.dbs.commit()
     logger.info("Deleted task proposal")
 
-    return util.json_encode(
-        {
-            "success": "ok",
-        }
-    )
+    return util.json_encode({"success": "ok"})
 
 
 @bottle.get("/tasks")

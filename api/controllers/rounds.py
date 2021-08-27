@@ -2,9 +2,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import bottle
-
 import secrets
+
+import bottle
 
 import common.auth as _auth
 import common.helpers as util
@@ -18,14 +18,7 @@ from models.user import UserModel
 @_auth.requires_auth
 def create_round(credentials, tid):
     data = bottle.request.json
-    if not util.check_fields(
-        data,
-        [
-            "url",
-            "desc",
-            "longdesc",
-        ],
-    ):
+    if not util.check_fields(data, ["url", "desc", "longdesc"]):
         bottle.abort(400, "Missing data")
 
     tup = TaskUserPermission.query.filter(TaskUserPermission.tid == tid)
@@ -55,24 +48,14 @@ def create_round(credentials, tid):
     r.dbs.commit()
     logger.info("Added round (%s)" % (r.id))
 
-    return util.json_encode(
-        {
-            "success": "ok",
-        }
-    )
+    return util.json_encode({"success": "ok"})
+
 
 @bottle.post("/round/update/<tid:int>")
 @_auth.requires_auth
 def update_round(credentials, tid):
     data = bottle.request.json
-    if not util.check_fields(
-        data,
-        [
-            "url",
-            "desc",
-            "longdesc",
-        ],
-    ):
+    if not util.check_fields(data, ["url", "desc", "longdesc"]):
         bottle.abort(400, "Missing data")
 
     tup = TaskUserPermission.query.filter(TaskUserPermission.tid == tid)
@@ -95,8 +78,4 @@ def update_round(credentials, tid):
     rm.dbs.commit()
     logger.info("Updated round (%s)" % (round.id))
 
-    return util.json_encode(
-        {
-            "success": "ok",
-        }
-    )
+    return util.json_encode({"success": "ok"})

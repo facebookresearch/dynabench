@@ -3,9 +3,9 @@
 # LICENSE file in the root directory of this source tree.
 
 import json
+import re
 
 import bottle
-import re
 
 import common.auth as _auth
 import common.helpers as util
@@ -21,11 +21,7 @@ def get_user_task_proposal_itentifiers(credentials):
     identifiers = []
     for proposal in proposals:
         identifiers.append(
-            {
-                "name": proposal.name,
-                "task_code": proposal.task_code,
-                "id": proposal.id,
-            }
+            {"name": proposal.name, "task_code": proposal.task_code, "id": proposal.id}
         )
     return util.json_encode(identifiers)
 
@@ -41,11 +37,7 @@ def get_all_task_proposal_itentifiers(credentials):
     identifiers = []
     for proposal in proposals:
         identifiers.append(
-            {
-                "name": proposal.name,
-                "task_code": proposal.task_code,
-                "id": proposal.id,
-            }
+            {"name": proposal.name, "task_code": proposal.task_code, "id": proposal.id}
         )
     return util.json_encode(identifiers)
 
@@ -81,8 +73,7 @@ def create_task_proposal(credentials):
             "submitable",
             "settings",
             "instance_type",
-            "instance_count"
-            "eval_metrics",
+            "instance_count" "eval_metrics",
             "perf_metric",
             "delta_metrics",
             "create_endpoint",
@@ -99,8 +90,13 @@ def create_task_proposal(credentials):
     if tm.getByName(data["name"]):
         bottle.abort(400, "Invalid name; this name is already taken")
 
-    if not bool(re.search('^[a-zA-Z0-9_-]*$', data["task_code"])):
-        bottle.abort(400, "Invalid task code (no special characters allowed besides underscores and dashes):", data["task_code"])
+    if not bool(re.search("^[a-zA-Z0-9_-]*$", data["task_code"])):
+        bottle.abort(
+            400,
+            "Invalid task code (no special characters allowed besides underscores "
+            + "and dashes):",
+            data["task_code"],
+        )
 
     try:
         TaskModel.verify_model_wrong_metric(data["model_wrong_metric"])
@@ -146,9 +142,4 @@ def create_task_proposal(credentials):
         logger.error("Could not create task proposal (%s)" % error_message)
         return False
 
-    return util.json_encode(
-        {
-            "success": "ok",
-            "id": tp.id
-        }
-    )
+    return util.json_encode({"success": "ok", "id": tp.id})

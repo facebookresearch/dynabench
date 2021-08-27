@@ -135,7 +135,11 @@ def verify_context_string_selection(
 
 def verify_context_string_selection_config(obj, annotation_config):
     assert "reference_name" in obj["constructor_args"]
-    reference_obj = filter(lambda other_obj: other_obj["name"] == obj["constructor_args"]["reference_name"], annotation_config["context"])[0]
+    reference_obj = filter(
+        lambda other_obj: other_obj["name"]
+        == obj["constructor_args"]["reference_name"],
+        annotation_config["context"],
+    )[0]
     assert reference_obj["type"] == AnnotationTypeEnum.string.name
 
 
@@ -160,8 +164,15 @@ def verify_multiclass_probs(obj, obj_constructor_args, name_to_constructor_args,
 
 def verify_multiclass_probs_config(obj, annotation_config):
     assert "reference_name" in obj["constructor_args"]
-    reference_obj = filter(lambda other_obj: other_obj["name"] == obj["constructor_args"]["reference_name"], annotation_config["context"])[0]
-    assert reference_obj["type"] in (AnnotationTypeEnum.multiclass_probs.name, AnnotationTypeEnum.target_label.name)
+    reference_obj = filter(
+        lambda other_obj: other_obj["name"]
+        == obj["constructor_args"]["reference_name"],
+        annotation_config["context"],
+    )[0]
+    assert reference_obj["type"] in (
+        AnnotationTypeEnum.multiclass_probs.name,
+        AnnotationTypeEnum.target_label.name,
+    )
 
 
 def verify_multiclass(obj, obj_constructor_args, name_to_constructor_args, data):
@@ -201,7 +212,7 @@ annotation_type_verifiers = {
 annotation_type_config_verifiers = {
     AnnotationTypeEnum.image_url.name: verify_image_url_config,
     AnnotationTypeEnum.string.name: verify_string_config,
-    AnnotationTypeEnum.context_string_selection.name: verify_context_string_selection_config,
+    AnnotationTypeEnum.context_string_selection.name: verify_context_string_selection_config,  # noqa
     AnnotationTypeEnum.conf.name: verify_conf_config,
     AnnotationTypeEnum.multiclass_probs.name: verify_multiclass_probs_config,
     AnnotationTypeEnum.multiclass.name: verify_multiclass_config,
@@ -311,7 +322,9 @@ class Task(Base):
     def verify_model_wrong_metric(model_wrong_metric):
         assert "type" in model_wrong_metric
         assert "constructor_args" in model_wrong_metric
-        model_wrong_metric_verifiers[model_wrong_metric["type"]](model_wrong_metric["constructor_args"])
+        model_wrong_metric_verifiers[model_wrong_metric["type"]](
+            model_wrong_metric["constructor_args"]
+        )
 
     @staticmethod
     def verify_annotation_config(annotation_config):
