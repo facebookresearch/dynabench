@@ -25,9 +25,9 @@ from models.user import UserModel
 from models.validation import Validation, ValidationModel
 
 
-@bottle.post("/task/process_proposal/<accept:bool>")
+@bottle.post("/tasks/process_proposal")
 @_auth.requires_auth
-def process_proposal(credentials, accept):
+def process_proposal(credentials):
 
     um = UserModel()
     user = um.get(credentials["id"])
@@ -35,16 +35,12 @@ def process_proposal(credentials, accept):
         bottle.abort(403, "Access denied")
 
     data = bottle.request.json
-    if not util.check_fields(data, ["task_proposal_id"]):
+    if not util.check_fields(data, ["tpid", "accept"]):
         bottle.abort(400, "Missing data")
     tm = TaskModel()
-    tp = (
-        tm.dbs.query(TaskProposal)
-        .filter(TaskProposal.id == data["task_proposal_id"])
-        .one()
-    )
+    tp = tm.dbs.query(TaskProposal).filter(TaskProposal.id == data["tpid"]).one()
 
-    if accept:
+    if data["accept"]:
         t = Task(
             task_code=tp.task_code,
             name=tp.name,
@@ -92,7 +88,7 @@ def process_proposal(credentials, accept):
         r.dbs.commit()
         logger.info("Added round (%s)" % (r.id))
 
-    TaskProposal.query.filter(TaskProposal.id == data["task_proposal_id"]).delete()
+    TaskProposal.query.filter(TaskProposal.id == data["tpid"]).delete()
     tm.dbs.flush()
     tm.dbs.commit()
     logger.info("Deleted task proposal")

@@ -503,6 +503,103 @@ export default class ApiService {
     });
   }
 
+  processProposal(accept, tpid) {
+    return this.fetch(`${this.domain}/tasks/process_proposal`, {
+      method: "POST",
+      body: JSON.stringify({
+        accept: accept,
+        tpid: tpid,
+      }),
+    });
+  }
+
+  createRound(tid, url, desc, longdesc) {
+    return this.fetch(`${this.domain}/rounds/create`, {
+      method: "POST",
+      body: JSON.stringify({
+        tid: tid,
+        url: url,
+        desc: desc,
+        longdesc: longdesc,
+      }),
+    });
+  }
+
+  updateRound(tid, url, desc, longdesc) {
+    return this.fetch(`${this.domain}/rounds/update`, {
+      method: "POST",
+      body: JSON.stringify({
+        tid: tid,
+        url: url,
+        desc: desc,
+        longdesc: longdesc,
+      }),
+    });
+  }
+
+  getUserTaskProposalIdentifiers() {
+    return this.fetch(`${this.domain}/task_proposals/user/get_identifiers`, {
+      method: "GET",
+    });
+  }
+
+  getAllTaskProposalIdentifiers() {
+    return this.fetch(`${this.domain}/task_proposals/user/get_identifiers`, {
+      method: "GET",
+    });
+  }
+
+  getTaskProposal(id) {
+    return this.fetch(`${this.domain}/task_proposals/get/${id}`, {
+      method: "GET",
+    });
+  }
+
+  storeTaskProposal(
+    task_code,
+    name,
+    annotation_config,
+    aggregation_metric,
+    model_wrong_metric,
+    instructions,
+    desc,
+    hidden,
+    submitable,
+    settings,
+    instance_type,
+    instance_count,
+    eval_metrics,
+    perf_metric,
+    delta_metrics,
+    create_endpoint,
+    gpu,
+    extra_torchserve_config
+  ) {
+    return this.fetch(`${this.domain}/task_proposals`, {
+      method: "POST",
+      body: JSON.stringify({
+        task_code: task_code,
+        name: name,
+        annotation_config: annotation_config,
+        aggregation_metric: aggregation_metric,
+        model_wrong_metric: model_wrong_metric,
+        instructions: instructions,
+        desc: desc,
+        hidden: hidden,
+        submitable: submitable,
+        settings: settings,
+        instance_type: instance_type,
+        instance_count: instance_count,
+        eval_metrics: eval_metrics,
+        pert_metric: perf_metric,
+        delta_metrics: delta_metrics,
+        create_endpoint: create_endpoint,
+        gpu: gpu,
+        extra_torchserve_config: extra_torchserve_config,
+      }),
+    });
+  }
+
   storeExample(
     tid,
     rid,

@@ -14,14 +14,14 @@ from models.task import TaskModel, TaskUserPermission
 from models.user import UserModel
 
 
-@bottle.post("/round/create/<tid:int>")
+@bottle.post("/rounds/create")
 @_auth.requires_auth
-def create_round(credentials, tid):
+def create_round(credentials):
     data = bottle.request.json
-    if not util.check_fields(data, ["url", "desc", "longdesc"]):
+    if not util.check_fields(data, ["tid", "url", "desc", "longdesc"]):
         bottle.abort(400, "Missing data")
 
-    tup = TaskUserPermission.query.filter(TaskUserPermission.tid == tid)
+    tup = TaskUserPermission.query.filter(TaskUserPermission.tid == data["tid"])
     if tup.uid != credentials["id"]:
         um = UserModel()
         user = um.get(credentials["id"])
@@ -29,13 +29,13 @@ def create_round(credentials, tid):
             bottle.abort(403, "Access denied")
 
     tm = TaskModel()
-    task = tm.get(tid)
+    task = tm.get(data["tid"])
     task.cur_round += 1
     tm.dbs.flush()
     tm.dbs.commit()
 
     r = Round(
-        tid=tid,
+        tid=data["tid"],
         rid=task.cur_round,
         secret=secrets.token_hex(),
         url=data["url"],
@@ -51,14 +51,14 @@ def create_round(credentials, tid):
     return util.json_encode({"success": "ok"})
 
 
-@bottle.post("/round/update/<tid:int>")
+@bottle.post("/rounds/update")
 @_auth.requires_auth
-def update_round(credentials, tid):
+def update_round(credentials):
     data = bottle.request.json
-    if not util.check_fields(data, ["url", "desc", "longdesc"]):
+    if not util.check_fields(data, ["tid"]):
         bottle.abort(400, "Missing data")
 
-    tup = TaskUserPermission.query.filter(TaskUserPermission.tid == tid)
+    tup = TaskUserPermission.query.filter(TaskUserPermission.tid == data["tid"])
     if tup.uid != credentials["id"]:
         um = UserModel()
         user = um.get(credentials["id"])
@@ -66,7 +66,7 @@ def update_round(credentials, tid):
             bottle.abort(403, "Access denied")
 
     tm = TaskModel()
-    task = tm.get(tid)
+    task = tm.get(data["tid"])
 
     rm = RoundModel()
     round = rm.get(task.cur_round)

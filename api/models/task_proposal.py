@@ -26,7 +26,7 @@ class TaskProposal(Base):
         nullable=False,
     )
     model_wrong_metric = db.Column(db.Text, nullable=False)
-    instructions_md = db.Column(db.Text)
+    instructions_md = db.Column(db.Text, nullable=False)
 
     desc = db.Column(db.String(length=255))
 

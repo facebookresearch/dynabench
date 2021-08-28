@@ -14,7 +14,7 @@ from models.task import TaskModel, TaskProposal
 from models.user import UserModel
 
 
-@bottle.get("/task_proposal/user/get_identifiers")
+@bottle.get("/task_proposals/user/get_identifiers")
 @_auth.requires_auth
 def get_user_task_proposal_itentifiers(credentials):
     proposals = TaskProposal.query.filter(TaskProposal.uid == credentials["id"])
@@ -26,7 +26,7 @@ def get_user_task_proposal_itentifiers(credentials):
     return util.json_encode(identifiers)
 
 
-@bottle.get("/task_proposal/all/get_identifiers")
+@bottle.get("/task_proposals/all/get_identifiers")
 @_auth.requires_auth
 def get_all_task_proposal_itentifiers(credentials):
     um = UserModel()
@@ -42,7 +42,7 @@ def get_all_task_proposal_itentifiers(credentials):
     return util.json_encode(identifiers)
 
 
-@bottle.get("/task_proposal/get/<tpid:int>")
+@bottle.get("/task_proposals/get/<tpid:int>")
 @_auth.requires_auth
 def get_task_proposal(credentials, tpid):
     tp = TaskProposal.query.filter(TaskProposal.id == tpid)
@@ -54,7 +54,7 @@ def get_task_proposal(credentials, tpid):
     return util.json_encode(tp.to_dict())
 
 
-@bottle.post("/task_proposal/create")
+@bottle.post("/task_proposals/create")
 @_auth.requires_auth
 def create_task_proposal(credentials):
     data = bottle.request.json
@@ -64,7 +64,7 @@ def create_task_proposal(credentials):
         [
             "task_code",
             "name",
-            "annotation_config_json",
+            "annotation_config",
             "aggregation_metric",
             "model_wrong_metric",
             "instructions",
@@ -73,7 +73,8 @@ def create_task_proposal(credentials):
             "submitable",
             "settings",
             "instance_type",
-            "instance_count" "eval_metrics",
+            "instance_count",
+            "eval_metrics",
             "perf_metric",
             "delta_metrics",
             "create_endpoint",
