@@ -7,7 +7,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import "./TaskPage.css";
-import { Container, Row, Col, Spinner } from "react-bootstrap";
+import { Container, Row, Spinner } from "react-bootstrap";
 import UserContext from "./UserContext";
 import { TaskModelDefaultLeaderboard } from "../components/TaskLeaderboard/TaskModelLeaderboardCardWrapper";
 

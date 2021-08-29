@@ -16,12 +16,6 @@ const ForkAndSnapshotRouter = (props) => {
   const context = useContext(UserContext);
   const [type, setType] = useState("");
 
-  const navigateToTaskPage = () => {
-    props.history.replace({
-      pathname: taskCode.indexOf("flores") > -1 ? "/flores" : "/tasks",
-    });
-  };
-
   useEffect(() => {
     const uriEncodedName = encodeURIComponent(forkOrSnapshotName);
     context.api.disambiguateForkAndSnapshot(taskCode, uriEncodedName).then(
@@ -31,11 +25,13 @@ const ForkAndSnapshotRouter = (props) => {
       (error) => {
         console.log(error);
         if (error && error.status_code === 404) {
-          navigateToTaskPage();
+          props.history.replace({
+            pathname: taskCode.indexOf("flores") > -1 ? "/flores" : "/tasks",
+          });
         }
       }
     );
-  }, [context.api, forkOrSnapshotName, navigateToTaskPage, taskCode]);
+  }, [context.api, forkOrSnapshotName, props.history, taskCode]);
 
   if (type === "") {
     return (

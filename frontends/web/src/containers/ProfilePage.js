@@ -571,7 +571,6 @@ class ProfilePage extends React.Component {
                                         <Button
                                           type="submit"
                                           variant="primary"
-                                          type="submit"
                                           className="submit-btn button-ellipse text-uppercase my-4"
                                           disabled={isSubmitting}
                                         >
