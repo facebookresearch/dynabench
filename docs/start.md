@@ -37,13 +37,33 @@ cp config.py.example config.py
 cd ../
 ```
 
-After this, you need to setup the SSL certificates which can be specified in the config. [TODO: Make this optional]
+Set up your SSL certificates, e.g.:
+
+```
+mkdir ~/.ssl
+cd ~/.ssl
+openssl genrsa -aes128 -out local-cert.key 2048
+openssl req -new -days 365 -key local-cert.key -out local-cert.csr
+openssl x509 -in local-cert.csr -out local-cert.crt -req -signkey local-cert.key -days 365
+cat local-cert.key local-cert.crt > local-cert.pem
+chmod 600 *
+```
+
+### Setting up the API server
+
+Run the installation script to ensure all outstanding database migrations are marked as completed:
+
+```
+cd api
+python install.py 
+```
 
 ### Running the API server
 
 Run the server:
 
 ```
+cd api
 python server.py dev
 ```
 
