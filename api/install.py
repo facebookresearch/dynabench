@@ -7,6 +7,7 @@
 import json
 import os
 
+
 if __name__ == "__main__":
     if not os.path.exists("common/config.py"):
         print("Config does not exist yet, let's create it.")
