@@ -29,29 +29,19 @@ Next, follow these [instructions to install MySQL](database.md).
 
 ### Configuration
 
-The next step is to create config.py. As a start, copy `config.py.example` and edit accordingly:
-
-```
-cd api/common
-cp config.py.example config.py
-cd ../
-```
-
 Set up your SSL certificates, e.g.:
 
 ```
 mkdir ~/.ssl
 cd ~/.ssl
-openssl genrsa -aes128 -out local-cert.key 2048
-openssl req -new -days 365 -key local-cert.key -out local-cert.csr
-openssl x509 -in local-cert.csr -out local-cert.crt -req -signkey local-cert.key -days 365
-cat local-cert.key local-cert.crt > local-cert.pem
+openssl req -newkey rsa:2048 -x509 -new -nodes -keyout local-cert.key -out local-cert.crt -subj /CN=test1 -sha256 -days 365 -addext "extendedKeyUsage = serverAuth"
+cat local-cert-nopw.key local-cert.crt > local-cert.pem
 chmod 600 *
 ```
 
 ### Setting up the API server
 
-Run the installation script to ensure all outstanding database migrations are marked as completed:
+Run the installation script to create your configuration files and ensure all outstanding database migrations are marked as completed:
 
 ```
 cd api
@@ -67,7 +57,7 @@ cd api
 python server.py dev
 ```
 
-Your API backend should now be running at https://localhost:8081.
+Your API backend should now be running at https://localhost:8081. If you just generated a local and unverified certificate, you may need to tell your browser it's okay to proceed.
 
 ## Frontend
 
