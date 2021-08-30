@@ -35,7 +35,7 @@ Set up your SSL certificates, e.g.:
 mkdir ~/.ssl
 cd ~/.ssl
 openssl req -newkey rsa:2048 -x509 -new -nodes -keyout local-cert.key -out local-cert.crt -subj /CN=test1 -sha256 -days 365 -addext "extendedKeyUsage = serverAuth"
-cat local-cert-nopw.key local-cert.crt > local-cert.pem
+cat local-cert.key local-cert.crt > local-cert.pem
 chmod 600 *
 ```
 
