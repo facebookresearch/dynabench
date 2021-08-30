@@ -11,7 +11,7 @@ import os
 if __name__ == "__main__":
     if not os.path.exists("common/config.py"):
         print("Config does not exist yet, let's create it.")
-        print("NOTE: Use absolute paths where necessary!")
+        print("NOTE: Use absolute paths where applicable!")
 
         example_config_str = open("common/config.py.example").read()
         config = {}
@@ -30,9 +30,9 @@ if __name__ == "__main__":
 
         with open("common/config.py", "w") as fw:
             fw.write("config = " + json.dumps(config, indent=4, sort_keys=True))
-            print("Wrote config to common/config.py - feel free to edit")
+            print("Wrote config to common/config.py - feel free to edit.")
     else:
-        print("Config exists.")
+        print("Config already exists.")
 
     from common.migrator import first_time_migrations
 
