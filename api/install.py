@@ -14,6 +14,7 @@ if __name__ == "__main__":
         print("NOTE: Use absolute paths where necessary!")
 
         example_config_str = open("common/config.py.example").read()
+        config = {}
         exec(example_config_str)
 
         required_fields = [
