@@ -35,5 +35,5 @@ Input the following SQL commands to create the `dynabench` user:
 ```
 CREATE USER 'dynabench'@'localhost' IDENTIFIED BY 'ENTER_YOUR_PASSWORD';
 CREATE DATABASE dynabench;
-USE dynabench;
+GRANT ALL PRIVILEGES ON dynabench.* TO 'dynabench'@'localhost';
 ```
