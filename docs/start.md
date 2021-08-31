@@ -61,16 +61,15 @@ Your API backend should now be running at https://localhost:8081. If you just ge
 
 ## Frontend
 
-To install and run frontend, we recommend using [nvm](https://github.com/creationix/nvm) to manage
-and install node versions.
+To install and run frontend, we recommend using [nvm](https://github.com/creationix/nvm) (see [here](https://github.com/nvm-sh/nvm#installing-and-updating) for instructions) to manage and install node versions.
 
 ```
-cd ..
 cd frontends/web/
-nvm install latest
-nvm alias default latest
-nvm use latest
+nvm install node
+nvm install-latest-npm
 npm install
 echo 'REACT_APP_API_HOST = "http://localhost:8081"' >> .env
 npm start
 ```
+
+If you get a warning about SSL certificates, edit the corresponding paths in `package.json`. Your frontend should now be running at https://localhost:3000.
