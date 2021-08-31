@@ -61,7 +61,7 @@ Your API backend should now be running at https://localhost:8081. If you just ge
 
 ## Frontend
 
-To install and run frontend, we recommend using [nvm](https://github.com/creationix/nvm) (see [here](https://github.com/nvm-sh/nvm#installing-and-updating) for instructions) to manage and install node versions.
+To install and run the frontend, we recommend using [nvm](https://github.com/creationix/nvm) (see [here](https://github.com/nvm-sh/nvm#installing-and-updating) for installation instructions) to manage and install node versions.
 
 ```
 cd frontends/web/
