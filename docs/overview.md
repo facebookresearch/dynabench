@@ -6,6 +6,6 @@ Dynabench connects users with different needs to each other. Model **builders** 
 
 ## Codebase
 
-This codebase is organized as follows. Dynabench has multiple web-based frontends written in [React](https://reactjs.org/) (in `frontends/src`, `frontends/mturk-src` and their shared code `frontends/common`) talking to the same API backend (in `api/`). Models can be uploaded via the API through [Dynalab](https://github.com/facebookresearch/dynalab), which lives in its own repository. Dockerized model containers are built in the build server (in `builder/`) and evaluated in the evaluation server (in `evaluator/`). We also offer scripts for collecting model-in-the-loop data using crowd workers using [Mephisto](https://github.com/facebookresearch/Mephisto) (in `annotators/`).
+This codebase is organized as follows. Dynabench has multiple web-based frontends written in [React](https://reactjs.org/) (in `frontends/web/src` and `frontends/web/mturk-src`) talking to the same API backend (in `api/`). Models can be uploaded via the API through [Dynalab](https://github.com/facebookresearch/dynalab), which lives in its own repository. Dockerized model containers are built in the build server (in `builder/`) and evaluated in the evaluation server (in `evaluator/`). We also offer scripts for collecting model-in-the-loop data using crowd workers using [Mephisto](https://github.com/facebookresearch/Mephisto) (in `annotators/`).
 
 ![Dynabench codebase](db-overview-fig2.png)
