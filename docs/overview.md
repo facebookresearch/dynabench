@@ -1,6 +1,6 @@
 # Platform overview
 
-Dynabench connects users with different needs to each other. Model **builders** build new models for tasks, which are evaluated in the evaluation-as-a-service cloud and displayed on dynamic leaderboards for **consumers** to inform their work or research. The way a given task is configured is determined by the task **owners**. Models can be put _in the loop_, for instance in order to obtain human-adversarial examples from **breakers**. Such examples can be used to get a more accurate sense of a model's in-the-wild performance, to train up new even better models, and to inform new datasets and metrics.
+Dynabench connects users with different needs to each other. Model **builders** build new models for tasks, which are evaluated in the evaluation-as-a-service cloud and displayed on dynamic leaderboards for **consumers** to inform their work or research. The way a given task is configured, for example which datasets and metrics are used for evaluation, is determined by the task **owners**. Models can be put _in the loop_, for instance in order to obtain human-adversarial examples from **breakers**. Such examples can be used to get a more accurate sense of a model's in-the-wild performance, to train up new even better models, and to inform new datasets and metrics.
 
 ![Dynabench overview](db-overview-fig1.png)
 
