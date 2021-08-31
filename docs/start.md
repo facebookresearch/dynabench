@@ -68,7 +68,7 @@ cd frontends/web/
 nvm install node
 nvm install-latest-npm
 npm install
-echo 'REACT_APP_API_HOST = "http://localhost:8081"' >> .env
+echo 'REACT_APP_API_HOST = "https://localhost:8081"' >> .env
 npm start
 ```
 
