@@ -82,6 +82,59 @@ def ensure_owner_or_admin(tid, uid):
             )
 
 
+@bottle.get("/tasks/get_all_rounds/<tid:int>")
+@_auth.requires_auth
+def get_all_rounds(credentials, tid):
+    ensure_owner_or_admin(tid, credentials["id"])
+    rm = RoundModel()
+    r_dicts = []
+    for r in rm.getByTid(tid):
+        r_dicts.append(r.to_dict())
+    r_dicts.sort(key=lambda r: r["rid"])
+    return util.json_encode(r_dicts)
+
+
+@bottle.post("/tasks/create_round/<tid:int>")
+@_auth.requires_auth
+def create_round(credentials, tid):
+
+    ensure_owner_or_admin(tid, credentials["id"])
+
+    tm = TaskModel()
+    task = tm.get(tid)
+    task.cur_round += 1
+    tm.dbs.flush()
+    tm.dbs.commit()
+
+    r = Round(tid=tid, rid=task.cur_round, secret=secrets.token_hex())
+
+    tm.dbs.add(r)
+    tm.dbs.flush()
+    tm.dbs.commit()
+    logger.info("Added round (%s)" % (r.id))
+
+    return util.json_encode({"success": "ok"})
+
+
+@bottle.put("/tasks/update_round/<tid:int>/<rid:int>")
+@_auth.requires_auth
+def update_round(credentials, tid, rid):
+    data = bottle.request.json
+
+    ensure_owner_or_admin(tid, credentials["id"])
+
+    rm = RoundModel()
+    round = rm.getByTidAndRid(tid, rid)
+    round.url = data.get("url", round.url)
+    round.longdesc = data.get("longdesc", round.longdesc)
+
+    rm.dbs.flush()
+    rm.dbs.commit()
+    logger.info("Updated round (%s)" % (round.id))
+
+    return util.json_encode({"success": "ok"})
+
+
 @bottle.put("/tasks/toggle_owner/<tid:int>/<username>")
 @_auth.requires_auth
 def toggle_owner(credentials, tid, username):

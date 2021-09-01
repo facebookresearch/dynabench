@@ -538,6 +538,12 @@ export default class ApiService {
     });
   }
 
+  getRounds(tid) {
+    return this.fetch(`${this.domain}/tasks/get_all_rounds/${tid}`, {
+      method: "GET",
+    });
+  }
+
   activateTask(tid, annotation_config_json) {
     return this.fetch(`${this.domain}/tasks/activate/${tid}`, {
       method: "PUT",
@@ -545,27 +551,16 @@ export default class ApiService {
     });
   }
 
-  createRound(tid, url, desc, longdesc) {
-    return this.fetch(`${this.domain}/rounds/create`, {
-      method: "POST",
-      body: JSON.stringify({
-        tid: tid,
-        url: url,
-        desc: desc,
-        longdesc: longdesc,
-      }),
+  updateRound(tid, rid, data) {
+    return this.fetch(`${this.domain}/tasks/update_round/${tid}/${rid}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
     });
   }
 
-  updateRound(tid, url, desc, longdesc) {
-    return this.fetch(`${this.domain}/rounds/update`, {
+  createRound(tid) {
+    return this.fetch(`${this.domain}/tasks/create_round/${tid}`, {
       method: "POST",
-      body: JSON.stringify({
-        tid: tid,
-        url: url,
-        desc: desc,
-        longdesc: longdesc,
-      }),
     });
   }
 

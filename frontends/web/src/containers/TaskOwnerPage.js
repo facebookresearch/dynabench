@@ -35,6 +35,190 @@ const handleContextValidation = (values) => {
   return errors;
 };
 
+const Rounds = (props) => {
+  return (
+    <Container className="mb-5 pb-5">
+      <h1 className="my-4 pt-3 text-uppercase text-center">Rounds</h1>
+      <Col>
+        {props.rounds.map((round) => (
+          <Card key={round.rid} className="my-4 pt-3">
+            <Card.Body className="mt-4">
+              <Formik
+                initialValues={{
+                  rid: round.rid,
+                  url: round.url,
+                  longdesc: round.longdesc,
+                }}
+                onSubmit={props.handleRoundUpdate}
+              >
+                {({
+                  values,
+                  errors,
+                  handleChange,
+                  handleSubmit,
+                  isSubmitting,
+                  dirty,
+                }) => (
+                  <>
+                    <form className="px-4" onSubmit={handleSubmit}>
+                      <Container>
+                        <Form.Group
+                          as={Row}
+                          controlId="round"
+                          className="py-3 my-0 border-bottom"
+                        >
+                          <Form.Label column>
+                            <b>Round</b>
+                          </Form.Label>
+                          <Col sm="8">
+                            <Form.Control
+                              plaintext
+                              disabled
+                              value={round.rid}
+                            />
+                          </Col>
+                        </Form.Group>
+                        <Form.Group
+                          as={Row}
+                          controlId="total_fooled"
+                          className="py-3 my-0 border-bottom"
+                        >
+                          <Form.Label column>
+                            <b>Total Fooling Examples</b>
+                          </Form.Label>
+                          <Col sm="8">
+                            <Form.Control
+                              plaintext
+                              disabled
+                              value={round.total_fooled}
+                            />
+                          </Col>
+                        </Form.Group>
+                        <Form.Group
+                          as={Row}
+                          controlId="total_verified_fooled"
+                          className="py-3 my-0 border-bottom"
+                        >
+                          <Form.Label column>
+                            <b>Total Verified Fooling Examples</b>
+                          </Form.Label>
+                          <Col sm="8">
+                            <Form.Control
+                              plaintext
+                              disabled
+                              value={round.total_verified_fooled}
+                            />
+                          </Col>
+                        </Form.Group>
+                        <Form.Group
+                          as={Row}
+                          controlId="total_collected"
+                          className="py-3 my-0 border-bottom"
+                        >
+                          <Form.Label column>
+                            <b>Total Collected Examples</b>
+                          </Form.Label>
+                          <Col sm="8">
+                            <Form.Control
+                              plaintext
+                              disabled
+                              value={round.total_collected}
+                            />
+                          </Col>
+                        </Form.Group>
+                        <Form.Group
+                          as={Row}
+                          controlId="url"
+                          className="py-3 my-0 border-bottom"
+                        >
+                          <Form.Label column>
+                            <b>Model URLs</b>
+                          </Form.Label>
+                          <Form.Control
+                            name="url"
+                            rows="2"
+                            as="textarea"
+                            defaultValue={values.url}
+                            onChange={handleChange}
+                          />
+                        </Form.Group>
+                        <Form.Group
+                          as={Row}
+                          controlId="longdesc"
+                          className="py-3 my-0"
+                        >
+                          <Form.Label column>
+                            <b>Round Description</b>
+                          </Form.Label>
+                          <Form.Control
+                            name="url"
+                            rows="6"
+                            as="textarea"
+                            defaultValue={values.longdesc}
+                            onChange={handleChange}
+                          />
+                          <Form.Text id="paramsHelpBlock" muted>
+                            <Markdown>
+                              The text will be rendered as
+                              [HTML](https://developer.mozilla.org/en-US/docs/Web/HTML)
+                              in the task page.
+                            </Markdown>
+                          </Form.Text>
+                        </Form.Group>
+                        <Form.Group
+                          as={Row}
+                          controlId="affiliation"
+                          className="py-3 my-0"
+                        >
+                          <Col sm="8">
+                            <small className="form-text text-muted">
+                              {errors.accept}
+                            </small>
+                          </Col>
+                        </Form.Group>
+                        <Row className="justify-content-md-center">
+                          <Col md={5} sm={12}>
+                            {dirty ? (
+                              <Button
+                                type="submit"
+                                variant="primary"
+                                className="submit-btn button-ellipse text-uppercase my-4"
+                                disabled={isSubmitting}
+                              >
+                                Save
+                              </Button>
+                            ) : null}
+                          </Col>
+                        </Row>
+                      </Container>
+                    </form>
+                  </>
+                )}
+              </Formik>
+            </Card.Body>
+          </Card>
+        ))}
+        <Card className="my-4">
+          <Card.Body>
+            <Row className="justify-content-md-center">
+              <Col md={5} sm={12}>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="submit-btn button-ellipse text-uppercase my-4"
+                  onClick={props.createRound}
+                >
+                  Create New Round
+                </Button>
+              </Col>
+            </Row>
+          </Card.Body>
+        </Card>
+      </Col>
+    </Container>
+  );
+};
+
 const Owners = (props) => {
   return (
     <Container className="mb-5 pb-5">
@@ -542,6 +726,7 @@ class TaskOwnerPage extends React.Component {
     super(props);
     this.state = {
       task: null,
+      rounds: null,
       owners_string: null,
       availableMetricNames: null,
       loader: true,
@@ -559,9 +744,7 @@ class TaskOwnerPage extends React.Component {
     } else if (this.props.location.hash === "#contexts") {
       this.fetchTask();
     } else if (this.props.location.hash === "#rounds") {
-      this.fetchTask();
-    } else if (this.props.location.hash === "#models") {
-      // TODO
+      this.fetchTask().then(() => this.fetchRounds());
     } else if (this.props.location.hash === "#datasets") {
       // TODO
     } else if (this.props.location.hash === "#metrics") {
@@ -600,6 +783,17 @@ class TaskOwnerPage extends React.Component {
           { owners_string: result.join(", "), loader: false },
           callback
         );
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
+  };
+
+  fetchRounds = (callback = () => {}) => {
+    return this.context.api.getRounds(this.state.task.id).then(
+      (result) => {
+        this.setState({ rounds: result, loader: false }, callback);
       },
       (error) => {
         console.log(error);
@@ -730,7 +924,6 @@ class TaskOwnerPage extends React.Component {
       .then(
         () => {
           this.fetchOwners(() => {
-            console.log(this.state.owners_string);
             resetForm({
               values: {
                 owners_string: this.state.owners_string,
@@ -744,11 +937,48 @@ class TaskOwnerPage extends React.Component {
           console.log(error);
           setFieldError(
             "accept",
-            "Task could not be updated (" + error.error + ")"
+            "Owners could not be updated (" + error.error + ")"
           );
           setSubmitting(false);
         }
       );
+  };
+
+  handleRoundUpdate = (values, { setFieldError, setSubmitting, resetForm }) => {
+    if (values.url === "") {
+      // The create interface looks for a null value to tell whethere there are
+      // no models to talk to.
+      values.url = null;
+    }
+    this.context.api.updateRound(this.state.task.id, values.rid, values).then(
+      () => {
+        this.fetchRounds(() => {
+          resetForm({
+            values: values,
+          });
+          setSubmitting(false);
+        });
+      },
+      (error) => {
+        console.log(error);
+        setFieldError(
+          "accept",
+          "Round could not be updated (" + error.error + ")"
+        );
+        setSubmitting(false);
+      }
+    );
+  };
+
+  createRound = () => {
+    this.context.api.createRound(this.state.task.id).then(
+      () => {
+        this.fetchRounds();
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
   };
 
   render() {
@@ -768,10 +998,6 @@ class TaskOwnerPage extends React.Component {
       {
         href: "#rounds",
         buttonText: "Rounds",
-      },
-      {
-        href: "#models",
-        buttonText: "Models",
       },
       {
         href: "#datasets",
@@ -820,6 +1046,13 @@ class TaskOwnerPage extends React.Component {
             ) : null}
             {this.props.location.hash === "#contexts" ? (
               <Contexts handleContextSubmit={this.handleContextSubmit} />
+            ) : null}
+            {this.props.location.hash === "#rounds" && this.state.rounds ? (
+              <Rounds
+                rounds={this.state.rounds}
+                createRound={this.createRound}
+                handleRoundUpdate={this.handleRoundUpdate}
+              />
             ) : null}
             {this.props.location.hash === "#metrics" &&
             this.state.task &&
