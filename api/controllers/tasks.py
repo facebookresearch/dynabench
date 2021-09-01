@@ -4,9 +4,11 @@
 
 import json
 import secrets
+import sys
 from urllib.parse import parse_qs, quote
 
 import bottle
+import sqlalchemy as db
 import uuid
 
 import common.auth as _auth
@@ -20,9 +22,183 @@ from models.model import Model
 from models.round import Round, RoundModel
 from models.round_user_example_info import RoundUserExampleInfoModel
 from models.score import ScoreModel
-from models.task import Task, TaskModel, TaskProposal, TaskUserPermission
+from models.task import (
+    AggregationMetricEnum,
+    ModelWrongMetricEnum,
+    Task,
+    TaskModel,
+    TaskUserPermission,
+)
+from models.task_proposal import TaskProposal
 from models.user import UserModel
 from models.validation import Validation, ValidationModel
+
+
+from metrics.metrics_config import (  # isort:skip
+    delta_metrics_config,
+    eval_metrics_config,
+)
+
+
+sys.path.append("../evaluation")  # noqa
+
+
+@bottle.get("/tasks/available_metric_names")
+def get_available_metric_names():
+    metric_names = {
+        "eval": list(eval_metrics_config.keys()),
+        "delta": list(delta_metrics_config.keys()),
+        "model_wrong": [enum.name for enum in ModelWrongMetricEnum],
+        "aggregation": [enum.name for enum in AggregationMetricEnum],
+    }
+    return util.json_encode(metric_names)
+
+
+@bottle.get("/tasks/owners/<tid:int>")
+@_auth.requires_auth
+def get_owners(credentials, tid):
+    ensure_owner_or_admin(tid, credentials["id"])
+    tm = TaskModel()
+    tups = tm.dbs.query(TaskUserPermission).filter(
+        db.and_(TaskUserPermission.type == "owner", TaskUserPermission.tid == tid)
+    )
+    um = UserModel()
+    usernames = []
+    for obj in tups:
+        user = um.get(obj.uid)
+        usernames.append(user.username)
+    return util.json_encode(usernames)
+
+
+def ensure_owner_or_admin(tid, uid):
+    um = UserModel()
+    user = um.get(uid)
+    if not user.admin:
+        if not (tid, "owner") in [
+            (perm.tid, perm.type) for perm in user.task_permissions
+        ]:
+            bottle.abort(
+                403, "Access denied (you are not an admin or owner of this task)"
+            )
+
+
+@bottle.put("/tasks/toggle_owner/<tid:int>/<username>")
+@_auth.requires_auth
+def toggle_owner(credentials, tid, username):
+    ensure_owner_or_admin(tid, credentials["id"])
+    um = UserModel()
+    user_to_toggle = um.getByUsername(username)
+    if (tid, "owner") in [
+        (perm.tid, perm.type) for perm in user_to_toggle.task_permissions
+    ]:
+        tup = (
+            um.dbs.query(TaskUserPermission)
+            .filter(
+                db.and_(
+                    TaskUserPermission.uid == user_to_toggle.id,
+                    TaskUserPermission.type == "owner",
+                    TaskUserPermission.tid == tid,
+                )
+            )
+            .delete()
+        )
+        um.dbs.flush()
+        um.dbs.commit()
+        logger.info("Removed task owner: " + username)
+    else:
+        tup = TaskUserPermission(uid=user_to_toggle.id, type="owner", tid=tid)
+        um.dbs.add(tup)
+        um.dbs.flush()
+        um.dbs.commit()
+        logger.info("Added task owner: " + username)
+
+    return util.json_encode({"success": "ok"})
+
+
+@bottle.put("/tasks/update/<tid:int>")
+@_auth.requires_auth
+def update(credentials, tid):
+    ensure_owner_or_admin(tid, credentials["id"])
+
+    data = bottle.request.json
+    for field in data:
+        if field not in (
+            "aggregation_metric",
+            "model_wrong_metric_config_json",
+            "instructions_md",
+            "hidden",
+            "submitable",
+            "perf_metric",
+            "delta_metrics",
+            "create_endpoint",
+        ):
+            bottle.abort(
+                403,
+                """Can only modify aggregation_metric,
+                model_wrong_metric_config_json, instructions_md, hidden,
+                submitable, perf_metric, delta_metrics, create_endpoint""",
+            )
+
+    if "model_wrong_metric_config_json" in data:
+        try:
+            Task.verify_model_wrong_metric_config(
+                json.loads(data["model_wrong_metric_config_json"])
+            )
+        except Exception as ex:
+            logger.exception("Invalid model wrong metric configuration: (%s)" % (ex))
+            bottle.abort(400, "Invalid model wrong metric configuration")
+
+    if "delta_metrics" in data:
+        try:
+            Task.verify_delta_metrics(data["delta_metrics"])
+        except Exception as ex:
+            logger.exception("Invalid delta metrics (%s)" % (ex))
+            bottle.abort(400, "Invalid delta metrics")
+
+    # update the eval metrics to match perf metric
+    if "perf_metric" in data:
+        data["eval_metrics"] = data["perf_metric"]
+
+    # TODO: If a task owner changes any of the metrics, we need to re-request
+    # evaluation for all models. But how do we handle the scenario where a task
+    # owner is changing metrics back and forth all willy nilly?
+    # A seperate re-request eval button that task owners can only run once
+    # every e.g., 3 days?
+
+    tm = TaskModel()
+    tm.update(tid, data)
+    return util.json_encode({"success": "ok"})
+
+
+@bottle.put("/tasks/activate/<tid:int>")
+@_auth.requires_auth
+def activate(credentials, tid):
+    data = bottle.request.json
+    if not util.check_fields(data, ["annotation_config_json"]):
+        bottle.abort(400, "Missing data")
+
+    ensure_owner_or_admin(tid, credentials["id"])
+
+    tm = TaskModel()
+    task = tm.get(tid)
+    if task.active:
+        bottle.abort(
+            403,
+            """Access denied. Cannot change the annotation_config_json of an
+            already active task.""",
+        )
+
+    try:
+        Task.verify_annotation_config(json.loads(data["annotation_config_json"]))
+    except Exception as ex:
+        logger.exception("Invalid annotation config: (%s)" % (ex))
+        bottle.abort(400, "Invalid annotation config")
+
+    tm.update(
+        tid, {"annotation_config_json": data["annotation_config_json"], "active": True}
+    )
+
+    return util.json_encode({"success": "ok"})
 
 
 @bottle.post("/tasks/process_proposal")
@@ -41,27 +217,7 @@ def process_proposal(credentials):
     tp = tm.dbs.query(TaskProposal).filter(TaskProposal.id == data["tpid"]).one()
 
     if data["accept"]:
-        t = Task(
-            task_code=tp.task_code,
-            name=tp.name,
-            annotation_config_json=tp.annotation_config,
-            aggregation_metric=tp.aggregation_metric,
-            model_wrong_metric=tp.model_wrong_metric,
-            instructions_md=tp.instructions_md,
-            desc=tp.desc,
-            hidden=tp.hidden,
-            submitable=tp.submitable,
-            settings_json=tp.settings_json,
-            instance_type=tp.instance_typs,
-            instance_count=tp.instance_count,
-            eval_metrics=tp.eval_metrics,
-            perf_metric=tp.perf_metric,
-            delta_metrics=tp.delta_metrics,
-            create_endpoint=tp.create_endpoint,
-            gpu=tp.gpu,
-            extra_torchserve_config=tp.extra_torchserve_config,
-            cur_round=1,
-        )
+        t = Task(task_code=tp.task_code, name=tp.name, desc=tp.desc, cur_round=1)
 
         t.dbs.add(t)
         t.dbs.flush()

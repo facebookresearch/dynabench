@@ -2,7 +2,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import json
 import re
 
 import bottle
@@ -59,29 +58,7 @@ def get_task_proposal(credentials, tpid):
 def create_task_proposal(credentials):
     data = bottle.request.json
 
-    if not util.check_fields(
-        data,
-        [
-            "task_code",
-            "name",
-            "annotation_config",
-            "aggregation_metric",
-            "model_wrong_metric",
-            "instructions",
-            "desc",
-            "hidden",
-            "submitable",
-            "settings",
-            "instance_type",
-            "instance_count",
-            "eval_metrics",
-            "perf_metric",
-            "delta_metrics",
-            "create_endpoint",
-            "gpu",
-            "extra_torchserve_config",
-        ],
-    ):
+    if not util.check_fields(data, ["task_code", "name", "desc"]):
         bottle.abort(400, "Missing data")
 
     tm = TaskModel()
@@ -100,38 +77,11 @@ def create_task_proposal(credentials):
         )
 
     try:
-        TaskModel.verify_model_wrong_metric(data["model_wrong_metric"])
-    except Exception as ex:
-        logger.exception("Invalid model wrong metric configuration: (%s)" % (ex))
-        bottle.abort(400, "Invalid model wrong metric configuration")
-
-    try:
-        TaskModel.verify_annotation_config(data["annotation_config"])
-    except Exception as ex:
-        logger.exception("Invalid annotation config: (%s)" % (ex))
-        bottle.abort(400, "Invalid annotation config")
-
-    try:
         tp = TaskProposal(
             uid=credentials["id"],
             task_code=data["task_code"],
             name=data["name"],
-            annotation_config_json=json.dumps(data["annotation_config"]),
-            aggregation_metric=data["aggregation_metric"],
-            model_wrong_metric=json.dumps(data["model_wrong_metric"]),
-            instructions_md=data["instructions"],
             desc=data["desc"],
-            hidden=data["hidden"],
-            submitable=data["submitable"],
-            settings_json=json.dumps(data["settings"]),
-            instance_type=data["instance_type"],
-            instance_count=data["instance_count"],
-            eval_metrics=data["eval_metrics"],
-            perf_metric=data["perf_metric"],
-            delta_metrics=data["delta_metrics"],
-            create_endpoint=data["create_endpoint"],
-            gpu=data["gpu"],
-            extra_torchserve_config=json.dumps(data["extra_torchserve_config"]),
         )
 
         tp.dbs.add(tp)

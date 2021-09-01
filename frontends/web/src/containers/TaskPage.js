@@ -409,7 +409,14 @@ class TaskPage extends React.Component {
                       )}
                     </OverlayContext.Consumer>
                   </Annotation>
-                  <TaskOwnerConsole task={this.state.task} />
+                  <Button
+                    as={Link}
+                    to={`/task-owner-interface/${this.state.task.task_code}#settings`}
+                    type="button"
+                    className="btn btn-light btn-outline-primary btn-sm btn-help-info"
+                  >
+                    <i className="fas fa-cog"></i>
+                  </Button>
                 </ButtonGroup>
               </div>
             </Col>

@@ -220,8 +220,8 @@ def evaluate_model_correctness():
 
     tm = TaskModel()
     task = tm.get(data["tid"])
-    model_wrong_metric_def = json.loads(task.model_wrong_metric)
-    model_wrong_metric = model_wrong_metrics[model_wrong_metric_def["type"]]
+    model_wrong_metric_config = json.loads(task.model_wrong_metric_config_json)
+    model_wrong_metric = model_wrong_metrics[model_wrong_metric_config["type"]]
     output_keys = set(
         map(
             lambda item: item["name"], json.loads(task.annotation_config_json)["output"]
@@ -241,7 +241,7 @@ def evaluate_model_correctness():
             pruned_output[key] = value
 
     model_wrong = model_wrong_metric(
-        pruned_output, pruned_target, model_wrong_metric_def["constructor_args"]
+        pruned_output, pruned_target, model_wrong_metric_config["constructor_args"]
     )
     missing_keys = len(pruned_target.keys()) != len(target_keys) or len(
         pruned_output.keys()

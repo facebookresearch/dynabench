@@ -5,7 +5,6 @@
 import sqlalchemy as db
 
 from .base import Base
-from .task import AggregationMetricEnum
 
 
 class TaskProposal(Base):
@@ -19,30 +18,8 @@ class TaskProposal(Base):
     task_code = db.Column(db.String(length=255), unique=True, nullable=False)
 
     name = db.Column(db.String(length=255), unique=True, nullable=False)
-    annotation_config_json = db.Column(db.Text, nullable=False)
-    aggregation_metric = db.Column(
-        db.Enum(AggregationMetricEnum),
-        default=AggregationMetricEnum.dynascore,
-        nullable=False,
-    )
-    model_wrong_metric = db.Column(db.Text, nullable=False)
-    instructions_md = db.Column(db.Text, nullable=False)
 
     desc = db.Column(db.String(length=255))
-
-    hidden = db.Column(db.Boolean, default=False)
-    submitable = db.Column(db.Boolean, default=False)
-
-    settings_json = db.Column(db.Text)
-
-    instance_type = db.Column(db.Text, default="ml.m5.2xlarge", nullable=False)
-    instance_count = db.Column(db.Integer, default=1, nullable=False)
-    eval_metrics = db.Column(db.Text, default="macro_f1", nullable=False)
-    perf_metric = db.Column(db.Text, default="macro_f1", nullable=False)
-    delta_metrics = db.Column(db.Text, default="fairness|robustness", nullable=True)
-    create_endpoint = db.Column(db.Boolean, default=True)
-    gpu = db.Column(db.Boolean, default=False)
-    extra_torchserve_config = db.Column(db.Text)
 
     def __repr__(self):
         return f"<Task {self.name}>"

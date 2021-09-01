@@ -19,6 +19,7 @@ from .user import User
 
 sys.path.append("../evaluation")  # noqa
 from metrics.metric_getters import get_task_metrics_meta  # isort:skip
+from metrics.metrics_config import delta_metrics_config  # isort:skip
 
 
 EPSILON_PREC = 1e-4
@@ -75,7 +76,7 @@ model_wrong_metrics = {
     ModelWrongMetricEnum.ask_user.name: ask_user,
 }
 
-model_wrong_metric_verifiers = {
+model_wrong_metric_config_verifiers = {
     ModelWrongMetricEnum.exact_match.name: verify_exact_match,
     ModelWrongMetricEnum.string_f1.name: verify_string_f1,
     ModelWrongMetricEnum.ask_user.name: verify_ask_user,
@@ -135,10 +136,12 @@ def verify_context_string_selection(
 
 def verify_context_string_selection_config(obj, annotation_config):
     assert "reference_name" in obj["constructor_args"]
-    reference_obj = filter(
-        lambda other_obj: other_obj["name"]
-        == obj["constructor_args"]["reference_name"],
-        annotation_config["context"],
+    reference_obj = list(
+        filter(
+            lambda other_obj: other_obj["name"]
+            == obj["constructor_args"]["reference_name"],
+            annotation_config["context"],
+        )
     )[0]
     assert reference_obj["type"] == AnnotationTypeEnum.string.name
 
@@ -164,15 +167,20 @@ def verify_multiclass_probs(obj, obj_constructor_args, name_to_constructor_args,
 
 def verify_multiclass_probs_config(obj, annotation_config):
     assert "reference_name" in obj["constructor_args"]
-    reference_obj = filter(
+    reference_objs = filter(
         lambda other_obj: other_obj["name"]
         == obj["constructor_args"]["reference_name"],
-        annotation_config["context"],
-    )[0]
-    assert reference_obj["type"] in (
-        AnnotationTypeEnum.multiclass_probs.name,
-        AnnotationTypeEnum.target_label.name,
+        annotation_config["context"]
+        + annotation_config["input"]
+        + annotation_config["output"]
+        + annotation_config["metadata"]["create"]
+        + annotation_config["metadata"]["validate"],
     )
+    for reference_obj in reference_objs:
+        assert reference_obj["type"] in (
+            AnnotationTypeEnum.multiclass_probs.name,
+            AnnotationTypeEnum.target_label.name,
+        )
 
 
 def verify_multiclass(obj, obj_constructor_args, name_to_constructor_args, data):
@@ -220,52 +228,6 @@ annotation_type_config_verifiers = {
 }
 
 
-class TaskProposal(Base):
-    __tablename__ = "task_proposals"
-    __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_general_ci"}
-
-    id = db.Column(db.Integer, primary_key=True)
-
-    uid = db.Column(db.Integer, db.ForeignKey("users.id"))
-
-    task_code = db.Column(db.String(length=255), unique=True, nullable=False)
-
-    name = db.Column(db.String(length=255), unique=True, nullable=False)
-    annotation_config_json = db.Column(db.Text, nullable=False)
-    aggregation_metric = db.Column(
-        db.Enum(AggregationMetricEnum),
-        default=AggregationMetricEnum.dynascore,
-        nullable=False,
-    )
-    model_wrong_metric = db.Column(db.Text, nullable=False)
-    instructions_md = db.Column(db.Text, nullable=False)
-
-    desc = db.Column(db.String(length=255))
-
-    hidden = db.Column(db.Boolean, default=False)
-    submitable = db.Column(db.Boolean, default=False)
-
-    settings_json = db.Column(db.Text)
-
-    instance_type = db.Column(db.Text, default="ml.m5.2xlarge", nullable=False)
-    instance_count = db.Column(db.Integer, default=1, nullable=False)
-    eval_metrics = db.Column(db.Text, default="macro_f1", nullable=False)
-    perf_metric = db.Column(db.Text, default="macro_f1", nullable=False)
-    delta_metrics = db.Column(db.Text, default="fairness|robustness", nullable=True)
-    create_endpoint = db.Column(db.Boolean, default=True)
-    gpu = db.Column(db.Boolean, default=False)
-    extra_torchserve_config = db.Column(db.Text)
-
-    def __repr__(self):
-        return f"<Task {self.name}>"
-
-    def to_dict(self, safe=True):
-        d = {}
-        for column in self.__table__.columns:
-            d[column.name] = getattr(self, column.name)
-        return d
-
-
 class Task(Base):
     __tablename__ = "tasks"
     __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_general_ci"}
@@ -281,7 +243,9 @@ class Task(Base):
         default=AggregationMetricEnum.dynascore,
         nullable=False,
     )
-    model_wrong_metric = db.Column(db.Text, nullable=False)
+    model_wrong_metric_config_json = db.Column(
+        db.Text, default='{"type": "ask_user", "constructor_args": {}}', nullable=False
+    )
     instructions_md = db.Column(db.Text)
 
     desc = db.Column(db.String(length=255))
@@ -297,9 +261,12 @@ class Task(Base):
 
     instance_type = db.Column(db.Text, default="ml.m5.2xlarge", nullable=False)
     instance_count = db.Column(db.Integer, default=1, nullable=False)
-    eval_metrics = db.Column(db.Text, default="macro_f1", nullable=False)
-    perf_metric = db.Column(db.Text, default="macro_f1", nullable=False)
-    delta_metrics = db.Column(db.Text, default="fairness|robustness", nullable=True)
+    eval_metrics = db.Column(db.Text, default="accuracy", nullable=False)
+    perf_metric = db.Column(db.Text, default="accuracy", nullable=False)
+    delta_metrics = db.Column(
+        db.Text, default="", nullable=True
+    )  # typically set to "fairness|robustness", but this isn't the default
+    # because these metrics might not work for every possible task
     aws_region = db.Column(db.Text, default="us-west-1", nullable=False)
     s3_bucket = db.Column(
         db.Text, default="evaluation-us-west-1-096166425824", nullable=False
@@ -308,6 +275,7 @@ class Task(Base):
     create_endpoint = db.Column(db.Boolean, default=True)
     gpu = db.Column(db.Boolean, default=False)
     extra_torchserve_config = db.Column(db.Text)
+    active = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         return f"<Task {self.name}>"
@@ -316,14 +284,25 @@ class Task(Base):
         d = {}
         for column in self.__table__.columns:
             d[column.name] = getattr(self, column.name)
+            if column.name == "aggregation_metric":
+                if getattr(self, column.name) is not None:
+                    d[column.name] = getattr(self, column.name).name
         return d
 
     @staticmethod
-    def verify_model_wrong_metric(model_wrong_metric):
-        assert "type" in model_wrong_metric
-        assert "constructor_args" in model_wrong_metric
-        model_wrong_metric_verifiers[model_wrong_metric["type"]](
-            model_wrong_metric["constructor_args"]
+    def verify_delta_metrics(delta_metrics):
+        delta_metric_list = delta_metrics.split("|")
+        if "" in delta_metric_list:
+            delta_metric_list.remove("")
+        for delta_metric in delta_metric_list:
+            assert delta_metric in delta_metrics_config.keys()
+
+    @staticmethod
+    def verify_model_wrong_metric_config(model_wrong_metric_config):
+        assert "type" in model_wrong_metric_config
+        assert "constructor_args" in model_wrong_metric_config
+        model_wrong_metric_config_verifiers[model_wrong_metric_config["type"]](
+            model_wrong_metric_config["constructor_args"]
         )
 
     @staticmethod
@@ -332,8 +311,8 @@ class Task(Base):
         assert "input" in annotation_config
         assert "output" in annotation_config
         assert "metadata" in annotation_config
-        assert ["create"] in annotation_config["metadata"]
-        assert ["validate"] in annotation_config["metadata"]
+        assert "create" in annotation_config["metadata"]
+        assert "validate" in annotation_config["metadata"]
         annotation_config_objs = (
             annotation_config["context"]
             + annotation_config["output"]

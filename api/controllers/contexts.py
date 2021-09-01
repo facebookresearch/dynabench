@@ -123,11 +123,11 @@ def do_upload(credentials):
                 or "metadata" not in context_info
                 or not task.verify_annotation(context_info["context"])
             ):
-                bottle.abort(400, "Upload valid contexts file")
+                bottle.abort(400, "Invalid contexts file")
 
     except Exception as ex:
         logger.exception(ex)
-        bottle.abort(400, "Upload valid contexts file")
+        bottle.abort(400, "Invalid contexts file")
 
     rm = RoundModel()
     round = rm.getByTidAndRid(task_id, task.cur_round)

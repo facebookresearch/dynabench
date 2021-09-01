@@ -16,33 +16,34 @@ __depends__ = {
 
 steps = [
     step(
+        """ALTER TABLE tasks CHANGE model_wrong_metric
+        model_wrong_metric_config_json TEXT""",
+        """ALTER TABLE tasks CHANGE model_wrong_metric_config_json
+        model_wrong_metric TEXT""",
+    ),
+    step(
+        "ALTER TABLE tasks ADD COLUMN active BOOL DEFAULT false",
+        "ALTER TABLE tasks DROP active",
+    ),
+    step(
+        """UPDATE tasks SET active=true WHERE task_code in ('dkqa',
+        'flores_full', 'flores_small1', 'flores_small2', 'hs', 'ladc', 'nli',
+        'placeholder', 'qa', 'sentiment', 'ucl_qa', 'vqa', 'vqa_val', 'yn')"""
+    ),
+    step("UPDATE tasks SET aggregation_metric='dynascore'"),
+    step(
         """
         CREATE TABLE task_proposals (
             id INT NOT NULL AUTO_INCREMENT,
             uid INT NOT NULL,
             task_code VARCHAR(255) NOT NULL UNIQUE,
             name VARCHAR(255) NOT NULL UNIQUE,
-            annotation_config_json MEDIUMTEXT NOT NULL,
-            aggregation_metric ENUM('dynascore') NOT NULL,
-            model_wrong_metric TEXT NOT NULL,
-            instructions_md MEDIUMTEXT NOT NULL,
             `desc` TEXT,
-            hidden BOOL DEFAULT false,
-            submitable BOOL DEFAULT false,
-            settings_json TEXT,
-            instance_type TEXT,
-            instance_count INT(11),
-            eval_metrics TEXT,
-            perf_metric TEXT,
-            delta_metrics TEXT,
-            create_endpoint BOOL DEFAULT false,
-            gpu BOOL DEFAULT false,
-            extra_torchserve_config TEXT,
 
             PRIMARY KEY (id),
             CONSTRAINT task_proposals_uid FOREIGN KEY (uid) REFERENCES users (id)
         )
         """,
         "DROP TABLE task_proposals",
-    )
+    ),
 ]

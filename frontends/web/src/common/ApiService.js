@@ -115,6 +115,12 @@ export default class ApiService {
     });
   }
 
+  getAvailableMetricNames() {
+    return this.fetch(`${this.domain}/tasks/available_metric_names`, {
+      method: "GET",
+    });
+  }
+
   getAPIToken() {
     return this.fetch(`${this.domain}/authenticate/generate_api_token`, {
       method: "GET",
@@ -513,6 +519,32 @@ export default class ApiService {
     });
   }
 
+  updateTask(tid, data) {
+    return this.fetch(`${this.domain}/tasks/update/${tid}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  toggleOwner(tid, username) {
+    return this.fetch(`${this.domain}/tasks/toggle_owner/${tid}/${username}`, {
+      method: "PUT",
+    });
+  }
+
+  getOwners(tid, username) {
+    return this.fetch(`${this.domain}/tasks/owners/${tid}`, {
+      method: "GET",
+    });
+  }
+
+  activateTask(tid, annotation_config_json) {
+    return this.fetch(`${this.domain}/tasks/activate/${tid}`, {
+      method: "PUT",
+      body: JSON.stringify({ annotation_config_json: annotation_config_json }),
+    });
+  }
+
   createRound(tid, url, desc, longdesc) {
     return this.fetch(`${this.domain}/rounds/create`, {
       method: "POST",
@@ -560,7 +592,7 @@ export default class ApiService {
     name,
     annotation_config,
     aggregation_metric,
-    model_wrong_metric,
+    model_wrong_metric_config,
     instructions,
     desc,
     hidden,
@@ -582,7 +614,7 @@ export default class ApiService {
         name: name,
         annotation_config: annotation_config,
         aggregation_metric: aggregation_metric,
-        model_wrong_metric: model_wrong_metric,
+        model_wrong_metric: model_wrong_metric_config,
         instructions: instructions,
         desc: desc,
         hidden: hidden,
