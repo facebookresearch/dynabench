@@ -26,6 +26,32 @@ steps = [
         "ALTER TABLE tasks DROP active",
     ),
     step(
+        "ALTER TABLE tasks ADD COLUMN validate_non_fooling BOOL DEFAULT false NOT NULL",
+        "ALTER TABLE tasks DROP validate_non_fooling",
+    ),
+    step(
+        """ALTER TABLE tasks ADD COLUMN unpublished_models_in_leaderboard BOOL
+        DEFAULT false NOT NULL""",
+        "ALTER TABLE tasks DROP unpublished_models_in_leaderboard",
+    ),
+    step(
+        """ALTER TABLE tasks ADD COLUMN num_matching_validations INT(11)
+        DEFAULT 3 NOT NULL""",
+        "ALTER TABLE tasks DROP num_matching_validations",
+    ),
+    step(
+        "ALTER TABLE tasks ADD COLUMN dynalab_threshold INT(11) DEFAULT 3 NOT NULL",
+        "ALTER TABLE tasks DROP dynalab_threshold",
+    ),
+    step(
+        "ALTER TABLE tasks ADD COLUMN dynalab_hr_diff INT(11) DEFAULT 24 NOT NULL",
+        "ALTER TABLE tasks DROP dynalab_hr_diff",
+    ),
+    step(
+        "ALTER TABLE tasks DROP settings_json",
+        "ALTER TABLE tasks ADD COLUMN settings_json TEXT",
+    ),
+    step(
         """UPDATE tasks SET active=true WHERE task_code in ('dkqa',
         'flores_full', 'flores_small1', 'flores_small2', 'hs', 'ladc', 'nli',
         'placeholder', 'qa', 'sentiment', 'ucl_qa', 'vqa', 'vqa_val', 'yn')"""

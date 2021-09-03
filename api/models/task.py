@@ -257,7 +257,13 @@ class Task(Base):
     hidden = db.Column(db.Boolean, default=False)
     submitable = db.Column(db.Boolean, default=False)
 
-    settings_json = db.Column(db.Text)
+    validate_non_fooling = db.Column(db.Boolean, default=False, nullable=False)
+    num_matching_validations = db.Column(db.Integer, default=3, nullable=False)
+    unpublished_models_in_leaderboard = db.Column(
+        db.Boolean, default=False, nullable=False
+    )
+    dynalab_hr_diff = db.Column(db.Integer, default=24, nullable=False)
+    dynalab_threshold = db.Column(db.Integer, default=3, nullable=False)
 
     instance_type = db.Column(db.Text, default="ml.m5.2xlarge", nullable=False)
     instance_count = db.Column(db.Integer, default=1, nullable=False)
@@ -422,25 +428,11 @@ class TaskModel(BaseModel):
         return tasks
 
     def get_default_dataset_weight(self, task, name):
-        if task.settings_json is not None:
-            weight = (
-                json.loads(task.settings_json)
-                .get("default_dataset_weights", {})
-                .get(name, None)
-            )
-            if weight is not None:
-                return weight
+        # TODO:  allow this to be settable by the task owner?
         return 5
 
     def get_default_metric_weight(self, task, field_name, perf_metric_field_name):
-        if task.settings_json is not None:
-            weight = (
-                json.loads(task.settings_json)
-                .get("default_metric_weights", {})
-                .get(field_name, None)
-            )
-            if weight is not None:
-                return weight
+        # TODO: allow this to be settable by the task owner?
         if field_name == perf_metric_field_name:
             return 4
         return 1

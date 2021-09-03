@@ -28,7 +28,6 @@ import {
   TaskModelForkLeaderboard,
 } from "../components/TaskLeaderboard/TaskModelLeaderboardCardWrapper";
 import UserLeaderboardCard from "../components/TaskPageComponents/UserLeaderboardCard";
-import TaskOwnerConsole from "../components/TaskPageComponents/TaskOwnerConsole";
 
 const chartSizes = {
   xs: { fontSize: 10 },

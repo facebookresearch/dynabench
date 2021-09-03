@@ -148,12 +148,11 @@ export default class ApiService {
     });
   }
 
-  submitContexts(data) {
+  submitContexts(tid, rid, data) {
     const token = this.getToken();
     const formData = new FormData();
     formData.append("file", data.file);
-    formData.append("taskId", data.taskId);
-    return this.fetch(`${this.domain}/contexts/upload`, {
+    return this.fetch(`${this.domain}/contexts/upload/${tid}/${rid}`, {
       method: "POST",
       body: formData,
       headers: {
@@ -562,6 +561,15 @@ export default class ApiService {
     return this.fetch(`${this.domain}/tasks/create_round/${tid}`, {
       method: "POST",
     });
+  }
+
+  getModelIdentifiersForTargetSelection(tid) {
+    return this.fetch(
+      `${this.domain}/tasks/get_model_identifiers_for_target_selection/${tid}`,
+      {
+        method: "GET",
+      }
+    );
   }
 
   getUserTaskProposalIdentifiers() {

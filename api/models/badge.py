@@ -285,31 +285,24 @@ class BadgeModel(BaseModel):
                     for example in user_examples:
                         if example.context:
                             task = example.context.round.task
-                            num_matching_validations = 3
-                            if task.settings_json:
-                                task_settings = json.loads(task.settings_json)
-                                if "num_matching_validations" in task_settings:
-                                    num_matching_validations = task_settings[
-                                        "num_matching_validations"
-                                    ]
                         if example.id in validations_by_eid:
                             example_validations = validations_by_eid[example.id]
                         else:
                             example_validations = []
 
-                        if (
+                        if example.context and (
                             not example.model_wrong
                             or example.retracted
                             or self.lengthOfFilteredList(
                                 lambda validation: validation.label.name == "flagged",
                                 example_validations,
                             )
-                            >= num_matching_validations
+                            >= task.num_matching_validations
                             or self.lengthOfFilteredList(
                                 lambda validation: validation.label.name == "incorrect",
                                 example_validations,
                             )
-                            >= num_matching_validations
+                            >= task.num_matching_validations
                             or self.lengthOfFilteredList(
                                 lambda validation: validation.label.name == "flagged"
                                 and validation.mode.name == "owner",

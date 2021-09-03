@@ -67,12 +67,8 @@ def _getContext(tid, rid, method="min", tags=None):
     elif method == "validation_failed":
         tm = TaskModel()
         task = tm.get(tid)
-        num_matching_validations = 3
-        if task.settings_json:
-            settings = json.loads(task.settings_json)
-            num_matching_validations = settings["num_matching_validations"]
         context = c.getRandomValidationFailed(
-            round.id, num_matching_validations, n=1, tags=tags
+            round.id, task.num_matching_validations, n=1, tags=tags
         )
     if not context:
         bottle.abort(500, f"No contexts available ({round.id})")
@@ -80,9 +76,9 @@ def _getContext(tid, rid, method="min", tags=None):
     return util.json_encode(context)
 
 
-@bottle.post("/contexts/upload")
+@bottle.post("/contexts/upload/<tid:int>/<rid:int>")
 @_auth.requires_auth
-def do_upload(credentials):
+def do_upload(credentials, tid, rid):
     """
     Upload a contexts file for the current round
     and save the contexts to the contexts table
@@ -96,21 +92,15 @@ def do_upload(credentials):
         logger.error("Invalid user detail for id (%s)" % (user_id))
         bottle.abort(404, "User information not found")
 
-    task_id = bottle.request.forms.get("taskId")
-    try:
-        task_id = int(task_id)
-    except ValueError:
-        bottle.abort(404, "Valid task id not found")
-
     if not user.admin and not (
-        (task_id, "owner") in [(perm.tid, perm.type) for perm in user.task_permissions]
+        (tid, "owner") in [(perm.tid, perm.type) for perm in user.task_permissions]
     ):
         bottle.abort(403, "Access denied (you are not an admin or owner of this task)")
 
     upload = bottle.request.files.get("file")
 
     tm = TaskModel()
-    task = tm.get(task_id)
+    task = tm.get(tid)
 
     try:
         parsed_upload_data = [
@@ -130,7 +120,7 @@ def do_upload(credentials):
         bottle.abort(400, "Invalid contexts file")
 
     rm = RoundModel()
-    round = rm.getByTidAndRid(task_id, task.cur_round)
+    round = rm.getByTidAndRid(tid, rid)
     r_realid = round.id
     contexts_to_add = []
     for context_info in parsed_upload_data:

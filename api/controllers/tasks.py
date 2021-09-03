@@ -18,7 +18,7 @@ from models.dataset import Dataset
 from models.example import ExampleModel
 from models.leaderboard_configuration import LeaderboardConfigurationModel
 from models.leaderboard_snapshot import LeaderboardSnapshotModel
-from models.model import Model
+from models.model import DeploymentStatusEnum, Model, ModelModel
 from models.round import Round, RoundModel
 from models.round_user_example_info import RoundUserExampleInfoModel
 from models.score import ScoreModel
@@ -103,6 +103,7 @@ def create_round(credentials, tid):
     tm = TaskModel()
     task = tm.get(tid)
     task.cur_round += 1
+    tm.dbs.add(task)
     tm.dbs.flush()
     tm.dbs.commit()
 
@@ -125,14 +126,87 @@ def update_round(credentials, tid, rid):
 
     rm = RoundModel()
     round = rm.getByTidAndRid(tid, rid)
-    round.url = data.get("url", round.url)
-    round.longdesc = data.get("longdesc", round.longdesc)
 
+    if "model_ids" in data:
+        tm = TaskModel()
+        task = tm.get(tid)
+        endpoint_urls = []
+        for model_id in data["model_ids"]:
+            mm = ModelModel()
+            model = mm.get(model_id)
+            if not model.is_published:
+                bottle.abort(400, "Can't use an unpublished model as a target model")
+            if model.tid != tid:
+                bottle.abort(
+                    400, "Can't add a model for another task as a target model"
+                )
+
+            # TODO: store the endpoint url in the models table?
+            endpoint_url = (
+                "https://obws766r82.execute-api."
+                + task.aws_region
+                + ".amazonaws.com/predict?model="
+                + model.endpoint_name
+            )
+            endpoint_urls.append(endpoint_url)
+        if endpoint_urls == []:
+            round.url = None
+        else:
+            round.url = "|".join(endpoint_urls)
+
+    round.longdesc = data.get("longdesc", round.longdesc)
+    rm.dbs.add(round)
     rm.dbs.flush()
     rm.dbs.commit()
     logger.info("Updated round (%s)" % (round.id))
 
     return util.json_encode({"success": "ok"})
+
+
+@bottle.get("/tasks/get_model_identifiers_for_target_selection/<tid:int>")
+@_auth.requires_auth
+def get_model_identifiers_for_target_selection(credentials, tid):
+    ensure_owner_or_admin(tid, credentials["id"])
+    tm = TaskModel()
+    task = tm.get(tid)
+    mm = ModelModel()
+    models = mm.getByTid(tid)
+    rm = RoundModel()
+    rounds = rm.getByTid(tid)
+    rid_to_model_identifiers = {}
+    for round in rounds:
+        model_identifiers = []
+        for model in models:
+            if (
+                model.endpoint_name is not None
+            ):  # This if-statement is needed for models that predate dynalab
+                # TODO: store the endpoint url in the models table?
+                endpoint_url = (
+                    "https://obws766r82.execute-api."
+                    + task.aws_region
+                    + ".amazonaws.com/predict?model="
+                    + model.endpoint_name
+                )
+                is_target = False
+                if round.url is not None and endpoint_url in round.url:
+                    is_target = True
+
+                if is_target or (
+                    model.is_published
+                    and model.deployment_status == DeploymentStatusEnum.deployed
+                ):
+                    model_identifiers.append(
+                        {
+                            "model_name": model.name,
+                            "model_id": model.id,
+                            "uid": model.uid,
+                            "username": model.user.username,
+                            "is_target": is_target,
+                        }
+                    )
+        rid_to_model_identifiers[round.rid] = model_identifiers
+
+    return util.json_encode(rid_to_model_identifiers)
 
 
 @bottle.put("/tasks/toggle_owner/<tid:int>/<username>")
@@ -176,6 +250,9 @@ def update(credentials, tid):
     data = bottle.request.json
     for field in data:
         if field not in (
+            "unpublished_models_in_leaderboard",
+            "validate_non_fooling",
+            "num_matching_validations",
             "aggregation_metric",
             "model_wrong_metric_config_json",
             "instructions_md",
@@ -187,7 +264,8 @@ def update(credentials, tid):
         ):
             bottle.abort(
                 403,
-                """Can only modify aggregation_metric,
+                """Can only modify aggregation_metric, unpublished_models_in_leaderboard,
+                validate_non_fooling, num_matching_validations,
                 model_wrong_metric_config_json, instructions_md, hidden,
                 submitable, perf_metric, delta_metrics, create_endpoint""",
             )
@@ -480,34 +558,6 @@ def export_task_data(credentials, tid):
     for rid in [round.rid for round in rm.getByTid(tid)]:
         example_and_validations_dicts += get_round_data_for_export(tid, rid)
     return util.json_encode(example_and_validations_dicts)
-
-
-@bottle.put("/tasks/<tid:int>/settings")
-@_auth.requires_auth
-def update_task_settings(credentials, tid):
-    data = bottle.request.json
-
-    um = UserModel()
-    user = um.get(credentials["id"])
-    if not user.admin:
-        if (tid, "owner") not in [
-            (perm.tid, perm.type) for perm in user.task_permissions
-        ]:
-            bottle.abort(403, "Access denied")
-    tm = TaskModel()
-    task = tm.getWithRoundAndMetricMetadata(tid)
-    if not task:
-        bottle.abort(404, "Not found")
-
-    if "settings" not in data:
-        bottle.abort(400, "Missing settings data")
-    try:
-        tm.update(tid, {"settings_json": json.dumps(data["settings"])})
-
-        return util.json_encode({"success": "ok"})
-    except Exception:
-        logger.error(f"Error updating task settings {tid}: {task}")
-        bottle.abort(500, {"error": str(task)})
 
 
 def construct_user_board_response_json(query_result, total_count=0):

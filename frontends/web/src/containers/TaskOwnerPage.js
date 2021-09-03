@@ -5,720 +5,13 @@
  */
 
 import React from "react";
-import { Container, Row, Form, Col, Card, Button, Nav } from "react-bootstrap";
-import Markdown from "react-markdown";
-import { Formik } from "formik";
+import { Container, Row, Col, Nav } from "react-bootstrap";
 import UserContext from "./UserContext";
-import "./Sidebar-Layout.css";
-import "./ProfilePage.css";
-import "./ModelStatus.css";
-import DragAndDrop from "../components/DragAndDrop/DragAndDrop";
-
-const escapeRegExp = (string) => {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-};
-
-const handleContextValidation = (values) => {
-  const errors = {};
-  let allowedTaskExtension = ".jsonl";
-  const allowedExtensions = new RegExp(
-    escapeRegExp(allowedTaskExtension) + "$",
-    "i"
-  );
-
-  if (values.file && !allowedExtensions.exec(values.file.name)) {
-    errors.file =
-      "Invalid file type - Please upload in " +
-      allowedTaskExtension +
-      " format";
-  }
-  return errors;
-};
-
-const Rounds = (props) => {
-  return (
-    <Container className="mb-5 pb-5">
-      <h1 className="my-4 pt-3 text-uppercase text-center">Rounds</h1>
-      <Col>
-        {props.rounds.map((round) => (
-          <Card key={round.rid} className="my-4 pt-3">
-            <Card.Body className="mt-4">
-              <Formik
-                initialValues={{
-                  rid: round.rid,
-                  url: round.url,
-                  longdesc: round.longdesc,
-                }}
-                onSubmit={props.handleRoundUpdate}
-              >
-                {({
-                  values,
-                  errors,
-                  handleChange,
-                  handleSubmit,
-                  isSubmitting,
-                  dirty,
-                }) => (
-                  <>
-                    <form className="px-4" onSubmit={handleSubmit}>
-                      <Container>
-                        <Form.Group
-                          as={Row}
-                          controlId="round"
-                          className="py-3 my-0 border-bottom"
-                        >
-                          <Form.Label column>
-                            <b>Round</b>
-                          </Form.Label>
-                          <Col sm="8">
-                            <Form.Control
-                              plaintext
-                              disabled
-                              value={round.rid}
-                            />
-                          </Col>
-                        </Form.Group>
-                        <Form.Group
-                          as={Row}
-                          controlId="total_fooled"
-                          className="py-3 my-0 border-bottom"
-                        >
-                          <Form.Label column>
-                            <b>Total Fooling Examples</b>
-                          </Form.Label>
-                          <Col sm="8">
-                            <Form.Control
-                              plaintext
-                              disabled
-                              value={round.total_fooled}
-                            />
-                          </Col>
-                        </Form.Group>
-                        <Form.Group
-                          as={Row}
-                          controlId="total_verified_fooled"
-                          className="py-3 my-0 border-bottom"
-                        >
-                          <Form.Label column>
-                            <b>Total Verified Fooling Examples</b>
-                          </Form.Label>
-                          <Col sm="8">
-                            <Form.Control
-                              plaintext
-                              disabled
-                              value={round.total_verified_fooled}
-                            />
-                          </Col>
-                        </Form.Group>
-                        <Form.Group
-                          as={Row}
-                          controlId="total_collected"
-                          className="py-3 my-0 border-bottom"
-                        >
-                          <Form.Label column>
-                            <b>Total Collected Examples</b>
-                          </Form.Label>
-                          <Col sm="8">
-                            <Form.Control
-                              plaintext
-                              disabled
-                              value={round.total_collected}
-                            />
-                          </Col>
-                        </Form.Group>
-                        <Form.Group
-                          as={Row}
-                          controlId="url"
-                          className="py-3 my-0 border-bottom"
-                        >
-                          <Form.Label column>
-                            <b>Model URLs</b>
-                          </Form.Label>
-                          <Form.Control
-                            name="url"
-                            rows="2"
-                            as="textarea"
-                            defaultValue={values.url}
-                            onChange={handleChange}
-                          />
-                        </Form.Group>
-                        <Form.Group
-                          as={Row}
-                          controlId="longdesc"
-                          className="py-3 my-0"
-                        >
-                          <Form.Label column>
-                            <b>Round Description</b>
-                          </Form.Label>
-                          <Form.Control
-                            name="url"
-                            rows="6"
-                            as="textarea"
-                            defaultValue={values.longdesc}
-                            onChange={handleChange}
-                          />
-                          <Form.Text id="paramsHelpBlock" muted>
-                            <Markdown>
-                              The text will be rendered as
-                              [HTML](https://developer.mozilla.org/en-US/docs/Web/HTML)
-                              in the task page.
-                            </Markdown>
-                          </Form.Text>
-                        </Form.Group>
-                        <Form.Group
-                          as={Row}
-                          controlId="affiliation"
-                          className="py-3 my-0"
-                        >
-                          <Col sm="8">
-                            <small className="form-text text-muted">
-                              {errors.accept}
-                            </small>
-                          </Col>
-                        </Form.Group>
-                        <Row className="justify-content-md-center">
-                          <Col md={5} sm={12}>
-                            {dirty ? (
-                              <Button
-                                type="submit"
-                                variant="primary"
-                                className="submit-btn button-ellipse text-uppercase my-4"
-                                disabled={isSubmitting}
-                              >
-                                Save
-                              </Button>
-                            ) : null}
-                          </Col>
-                        </Row>
-                      </Container>
-                    </form>
-                  </>
-                )}
-              </Formik>
-            </Card.Body>
-          </Card>
-        ))}
-        <Card className="my-4">
-          <Card.Body>
-            <Row className="justify-content-md-center">
-              <Col md={5} sm={12}>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="submit-btn button-ellipse text-uppercase my-4"
-                  onClick={props.createRound}
-                >
-                  Create New Round
-                </Button>
-              </Col>
-            </Row>
-          </Card.Body>
-        </Card>
-      </Col>
-    </Container>
-  );
-};
-
-const Owners = (props) => {
-  return (
-    <Container className="mb-5 pb-5">
-      <h1 className="my-4 pt-3 text-uppercase text-center">Owners</h1>
-      <Col>
-        <Card>
-          <Card.Body className="mt-4">
-            <Formik
-              initialValues={{
-                owners_string: props.owners_string,
-                owner_to_toggle: null,
-              }}
-              onSubmit={props.handleOwnerUpdate}
-            >
-              {({
-                values,
-                errors,
-                handleChange,
-                handleSubmit,
-                isSubmitting,
-                dirty,
-              }) => (
-                <>
-                  <form className="px-4" onSubmit={handleSubmit}>
-                    <Container>
-                      <Form.Group
-                        as={Row}
-                        controlId="owners"
-                        className="py-3 my-0 border-bottom"
-                      >
-                        <Form.Label column>
-                          <b>Owners</b>
-                        </Form.Label>
-                        <Col sm="8">
-                          <Form.Control
-                            plaintext
-                            disabled
-                            value={values.owners_string}
-                          />
-                        </Col>
-                      </Form.Group>
-                      <Form.Group
-                        as={Row}
-                        controlId="owner_to_add"
-                        className="py-3 my-0"
-                      >
-                        <Form.Label column>
-                          <b>Add/Remove Owner</b>
-                        </Form.Label>
-                        <Col sm="8">
-                          <Form.Control
-                            name="owner_to_toggle"
-                            defaultValue={values.owner_to_toggle}
-                            onChange={handleChange}
-                          />
-                        </Col>
-                      </Form.Group>
-                      <Form.Group
-                        as={Row}
-                        controlId="affiliation"
-                        className="py-3 my-0"
-                      >
-                        <Col sm="8">
-                          <small className="form-text text-muted">
-                            {errors.accept}
-                          </small>
-                        </Col>
-                      </Form.Group>
-                      <Row className="justify-content-md-center">
-                        <Col md={5} sm={12}>
-                          {dirty ? (
-                            <Button
-                              type="submit"
-                              variant="primary"
-                              className="submit-btn button-ellipse text-uppercase my-4"
-                              disabled={isSubmitting}
-                            >
-                              Save
-                            </Button>
-                          ) : null}
-                        </Col>
-                      </Row>
-                    </Container>
-                  </form>
-                </>
-              )}
-            </Formik>
-          </Card.Body>
-        </Card>
-      </Col>
-    </Container>
-  );
-};
-
-const Metrics = (props) => {
-  return (
-    <Container className="mb-5 pb-5">
-      <h1 className="my-4 pt-3 text-uppercase text-center">Metrics</h1>
-      <Col>
-        <Card>
-          <Card.Body className="mt-4">
-            <Formik
-              initialValues={{
-                perf_metric: props.task.perf_metric,
-                delta_metrics: props.task.delta_metrics,
-                aggregation_metric: props.task.aggregation_metric,
-                model_wrong_metric_config_json:
-                  props.task.model_wrong_metric_config_json,
-              }}
-              onSubmit={props.handleTaskUpdate}
-            >
-              {({
-                values,
-                errors,
-                handleChange,
-                handleSubmit,
-                isSubmitting,
-                dirty,
-              }) => (
-                <>
-                  <form className="px-4" onSubmit={handleSubmit}>
-                    <Container>
-                      <Form.Group
-                        as={Row}
-                        controlId="perf_metric"
-                        className="py-3 my-0 border-bottom"
-                      >
-                        <Form.Label column>
-                          <b>Performance Metric</b>
-                        </Form.Label>
-                        <Col sm="8">
-                          <Form.Control
-                            as="select"
-                            onChange={handleChange}
-                            value={values.perf_metric}
-                          >
-                            {props.availableMetricNames.eval.map(
-                              (label, index) => (
-                                <option key={index} value={label}>
-                                  {label}
-                                </option>
-                              )
-                            )}
-                          </Form.Control>
-                        </Col>
-                      </Form.Group>
-                      <Form.Group
-                        as={Row}
-                        controlId="aggregation_metric"
-                        className="py-3 my-0 border-bottom"
-                      >
-                        <Form.Label column>
-                          <b>Aggregation Metric</b>
-                        </Form.Label>
-                        <Col sm="8">
-                          <Form.Control
-                            as="select"
-                            onChange={handleChange}
-                            value={values.aggregation_metric}
-                          >
-                            {props.availableMetricNames.aggregation.map(
-                              (label, index) => (
-                                <option key={index} value={label}>
-                                  {label}
-                                </option>
-                              )
-                            )}
-                          </Form.Control>
-                        </Col>
-                      </Form.Group>
-                      <Form.Group
-                        as={Row}
-                        controlId="delta_metrics"
-                        className="py-3 my-0 border-bottom"
-                      >
-                        <Form.Label column>
-                          <b>Delta Metrics</b>
-                        </Form.Label>
-                        <Col sm="8">
-                          <Form.Control
-                            name="delta_metrics"
-                            defaultValue={values.delta_metrics}
-                            onChange={handleChange}
-                          />
-                        </Col>
-                      </Form.Group>
-                      <Form.Group
-                        as={Row}
-                        controlId="model_wrong_metric_config_json"
-                        className="py-3 my-0"
-                      >
-                        <Form.Label column>
-                          <b>Model Wrong Metric Config JSON</b>
-                        </Form.Label>
-                        <Form.Control
-                          name="model_wrong_metric_config_json"
-                          defaultValue={values.model_wrong_metric_config_json}
-                          onChange={handleChange}
-                        />
-                      </Form.Group>
-                      <Form.Group
-                        as={Row}
-                        controlId="affiliation"
-                        className="py-3 my-0"
-                      >
-                        <Col sm="8">
-                          <small className="form-text text-muted">
-                            {errors.accept}
-                          </small>
-                        </Col>
-                      </Form.Group>
-                      <Row className="justify-content-md-center">
-                        <Col md={5} sm={12}>
-                          {dirty ? (
-                            <Button
-                              type="submit"
-                              variant="primary"
-                              className="submit-btn button-ellipse text-uppercase my-4"
-                              disabled={isSubmitting}
-                            >
-                              Save
-                            </Button>
-                          ) : null}
-                        </Col>
-                      </Row>
-                    </Container>
-                  </form>
-                </>
-              )}
-            </Formik>
-          </Card.Body>
-        </Card>
-      </Col>
-    </Container>
-  );
-};
-
-const Settings = (props) => {
-  return (
-    <Container className="mb-5 pb-5">
-      <h1 className="my-4 pt-3 text-uppercase text-center">Settings</h1>
-      <Col>
-        <Card>
-          <Card.Body className="mt-4">
-            <Formik
-              initialValues={{
-                annotation_config_json: props.task.annotation_config_json,
-                hidden: props.task.hidden,
-                submitable: props.task.submitable,
-                instructions_md: props.task.instructions_md,
-              }}
-              onSubmit={props.handleTaskUpdateWithActivate}
-            >
-              {({
-                values,
-                errors,
-                handleChange,
-                handleSubmit,
-                isSubmitting,
-                dirty,
-              }) => (
-                <>
-                  <form className="px-4" onSubmit={handleSubmit}>
-                    <Container>
-                      <Form.Group
-                        as={Row}
-                        controlId="hidden"
-                        className="py-3 my-0 border-bottom"
-                      >
-                        <Form.Label column>
-                          <b>Hidden</b>
-                        </Form.Label>
-                        <Col sm="8">
-                          <Form.Check
-                            checked={values.hidden}
-                            onChange={handleChange}
-                          />
-                        </Col>
-                      </Form.Group>
-                      <Form.Group
-                        as={Row}
-                        controlId="submitable"
-                        className="py-3 my-0 border-bottom"
-                      >
-                        <Form.Label column>
-                          <b>Submitable</b>
-                        </Form.Label>
-                        <Col sm="8">
-                          <Form.Check
-                            checked={values.submitable}
-                            onChange={handleChange}
-                          />
-                        </Col>
-                      </Form.Group>
-                      <Form.Group
-                        as={Row}
-                        controlId="hidden"
-                        className="py-3 my-0 border-bottom"
-                      >
-                        <Form.Label column>
-                          <b>Annotation Config JSON</b>
-                        </Form.Label>
-                        {props.task.active ? (
-                          <Form.Control
-                            plaintext
-                            disabled
-                            rows="24"
-                            as="textarea"
-                            defaultValue={values.annotation_config_json}
-                          />
-                        ) : (
-                          <Form.Control
-                            as="textarea"
-                            name="annotation_config_json"
-                            defaultValue={values.annotation_config_json}
-                            rows="24"
-                            onChange={handleChange}
-                          />
-                        )}
-                      </Form.Group>
-                      <Form.Group
-                        as={Row}
-                        controlId="instructions_md"
-                        className="py-3 my-0"
-                      >
-                        <Form.Label column>
-                          <b>Instructions MD</b>
-                        </Form.Label>
-                        <Form.Control
-                          as="textarea"
-                          name="instructions_md"
-                          defaultValue={values.instructions_md}
-                          rows="12"
-                          onChange={handleChange}
-                        />
-                        <Form.Text id="paramsHelpBlock" muted>
-                          <Markdown>
-                            The text will be rendered as
-                            [markdown](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
-                            in the create interface.
-                          </Markdown>
-                        </Form.Text>
-                      </Form.Group>
-                      <Form.Group
-                        as={Row}
-                        controlId="affiliation"
-                        className="py-3 my-0"
-                      >
-                        <Col sm="8">
-                          <small className="form-text text-muted">
-                            {errors.accept}
-                          </small>
-                        </Col>
-                      </Form.Group>
-                      <Row className="justify-content-md-center">
-                        {dirty ? (
-                          props.task.active ? (
-                            <Col md={5} sm={12}>
-                              <Button
-                                type="submit"
-                                variant="primary"
-                                className="submit-btn button-ellipse text-uppercase my-4"
-                                disabled={isSubmitting}
-                              >
-                                Save
-                              </Button>
-                            </Col>
-                          ) : (
-                            <Button
-                              type="submit"
-                              variant="danger"
-                              size="lg"
-                              className="text-uppercase my-4"
-                              disabled={isSubmitting}
-                            >
-                              Activate Task <br />{" "}
-                              <small>
-                                (WARNING: Annotation Config JSON will be fixed)
-                              </small>
-                            </Button>
-                          )
-                        ) : null}
-                      </Row>
-                    </Container>
-                  </form>
-                </>
-              )}
-            </Formik>
-          </Card.Body>
-        </Card>
-      </Col>
-    </Container>
-  );
-};
-
-const Contexts = (props) => {
-  return (
-    <Container className="mb-5 pb-5">
-      <h1 className="my-4 pt-3 text-uppercase text-center">Contexts</h1>
-      <Col>
-        <Card>
-          <Card.Body className="mt-4">
-            <Formik
-              initialValues={{
-                file: null,
-              }}
-              validate={handleContextValidation}
-              onSubmit={props.handleContextSubmit}
-            >
-              {({
-                values,
-                errors,
-                handleChange,
-                setFieldValue,
-                handleSubmit,
-                isSubmitting,
-                setValues,
-                dirty,
-              }) => (
-                <form onSubmit={handleSubmit} encType="multipart/form-data">
-                  <Container>
-                    <Form.Group>
-                      Add new contexts to the current round by uploading them
-                      here, as a jsonl where each line has three fields: <br />{" "}
-                      <br />
-                      <b>context</b>: a json-style dict with keys and values for
-                      each of the context components in your task's Annotation
-                      Config JSON.
-                      <br />
-                      <b>tag</b>: a string that associates this context with a
-                      set of other contexts <br />
-                      <b>metadata</b>: a dictionary in json format representing
-                      any other data that is useful to you <br /> <br />
-                      {values.file ? (
-                        <div className="UploadResult">
-                          <Card>
-                            <Card.Body>
-                              <Container>
-                                <Row>
-                                  <Col md={10}>{values.file.name}</Col>
-                                  <Col md={2}>
-                                    <Button
-                                      variant="outline-danger"
-                                      size="sm"
-                                      onClick={(event) => {
-                                        setFieldValue("file", null);
-                                      }}
-                                    >
-                                      Delete
-                                    </Button>
-                                  </Col>
-                                </Row>
-                              </Container>
-                            </Card.Body>
-                          </Card>
-                        </div>
-                      ) : (
-                        <DragAndDrop
-                          handleChange={(event) => {
-                            setValues({
-                              ...values,
-                              file: event.currentTarget.files[0],
-                            });
-                          }}
-                          name="file"
-                        >
-                          Drag
-                        </DragAndDrop>
-                      )}
-                      <Col sm="8">
-                        <small className="form-text text-muted">
-                          {errors.file}
-                          {errors.accept}
-                        </small>
-                      </Col>
-                    </Form.Group>
-                    <Row className="justify-content-md-center">
-                      <Col md={5} sm={12}>
-                        {values.file !== null && !errors.file ? (
-                          <Button
-                            type="submit"
-                            variant="primary"
-                            className="submit-btn button-ellipse text-uppercase my-4"
-                            disabled={isSubmitting}
-                          >
-                            Upload
-                          </Button>
-                        ) : null}
-                      </Col>
-                    </Row>
-                  </Container>
-                </form>
-              )}
-            </Formik>
-          </Card.Body>
-        </Card>
-      </Col>
-    </Container>
-  );
-};
+import Metrics from "../components/TaskOwnerPageComponents/Metrics";
+import Models from "../components/TaskOwnerPageComponents/Models";
+import Owners from "../components/TaskOwnerPageComponents/Owners";
+import Rounds from "../components/TaskOwnerPageComponents/Rounds";
+import Settings from "../components/TaskOwnerPageComponents/Settings";
 
 class TaskOwnerPage extends React.Component {
   static contextType = UserContext;
@@ -729,6 +22,7 @@ class TaskOwnerPage extends React.Component {
       rounds: null,
       owners_string: null,
       availableMetricNames: null,
+      model_identifiers_for_target_selection: null,
       loader: true,
     };
   }
@@ -738,18 +32,23 @@ class TaskOwnerPage extends React.Component {
       this.props.location.hash === "" ||
       this.props.location.hash === "#settings"
     ) {
-      this.fetchTask();
+      return this.fetchTask();
     } else if (this.props.location.hash === "#owners") {
-      this.fetchTask().then(() => this.fetchOwners());
-    } else if (this.props.location.hash === "#contexts") {
-      this.fetchTask();
+      return this.fetchTask().then(() => this.fetchOwners());
     } else if (this.props.location.hash === "#rounds") {
-      this.fetchTask().then(() => this.fetchRounds());
+      return this.fetchTask().then(() =>
+        this.fetchRounds().then(() =>
+          this.fetchModelIdentifiersForTargetSelection()
+        )
+      );
+    } else if (this.props.location.hash === "#models") {
+      return this.fetchTask().then(() =>
+        this.fetchModelIdentifiersForTargetSelection()
+      );
     } else if (this.props.location.hash === "#datasets") {
       // TODO
     } else if (this.props.location.hash === "#metrics") {
-      this.fetchTask();
-      this.fetchAvailableMetricNames();
+      return this.fetchTask().then(() => this.fetchAvailableMetricNames());
     }
   }
 
@@ -815,34 +114,55 @@ class TaskOwnerPage extends React.Component {
     );
   };
 
+  fetchModelIdentifiersForTargetSelection = (callback = () => {}) => {
+    this.context.api
+      .getModelIdentifiersForTargetSelection(this.state.task.id)
+      .then(
+        (result) => {
+          this.setState(
+            { model_identifiers_for_target_selection: result, loader: false },
+            callback
+          );
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
+  };
+
   componentDidUpdate(prevProps) {
     if (prevProps.location.hash !== this.props.location.hash) {
       this.refreshData();
     }
   }
 
-  handleContextSubmit = (
+  handleContextsSubmit = (
     values,
-    { setFieldError, setFieldValue, setSubmitting }
+    { setFieldError, setFieldValue, resetForm, setSubmitting }
   ) => {
-    const reqObj = {
-      taskId: this.state.task.id,
-      file: values.file,
+    const data = {
+      file: values.contexts_file,
     };
-    this.context.api.submitContexts(reqObj).then(
-      (result) => {
-        setSubmitting(false);
-        setFieldValue("file", null, false);
-      },
-      (error) => {
-        setSubmitting(false);
-        setFieldError(
-          "accept",
-          "File could not be submitted (" + error.error + ")"
-        );
-        console.log(error);
-      }
-    );
+
+    return this.context.api
+      .submitContexts(this.state.task.id, values.rid, data)
+      .then(
+        (result) => {
+          values.contexts_file = null;
+          resetForm({ values: values });
+          setSubmitting(false);
+        },
+        (error) => {
+          values.contexts_file = null;
+          resetForm({ values: values });
+          setFieldError(
+            "accept",
+            "File could not be submitted (" + error.error + ")"
+          );
+          setSubmitting(false);
+          console.log(error);
+        }
+      );
   };
 
   handleTaskUpdateWithActivate = (
@@ -883,6 +203,9 @@ class TaskOwnerPage extends React.Component {
 
   handleTaskUpdate = (values, { setFieldError, setSubmitting, resetForm }) => {
     const allowed = [
+      "num_matching_validations",
+      "unpublished_models_in_leaderboard",
+      "validate_non_fooling",
       "aggregation_metric",
       "model_wrong_metric_config_json",
       "instructions_md",
@@ -944,20 +267,47 @@ class TaskOwnerPage extends React.Component {
       );
   };
 
-  handleRoundUpdate = (values, { setFieldError, setSubmitting, resetForm }) => {
-    if (values.url === "") {
-      // The create interface looks for a null value to tell whethere there are
-      // no models to talk to.
-      values.url = null;
+  handleRoundUpdate = (
+    values,
+    { setFieldError, setSubmitting, setFieldValue, resetForm }
+  ) => {
+    const model_ids = [];
+
+    for (const model_identifier of values.model_identifiers) {
+      if (model_identifier.is_target) {
+        model_ids.push(model_identifier.model_id);
+      }
     }
-    this.context.api.updateRound(this.state.task.id, values.rid, values).then(
+
+    const data = {
+      model_ids: model_ids,
+      longdesc: values.longdesc,
+    };
+
+    this.context.api.updateRound(this.state.task.id, values.rid, data).then(
       () => {
-        this.fetchRounds(() => {
-          resetForm({
-            values: values,
+        if (values.contexts_file) {
+          this.handleContextsSubmit(values, {
+            setFieldError,
+            setFieldValue,
+            setSubmitting,
+            resetForm,
+          }).then(
+            this.fetchRounds(() => {
+              resetForm({
+                values: values,
+              });
+              setSubmitting(false);
+            })
+          );
+        } else {
+          this.fetchRounds(() => {
+            resetForm({
+              values: values,
+            });
+            setSubmitting(false);
           });
-          setSubmitting(false);
-        });
+        }
       },
       (error) => {
         console.log(error);
@@ -973,7 +323,7 @@ class TaskOwnerPage extends React.Component {
   createRound = () => {
     this.context.api.createRound(this.state.task.id).then(
       () => {
-        this.fetchRounds();
+        this.refreshData();
       },
       (error) => {
         console.log(error);
@@ -992,12 +342,12 @@ class TaskOwnerPage extends React.Component {
         buttonText: "Owners",
       },
       {
-        href: "#contexts",
-        buttonText: "Contexts",
-      },
-      {
         href: "#rounds",
         buttonText: "Rounds",
+      },
+      {
+        href: "#models",
+        buttonText: "Models",
       },
       {
         href: "#datasets",
@@ -1044,15 +394,21 @@ class TaskOwnerPage extends React.Component {
                 handleOwnerUpdate={this.handleOwnerUpdate}
               />
             ) : null}
-            {this.props.location.hash === "#contexts" ? (
-              <Contexts handleContextSubmit={this.handleContextSubmit} />
-            ) : null}
-            {this.props.location.hash === "#rounds" && this.state.rounds ? (
+            {this.props.location.hash === "#rounds" &&
+            this.state.rounds &&
+            this.state.model_identifiers_for_target_selection ? (
               <Rounds
                 rounds={this.state.rounds}
+                model_identifiers_for_target_selection={
+                  this.state.model_identifiers_for_target_selection
+                }
                 createRound={this.createRound}
                 handleRoundUpdate={this.handleRoundUpdate}
               />
+            ) : null}
+            {this.props.location.hash === "#models" &&
+            this.state.model_identifiers ? (
+              <Models model_identifiers={this.state.model_identifiers} />
             ) : null}
             {this.props.location.hash === "#metrics" &&
             this.state.task &&
