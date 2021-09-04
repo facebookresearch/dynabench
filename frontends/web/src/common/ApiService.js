@@ -381,7 +381,7 @@ export default class ApiService {
   }
 
   getModelResponse(modelUrl, data) {
-    data["uuid"] = "0"; // A required field for dynalab uploaded models. TODO: fix
+    data["uid"] = "0"; // A required field for dynalab uploaded models. TODO: fix
     data["insight"] = false; // TODO: an artifact of old models
     const trialAuthToken = localStorage.getItem("trial_auth_token");
     const customHeader =

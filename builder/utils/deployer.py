@@ -18,12 +18,11 @@ from dynalab_cli.utils import SetupConfigHandler
 from sagemaker.model import Model
 from sagemaker.predictor import Predictor
 
-from api.models.task import TaskModel
-from deploy_config import deploy_config
-from utils.logging import logger
-
 
 sys.path.append("../api")  # noqa
+from deploy_config import deploy_config  # isort:skip
+from models.task import TaskModel  # isort:skip
+from utils.logging import logger  # isort:skip
 
 
 class ModelDeployer:
@@ -84,12 +83,9 @@ class ModelDeployer:
     def _save_task_info_json(self, task_code):
         tm = TaskModel()
         task = tm.getByTaskCode(task_code)
-        annotation_config_json = json.loads(task.annotation_config_json)
-        task_info = {
-            "annotation_config_json": annotation_config_json,
-            "task": task_code,
-        }
-        task_info_path = os.path.join(self.root_dir, "task_info.json")
+        annotation_config = json.loads(task.annotation_config_json)
+        task_info = {"annotation_config": annotation_config, "task": task_code}
+        task_info_path = os.path.join(self.root_dir, f"{task_code}.json")
         with open(task_info_path, "w+") as f:
             f.write(json.dumps(task_info, indent=4))
 
