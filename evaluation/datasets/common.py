@@ -347,7 +347,9 @@ class BaseDataset:
         Used for fairness and robustness to compute
         unperturbed percentage on output
         """
-        pred["answer"] = pred.pop(self.task["some_new_config"]["pred_key"])
+        pred[self.task["some_new_config"]["answer_key"]] = pred.pop(
+            self.task["some_new_config"]["pred_key"]
+        )
         pred["tags"] = []
         return pred
 
@@ -363,7 +365,12 @@ class BaseDataset:
             "tags": <list of string, can be empty>
         }
         """
-        raise NotImplementedError
+
+        return {
+            "id": example["uid"],
+            "answer": example[self.task["some_new_config"]["answer_key"]],
+            "tags": example.get("tags", []),
+        }
 
     def get_pred_from_response(self, example):
         return example[self.task["some_new_config"]["pred_key"]]
