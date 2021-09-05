@@ -27,6 +27,3 @@ class NliBase(BaseDataset):
             longdesc=longdesc,
             source_url=source_url,
         )
-
-    def pred_field_converter(self, example):
-        return {"id": example["id"], "pred": example["label"]}

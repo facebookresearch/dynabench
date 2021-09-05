@@ -221,7 +221,7 @@ class BaseDataset:
         delta_metrics_dict = {}
         if job.perturb_prefix:
             targets = [
-                self.pred_to_target_converter(self.pred_field_converter(prediction))
+                self.pred_to_target_converter(prediction)
                 for prediction in self.parse_outfile_and_upload(job, original=True)
             ]
             delta_metrics_dict = self.eval(
@@ -246,10 +246,6 @@ class BaseDataset:
         target_tags_dict = {t["id"]: t["tags"] for t in target_examples}
         target_tags = [target_tags_dict[id] for id in target_ids]
 
-        predictions = [
-            self.pred_field_converter(prediction) for prediction in predictions
-        ]
-
         score_obj = {}  # score_obj keys always correspond to scores table columns
 
         if targets and perturb_prefix:  # i.e compute perturb percentage
@@ -258,7 +254,9 @@ class BaseDataset:
                 id_mapping = self.read_labels(perturb_prefix)
                 id_mapping = {m["id"]: m["input_id"] for m in id_mapping}
                 for p in predictions:
-                    predictions_dict[id_mapping[p["id"]]].append(p["pred"])
+                    predictions_dict[id_mapping[p["id"]]].append(
+                        self.get_pred_from_response(p)
+                    )
                 predictions = [predictions_dict[id] for id in target_ids]
             except KeyError as ex:
                 logger.exception(f"Prediction and target file example mismatch: {ex}")
@@ -275,7 +273,7 @@ class BaseDataset:
 
         else:  # compute normal eval metrics
             # validate alignment of prediction and target labels
-            predictions = {p["id"]: p["pred"] for p in predictions}
+            predictions = {p["id"]: self.get_pred_from_response(p) for p in predictions}
             try:
                 predictions = [predictions[id] for id in target_ids]
                 assert len(predictions) == len(target_labels)
@@ -349,7 +347,7 @@ class BaseDataset:
         Used for fairness and robustness to compute
         unperturbed percentage on output
         """
-        pred["answer"] = pred.pop("pred")
+        pred["answer"] = pred.pop(self.task["some_new_config"]["pred_key"])
         pred["tags"] = []
         return pred
 
@@ -367,15 +365,5 @@ class BaseDataset:
         """
         raise NotImplementedError
 
-    def pred_field_converter(self, example):
-        """
-        Convert the prediction to a format expected by self.eval,
-        the input follows the format of required handler output defined in Dynalab,
-        hence this function should normally be implemented on task level,
-        and the output should have the following keys
-        {
-            "id": <a unique identifier>,
-            "pred": <the prediction that will be used to calculate metrics>,
-        }
-        """
-        raise NotImplementedError
+    def get_pred_from_response(self, example):
+        return example[self.task["some_new_config"]["pred_key"]]

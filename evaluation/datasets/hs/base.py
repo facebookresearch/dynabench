@@ -10,6 +10,3 @@ class HsBase(BaseDataset):
         super().__init__(
             task_code="hs", name=name, round_id=round_id, access_type=access_type
         )
-
-    def pred_field_converter(self, example):
-        return {"id": example["id"], "pred": example["label"]}
