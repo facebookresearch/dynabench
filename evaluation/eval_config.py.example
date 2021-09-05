@@ -9,7 +9,7 @@ eval_config = {
     "evaluation_sqs_queue": "",
     "scheduler_status_dump": "scheduler.dump",
     "computer_status_dump": "computer.dump",
-    "max_submission": 20
+    "max_submission": 20,
     "eval_server_id": "default",
     "compute_metric_processes": 4,
 }

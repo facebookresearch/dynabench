@@ -6,7 +6,6 @@ import json
 import logging
 import os
 import tempfile
-from abc import ABC, abstractmethod
 
 import boto3
 
@@ -27,14 +26,14 @@ from utils.helpers import (
 logger = logging.getLogger("datasets")
 
 
-class BaseDataset(ABC):
+class BaseDataset:
     def __init__(
         self,
         task_code,
-        name,
         round_id,
-        access_type=AccessTypeEnum.scoring,
+        name,
         config=eval_config,
+        access_type=AccessTypeEnum.scoring,
         ext=".jsonl",
         longdesc=None,
         source_url=None,
@@ -56,21 +55,11 @@ class BaseDataset(ABC):
     def _ensure_model_on_s3(self):
         # Load dataset to S3 and register in db if not yet
         loaded = self.dataset_available_on_s3()
-        if not loaded:
-            logger.info(
-                f"Dataset {self.name} does not exist on S3. "
-                f"Pushing to {self.s3_url} now..."
-            )
-            loaded = self.load()
-            if loaded:
-                logger.info(f"Loaded {self.name} on S3 at {self.s3_url}")
-            else:
-                logger.exception(f"Failed to load {self.name} to S3")
-        else:
-            logger.info(f"Dataset {self.name} exists on S3 at {self.s3_url}")
-
         if loaded:
+            logger.info(f"Dataset {self.name} exists on S3 at {self.s3_url}")
             self._register_dataset_in_db_and_eval(eval_config)
+        else:
+            logger.exception(f"Dataset {self.name} does not exist on S3. ")
 
     @property
     def s3_client(self):
@@ -364,18 +353,6 @@ class BaseDataset(ABC):
         pred["tags"] = []
         return pred
 
-    @abstractmethod
-    def load(self) -> bool:
-        """
-        This function loads the full dataset, including both input keys and labels keys,
-        to s3 and return True if succcessful. Implemented on dataset level.
-        The input keys must be consistent with the task i/o,
-        the label keys will be consistent with those in self.label_field_converter,
-        i.e. you can think of this function as a input_field_converter + send to S3
-        """
-        raise NotImplementedError
-
-    @abstractmethod
     def label_field_converter(self, example):
         """
         Convert the example to a format expected by self.eval,
@@ -390,7 +367,6 @@ class BaseDataset(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
     def pred_field_converter(self, example):
         """
         Convert the prediction to a format expected by self.eval,

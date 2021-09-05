@@ -20,37 +20,6 @@ class AhsBase(HsBase):
         self.local_path = os.path.join(rootpath, "data", "hs/ahs/final_ahs_dataset.csv")
         super().__init__(name=name, round_id=round_id, access_type=access_type)
 
-    def load(self):
-        try:
-            with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
-                for _, row in pd.read_csv(self.local_path).iterrows():
-                    if (
-                        row["round.base"] == self.round_id
-                        and row["split"] == self.split
-                    ):
-                        tmp_jl = {
-                            "uid": row["acl.id"],
-                            "context": "",
-                            "statement": row["text"],
-                            "label": {"nothate": "not-hateful", "hate": "hateful"}[
-                                row["label"]
-                            ],
-                            "tags": [row["label"]],
-                        }
-                        tmp.write(json.dumps(tmp_jl) + "\n")
-                tmp.close()
-                response = self.s3_client.upload_file(
-                    tmp.name, self.task.s3_bucket, self._get_data_s3_path()
-                )
-                os.remove(tmp.name)
-                if response:
-                    logger.info(response)
-        except Exception as ex:
-            logger.exception(f"Failed to load {self.name} to S3 due to {ex}.")
-            return False
-        else:
-            return True
-
     def label_field_converter(self, example):
         return {
             "id": example["uid"],
