@@ -18,11 +18,12 @@ from dynalab_cli.utils import SetupConfigHandler
 from sagemaker.model import Model
 from sagemaker.predictor import Predictor
 
+from deploy_config import deploy_config
+from utils.logging import logger
+
 
 sys.path.append("../api")  # noqa
-from deploy_config import deploy_config  # isort:skip
 from models.task import TaskModel  # isort:skip
-from utils.logging import logger  # isort:skip
 
 
 class ModelDeployer:
