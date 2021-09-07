@@ -9,15 +9,17 @@ import enum
 import sqlalchemy as db
 from transformers.data.metrics.squad_metrics import compute_f1
 
+from common import helpers as util
 from common.logging import logger
 
 from .base import Base, BaseModel
 from .dataset import AccessTypeEnum, DatasetModel
 from .round import Round
+from .task_user_permission import TaskUserPermission
 
 
 sys.path.append("../evaluation")  # noqa
-from metrics.metric_getters import get_task_metrics_meta  # isort:skip
+from metrics.metric_getters import get_task_metrics_meta  # isort:skip noqa
 
 
 EPSILON_PREC = 1e-4
@@ -270,6 +272,15 @@ class TaskModel(BaseModel):
         if field_name == perf_metric_field_name:
             return 4
         return 1
+
+    def getByOwnerUid(self, uid, n=5, offset=0):
+        query_res = (
+            self.dbs.query(Task)
+            .join(TaskUserPermission, (TaskUserPermission.tid == Task.id))
+            .filter(TaskUserPermission.uid == uid)
+            .filter(TaskUserPermission.type == "owner")
+        )
+        return query_res.limit(n).offset(offset * n), util.get_query_count(query_res)
 
     def getWithRoundAndMetricMetadata(self, task_id_or_code):
         try:
