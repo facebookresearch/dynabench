@@ -39,8 +39,8 @@ def load_datasets():
     }
 
     for dataset in datasets:
-        rid, tid = dataset["rid"], dataset["tid"]
-        del dataset["id"], dataset["rid"], dataset["desc"], dataset["tid"]
+        rid, tid = dataset.pop("rid"), dataset.pop("tid")
+        del dataset["id"], dataset["desc"]
         if dataset["name"] not in datasets_dict:
             datasets_dict[dataset["name"]] = BaseDataset(
                 round_id=rid, task_code=task_dict[tid]["task_code"], **dataset

@@ -50,14 +50,13 @@ class BaseDataset:
         self.source_url = source_url
         self._config = config
         self._s3_client = None
-        self._ensure_model_on_s3()
+        self._check_dataset_on_s3()
 
-    def _ensure_model_on_s3(self):
-        # Load dataset to S3 and register in db if not yet
-        loaded = self.dataset_available_on_s3()
-        if loaded:
+    def _check_dataset_on_s3(self):
+        # Datasets are now uploaded by task owners from the DynaBench UI, so we don't upload them here.
+        # We just display logs to confirm which datasets are present/absent on S3.
+        if self.dataset_available_on_s3():
             logger.info(f"Dataset {self.name} exists on S3 at {self.s3_url}")
-            self._register_dataset_in_db_and_eval(eval_config)
         else:
             logger.exception(f"Dataset {self.name} does not exist on S3. ")
 
@@ -95,28 +94,6 @@ class BaseDataset:
     def dataset_available_on_s3(self, perturb_prefix=None) -> bool:
         path = self._get_data_s3_path(perturb_prefix)
         return path_available_on_s3(self.s3_client, self.task.s3_bucket, path, path)
-
-    def _register_dataset_in_db_and_eval(self, eval_config) -> bool:
-        t = TaskModel()
-        task_id = t.getByTaskCode(self.task.task_code).id
-        d = DatasetModel()
-        if not d.getByName(self.name):  # avoid id increment for unsuccessful creation
-            if d.create(
-                name=self.name,
-                task_id=task_id,
-                rid=self.round_id,
-                access_type=self.access_type,
-                longdesc=self.longdesc,
-                source_url=self.source_url,
-            ):
-                logger.info(f"Registered {self.name} in datasets db.")
-                send_eval_request(
-                    model_id="*",
-                    dataset_name=self.name,
-                    config=eval_config,
-                    eval_server_id=self.task.eval_server_id,
-                    logger=logger,
-                )
 
     def get_output_s3_url(self, endpoint_name, raw=False, perturb_prefix=None):
         if raw:
@@ -221,7 +198,7 @@ class BaseDataset:
         delta_metrics_dict = {}
         if job.perturb_prefix:
             targets = [
-                self.pred_to_target_converter(prediction)
+                self.pred_to_target_converter(self.pred_field_converter(prediction))
                 for prediction in self.parse_outfile_and_upload(job, original=True)
             ]
             delta_metrics_dict = self.eval(
@@ -246,6 +223,10 @@ class BaseDataset:
         target_tags_dict = {t["id"]: t["tags"] for t in target_examples}
         target_tags = [target_tags_dict[id] for id in target_ids]
 
+        predictions = [
+            self.pred_field_converter(prediction) for prediction in predictions
+        ]
+
         score_obj = {}  # score_obj keys always correspond to scores table columns
 
         if targets and perturb_prefix:  # i.e compute perturb percentage
@@ -254,9 +235,7 @@ class BaseDataset:
                 id_mapping = self.read_labels(perturb_prefix)
                 id_mapping = {m["id"]: m["input_id"] for m in id_mapping}
                 for p in predictions:
-                    predictions_dict[id_mapping[p["id"]]].append(
-                        self.get_pred_from_response(p)
-                    )
+                    predictions_dict[id_mapping[p["id"]]].append(p["pred"])
                 predictions = [predictions_dict[id] for id in target_ids]
             except KeyError as ex:
                 logger.exception(f"Prediction and target file example mismatch: {ex}")
@@ -273,7 +252,7 @@ class BaseDataset:
 
         else:  # compute normal eval metrics
             # validate alignment of prediction and target labels
-            predictions = {p["id"]: self.get_pred_from_response(p) for p in predictions}
+            predictions = {p["id"]: p["pred"] for p in predictions}
             try:
                 predictions = [predictions[id] for id in target_ids]
                 assert len(predictions) == len(target_labels)
@@ -347,9 +326,7 @@ class BaseDataset:
         Used for fairness and robustness to compute
         unperturbed percentage on output
         """
-        pred[self.task["some_new_config"]["answer_key"]] = pred.pop(
-            self.task["some_new_config"]["pred_key"]
-        )
+        pred["answer"] = pred.pop("pred")
         pred["tags"] = []
         return pred
 
@@ -372,5 +349,18 @@ class BaseDataset:
             "tags": example.get("tags", []),
         }
 
-    def get_pred_from_response(self, example):
-        return example[self.task["some_new_config"]["pred_key"]]
+    def pred_field_converter(self, example):
+        """
+        Convert the prediction to a format expected by self.eval,
+        the input follows the format of required handler output defined in Dynalab,
+        hence this function should normally be implemented on task level,
+        and the output should have the following keys
+        {
+            "id": <a unique identifier>,
+            "pred": <the prediction that will be used to calculate metrics>,
+        }
+        """
+        return {
+            "id": example["id"],
+            "pred": example["model_response"][self.task["some_new_config"]["pred_key"]],
+        }
