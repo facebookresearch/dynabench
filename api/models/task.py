@@ -14,7 +14,6 @@ from common.logging import logger
 from .base import Base, BaseModel
 from .dataset import AccessTypeEnum, DatasetModel
 from .round import Round
-from .user import User
 
 
 sys.path.append("../evaluation")  # noqa
@@ -219,29 +218,6 @@ class Task(Base):
                     logger.error(name + " is improperly formatted")
                     return False
         return True
-
-
-class TaskUserPermission(Base):
-    __tablename__ = "task_user_permissions"
-    __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_general_ci"}
-
-    id = db.Column(db.Integer, primary_key=True)
-    uid = db.Column(db.Integer, db.ForeignKey("users.id"))
-    # For now, the only recognized type is 'owner'
-    type = db.Column(db.String(255))
-    tid = db.Column(db.Integer, db.ForeignKey("tasks.id"))
-
-    task = db.orm.relationship(Task, backref="task_permissions")
-    user = db.orm.relationship(User, backref="task_permissions")
-
-    def __repr__(self):
-        return f"<TaskUserPermission {self.id}>"
-
-    def to_dict(self, safe=True):
-        d = {}
-        for column in self.__table__.columns:
-            d[column.name] = getattr(self, column.name)
-        return d
 
 
 class TaskModel(BaseModel):
