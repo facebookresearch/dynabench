@@ -18,6 +18,7 @@ from models.leaderboard_snapshot import LeaderboardSnapshotModel
 from models.model import ModelModel
 from models.notification import NotificationModel
 from models.refresh_token import RefreshTokenModel
+from models.task import TaskModel
 from models.user import UserModel
 
 
@@ -289,6 +290,27 @@ def get_user_models(uid):
     except Exception as e:
         logger.exception("Could not fetch user model(s) : %s" % (e))
         bottle.abort(400, "Could not fetch user model(s)")
+
+
+@bottle.get("/users/<uid:int>/tasks")
+def get_user_tasks(uid):
+    """
+    Fetch all user-owned tasks based on user id
+    :param uid:
+    :return: Json Object
+    """
+    # check the current user and request user id are same
+    limit, offset = util.get_limit_and_offset_from_request()
+    try:
+        tm = TaskModel()
+        results, total_count = tm.getByOwnerUid(uid, n=limit, offset=offset)
+        dicts = [task_obj.to_dict() for task_obj in results]
+        if dicts:
+            return util.json_encode({"count": total_count, "data": dicts})
+        return util.json_encode({"count": 0, "data": []})
+    except Exception as e:
+        logger.exception("Could not fetch user task(s) : %s" % (e))
+        bottle.abort(400, "Could not fetch user task(s)")
 
 
 @bottle.get("/users/<uid:int>/models/<model_id:int>")

@@ -32,6 +32,7 @@ import {
   RetractionTooltip,
 } from "./UserStatTooltips.js";
 import ModelSubPage from "../components/ProfilePageComponents/ModelSubPage";
+import TaskSubPage from "../components/ProfilePageComponents/TaskSubPage";
 import ForksAndSnapshotsSubPage from "../components/ProfilePageComponents/ForksAndSnapshotsSubPage";
 
 const StatsSubPage = (props) => {
@@ -411,6 +412,10 @@ class ProfilePage extends React.Component {
         href: "#forks-and-snapshots",
         buttonText: "Forks & Snapshots",
       },
+      {
+        href: "#tasks",
+        buttonText: "Tasks",
+      },
     ];
 
     return (
@@ -617,6 +622,13 @@ class ProfilePage extends React.Component {
             {this.props.location.hash === "#forks-and-snapshots" ? (
               <ForksAndSnapshotsSubPage
                 api={this.context.api}
+                userId={this.context.api.getCredentials().id}
+              />
+            ) : null}
+            {this.props.location.hash === "#tasks" ? (
+              <TaskSubPage
+                api={this.context.api}
+                history={this.props.history}
                 userId={this.context.api.getCredentials().id}
               />
             ) : null}
