@@ -15,16 +15,15 @@ from common.logging import logger
 from .base import Base, BaseModel
 from .dataset import AccessTypeEnum, DatasetModel
 from .round import Round
-
-#
-# TODO: Uncomment after other install_defaults PR lands
-# from .task_user_permission import TaskUserPermission
 from .user import User
 
 
 sys.path.append("../evaluation")  # noqa
-from metrics.metric_getters import get_task_metrics_meta  # isort:skip
+from metrics.metric_getters import get_task_metrics_meta  # isort:skip noqa
 
+#
+# TODO: Uncomment after other install_defaults PR lands
+# from .task_user_permission import TaskUserPermission
 
 EPSILON_PREC = 1e-4
 
