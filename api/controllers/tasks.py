@@ -29,7 +29,6 @@ from models.task import (
     TaskModel,
     TaskUserPermission,
 )
-from models.task_proposal import TaskProposal
 from models.user import UserModel
 from models.validation import Validation, ValidationModel
 
@@ -362,57 +361,6 @@ def activate(credentials, tid):
     tm.update(
         tid, {"annotation_config_json": data["annotation_config_json"], "active": True}
     )
-
-    return util.json_encode({"success": "ok"})
-
-
-@bottle.post("/tasks/process_proposal")
-@_auth.requires_auth
-def process_proposal(credentials):
-
-    um = UserModel()
-    user = um.get(credentials["id"])
-    if not user.admin:
-        bottle.abort(403, "Access denied")
-
-    data = bottle.request.json
-    if not util.check_fields(data, ["tpid", "accept"]):
-        bottle.abort(400, "Missing data")
-    tm = TaskModel()
-    tp = tm.dbs.query(TaskProposal).filter(TaskProposal.id == data["tpid"]).one()
-
-    if data["accept"]:
-        t = Task(task_code=tp.task_code, name=tp.name, desc=tp.desc, cur_round=1)
-
-        t.dbs.add(t)
-        t.dbs.flush()
-        t.dbs.commit()
-        logger.info("Added task (%s)" % (t.id))
-
-        tup = TaskUserPermission(uid=tp.uid, type="owner", tid=t.id)
-        tup.dbs.add(tup)
-        tup.dbs.flush()
-        tup.dbs.commit()
-        logger.info("Added task owner")
-
-        r = Round(
-            tid=t.id,
-            rid=1,
-            secret=secrets.token_hex(),
-            url=None,
-            desc=None,
-            longdesc=None,
-        )
-
-        r.dbs.add(r)
-        r.dbs.flush()
-        r.dbs.commit()
-        logger.info("Added round (%s)" % (r.id))
-
-    TaskProposal.query.filter(TaskProposal.id == data["tpid"]).delete()
-    tm.dbs.flush()
-    tm.dbs.commit()
-    logger.info("Deleted task proposal")
 
     return util.json_encode({"success": "ok"})
 
