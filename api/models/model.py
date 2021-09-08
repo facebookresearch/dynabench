@@ -65,7 +65,6 @@ class Model(Base):
             if safe and column.name in ["secret", "user"]:
                 continue
             d[column.name] = getattr(self, column.name)
-
         return d
 
 
