@@ -572,6 +572,44 @@ export default class ApiService {
     );
   }
 
+  getModelIdentifiers(tid) {
+    return this.fetch(`${this.domain}/tasks/get_model_identifiers/${tid}`, {
+      method: "GET",
+    });
+  }
+
+  getAvailableDatasetAccessTypes() {
+    return this.fetch(`${this.domain}/datasets/get_access_types`, {
+      method: "GET",
+    });
+  }
+
+  getDatasets(tid) {
+    return this.fetch(`${this.domain}/tasks/datasets/${tid}`, {
+      method: "GET",
+    });
+  }
+
+  updateDataset(did, data) {
+    return this.fetch(`${this.domain}/datasets/update/${did}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  uploadAndCreateDataset(tid, data) {
+    const token = this.getToken();
+    const formData = new FormData();
+    formData.append("file", data.file);
+    return this.fetch(`${this.domain}/datasets/create/${tid}`, {
+      method: "POST",
+      body: formData,
+      headers: {
+        Authorization: token ? "Bearer " + token : "None",
+      },
+    });
+  }
+
   getUserTaskProposalIdentifiers() {
     return this.fetch(`${this.domain}/task_proposals/user/get_identifiers`, {
       method: "GET",

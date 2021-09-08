@@ -21,6 +21,8 @@ from models.score import ScoreModel
 from models.task import TaskModel
 from models.user import UserModel
 
+from .tasks import ensure_owner_or_admin
+
 
 @bottle.get("/models/<mid:int>")
 def get_model(mid):
@@ -38,20 +40,16 @@ def get_model_detail(credentials, mid):
     m = ModelModel()
     s = ScoreModel()
     dm = DatasetModel()
-    um = UserModel()
     try:
         query_result = m.getModelUserByMid(mid)
         model = query_result[0].to_dict()
-        user = um.get(credentials["id"])
-        is_admin = False
-        if user:
-            is_admin = user.admin
+
         # Secure to read unpublished model detail for only owner
         if (
             not query_result[0].is_published
             and query_result[0].uid != credentials["id"]
-        ) and not is_admin:
-            raise AssertionError()
+        ):
+            ensure_owner_or_admin(query_result[0].tid, credentials["id"])
         model["username"] = query_result[1].username
         model["user_id"] = query_result[1].id
         # Construct Score information based on model id

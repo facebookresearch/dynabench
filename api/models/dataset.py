@@ -35,7 +35,10 @@ class Dataset(Base):
     def to_dict(self, safe=True):
         d = {}
         for column in self.__table__.columns:
-            d[column.name] = getattr(self, column.name)
+            if column.name == "access_type" and getattr(self, column.name) is not None:
+                d[column.name] = getattr(self, column.name).name
+            else:
+                d[column.name] = getattr(self, column.name)
         return d
 
 

@@ -125,7 +125,7 @@ const Settings = (props) => {
                       </Form.Group>
                       <Form.Group
                         as={Row}
-                        controlId="hidden"
+                        controlId="annotation_config_json"
                         className="py-3 my-0 border-bottom"
                       >
                         <Form.Label column>
@@ -142,7 +142,6 @@ const Settings = (props) => {
                         ) : (
                           <Form.Control
                             as="textarea"
-                            name="annotation_config_json"
                             defaultValue={values.annotation_config_json}
                             rows="24"
                             onChange={handleChange}
@@ -159,7 +158,6 @@ const Settings = (props) => {
                         </Form.Label>
                         <Form.Control
                           as="textarea"
-                          name="instructions_md"
                           defaultValue={values.instructions_md}
                           rows="12"
                           onChange={handleChange}
@@ -172,11 +170,7 @@ const Settings = (props) => {
                           </Markdown>
                         </Form.Text>
                       </Form.Group>
-                      <Form.Group
-                        as={Row}
-                        controlId="affiliation"
-                        className="py-3 my-0"
-                      >
+                      <Form.Group as={Row} className="py-3 my-0">
                         <Col sm="8">
                           <small className="form-text text-muted">
                             {errors.accept}

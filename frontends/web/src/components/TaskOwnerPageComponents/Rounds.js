@@ -21,6 +21,14 @@ const Rounds = (props) => {
     props.rounds.map((round) => false)
   );
 
+  if (props.rounds.length !== showModelSelectRound.length) {
+    setShowModelSelectRound(props.rounds.map((round) => false));
+  }
+
+  if (props.rounds.length !== showContextUploadRound.length) {
+    setShowContextUploadRound(props.rounds.map((round) => false));
+  }
+
   const toggleIsTarget = (model_identifiers, index, setFieldValue) => {
     model_identifiers[index].is_target = !model_identifiers[index].is_target;
     setFieldValue("model_identifiers", model_identifiers);
@@ -34,6 +42,7 @@ const Rounds = (props) => {
           <Card key={round.rid} className="my-4 pt-3">
             <Card.Body className="mt-4">
               <Formik
+                enableReinitialize={true}
                 initialValues={{
                   contexts_file: null,
                   rid: round.rid,
@@ -58,7 +67,6 @@ const Rounds = (props) => {
                       <Container>
                         <Form.Group
                           as={Row}
-                          controlId="round"
                           className="py-3 my-0 border-bottom"
                         >
                           <Form.Label column>
@@ -74,7 +82,6 @@ const Rounds = (props) => {
                         </Form.Group>
                         <Form.Group
                           as={Row}
-                          controlId="total_fooled"
                           className="py-3 my-0 border-bottom"
                         >
                           <Form.Label column>
@@ -90,7 +97,6 @@ const Rounds = (props) => {
                         </Form.Group>
                         <Form.Group
                           as={Row}
-                          controlId="total_verified_fooled"
                           className="py-3 my-0 border-bottom"
                         >
                           <Form.Label column>
@@ -106,7 +112,6 @@ const Rounds = (props) => {
                         </Form.Group>
                         <Form.Group
                           as={Row}
-                          controlId="total_collected"
                           className="py-3 my-0 border-bottom"
                         >
                           <Form.Label column>
@@ -122,7 +127,6 @@ const Rounds = (props) => {
                         </Form.Group>
                         <Form.Group
                           as={Row}
-                          controlId="toggle_select_models"
                           className="py-3 my-0"
                           onClick={() =>
                             setShowModelSelectRound(
@@ -148,7 +152,7 @@ const Rounds = (props) => {
                         </Form.Group>
                         {showModelSelectRound[round.rid - 1] ? (
                           <Container>
-                            <Form.Group controlId="select_models">
+                            <Form.Group controlId="is_target">
                               {values.model_identifiers.map(
                                 (model_identifier, index) => (
                                   <Row key={model_identifier.model_id}>
@@ -168,6 +172,7 @@ const Rounds = (props) => {
                                     </Col>
                                     <Col>
                                       <Form.Check
+                                        name="is_target"
                                         checked={model_identifier.is_target}
                                         onClick={() =>
                                           toggleIsTarget(
@@ -187,7 +192,6 @@ const Rounds = (props) => {
                         ) : null}
                         <Form.Group
                           as={Row}
-                          controlId="toggle_show_context_upload"
                           className="py-3 my-0 border-top"
                           onClick={() =>
                             setShowContextUploadRound(
@@ -228,7 +232,6 @@ const Rounds = (props) => {
                             <b>Round Description</b>
                           </Form.Label>
                           <Form.Control
-                            name="url"
                             rows="6"
                             as="textarea"
                             defaultValue={values.longdesc}
@@ -242,11 +245,7 @@ const Rounds = (props) => {
                             </Markdown>
                           </Form.Text>
                         </Form.Group>
-                        <Form.Group
-                          as={Row}
-                          controlId="affiliation"
-                          className="py-3 my-0"
-                        >
+                        <Form.Group as={Row} className="py-3 my-0">
                           <Col sm="8">
                             <small className="form-text text-muted">
                               {errors.accept}

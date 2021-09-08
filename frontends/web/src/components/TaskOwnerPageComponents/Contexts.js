@@ -11,7 +11,7 @@ import DragAndDrop from "../DragAndDrop/DragAndDrop";
 const Contexts = (props) => {
   return (
     <Container>
-      <Form.Group>
+      <Form.Group controlId="contexts_file">
         Add new contexts by uploading them here, as a jsonl where each line has
         three fields: <br /> <br />
         <b>context</b>: a json-style dict with keys and values for each of the
@@ -52,7 +52,6 @@ const Contexts = (props) => {
                 contexts_file: event.currentTarget.files[0],
               });
             }}
-            name="contexts_file"
           >
             Drag
           </DragAndDrop>

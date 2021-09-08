@@ -94,7 +94,6 @@ const Metrics = (props) => {
                         </Form.Label>
                         <Col sm="8">
                           <Form.Control
-                            name="delta_metrics"
                             defaultValue={values.delta_metrics}
                             onChange={handleChange}
                           />
@@ -109,16 +108,11 @@ const Metrics = (props) => {
                           <b>Model Wrong Metric Config JSON</b>
                         </Form.Label>
                         <Form.Control
-                          name="model_wrong_metric_config_json"
                           defaultValue={values.model_wrong_metric_config_json}
                           onChange={handleChange}
                         />
                       </Form.Group>
-                      <Form.Group
-                        as={Row}
-                        controlId="affiliation"
-                        className="py-3 my-0"
-                      >
+                      <Form.Group as={Row} className="py-3 my-0">
                         <Col sm="8">
                           <small className="form-text text-muted">
                             {errors.accept}

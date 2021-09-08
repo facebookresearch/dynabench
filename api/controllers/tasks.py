@@ -14,7 +14,7 @@ import uuid
 import common.auth as _auth
 import common.helpers as util
 from common.logging import logger
-from models.dataset import Dataset
+from models.dataset import Dataset, DatasetModel
 from models.example import ExampleModel
 from models.leaderboard_configuration import LeaderboardConfigurationModel
 from models.leaderboard_snapshot import LeaderboardSnapshotModel
@@ -92,6 +92,19 @@ def get_all_rounds(credentials, tid):
         r_dicts.append(r.to_dict())
     r_dicts.sort(key=lambda r: r["rid"])
     return util.json_encode(r_dicts)
+
+
+@bottle.get("/tasks/datasets/<tid:int>")
+def get_datasets(tid):
+    dm = DatasetModel()
+    dataset_list = []
+    datasets = dm.getByTid(tid)
+    if datasets:
+        for dataset in datasets:
+            dataset_list.append(dataset.to_dict())
+
+    # Also get this model's scores?
+    return util.json_encode(dataset_list)
 
 
 @bottle.post("/tasks/create_round/<tid:int>")
@@ -207,6 +220,28 @@ def get_model_identifiers_for_target_selection(credentials, tid):
         rid_to_model_identifiers[round.rid] = model_identifiers
 
     return util.json_encode(rid_to_model_identifiers)
+
+
+@bottle.get("/tasks/get_model_identifiers/<tid:int>")
+@_auth.requires_auth
+def get_model_identifiers(credentials, tid):
+    ensure_owner_or_admin(tid, credentials["id"])
+    mm = ModelModel()
+    models = mm.getByTid(tid)
+    model_identifiers = []
+    for model in models:
+        model_identifiers.append(
+            {
+                "model_name": model.name,
+                "model_id": model.id,
+                "deployment_status": model.deployment_status.name,
+                "is_published": model.is_published,
+                "uid": model.uid,
+                "username": model.user.username,
+            }
+        )
+
+    return util.json_encode(model_identifiers)
 
 
 @bottle.put("/tasks/toggle_owner/<tid:int>/<username>")

@@ -12,6 +12,7 @@ import Models from "../components/TaskOwnerPageComponents/Models";
 import Owners from "../components/TaskOwnerPageComponents/Owners";
 import Rounds from "../components/TaskOwnerPageComponents/Rounds";
 import Settings from "../components/TaskOwnerPageComponents/Settings";
+import Datasets from "../components/TaskOwnerPageComponents/Datasets";
 
 class TaskOwnerPage extends React.Component {
   static contextType = UserContext;
@@ -23,6 +24,9 @@ class TaskOwnerPage extends React.Component {
       owners_string: null,
       availableMetricNames: null,
       model_identifiers_for_target_selection: null,
+      model_identifiers: null,
+      datasets: null,
+      availableDatasetAccessTypes: null,
       loader: true,
     };
   }
@@ -42,11 +46,11 @@ class TaskOwnerPage extends React.Component {
         )
       );
     } else if (this.props.location.hash === "#models") {
-      return this.fetchTask().then(() =>
-        this.fetchModelIdentifiersForTargetSelection()
-      );
+      return this.fetchTask().then(() => this.fetchModelIdentifiers());
     } else if (this.props.location.hash === "#datasets") {
-      // TODO
+      return this.fetchTask().then(() =>
+        this.fetchDatasets(() => this.fetchAvailableDatasetAccessTypes())
+      );
     } else if (this.props.location.hash === "#metrics") {
       return this.fetchTask().then(() => this.fetchAvailableMetricNames());
     }
@@ -100,6 +104,31 @@ class TaskOwnerPage extends React.Component {
     );
   };
 
+  fetchDatasets = (callback = () => {}) => {
+    return this.context.api.getDatasets(this.state.task.id).then(
+      (result) => {
+        this.setState({ datasets: result, loader: false }, callback);
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
+  };
+
+  fetchAvailableDatasetAccessTypes = (callback = () => {}) => {
+    return this.context.api.getAvailableDatasetAccessTypes().then(
+      (result) => {
+        this.setState(
+          { availableDatasetAccessTypes: result, loader: false },
+          callback
+        );
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
+  };
+
   fetchAvailableMetricNames = (callback = () => {}) => {
     this.context.api.getAvailableMetricNames().then(
       (result) => {
@@ -112,6 +141,41 @@ class TaskOwnerPage extends React.Component {
         console.log(error);
       }
     );
+  };
+
+  fetchModelIdentifiers = (callback = () => {}) => {
+    this.context.api.getModelIdentifiers(this.state.task.id).then(
+      (result) => {
+        this.setState({ model_identifiers: result, loader: false }, callback);
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
+  };
+
+  exportAllData = (callback = () => {}) => {
+    return this.context.api.exportData(this.state.task.id).then(
+      (result) => {
+        this.setState({ loader: false }, callback);
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
+  };
+
+  exportCurrentRoundData = (callback = () => {}) => {
+    return this.context.api
+      .exportData(this.state.task.id, this.state.task.cur_round)
+      .then(
+        (result) => {
+          this.setState({ loader: false }, callback);
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
   };
 
   fetchModelIdentifiersForTargetSelection = (callback = () => {}) => {
@@ -267,6 +331,39 @@ class TaskOwnerPage extends React.Component {
       );
   };
 
+  handleDatasetUpdate = (
+    values,
+    { setFieldError, setSubmitting, resetForm }
+  ) => {
+    const allowed = ["name", "longdesc", "rid", "source_url", "access_type"];
+
+    const data = Object.keys(values)
+      .filter((key) => allowed.includes(key))
+      .reduce((obj, key) => {
+        obj[key] = values[key];
+        return obj;
+      }, {});
+
+    this.context.api.updateDataset(values.id, data).then(
+      (result) => {
+        this.fetchDatasets(() => {
+          resetForm({
+            values: values,
+          });
+          setSubmitting(false);
+        });
+      },
+      (error) => {
+        console.log(error);
+        setFieldError(
+          "accept",
+          "Dataset could not be updated (" + error.error + ")"
+        );
+        setSubmitting(false);
+      }
+    );
+  };
+
   handleRoundUpdate = (
     values,
     { setFieldError, setSubmitting, setFieldValue, resetForm }
@@ -322,6 +419,21 @@ class TaskOwnerPage extends React.Component {
 
   createRound = () => {
     this.context.api.createRound(this.state.task.id).then(
+      () => {
+        this.refreshData();
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
+  };
+
+  handleUploadAndCreateDataset = (values) => {
+    const data = {
+      name: values.name,
+      file: values.dataset_file,
+    };
+    this.context.api.uploadAndCreateDataset(this.state.task.id, data).then(
       () => {
         this.refreshData();
       },
@@ -417,6 +529,18 @@ class TaskOwnerPage extends React.Component {
                 availableMetricNames={this.state.availableMetricNames}
                 task={this.state.task}
                 handleTaskUpdate={this.handleTaskUpdate}
+              />
+            ) : null}
+            {this.props.location.hash === "#datasets" &&
+            this.state.task &&
+            this.state.datasets &&
+            this.state.availableDatasetAccessTypes ? (
+              <Datasets
+                task={this.state.task}
+                datasets={this.state.datasets}
+                availableAccessTypes={this.state.availableDatasetAccessTypes}
+                handleDatasetUpdate={this.handleDatasetUpdate}
+                handleUploadAndCreateDataset={this.handleUploadAndCreateDataset}
               />
             ) : null}
           </Col>

@@ -33,11 +33,7 @@ const Owners = (props) => {
                 <>
                   <form className="px-4" onSubmit={handleSubmit}>
                     <Container>
-                      <Form.Group
-                        as={Row}
-                        controlId="owners"
-                        className="py-3 my-0 border-bottom"
-                      >
+                      <Form.Group as={Row} className="py-3 my-0 border-bottom">
                         <Form.Label column>
                           <b>Owners</b>
                         </Form.Label>
@@ -51,7 +47,7 @@ const Owners = (props) => {
                       </Form.Group>
                       <Form.Group
                         as={Row}
-                        controlId="owner_to_add"
+                        controlId="owner_to_toggle"
                         className="py-3 my-0"
                       >
                         <Form.Label column>
@@ -59,17 +55,12 @@ const Owners = (props) => {
                         </Form.Label>
                         <Col sm="8">
                           <Form.Control
-                            name="owner_to_toggle"
                             defaultValue={values.owner_to_toggle}
                             onChange={handleChange}
                           />
                         </Col>
                       </Form.Group>
-                      <Form.Group
-                        as={Row}
-                        controlId="affiliation"
-                        className="py-3 my-0"
-                      >
+                      <Form.Group as={Row} className="py-3 my-0">
                         <Col sm="8">
                           <small className="form-text text-muted">
                             {errors.accept}

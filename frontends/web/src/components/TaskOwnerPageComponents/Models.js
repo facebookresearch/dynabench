@@ -5,9 +5,19 @@
  */
 
 import React from "react";
-import { Container, Row, Form, Col, Card, Button } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Form,
+  Col,
+  Card,
+  Button,
+  Badge,
+} from "react-bootstrap";
 import { Formik } from "formik";
 import { Link } from "react-router-dom";
+import DeploymentStatus from "../../containers/ModelStatus";
+import "../../containers/ModelStatus.css";
 
 const Models = (props) => {
   return (
@@ -16,102 +26,55 @@ const Models = (props) => {
       <Col>
         <Card>
           <Card.Body className="mt-4">
-            <Formik
-              initialValues={{
-                model_identifiers: props.model_identifiers,
-              }}
-              onSubmit={props.handleTaskUpdateWithActivate}
-            >
-              {({
-                values,
-                errors,
-                handleChange,
-                handleSubmit,
-                isSubmitting,
-                dirty,
-              }) => (
-                <>
-                  <form className="px-4" onSubmit={handleSubmit}>
-                    <Container>
-                      <Form.Group
-                        as={Row}
-                        controlId="hidden"
-                        className="py-3 my-0 border-bottom"
+            <form className="px-4">
+              <Container>
+                <Form.Group as={Row} className="py-3 my-0 border-bottom">
+                  <Form.Label column>
+                    <b>Model</b>
+                  </Form.Label>
+                  <Form.Label column>
+                    <b>Publication Status</b>
+                  </Form.Label>
+                  <Form.Label column>
+                    <b>Deployment Status</b>
+                  </Form.Label>
+                </Form.Group>
+                {props.model_identifiers.map((model_identifier) => (
+                  <Form.Group as={Row} className="py-3 my-0 border-bottom">
+                    <Form.Label column>
+                      <Link
+                        to={`/models/${model_identifier.model_id}`}
+                        className="btn-link"
                       >
-                        <Form.Label column>
-                          <b>Model</b>
-                        </Form.Label>
-                        <Row className="align-items-center">
-                          <Col>
-                            <b>Round (check box to add model into the loop)</b>
-                          </Col>
-                        </Row>
-                      </Form.Group>
-                      {values.model_identifiers.map((model_identifier) => (
-                        <Form.Group
-                          as={Row}
-                          controlId="hidden"
-                          className="py-3 my-0 border-bottom"
-                        >
-                          <Form.Label column>
-                            <Link
-                              to={`/models/${model_identifier.model_id}`}
-                              className="btn-link"
-                            >
-                              {model_identifier.model_name}
-                            </Link>{" "}
-                            <Link
-                              to={`/users/${model_identifier.uid}#profile`}
-                              className="btn-link"
-                            >
-                              ({model_identifier.username})
-                            </Link>
-                          </Form.Label>
-                          <Row className="align-items-center">
-                            {model_identifier.is_target_for_round.map(
-                              (is_target, round_index) => (
-                                <Col>
-                                  <Form.Check
-                                    checked={is_target}
-                                    onChange={handleChange}
-                                  />
-                                  {round_index + 1}
-                                </Col>
-                              )
-                            )}
-                          </Row>
-                        </Form.Group>
-                      ))}
-                      <Form.Group
-                        as={Row}
-                        controlId="affiliation"
-                        className="py-3 my-0"
+                        {model_identifier.model_name}
+                      </Link>{" "}
+                      <Link
+                        to={`/users/${model_identifier.uid}#profile`}
+                        className="btn-link"
                       >
-                        <Col sm="8">
-                          <small className="form-text text-muted">
-                            {errors.accept}
-                          </small>
-                        </Col>
-                      </Form.Group>
-                      <Row className="justify-content-md-center">
-                        {dirty ? (
-                          <Col md={5} sm={12}>
-                            <Button
-                              type="submit"
-                              variant="primary"
-                              className="submit-btn button-ellipse text-uppercase my-4"
-                              disabled={isSubmitting}
-                            >
-                              Save
-                            </Button>
-                          </Col>
-                        ) : null}
-                      </Row>
-                    </Container>
-                  </form>
-                </>
-              )}
-            </Formik>
+                        ({model_identifier.username})
+                      </Link>
+                    </Form.Label>
+                    <Form.Label column>
+                      {model_identifier.is_published ? (
+                        <Badge variant="success" className="modelStatus">
+                          Published
+                        </Badge>
+                      ) : (
+                        <Badge variant="danger" className="modelStatus">
+                          Unpublished
+                        </Badge>
+                      )}
+                    </Form.Label>
+                    <Form.Label column>
+                      <DeploymentStatus
+                        deploymentStatus={model_identifier.deployment_status}
+                      />
+                    </Form.Label>
+                  </Form.Group>
+                ))}
+              </Container>
+            </form>
           </Card.Body>
         </Card>
       </Col>
