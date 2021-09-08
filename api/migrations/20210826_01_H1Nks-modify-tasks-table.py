@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 """
-Add a new table for task proposals and modify tasks table for task owner interface.
+Modify tasks table for task owner interface.
 """
 
 from yoyo import step
@@ -57,19 +57,4 @@ steps = [
         'placeholder', 'qa', 'sentiment', 'ucl_qa', 'vqa', 'vqa_val', 'yn')"""
     ),
     step("UPDATE tasks SET aggregation_metric='dynascore'"),
-    step(
-        """
-        CREATE TABLE task_proposals (
-            id INT NOT NULL AUTO_INCREMENT,
-            uid INT NOT NULL,
-            task_code VARCHAR(255) NOT NULL UNIQUE,
-            name VARCHAR(255) NOT NULL UNIQUE,
-            `desc` TEXT,
-
-            PRIMARY KEY (id),
-            CONSTRAINT task_proposals_uid FOREIGN KEY (uid) REFERENCES users (id)
-        )
-        """,
-        "DROP TABLE task_proposals",
-    ),
 ]
