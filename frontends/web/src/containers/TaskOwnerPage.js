@@ -27,7 +27,7 @@ class TaskOwnerPage extends React.Component {
       model_identifiers: null,
       datasets: null,
       availableDatasetAccessTypes: null,
-      loader: true,
+      dataExporting: false,
     };
   }
 
@@ -71,7 +71,7 @@ class TaskOwnerPage extends React.Component {
   fetchTask = (callback = () => {}) => {
     return this.context.api.getTask(this.props.match.params.taskCode).then(
       (result) => {
-        this.setState({ task: result, loader: false }, callback);
+        this.setState({ task: result }, callback);
       },
       (error) => {
         console.log(error);
@@ -82,10 +82,7 @@ class TaskOwnerPage extends React.Component {
   fetchOwners = (callback = () => {}) => {
     return this.context.api.getOwners(this.state.task.id).then(
       (result) => {
-        this.setState(
-          { owners_string: result.join(", "), loader: false },
-          callback
-        );
+        this.setState({ owners_string: result.join(", ") }, callback);
       },
       (error) => {
         console.log(error);
@@ -96,7 +93,7 @@ class TaskOwnerPage extends React.Component {
   fetchRounds = (callback = () => {}) => {
     return this.context.api.getRounds(this.state.task.id).then(
       (result) => {
-        this.setState({ rounds: result, loader: false }, callback);
+        this.setState({ rounds: result }, callback);
       },
       (error) => {
         console.log(error);
@@ -107,7 +104,7 @@ class TaskOwnerPage extends React.Component {
   fetchDatasets = (callback = () => {}) => {
     return this.context.api.getDatasets(this.state.task.id).then(
       (result) => {
-        this.setState({ datasets: result, loader: false }, callback);
+        this.setState({ datasets: result }, callback);
       },
       (error) => {
         console.log(error);
@@ -118,10 +115,7 @@ class TaskOwnerPage extends React.Component {
   fetchAvailableDatasetAccessTypes = (callback = () => {}) => {
     return this.context.api.getAvailableDatasetAccessTypes().then(
       (result) => {
-        this.setState(
-          { availableDatasetAccessTypes: result, loader: false },
-          callback
-        );
+        this.setState({ availableDatasetAccessTypes: result }, callback);
       },
       (error) => {
         console.log(error);
@@ -132,10 +126,7 @@ class TaskOwnerPage extends React.Component {
   fetchAvailableMetricNames = (callback = () => {}) => {
     this.context.api.getAvailableMetricNames().then(
       (result) => {
-        this.setState(
-          { availableMetricNames: result, loader: false },
-          callback
-        );
+        this.setState({ availableMetricNames: result }, callback);
       },
       (error) => {
         console.log(error);
@@ -146,7 +137,7 @@ class TaskOwnerPage extends React.Component {
   fetchModelIdentifiers = (callback = () => {}) => {
     this.context.api.getModelIdentifiers(this.state.task.id).then(
       (result) => {
-        this.setState({ model_identifiers: result, loader: false }, callback);
+        this.setState({ model_identifiers: result }, callback);
       },
       (error) => {
         console.log(error);
@@ -154,28 +145,17 @@ class TaskOwnerPage extends React.Component {
     );
   };
 
-  exportAllData = (callback = () => {}) => {
-    return this.context.api.exportData(this.state.task.id).then(
+  exportData = (rid, callback = () => {}) => {
+    this.setState({ dataExporting: true });
+    return this.context.api.exportData(this.state.task.id, rid).then(
       (result) => {
-        this.setState({ loader: false }, callback);
+        this.setState({ dataExporting: false }, callback);
       },
       (error) => {
         console.log(error);
+        this.setState({ dataExporting: false }, callback);
       }
     );
-  };
-
-  exportCurrentRoundData = (callback = () => {}) => {
-    return this.context.api
-      .exportData(this.state.task.id, this.state.task.cur_round)
-      .then(
-        (result) => {
-          this.setState({ loader: false }, callback);
-        },
-        (error) => {
-          console.log(error);
-        }
-      );
   };
 
   fetchModelIdentifiersForTargetSelection = (callback = () => {}) => {
@@ -184,7 +164,7 @@ class TaskOwnerPage extends React.Component {
       .then(
         (result) => {
           this.setState(
-            { model_identifiers_for_target_selection: result, loader: false },
+            { model_identifiers_for_target_selection: result },
             callback
           );
         },
@@ -530,6 +510,8 @@ class TaskOwnerPage extends React.Component {
                 }
                 createRound={this.createRound}
                 handleRoundUpdate={this.handleRoundUpdate}
+                exportData={this.exportData}
+                dataExporting={this.state.dataExporting}
               />
             ) : null}
             {this.props.location.hash === "#models" &&

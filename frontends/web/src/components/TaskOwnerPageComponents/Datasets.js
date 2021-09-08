@@ -5,7 +5,16 @@
  */
 
 import React from "react";
-import { Container, Row, Form, Col, Card, Button } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Form,
+  Col,
+  Card,
+  Button,
+  DropdownButton,
+  Dropdown,
+} from "react-bootstrap";
 import { Formik } from "formik";
 import DragAndDrop from "../DragAndDrop/DragAndDrop";
 
@@ -27,177 +36,6 @@ const Datasets = (props) => {
     <Container className="mb-5 pb-5">
       <h1 className="my-4 pt-3 text-uppercase text-center">Datasets</h1>
       <Col>
-        {props.datasets.map((dataset) => (
-          <Card key={dataset.id} className="my-4 pt-3">
-            <Card.Body className="mt-4">
-              <Formik
-                enableReinitialize={true}
-                initialValues={{
-                  id: dataset.id,
-                  name: dataset.name,
-                  source_url: dataset.source_url,
-                  corresponds_to_round: dataset.rid !== 0,
-                  rid: dataset.rid,
-                  access_type: dataset.access_type,
-                  longdesc: dataset.longdesc,
-                }}
-                onSubmit={props.handleDatasetUpdate}
-              >
-                {({
-                  values,
-                  errors,
-                  handleChange,
-                  setFieldValue,
-                  handleSubmit,
-                  isSubmitting,
-                  setValues,
-                  dirty,
-                }) => (
-                  <>
-                    <form className="px-4" onSubmit={handleSubmit}>
-                      <Container>
-                        <Form.Group
-                          as={Row}
-                          controlId="name"
-                          className="py-3 my-0 border-bottom"
-                        >
-                          <Form.Label column>
-                            <b>Name</b>
-                          </Form.Label>
-                          <Col sm="8">
-                            <Form.Control
-                              onChange={handleChange}
-                              defaultValue={values.name}
-                            />
-                          </Col>
-                        </Form.Group>
-                        <Form.Group
-                          as={Row}
-                          controlId="source_url"
-                          className="py-3 my-0 border-bottom"
-                        >
-                          <Form.Label column>
-                            <b>Link to Paper</b>
-                          </Form.Label>
-                          <Col sm="8">
-                            <Form.Control
-                              onChange={handleChange}
-                              defaultValue={values.source_url}
-                            />
-                          </Col>
-                        </Form.Group>
-                        <Form.Group
-                          as={Row}
-                          controlId="access_type"
-                          className="py-3 my-0 border-bottom"
-                        >
-                          <Form.Label column>
-                            <b>Access Type</b>
-                          </Form.Label>
-                          <Col sm="8">
-                            <Form.Control
-                              as="select"
-                              onChange={handleChange}
-                              value={values.access_type}
-                            >
-                              {props.availableAccessTypes.map((type, index) => (
-                                <option key={index} value={type}>
-                                  {type}
-                                </option>
-                              ))}
-                            </Form.Control>
-                          </Col>
-                        </Form.Group>
-                        <Form.Group
-                          as={Row}
-                          className="py-3 my-0 border-bottom"
-                        >
-                          <Form.Label column>
-                            <b>Corresponds to a Round</b>
-                          </Form.Label>
-                          <Col sm="8">
-                            <Form.Check
-                              checked={values.corresponds_to_round}
-                              onClick={() =>
-                                changeCorrespondsToRound(
-                                  values.corresponds_to_round,
-                                  props.task.cur_round,
-                                  setFieldValue
-                                )
-                              }
-                              onChange={handleChange}
-                            />
-                          </Col>
-                        </Form.Group>
-                        {values.corresponds_to_round ? (
-                          <Form.Group
-                            as={Row}
-                            controlId="rid"
-                            className="py-3 my-0 border-bottom"
-                          >
-                            <Form.Label column>
-                              <b>Round</b>
-                            </Form.Label>
-                            <Col sm="8">
-                              <Form.Control
-                                type="number"
-                                min={1}
-                                max={props.task.cur_round}
-                                step={1}
-                                value={
-                                  values.rid === 0
-                                    ? props.task.cur_round
-                                    : values.rid
-                                }
-                                onChange={handleChange}
-                              />
-                            </Col>
-                          </Form.Group>
-                        ) : null}
-                        <Form.Group
-                          as={Row}
-                          controlId="longdesc"
-                          className="py-3 my-0"
-                        >
-                          <Form.Label column>
-                            <b>Description</b>
-                          </Form.Label>
-                          <Form.Control
-                            rows="6"
-                            as="textarea"
-                            defaultValue={values.longdesc}
-                            onChange={handleChange}
-                          />
-                        </Form.Group>
-                        <Form.Group as={Row} className="py-3 my-0">
-                          <Col sm="8">
-                            <small className="form-text text-muted">
-                              {errors.accept}
-                            </small>
-                          </Col>
-                        </Form.Group>
-                        <Row className="justify-content-md-center">
-                          <Col md={5} sm={12}>
-                            {dirty ? (
-                              <Button
-                                type="submit"
-                                variant="primary"
-                                className="submit-btn button-ellipse text-uppercase my-4"
-                                disabled={isSubmitting}
-                              >
-                                Save
-                              </Button>
-                            ) : null}
-                          </Col>
-                        </Row>
-                      </Container>
-                    </form>
-                  </>
-                )}
-              </Formik>
-            </Card.Body>
-          </Card>
-        ))}
         <Card className="my-4">
           <Card.Body>
             <Formik
@@ -307,6 +145,182 @@ const Datasets = (props) => {
             </Formik>
           </Card.Body>
         </Card>
+        {props.datasets
+          .slice(0)
+          .reverse()
+          .map((dataset) => (
+            <Card key={dataset.id} className="my-4 pt-3">
+              <Card.Body className="mt-4">
+                <Formik
+                  enableReinitialize={true}
+                  initialValues={{
+                    id: dataset.id,
+                    name: dataset.name,
+                    source_url: dataset.source_url,
+                    corresponds_to_round: dataset.rid !== 0,
+                    rid: dataset.rid,
+                    access_type: dataset.access_type,
+                    longdesc: dataset.longdesc,
+                  }}
+                  onSubmit={props.handleDatasetUpdate}
+                >
+                  {({
+                    values,
+                    errors,
+                    handleChange,
+                    setFieldValue,
+                    handleSubmit,
+                    isSubmitting,
+                    setValues,
+                    dirty,
+                  }) => (
+                    <>
+                      <form className="px-4" onSubmit={handleSubmit}>
+                        <Container>
+                          <Form.Group
+                            as={Row}
+                            controlId="name"
+                            className="py-3 my-0 border-bottom"
+                          >
+                            <Form.Label column>
+                              <b>Name</b>
+                            </Form.Label>
+                            <Col sm="8">
+                              <Form.Control
+                                onChange={handleChange}
+                                defaultValue={values.name}
+                              />
+                            </Col>
+                          </Form.Group>
+                          <Form.Group
+                            as={Row}
+                            controlId="source_url"
+                            className="py-3 my-0 border-bottom"
+                          >
+                            <Form.Label column>
+                              <b>Link to Paper</b>
+                            </Form.Label>
+                            <Col sm="8">
+                              <Form.Control
+                                onChange={handleChange}
+                                defaultValue={values.source_url}
+                              />
+                            </Col>
+                          </Form.Group>
+                          <Form.Group
+                            as={Row}
+                            controlId="access_type"
+                            className="py-3 my-0 border-bottom"
+                          >
+                            <Form.Label column>
+                              <b>Access Type</b>
+                            </Form.Label>
+                            <Col sm="8">
+                              <Form.Control
+                                as="select"
+                                onChange={handleChange}
+                                value={values.access_type}
+                              >
+                                {props.availableAccessTypes.map(
+                                  (type, index) => (
+                                    <option key={index} value={type}>
+                                      {type}
+                                    </option>
+                                  )
+                                )}
+                              </Form.Control>
+                            </Col>
+                          </Form.Group>
+                          <Form.Group
+                            as={Row}
+                            className="py-3 my-0 border-bottom"
+                          >
+                            <Form.Label column>
+                              <b>Corresponds to a Round</b>
+                            </Form.Label>
+                            <Col sm="8">
+                              <Form.Check
+                                checked={values.corresponds_to_round}
+                                onClick={() =>
+                                  changeCorrespondsToRound(
+                                    values.corresponds_to_round,
+                                    props.task.cur_round,
+                                    setFieldValue
+                                  )
+                                }
+                                onChange={handleChange}
+                              />
+                            </Col>
+                          </Form.Group>
+                          {values.corresponds_to_round ? (
+                            <Form.Group
+                              as={Row}
+                              controlId="rid"
+                              className="py-3 my-0 border-bottom"
+                            >
+                              <Form.Label column>
+                                <b>Round</b>
+                              </Form.Label>
+                              <Col sm="8">
+                                <Form.Control
+                                  type="number"
+                                  min={1}
+                                  max={props.task.cur_round}
+                                  step={1}
+                                  value={
+                                    values.rid === 0
+                                      ? props.task.cur_round
+                                      : values.rid
+                                  }
+                                  onChange={handleChange}
+                                />
+                              </Col>
+                            </Form.Group>
+                          ) : null}
+                          <Form.Group
+                            as={Row}
+                            controlId="longdesc"
+                            className="py-3 my-0"
+                          >
+                            <Form.Label column>
+                              <b>Description</b>
+                            </Form.Label>
+                            <Form.Control
+                              rows="6"
+                              as="textarea"
+                              defaultValue={values.longdesc}
+                              onChange={handleChange}
+                            />
+                          </Form.Group>
+                          <Form.Group as={Row} className="py-3 my-0">
+                            <Col sm="8">
+                              <small className="form-text text-muted">
+                                {errors.accept}
+                              </small>
+                            </Col>
+                          </Form.Group>
+                          <Row className="justify-content-md-center">
+                            <Col md={5} sm={12}>
+                              {dirty ? (
+                                <Button
+                                  type="submit"
+                                  variant="primary"
+                                  className="submit-btn button-ellipse text-uppercase my-4"
+                                  disabled={isSubmitting}
+                                >
+                                  Save
+                                </Button>
+                              ) : null}
+                            </Col>
+                          </Row>
+                        </Container>
+                      </form>
+                    </>
+                  )}
+                </Formik>
+              </Card.Body>
+            </Card>
+          ))}
       </Col>
     </Container>
   );
