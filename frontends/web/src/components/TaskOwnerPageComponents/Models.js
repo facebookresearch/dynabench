@@ -39,8 +39,12 @@ const Models = (props) => {
                     <b>Deployment Status</b>
                   </Form.Label>
                 </Form.Group>
-                {props.model_identifiers.map((model_identifier) => (
-                  <Form.Group as={Row} className="py-3 my-0 border-bottom">
+                {props.model_identifiers.map((model_identifier, index) => (
+                  <Form.Group
+                    key={index}
+                    as={Row}
+                    className="py-3 my-0 border-bottom"
+                  >
                     <Form.Label column>
                       <Link
                         to={`/models/${model_identifier.model_id}`}

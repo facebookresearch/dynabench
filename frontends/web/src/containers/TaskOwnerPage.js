@@ -428,19 +428,33 @@ class TaskOwnerPage extends React.Component {
     );
   };
 
-  handleUploadAndCreateDataset = (values) => {
-    const data = {
-      name: values.name,
-      file: values.dataset_file,
-    };
-    this.context.api.uploadAndCreateDataset(this.state.task.id, data).then(
-      () => {
-        this.refreshData();
-      },
-      (error) => {
-        console.log(error);
-      }
-    );
+  handleUploadAndCreateDataset = (
+    values,
+    { setFieldError, setSubmitting, setFieldValue, resetForm }
+  ) => {
+    this.context.api
+      .uploadAndCreateDataset(
+        this.state.task.id,
+        values.name,
+        values.dataset_file
+      )
+      .then(
+        () => {
+          this.refreshData();
+          values.name = "";
+          values.dataset_file = null;
+          resetForm({ values: values });
+          setSubmitting(false);
+        },
+        (error) => {
+          console.log(error);
+          setFieldError(
+            "accept",
+            "Dataset cound not be added (" + error.error + ")"
+          );
+          setSubmitting(false);
+        }
+      );
   };
 
   render() {

@@ -201,10 +201,9 @@ const Datasets = (props) => {
         <Card className="my-4">
           <Card.Body>
             <Formik
-              enableReinitialize={true}
               initialValues={{
                 dataset_file: null,
-                name: null,
+                name: "",
               }}
               onSubmit={props.handleUploadAndCreateDataset}
             >
@@ -221,7 +220,22 @@ const Datasets = (props) => {
                 <>
                   <form className="px-4" onSubmit={handleSubmit}>
                     <Container>
-                      <Form.Group>
+                      <Form.Group
+                        as={Row}
+                        controlId="name"
+                        className="py-3 my-0 border-bottom"
+                      >
+                        <Form.Label column>
+                          <b>Name</b>
+                        </Form.Label>
+                        <Col sm={8}>
+                          <Form.Control
+                            value={values.name}
+                            onChange={handleChange}
+                          />
+                        </Col>
+                      </Form.Group>
+                      <Form.Group className="py-3 my-0">
                         Add a new dataset by uploading the file here, as a jsonl
                         where each line has fields that match the model inputs
                         and outputs for your task. <br /> <br />
@@ -272,7 +286,9 @@ const Datasets = (props) => {
                       </Form.Group>
                       <Row className="justify-content-md-center">
                         <Col md={5} sm={12}>
-                          {dirty ? (
+                          {dirty &&
+                          values.dataset_file &&
+                          values.name !== "" ? (
                             <Button
                               type="submit"
                               variant="primary"

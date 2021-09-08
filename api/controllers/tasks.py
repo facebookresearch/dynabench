@@ -34,13 +34,12 @@ from models.user import UserModel
 from models.validation import Validation, ValidationModel
 
 
-from metrics.metrics_config import (  # isort:skip
-    delta_metrics_config,
-    eval_metrics_config,
-)
+sys.path.append("../evaluation")  # noqa isort:skip
 
-
-sys.path.append("../evaluation")  # noqa
+from metrics.metrics_config import (  # noqa isort:skip
+    delta_metrics_config,  # noqa isort: skip
+    eval_metrics_config,  # noqa isort: skip
+)  # noqa isort: skip
 
 
 @bottle.get("/tasks/available_metric_names")

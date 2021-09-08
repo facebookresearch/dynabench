@@ -597,11 +597,11 @@ export default class ApiService {
     });
   }
 
-  uploadAndCreateDataset(tid, data) {
+  uploadAndCreateDataset(tid, name, file) {
     const token = this.getToken();
     const formData = new FormData();
-    formData.append("file", data.file);
-    return this.fetch(`${this.domain}/datasets/create/${tid}`, {
+    formData.append("file", file);
+    return this.fetch(`${this.domain}/datasets/create/${tid}/${name}`, {
       method: "POST",
       body: formData,
       headers: {
