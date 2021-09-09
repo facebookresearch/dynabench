@@ -362,5 +362,5 @@ class BaseDataset:
         """
         return {
             "id": example["id"],
-            "pred": example["model_response"][self.task["some_new_config"]["pred_key"]],
+            "pred": example[self.task["some_new_config"]["pred_key"]],
         }
