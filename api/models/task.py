@@ -9,16 +9,17 @@ import enum
 import sqlalchemy as db
 from transformers.data.metrics.squad_metrics import compute_f1
 
+from common import helpers as util
 from common.logging import logger
 
 from .base import Base, BaseModel
 from .dataset import AccessTypeEnum, DatasetModel
 from .round import Round
-from .user import User
+from .task_user_permission import TaskUserPermission
 
 
 sys.path.append("../evaluation")  # noqa
-from metrics.metric_getters import get_task_metrics_meta  # isort:skip
+from metrics.metric_getters import get_task_metrics_meta  # isort:skip noqa
 
 
 EPSILON_PREC = 1e-4
@@ -221,29 +222,6 @@ class Task(Base):
         return True
 
 
-class TaskUserPermission(Base):
-    __tablename__ = "task_user_permissions"
-    __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_general_ci"}
-
-    id = db.Column(db.Integer, primary_key=True)
-    uid = db.Column(db.Integer, db.ForeignKey("users.id"))
-    # For now, the only recognized type is 'owner'
-    type = db.Column(db.String(255))
-    tid = db.Column(db.Integer, db.ForeignKey("tasks.id"))
-
-    task = db.orm.relationship(Task, backref="task_permissions")
-    user = db.orm.relationship(User, backref="task_permissions")
-
-    def __repr__(self):
-        return f"<TaskUserPermission {self.id}>"
-
-    def to_dict(self, safe=True):
-        d = {}
-        for column in self.__table__.columns:
-            d[column.name] = getattr(self, column.name)
-        return d
-
-
 class TaskModel(BaseModel):
     def __init__(self):
         super().__init__(Task)
@@ -294,6 +272,15 @@ class TaskModel(BaseModel):
         if field_name == perf_metric_field_name:
             return 4
         return 1
+
+    def getByOwnerUid(self, uid, n=5, offset=0):
+        query_res = (
+            self.dbs.query(Task)
+            .join(TaskUserPermission, (TaskUserPermission.tid == Task.id))
+            .filter(TaskUserPermission.uid == uid)
+            .filter(TaskUserPermission.type == "owner")
+        )
+        return query_res.limit(n).offset(offset * n), util.get_query_count(query_res)
 
     def getWithRoundAndMetricMetadata(self, task_id_or_code):
         try:

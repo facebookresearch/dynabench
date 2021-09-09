@@ -362,6 +362,17 @@ export default class ApiService {
     );
   }
 
+  getUserTasks(userId, limit, offset) {
+    return this.fetch(
+      `${this.domain}/users/${userId}/tasks?limit=${limit || 10}&offset=${
+        offset || 0
+      }`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
   getUserForks(userId, limit, offset) {
     return this.fetch(
       `${this.domain}/users/${userId}/forks?limit=${limit}&offset=${offset}`,
