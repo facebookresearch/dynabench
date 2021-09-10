@@ -274,18 +274,6 @@ export default class ApiService {
     });
   }
 
-  getUserTaskProposals() {
-    return this.fetch(`${this.domain}/task_proposals/user`, {
-      method: "GET",
-    });
-  }
-
-  getAllTaskProposals() {
-    return this.fetch(`${this.domain}/task_proposals/all`, {
-      method: "GET",
-    });
-  }
-
   getRandomContext(tid, rid, tags = [], method = "min") {
     return this.fetch(
       `${
