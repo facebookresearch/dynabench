@@ -21,7 +21,8 @@ from models.model import DeploymentStatusEnum, Model, ModelModel
 from models.round import Round, RoundModel
 from models.round_user_example_info import RoundUserExampleInfoModel
 from models.score import ScoreModel
-from models.task import Task, TaskModel, TaskUserPermission
+from models.task import Task, TaskModel
+from models.task_user_permission import TaskUserPermission
 from models.user import UserModel
 from models.validation import Validation, ValidationModel
 

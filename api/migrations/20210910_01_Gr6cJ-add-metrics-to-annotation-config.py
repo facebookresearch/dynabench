@@ -14,29 +14,28 @@ __depends__ = {"20210826_01_H1Nks-modify-tasks-table"}
 steps = [
     step(
         "",
-        """UPDATE tasks SET model_wrong_metric='{"type": "exact_match",
+        """UPDATE tasks SET model_wrong_metric_config_json='{"type": "exact_match",
         "constructor_args": {"reference_names": ["label"]}}'
         WHERE shortname not in ('QA','DK_QA', 'UCL_QA', 'VQA', 'VQA-VAL')""",
     ),
     step(
         "",
-        """UPDATE tasks SET model_wrong_metric='{"type": "string_f1",
+        """UPDATE tasks SET model_wrong_metric_config_json='{"type": "string_f1",
         "constructor_args": {"threshold": 0.9, "reference_name": "answer"}}'
         WHERE shortname in ('QA','DK_QA', 'UCL_QA')""",
     ),
     step(
         "",
-        """UPDATE tasks SET model_wrong_metric='{"type": "ask_user",
+        """UPDATE tasks SET model_wrong_metric_config_json='{"type": "ask_user",
         "constructor_args": {}}' WHERE shortname in ('VQA', 'VQA-VAL')""",
     ),
     step(
-        "",
         "ALTER TABLE tasks DROP aggregation_metric",
         "ALTER TABLE tasks ADD COLUMN aggregation_metric ENUM('dynascore')",
     ),
     step(
-        "ALTER TABLE tasks DROP model_wrong_metric",
-        "ALTER TABLE tasks ADD COLUMN model_wrong_metric TEXT",
+        "ALTER TABLE tasks DROP model_wrong_metric_config_json",
+        "ALTER TABLE tasks ADD COLUMN model_wrong_metric_config_json TEXT",
     ),
     step(
         "",

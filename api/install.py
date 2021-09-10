@@ -95,7 +95,8 @@ if __name__ == "__main__":
     ##
     from models.base import DBSession as dbs
     from models.user import User
-    from models.task import Task, TaskUserPermission
+    from models.task import Task
+    from model.task_user_permission import TaskUserPermission
     from models.round import Round
     import getpass
 
@@ -115,7 +116,6 @@ if __name__ == "__main__":
         task_code="test",
         desc="Your test task",
         annotation_config_json=json.dumps({}),
-        model_wrong_metric="ask_user",
         cur_round=1,
     )
     dbs.add(t)
