@@ -416,10 +416,6 @@ class ProfilePage extends React.Component {
         href: "#tasks",
         buttonText: "Tasks",
       },
-      {
-        href: "#task_proposals",
-        buttonText: "Task Proposals",
-      },
     ];
 
     return (
