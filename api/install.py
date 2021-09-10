@@ -96,7 +96,7 @@ if __name__ == "__main__":
     from models.base import DBSession as dbs
     from models.user import User
     from models.task import Task
-    from model.task_user_permission import TaskUserPermission
+    from models.task_user_permission import TaskUserPermission
     from models.round import Round
     import getpass
 
