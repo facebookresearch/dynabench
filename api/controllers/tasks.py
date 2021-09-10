@@ -4,7 +4,6 @@
 
 import json
 import secrets
-import sys
 from urllib.parse import parse_qs, quote
 
 import bottle
@@ -22,34 +21,61 @@ from models.model import DeploymentStatusEnum, Model, ModelModel
 from models.round import Round, RoundModel
 from models.round_user_example_info import RoundUserExampleInfoModel
 from models.score import ScoreModel
-from models.task import (
-    AggregationMetricEnum,
-    ModelWrongMetricEnum,
-    Task,
-    TaskModel,
-    TaskUserPermission,
-)
+from models.task import Task, TaskModel, TaskUserPermission
+from models.task_proposal import TaskProposal
 from models.user import UserModel
 from models.validation import Validation, ValidationModel
 
 
-sys.path.append("../evaluation")  # noqa isort:skip
+@bottle.post("/tasks/process_proposal/<tpid:int>")
+@_auth.requires_auth
+def process_proposal(credentials, tpid):
 
-from metrics.metrics_config import (  # noqa isort:skip
-    delta_metrics_config,  # noqa isort: skip
-    eval_metrics_config,  # noqa isort: skip
-)  # noqa isort: skip
+    um = UserModel()
+    user = um.get(credentials["id"])
+    if not user.admin:
+        bottle.abort(403, "Access denied")
 
+    data = bottle.request.json
+    if not util.check_fields(data, ["accept"]):
+        bottle.abort(400, "Missing data")
+    tm = TaskModel()
+    tp = tm.dbs.query(TaskProposal).filter(TaskProposal.id == tpid).one()
 
-@bottle.get("/tasks/available_metric_names")
-def get_available_metric_names():
-    metric_names = {
-        "eval": list(eval_metrics_config.keys()),
-        "delta": list(delta_metrics_config.keys()),
-        "model_wrong": [enum.name for enum in ModelWrongMetricEnum],
-        "aggregation": [enum.name for enum in AggregationMetricEnum],
-    }
-    return util.json_encode(metric_names)
+    if data["accept"]:
+        t = Task(task_code=tp.task_code, name=tp.name, desc=tp.desc, cur_round=1)
+
+        t.dbs.add(t)
+        t.dbs.flush()
+        t.dbs.commit()
+        logger.info("Added task (%s)" % (t.id))
+
+        tup = TaskUserPermission(uid=tp.uid, type="owner", tid=t.id)
+        tup.dbs.add(tup)
+        tup.dbs.flush()
+        tup.dbs.commit()
+        logger.info("Added task owner")
+
+        r = Round(
+            tid=t.id,
+            rid=1,
+            secret=secrets.token_hex(),
+            url=None,
+            desc=None,
+            longdesc=None,
+        )
+
+        r.dbs.add(r)
+        r.dbs.flush()
+        r.dbs.commit()
+        logger.info("Added round (%s)" % (r.id))
+
+    tm.dbs.query(TaskProposal).filter(TaskProposal.id == tpid).delete()
+    tm.dbs.flush()
+    tm.dbs.commit()
+    logger.info("Deleted task proposal")
+
+    return util.json_encode({"success": "ok"})
 
 
 @bottle.get("/tasks/owners/<tid:int>")
@@ -286,48 +312,18 @@ def update(credentials, tid):
             "unpublished_models_in_leaderboard",
             "validate_non_fooling",
             "num_matching_validations",
-            "aggregation_metric",
-            "model_wrong_metric_config_json",
             "instructions_md",
             "hidden",
             "submitable",
-            "perf_metric",
-            "delta_metrics",
             "create_endpoint",
         ):
             bottle.abort(
                 403,
-                """Can only modify aggregation_metric, unpublished_models_in_leaderboard,
+                """Can only modify unpublished_models_in_leaderboard,
                 validate_non_fooling, num_matching_validations,
-                model_wrong_metric_config_json, instructions_md, hidden,
-                submitable, perf_metric, delta_metrics, create_endpoint""",
+                instructions_md, hidden,
+                submitable, create_endpoint""",
             )
-
-    if "model_wrong_metric_config_json" in data:
-        try:
-            Task.verify_model_wrong_metric_config(
-                json.loads(data["model_wrong_metric_config_json"])
-            )
-        except Exception as ex:
-            logger.exception("Invalid model wrong metric configuration: (%s)" % (ex))
-            bottle.abort(400, "Invalid model wrong metric configuration")
-
-    if "delta_metrics" in data:
-        try:
-            Task.verify_delta_metrics(data["delta_metrics"])
-        except Exception as ex:
-            logger.exception("Invalid delta metrics (%s)" % (ex))
-            bottle.abort(400, "Invalid delta metrics")
-
-    # update the eval metrics to match perf metric
-    if "perf_metric" in data:
-        data["eval_metrics"] = data["perf_metric"]
-
-    # TODO: If a task owner changes any of the metrics, we need to re-request
-    # evaluation for all models. But how do we handle the scenario where a task
-    # owner is changing metrics back and forth all willy nilly?
-    # A seperate re-request eval button that task owners can only run once
-    # every e.g., 3 days?
 
     tm = TaskModel()
     tm.update(tid, data)

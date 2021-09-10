@@ -115,12 +115,6 @@ export default class ApiService {
     });
   }
 
-  getAvailableMetricNames() {
-    return this.fetch(`${this.domain}/tasks/available_metric_names`, {
-      method: "GET",
-    });
-  }
-
   getAPIToken() {
     return this.fetch(`${this.domain}/authenticate/generate_api_token`, {
       method: "GET",
@@ -276,6 +270,18 @@ export default class ApiService {
 
   getTaskRound(id, rid) {
     return this.fetch(`${this.domain}/tasks/${id}/${rid}`, {
+      method: "GET",
+    });
+  }
+
+  getUserTaskProposals() {
+    return this.fetch(`${this.domain}/task_proposals/user`, {
+      method: "GET",
+    });
+  }
+
+  getAllTaskProposals() {
+    return this.fetch(`${this.domain}/task_proposals/all`, {
       method: "GET",
     });
   }
@@ -598,10 +604,12 @@ export default class ApiService {
     });
   }
 
-  uploadAndCreateDataset(tid, name, file) {
+  uploadAndCreateDataset(tid, name, files) {
     const token = this.getToken();
     const formData = new FormData();
-    formData.append("file", file);
+    for (const [name, file] of Object.entries(files)) {
+      formData.append(name, file);
+    }
     return this.fetch(`${this.domain}/datasets/create/${tid}/${name}`, {
       method: "POST",
       body: formData,

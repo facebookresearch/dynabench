@@ -20,7 +20,6 @@ from .user import User
 
 sys.path.append("../evaluation")  # noqa
 from metrics.metric_getters import get_task_metrics_meta  # isort:skip
-from metrics.metrics_config import delta_metrics_config  # isort:skip
 
 
 EPSILON_PREC = 1e-4
@@ -41,7 +40,7 @@ def exact_match(output, target, constructor_args):
     return False
 
 
-def verify_exact_match(constructor_args):
+def verify_exact_match_config(constructor_args):
     assert "reference_names" in constructor_args
     assert isinstance(constructor_args["reference_names"], list)
     for name in constructor_args["reference_names"]:
@@ -58,7 +57,7 @@ def string_f1(output, target, constructor_args):
     )
 
 
-def verify_string_f1(constructor_args):
+def verify_string_f1_config(constructor_args):
     assert "reference_name" in constructor_args
     assert isinstance(constructor_args["reference_name"], str)
 
@@ -67,7 +66,7 @@ def ask_user(output, target, constructor_args):
     return None  # The frontend is supposed to see the None and then ask the user
 
 
-def verify_ask_user(constructor_args):
+def verify_ask_user_config(constructor_args):
     pass
 
 
@@ -78,9 +77,41 @@ model_wrong_metrics = {
 }
 
 model_wrong_metric_config_verifiers = {
-    ModelWrongMetricEnum.exact_match.name: verify_exact_match,
-    ModelWrongMetricEnum.string_f1.name: verify_string_f1,
-    ModelWrongMetricEnum.ask_user.name: verify_ask_user,
+    ModelWrongMetricEnum.exact_match.name: verify_exact_match_config,
+    ModelWrongMetricEnum.string_f1.name: verify_string_f1_config,
+    ModelWrongMetricEnum.ask_user.name: verify_ask_user_config,
+}
+
+
+class AggregationMetricEnum(enum.Enum):
+    dynascore = "dynascore"
+
+
+def verify_dynascore_config(constructor_args):
+    pass
+
+
+aggregation_metric_config_verifiers = {
+    AggregationMetricEnum.dynascore.name: verify_dynascore_config
+}
+
+
+class DeltaMetricEnum(enum.Enum):
+    fairness = "fairness"
+    robustness = "robustness"
+
+
+def verify_fairness_config(constructor_args):
+    assert "perturb_fields" in constructor_args
+
+
+def verify_robustness_config(constructor_args):
+    assert "perturb_fields" in constructor_args
+
+
+delta_metric_config_verifiers = {
+    DeltaMetricEnum.fairness.name: verify_fairness_config,
+    DeltaMetricEnum.robustness.name: verify_robustness_config,
 }
 
 
@@ -92,8 +123,43 @@ class PerfMetricEnum(enum.Enum):
     bleu = "bleu"
 
 
-class AggregationMetricEnum(enum.Enum):
-    dynascore = "dynascore"
+def verify_macro_f1_config(constructor_args):
+    assert "reference_name" in constructor_args
+    # TODO: could do more verification to ensure that the type of the referenced object
+    # is a string or string selection
+
+
+def verify_squad_f1_config(constructor_args):
+    assert "reference_name" in constructor_args
+    # TODO: could do more verification to ensure that the type of the referenced object
+    # is a string or string selection
+
+
+def verify_accuracy_config(constructor_args):
+    assert "reference_name" in constructor_args
+    # TODO: could do more verification to ensure that the type of the referenced object
+    # is a string or string selection
+
+
+def verify_sp_bleu_config(constructor_args):
+    assert "reference_name" in constructor_args
+    # TODO: could do more verification to ensure that the type of the referenced object
+    # is a string or string selection
+
+
+def verify_bleu_config(constructor_args):
+    assert "reference_name" in constructor_args
+    # TODO: could do more verification to ensure that the type of the referenced object
+    # is a string or string selection
+
+
+perf_metric_config_verifiers = {
+    PerfMetricEnum.macro_f1.name: verify_macro_f1_config,
+    PerfMetricEnum.squad_f1.name: verify_squad_f1_config,
+    PerfMetricEnum.accuracy.name: verify_accuracy_config,
+    PerfMetricEnum.sp_bleu.name: verify_sp_bleu_config,
+    PerfMetricEnum.bleu.name: verify_bleu_config,
+}
 
 
 class AnnotationTypeEnum(enum.Enum):
@@ -104,12 +170,6 @@ class AnnotationTypeEnum(enum.Enum):
     multiclass_probs = "multiclass_probs"
     multiclass = "multiclass"
     target_label = "target_label"
-
-
-def verify_config_obj_base(obj):
-    assert "name" in obj
-    assert "type" in obj
-    assert "constructor_args" in obj
 
 
 def verify_image_url(obj, obj_constructor_args, name_to_constructor_args, data):
@@ -239,14 +299,7 @@ class Task(Base):
 
     name = db.Column(db.String(length=255), nullable=False, unique=True)
     annotation_config_json = db.Column(db.Text, nullable=False)
-    aggregation_metric = db.Column(
-        db.Enum(AggregationMetricEnum),
-        default=AggregationMetricEnum.dynascore,
-        nullable=False,
-    )
-    model_wrong_metric_config_json = db.Column(
-        db.Text, default='{"type": "ask_user", "constructor_args": {}}', nullable=False
-    )
+
     instructions_md = db.Column(db.Text)
 
     desc = db.Column(db.String(length=255))
@@ -268,12 +321,6 @@ class Task(Base):
 
     instance_type = db.Column(db.Text, default="ml.m5.2xlarge", nullable=False)
     instance_count = db.Column(db.Integer, default=1, nullable=False)
-    eval_metrics = db.Column(db.Text, default="accuracy", nullable=False)
-    perf_metric = db.Column(db.Text, default="accuracy", nullable=False)
-    delta_metrics = db.Column(
-        db.Text, default="", nullable=True
-    )  # typically set to "fairness|robustness", but this isn't the default
-    # because these metrics might not work for every possible task
     aws_region = db.Column(db.Text, default="us-west-1", nullable=False)
     s3_bucket = db.Column(
         db.Text, default="evaluation-us-west-1-096166425824", nullable=False
@@ -291,18 +338,7 @@ class Task(Base):
         d = {}
         for column in self.__table__.columns:
             d[column.name] = getattr(self, column.name)
-            if column.name == "aggregation_metric":
-                if getattr(self, column.name) is not None:
-                    d[column.name] = getattr(self, column.name).name
         return d
-
-    @staticmethod
-    def verify_delta_metrics(delta_metrics):
-        delta_metric_list = delta_metrics.split("|")
-        if "" in delta_metric_list:
-            delta_metric_list.remove("")
-        for delta_metric in delta_metric_list:
-            assert delta_metric in delta_metrics_config.keys()
 
     @staticmethod
     def verify_model_wrong_metric_config(model_wrong_metric_config):
@@ -313,7 +349,44 @@ class Task(Base):
         )
 
     @staticmethod
+    def verify_aggregation_metric_config(aggregation_metric_config):
+        assert "type" in aggregation_metric_config
+        assert "constructor_args" in aggregation_metric_config
+        aggregation_metric_config_verifiers[aggregation_metric_config["type"]](
+            aggregation_metric_config["constructor_args"]
+        )
+
+    @staticmethod
+    def verify_perf_metric_config(perf_metric_config):
+        assert "type" in perf_metric_config
+        assert "constructor_args" in perf_metric_config
+        perf_metric_config_verifiers[perf_metric_config["type"]](
+            perf_metric_config["constructor_args"]
+        )
+
+    @staticmethod
+    def verify_delta_metrics_config(delta_metrics_config):
+        for delta_metric_config in delta_metrics_config:
+            assert "type" in delta_metric_config
+            assert "constructor_args" in delta_metric_config
+            delta_metric_config_verifiers[delta_metric_config["type"]](
+                delta_metric_config["constructor_args"]
+            )
+
+    @staticmethod
     def verify_annotation_config(annotation_config):
+        assert "aggregation_metric" in annotation_config
+        Task.verify_aggregation_metric_config(annotation_config["aggregation_metric"])
+
+        assert "model_wrong_metric" in annotation_config
+        Task.verify_model_wrong_metric_config(annotation_config["model_wrong_metric"])
+
+        assert "perf_metric" in annotation_config
+        Task.verify_perf_metric_config(annotation_config["perf_metric"])
+
+        assert "delta_metrics" in annotation_config
+        Task.verify_delta_metrics_config(annotation_config["delta_metrics"])
+
         assert "context" in annotation_config
         assert "input" in annotation_config
         assert "output" in annotation_config
@@ -463,7 +536,9 @@ class TaskModel(BaseModel):
             r_dict = r.to_dict()
             t_dict["ordered_scoring_datasets"] = scoring_dataset_list
             t_dict["ordered_datasets"] = dataset_list
-            t_dict["perf_metric_field_name"] = t_dict["perf_metric"]
+            t_dict["perf_metric_field_name"] = json.loads(
+                t_dict["annotation_config_json"]
+            )["perf_metric"]["type"]
             # TODO: make the frontend use perf_metric instead of perf_metric_field_name?
             metrics_meta, ordered_field_names = get_task_metrics_meta(t)
             ordered_metrics = [

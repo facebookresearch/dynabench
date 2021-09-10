@@ -214,16 +214,12 @@ def evaluate_model_correctness():
 
     tm = TaskModel()
     task = tm.get(data["tid"])
-    model_wrong_metric_config = json.loads(task.model_wrong_metric_config_json)
-    model_wrong_metric = model_wrong_metrics[model_wrong_metric_config["type"]]
-    output_keys = set(
-        map(
-            lambda item: item["name"], json.loads(task.annotation_config_json)["output"]
-        )
-    )
-    input_keys = set(
-        map(lambda item: item["name"], json.loads(task.annotation_config_json)["input"])
-    )
+    annotation_config = json.loads(task.annotation_config_json)
+    model_wrong_metric = model_wrong_metrics[
+        annotation_config["model_wrong_metric"]["type"]
+    ]
+    output_keys = set(map(lambda item: item["name"], annotation_config["output"]))
+    input_keys = set(map(lambda item: item["name"], annotation_config["input"]))
     target_keys = input_keys.intersection(output_keys)
     pruned_target = {}
     pruned_output = {}
@@ -235,7 +231,9 @@ def evaluate_model_correctness():
             pruned_output[key] = value
 
     model_wrong = model_wrong_metric(
-        pruned_output, pruned_target, model_wrong_metric_config["constructor_args"]
+        pruned_output,
+        pruned_target,
+        annotation_config["model_wrong_metric"]["constructor_args"],
     )
     missing_keys = len(pruned_target.keys()) != len(target_keys) or len(
         pruned_output.keys()

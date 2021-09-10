@@ -7,7 +7,6 @@
 import React from "react";
 import { Container, Row, Col, Nav } from "react-bootstrap";
 import UserContext from "./UserContext";
-import Metrics from "../components/TaskOwnerPageComponents/Metrics";
 import Models from "../components/TaskOwnerPageComponents/Models";
 import Owners from "../components/TaskOwnerPageComponents/Owners";
 import Rounds from "../components/TaskOwnerPageComponents/Rounds";
@@ -22,7 +21,6 @@ class TaskOwnerPage extends React.Component {
       task: null,
       rounds: null,
       owners_string: null,
-      availableMetricNames: null,
       model_identifiers_for_target_selection: null,
       model_identifiers: null,
       datasets: null,
@@ -51,8 +49,6 @@ class TaskOwnerPage extends React.Component {
       return this.fetchTask().then(() =>
         this.fetchDatasets(() => this.fetchAvailableDatasetAccessTypes())
       );
-    } else if (this.props.location.hash === "#metrics") {
-      return this.fetchTask().then(() => this.fetchAvailableMetricNames());
     }
   }
 
@@ -116,17 +112,6 @@ class TaskOwnerPage extends React.Component {
     return this.context.api.getAvailableDatasetAccessTypes().then(
       (result) => {
         this.setState({ availableDatasetAccessTypes: result }, callback);
-      },
-      (error) => {
-        console.log(error);
-      }
-    );
-  };
-
-  fetchAvailableMetricNames = (callback = () => {}) => {
-    this.context.api.getAvailableMetricNames().then(
-      (result) => {
-        this.setState({ availableMetricNames: result }, callback);
       },
       (error) => {
         console.log(error);
@@ -250,13 +235,9 @@ class TaskOwnerPage extends React.Component {
       "num_matching_validations",
       "unpublished_models_in_leaderboard",
       "validate_non_fooling",
-      "aggregation_metric",
-      "model_wrong_metric_config_json",
       "instructions_md",
       "hidden",
       "submitable",
-      "perf_metric",
-      "delta_metrics",
       "create_endpoint",
     ];
 
@@ -412,17 +393,20 @@ class TaskOwnerPage extends React.Component {
     values,
     { setFieldError, setSubmitting, setFieldValue, resetForm }
   ) => {
+    const files = { file: values.file };
+    for (const config of JSON.parse(this.state.task.annotation_config_json)
+      .delta_metrics) {
+      files[config.type] = values[config.type];
+    }
     this.context.api
-      .uploadAndCreateDataset(
-        this.state.task.id,
-        values.name,
-        values.dataset_file
-      )
+      .uploadAndCreateDataset(this.state.task.id, values.name, files)
       .then(
         () => {
           this.refreshData();
           values.name = "";
-          values.dataset_file = null;
+          for (const [fname, _] of Object.entries(files)) {
+            values[fname] = null;
+          }
           resetForm({ values: values });
           setSubmitting(false);
         },
@@ -458,10 +442,6 @@ class TaskOwnerPage extends React.Component {
       {
         href: "#datasets",
         buttonText: "Datasets",
-      },
-      {
-        href: "#metrics",
-        buttonText: "Metrics",
       },
     ];
 
@@ -517,15 +497,6 @@ class TaskOwnerPage extends React.Component {
             {this.props.location.hash === "#models" &&
             this.state.model_identifiers ? (
               <Models model_identifiers={this.state.model_identifiers} />
-            ) : null}
-            {this.props.location.hash === "#metrics" &&
-            this.state.task &&
-            this.state.availableMetricNames ? (
-              <Metrics
-                availableMetricNames={this.state.availableMetricNames}
-                task={this.state.task}
-                handleTaskUpdate={this.handleTaskUpdate}
-              />
             ) : null}
             {this.props.location.hash === "#datasets" &&
             this.state.task &&

@@ -5,18 +5,44 @@
  */
 
 import React from "react";
-import {
-  Container,
-  Row,
-  Form,
-  Col,
-  Card,
-  Button,
-  DropdownButton,
-  Dropdown,
-} from "react-bootstrap";
+import { Container, Row, Form, Col, Card, Button } from "react-bootstrap";
 import { Formik } from "formik";
 import DragAndDrop from "../DragAndDrop/DragAndDrop";
+
+const FileUpload = (props) => {
+  return props.values[props.filename] ? (
+    <div className="UploadResult">
+      <Card>
+        <Card.Body>
+          <Container>
+            <Row>
+              <Col md={10}>{props.values[props.filename].name}</Col>
+              <Col md={2}>
+                <Button
+                  variant="outline-danger"
+                  size="sm"
+                  onClick={(event) => {
+                    props.setFieldValue(props.filename, null);
+                  }}
+                >
+                  Delete
+                </Button>
+              </Col>
+            </Row>
+          </Container>
+        </Card.Body>
+      </Card>
+    </div>
+  ) : (
+    <DragAndDrop
+      handleChange={(event) => {
+        props.setFieldValue(props.filename, event.currentTarget.files[0]);
+      }}
+    >
+      Drag
+    </DragAndDrop>
+  );
+};
 
 const Datasets = (props) => {
   const changeCorrespondsToRound = (
@@ -32,6 +58,13 @@ const Datasets = (props) => {
       setFieldValue("rid", 0); //0 means that the dataset does not correspond to a round.
     }
   };
+  const delta_metric_configs = JSON.parse(
+    props.task.annotation_config_json
+  ).delta_metrics;
+  const delta_files = {};
+  for (const config of delta_metric_configs) {
+    delta_files[config.type] = null;
+  }
   return (
     <Container className="mb-5 pb-5">
       <h1 className="my-4 pt-3 text-uppercase text-center">Datasets</h1>
@@ -39,10 +72,13 @@ const Datasets = (props) => {
         <Card className="my-4">
           <Card.Body>
             <Formik
-              initialValues={{
-                dataset_file: null,
-                name: "",
-              }}
+              initialValues={Object.assign(
+                {
+                  file: null,
+                  name: "",
+                },
+                delta_files
+              )}
               onSubmit={props.handleUploadAndCreateDataset}
             >
               {({
@@ -58,6 +94,13 @@ const Datasets = (props) => {
                 <>
                   <form className="px-4" onSubmit={handleSubmit}>
                     <Container>
+                      <Form.Group as={Row} className="py-3 my-0 border-bottom">
+                        <Form.Label column>
+                          Add a new dataset by uploading it here. Files should
+                          be a jsonl where each line has fields that match the
+                          model inputs and outputs for your task.
+                        </Form.Label>
+                      </Form.Group>
                       <Form.Group
                         as={Row}
                         controlId="name"
@@ -73,48 +116,32 @@ const Datasets = (props) => {
                           />
                         </Col>
                       </Form.Group>
-                      <Form.Group className="py-3 my-0">
-                        Add a new dataset by uploading the file here, as a jsonl
-                        where each line has fields that match the model inputs
-                        and outputs for your task. <br /> <br />
-                        {values.dataset_file ? (
-                          <div className="UploadResult">
-                            <Card>
-                              <Card.Body>
-                                <Container>
-                                  <Row>
-                                    <Col md={10}>
-                                      {values.dataset_file.name}
-                                    </Col>
-                                    <Col md={2}>
-                                      <Button
-                                        variant="outline-danger"
-                                        size="sm"
-                                        onClick={(event) => {
-                                          setFieldValue("dataset_file", null);
-                                        }}
-                                      >
-                                        Delete
-                                      </Button>
-                                    </Col>
-                                  </Row>
-                                </Container>
-                              </Card.Body>
-                            </Card>
-                          </div>
-                        ) : (
-                          <DragAndDrop
-                            handleChange={(event) => {
-                              setValues({
-                                ...values,
-                                dataset_file: event.currentTarget.files[0],
-                              });
-                            }}
-                          >
-                            Drag
-                          </DragAndDrop>
-                        )}
+                      <Form.Group as={Row} className="py-3 my-0">
+                        <Form.Label column>
+                          <b>File</b>
+                        </Form.Label>
+                        <Col sm={8}>
+                          <FileUpload
+                            values={values}
+                            filename={"file"}
+                            setFieldValue={setFieldValue}
+                          />
+                        </Col>
                       </Form.Group>
+                      {delta_metric_configs.map((config) => (
+                        <Form.Group as={Row} className="py-3 my-0 border-top">
+                          <Form.Label column>
+                            <b>File for {config.type}</b>
+                          </Form.Label>
+                          <Col sm={8}>
+                            <FileUpload
+                              values={values}
+                              filename={config.type}
+                              setFieldValue={setFieldValue}
+                            />
+                          </Col>
+                        </Form.Group>
+                      ))}
                       <Form.Group as={Row} className="py-3 my-0">
                         <Col sm="8">
                           <small className="form-text text-muted">
@@ -125,7 +152,10 @@ const Datasets = (props) => {
                       <Row className="justify-content-md-center">
                         <Col md={5} sm={12}>
                           {dirty &&
-                          values.dataset_file &&
+                          values.file &&
+                          !delta_metric_configs
+                            .map((config) => values[config.type])
+                            .includes(null) &&
                           values.name !== "" ? (
                             <Button
                               type="submit"
@@ -179,7 +209,6 @@ const Datasets = (props) => {
                         <Container>
                           <Form.Group
                             as={Row}
-                            controlId="name"
                             className="py-3 my-0 border-bottom"
                           >
                             <Form.Label column>
@@ -187,7 +216,8 @@ const Datasets = (props) => {
                             </Form.Label>
                             <Col sm="8">
                               <Form.Control
-                                onChange={handleChange}
+                                disabled
+                                plaintext
                                 defaultValue={values.name}
                               />
                             </Col>

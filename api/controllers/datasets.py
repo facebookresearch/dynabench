@@ -21,7 +21,7 @@ from .tasks import ensure_owner_or_admin
 
 sys.path.append("../evaluation")  # noqa isort:skip
 from eval_config import eval_config  # noqa isort:skip
-from utils.helpers import get_data_s3_path  # noqa isort:skip
+from utils.helpers import get_data_s3_path, send_eval_request  # noqa isort:skip
 
 
 @bottle.get("/datasets/get_access_types")
@@ -38,10 +38,9 @@ def update(credentials, did):
 
     data = bottle.request.json
     for field in data:
-        if field not in ("name", "longdesc", "rid", "source_url", "access_type"):
+        if field not in ("longdesc", "rid", "source_url", "access_type"):
             bottle.abort(
-                403,
-                """Can only modify name, longdesc, round, source_url, access_type""",
+                403, """Can only modify longdesc, round, source_url, access_type"""
             )
 
     dm.update(did, data)
@@ -53,52 +52,69 @@ def update(credentials, did):
 def create(credentials, tid, name):
     ensure_owner_or_admin(tid, credentials["id"])
 
-    upload = bottle.request.files.get("file")
+    dataset_upload = bottle.request.files.get("file")
 
     tm = TaskModel()
     task = tm.get(tid)
 
-    # Ensure correct format
-    try:
-        parsed_upload_data = [
-            json.loads(line) for line in upload.file.read().decode("utf-8").splitlines()
-        ]
-        for io in parsed_upload_data:
-            if not task.verify_annotation(io):
-                bottle.abort(400, "Invalid dataset file")
+    delta_dataset_uploads = []
+    delta_metric_types = [
+        config["type"]
+        for config in json.loads(task.annotation_config_json)["delta_metrics"]
+    ]
+    for delta_metric_type in delta_metric_types:
+        delta_dataset_uploads.append(
+            (bottle.request.files.get(delta_metric_type), delta_metric_type)
+        )
 
-    except Exception as ex:
-        logger.exception(ex)
-        bottle.abort(400, "Invalid dataset file")
+    uploads = [(dataset_upload, None)] + delta_dataset_uploads
+
+    parsed_uploads = []
+    # Ensure correct format
+    for upload, perturb_prefix in uploads:
+        try:
+            parsed_upload = [
+                json.loads(line)
+                for line in upload.file.read().decode("utf-8").splitlines()
+            ]
+            for io in parsed_upload:
+                if not task.verify_annotation(io):
+                    bottle.abort(400, "Invalid dataset file")
+            parsed_uploads.append((parsed_upload, perturb_prefix))
+
+        except Exception as ex:
+            logger.exception(ex)
+            bottle.abort(400, "Invalid dataset file")
 
     # Upload to s3
-    try:
-        s3_client = boto3.client(
-            "s3",
-            aws_access_key_id=eval_config["aws_access_key_id"],
-            aws_secret_access_key=eval_config["aws_secret_access_key"],
-            region_name=eval_config["aws_region"],
-        )
-        with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
-            index = 0
-            for datum in parsed_upload_data:
-                datum["uid"] = str(
-                    index
-                )  # NOTE: this means nobody can have an annotation object with the
-                # name "uid"
-                index += 1
-                tmp.write(json.dumps(datum) + "\n")
-            tmp.close()
-            response = s3_client.upload_file(
-                tmp.name,
-                task.s3_bucket,
-                get_data_s3_path(task.task_code, name + ".jsonl", None),
+    for parsed_upload, perturb_prefix in parsed_uploads:
+        try:
+            s3_client = boto3.client(
+                "s3",
+                aws_access_key_id=eval_config["aws_access_key_id"],
+                aws_secret_access_key=eval_config["aws_secret_access_key"],
+                region_name=eval_config["aws_region"],
             )
-            os.remove(tmp.name)
-            if response:
-                logger.info(response)
-    except Exception as ex:
-        logger.exception(f"Failed to load {name} to S3 due to {ex}.")
+            with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
+                index = 0
+                for datum in parsed_upload:
+                    datum["uid"] = str(
+                        index
+                    )  # NOTE: this means nobody can have an annotation object with the
+                    # name "uid"
+                    index += 1
+                    tmp.write(json.dumps(datum) + "\n")
+                tmp.close()
+                response = s3_client.upload_file(
+                    tmp.name,
+                    task.s3_bucket,
+                    get_data_s3_path(task.task_code, name + ".jsonl", perturb_prefix),
+                )
+                os.remove(tmp.name)
+                if response:
+                    logger.info(response)
+        except Exception as ex:
+            logger.exception(f"Failed to load {name} to S3 due to {ex}.")
 
     # Create an entry in the db for the dataset, or skip if one already exists.
     d = DatasetModel()
@@ -116,7 +132,14 @@ def create(credentials, tid, name):
     else:
         updated_existing_dataset = True
 
-    # TODO: re-request evaluation here?
+    # Evaluate all models
+    send_eval_request(
+        model_id="*",
+        dataset_name=name,
+        config=eval_config,
+        eval_server_id=task.eval_server_id,
+        logger=logger,
+    )
 
     return util.json_encode(
         {"success": "ok", "updated_existing_dataset": updated_existing_dataset}
