@@ -231,6 +231,9 @@ class App extends React.Component {
                           >
                             Forks &amp; Snapshots
                           </NavDropdown.Item>
+                          <NavDropdown.Item as={Link} to="/account#tasks">
+                            Tasks
+                          </NavDropdown.Item>
                           <NavDropdown.Divider />
                           <NavDropdown.Item as={Link} to="/logout">
                             Logout

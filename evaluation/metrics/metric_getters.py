@@ -58,7 +58,6 @@ def get_task_metrics_meta(task):
     ordered_metric_field_names = (
         [perf_metric_type] + instance_config["aws_metrics"] + delta_metric_types
     )
-    print(ordered_metric_field_names)
     metrics_meta = {
         metric: metrics_meta_dict.get(metric, metrics_meta_dict[perf_metric_type])(task)
         for metric in ordered_metric_field_names
