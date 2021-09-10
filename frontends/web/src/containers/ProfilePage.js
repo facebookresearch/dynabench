@@ -34,7 +34,6 @@ import {
 import ModelSubPage from "../components/ProfilePageComponents/ModelSubPage";
 import TaskSubPage from "../components/ProfilePageComponents/TaskSubPage";
 import ForksAndSnapshotsSubPage from "../components/ProfilePageComponents/ForksAndSnapshotsSubPage";
-import TaskProposals from "../components/ProfilePageComponents/TaskProposals";
 
 const StatsSubPage = (props) => {
   return (
@@ -266,8 +265,6 @@ class ProfilePage extends React.Component {
       this.fetchNotifications(0);
     } else if (this.props.location.hash === "#stats") {
       this.fetchUser();
-    } else if (this.props.location.hash === "#task-proposals") {
-      this.fetchTaskProposals();
     }
   }
 
@@ -283,20 +280,9 @@ class ProfilePage extends React.Component {
     }
   }
 
-  fetchTaskProposals = () => {
-    return this.context.api.getUserTaskProposals().then(
-      (result) => {
-        this.setState({ proposals: result, loader: false });
-      },
-      (error) => {
-        console.log(error);
-      }
-    );
-  };
-
   fetchUser = () => {
     const user = this.context.api.getCredentials();
-    return this.context.api.getUser(user.id, true).then(
+    this.context.api.getUser(user.id, true).then(
       (result) => {
         this.setState({ user: result, loader: false });
       },
@@ -648,13 +634,6 @@ class ProfilePage extends React.Component {
                 api={this.context.api}
                 history={this.props.history}
                 userId={this.context.api.getCredentials().id}
-              />
-            ) : null}
-            {this.props.location.hash === "#task-proposals" &&
-            this.state.task_proposals ? (
-              <TaskProposals
-                handleSubmitProposal={this.handleSubmitProposal}
-                proposals={this.state.task_proposals}
               />
             ) : null}
           </Col>
