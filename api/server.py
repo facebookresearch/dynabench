@@ -19,6 +19,7 @@ from common.migrator import run_migrations
 from controllers.auth import *  # noqa
 from controllers.badges import *  # noqa
 from controllers.contexts import *  # noqa
+from controllers.datasets import *  # noqa
 from controllers.endpoints import *  # noqa
 from controllers.examples import *  # noqa
 from controllers.index import *  # noqa
