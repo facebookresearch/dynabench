@@ -96,11 +96,7 @@ class ScoreModel(BaseModel):
     ):
         tm = TaskModel()
         task = tm.get(tid)
-        include_unpublished_models = False
-        if task.settings_json is not None:
-            include_unpublished_models = json.loads(task.settings_json).get(
-                "include_unpublished_models_in_dynaboard", False
-            )
+        include_unpublished_models = task.unpublished_models_in_leaderboard
 
         scores_users_datasets_models = (
             self.dbs.query(Score, User, Dataset, Model)
@@ -250,11 +246,7 @@ class ScoreModel(BaseModel):
     ):
         tm = TaskModel()
         task = tm.get(tid)
-        include_unpublished_models = False
-        if task.settings_json is not None:
-            include_unpublished_models = json.loads(task.settings_json).get(
-                "include_unpublished_models_in_dynaboard", False
-            )
+        include_unpublished_models = task.unpublished_models_in_leaderboard
 
         ordered_dids = [
             did_and_weight["did"] for did_and_weight in ordered_dids_with_weight

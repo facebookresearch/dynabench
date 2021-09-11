@@ -301,9 +301,10 @@ class CreateInterface extends React.Component {
         this.storeExampleWrapper().then(() => this.smoothlyAnimateToBottom());
         return;
       }
-      const endpoint = url.split("predict?model=")[1];
 
       // Begin hack that can be removed upon full dynalab integration
+      const endpoint = url.split("predict?model=")[1];
+
       if (
         !endpoint.startsWith("ts") &&
         (this.state.task.task_code === "hs" ||

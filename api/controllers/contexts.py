@@ -13,7 +13,8 @@ from common.logging import logger
 from models.context import Context, ContextModel
 from models.round import RoundModel
 from models.task import TaskModel
-from models.user import UserModel
+
+from .tasks import ensure_owner_or_admin
 
 
 @bottle.get("/contexts/<tid:int>/<rid:int>")
@@ -67,12 +68,8 @@ def _getContext(tid, rid, method="min", tags=None):
     elif method == "validation_failed":
         tm = TaskModel()
         task = tm.get(tid)
-        num_matching_validations = 3
-        if task.settings_json:
-            settings = json.loads(task.settings_json)
-            num_matching_validations = settings["num_matching_validations"]
         context = c.getRandomValidationFailed(
-            round.id, num_matching_validations, n=1, tags=tags
+            round.id, task.num_matching_validations, n=1, tags=tags
         )
     if not context:
         bottle.abort(500, f"No contexts available ({round.id})")
@@ -80,37 +77,22 @@ def _getContext(tid, rid, method="min", tags=None):
     return util.json_encode(context)
 
 
-@bottle.post("/contexts/upload")
+@bottle.post("/contexts/upload/<tid:int>/<rid:int>")
 @_auth.requires_auth
-def do_upload(credentials):
+def do_upload(credentials, tid, rid):
     """
     Upload a contexts file for the current round
     and save the contexts to the contexts table
     :param credentials:
     :return: success info
     """
-    u = UserModel()
-    user_id = credentials["id"]
-    user = u.get(user_id)
-    if not user:
-        logger.error("Invalid user detail for id (%s)" % (user_id))
-        bottle.abort(404, "User information not found")
 
-    task_id = bottle.request.forms.get("taskId")
-    try:
-        task_id = int(task_id)
-    except ValueError:
-        bottle.abort(404, "Valid task id not found")
-
-    if not user.admin and not (
-        (task_id, "owner") in [(perm.tid, perm.type) for perm in user.task_permissions]
-    ):
-        bottle.abort(403, "Access denied (you are not an admin or owner of this task)")
+    ensure_owner_or_admin(tid, credentials["id"])
 
     upload = bottle.request.files.get("file")
 
     tm = TaskModel()
-    task = tm.get(task_id)
+    task = tm.get(tid)
 
     try:
         parsed_upload_data = [
@@ -123,14 +105,14 @@ def do_upload(credentials):
                 or "metadata" not in context_info
                 or not task.verify_annotation(context_info["context"])
             ):
-                bottle.abort(400, "Upload valid contexts file")
+                bottle.abort(400, "Invalid contexts file")
 
     except Exception as ex:
         logger.exception(ex)
-        bottle.abort(400, "Upload valid contexts file")
+        bottle.abort(400, "Invalid contexts file")
 
     rm = RoundModel()
-    round = rm.getByTidAndRid(task_id, task.cur_round)
+    round = rm.getByTidAndRid(tid, rid)
     r_realid = round.id
     contexts_to_add = []
     for context_info in parsed_upload_data:
@@ -142,6 +124,6 @@ def do_upload(credentials):
         )
         contexts_to_add.append(c)
 
-    u.dbs.bulk_save_objects(contexts_to_add)
-    u.dbs.commit()
+    rm.dbs.bulk_save_objects(contexts_to_add)
+    rm.dbs.commit()
     return util.json_encode({"success": "ok"})

@@ -6,7 +6,7 @@ import metrics.metrics as metrics
 
 
 # all eval_metrics takes predictions and targets as input, and output a metric number
-eval_metrics_config = {
+eval_metrics_dict = {
     "accuracy": metrics.get_accuracy,
     "macro_f1": metrics.get_macro_f1,
     "squad_f1": metrics.get_squad_f1,
@@ -14,17 +14,17 @@ eval_metrics_config = {
     "sp_bleu": metrics.get_sp_bleu,
 }
 
-delta_metrics_config = {
+delta_metrics_dict = {
     "fairness": metrics.get_unperturbed_percent,
     "robustness": metrics.get_unperturbed_percent,
 }
 
-job_metrics_config = {
+job_metrics_dict = {
     "memory_utilization": metrics.get_memory_utilization,
     "examples_per_second": metrics.get_examples_per_second,
 }
 
-metrics_meta_config = {
+metrics_meta_dict = {
     "accuracy": metrics.get_accuracy_meta,
     "macro_f1": metrics.get_macro_f1_meta,
     "squad_f1": metrics.get_squad_f1_meta,

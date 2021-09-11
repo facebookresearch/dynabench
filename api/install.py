@@ -116,7 +116,6 @@ if __name__ == "__main__":
         task_code="test",
         desc="Your test task",
         annotation_config_json=json.dumps({}),
-        model_wrong_metric="ask_user",
         cur_round=1,
     )
     dbs.add(t)

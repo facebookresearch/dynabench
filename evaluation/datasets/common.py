@@ -388,7 +388,15 @@ class BaseDataset(ABC):
             "tags": <list of string, can be empty>
         }
         """
-        raise NotImplementedError
+        return {
+            "id": example["uid"],
+            "answer": example[
+                json.loads(self.task.annotation_config_json)["perf_metric"][
+                    "reference_name"
+                ]
+            ],
+            "tags": example.get("tags", []),
+        }  # NOTE: For now, the perf_metric defines the output to look for
 
     @abstractmethod
     def pred_field_converter(self, example):
@@ -402,4 +410,11 @@ class BaseDataset(ABC):
             "pred": <the prediction that will be used to calculate metrics>,
         }
         """
-        raise NotImplementedError
+        return {
+            "id": example["uid"],
+            "pred": example[
+                json.loads(self.task.annotation_config_json)["perf_metric"][
+                    "reference_name"
+                ]
+            ],
+        }  # NOTE: For now, the perf_metric defines the output to look for

@@ -1,22 +1,26 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+import json
 
 from metrics.instance_property import instance_property
-from metrics.metrics_config import (
-    delta_metrics_config,
-    eval_metrics_config,
-    job_metrics_config,
-    metrics_meta_config,
+from metrics.metrics_dicts import (
+    delta_metrics_dict,
+    eval_metrics_dict,
+    job_metrics_dict,
+    metrics_meta_dict,
 )
 
 
 def get_eval_metrics(task, predictions: list, targets: list) -> tuple:
-    eval_metrics = task.eval_metrics.split("|")
-    eval_metrics_dict = {
-        key: eval_metrics_config[key](predictions, targets) for key in eval_metrics
+    perf_metric_type = json.loads(task.annotation_config_json)["perf_metric"]["type"]
+    eval_metrics = [perf_metric_type]  # NOTE:
+    # right now, the returned eval metric scores are just the perf metric, but we
+    # could add a feature that allows for the display of multiple eval metrics
+    eval_metrics_scores = {
+        key: eval_metrics_dict[key](predictions, targets) for key in eval_metrics
     }
-    return eval_metrics_dict[task.perf_metric], eval_metrics_dict
+    return eval_metrics_scores[perf_metric_type], eval_metrics_scores
 
 
 def get_job_metrics(job, dataset) -> dict:
@@ -24,7 +28,7 @@ def get_job_metrics(job, dataset) -> dict:
         return {}
     instance_config = instance_property[dataset.task.instance_type]
     job_metrics = instance_config["aws_metrics"]
-    return {key: job_metrics_config[key](job, dataset) for key in job_metrics}
+    return {key: job_metrics_dict[key](job, dataset) for key in job_metrics}
 
 
 def get_delta_metrics(
@@ -34,26 +38,28 @@ def get_delta_metrics(
     predictions: a list of list of predictions
     targets: a list of labels
     """
-    perf_metric = eval_metrics_config[task.perf_metric]
-    delta_metrics_dict = {
-        perturb_prefix: delta_metrics_config[perturb_prefix](
+    perf_metric_type = json.loads(task.annotation_config_json)["perf_metric"]["type"]
+    perf_metric = eval_metrics_dict[perf_metric_type]
+    delta_metrics_scores = {
+        perturb_prefix: delta_metrics_dict[perturb_prefix](
             predictions, targets, perf_metric
         )
     }
-    return delta_metrics_dict
+    return delta_metrics_scores
 
 
 def get_task_metrics_meta(task):
     instance_config = instance_property[task.instance_type]
-    perf_metric = task.perf_metric
-    delta_metrics = []
-    if task.delta_metrics is not None:
-        delta_metrics = task.delta_metrics.split("|")
+    perf_metric_type = json.loads(task.annotation_config_json)["perf_metric"]["type"]
+    delta_metric_types = [
+        config["type"]
+        for config in json.loads(task.annotation_config_json)["delta_metrics"]
+    ]
     ordered_metric_field_names = (
-        [perf_metric] + instance_config["aws_metrics"] + delta_metrics
+        [perf_metric_type] + instance_config["aws_metrics"] + delta_metric_types
     )
     metrics_meta = {
-        metric: metrics_meta_config.get(metric, metrics_meta_config[perf_metric])(task)
+        metric: metrics_meta_dict.get(metric, metrics_meta_dict[perf_metric_type])(task)
         for metric in ordered_metric_field_names
     }
     return metrics_meta, ordered_metric_field_names

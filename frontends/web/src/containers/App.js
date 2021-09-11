@@ -28,6 +28,7 @@ import ModelPage from "./ModelPage";
 import ApiService from "../common/ApiService";
 import ScrollToTop from "./ScrollToTop.js";
 import CreateInterface from "../common/Annotation/CreateInterface.js";
+import TaskOwnerPage from "./TaskOwnerPage";
 import ValidateInterface from "../common/Annotation/ValidateInterface.js";
 import UpdateModelInfoInterface from "./UpdateModelInfoInterface.js";
 import GenerateAPITokenPage from "./GenerateAPITokenPage.js";
@@ -230,6 +231,9 @@ class App extends React.Component {
                           >
                             Forks &amp; Snapshots
                           </NavDropdown.Item>
+                          <NavDropdown.Item as={Link} to="/account#tasks">
+                            Tasks
+                          </NavDropdown.Item>
                           <NavDropdown.Divider />
                           <NavDropdown.Item as={Link} to="/logout">
                             Logout
@@ -313,6 +317,10 @@ class App extends React.Component {
                 />
                 <Route path="/logout" component={Logout} />
                 <Route path="/account" component={ProfilePage} />
+                <Route
+                  path="/task-owner-interface/:taskCode"
+                  component={TaskOwnerPage}
+                />
                 <Route path="/register" component={RegisterPage} />
                 <Route path="/users/:userId" component={UserPage} />
                 <Route path="/models/:modelId" component={ModelPage} />

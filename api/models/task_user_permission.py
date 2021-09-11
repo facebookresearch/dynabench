@@ -4,7 +4,9 @@
 
 import sqlalchemy as db
 
-from .base import Base
+import common.helpers as util
+
+from .base import Base, BaseModel
 from .task import Task
 from .user import User
 
@@ -30,3 +32,17 @@ class TaskUserPermission(Base):
         for column in self.__table__.columns:
             d[column.name] = getattr(self, column.name)
         return d
+
+
+class TaskUserPermissionModel(BaseModel):
+    def __init__(self):
+        super().__init__(Task)
+
+    def getByOwnerUid(self, uid, n=5, offset=0):
+        query_res = (
+            self.dbs.query(Task)
+            .join(TaskUserPermission, (TaskUserPermission.tid == Task.id))
+            .filter(TaskUserPermission.uid == uid)
+            .filter(TaskUserPermission.type == "owner")
+        )
+        return query_res.limit(n).offset(offset * n), util.get_query_count(query_res)

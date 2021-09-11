@@ -142,12 +142,11 @@ export default class ApiService {
     });
   }
 
-  submitContexts(data) {
+  submitContexts(tid, rid, data) {
     const token = this.getToken();
     const formData = new FormData();
     formData.append("file", data.file);
-    formData.append("taskId", data.taskId);
-    return this.fetch(`${this.domain}/contexts/upload`, {
+    return this.fetch(`${this.domain}/contexts/upload/${tid}/${rid}`, {
       method: "POST",
       body: formData,
       headers: {
@@ -436,6 +435,12 @@ export default class ApiService {
     });
   }
 
+  getAdminOrOwner(tid) {
+    return this.fetch(`${this.domain}/tasks/admin_or_owner/${tid}`, {
+      method: "GET",
+    });
+  }
+
   setExampleMetadata(id, metadata) {
     var obj = {};
     obj.metadata_json = JSON.stringify(metadata);
@@ -454,15 +459,6 @@ export default class ApiService {
       method: "PUT",
       body: JSON.stringify(obj),
     });
-  }
-
-  isTaskOwner(user, tid) {
-    return (
-      user.task_permissions?.filter(
-        (task_permission) =>
-          tid === task_permission.tid && "owner" === task_permission.type
-      ).length > 0
-    );
   }
 
   validateExample(id, label, mode, metadata = {}, uid = null) {
@@ -511,6 +507,100 @@ export default class ApiService {
     return this.fetch(`${this.domain}/examples/evaluate`, {
       method: "POST",
       body: JSON.stringify(obj),
+    });
+  }
+
+  updateTask(tid, data) {
+    return this.fetch(`${this.domain}/tasks/update/${tid}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  toggleOwner(tid, username) {
+    return this.fetch(`${this.domain}/tasks/toggle_owner/${tid}/${username}`, {
+      method: "PUT",
+    });
+  }
+
+  getOwners(tid, username) {
+    return this.fetch(`${this.domain}/tasks/owners/${tid}`, {
+      method: "GET",
+    });
+  }
+
+  getRounds(tid) {
+    return this.fetch(`${this.domain}/tasks/get_all_rounds/${tid}`, {
+      method: "GET",
+    });
+  }
+
+  activateTask(tid, annotation_config_json) {
+    return this.fetch(`${this.domain}/tasks/activate/${tid}`, {
+      method: "PUT",
+      body: JSON.stringify({ annotation_config_json: annotation_config_json }),
+    });
+  }
+
+  updateRound(tid, rid, data) {
+    return this.fetch(`${this.domain}/tasks/update_round/${tid}/${rid}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  createRound(tid) {
+    return this.fetch(`${this.domain}/tasks/create_round/${tid}`, {
+      method: "POST",
+    });
+  }
+
+  getModelIdentifiersForTargetSelection(tid) {
+    return this.fetch(
+      `${this.domain}/tasks/get_model_identifiers_for_target_selection/${tid}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  getModelIdentifiers(tid) {
+    return this.fetch(`${this.domain}/tasks/get_model_identifiers/${tid}`, {
+      method: "GET",
+    });
+  }
+
+  getAvailableDatasetAccessTypes() {
+    return this.fetch(`${this.domain}/datasets/get_access_types`, {
+      method: "GET",
+    });
+  }
+
+  getDatasets(tid) {
+    return this.fetch(`${this.domain}/tasks/datasets/${tid}`, {
+      method: "GET",
+    });
+  }
+
+  updateDataset(did, data) {
+    return this.fetch(`${this.domain}/datasets/update/${did}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  uploadAndCreateDataset(tid, name, files) {
+    const token = this.getToken();
+    const formData = new FormData();
+    for (const [name, file] of Object.entries(files)) {
+      formData.append(name, file);
+    }
+    return this.fetch(`${this.domain}/datasets/create/${tid}/${name}`, {
+      method: "POST",
+      body: formData,
+      headers: {
+        Authorization: token ? "Bearer " + token : "None",
+      },
     });
   }
 

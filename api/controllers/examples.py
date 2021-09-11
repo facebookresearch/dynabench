@@ -40,10 +40,6 @@ def get_random_filtered_example(
 
     tm = TaskModel()
     task = tm.get(tid)
-    validate_non_fooling = False
-    if task.settings_json:
-        settings = json.loads(task.settings_json)
-        validate_non_fooling = settings["validate_non_fooling"]
     rm = RoundModel()
     round = rm.getByTidAndRid(tid, rid)
     em = ExampleModel()
@@ -53,7 +49,7 @@ def get_random_filtered_example(
         max_num_flags,
         min_num_disagreements,
         max_num_disagreements,
-        validate_non_fooling,
+        task.validate_non_fooling,
         n=1,
         tags=tags,
     )
@@ -73,27 +69,25 @@ def get_random_example(credentials, tid, rid):
 
     tm = TaskModel()
     task = tm.get(tid)
-    validate_non_fooling = False
-    num_matching_validations = 3
-    if task.settings_json:
-        settings = json.loads(task.settings_json)
-        validate_non_fooling = settings["validate_non_fooling"]
-        num_matching_validations = settings["num_matching_validations"]
     rm = RoundModel()
     round = rm.getByTidAndRid(tid, rid)
     em = ExampleModel()
     if credentials["id"] != "turk":
         example = em.getRandom(
             round.id,
-            validate_non_fooling,
-            num_matching_validations,
+            task.validate_non_fooling,
+            task.num_matching_validations,
             n=1,
             my_uid=credentials["id"],
             tags=tags,
         )
     else:
         example = em.getRandom(
-            round.id, validate_non_fooling, num_matching_validations, n=1, tags=tags
+            round.id,
+            task.validate_non_fooling,
+            task.num_matching_validations,
+            n=1,
+            tags=tags,
         )
     if not example:
         bottle.abort(500, f"No examples available ({round.id})")
@@ -220,16 +214,12 @@ def evaluate_model_correctness():
 
     tm = TaskModel()
     task = tm.get(data["tid"])
-    model_wrong_metric_def = json.loads(task.model_wrong_metric)
-    model_wrong_metric = model_wrong_metrics[model_wrong_metric_def["type"]]
-    output_keys = set(
-        map(
-            lambda item: item["name"], json.loads(task.annotation_config_json)["output"]
-        )
-    )
-    input_keys = set(
-        map(lambda item: item["name"], json.loads(task.annotation_config_json)["input"])
-    )
+    annotation_config = json.loads(task.annotation_config_json)
+    model_wrong_metric = model_wrong_metrics[
+        annotation_config["model_wrong_metric"]["type"]
+    ]
+    output_keys = set(map(lambda item: item["name"], annotation_config["output"]))
+    input_keys = set(map(lambda item: item["name"], annotation_config["input"]))
     target_keys = input_keys.intersection(output_keys)
     pruned_target = {}
     pruned_output = {}
@@ -241,7 +231,9 @@ def evaluate_model_correctness():
             pruned_output[key] = value
 
     model_wrong = model_wrong_metric(
-        pruned_output, pruned_target, model_wrong_metric_def["constructor_args"]
+        pruned_output,
+        pruned_target,
+        annotation_config["model_wrong_metric"]["constructor_args"],
     )
     missing_keys = len(pruned_target.keys()) != len(target_keys) or len(
         pruned_output.keys()

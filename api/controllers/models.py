@@ -21,6 +21,8 @@ from models.score import ScoreModel
 from models.task import TaskModel
 from models.user import UserModel
 
+from .tasks import ensure_owner_or_admin
+
 
 @bottle.get("/models/<mid:int>")
 def get_model(mid):
@@ -38,20 +40,16 @@ def get_model_detail(credentials, mid):
     m = ModelModel()
     s = ScoreModel()
     dm = DatasetModel()
-    um = UserModel()
     try:
         query_result = m.getModelUserByMid(mid)
         model = query_result[0].to_dict()
-        user = um.get(credentials["id"])
-        is_admin = False
-        if user:
-            is_admin = user.admin
+
         # Secure to read unpublished model detail for only owner
         if (
             not query_result[0].is_published
             and query_result[0].uid != credentials["id"]
-        ) and not is_admin:
-            raise AssertionError()
+        ):
+            ensure_owner_or_admin(query_result[0].tid, credentials["id"])
         model["username"] = query_result[1].username
         model["user_id"] = query_result[1].id
         # Construct Score information based on model id
@@ -193,19 +191,13 @@ def upload_to_s3(credentials):
     if not task.submitable:
         bottle.abort(403, "Task not available for model submission")
 
-    # throttling; default is 3 per 24 hrs for a specific task.
-    dynalab_hr_diff = 24
-    dynalab_threshold = 3
-    if task.settings_json is not None:
-        task_settings = json.loads(task.settings_json)
-        dynalab_hr_diff = task_settings.get("dynalab_hr_diff", dynalab_hr_diff)
-        dynalab_threshold = task_settings.get("dynalab_threshold", dynalab_threshold)
-
     m = ModelModel()
     if (
         bottle.default_app().config["mode"] == "prod"
-        and m.getCountByUidTidAndHrDiff(user_id, tid=task.id, hr_diff=dynalab_hr_diff)
-        >= dynalab_threshold
+        and m.getCountByUidTidAndHrDiff(
+            user_id, tid=task.id, hr_diff=task.dynalab_hr_diff
+        )
+        >= task.dynalab_threshold
     ):
         logger.error("Submission limit reached for user (%s)" % (user_id))
         bottle.abort(429, "Submission limit reached")

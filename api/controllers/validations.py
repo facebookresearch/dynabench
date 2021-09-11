@@ -97,11 +97,6 @@ def validate_example(credentials, eid):
 
     tm = TaskModel()
     task = tm.get(context.round.task.id)
-    num_matching_validations = 3
-    if task.settings_json:
-        num_matching_validations = json.loads(task.settings_json)[
-            "num_matching_validations"
-        ]
 
     rm = RoundModel()
     rm.updateLastActivity(context.r_realid)
@@ -109,14 +104,14 @@ def validate_example(credentials, eid):
     if example.model_wrong:
         user = um.get(example.uid)
         if user:
-            if label_counts["correct"] >= num_matching_validations or (
+            if label_counts["correct"] >= task.num_matching_validations or (
                 mode == "owner" and label == "correct"
             ):
                 rm.incrementVerifiedFooledCount(context.r_realid)
                 um.incrementVerifiedFooledCount(example.uid)
             elif (
-                label_counts["incorrect"] >= num_matching_validations
-                or label_counts["flagged"] >= num_matching_validations
+                label_counts["incorrect"] >= task.num_matching_validations
+                or label_counts["flagged"] >= task.num_matching_validations
                 or (mode == "owner" and label != "correct")
             ):
 

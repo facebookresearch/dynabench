@@ -138,8 +138,10 @@ class Flores101Base(MTBase):
                 src_perfs = self.eval_src_lang(job, src)
                 perf_by_tag.extend(src_perfs)
 
-        perf_metric = self.task.perf_metric
-        return compute_averages(perf_metric, perf_by_tag), {}
+        perf_metric_type = json.loads(self.task.annotation_config_json)["perf_metric"][
+            "type"
+        ]
+        return compute_averages(perf_metric_type, perf_by_tag), {}
 
     def eval_src_lang(self, job: Job, src: str) -> dict:
         # Flores out file are correct .jsonl format,

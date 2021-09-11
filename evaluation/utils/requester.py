@@ -2,6 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import json
 import logging
 
 from common.config import config
@@ -74,10 +75,13 @@ class Requester:
             self.scheduler.enqueue(model_id, dataset_name, perturb_prefix, dump=False)
             if not perturb_prefix:
                 dataset = self.datasets[dataset_name]
-                delta_metrics = []
-                if dataset.task.delta_metrics:
-                    delta_metrics = dataset.task.delta_metrics.split("|")
-                for prefix in delta_metrics:
+                delta_metric_types = [
+                    config["type"]
+                    for config in json.loads(dataset.task.annotation_config_json)[
+                        "delta_metrics"
+                    ]
+                ]
+                for prefix in delta_metric_types:
                     if dataset.dataset_available_on_s3(prefix):
                         self.scheduler.enqueue(
                             model_id, dataset_name, prefix, dump=False

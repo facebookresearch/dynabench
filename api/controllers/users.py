@@ -18,7 +18,7 @@ from models.leaderboard_snapshot import LeaderboardSnapshotModel
 from models.model import ModelModel
 from models.notification import NotificationModel
 from models.refresh_token import RefreshTokenModel
-from models.task import TaskModel
+from models.task_user_permission import TaskUserPermissionModel
 from models.user import UserModel
 
 
@@ -302,8 +302,8 @@ def get_user_tasks(uid):
     # check the current user and request user id are same
     limit, offset = util.get_limit_and_offset_from_request()
     try:
-        tm = TaskModel()
-        results, total_count = tm.getByOwnerUid(uid, n=limit, offset=offset)
+        tupm = TaskUserPermissionModel()
+        results, total_count = tupm.getByOwnerUid(uid, n=limit, offset=offset)
         dicts = [task_obj.to_dict() for task_obj in results]
         if dicts:
             return util.json_encode({"count": total_count, "data": dicts})
