@@ -122,7 +122,7 @@ def create(credentials, tid, name):
     if not d.getByName(name):  # avoid id increment for unsuccessful creation
         if d.create(
             name=name,
-            task_id=task.id,
+            task_id=tid,
             rid=0,
             access_type=AccessTypeEnum.hidden,
             longdesc=None,

@@ -128,8 +128,12 @@ const Datasets = (props) => {
                           />
                         </Col>
                       </Form.Group>
-                      {delta_metric_configs.map((config) => (
-                        <Form.Group as={Row} className="py-3 my-0 border-top">
+                      {delta_metric_configs.map((config, index) => (
+                        <Form.Group
+                          key={index}
+                          as={Row}
+                          className="py-3 my-0 border-top"
+                        >
                           <Form.Label column>
                             <b>File for {config.type}</b>
                           </Form.Label>
@@ -185,7 +189,6 @@ const Datasets = (props) => {
                   enableReinitialize={true}
                   initialValues={{
                     id: dataset.id,
-                    name: dataset.name,
                     source_url: dataset.source_url,
                     corresponds_to_round: dataset.rid !== 0,
                     rid: dataset.rid,
@@ -218,7 +221,7 @@ const Datasets = (props) => {
                               <Form.Control
                                 disabled
                                 plaintext
-                                defaultValue={values.name}
+                                defaultValue={dataset.name}
                               />
                             </Col>
                           </Form.Group>

@@ -50,6 +50,7 @@ const Settings = (props) => {
                         </Form.Label>
                         <Col sm="8">
                           <Form.Check
+                            disabled={!props.admin_or_owner}
                             checked={values.hidden}
                             onChange={handleChange}
                           />
@@ -65,6 +66,7 @@ const Settings = (props) => {
                         </Form.Label>
                         <Col sm="8">
                           <Form.Check
+                            disabled={!props.admin_or_owner}
                             checked={values.validate_non_fooling}
                             onChange={handleChange}
                           />
@@ -82,6 +84,7 @@ const Settings = (props) => {
                         </Form.Label>
                         <Col sm="8">
                           <Form.Check
+                            disabled={!props.admin_or_owner}
                             checked={values.unpublished_models_in_leaderboard}
                             onChange={handleChange}
                           />
@@ -97,6 +100,7 @@ const Settings = (props) => {
                         </Form.Label>
                         <Col sm="8">
                           <Form.Check
+                            disabled={!props.admin_or_owner}
                             checked={values.submitable}
                             onChange={handleChange}
                           />
@@ -118,6 +122,7 @@ const Settings = (props) => {
                             type="number"
                             min={0}
                             step={1}
+                            disabled={!props.admin_or_owner}
                             defaultValue={values.num_matching_validations}
                             onChange={handleChange}
                           />
@@ -142,6 +147,7 @@ const Settings = (props) => {
                         ) : (
                           <Form.Control
                             as="textarea"
+                            disabled={!props.admin_or_owner}
                             defaultValue={values.annotation_config_json}
                             rows="24"
                             onChange={handleChange}
@@ -158,6 +164,7 @@ const Settings = (props) => {
                         </Form.Label>
                         <Form.Control
                           as="textarea"
+                          disabled={!props.admin_or_owner}
                           defaultValue={values.instructions_md}
                           rows="12"
                           onChange={handleChange}
@@ -178,7 +185,7 @@ const Settings = (props) => {
                         </Col>
                       </Form.Group>
                       <Row className="justify-content-md-center">
-                        {dirty ? (
+                        {dirty && props.admin_or_owner ? (
                           props.task.active ? (
                             <Col md={5} sm={12}>
                               <Button

@@ -13,7 +13,8 @@ from common.logging import logger
 from models.context import Context, ContextModel
 from models.round import RoundModel
 from models.task import TaskModel
-from models.user import UserModel
+
+from .tasks import ensure_owner_or_admin
 
 
 @bottle.get("/contexts/<tid:int>/<rid:int>")
@@ -85,17 +86,8 @@ def do_upload(credentials, tid, rid):
     :param credentials:
     :return: success info
     """
-    u = UserModel()
-    user_id = credentials["id"]
-    user = u.get(user_id)
-    if not user:
-        logger.error("Invalid user detail for id (%s)" % (user_id))
-        bottle.abort(404, "User information not found")
 
-    if not user.admin and not (
-        (tid, "owner") in [(perm.tid, perm.type) for perm in user.task_permissions]
-    ):
-        bottle.abort(403, "Access denied (you are not an admin or owner of this task)")
+    ensure_owner_or_admin(tid, credentials["id"])
 
     upload = bottle.request.files.get("file")
 
@@ -132,6 +124,6 @@ def do_upload(credentials, tid, rid):
         )
         contexts_to_add.append(c)
 
-    u.dbs.bulk_save_objects(contexts_to_add)
-    u.dbs.commit()
+    rm.dbs.bulk_save_objects(contexts_to_add)
+    rm.dbs.commit()
     return util.json_encode({"success": "ok"})

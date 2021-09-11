@@ -68,7 +68,9 @@ def get_all_rounds(credentials, tid):
 
 
 @bottle.get("/tasks/datasets/<tid:int>")
-def get_datasets(tid):
+@_auth.requires_auth
+def get_datasets(credentials, tid):
+    ensure_owner_or_admin(tid, credentials["id"])
     dm = DatasetModel()
     dataset_list = []
     datasets = dm.getByTid(tid)
@@ -76,8 +78,22 @@ def get_datasets(tid):
         for dataset in datasets:
             dataset_list.append(dataset.to_dict())
 
-    # Also get this model's scores?
     return util.json_encode(dataset_list)
+
+
+@bottle.get("/tasks/admin_or_owner/<tid:int>")
+@_auth.requires_auth
+def get_admin_or_owner(credentials, tid):
+    um = UserModel()
+    user = um.get(credentials["id"])
+    admin_or_owner = True
+    if not user.admin:
+        if not (tid, "owner") in [
+            (perm.tid, perm.type) for perm in user.task_permissions
+        ]:
+            admin_or_owner = False
+
+    return util.json_encode({"admin_or_owner": admin_or_owner})
 
 
 @bottle.post("/tasks/create_round/<tid:int>")

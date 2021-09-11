@@ -72,7 +72,7 @@ const Rounds = (props) => {
                       {props.dataExporting ? (
                         <Spinner animation="border" />
                       ) : (
-                        <i class="fa fa-download" aria-hidden="true"></i>
+                        <i className="fa fa-download" aria-hidden="true"></i>
                       )}
                     </Button>
                   </Col>

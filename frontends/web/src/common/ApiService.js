@@ -435,6 +435,12 @@ export default class ApiService {
     });
   }
 
+  getAdminOrOwner(tid) {
+    return this.fetch(`${this.domain}/tasks/admin_or_owner/${tid}`, {
+      method: "GET",
+    });
+  }
+
   setExampleMetadata(id, metadata) {
     var obj = {};
     obj.metadata_json = JSON.stringify(metadata);
@@ -453,15 +459,6 @@ export default class ApiService {
       method: "PUT",
       body: JSON.stringify(obj),
     });
-  }
-
-  isTaskOwner(user, tid) {
-    return (
-      user.task_permissions?.filter(
-        (task_permission) =>
-          tid === task_permission.tid && "owner" === task_permission.type
-      ).length > 0
-    );
   }
 
   validateExample(id, label, mode, metadata = {}, uid = null) {

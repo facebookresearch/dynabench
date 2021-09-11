@@ -18,6 +18,7 @@ class TaskOwnerPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      admin_or_owner: false,
       task: null,
       rounds: null,
       owners_string: null,
@@ -36,17 +37,15 @@ class TaskOwnerPage extends React.Component {
     ) {
       return this.fetchTask();
     } else if (this.props.location.hash === "#owners") {
-      return this.fetchTask().then(() => this.fetchOwners());
+      return this.fetchTask(() => this.fetchOwners());
     } else if (this.props.location.hash === "#rounds") {
-      return this.fetchTask().then(() =>
-        this.fetchRounds().then(() =>
-          this.fetchModelIdentifiersForTargetSelection()
-        )
+      return this.fetchTask(() =>
+        this.fetchRounds(() => this.fetchModelIdentifiersForTargetSelection())
       );
     } else if (this.props.location.hash === "#models") {
-      return this.fetchTask().then(() => this.fetchModelIdentifiers());
+      return this.fetchTask(() => this.fetchModelIdentifiers());
     } else if (this.props.location.hash === "#datasets") {
-      return this.fetchTask().then(() =>
+      return this.fetchTask(() =>
         this.fetchDatasets(() => this.fetchAvailableDatasetAccessTypes())
       );
     }
@@ -67,7 +66,20 @@ class TaskOwnerPage extends React.Component {
   fetchTask = (callback = () => {}) => {
     return this.context.api.getTask(this.props.match.params.taskCode).then(
       (result) => {
-        this.setState({ task: result }, callback);
+        this.context.api.getAdminOrOwner(result.id).then(
+          (adminOrOwnerResult) => {
+            this.setState(
+              {
+                admin_or_owner: adminOrOwnerResult.admin_or_owner,
+                task: result,
+              },
+              callback
+            );
+          },
+          (error) => {
+            console.log(error);
+          }
+        );
       },
       (error) => {
         console.log(error);
@@ -296,7 +308,7 @@ class TaskOwnerPage extends React.Component {
     values,
     { setFieldError, setSubmitting, resetForm }
   ) => {
-    const allowed = ["name", "longdesc", "rid", "source_url", "access_type"];
+    const allowed = ["longdesc", "rid", "source_url", "access_type"];
 
     const data = Object.keys(values)
       .filter((key) => allowed.includes(key))
@@ -422,28 +434,35 @@ class TaskOwnerPage extends React.Component {
   };
 
   render() {
-    const navOptions = [
-      {
-        href: "#settings",
-        buttonText: "Settings",
-      },
-      {
-        href: "#owners",
-        buttonText: "Owners",
-      },
-      {
-        href: "#rounds",
-        buttonText: "Rounds",
-      },
-      {
-        href: "#models",
-        buttonText: "Models",
-      },
-      {
-        href: "#datasets",
-        buttonText: "Datasets",
-      },
-    ];
+    const navOptions = this.state.admin_or_owner
+      ? [
+          {
+            href: "#settings",
+            buttonText: "Settings",
+          },
+          {
+            href: "#owners",
+            buttonText: "Owners",
+          },
+          {
+            href: "#rounds",
+            buttonText: "Rounds",
+          },
+          {
+            href: "#models",
+            buttonText: "Models",
+          },
+          {
+            href: "#datasets",
+            buttonText: "Datasets",
+          },
+        ]
+      : [
+          {
+            href: "#settings",
+            buttonText: "Settings",
+          },
+        ];
 
     return (
       <Container fluid>
@@ -469,6 +488,7 @@ class TaskOwnerPage extends React.Component {
           <Col>
             {this.props.location.hash === "#settings" && this.state.task ? (
               <Settings
+                admin_or_owner={this.state.admin_or_owner}
                 task={this.state.task}
                 handleTaskUpdateWithActivate={this.handleTaskUpdateWithActivate}
               />
