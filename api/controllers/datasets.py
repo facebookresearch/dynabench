@@ -57,7 +57,7 @@ def create(credentials, tid, name):
         bottle.abort(
             400,
             "Invalid name (no special characters allowed besides underscores "
-            + "and dashes, must be shorter than 27 characters)",
+            + "and dashes, must be shorter than 28 characters)",
         )
 
     dataset_upload = bottle.request.files.get("file")
