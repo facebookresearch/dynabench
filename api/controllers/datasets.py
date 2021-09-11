@@ -4,6 +4,7 @@
 
 import json
 import os
+import re
 import sys
 import tempfile
 
@@ -51,6 +52,14 @@ def update(credentials, did):
 @_auth.requires_auth
 def create(credentials, tid, name):
     ensure_owner_or_admin(tid, credentials["id"])
+
+    if len(name) > 27 or not bool(re.search("^[a-zA-Z0-9_-]*$", name)):
+        bottle.abort(
+            400,
+            "Invalid name (no special characters allowed besides underscores "
+            + "and dashes, must be shorter than 27 characters):",
+            name,
+        )
 
     dataset_upload = bottle.request.files.get("file")
 
