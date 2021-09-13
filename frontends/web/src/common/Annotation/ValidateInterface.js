@@ -42,6 +42,7 @@ class ValidateInterface extends React.Component {
       annotationConfig: null,
       data: {},
       loading: true,
+      admin_or_owner: false,
     };
     this.getNewExample = this.getNewExample.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
@@ -89,6 +90,11 @@ class ValidateInterface extends React.Component {
           this.setState(
             { task: result, taskCode: result.task_code },
             function () {
+              this.context.api
+                .getAdminOrOwner(this.state.task.id)
+                .then((result) => {
+                  this.setState({ admin_or_owner: result.admin_or_owner });
+                });
               this.state.task.selected_round = this.state.task.cur_round;
               this.getNewExample();
               if (params.taskCode !== this.state.taskCode) {
@@ -325,11 +331,7 @@ class ValidateInterface extends React.Component {
         ></BadgeOverlay>
         <Container className="mb-5 pb-5">
           <Col className="m-auto" lg={12}>
-            {(this.context.api.isTaskOwner(
-              this.context.user,
-              this.state.task.id
-            ) ||
-              this.context.user.admin) && (
+            {this.state.admin_or_owner && (
               <div style={{ float: "right" }}>
                 <Annotation
                   placement="top"
