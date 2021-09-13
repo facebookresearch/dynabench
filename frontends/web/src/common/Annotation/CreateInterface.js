@@ -220,60 +220,60 @@ class CreateInterface extends React.Component {
           if (!this.state.retainInput) {
             this.initializeDataWrapper();
           }
+          this.setState({
+            submitDisabled: false,
+            refreshDisabled: false,
+          });
+          return;
         }
-        this.setState({
-          submitDisabled: false,
-          refreshDisabled: false,
-        });
-        return;
+
+        // Save examples.
+        return this.context.api
+          .storeExample(
+            this.state.task.id,
+            this.state.task.selected_round,
+            this.context.user.id,
+            this.state.context.id,
+            this.getInputData(),
+            output,
+            signature,
+            metadata,
+            modelWrong,
+            null,
+            endpoint
+          )
+          .then(
+            (storeExampleResult) => {
+              var key = this.state.content.length;
+              // Reset state variables and store example id.
+              this.setState({
+                submitDisabled: false,
+                refreshDisabled: false,
+                mapKeyToExampleId: {
+                  ...this.state.mapKeyToExampleId,
+                  [key]: storeExampleResult.id,
+                },
+              });
+
+              if (!!storeExampleResult.badges) {
+                this.setState({
+                  showBadges: storeExampleResult.badges,
+                });
+              }
+              if (!this.state.retainInput) {
+                this.initializeDataWrapper();
+              }
+            },
+            (error) => {
+              console.log(error);
+              this.setState({
+                submitDisabled: false,
+                refreshDisabled: false,
+              });
+            }
+          );
       }
     );
-
-    // Save examples.
-    return this.context.api
-      .storeExample(
-        this.state.task.id,
-        this.state.task.selected_round,
-        this.context.user.id,
-        this.state.context.id,
-        this.getInputData(),
-        output,
-        signature,
-        metadata,
-        modelWrong,
-        null,
-        endpoint
-      )
-      .then(
-        (storeExampleResult) => {
-          var key = this.state.content.length;
-          // Reset state variables and store example id.
-          this.setState({
-            submitDisabled: false,
-            refreshDisabled: false,
-            mapKeyToExampleId: {
-              ...this.state.mapKeyToExampleId,
-              [key]: storeExampleResult.id,
-            },
-          });
-
-          if (!!storeExampleResult.badges) {
-            this.setState({
-              showBadges: storeExampleResult.badges,
-            });
-          }
-          if (!this.state.retainInput) {
-            this.initializeDataWrapper();
-          }
-        },
-        (error) => {
-          console.log(error);
-          this.setState({
-            submitDisabled: false,
-            refreshDisabled: false,
-          });
-        }
-      );
   }
 
   handleResponse(e) {
