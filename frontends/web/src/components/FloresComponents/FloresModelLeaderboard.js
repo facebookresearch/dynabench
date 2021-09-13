@@ -50,20 +50,6 @@ const FloresModelLeaderboard = (props) => {
 
   const { taskId, history, isTop5, taskCode, snapshotData } = props;
 
-  const dummyMetricWeights = [
-    { weight: 1 },
-    { weight: 0 },
-    { weight: 0 },
-    { weight: 0 },
-    { weight: 0 },
-  ];
-  const dummyDatasetWeights = [{ weight: 1 }];
-
-  const { orderedMetricWeights, orderedDatasetWeights } = getOrderedWeights(
-    dummyMetricWeights,
-    dummyDatasetWeights
-  );
-
   useEffect(() => {
     setIsLoading(true);
 
@@ -74,6 +60,18 @@ const FloresModelLeaderboard = (props) => {
       setTotal(snapshotData.count);
       setSort(snapshotData.miscInfoJson.sort);
     } else {
+      const dummyMetricWeights = [
+        { weight: 1 },
+        { weight: 0 },
+        { weight: 0 },
+        { weight: 0 },
+        { weight: 0 },
+      ];
+      const dummyDatasetWeights = [{ weight: 1 }];
+      const { orderedMetricWeights, orderedDatasetWeights } = getOrderedWeights(
+        dummyMetricWeights,
+        dummyDatasetWeights
+      );
       context.api
         .getDynaboardScores(
           taskId,
@@ -109,8 +107,6 @@ const FloresModelLeaderboard = (props) => {
     history,
     isTop5,
     snapshotData,
-    orderedMetricWeights,
-    orderedDatasetWeights,
   ]);
 
   useEffect(() => {
@@ -187,6 +183,15 @@ const FloresModelLeaderboard = (props) => {
   });
 
   if (isLoading) return <Spinner animation="border" />;
+
+  const dummyMetricWeights = [
+    { weight: 1 },
+    { weight: 0 },
+    { weight: 0 },
+    { weight: 0 },
+    { weight: 0 },
+  ];
+  const dummyDatasetWeights = [{ weight: 1 }];
 
   return (
     <Col className="ml-auto mr-auto" md={isTop5 ? "12" : "5"}>
