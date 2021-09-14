@@ -432,12 +432,14 @@ class TaskPage extends React.Component {
             </Annotation>
           </Row>
           <Row className="justify-content-center">
-            <TaskActionButtons
-              api={this.context.api}
-              taskCode={this.state.taskCode}
-              user={this.context.user}
-              task={this.state.task}
-            />
+            {this.state.task?.active && (
+              <TaskActionButtons
+                api={this.context.api}
+                taskCode={this.state.taskCode}
+                user={this.context.user}
+                task={this.state.task}
+              />
+            )}
           </Row>
           <Row className="justify-content-center">
             <Col xs={12} md={12}>
@@ -449,54 +451,63 @@ class TaskPage extends React.Component {
               />
             </Col>
           </Row>
-          {this.state.task && this.state.task.ordered_scoring_datasets && (
-            <Row className="justify-content-center">
-              <Col xs={12} md={12}>
-                <Annotation
-                  placement="left"
-                  tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
-                >
-                  {this.props.match?.params.forkOrSnapshotName ? (
-                    <TaskModelForkLeaderboard
-                      {...this.props}
-                      task={this.state.task}
-                      taskCode={this.state.taskCode}
-                      title={"Model Leaderboard (Fork)"}
-                    />
-                  ) : (
-                    <TaskModelDefaultLeaderboard
-                      {...this.props}
-                      task={this.state.task}
-                      taskCode={this.state.taskCode}
-                    />
+          {this.state.task?.active ? (
+            <>
+              {this.state.task &&
+                this.state.task.ordered_scoring_datasets?.length > 0 && (
+                  <Row className="justify-content-center">
+                    <Col xs={12} md={12}>
+                      <Annotation
+                        placement="left"
+                        tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
+                      >
+                        {this.props.match?.params.forkOrSnapshotName ? (
+                          <TaskModelForkLeaderboard
+                            {...this.props}
+                            task={this.state.task}
+                            taskCode={this.state.taskCode}
+                            title={"Model Leaderboard (Fork)"}
+                          />
+                        ) : (
+                          <TaskModelDefaultLeaderboard
+                            {...this.props}
+                            task={this.state.task}
+                            taskCode={this.state.taskCode}
+                          />
+                        )}
+                      </Annotation>
+                    </Col>
+                  </Row>
+                )}
+              <Row>
+                <Col xs={12} md={6}>
+                  {this.state.task.id &&
+                    this.state.task.round &&
+                    this.state.task.cur_round && (
+                      <UserLeaderboardCard
+                        taskId={this.state.task.id}
+                        round={this.state.task.round}
+                        cur_round={this.state.task.cur_round}
+                      />
+                    )}
+                </Col>
+                <Col xs={12} md={6}>
+                  {this.state.trendScore.length > 0 && (
+                    <Annotation
+                      placement="top-end"
+                      tooltip="As tasks progress over time, we can follow their trend, which is shown here"
+                    >
+                      <TaskTrend data={this.state.trendScore} />
+                    </Annotation>
                   )}
-                </Annotation>
-              </Col>
+                </Col>
+              </Row>
+            </>
+          ) : (
+            <Row className="justify-content-center">
+              The task owner still needs to activate this task.
             </Row>
           )}
-          <Row>
-            <Col xs={12} md={6}>
-              {this.state.task.id &&
-                this.state.task.round &&
-                this.state.task.cur_round && (
-                  <UserLeaderboardCard
-                    taskId={this.state.task.id}
-                    round={this.state.task.round}
-                    cur_round={this.state.task.cur_round}
-                  />
-                )}
-            </Col>
-            <Col xs={12} md={6}>
-              {this.state.trendScore.length > 0 && (
-                <Annotation
-                  placement="top-end"
-                  tooltip="As tasks progress over time, we can follow their trend, which is shown here"
-                >
-                  <TaskTrend data={this.state.trendScore} />
-                </Annotation>
-              )}
-            </Col>
-          </Row>
         </Container>
       </OverlayProvider>
     );

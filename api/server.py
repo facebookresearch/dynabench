@@ -25,6 +25,7 @@ from controllers.examples import *  # noqa
 from controllers.index import *  # noqa
 from controllers.models import *  # noqa
 from controllers.notifications import *  # noqa
+from controllers.task_proposals import *  # noqa
 from controllers.tasks import *  # noqa
 from controllers.users import *  # noqa
 from controllers.validations import *  # noqa

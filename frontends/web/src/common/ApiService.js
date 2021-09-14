@@ -89,13 +89,6 @@ export default class ApiService {
     });
   }
 
-  updateTaskSettings(taskId, settings) {
-    return this.fetch(`${this.domain}/tasks/${taskId}/settings`, {
-      method: "PUT",
-      body: JSON.stringify({ settings: settings }),
-    });
-  }
-
   updateProfilePic(userId, file) {
     const formData = new FormData();
     formData.append("file", file);
@@ -506,6 +499,47 @@ export default class ApiService {
     };
     return this.fetch(`${this.domain}/examples/evaluate`, {
       method: "POST",
+      body: JSON.stringify(obj),
+    });
+  }
+
+  getAllTaskProposals(page, pageLimit) {
+    return this.fetch(
+      `${this.domain}/task_proposals/all/${page}/${pageLimit}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  getUserTaskProposals(page, pageLimit) {
+    return this.fetch(
+      `${this.domain}/task_proposals/user/${page}/${pageLimit}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  createTaskProposal(name, task_code, desc, longdesc) {
+    let obj = {
+      name: name,
+      desc: desc,
+      longdesc: longdesc,
+      task_code: task_code,
+    };
+    return this.fetch(`${this.domain}/task_proposals/create`, {
+      method: "POST",
+      body: JSON.stringify(obj),
+    });
+  }
+
+  processTaskProposal(tpid, accept) {
+    let obj = {
+      accept: accept,
+    };
+    return this.fetch(`${this.domain}/tasks/process_proposal/${tpid}`, {
+      method: "PUT",
       body: JSON.stringify(obj),
     });
   }

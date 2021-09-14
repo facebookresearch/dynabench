@@ -264,13 +264,16 @@ class ScoreModel(BaseModel):
                 Model.is_published
             )
 
-        scores, users, datasets, models = zip(*scores_users_datasets_models)
-        scores, users, datasets, models = (
-            set(scores),
-            set(users),
-            set(datasets),
-            set(models),
-        )
+        if len(list(scores_users_datasets_models)) == 0:
+            return util.json_encode({"count": 0, "data": []})
+        else:
+            scores, users, datasets, models = zip(*scores_users_datasets_models)
+            scores, users, datasets, models = (
+                set(scores),
+                set(users),
+                set(datasets),
+                set(models),
+            )
 
         # Order datasets as in ordered_dids, for display purposes
         ordered_datasets = []

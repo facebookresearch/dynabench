@@ -34,6 +34,8 @@ import {
 import ModelSubPage from "../components/ProfilePageComponents/ModelSubPage";
 import TaskSubPage from "../components/ProfilePageComponents/TaskSubPage";
 import ForksAndSnapshotsSubPage from "../components/ProfilePageComponents/ForksAndSnapshotsSubPage";
+import TaskProposalSubPage from "../components/ProfilePageComponents/TaskProposalSubPage";
+import AdminTaskProposalSubPage from "../components/ProfilePageComponents/AdminTaskProposalSubPage";
 
 const StatsSubPage = (props) => {
   return (
@@ -256,15 +258,9 @@ class ProfilePage extends React.Component {
   }
 
   refreshData() {
-    if (
-      this.props.location.hash === "" ||
-      this.props.location.hash === "#profile"
-    ) {
-      this.fetchUser();
-    } else if (this.props.location.hash === "#notifications") {
+    this.fetchUser();
+    if (this.props.location.hash === "#notifications") {
       this.fetchNotifications(0);
-    } else if (this.props.location.hash === "#stats") {
-      this.fetchUser();
     }
   }
 
@@ -280,11 +276,11 @@ class ProfilePage extends React.Component {
     }
   }
 
-  fetchUser = () => {
+  fetchUser = (callback = () => {}) => {
     const user = this.context.api.getCredentials();
     this.context.api.getUser(user.id, true).then(
       (result) => {
-        this.setState({ user: result, loader: false });
+        this.setState({ user: result, loader: false }, callback);
       },
       (error) => {
         console.log(error);
@@ -354,6 +350,39 @@ class ProfilePage extends React.Component {
     );
   };
 
+  handleProposalSubmit = (
+    values,
+    { setFieldError, setSubmitting, resetForm },
+    callback
+  ) => {
+    this.context.api
+      .createTaskProposal(
+        values.name,
+        values.task_code,
+        values.desc,
+        values.longdesc
+      )
+      .then(
+        (result) => {
+          values.name = "";
+          values.task_code = "";
+          values.desc = "";
+          values.longdesc = "";
+          resetForm({ values: values });
+          setSubmitting(false);
+          callback();
+        },
+        (error) => {
+          console.log(error);
+          setFieldError(
+            "accept",
+            "Profile could not be updated (" + error.error + ")"
+          );
+          setSubmitting(false);
+        }
+      );
+  };
+
   handleAvatarChange = (e, props) => {
     const user = this.context.api.getCredentials();
     const files = e.target.files;
@@ -391,32 +420,71 @@ class ProfilePage extends React.Component {
   };
 
   render() {
-    const navOptions = [
-      {
-        href: "#profile",
-        buttonText: "Profile",
-      },
-      {
-        href: "#notifications",
-        buttonText: "Notifications",
-      },
-      {
-        href: "#stats",
-        buttonText: "Stats & Badges",
-      },
-      {
-        href: "#models",
-        buttonText: "Models",
-      },
-      {
-        href: "#forks-and-snapshots",
-        buttonText: "Forks & Snapshots",
-      },
-      {
-        href: "#tasks",
-        buttonText: "Tasks",
-      },
-    ];
+    const navOptions = this.state.user.admin
+      ? [
+          {
+            href: "#profile",
+            buttonText: "Profile",
+          },
+          {
+            href: "#notifications",
+            buttonText: "Notifications",
+          },
+          {
+            href: "#stats",
+            buttonText: "Stats & Badges",
+          },
+          {
+            href: "#models",
+            buttonText: "Models",
+          },
+          {
+            href: "#forks-and-snapshots",
+            buttonText: "Forks & Snapshots",
+          },
+          {
+            href: "#tasks",
+            buttonText: "Tasks",
+          },
+          {
+            href: "#task_proposals",
+            buttonText: "Task Proposals",
+          },
+          {
+            href: "#admin_task_proposals",
+            buttonText: "Admin Task Proposals",
+          },
+        ]
+      : [
+          {
+            href: "#profile",
+            buttonText: "Profile",
+          },
+          {
+            href: "#notifications",
+            buttonText: "Notifications",
+          },
+          {
+            href: "#stats",
+            buttonText: "Stats & Badges",
+          },
+          {
+            href: "#models",
+            buttonText: "Models",
+          },
+          {
+            href: "#forks-and-snapshots",
+            buttonText: "Forks & Snapshots",
+          },
+          {
+            href: "#tasks",
+            buttonText: "Tasks",
+          },
+          {
+            href: "#task_proposals",
+            buttonText: "Task Proposals",
+          },
+        ];
 
     return (
       <Container fluid>
@@ -630,6 +698,20 @@ class ProfilePage extends React.Component {
                 api={this.context.api}
                 history={this.props.history}
                 userId={this.context.api.getCredentials().id}
+              />
+            ) : null}
+            {this.props.location.hash === "#task_proposals" ? (
+              <TaskProposalSubPage
+                handleProposalSubmit={this.handleProposalSubmit}
+                api={this.context.api}
+                history={this.props.history}
+              />
+            ) : null}
+            {this.state.user.admin &&
+            this.props.location.hash === "#admin_task_proposals" ? (
+              <AdminTaskProposalSubPage
+                api={this.context.api}
+                history={this.props.history}
               />
             ) : null}
           </Col>
