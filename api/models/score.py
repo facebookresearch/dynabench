@@ -251,29 +251,30 @@ class ScoreModel(BaseModel):
         ordered_dids = [
             did_and_weight["did"] for did_and_weight in ordered_dids_with_weight
         ]
-        scores_users_datasets_models = (
-            self.dbs.query(Score, User, Dataset, Model)
-            .join(Dataset, Dataset.id == Score.did)
-            .join(Model, Score.mid == Model.id)
-            .join(User, User.id == Model.uid)
-            .filter(Model.tid == tid)
-            .filter(Score.did.in_(ordered_dids))
-        )
-        if not include_unpublished_models:
-            scores_users_datasets_models = scores_users_datasets_models.filter(
-                Model.is_published
+        try:
+            scores_users_datasets_models = (
+                self.dbs.query(Score, User, Dataset, Model)
+                .join(Dataset, Dataset.id == Score.did)
+                .join(Model, Score.mid == Model.id)
+                .join(User, User.id == Model.uid)
+                .filter(Model.tid == tid)
+                .filter(Score.did.in_(ordered_dids))
             )
+            if not include_unpublished_models:
+                scores_users_datasets_models = scores_users_datasets_models.filter(
+                    Model.is_published
+                )
 
-        if len(list(scores_users_datasets_models)) == 0:
-            return util.json_encode({"count": 0, "data": []})
-        else:
             scores, users, datasets, models = zip(*scores_users_datasets_models)
-            scores, users, datasets, models = (
-                set(scores),
-                set(users),
-                set(datasets),
-                set(models),
-            )
+        except Exception:
+            return util.json_encode({"count": 0, "data": []})
+
+        scores, users, datasets, models = (
+            set(scores),
+            set(users),
+            set(datasets),
+            set(models),
+        )
 
         # Order datasets as in ordered_dids, for display purposes
         ordered_datasets = []

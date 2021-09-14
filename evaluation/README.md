@@ -18,7 +18,7 @@ data = {
 Note your input should always contain an `id` or equivalent field to uniquely identify an example. This defines the full set of input keys.
 
 The output format is defined by a `verify_response` method that will be used to validate model response, i.e. a single json object. The model output should encompass both the keys for batch evaluation (i.e. an example identifier passed from input, and a definite prediction) and talking to the endpoint (e.g. some additional insights of the inference such as probability list). To do this, declare a `TaskIO` class that inherits `BaseTaskIO`. Your class has to be called `TaskIO` so don't rename it. This function defines the full set of output keys.
-```
+```python
 from dynalab.tasks.common import BaseTaskIO
 class TaskIO(BaseTaskIO):
     def __init__(self):
@@ -102,10 +102,15 @@ The evaluation metrics, such as accuracy, f1, etc. are implemented in the metric
 ## Perturb datasets
 Use the scripts in scripts folder to perturb datasets and request evaluation.
 For example, to perturb a dataset for task nli to fairness dataset, do
-```
+```bash
 cd scripts
 python perturb.py --s3-uri <s3-uri> --task nli --perturb-prefix fairness
 ```
 The `s3-uri` is the "S3 URI" under "Object overview" in S3, and it should point to an original dataset (i.e. unperturbed version). S3 uri is usually in the format of `s3://{bucket}/{path}`.
+
+Note: If you are running fairness augmentations for the first time, you will first need to run the following command to download the spacy model used to identify entities:
+```bash
+python -m spacy download en_core_web_sm
+```
 
 Follow the prompt to check the output and if everything looks good, copy paste the given command to upload the dataset and request an evaluation.
