@@ -100,11 +100,13 @@ class DeltaMetricEnum(enum.Enum):
 
 
 def verify_fairness_config(constructor_args):
-    assert "perturb_fields" in constructor_args
+    # assert "perturb_fields" in constructor_args
+    pass
 
 
 def verify_robustness_config(constructor_args):
-    assert "perturb_fields" in constructor_args
+    # assert "perturb_fields" in constructor_args
+    pass
 
 
 delta_metric_config_verifiers = {
@@ -525,27 +527,29 @@ class TaskModel(BaseModel):
             r_dict = r.to_dict()
             t_dict["ordered_scoring_datasets"] = scoring_dataset_list
             t_dict["ordered_datasets"] = dataset_list
-            t_dict["perf_metric_field_name"] = json.loads(
-                t_dict["annotation_config_json"]
-            )["perf_metric"]["type"]
+            annotation_config = json.loads(t_dict["annotation_config_json"])
             # TODO: make the frontend use perf_metric instead of perf_metric_field_name?
-            metrics_meta, ordered_field_names = get_task_metrics_meta(t)
-            ordered_metrics = [
-                dict(
-                    {
-                        "name": metrics_meta[field_name]["pretty_name"],
-                        # TODO: make the frontend use pretty_name?
-                        "field_name": field_name,
-                        "default_weight": self.get_default_metric_weight(
-                            t, field_name, t_dict["perf_metric_field_name"]
-                        ),
-                    },
-                    **metrics_meta[field_name],
-                )
-                for field_name in ordered_field_names
-            ]
+            if "perf_metric" in annotation_config:
+                t_dict["perf_metric_field_name"] = annotation_config["perf_metric"][
+                    "type"
+                ]
+                metrics_meta, ordered_field_names = get_task_metrics_meta(t)
+                ordered_metrics = [
+                    dict(
+                        {
+                            "name": metrics_meta[field_name]["pretty_name"],
+                            # TODO: make the frontend use pretty_name?
+                            "field_name": field_name,
+                            "default_weight": self.get_default_metric_weight(
+                                t, field_name, t_dict["perf_metric_field_name"]
+                            ),
+                        },
+                        **metrics_meta[field_name],
+                    )
+                    for field_name in ordered_field_names
+                ]
 
-            t_dict["ordered_metrics"] = ordered_metrics
+                t_dict["ordered_metrics"] = ordered_metrics
             t_dict["round"] = r_dict
             return t_dict
         except db.orm.exc.NoResultFound:
