@@ -50,11 +50,18 @@ def get_delta_metrics(
 
 def get_task_metrics_meta(task):
     instance_config = instance_property[task.instance_type]
-    perf_metric_type = json.loads(task.annotation_config_json)["perf_metric"]["type"]
-    delta_metric_types = [
-        config["type"]
-        for config in json.loads(task.annotation_config_json)["delta_metrics"]
-    ]
+    annotation_config = json.loads(task.annotation_config_json)
+    perf_metric_type = (
+        annotation_config["perf_metric"]["type"]
+        if "perf_metric" in annotation_config
+        else "accuracy"
+    )
+    delta_metric_types = (
+        []
+        if "delta_metrics" not in annotation_config
+        else [x["type"] for x in annotation_config["delta_metrics"]]
+    )
+
     ordered_metric_field_names = (
         [perf_metric_type] + instance_config["aws_metrics"] + delta_metric_types
     )
