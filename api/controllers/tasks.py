@@ -22,9 +22,133 @@ from models.round import Round, RoundModel
 from models.round_user_example_info import RoundUserExampleInfoModel
 from models.score import ScoreModel
 from models.task import Task, TaskModel
+from models.task_proposal import TaskProposal, TaskProposalModel
 from models.task_user_permission import TaskUserPermission
 from models.user import UserModel
 from models.validation import Validation, ValidationModel
+
+
+@bottle.put("/tasks/process_proposal/<tpid:int>")
+@_auth.requires_auth
+def process_proposal(credentials, tpid):
+
+    um = UserModel()
+    user = um.get(credentials["id"])
+    if not user.admin:
+        bottle.abort(403, "Access denied")
+
+    data = bottle.request.json
+    if not util.check_fields(data, ["accept"]):
+        bottle.abort(400, "Missing data")
+    tpm = TaskProposalModel()
+    tp = tpm.get(tpid)
+
+    if data["accept"]:
+        t = Task(
+            task_code=tp.task_code,
+            name=tp.name,
+            desc=tp.desc,
+            annotation_config_json="""
+            {
+                "model_wrong_metric": {"type": "exact_match", "constructor_args":
+                    {"reference_names": ["label"]}},
+                "aggregation_metric": {"type": "dynascore", "constructor_args": {}},
+                "perf_metric": {"type": "macro_f1", "constructor_args":
+                    {"reference_name": "label"}},
+                "delta_metrics": [{"type": "fairness", "constructor_args": {}},
+                    {"type": "robustness", "constructor_args": {}}],
+                "context": [{"name": "context", "type": "string",
+                    "constructor_args": {"placeholder": "Enter context..."}}],
+                "input": [{"name": "statement", "type": "string",
+                    "constructor_args": {"placeholder": "Enter statement..."}},
+                    {"name": "label", "type": "target_label",
+                    "constructor_args": {
+                        "labels": ["negative", "positive", "neutral"]}}],
+                "output": [
+                    {"name": "label", "type": "target_label",
+                        "constructor_args": {
+                            "labels": ["negative", "positive", "neutral"]}},
+                    {"name": "prob", "type": "multiclass_probs",
+                        "constructor_args": {"reference_name": "label"}}
+                ],
+                "metadata": {
+                "create":
+                [
+                    {"name": "example_explanation", "type": "string",
+                        "constructor_args":
+                            {"placeholder": "Explain why your example is correct..."},
+                        "display_name": "example explanation"},
+                    {"name": "model_explanation_right", "type": "string",
+                        "constructor_args": {"placeholder":
+                        "Explain why you thought the model would make a mistake..."},
+                        "model_wrong_condition": false,
+                        "display_name": "model explanation"},
+                    {"name": "model_explanation_wrong", "type": "string",
+                        "constructor_args": {"placeholder":
+                            "Explain why you think the model made a mistake..."},
+                            "model_wrong_condition": true,
+                            "display_name": "model explanation"}
+                ],
+                "validate":
+                [
+                    {"name": "corrected_label",
+                        "type": "multiclass",
+                        "constructor_args": {
+                            "labels": ["negative", "positive", "entailed"],
+                            "placeholder": "Enter corrected label"
+                            },
+                        "validated_label_condition": "incorrect"},
+                    {"name": "target_explanation", "type": "string",
+                        "constructor_args":
+                            {"placeholder":
+                                "Explain why your proposed target is correct..."},
+                        "validated_label_condition": "incorrect"},
+                    {"name": "flag_reason", "type": "string",
+                        "constructor_args":
+                            {"placeholder": "Enter the reason for flagging..."},
+                        "validated_label_condition": "flagged"},
+                    {"name": "validator_example_explanation", "type": "string",
+                        "constructor_args":
+                            {"placeholder": "Explain why the example is correct..."},
+                        "validated_label_condition": "correct"},
+                    {"name": "validator_model_explanation", "type": "string",
+                        "constructor_args": {"placeholder":
+                        "Enter what you think was done to try to trick the model..."}}
+                ]
+                }
+            }
+            """,
+            cur_round=1,
+            last_updated=db.sql.func.now(),
+        )  # Annotation config is sentiment example.
+
+        tpm.dbs.add(t)
+        tpm.dbs.flush()
+        logger.info("Added task (%s)" % (t.id))
+
+        tup = TaskUserPermission(uid=tp.uid, type="owner", tid=t.id)
+        tpm.dbs.add(tup)
+        tpm.dbs.flush()
+        logger.info("Added task owner")
+
+        r = Round(
+            tid=t.id,
+            rid=1,
+            secret=secrets.token_hex(),
+            url=None,
+            desc=None,
+            longdesc=None,
+        )
+
+        tpm.dbs.add(r)
+        tpm.dbs.flush()
+        tpm.dbs.commit()
+        logger.info("Added round (%s)" % (r.id))
+
+    tpm.dbs.query(TaskProposal).filter(TaskProposal.id == tpid).delete()
+    tpm.dbs.flush()
+    tpm.dbs.commit()
+    return util.json_encode({"success": "ok"})
 
 
 @bottle.get("/tasks/owners/<tid:int>")
@@ -107,7 +231,6 @@ def create_round(credentials, tid):
     task.cur_round += 1
     tm.dbs.add(task)
     tm.dbs.flush()
-    tm.dbs.commit()
 
     r = Round(tid=tid, rid=task.cur_round, secret=secrets.token_hex())
 

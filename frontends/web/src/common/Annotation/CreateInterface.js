@@ -199,7 +199,8 @@ class CreateInterface extends React.Component {
     modelWrong = null,
     output = null,
     endpoint = null,
-    metadata = {}
+    metadata = {},
+    callback = () => this.smoothlyAnimateToBottom()
   ) {
     this.setState(
       {
@@ -220,10 +221,13 @@ class CreateInterface extends React.Component {
           if (!this.state.retainInput) {
             this.initializeDataWrapper();
           }
-          this.setState({
-            submitDisabled: false,
-            refreshDisabled: false,
-          });
+          this.setState(
+            {
+              submitDisabled: false,
+              refreshDisabled: false,
+            },
+            callback
+          );
           return;
         }
 
@@ -246,14 +250,17 @@ class CreateInterface extends React.Component {
             (storeExampleResult) => {
               var key = this.state.content.length;
               // Reset state variables and store example id.
-              this.setState({
-                submitDisabled: false,
-                refreshDisabled: false,
-                mapKeyToExampleId: {
-                  ...this.state.mapKeyToExampleId,
-                  [key]: storeExampleResult.id,
+              this.setState(
+                {
+                  submitDisabled: false,
+                  refreshDisabled: false,
+                  mapKeyToExampleId: {
+                    ...this.state.mapKeyToExampleId,
+                    [key]: storeExampleResult.id,
+                  },
                 },
-              });
+                callback
+              );
 
               if (!!storeExampleResult.badges) {
                 this.setState({
@@ -298,7 +305,7 @@ class CreateInterface extends React.Component {
 
       if (url === null) {
         // In this case, there is no target model. Just store the example without model data.
-        this.storeExampleWrapper().then(() => this.smoothlyAnimateToBottom());
+        this.storeExampleWrapper();
         return;
       }
 

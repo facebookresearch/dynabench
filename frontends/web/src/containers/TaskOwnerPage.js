@@ -5,7 +5,7 @@
  */
 
 import React from "react";
-import { Container, Row, Col, Nav } from "react-bootstrap";
+import { Container, Row, Col, Nav, Card } from "react-bootstrap";
 import UserContext from "./UserContext";
 import Models from "../components/TaskOwnerPageComponents/Models";
 import Owners from "../components/TaskOwnerPageComponents/Owners";
@@ -493,43 +493,63 @@ class TaskOwnerPage extends React.Component {
                 handleTaskUpdateWithActivate={this.handleTaskUpdateWithActivate}
               />
             ) : null}
-            {this.props.location.hash === "#owners" &&
-            this.state.owners_string ? (
-              <Owners
-                owners_string={this.state.owners_string}
-                handleOwnerUpdate={this.handleOwnerUpdate}
-              />
-            ) : null}
-            {this.props.location.hash === "#rounds" &&
-            this.state.rounds &&
-            this.state.model_identifiers_for_target_selection ? (
-              <Rounds
-                rounds={this.state.rounds}
-                model_identifiers_for_target_selection={
-                  this.state.model_identifiers_for_target_selection
-                }
-                createRound={this.createRound}
-                handleRoundUpdate={this.handleRoundUpdate}
-                exportData={this.exportData}
-                dataExporting={this.state.dataExporting}
-              />
-            ) : null}
-            {this.props.location.hash === "#models" &&
-            this.state.model_identifiers ? (
-              <Models model_identifiers={this.state.model_identifiers} />
-            ) : null}
-            {this.props.location.hash === "#datasets" &&
-            this.state.task &&
-            this.state.datasets &&
-            this.state.availableDatasetAccessTypes ? (
-              <Datasets
-                task={this.state.task}
-                datasets={this.state.datasets}
-                availableAccessTypes={this.state.availableDatasetAccessTypes}
-                handleDatasetUpdate={this.handleDatasetUpdate}
-                handleUploadAndCreateDataset={this.handleUploadAndCreateDataset}
-              />
-            ) : null}
+            {this.state.task?.active ? (
+              <>
+                {this.props.location.hash === "#owners" &&
+                this.state.owners_string ? (
+                  <Owners
+                    owners_string={this.state.owners_string}
+                    handleOwnerUpdate={this.handleOwnerUpdate}
+                  />
+                ) : null}
+                {this.props.location.hash === "#rounds" &&
+                this.state.rounds &&
+                this.state.model_identifiers_for_target_selection ? (
+                  <Rounds
+                    rounds={this.state.rounds}
+                    model_identifiers_for_target_selection={
+                      this.state.model_identifiers_for_target_selection
+                    }
+                    createRound={this.createRound}
+                    handleRoundUpdate={this.handleRoundUpdate}
+                    exportData={this.exportData}
+                    dataExporting={this.state.dataExporting}
+                  />
+                ) : null}
+                {this.props.location.hash === "#models" &&
+                this.state.model_identifiers ? (
+                  <Models model_identifiers={this.state.model_identifiers} />
+                ) : null}
+                {this.props.location.hash === "#datasets" &&
+                this.state.task &&
+                this.state.datasets &&
+                this.state.availableDatasetAccessTypes ? (
+                  <Datasets
+                    task={this.state.task}
+                    datasets={this.state.datasets}
+                    availableAccessTypes={
+                      this.state.availableDatasetAccessTypes
+                    }
+                    handleDatasetUpdate={this.handleDatasetUpdate}
+                    handleUploadAndCreateDataset={
+                      this.handleUploadAndCreateDataset
+                    }
+                  />
+                ) : null}
+              </>
+            ) : (
+              this.props.location.hash !== "#settings" && (
+                <Container className="mb-5 pb-5">
+                  <Card className="my-4">
+                    <Card.Body>
+                      <Row className="justify-content-center">
+                        Activate this task first.
+                      </Row>
+                    </Card.Body>
+                  </Card>
+                </Container>
+              )
+            )}
           </Col>
         </Row>
       </Container>

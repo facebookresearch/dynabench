@@ -25,6 +25,7 @@ from controllers.examples import *  # noqa
 from controllers.index import *  # noqa
 from controllers.models import *  # noqa
 from controllers.notifications import *  # noqa
+from controllers.task_proposals import *  # noqa
 from controllers.tasks import *  # noqa
 from controllers.users import *  # noqa
 from controllers.validations import *  # noqa
@@ -94,10 +95,12 @@ if "aws_access_key_id" in config and config["aws_access_key_id"] != "":
 
 
 if running_mode == "dev":
+    """
     if not check_fields(
         config, ["ssl_cert_file_path", "ssl_org_pem_file_path"]
     ) or is_fields_blank(config, ["ssl_cert_file_path", "ssl_org_pem_file_path"]):
         raise AssertionError("Configure SSL certificates detail")
+    """
     app.config["mode"] = "dev"
     bottle.run(
         host="0.0.0.0",

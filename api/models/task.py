@@ -239,7 +239,7 @@ def verify_multiclass_probs_config(obj, annotation_config):
     )
     for reference_obj in reference_objs:
         assert reference_obj["type"] in (
-            AnnotationTypeEnum.multiclass_probs.name,
+            AnnotationTypeEnum.multiclass.name,
             AnnotationTypeEnum.target_label.name,
         )
 
@@ -308,7 +308,7 @@ class Task(Base):
 
     cur_round = db.Column(db.Integer, nullable=False)
 
-    hidden = db.Column(db.Boolean, default=False)
+    hidden = db.Column(db.Boolean, default=True)
     submitable = db.Column(db.Boolean, default=False)
 
     validate_non_fooling = db.Column(db.Boolean, default=False, nullable=False)
