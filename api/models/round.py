@@ -19,7 +19,7 @@ class Round(Base):
     rid = db.Column(db.Integer, default=1, nullable=False, index=True)
 
     secret = db.Column(db.String(length=255), nullable=False)
-    url = db.Column(db.String(length=255), nullable=False)
+    url = db.Column(db.TEXT)
 
     desc = db.Column(db.String(length=255))
     longdesc = db.Column(db.Text)
