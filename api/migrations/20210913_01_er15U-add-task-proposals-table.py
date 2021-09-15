@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 """
-Add task proposals table, also change
+Add task proposals table, also change new tasks to hidden by default.
 """
 
 from yoyo import step

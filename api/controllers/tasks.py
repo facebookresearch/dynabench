@@ -123,10 +123,12 @@ def process_proposal(credentials, tpid):
         )  # Annotation config is sentiment example.
 
         tpm.dbs.add(t)
+        tpm.dbs.flush()
         logger.info("Added task (%s)" % (t.id))
 
         tup = TaskUserPermission(uid=tp.uid, type="owner", tid=t.id)
         tpm.dbs.add(tup)
+        tpm.dbs.flush()
         logger.info("Added task owner")
 
         r = Round(
@@ -228,6 +230,7 @@ def create_round(credentials, tid):
     task = tm.get(tid)
     task.cur_round += 1
     tm.dbs.add(task)
+    tm.dbs.flush()
 
     r = Round(tid=tid, rid=task.cur_round, secret=secrets.token_hex())
 
