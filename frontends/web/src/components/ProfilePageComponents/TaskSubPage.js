@@ -6,6 +6,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Card, Col, Container, Pagination, Table } from "react-bootstrap";
+import TaskProposalSubPage from "./TaskProposalSubPage.js";
 
 const TaskSubPage = (props) => {
   const [userTasks, setUserTasks] = useState([]);
@@ -33,7 +34,7 @@ const TaskSubPage = (props) => {
     setPage(newPage);
   };
 
-  return (
+  const tasks = (
     <Container className="mb-5 pb-5">
       <h1 className="my-4 pt-3 text-uppercase text-center">Your Tasks</h1>
       <Col className="m-auto" lg={8}>
@@ -92,6 +93,16 @@ const TaskSubPage = (props) => {
         </Card>
       </Col>
     </Container>
+  );
+  return (
+    <>
+      {tasks}
+      <TaskProposalSubPage
+        handleProposalSubmit={props.handleProposalSubmit}
+        api={api}
+        history={history}
+      />
+    </>
   );
 };
 

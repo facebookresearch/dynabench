@@ -135,7 +135,7 @@ def process_proposal(credentials, tpid):
             tid=t.id,
             rid=1,
             secret=secrets.token_hex(),
-            url=None,
+            url="https://TBD",
             desc=None,
             longdesc=None,
         )
@@ -160,11 +160,11 @@ def get_owners(credentials, tid):
         db.and_(TaskUserPermission.type == "owner", TaskUserPermission.tid == tid)
     )
     um = UserModel()
-    usernames = []
+    users = []
     for obj in tups:
         user = um.get(obj.uid)
-        usernames.append(user.username)
-    return util.json_encode(usernames)
+        users.append({"id": user.id, "username": user.username})
+    return util.json_encode(users)
 
 
 def ensure_owner_or_admin(tid, uid):
@@ -232,7 +232,9 @@ def create_round(credentials, tid):
     tm.dbs.add(task)
     tm.dbs.flush()
 
-    r = Round(tid=tid, rid=task.cur_round, secret=secrets.token_hex())
+    r = Round(
+        tid=tid, rid=task.cur_round, url="https://TBD", secret=secrets.token_hex()
+    )
 
     tm.dbs.add(r)
     tm.dbs.flush()

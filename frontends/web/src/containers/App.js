@@ -234,19 +234,16 @@ class App extends React.Component {
                           <NavDropdown.Item as={Link} to="/account#tasks">
                             Tasks
                           </NavDropdown.Item>
-                          <NavDropdown.Item
-                            as={Link}
-                            to="/account#task_proposals"
-                          >
-                            Task Proposals
-                          </NavDropdown.Item>
                           {this.state.user?.admin && (
-                            <NavDropdown.Item
-                              as={Link}
-                              to="/account#admin_task_proposals"
-                            >
-                              Admin Task Proposals
-                            </NavDropdown.Item>
+                            <>
+                              <NavDropdown.Divider />
+                              <NavDropdown.Item
+                                as={Link}
+                                to="/account#admin_task_proposals"
+                              >
+                                Admin Task Proposals
+                              </NavDropdown.Item>
+                            </>
                           )}
                           <NavDropdown.Divider />
                           <NavDropdown.Item as={Link} to="/logout">
