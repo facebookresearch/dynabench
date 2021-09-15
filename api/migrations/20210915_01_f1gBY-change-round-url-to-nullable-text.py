@@ -14,6 +14,6 @@ __depends__ = {"20210913_01_er15U-add-task-proposals-table"}
 steps = [
     step(
         "ALTER TABLE rounds CHANGE COLUMN url url TEXT DEFAULT NULL",
-        "ALTER TABLE tasks CHANGE COLUMN url url VARCHAR(255) NOT NULL",
+        "ALTER TABLE rounds CHANGE COLUMN url url VARCHAR(255) NOT NULL",
     )
 ]
