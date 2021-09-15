@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 """
-Add task proposals table.
+Add task proposals table, also change
 """
 
 from yoyo import step
@@ -27,5 +27,9 @@ steps = [
         )
         """,
         "DROP TABLE task_proposals",
-    )
+    ),
+    step(
+        "ALTER TABLE tasks CHANGE COLUMN hidden hidden BOOL DEFAULT true",
+        "ALTER TABLE tasks CHANGE COLUMN hidden hidden BOOL DEFAULT false",
+    ),
 ]
