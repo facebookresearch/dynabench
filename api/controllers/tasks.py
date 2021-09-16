@@ -131,14 +131,7 @@ def process_proposal(credentials, tpid):
         tpm.dbs.flush()
         logger.info("Added task owner")
 
-        r = Round(
-            tid=t.id,
-            rid=1,
-            secret=secrets.token_hex(),
-            url="https://TBD",
-            desc=None,
-            longdesc=None,
-        )
+        r = Round(tid=t.id, rid=1, secret=secrets.token_hex())
 
         tpm.dbs.add(r)
         tpm.dbs.flush()
@@ -232,9 +225,7 @@ def create_round(credentials, tid):
     tm.dbs.add(task)
     tm.dbs.flush()
 
-    r = Round(
-        tid=tid, rid=task.cur_round, url="https://TBD", secret=secrets.token_hex()
-    )
+    r = Round(tid=tid, rid=task.cur_round, secret=secrets.token_hex())
 
     tm.dbs.add(r)
     tm.dbs.flush()

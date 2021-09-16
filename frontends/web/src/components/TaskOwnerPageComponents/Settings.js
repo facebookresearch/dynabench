@@ -18,8 +18,6 @@ const Settings = (props) => {
           <Card.Body className="mt-4">
             <Formik
               initialValues={{
-                annotation_config_json: props.task.annotation_config_json,
-                active: props.task.active,
                 hidden: props.task.hidden,
                 submitable: props.task.submitable,
                 instructions_md: props.task.instructions_md,
@@ -41,7 +39,7 @@ const Settings = (props) => {
                 <>
                   <form className="px-4" onSubmit={handleSubmit}>
                     <Container>
-                      {!!!values.active && (
+                      {!!!props.task.active && (
                         <div>
                           <span style={{ color: "red" }}>BETA Notice</span>:
                           Your task is not yet active. Please go to the Advanced

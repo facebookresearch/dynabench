@@ -21,13 +21,6 @@ const Advanced = (props) => {
             <Formik
               initialValues={{
                 annotation_config_json: props.task.annotation_config_json,
-                hidden: props.task.hidden,
-                submitable: props.task.submitable,
-                instructions_md: props.task.instructions_md,
-                unpublished_models_in_leaderboard:
-                  props.task.unpublished_models_in_leaderboard,
-                num_matching_validations: props.task.num_matching_validations,
-                validate_non_fooling: props.task.validate_non_fooling,
               }}
               onSubmit={props.handleTaskUpdateWithActivate}
             >
@@ -101,34 +94,21 @@ const Advanced = (props) => {
                         </Col>
                       </Form.Group>
                       <Row className="justify-content-md-center">
-                        {dirty && props.admin_or_owner ? (
-                          props.task.active ? (
-                            <Col md={5} sm={12}>
-                              <Button
-                                type="submit"
-                                variant="primary"
-                                className="submit-btn button-ellipse text-uppercase my-4"
-                                disabled={isSubmitting}
-                              >
-                                Save
-                              </Button>
-                            </Col>
-                          ) : (
-                            <Button
-                              type="submit"
-                              variant="danger"
-                              size="lg"
-                              className="text-uppercase my-4"
-                              disabled={isSubmitting}
-                            >
-                              Save
-                              <br />{" "}
-                              <small>
-                                (WARNING: You will not be able to change this
-                                config while we're in beta)
-                              </small>
-                            </Button>
-                          )
+                        {dirty && props.admin_or_owner && !props.tast.active ? (
+                          <Button
+                            type="submit"
+                            variant="danger"
+                            size="lg"
+                            className="text-uppercase my-4"
+                            disabled={isSubmitting}
+                          >
+                            Save
+                            <br />{" "}
+                            <small>
+                              (WARNING: You will not be able to change this
+                              config while we're in beta)
+                            </small>
+                          </Button>
                         ) : null}
                       </Row>
                     </Container>
