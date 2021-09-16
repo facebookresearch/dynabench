@@ -106,9 +106,7 @@ const Datasets = (props) => {
                         controlId="name"
                         className="py-3 my-0 border-bottom"
                       >
-                        <Form.Label column>
-                          <b>Name</b>
-                        </Form.Label>
+                        <Form.Label column>Name</Form.Label>
                         <Col sm={8}>
                           <Form.Control
                             value={values.name}
@@ -117,9 +115,7 @@ const Datasets = (props) => {
                         </Col>
                       </Form.Group>
                       <Form.Group as={Row} className="py-3 my-0">
-                        <Form.Label column>
-                          <b>File</b>
-                        </Form.Label>
+                        <Form.Label column>File</Form.Label>
                         <Col sm={8}>
                           <FileUpload
                             values={values}
@@ -134,9 +130,7 @@ const Datasets = (props) => {
                           as={Row}
                           className="py-3 my-0 border-top"
                         >
-                          <Form.Label column>
-                            <b>File for {config.type}</b>
-                          </Form.Label>
+                          <Form.Label column>File for {config.type}</Form.Label>
                           <Col sm={8}>
                             <FileUpload
                               values={values}
@@ -214,9 +208,7 @@ const Datasets = (props) => {
                             as={Row}
                             className="py-3 my-0 border-bottom"
                           >
-                            <Form.Label column>
-                              <b>Name</b>
-                            </Form.Label>
+                            <Form.Label column>Name</Form.Label>
                             <Col sm="8">
                               <Form.Control
                                 disabled
@@ -230,9 +222,7 @@ const Datasets = (props) => {
                             controlId="source_url"
                             className="py-3 my-0 border-bottom"
                           >
-                            <Form.Label column>
-                              <b>Link to Paper</b>
-                            </Form.Label>
+                            <Form.Label column>Link to Paper</Form.Label>
                             <Col sm="8">
                               <Form.Control
                                 onChange={handleChange}
@@ -245,9 +235,7 @@ const Datasets = (props) => {
                             controlId="access_type"
                             className="py-3 my-0 border-bottom"
                           >
-                            <Form.Label column>
-                              <b>Access Type</b>
-                            </Form.Label>
+                            <Form.Label column>Access Type</Form.Label>
                             <Col sm="8">
                               <Form.Control
                                 as="select"
@@ -269,7 +257,7 @@ const Datasets = (props) => {
                             className="py-3 my-0 border-bottom"
                           >
                             <Form.Label column>
-                              <b>Corresponds to a Round</b>
+                              Corresponds to a Round
                             </Form.Label>
                             <Col sm="8">
                               <Form.Check
@@ -291,9 +279,7 @@ const Datasets = (props) => {
                               controlId="rid"
                               className="py-3 my-0 border-bottom"
                             >
-                              <Form.Label column>
-                                <b>Round</b>
-                              </Form.Label>
+                              <Form.Label column>Round</Form.Label>
                               <Col sm="8">
                                 <Form.Control
                                   type="number"
@@ -315,9 +301,7 @@ const Datasets = (props) => {
                             controlId="longdesc"
                             className="py-3 my-0"
                           >
-                            <Form.Label column>
-                              <b>Description</b>
-                            </Form.Label>
+                            <Form.Label column>Description</Form.Label>
                             <Form.Control
                               rows="6"
                               as="textarea"

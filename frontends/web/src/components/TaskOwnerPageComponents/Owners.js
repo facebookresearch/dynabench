@@ -7,6 +7,7 @@
 import React from "react";
 import { Container, Row, Form, Col, Card, Button } from "react-bootstrap";
 import { Formik } from "formik";
+import { Link } from "react-router-dom";
 
 const Owners = (props) => {
   return (
@@ -17,7 +18,7 @@ const Owners = (props) => {
           <Card.Body className="mt-4">
             <Formik
               initialValues={{
-                owners_string: props.owners_string,
+                owners: props.owners,
                 owner_to_toggle: null,
               }}
               onSubmit={props.handleOwnerUpdate}
@@ -34,15 +35,17 @@ const Owners = (props) => {
                   <form className="px-4" onSubmit={handleSubmit}>
                     <Container>
                       <Form.Group as={Row} className="py-3 my-0 border-bottom">
-                        <Form.Label column>
-                          <b>Owners</b>
-                        </Form.Label>
-                        <Col sm="8">
-                          <Form.Control
-                            plaintext
-                            disabled
-                            value={values.owners_string}
-                          />
+                        <Form.Label column>Owners</Form.Label>
+                        <Col sm="8" style={{ margin: 0, padding: 15 }}>
+                          {values.owners.map((value, index) => (
+                            <Link
+                              key={index}
+                              to={`/users/${value.id}`}
+                              className="btn-link"
+                            >
+                              {value.username}{" "}
+                            </Link>
+                          ))}
                         </Col>
                       </Form.Group>
                       <Form.Group
@@ -50,14 +53,13 @@ const Owners = (props) => {
                         controlId="owner_to_toggle"
                         className="py-3 my-0"
                       >
-                        <Form.Label column>
-                          <b>Add/Remove Owner</b>
-                        </Form.Label>
+                        <Form.Label column>Add/Remove Owner</Form.Label>
                         <Col sm="8">
                           <Form.Control
                             defaultValue={values.owner_to_toggle}
                             onChange={handleChange}
                           />
+                          <Form.Text muted>Enter username</Form.Text>
                         </Col>
                       </Form.Group>
                       <Form.Group as={Row} className="py-3 my-0">
