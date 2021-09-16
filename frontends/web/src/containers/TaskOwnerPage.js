@@ -7,6 +7,7 @@
 import React from "react";
 import { Container, Row, Col, Nav, Card } from "react-bootstrap";
 import UserContext from "./UserContext";
+import Advanced from "../components/TaskOwnerPageComponents/Advanced";
 import Models from "../components/TaskOwnerPageComponents/Models";
 import Owners from "../components/TaskOwnerPageComponents/Owners";
 import Rounds from "../components/TaskOwnerPageComponents/Rounds";
@@ -21,7 +22,7 @@ class TaskOwnerPage extends React.Component {
       admin_or_owner: false,
       task: null,
       rounds: null,
-      owners_string: null,
+      owners: null,
       model_identifiers_for_target_selection: null,
       model_identifiers: null,
       datasets: null,
@@ -90,7 +91,7 @@ class TaskOwnerPage extends React.Component {
   fetchOwners = (callback = () => {}) => {
     return this.context.api.getOwners(this.state.task.id).then(
       (result) => {
-        this.setState({ owners_string: result.join(", ") }, callback);
+        this.setState({ owners: result }, callback);
       },
       (error) => {
         console.log(error);
@@ -206,40 +207,28 @@ class TaskOwnerPage extends React.Component {
       );
   };
 
-  handleTaskUpdateWithActivate = (
+  handleTaskActivate = (
     values,
     { setFieldError, setSubmitting, resetForm }
   ) => {
-    if (
-      this.state.task.active === false &&
-      values.hasOwnProperty("annotation_config_json")
-    ) {
-      this.context.api
-        .activateTask(this.state.task.id, values.annotation_config_json)
-        .then(
-          (result) => {
-            this.handleTaskUpdate(values, {
-              setFieldError,
-              setSubmitting,
-              resetForm,
-            });
-          },
-          (error) => {
-            console.log(error);
-            setFieldError(
-              "accept",
-              "Task could not be updated (" + error.error + ")"
-            );
+    this.context.api
+      .activateTask(this.state.task.id, values.annotation_config_json)
+      .then(
+        (result) => {
+          this.fetchTask(() => {
+            resetForm({ values: values });
             setSubmitting(false);
-          }
-        );
-    } else {
-      this.handleTaskUpdate(values, {
-        setFieldError,
-        setSubmitting,
-        resetForm,
-      });
-    }
+          });
+        },
+        (error) => {
+          console.log(error);
+          setFieldError(
+            "accept",
+            "Task could not be activated (" + error.error + ")"
+          );
+          setSubmitting(false);
+        }
+      );
   };
 
   handleTaskUpdate = (values, { setFieldError, setSubmitting, resetForm }) => {
@@ -286,7 +275,7 @@ class TaskOwnerPage extends React.Component {
           this.fetchOwners(() => {
             resetForm({
               values: {
-                owners_string: this.state.owners_string,
+                owners: this.state.owners,
                 owner_to_toggle: null,
               },
             });
@@ -441,6 +430,10 @@ class TaskOwnerPage extends React.Component {
             buttonText: "Settings",
           },
           {
+            href: "#advanced",
+            buttonText: "Advanced",
+          },
+          {
             href: "#owners",
             buttonText: "Owners",
           },
@@ -490,15 +483,21 @@ class TaskOwnerPage extends React.Component {
               <Settings
                 admin_or_owner={this.state.admin_or_owner}
                 task={this.state.task}
-                handleTaskUpdateWithActivate={this.handleTaskUpdateWithActivate}
+                handleTaskUpdate={this.handleTaskUpdate}
+              />
+            ) : null}
+            {this.props.location.hash === "#advanced" && this.state.task ? (
+              <Advanced
+                admin_or_owner={this.state.admin_or_owner}
+                task={this.state.task}
+                handleTaskActivate={this.handleTaskActivate}
               />
             ) : null}
             {this.state.task?.active ? (
               <>
-                {this.props.location.hash === "#owners" &&
-                this.state.owners_string ? (
+                {this.props.location.hash === "#owners" && this.state.owners ? (
                   <Owners
-                    owners_string={this.state.owners_string}
+                    owners={this.state.owners}
                     handleOwnerUpdate={this.handleOwnerUpdate}
                   />
                 ) : null}
@@ -538,7 +537,8 @@ class TaskOwnerPage extends React.Component {
                 ) : null}
               </>
             ) : (
-              this.props.location.hash !== "#settings" && (
+              this.props.location.hash !== "#settings" &&
+              this.props.location.hash !== "#advanced" && (
                 <Container className="mb-5 pb-5">
                   <Card className="my-4">
                     <Card.Body>

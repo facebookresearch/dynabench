@@ -34,7 +34,6 @@ import {
 import ModelSubPage from "../components/ProfilePageComponents/ModelSubPage";
 import TaskSubPage from "../components/ProfilePageComponents/TaskSubPage";
 import ForksAndSnapshotsSubPage from "../components/ProfilePageComponents/ForksAndSnapshotsSubPage";
-import TaskProposalSubPage from "../components/ProfilePageComponents/TaskProposalSubPage";
 import AdminTaskProposalSubPage from "../components/ProfilePageComponents/AdminTaskProposalSubPage";
 
 const StatsSubPage = (props) => {
@@ -447,10 +446,6 @@ class ProfilePage extends React.Component {
             buttonText: "Tasks",
           },
           {
-            href: "#task_proposals",
-            buttonText: "Task Proposals",
-          },
-          {
             href: "#admin_task_proposals",
             buttonText: "Admin Task Proposals",
           },
@@ -479,10 +474,6 @@ class ProfilePage extends React.Component {
           {
             href: "#tasks",
             buttonText: "Tasks",
-          },
-          {
-            href: "#task_proposals",
-            buttonText: "Task Proposals",
           },
         ];
 
@@ -697,14 +688,8 @@ class ProfilePage extends React.Component {
               <TaskSubPage
                 api={this.context.api}
                 history={this.props.history}
-                userId={this.context.api.getCredentials().id}
-              />
-            ) : null}
-            {this.props.location.hash === "#task_proposals" ? (
-              <TaskProposalSubPage
                 handleProposalSubmit={this.handleProposalSubmit}
-                api={this.context.api}
-                history={this.props.history}
+                userId={this.context.api.getCredentials().id}
               />
             ) : null}
             {this.state.user.admin &&

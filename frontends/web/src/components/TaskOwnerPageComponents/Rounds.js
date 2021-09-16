@@ -105,9 +105,7 @@ const Rounds = (props) => {
                             as={Row}
                             className="py-3 my-0 border-bottom"
                           >
-                            <Form.Label column>
-                              <b>Round</b>
-                            </Form.Label>
+                            <Form.Label column>Round</Form.Label>
                             <Col sm="8">
                               <Form.Control
                                 plaintext
@@ -121,7 +119,7 @@ const Rounds = (props) => {
                             className="py-3 my-0 border-bottom"
                           >
                             <Form.Label column>
-                              <b>Total Fooling Examples</b>
+                              Total Fooling Examples
                             </Form.Label>
                             <Col sm="8">
                               <Form.Control
@@ -136,7 +134,7 @@ const Rounds = (props) => {
                             className="py-3 my-0 border-bottom"
                           >
                             <Form.Label column>
-                              <b>Total Verified Fooling Examples</b>
+                              Total Verified Fooling Examples
                             </Form.Label>
                             <Col sm="8">
                               <Form.Control
@@ -151,7 +149,7 @@ const Rounds = (props) => {
                             className="py-3 my-0 border-bottom"
                           >
                             <Form.Label column>
-                              <b>Total Collected Examples</b>
+                              Total Collected Examples
                             </Form.Label>
                             <Col sm="8">
                               <Form.Control
@@ -175,7 +173,7 @@ const Rounds = (props) => {
                             }
                           >
                             <Form.Label column>
-                              <b>Set Models in the Loop</b>
+                              Set Models in the Loop
                             </Form.Label>
                             <Col sm="8">
                               <ChevronExpandButton
@@ -239,9 +237,7 @@ const Rounds = (props) => {
                               )
                             }
                           >
-                            <Form.Label column>
-                              <b>Upload Contexts</b>
-                            </Form.Label>
+                            <Form.Label column>Upload Contexts</Form.Label>
                             <Col sm="8">
                               <ChevronExpandButton
                                 expanded={showContextUploadRound[round.rid - 1]}
@@ -264,9 +260,7 @@ const Rounds = (props) => {
                             controlId="longdesc"
                             className="py-3 my-0 border-top"
                           >
-                            <Form.Label column>
-                              <b>Round Description</b>
-                            </Form.Label>
+                            <Form.Label column>Round Description</Form.Label>
                             <Form.Control
                               rows="6"
                               as="textarea"

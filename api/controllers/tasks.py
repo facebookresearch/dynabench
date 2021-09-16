@@ -131,14 +131,7 @@ def process_proposal(credentials, tpid):
         tpm.dbs.flush()
         logger.info("Added task owner")
 
-        r = Round(
-            tid=t.id,
-            rid=1,
-            secret=secrets.token_hex(),
-            url=None,
-            desc=None,
-            longdesc=None,
-        )
+        r = Round(tid=t.id, rid=1, secret=secrets.token_hex())
 
         tpm.dbs.add(r)
         tpm.dbs.flush()
@@ -160,11 +153,11 @@ def get_owners(credentials, tid):
         db.and_(TaskUserPermission.type == "owner", TaskUserPermission.tid == tid)
     )
     um = UserModel()
-    usernames = []
+    users = []
     for obj in tups:
         user = um.get(obj.uid)
-        usernames.append(user.username)
-    return util.json_encode(usernames)
+        users.append({"id": user.id, "username": user.username})
+    return util.json_encode(users)
 
 
 def ensure_owner_or_admin(tid, uid):
