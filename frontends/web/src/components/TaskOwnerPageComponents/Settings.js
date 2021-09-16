@@ -26,7 +26,7 @@ const Settings = (props) => {
                 num_matching_validations: props.task.num_matching_validations,
                 validate_non_fooling: props.task.validate_non_fooling,
               }}
-              onSubmit={props.handleTaskUpdateWithActivate}
+              onSubmit={props.handleTaskUpdate}
             >
               {({
                 values,

@@ -22,7 +22,7 @@ const Advanced = (props) => {
               initialValues={{
                 annotation_config_json: props.task.annotation_config_json,
               }}
-              onSubmit={props.handleTaskUpdateWithActivate}
+              onSubmit={props.handleTaskActivate}
             >
               {({
                 values,
@@ -94,7 +94,7 @@ const Advanced = (props) => {
                         </Col>
                       </Form.Group>
                       <Row className="justify-content-md-center">
-                        {dirty && props.admin_or_owner && !props.tast.active ? (
+                        {dirty && props.admin_or_owner && !props.task.active ? (
                           <Button
                             type="submit"
                             variant="danger"

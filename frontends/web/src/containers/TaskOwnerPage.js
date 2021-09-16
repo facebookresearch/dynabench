@@ -207,40 +207,28 @@ class TaskOwnerPage extends React.Component {
       );
   };
 
-  handleTaskUpdateWithActivate = (
+  handleTaskActivate = (
     values,
     { setFieldError, setSubmitting, resetForm }
   ) => {
-    if (
-      this.state.task.active === false &&
-      values.hasOwnProperty("annotation_config_json")
-    ) {
-      this.context.api
-        .activateTask(this.state.task.id, values.annotation_config_json)
-        .then(
-          (result) => {
-            this.handleTaskUpdate(values, {
-              setFieldError,
-              setSubmitting,
-              resetForm,
-            });
-          },
-          (error) => {
-            console.log(error);
-            setFieldError(
-              "accept",
-              "Task could not be updated (" + error.error + ")"
-            );
+    this.context.api
+      .activateTask(this.state.task.id, values.annotation_config_json)
+      .then(
+        (result) => {
+          this.fetchTask(() => {
+            resetForm({ values: values });
             setSubmitting(false);
-          }
-        );
-    } else {
-      this.handleTaskUpdate(values, {
-        setFieldError,
-        setSubmitting,
-        resetForm,
-      });
-    }
+          });
+        },
+        (error) => {
+          console.log(error);
+          setFieldError(
+            "accept",
+            "Task could not be activated (" + error.error + ")"
+          );
+          setSubmitting(false);
+        }
+      );
   };
 
   handleTaskUpdate = (values, { setFieldError, setSubmitting, resetForm }) => {
@@ -495,14 +483,14 @@ class TaskOwnerPage extends React.Component {
               <Settings
                 admin_or_owner={this.state.admin_or_owner}
                 task={this.state.task}
-                handleTaskUpdateWithActivate={this.handleTaskUpdateWithActivate}
+                handleTaskUpdate={this.handleTaskUpdate}
               />
             ) : null}
             {this.props.location.hash === "#advanced" && this.state.task ? (
               <Advanced
                 admin_or_owner={this.state.admin_or_owner}
                 task={this.state.task}
-                handleTaskUpdateWithActivate={this.handleTaskUpdateWithActivate}
+                handleTaskActivate={this.handleTaskActivate}
               />
             ) : null}
             {this.state.task?.active ? (
