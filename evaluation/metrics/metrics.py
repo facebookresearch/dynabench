@@ -13,6 +13,8 @@ from transformers.data.metrics.squad_metrics import compute_f1
 
 from metrics.instance_property import instance_property
 
+from .vqa_accuracy import VQAEval
+
 
 # perf functions. propose to move to dynalab
 
@@ -40,6 +42,33 @@ def get_accuracy(predictions: list, targets: list):
 
 def get_accuracy_meta(task=None):
     return {"unit": "%", "pretty_name": "Accuracy", "utility_direction": 1, "offset": 0}
+
+
+def get_vqa_accuracy(predictions: list, targets: list):
+    """
+    prediction format: [
+        0, 1, 2, 3, 4
+    ]
+    target format: [
+        [0, 0, 0, 1, 2, 3, 4, 5, 6, 7],
+        [1, 1, 1, 1, 2, 3, 4, 5, 6, 7],
+        [2, 2, 2, 1, 2, 3, 4, 5, 6, 7],
+        [3, 3, 3, 1, 2, 3, 4, 5, 6, 7],
+        [4, 4, 4, 1, 2, 3, 4, 5, 6, 7],
+    ]
+    """
+    vqa_eval = VQAEval()
+    acc_vqa = [vqa_eval(t, p) for p, t in zip(predictions, targets)]
+    return round(100 * float(sum(acc_vqa)) / len(acc_vqa), vqa_eval.n)
+
+
+def get_vqa_accuracy_meta(tasl=None):
+    return {
+        "unit": "%",
+        "pretty_name": "VQA Accuracy",
+        "utility_direction": 1,
+        "offset": 0,
+    }
 
 
 def get_macro_f1(predictions: list, targets: list):

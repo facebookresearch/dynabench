@@ -12,6 +12,7 @@ eval_metrics_dict = {
     "squad_f1": metrics.get_squad_f1,
     "bleu": metrics.get_bleu,
     "sp_bleu": metrics.get_sp_bleu,
+    "vqa_accuracy": metrics.get_vqa_accuracy,
 }
 
 delta_metrics_dict = {
@@ -34,4 +35,5 @@ metrics_meta_dict = {
     "examples_per_second": metrics.get_examples_per_second_meta,
     "fairness": metrics.get_fairness_meta,
     "robustness": metrics.get_robustness_meta,
+    "vqa_accuracy": metrics.get_vqa_accuracy_meta,
 }

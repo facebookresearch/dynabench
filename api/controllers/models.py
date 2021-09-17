@@ -24,6 +24,25 @@ from models.user import UserModel
 from .tasks import ensure_owner_or_admin
 
 
+@bottle.post("/models/upload_via_predictions")
+@_auth.requires_auth
+def do_upload_via_predictions(credentials):
+    """
+    Upload the result file for overall round or specified round like 1,2,3
+    and kick off an evaluation server run
+    :param credentials:
+    :return: whether or not the evaluation server run is kicked off successfully.
+    """
+    u = UserModel()
+    user_id = credentials["id"]
+    user = u.get(user_id)
+    if not user:
+        logger.error("Invalid user detail for id (%s)" % (user_id))
+        bottle.abort(404, "User information not found")
+
+    print(bottle.request.files)
+
+
 @bottle.get("/models/<mid:int>")
 def get_model(mid):
     m = ModelModel()
