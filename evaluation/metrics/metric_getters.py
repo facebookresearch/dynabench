@@ -61,9 +61,15 @@ def get_task_metrics_meta(task):
         if "delta_metrics" not in annotation_config
         else [x["type"] for x in annotation_config["delta_metrics"]]
     )
+    aws_metric_names = instance_config["aws_metrics"]
+
+    # TODO: make it possible to display some modes with aws metrics and some
+    # models without aws metrics on the same leaderboard?
+    if task.has_file_eval:
+        aws_metric_names = []
 
     ordered_metric_field_names = (
-        [perf_metric_type] + instance_config["aws_metrics"] + delta_metric_types
+        [perf_metric_type] + aws_metric_names + delta_metric_types
     )
     metrics_meta = {
         metric: metrics_meta_dict.get(metric, metrics_meta_dict[perf_metric_type])(task)
