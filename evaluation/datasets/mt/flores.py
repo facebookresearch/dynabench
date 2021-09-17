@@ -9,15 +9,14 @@ import logging
 import os
 import subprocess
 import sys
-import tempfile
 import time
 from pathlib import Path
 from typing import Dict, List, TextIO, Tuple
 
+from datasets.common import BaseDataset
+
 from utils import helpers
 from utils.evaluator import Job
-
-from .base import MTBase
 
 
 logger = logging.getLogger(__name__)
@@ -34,7 +33,7 @@ FLORES101_FULL_LANGS = (
 ).split(",")
 
 
-class Flores101Base(MTBase):
+class Flores101Base(BaseDataset):
     def __init__(
         self,
         task_code: str,
@@ -91,27 +90,9 @@ class Flores101Base(MTBase):
         batch_transform_config["MaxPayloadInMB"] = 1
         return batch_transform_config
 
-    def load(self):
-        try:
-            with tempfile.TemporaryDirectory(prefix="flores101", delete=True) as tmp:
-                prepare(
-                    folder=Path(self.local_path),
-                    outdir=Path(tmp.name),
-                    task_code=self.task.task_code,
-                    langs=self.languages,
-                    split=self.partition,
-                    s3_bucket=self.task.s3_bucket,
-                    shard=self.shard_by_lang,
-                )
-                return True
-        except Exception as ex:
-            logger.exception(f"Failed to load {self.name} to S3 due to {ex}.")
-            return False
-
     def label_field_converter(self, example):
         return {
-            "id": example["uid"],
-            "answer": example["targetText"],
+            **(super().label_field_converter(example)),
             "tags": ["-".join((example["sourceLanguage"], example["targetLanguage"]))],
         }
 

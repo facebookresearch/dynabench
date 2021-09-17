@@ -26,7 +26,7 @@ test_config = {
 eval_config.eval_config.update(test_config)
 
 # Skips the code that check that the dataset are on S3 and in the DB
-setattr(BaseDataset, "_ensure_model_on_s3", lambda self: None)
+setattr(BaseDataset, "_check_dataset_on_s3", lambda self: None)
 
 
 # Prevents from instantiating a S3 client
