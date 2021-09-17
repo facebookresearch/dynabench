@@ -114,7 +114,7 @@ def do_upload_via_predictions(credentials, tid, model_name):
                     ret = _eval_dataset(dataset, endpoint_name, model, task, tmp.name)
                     status_dict.update(ret)
 
-    return util.json_encode({"success": "ok"})
+    return util.json_encode({"success": "ok", "model_id": model.id})
 
 
 def _eval_dataset(dataset_name, endpoint_name, model, task, afile):

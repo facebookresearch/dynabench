@@ -14,10 +14,10 @@ import {
   Form,
   Modal,
 } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import { Formik } from "formik";
 import UserContext from "./UserContext";
 import DragAndDrop from "../components/DragAndDrop/DragAndDrop";
-import "./SubmitInterface.css";
 
 const FileUpload = (props) => {
   return props.values[props.filename] ? (
@@ -69,8 +69,6 @@ class SubmitInterface extends React.Component {
     const {
       match: { params },
     } = this.props;
-    console.log(this.props);
-    console.log("submit interface");
     if (!this.context.api.loggedIn()) {
       this.props.history.push(
         "/login?&src=" +
@@ -108,11 +106,12 @@ class SubmitInterface extends React.Component {
     this.context.api
       .uploadPredictions(this.state.task.id, values.modelName, files)
       .then(
-        () => {
+        (result) => {
           values.modelName = "";
           for (const [fname, _] of Object.entries(files)) {
             values[fname] = null;
           }
+          values.submittedModelId = result.model_id;
           resetForm({ values: values });
           setSubmitting(false);
         },
@@ -262,10 +261,22 @@ class SubmitInterface extends React.Component {
                               {errors.accept}
                             </small>
                           </Col>
+                          {values.submittedModelId && (
+                            <Col sm="8">
+                              <small className="form-text text-muted">
+                                Thanks for your submission. You can view it{" "}
+                                <Link to={"/models/" + values.submittedModelId}>
+                                  here
+                                </Link>
+                                . Scores may not be ready immediatly, so check
+                                on your submission later.
+                              </small>
+                            </Col>
+                          )}
                         </Form.Group>
                         <Row className="justify-content-md-center">
                           <Col md={5} sm={12}>
-                            {dirty ? (
+                            {dirty && values.modelName !== "" ? (
                               <Button
                                 type="submit"
                                 variant="primary"
