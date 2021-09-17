@@ -16,5 +16,19 @@ steps = [
         "ALTER TABLE tasks ADD COLUMN has_file_eval BOOLEAN DEFAULT false",
         "ALTER TABLE tasks DROP has_file_eval",
     ),
+    step(
+        """
+        ALTER TABLE models MODIFY deployment_status
+        ENUM('uploaded', 'processing', 'deployed',
+        'created', 'failed', 'unknown', "takendown", "predictions_upload")
+        DEFAULT "unknown"
+        """,
+        """
+        ALTER TABLE models MODIFY deployment_status
+        ENUM('uploaded', 'processing', 'deployed',
+        'created', 'failed', 'unknown', "takendown")
+        DEFAULT "unknown"
+        """,
+    ),
     step("UPDATE tasks SET has_file_eval=1 WHERE task_code='vqa' limit 1"),
 ]

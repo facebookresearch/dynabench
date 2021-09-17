@@ -10,14 +10,49 @@ import {
   Row,
   Col,
   Card,
-  CardGroup,
   Button,
   Form,
+  Modal,
 } from "react-bootstrap";
 import { Formik } from "formik";
 import UserContext from "./UserContext";
 import DragAndDrop from "../components/DragAndDrop/DragAndDrop";
 import "./SubmitInterface.css";
+
+const FileUpload = (props) => {
+  return props.values[props.filename] ? (
+    <div className="UploadResult">
+      <Card>
+        <Card.Body>
+          <Container>
+            <Row>
+              <Col md={10}>{props.values[props.filename].name}</Col>
+              <Col md={2}>
+                <Button
+                  variant="outline-danger"
+                  size="sm"
+                  onClick={(event) => {
+                    props.setFieldValue(props.filename, null);
+                  }}
+                >
+                  Delete
+                </Button>
+              </Col>
+            </Row>
+          </Container>
+        </Card.Body>
+      </Card>
+    </div>
+  ) : (
+    <DragAndDrop
+      handleChange={(event) => {
+        props.setFieldValue(props.filename, event.currentTarget.files[0]);
+      }}
+    >
+      Drag
+    </DragAndDrop>
+  );
+};
 
 class SubmitInterface extends React.Component {
   static contextType = UserContext;
@@ -27,28 +62,30 @@ class SubmitInterface extends React.Component {
       taskId: null,
       task: {},
       datasets: [],
+      showModals: [],
     };
   }
   componentDidMount() {
     const {
       match: { params },
     } = this.props;
+    console.log(this.props);
     console.log("submit interface");
     if (!this.context.api.loggedIn()) {
       this.props.history.push(
         "/login?&src=" +
-          encodeURIComponent("/tasks/" + this.state.taskId + "/submit")
+          encodeURIComponent("/tasks/" + this.state.task_code + "/submit")
       );
     }
 
     this.setState({ taskId: params.taskId }, function () {
       this.context.api.getTask(this.state.taskId).then(
         (result) => {
-          result.targets = result.targets.split("|"); // split targets
           this.setState({ task: result }, function () {
             this.context.api.getDatasets(result.id).then((datasets) => {
               this.setState({
-                datasets: datasets.map((dataset) => dataset.name),
+                datasets: datasets,
+                showModals: datasets.map((dataset) => false),
               });
             });
           });
@@ -60,180 +97,194 @@ class SubmitInterface extends React.Component {
     });
   }
 
-  escapeRegExp = (string) => {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  };
-
-  handleValidation = (values) => {
-    const errors = {};
-    let allowedTaskExtension = ".json";
-    const allowedExtensions = new RegExp(
-      this.escapeRegExp(allowedTaskExtension) + "$",
-      "i"
-    );
-    if (!values.roundType) {
-      errors.roundType = "Required";
+  handleSubmit = (
+    values,
+    { setFieldValue, setSubmitting, resetForm, setFieldError }
+  ) => {
+    const files = {};
+    for (const dataset of this.state.datasets) {
+      files[dataset.name] = values[dataset.name];
     }
-    if (!values.file) {
-      errors.file = "Required";
-    } else if (!allowedExtensions.exec(values.file.name)) {
-      errors.file =
-        "Invalid file type - Please upload in " +
-        allowedTaskExtension +
-        " format";
-    }
-    return errors;
-  };
-
-  handleSubmit = (values, { setFieldValue, setSubmitting }) => {
-    const reqObj = {
-      task_id: this.state.taskId,
-      dataset_names: this.state.datasets.toString(),
-      file: values.file,
-    };
-    this.context.api.submitModelViaPredictions(reqObj).then(
-      (result) => {
-        var result = JSON.parse(result);
-        console.log(result);
-        this.props.history.push({
-          pathname: `/tasks/${this.state.taskId}/models/${result["model"]["id"]}/publish`,
-          state: { detail: result },
-        });
-      },
-      (error) => {
-        setSubmitting(false);
-        setFieldValue("failed", "Failed To Submit. Plese try again");
-        console.log(error);
-      }
-    );
+    this.context.api
+      .uploadPredictions(this.state.task.id, values.modelName, files)
+      .then(
+        () => {
+          values.modelName = "";
+          for (const [fname, _] of Object.entries(files)) {
+            values[fname] = null;
+          }
+          resetForm({ values: values });
+          setSubmitting(false);
+        },
+        (error) => {
+          console.log(error);
+          setFieldError(
+            "accept",
+            "Dataset cound not be added (" + error.error + ")"
+          );
+          setSubmitting(false);
+        }
+      );
   };
 
   render() {
-    const datasetNavs = [];
-    for (let i = 0; i < this.state.datasets.length; i++) {
-      datasetNavs.push(
-        <option key={i} value={i}>
-          {this.state.datasets[i]}
-        </option>
-      );
+    const files = {};
+    for (const dataset of this.state.datasets) {
+      files[dataset.name] = null;
     }
-
     return (
-      <Container>
-        <Row>
-          <h2 className="text-uppercase blue-color">
-            Submit your model results{" "}
-          </h2>
-        </Row>
-        <Row>
-          <CardGroup style={{ marginTop: 20, width: "100%" }}>
-            <Card>
-              <Card.Body>
-                <p>
-                  Upload predicted answers as a <em>.json</em> file.
-                </p>
-                <Formik
-                  initialValues={{
-                    file: null,
-                    roundType: "overall",
-                    failed: "",
-                  }}
-                  validate={this.handleValidation}
-                  onSubmit={this.handleSubmit}
-                >
-                  {({
-                    values,
-                    errors,
-                    handleChange,
-                    setFieldValue,
-                    handleSubmit,
-                    isSubmitting,
-                    setValues,
-                  }) => (
-                    <>
-                      <form
-                        onSubmit={handleSubmit}
-                        encType="multipart/form-data"
-                      >
-                        <Container>
-                          <Row md={2}>
-                            <Form.Group controlId="roundType">
-                              <Form.Label>Your upload type:</Form.Label>
-                              <Form.Control
-                                as="select"
-                                value={values.roundType}
-                                onChange={handleChange}
+      <Container className="mb-5 pb-5">
+        <h1 className="my-4 pt-3 text-uppercase text-center">
+          Submit Model Predictions
+        </h1>
+        <Col>
+          <Card className="my-4">
+            <Card.Body>
+              <Formik
+                initialValues={Object.assign(
+                  {
+                    modelName: "",
+                  },
+                  files
+                )}
+                onSubmit={this.handleSubmit}
+              >
+                {({
+                  dirty,
+                  values,
+                  errors,
+                  handleChange,
+                  setFieldValue,
+                  handleSubmit,
+                  isSubmitting,
+                  setValues,
+                }) => (
+                  <>
+                    <form className="px-4" onSubmit={handleSubmit}>
+                      <Container>
+                        <Form.Group as={Row} className="py-3 my-0">
+                          <p>
+                            Upload predicted answers as a <em>.jsonl</em> file,
+                            where each line has a field for each of the model
+                            output fields. These outputs are defined in the
+                            config JSON for this task. Additionally, there
+                            should be a field called "uid" that matches the
+                            "uid" field of the example that the prediction is
+                            for.
+                            <br />
+                            <br />
+                            You don't need to upload results for all datasets
+                            for us to run the evaluation, but your model won't
+                            appear on the leaderboard if you don't upload
+                            predictions for all of the leaderboard datasets.
+                          </p>
+                        </Form.Group>
+                        <Form.Group
+                          as={Row}
+                          controlId="modelName"
+                          className="py-3 my-0 border-top"
+                        >
+                          <Form.Label column>Model Name</Form.Label>
+                          <Col sm={8}>
+                            <Form.Control
+                              value={values.modelName}
+                              onChange={handleChange}
+                            />
+                          </Col>
+                        </Form.Group>
+                        {this.state.datasets.map((dataset, index) => (
+                          <div key={index}>
+                            <Modal
+                              show={this.state.showModals[index]}
+                              onHide={() =>
+                                this.setState({
+                                  showModals: this.state.showModals.map(
+                                    (obj, obj_index) =>
+                                      index === obj_index ? !obj : obj
+                                  ),
+                                })
+                              }
+                            >
+                              <Modal.Header closeButton>
+                                <Modal.Title>{dataset.name}</Modal.Title>
+                              </Modal.Header>
+                              <Modal.Body>
+                                {dataset.longdesc}
+                                <br />
+                                <br />
+                                {dataset.source_url &&
+                                dataset.source_url !== "" ? (
+                                  <Button href={dataset.source_url}>
+                                    <i className="fas fa-newspaper"></i> Read
+                                    Paper
+                                  </Button>
+                                ) : (
+                                  ""
+                                )}
+                              </Modal.Body>
+                            </Modal>
+                            <Form.Group
+                              as={Row}
+                              className="py-3 my-0 border-top"
+                            >
+                              <Form.Label column>Dataset</Form.Label>
+                              <Col sm={8}>
+                                <span
+                                  className="btn-link dataset-link"
+                                  onClick={() =>
+                                    this.setState({
+                                      showModals: this.state.showModals.map(
+                                        (obj, obj_index) =>
+                                          index === obj_index ? !obj : obj
+                                      ),
+                                    })
+                                  }
+                                >
+                                  {dataset.name}
+                                </span>
+                              </Col>
+                            </Form.Group>
+                            <Form.Group as={Row} className="py-3 my-0">
+                              <Form.Label column>Predictions</Form.Label>
+                              <Col sm={8}>
+                                <FileUpload
+                                  values={values}
+                                  filename={dataset.name}
+                                  setFieldValue={setFieldValue}
+                                />
+                              </Col>
+                            </Form.Group>
+                          </div>
+                        ))}
+                        <Form.Group as={Row} className="py-3 my-0">
+                          <Col sm="8">
+                            <small className="form-text text-muted">
+                              {errors.accept}
+                            </small>
+                          </Col>
+                        </Form.Group>
+                        <Row className="justify-content-md-center">
+                          <Col md={5} sm={12}>
+                            {dirty ? (
+                              <Button
+                                type="submit"
+                                variant="primary"
+                                className="submit-btn button-ellipse text-uppercase my-4"
+                                disabled={isSubmitting}
                               >
-                                {datasetNavs}
-                              </Form.Control>
-                            </Form.Group>
-                          </Row>
-                          <Row md={2}>
-                            <Form.Group>
-                              {values.file ? (
-                                <div className="UploadResult">
-                                  <Card>
-                                    <Card.Body>
-                                      <Container>
-                                        <Row>
-                                          <Col md={10}>{values.file.name}</Col>
-                                          <Col md={2}>
-                                            <Button
-                                              variant="outline-danger"
-                                              size="sm"
-                                              onClick={(event) => {
-                                                setFieldValue("failed", "");
-                                                setFieldValue("file", null);
-                                              }}
-                                            >
-                                              Delete
-                                            </Button>
-                                          </Col>
-                                        </Row>
-                                      </Container>
-                                    </Card.Body>
-                                  </Card>
-                                </div>
-                              ) : (
-                                <>
-                                  <DragAndDrop
-                                    handleChange={(event) => {
-                                      setValues({
-                                        ...values,
-                                        file: event.currentTarget.files[0],
-                                        failed: "",
-                                      });
-                                    }}
-                                    required={errors.file}
-                                    name="file"
-                                  >
-                                    Drag
-                                  </DragAndDrop>
-                                </>
-                              )}
-                              <small className="form-text text-muted">
-                                {errors.file}
-                                {values.failed}
-                              </small>
-                            </Form.Group>
-                          </Row>
-                          <Button
-                            type="submit"
-                            variant="primary"
-                            className="fadeIn third submitBtn button-ellipse"
-                            disabled={isSubmitting}
-                          >
-                            Evaluate
-                          </Button>
-                        </Container>
-                      </form>
-                    </>
-                  )}
-                </Formik>
-              </Card.Body>
-            </Card>
-          </CardGroup>
-        </Row>
+                                Save
+                              </Button>
+                            ) : null}
+                          </Col>
+                        </Row>
+                      </Container>
+                    </form>
+                  </>
+                )}
+              </Formik>
+            </Card.Body>
+          </Card>
+        </Col>
       </Container>
     );
   }

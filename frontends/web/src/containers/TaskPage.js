@@ -192,7 +192,7 @@ const TaskActionButtons = (props) => {
               <Button
                 as={Link}
                 className="border-0 blue-color font-weight-bold light-gray-bg"
-                to={"/tasks/" + props.taskId + "/submit"}
+                to={"/tasks/" + props.taskCode + "/submit"}
               >
                 <i className="fa fa-upload"></i> Submit Prediction Files
               </Button>

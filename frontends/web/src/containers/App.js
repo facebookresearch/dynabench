@@ -105,6 +105,7 @@ class App extends React.Component {
     }
     this.api.getTasks().then(
       (result) => {
+        console.log(result);
         this.setState({ tasks: result });
       },
       (error) => {

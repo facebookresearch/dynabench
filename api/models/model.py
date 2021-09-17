@@ -19,6 +19,7 @@ class DeploymentStatusEnum(enum.Enum):
     failed = "failed"
     unknown = "unknown"
     takendown = "takendown"
+    predictions_upload = "predictions_upload"
 
 
 class Model(Base):

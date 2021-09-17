@@ -56,9 +56,15 @@ def get_vqa_accuracy(predictions: list, targets: list):
         [3, 3, 3, 1, 2, 3, 4, 5, 6, 7],
         [4, 4, 4, 1, 2, 3, 4, 5, 6, 7],
     ]
+
+    Target format can also be the same as the prediction format (in this case it is
+    assumed that there is only one answer, not a list of answers)
     """
     vqa_eval = VQAEval()
-    acc_vqa = [vqa_eval(t, p) for p, t in zip(predictions, targets)]
+    acc_vqa = [
+        vqa_eval(list(t) if isinstance(t, str) else t, p)
+        for p, t in zip(predictions, targets)
+    ]
     return round(100 * float(sum(acc_vqa)) / len(acc_vqa), vqa_eval.n)
 
 

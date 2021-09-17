@@ -12,7 +12,7 @@ import boto3
 import botocore
 from dateutil.tz import tzlocal
 
-from models.model import ModelModel
+from models.model import DeploymentStatusEnum, ModelModel
 from utils.helpers import process_aws_metrics, round_end_dt, round_start_dt
 
 
@@ -94,11 +94,23 @@ class JobScheduler:
         # create batch transform job and
         # update the inprogress queue
         job = Job(model_id, dataset_name, perturb_prefix)
-        self._queued.append(job)
-        logger.info(f"Queued {job.job_name} for submission")
+        if self.is_predictions_upload(model_id):
+            self._completed.append(job)
+            logger.info(
+                f"Queued {job.job_name} for completion instead of "
+                + f"submission, as this is just a file upload and not a real model"
+            )
+        else:
+            self._queued.append(job)
+            logger.info(f"Queued {job.job_name} for submission")
 
         if dump:
             self.dump()
+
+    def is_predictions_upload(self, model_id):
+        mm = ModelModel()
+        model = mm.get(model_id)
+        return model.deployment_status == DeploymentStatusEnum.predictions_upload
 
     def _set_jobname_with_unique_timestamp(self, job: Job) -> None:
         """Make sure that we aren't submitting jobs too fast,

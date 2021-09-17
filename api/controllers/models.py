@@ -4,6 +4,8 @@
 
 import json
 import secrets
+import sys
+import tempfile
 import time
 
 import boto3
@@ -18,15 +20,20 @@ from models.badge import BadgeModel
 from models.dataset import AccessTypeEnum, DatasetModel
 from models.model import DeploymentStatusEnum, ModelModel
 from models.score import ScoreModel
-from models.task import TaskModel
+from models.task import AnnotationVerifierMode, TaskModel
 from models.user import UserModel
 
 from .tasks import ensure_owner_or_admin
 
 
-@bottle.post("/models/upload_via_predictions")
+sys.path.append("../evaluation")  # noqa isort:skip
+from eval_config import eval_config  # noqa isort:skip
+from utils.helpers import get_predictions_s3_path, send_eval_request  # noqa isort:skip
+
+
+@bottle.post("/models/upload_predictions/<tid:int>/<model_name>")
 @_auth.requires_auth
-def do_upload_via_predictions(credentials):
+def do_upload_via_predictions(credentials, tid, model_name):
     """
     Upload the result file for overall round or specified round like 1,2,3
     and kick off an evaluation server run
@@ -40,7 +47,115 @@ def do_upload_via_predictions(credentials):
         logger.error("Invalid user detail for id (%s)" % (user_id))
         bottle.abort(404, "User information not found")
 
-    print(bottle.request.files)
+    tm = TaskModel()
+    task = tm.get(tid)
+    if not task.has_file_eval:
+        bottle.abort(
+            403,
+            """This task does not allow prediction uploads. Submit a model instead.""",
+        )
+
+    uploads = {}
+    dm = DatasetModel()
+    dataset_names = [dataset.name for dataset in list(dm.getByTid(tid))]
+    for name in dataset_names:
+        uploads[name] = bottle.request.files.get(name)
+
+    # Users don't need to upload preds for all datasets.
+    uploads = {
+        name: uploads[name]
+        for name, upload in uploads.items()
+        if uploads[name] is not None
+    }
+
+    parsed_uploads = {}
+    # Ensure correct format
+    for name, upload in uploads.items():
+        try:
+            parsed_upload = [
+                json.loads(line)
+                for line in upload.file.read().decode("utf-8").splitlines()
+            ]
+            for io in parsed_upload:
+                if not task.verify_annotation(
+                    io, mode=AnnotationVerifierMode.predictions_upload
+                ):
+                    bottle.abort(400, "Invalid prediction file")
+            parsed_uploads[name] = parsed_upload
+
+        except Exception as ex:
+            logger.exception(ex)
+            bottle.abort(400, "Invalid prediction file")
+
+    m = ModelModel()
+    endpoint_name = f"ts{int(time.time())}-{model_name}"
+
+    status_dict = {}
+    # Create local model db object
+    model = m.create(
+        task_id=tid,
+        user_id=user_id,
+        name=model_name,
+        shortname="",
+        longdesc="",
+        desc="",
+        upload_datetime=db.sql.func.now(),
+        endpoint_name=endpoint_name,
+        deployment_status=DeploymentStatusEnum.predictions_upload,
+        secret=secrets.token_hex(),
+    )
+    with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
+        for name, upload in parsed_uploads.items():
+            with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
+                for datum in parsed_upload:
+                    tmp.write(json.dumps(datum) + "\n")
+                tmp.close()
+                for dataset in dataset_names:
+                    ret = _eval_dataset(dataset, endpoint_name, model, task, tmp.name)
+                    status_dict.update(ret)
+
+    return util.json_encode({"success": "ok"})
+
+
+def _eval_dataset(dataset_name, endpoint_name, model, task, afile):
+
+    try:
+        _upload_prediction_file(
+            afile=afile,
+            task_code=task.task_code,
+            s3_bucket=task.s3_bucket,
+            endpoint_name=endpoint_name,
+            dataset_name=dataset_name,
+        )
+        ret = send_eval_request(
+            eval_server_id=task.eval_server_id,
+            model_id=model.id,
+            dataset_name=dataset_name,
+            config=eval_config,
+            logger=logger,
+        )
+    except Exception as e:
+        logger.exception(e)
+        bottle.abort(400, "Could not upload file: %s" % (e))
+    return {dataset_name: {"success": ret}}
+
+
+def _upload_prediction_file(afile, task_code, s3_bucket, endpoint_name, dataset_name):
+
+    client = boto3.client(
+        "s3",
+        aws_access_key_id=eval_config["aws_access_key_id"],
+        aws_secret_access_key=eval_config["aws_secret_access_key"],
+        region_name=eval_config["aws_region"],
+    )
+    path = get_predictions_s3_path(
+        endpoint_name=endpoint_name, task_code=task_code, dataset_name=dataset_name
+    )
+    response = client.upload_file(afile, s3_bucket, path)
+    if response:
+        logger.info(response)
+
+    return path
 
 
 @bottle.get("/models/<mid:int>")
