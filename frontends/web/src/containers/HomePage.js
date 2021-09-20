@@ -197,10 +197,12 @@ class HomePage extends React.Component {
                         ))}
                     </CardGroup>
                     <br />
+                    {/*
                     <center>
                       <u>Contributed tasks</u>
                     </center>
                     <br />
+                    */}
                     <CardGroup>
                       {tasks
                         .filter((t) => !t.official)
