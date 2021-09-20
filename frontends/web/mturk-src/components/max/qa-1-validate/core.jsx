@@ -8,6 +8,9 @@ import React from "react";
 import { Row, Container, Button, InputGroup } from "react-bootstrap";
 
 import { ValidateInterface } from "./ValidateInterface.js";
+import { ValidateInterfaceOnboarding } from "./ValidateInterfaceOnboarding.js";
+
+
 class QAValidationTaskPreview extends React.Component {
   constructor(props) {
     super(props);
@@ -25,31 +28,86 @@ class QAValidationTaskPreview extends React.Component {
   }
 }
 
-class QAValidationTaskOnboarder extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-  render() {
-    return (
-      <>
-      </>
-    )
-  }
-}
-
 class TaskInstructions extends React.Component {
   render() {
     return (
       <>
         <br />
-        <small>
-          Below, you are shown a question, and a passage of text. A candidate
-          answer to the question is highlighted in the passage. Please mark
-          whether the answer is correct or not. If the selected answer is
+        <p>
+          You will be shown a passage of text from Wikipedia, and a question.
+          A candidate answer to the question is highlighted in the passage. 
+          Please mark whether the answer is correct or not. If the selected answer is
           incorrect and the correct answer is not in the context, then flag this
           example.
-        </small>
+        </p>
+        <p>The possible validation options are:</p>
+        <ul>
+          <li><b>Valid</b> - The human answer is a correct answer, there is only one valid answer, and the AI answer is incorrect.</li>
+          <li><b>Invalid: Bad Question</b> - You cannot understand the question, or it cannot be answered from the passage.</li>
+          <li><b>Invalid: Bad Answer</b> - The human answer is incorrect.</li>
+          <li><b>Invalid: AI Correct</b> - The human answer is correct, but the AI answer is also correct.</li>
+          <li><b>Invalid: Multiple Valid Answers</b> - There isn't one answer which is clearly the best answer to the question, but there are multiple equally valid ones.</li>
+          <li><b>Invalid: Yes/No Question</b> - The correct answer to the question should be "Yes" or "No".</li>
+          <li><b>Invalid: Other</b> - Invalid for any other reason.</li>
+          <li><b>Flag</b> - Flag this example as inappropriate.</li>
+        </ul>
         <br />
+      </>
+    );
+  }
+}
+
+class QAValidationTaskOnboarder extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      showInstructions: true,
+      showOnboardingSubmit: false,
+      onboardingStep: 0,
+      showNext: true,
+    };
+    this.showInstructions = this.showInstructions.bind(this);
+    this.completeOnboarding = this.completeOnboarding.bind(this);
+    this.nextOnboarding = this.nextOnboarding.bind(this);
+    this.showOnboardingSubmit = this.showOnboardingSubmit.bind(this);
+  }
+  showInstructions() {
+    this.setState({ showInstructions: !this.state.showInstructions });
+  }
+  nextOnboarding() {
+    this.setState({ onboardingStep: this.state.onboardingStep + 1 });
+    this.showOnboardingPrevious();
+    if (this.state.onboardingStep == 9) {
+      this.showOnboardingSubmit();
+    }
+  }
+  completeOnboarding() {
+    this.props.onSubmit({ success: true }); // if they failed, set to false
+  }
+  showOnboardingSubmit() {
+    this.setState({ showOnboardingSubmit: true, showNext: false });
+  }
+  
+  render() {
+    return (
+      <>
+        <Container>
+          <Row>
+            <h2>Does the highlighted span correctly answer the question?</h2>{" "}
+            &nbsp; &nbsp;{" "}
+            <Button className="btn" onClick={this.showInstructions}>
+              {this.state.showInstructions ? "Hide" : "Show"} instructions{" "}
+            </Button>
+          </Row>
+          {this.state.showInstructions && (
+            <Row>
+              {" "}
+              <TaskInstructions />{" "}
+            </Row>
+          )}
+          <br />
+        </Container>
+        <ValidateInterfaceOnboarding step={this.state.onboardingStep} {...this.props} />
       </>
     );
   }

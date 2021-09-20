@@ -14,6 +14,7 @@ import {
   Button,
   FormControl,
 } from "react-bootstrap";
+import { FaInfoCircle, FaThumbsUp, FaThumbsDown, FaFlag } from "react-icons/fa";
 
 import { TokenAnnotator, TextAnnotator } from "react-text-annotate";
 
@@ -31,6 +32,7 @@ class ContextInfo extends React.Component {
           className="mb-1 p-3 light-gray-bg qa-context"
           tokens={this.props.text.split(/\b|(?<=[\s\(\)])|(?=[\s\(\)])/)}
           value={this.props.answer}
+          onChange={(e) => void 0}
         />
       </>
     );
@@ -41,6 +43,17 @@ class ValidateInterface extends React.Component {
   constructor(props) {
     super(props);
     this.api = props.api;
+    this.batchAmount = 10;
+    this.userMode = "user";
+    this.interfaceMode = "mturk";
+    this.VALIDATION_STATES = {
+      CORRECT: "correct",
+      INCORRECT: "incorrect",
+      VALID: "valid",
+      INVALID: "invalid",
+      FLAGGED: "flagged",
+      UNKNOWN: "unknown",
+    };
     this.state = {
       taskId: null,
       task: {},
@@ -81,6 +94,7 @@ class ValidateInterface extends React.Component {
       )
       .then(
         (result) => {
+          console.log(result);
           if (this.state.task.type !== "extract") {
             result.target = this.state.task.targets[
               parseInt(result.target_pred)
@@ -122,7 +136,13 @@ class ValidateInterface extends React.Component {
       this.setState({ label: action_label });
       var metadata = { annotator_id: this.props.providerWorkerId };
       this.api
-        .validateExample(this.state.example.id, action, "user", metadata)
+        .validateExample(
+          this.state.example.id, 
+          action,
+          this.userMode,
+          metadata,
+          this.props.providerWorkerId
+        )
         .then(
           (result) => {
             this.props.onSubmit(this.state);

@@ -169,7 +169,7 @@ if __name__ == "__main__":
                                 reason="Bonus for validated questions that fooled the model",
                                 unit=unit,
                             )
-                            print(f"PAYMENT TO WORKER {agentId} PROCESSED")
+                            print(f"PAYMENT OF ${sendbonus:.2f} TO WORKER {agentId} PROCESSED")
                         bonus_sent += sendbonus
                     except Exception as e:
                         print(f"Could not bonus worker {agentId}")
@@ -201,7 +201,7 @@ if __name__ == "__main__":
                                 reason="Bonus for validated questions that fooled the model",
                                 unit=unit,
                             )
-                            print(f"PAYMENT TO WORKER {agentId} PROCESSED")
+                            print(f"PAYMENT OF ${sendbonus:.2f} TO WORKER {agentId} PROCESSED")
                         bonus_sent += sendbonus
                     except Exception as e:
                         print(f"Could not bonus worker {agentId}")

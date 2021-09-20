@@ -1,7 +1,7 @@
 #@package _global_
 mephisto:
-  # blueprint:
-  #   onboarding_qualification: max-qa-1-onboarding
+  blueprint:
+    onboarding_qualification: max-qa-1-val-onboarding
   # TODO: give them 5 examples to validate as onboarding!
   # architect:
   #   port: 4000
@@ -10,7 +10,7 @@ mephisto:
     task_title: Validate Questions and Answers | Reading Comprehension
     task_description: >
       You will be presented with a short passage of text from Wikipedia, a question, and an answer. You will then be asked to validate the example.
-    task_reward: 1.00
+    task_reward: 0.50
     assignment_duration_in_seconds: 3600
     maximum_units_per_worker: 10
     max_num_concurrent_units: 250  # how much it launches at a given time (how many HITs running at any given time)
