@@ -121,16 +121,18 @@ class App extends React.Component {
       ignoreQueryPrefix: true,
     });
     const showContentOnly = query.content_only === "true";
-    const NavItems = this.state.tasks.map((task, index) => (
-      <NavDropdown.Item
-        key={task.task_code}
-        as={Link}
-        to={`/tasks/${task.task_code}`}
-        className="py-3"
-      >
-        {task.name}
-      </NavDropdown.Item>
-    ));
+    const NavItems = this.state.tasks
+      .filter((t) => t.official)
+      .map((task, index) => (
+        <NavDropdown.Item
+          key={task.task_code}
+          as={Link}
+          to={`/tasks/${task.task_code}`}
+          className="py-3"
+        >
+          {task.name}
+        </NavDropdown.Item>
+      ));
     return (
       <UserContext.Provider
         value={{
