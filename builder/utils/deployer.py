@@ -18,7 +18,7 @@ from dynalab_cli.utils import SetupConfigHandler
 from sagemaker.model import Model
 from sagemaker.predictor import Predictor
 
-from deploy_config import deploy_config
+from build_config import deploy_config
 from utils.logging import logger
 
 
@@ -94,8 +94,8 @@ class ModelDeployer:
         env = {}
         region = self.model.task.aws_region
         session = boto3.Session(
-            aws_access_key_id=deploy_config["aws_access_key_id"],
-            aws_secret_access_key=deploy_config["aws_secret_access_key"],
+            aws_access_key_id=build_config["aws_access_key_id"],
+            aws_secret_access_key=build_config["aws_secret_access_key"],
             region_name=region,
         )
 
@@ -374,7 +374,7 @@ class ModelDeployer:
         torchserve_model = Model(
             model_data=model_s3_path,
             image_uri=image_ecr_path,
-            role=deploy_config["sagemaker_role"],
+            role=build_config["sagemaker_role"],
             sagemaker_session=self.env["sagemaker_session"],
             predictor_cls=Predictor,
             name=self.endpoint_name,
@@ -388,12 +388,12 @@ class ModelDeployer:
                 initial_instance_count=self.model.task.instance_count,
                 endpoint_name=self.endpoint_name,
             )
-            return f"{deploy_config['gateway_url']}?model={self.endpoint_name}"
+            return f"{build_config['gateway_url']}?model={self.endpoint_name}"
         else:
             logger.info(f"Creating model for {self.name} on Sagemaker")
             container_def = torchserve_model.prepare_container_def()
             self.env["sagemaker_session"].create_model(
-                self.endpoint_name, deploy_config["sagemaker_role"], container_def
+                self.endpoint_name, build_config["sagemaker_role"], container_def
             )
             return None
 
