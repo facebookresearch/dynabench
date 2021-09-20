@@ -18,7 +18,7 @@ from dynalab_cli.utils import SetupConfigHandler
 from sagemaker.model import Model
 from sagemaker.predictor import Predictor
 
-from build_config import deploy_config
+from build_config import build_config
 from utils.logging import logger
 
 
