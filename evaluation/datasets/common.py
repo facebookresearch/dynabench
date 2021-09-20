@@ -346,8 +346,8 @@ class BaseDataset:
             "id": example["uid"],
             "answer": example[
                 json.loads(self.task.annotation_config_json)["perf_metric"][
-                    "reference_name"
-                ]
+                    "constructor_args"
+                ]["reference_name"]
             ],
             "tags": example.get("tags", []),
         }  # NOTE: For now, the perf_metric defines the output to look for
@@ -364,10 +364,10 @@ class BaseDataset:
         }
         """
         return {
-            "id": example["uid"],
+            "id": example["id"],
             "pred": example[
                 json.loads(self.task.annotation_config_json)["perf_metric"][
-                    "reference_name"
-                ]
+                    "constructor_args"
+                ]["reference_name"]
             ],
         }  # NOTE: For now, the perf_metric defines the output to look for
