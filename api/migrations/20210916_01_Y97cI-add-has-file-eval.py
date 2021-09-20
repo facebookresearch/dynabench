@@ -13,8 +13,8 @@ __depends__ = {"20210915_01_f1gBY-change-round-url-to-nullable-text"}
 
 steps = [
     step(
-        "ALTER TABLE tasks ADD COLUMN has_file_eval BOOLEAN DEFAULT false",
-        "ALTER TABLE tasks DROP has_file_eval",
+        "ALTER TABLE tasks ADD COLUMN has_predictions_upload BOOLEAN DEFAULT false",
+        "ALTER TABLE tasks DROP has_predictions_upload",
     ),
     step(
         """
@@ -30,5 +30,5 @@ steps = [
         DEFAULT "unknown"
         """,
     ),
-    step("UPDATE tasks SET has_file_eval=1 WHERE task_code='vqa' limit 1"),
+    step("UPDATE tasks SET has_predictions_upload=1 WHERE task_code='vqa' limit 1"),
 ]

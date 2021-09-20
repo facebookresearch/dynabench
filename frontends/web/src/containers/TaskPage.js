@@ -176,7 +176,7 @@ const TaskActionButtons = (props) => {
           </Annotation>
         </Nav.Item>
       )}
-      {props.task.has_file_eval && (
+      {props.task.has_predictions_upload && (
         <Nav.Item className="task-action-btn">
           <Annotation
             placement="top"

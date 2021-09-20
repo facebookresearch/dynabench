@@ -57,6 +57,8 @@ def get_vqa_accuracy(predictions: list, targets: list):
         [4, 4, 4, 1, 2, 3, 4, 5, 6, 7],
     ]
 
+    (where each digit represents an answer)
+
     Target format can also be the same as the prediction format (in this case it is
     assumed that there is only one answer, not a list of answers)
     """
@@ -68,7 +70,7 @@ def get_vqa_accuracy(predictions: list, targets: list):
     return round(100 * float(sum(acc_vqa)) / len(acc_vqa), vqa_eval.n)
 
 
-def get_vqa_accuracy_meta(tasl=None):
+def get_vqa_accuracy_meta(task=None):
     return {
         "unit": "%",
         "pretty_name": "VQA Accuracy",

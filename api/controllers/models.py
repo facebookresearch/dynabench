@@ -34,12 +34,6 @@ from utils.helpers import get_predictions_s3_path, send_eval_request  # noqa iso
 @bottle.post("/models/upload_predictions/<tid:int>/<model_name>")
 @_auth.requires_auth
 def do_upload_via_predictions(credentials, tid, model_name):
-    """
-    Upload the result file for overall round or specified round like 1,2,3
-    and kick off an evaluation server run
-    :param credentials:
-    :return: whether or not the evaluation server run is kicked off successfully.
-    """
     u = UserModel()
     user_id = credentials["id"]
     user = u.get(user_id)
@@ -49,7 +43,7 @@ def do_upload_via_predictions(credentials, tid, model_name):
 
     tm = TaskModel()
     task = tm.get(tid)
-    if not task.has_file_eval:
+    if not task.has_predictions_upload:
         bottle.abort(
             403,
             """This task does not allow prediction uploads. Submit a model instead.""",
@@ -118,7 +112,6 @@ def do_upload_via_predictions(credentials, tid, model_name):
 
 
 def _eval_dataset(dataset_name, endpoint_name, model, task, afile):
-
     try:
         _upload_prediction_file(
             afile=afile,
@@ -141,7 +134,6 @@ def _eval_dataset(dataset_name, endpoint_name, model, task, afile):
 
 
 def _upload_prediction_file(afile, task_code, s3_bucket, endpoint_name, dataset_name):
-
     client = boto3.client(
         "s3",
         aws_access_key_id=eval_config["aws_access_key_id"],

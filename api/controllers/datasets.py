@@ -86,8 +86,11 @@ def create(credentials, tid, name):
                 for line in upload.file.read().decode("utf-8").splitlines()
             ]
             for io in parsed_upload:
-                if not task.verify_annotation(
-                    io, mode=AnnotationVerifierMode.dataset_upload
+                if (
+                    not task.verify_annotation(
+                        io, mode=AnnotationVerifierMode.dataset_upload
+                    )
+                    or "uid" not in io
                 ):
                     bottle.abort(400, "Invalid dataset file")
             parsed_uploads.append((parsed_upload, perturb_prefix))

@@ -416,7 +416,7 @@ class Task(Base):
     extra_torchserve_config = db.Column(db.Text)
     active = db.Column(db.Boolean, default=False)
 
-    has_file_eval = db.Column(db.Boolean, default=False)
+    has_predictions_upload = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         return f"<Task {self.name}>"

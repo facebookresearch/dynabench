@@ -165,17 +165,14 @@ class SubmitInterface extends React.Component {
                           <p>
                             Upload predicted answers as a <em>.jsonl</em> file,
                             where each line has a field for each of the model
-                            output fields. These outputs are defined in the
-                            config JSON for this task. Additionally, there
-                            should be a field called "uid" that matches the
-                            "uid" field of the example that the prediction is
-                            for.
+                            output fields. Additionally, there should be a field
+                            called "uid" that matches the "uid" field of the
+                            example that the prediction is for.
                             <br />
                             <br />
-                            You don't need to upload results for all datasets
-                            for us to run the evaluation, but your model won't
-                            appear on the leaderboard if you don't upload
-                            predictions for all of the leaderboard datasets.
+                            We require that you upload a prediction file for
+                            each of the leaderboard datasets. You can optionally
+                            upload a prediction file for the other datasets.
                           </p>
                         </Form.Group>
                         <Form.Group
@@ -268,7 +265,7 @@ class SubmitInterface extends React.Component {
                                 <Link to={"/models/" + values.submittedModelId}>
                                   here
                                 </Link>
-                                . Scores may not be ready immediatly, so check
+                                . Scores may not be ready immediately, so check
                                 on your submission later.
                               </small>
                             </Col>
