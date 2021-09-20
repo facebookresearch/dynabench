@@ -6,20 +6,18 @@ import json
 import logging
 import os
 import tempfile
-from abc import ABC, abstractmethod
 
 import boto3
 
 from eval_config import eval_config
 from metrics.metric_getters import get_delta_metrics, get_eval_metrics
-from models.dataset import AccessTypeEnum, DatasetModel
+from models.dataset import AccessTypeEnum
 from models.task import TaskModel
 from utils.helpers import (
     get_data_s3_path,
     get_perturbed_filename,
     parse_s3_outfile,
     path_available_on_s3,
-    send_eval_request,
     upload_predictions,
 )
 
@@ -27,14 +25,14 @@ from utils.helpers import (
 logger = logging.getLogger("datasets")
 
 
-class BaseDataset(ABC):
+class BaseDataset:
     def __init__(
         self,
         task_code,
-        name,
         round_id,
-        access_type=AccessTypeEnum.scoring,
+        name,
         config=eval_config,
+        access_type=AccessTypeEnum.scoring,
         ext=".jsonl",
         longdesc=None,
         source_url=None,
@@ -51,26 +49,16 @@ class BaseDataset(ABC):
         self.source_url = source_url
         self._config = config
         self._s3_client = None
-        self._ensure_model_on_s3()
+        self._check_dataset_on_s3()
 
-    def _ensure_model_on_s3(self):
-        # Load dataset to S3 and register in db if not yet
-        loaded = self.dataset_available_on_s3()
-        if not loaded:
-            logger.info(
-                f"Dataset {self.name} does not exist on S3. "
-                f"Pushing to {self.s3_url} now..."
-            )
-            loaded = self.load()
-            if loaded:
-                logger.info(f"Loaded {self.name} on S3 at {self.s3_url}")
-            else:
-                logger.exception(f"Failed to load {self.name} to S3")
-        else:
+    def _check_dataset_on_s3(self):
+        # Datasets are now uploaded by task owners from the DynaBench UI, so we don't
+        # upload them here.
+        # We just display logs to confirm which datasets are present/absent on S3.
+        if self.dataset_available_on_s3():
             logger.info(f"Dataset {self.name} exists on S3 at {self.s3_url}")
-
-        if loaded:
-            self._register_dataset_in_db_and_eval(eval_config)
+        else:
+            logger.exception(f"Dataset {self.name} does not exist on S3. ")
 
     @property
     def s3_client(self):
@@ -106,28 +94,6 @@ class BaseDataset(ABC):
     def dataset_available_on_s3(self, perturb_prefix=None) -> bool:
         path = self._get_data_s3_path(perturb_prefix)
         return path_available_on_s3(self.s3_client, self.task.s3_bucket, path, path)
-
-    def _register_dataset_in_db_and_eval(self, eval_config) -> bool:
-        t = TaskModel()
-        task_id = t.getByTaskCode(self.task.task_code).id
-        d = DatasetModel()
-        if not d.getByName(self.name):  # avoid id increment for unsuccessful creation
-            if d.create(
-                name=self.name,
-                task_id=task_id,
-                rid=self.round_id,
-                access_type=self.access_type,
-                longdesc=self.longdesc,
-                source_url=self.source_url,
-            ):
-                logger.info(f"Registered {self.name} in datasets db.")
-                send_eval_request(
-                    model_id="*",
-                    dataset_name=self.name,
-                    config=eval_config,
-                    eval_server_id=self.task.eval_server_id,
-                    logger=logger,
-                )
 
     def get_output_s3_url(self, endpoint_name, raw=False, perturb_prefix=None):
         if raw:
@@ -364,18 +330,6 @@ class BaseDataset(ABC):
         pred["tags"] = []
         return pred
 
-    @abstractmethod
-    def load(self) -> bool:
-        """
-        This function loads the full dataset, including both input keys and labels keys,
-        to s3 and return True if succcessful. Implemented on dataset level.
-        The input keys must be consistent with the task i/o,
-        the label keys will be consistent with those in self.label_field_converter,
-        i.e. you can think of this function as a input_field_converter + send to S3
-        """
-        raise NotImplementedError
-
-    @abstractmethod
     def label_field_converter(self, example):
         """
         Convert the example to a format expected by self.eval,
@@ -392,13 +346,12 @@ class BaseDataset(ABC):
             "id": example["uid"],
             "answer": example[
                 json.loads(self.task.annotation_config_json)["perf_metric"][
-                    "reference_name"
-                ]
+                    "constructor_args"
+                ]["reference_name"]
             ],
             "tags": example.get("tags", []),
         }  # NOTE: For now, the perf_metric defines the output to look for
 
-    @abstractmethod
     def pred_field_converter(self, example):
         """
         Convert the prediction to a format expected by self.eval,
@@ -411,10 +364,10 @@ class BaseDataset(ABC):
         }
         """
         return {
-            "id": example["uid"],
+            "id": example["id"],
             "pred": example[
                 json.loads(self.task.annotation_config_json)["perf_metric"][
-                    "reference_name"
-                ]
+                    "constructor_args"
+                ]["reference_name"]
             ],
         }  # NOTE: For now, the perf_metric defines the output to look for

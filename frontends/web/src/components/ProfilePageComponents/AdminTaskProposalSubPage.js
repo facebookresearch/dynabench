@@ -125,8 +125,12 @@ const AdminTaskProposalTable = (props) => {
                               />
                             </Col>
                           </Form.Group>
-                          <Row className="justify-content-md-center">
+                          <Row
+                            className="float-right"
+                            style={{ paddingRight: 15 }}
+                          >
                             <Button
+                              style={{ marginRight: 10 }}
                               onClick={() => {
                                 toggleShowViewModal(index);
                                 api
@@ -135,7 +139,7 @@ const AdminTaskProposalTable = (props) => {
                               }}
                             >
                               Accept
-                            </Button>
+                            </Button>{" "}
                             <Button
                               onClick={() => {
                                 toggleShowViewModal(index);

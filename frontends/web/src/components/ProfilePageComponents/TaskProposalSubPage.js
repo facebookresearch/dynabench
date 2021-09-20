@@ -18,29 +18,19 @@ import {
 } from "react-bootstrap";
 import { Formik } from "formik";
 
-const TaskProposalTable = (props) => {
-  const { data, page, getPage, paginate, isEndOfPage, handleProposalSubmit } =
-    props;
+const TaskProposalForm = (props) => {
+  const { handleProposalSubmit, getPage } = props;
 
   const [showCreateModal, setShowCreateModal] = useState(false);
-
-  const [showViewModals, setShowViewModals] = useState(
-    data.map((datum) => false)
-  );
-
-  if (data.length !== showViewModals.length) {
-    setShowViewModals(data.map((datum) => false));
-  }
-
   return (
-    <Col className="m-auto" lg={12}>
+    <>
       <Modal
         size="lg"
         show={showCreateModal}
         onHide={() => setShowCreateModal(!showCreateModal)}
       >
         <Modal.Header closeButton>
-          <Modal.Title>Create Proposal</Modal.Title>
+          <Modal.Title>Propose new task</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Formik
@@ -162,6 +152,37 @@ const TaskProposalTable = (props) => {
           </Formik>
         </Modal.Body>
       </Modal>
+
+      <Row>
+        <Col className="text-center">
+          <center>
+            <Button
+              variant="primary"
+              onClick={() => setShowCreateModal(!showCreateModal)}
+            >
+              <i className="fas fa-edit"></i> Propose new task
+            </Button>
+          </center>
+        </Col>
+      </Row>
+    </>
+  );
+};
+
+const TaskProposalTable = (props) => {
+  const { data, page, getPage, paginate, isEndOfPage, handleProposalSubmit } =
+    props;
+
+  const [showViewModals, setShowViewModals] = useState(
+    data.map((datum) => false)
+  );
+
+  if (data.length !== showViewModals.length) {
+    setShowViewModals(data.map((datum) => false));
+  }
+
+  return (
+    <Col className="m-auto" lg={12}>
       <Card className="profile-card">
         <Card.Body className="overflow-auto">
           <Table hover className="mb-0">
@@ -285,13 +306,6 @@ const TaskProposalTable = (props) => {
           </Table>
         </Card.Body>
         <Card.Footer className="text-center">
-          <Button
-            variant="primary"
-            className="float-left"
-            onClick={() => setShowCreateModal(!showCreateModal)}
-          >
-            <i className="fas fa-edit"></i>
-          </Button>
           <Pagination className="mb-0 float-right" size="sm">
             <Pagination.Item disabled={!page} onClick={() => paginate("prev")}>
               Previous
@@ -343,17 +357,26 @@ const TaskProposalSubPage = (props) => {
   };
 
   return (
-    <Container className="mb-5 pb-5">
-      <h1 className="my-4 pt-3 text-uppercase text-center">Your Proposals</h1>
-      <TaskProposalTable
-        handleProposalSubmit={handleProposalSubmit}
-        data={userTaskProposals}
-        page={taskProposalsPage}
+    <>
+      <TaskProposalForm
         getPage={getPage}
-        paginate={paginate}
-        isEndOfPage={isEndOfTaskProposalsPage}
+        handleProposalSubmit={handleProposalSubmit}
       />
-    </Container>
+      {userTaskProposals.length !== 0 && (
+        <Container className="mb-5 pb-5">
+          <h1 className="my-4 pt-3 text-uppercase text-center">
+            Your Proposals
+          </h1>
+          <TaskProposalTable
+            data={userTaskProposals}
+            page={taskProposalsPage}
+            getPage={getPage}
+            paginate={paginate}
+            isEndOfPage={isEndOfTaskProposalsPage}
+          />
+        </Container>
+      )}
+    </>
   );
 };
 
