@@ -10,7 +10,7 @@ import time
 import boto3
 import uuid
 
-from deploy_config import deploy_config
+from build_config import build_config
 from utils.deployer import ModelDeployer
 from utils.helpers import load_queue_dump
 from utils.logging import init_logger, logger
@@ -27,13 +27,13 @@ if __name__ == "__main__":
     logger.info("Start build server")
     sqs = boto3.resource(
         "sqs",
-        aws_access_key_id=deploy_config["aws_access_key_id"],
-        aws_secret_access_key=deploy_config["aws_secret_access_key"],
-        region_name=deploy_config["aws_region"],
+        aws_access_key_id=build_config["aws_access_key_id"],
+        aws_secret_access_key=build_config["aws_secret_access_key"],
+        region_name=build_config["aws_region"],
     )
     queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
     eval_queue = sqs.get_queue_by_name(QueueName=config["evaluation_sqs_queue"])
-    redeployment_queue = load_queue_dump(deploy_config["queue_dump"], logger=logger)
+    redeployment_queue = load_queue_dump(build_config["queue_dump"], logger=logger)
     if redeployment_queue:
         for msg in redeployment_queue:  # ask for redeployment
             queue.send_message(MessageBody=json.dumps(msg))
@@ -65,7 +65,7 @@ if __name__ == "__main__":
                     if response["status"] == "delayed":
                         redeployment_queue.append(msg)
                         pickle.dump(
-                            redeployment_queue, open(deploy_config["queue_dump"], "wb")
+                            redeployment_queue, open(build_config["queue_dump"], "wb")
                         )
                         m.update(
                             model_id, deployment_status=DeploymentStatusEnum.uploaded

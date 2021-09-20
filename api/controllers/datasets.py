@@ -13,6 +13,7 @@ import bottle
 
 import common.auth as _auth
 import common.helpers as util
+from common.config import config
 from common.logging import logger
 from models.dataset import AccessTypeEnum, DatasetModel
 from models.task import AnnotationVerifierMode, TaskModel
@@ -21,7 +22,6 @@ from .tasks import ensure_owner_or_admin
 
 
 sys.path.append("../evaluation")  # noqa isort:skip
-from eval_config import eval_config  # noqa isort:skip
 from utils.helpers import get_data_s3_path, send_eval_request  # noqa isort:skip
 
 
@@ -104,9 +104,9 @@ def create(credentials, tid, name):
         try:
             s3_client = boto3.client(
                 "s3",
-                aws_access_key_id=eval_config["aws_access_key_id"],
-                aws_secret_access_key=eval_config["aws_secret_access_key"],
-                region_name=eval_config["aws_region"],
+                aws_access_key_id=config["eval_aws_access_key_id"],
+                aws_secret_access_key=config["eval_aws_secret_access_key"],
+                region_name=config["eval_aws_region"],
             )
             with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
                 for datum in parsed_upload:
@@ -140,6 +140,12 @@ def create(credentials, tid, name):
         updated_existing_dataset = True
 
     # Evaluate all models
+    eval_config = {
+        "aws_access_key_id": config["eval_aws_access_key_id"],
+        "aws_secret_access_key": config["eval_aws_secret_access_key"],
+        "aws_region": config["eval_aws_region"],
+        "evaluation_sqs_queue": config["evaluation_sqs_queue"],
+    }
     send_eval_request(
         model_id="*",
         dataset_name=name,
