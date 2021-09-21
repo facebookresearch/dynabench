@@ -17,6 +17,7 @@ import {
 import { Link } from "react-router-dom";
 import { Formik } from "formik";
 import UserContext from "./UserContext";
+import Markdown from "react-markdown";
 import DragAndDrop from "../components/DragAndDrop/DragAndDrop";
 
 const FileUpload = (props) => {
@@ -173,6 +174,14 @@ class SubmitInterface extends React.Component {
                             We require that you upload a prediction file for
                             each of the leaderboard datasets. You can optionally
                             upload a prediction file for the other datasets.
+                            <br />
+                            <br />
+                            <Markdown>
+                              {
+                                this.state.task
+                                  .predictions_upload_instructions_md
+                              }
+                            </Markdown>
                           </p>
                         </Form.Group>
                         <Form.Group

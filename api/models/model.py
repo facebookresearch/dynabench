@@ -22,6 +22,13 @@ class DeploymentStatusEnum(enum.Enum):
     predictions_upload = "predictions_upload"
 
 
+class EvaluationStatusEnum(enum.Enum):
+    evaluating = "evaluating"
+    completed = "completed"
+    pre_evaluation = "pre_evaluation"
+    failed = "failed"
+
+
 class Model(Base):
     __tablename__ = "models"
     __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_general_ci"}
@@ -53,6 +60,9 @@ class Model(Base):
     endpoint_name = db.Column(db.Text)
     deployment_status = db.Column(
         db.Enum(DeploymentStatusEnum), default=DeploymentStatusEnum.unknown
+    )
+    evaluation_status = db.Column(
+        db.Enum(EvaluationStatusEnum), default=EvaluationStatusEnum.pre_evaluation
     )
 
     secret = db.Column(db.Text)

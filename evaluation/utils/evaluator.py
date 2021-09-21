@@ -98,7 +98,8 @@ class JobScheduler:
             self._completed.append(job)
             logger.info(
                 f"Queued {job.job_name} for completion instead of "
-                + f"submission, as this is just a file upload and not a real model"
+                + f"submission, as this is just a predictions upload and not a "
+                + f"real model"
             )
         else:
             self._queued.append(job)

@@ -49,9 +49,21 @@ def do_upload_via_predictions(credentials, tid, model_name):
             """This task does not allow prediction uploads. Submit a model instead.""",
         )
 
+    m = ModelModel()
+    if (
+        bottle.default_app().config["mode"] == "prod"
+        and m.getCountByUidTidAndHrDiff(
+            user_id, tid=task.id, hr_diff=task.dynalab_hr_diff
+        )
+        >= task.dynalab_threshold
+    ):
+        logger.error("Submission limit reached for user (%s)" % (user_id))
+        bottle.abort(429, "Submission limit reached")
+
     uploads = {}
     dm = DatasetModel()
-    dataset_names = [dataset.name for dataset in list(dm.getByTid(tid))]
+    datasets = list(dm.getByTid(tid))
+    dataset_names = [dataset.name for dataset in datasets]
     for name in dataset_names:
         uploads[name] = bottle.request.files.get(name)
 
@@ -61,6 +73,13 @@ def do_upload_via_predictions(credentials, tid, model_name):
         for name, upload in uploads.items()
         if uploads[name] is not None
     }
+
+    for dataset in datasets:
+        if (
+            dataset.access_type == AccessTypeEnum.scoring
+            and dataset.name not in uploads.keys()
+        ):
+            bottle.abort(400, "Need to upload predictions for all leaderboard datasets")
 
     parsed_uploads = {}
     # Ensure correct format
@@ -81,7 +100,6 @@ def do_upload_via_predictions(credentials, tid, model_name):
             logger.exception(ex)
             bottle.abort(400, "Invalid prediction file")
 
-    m = ModelModel()
     endpoint_name = f"ts{int(time.time())}-{model_name}"
 
     status_dict = {}

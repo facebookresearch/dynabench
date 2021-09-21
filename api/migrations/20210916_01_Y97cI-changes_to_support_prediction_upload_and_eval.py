@@ -17,6 +17,10 @@ steps = [
         "ALTER TABLE tasks DROP has_predictions_upload",
     ),
     step(
+        "ALTER TABLE tasks ADD COLUMN predictions_upload_instructions_md TEXT",
+        "ALTER TABLE tasks DROP predictions_upload_instructions_md",
+    ),
+    step(
         """
         ALTER TABLE models MODIFY deployment_status
         ENUM('uploaded', 'processing', 'deployed',
@@ -29,6 +33,14 @@ steps = [
         'created', 'failed', 'unknown', "takendown")
         DEFAULT "unknown"
         """,
+    ),
+    step(
+        """
+        ALTER TABLE models ADD COLUMN evaluation_status
+        ENUM('evaluating', 'completed', 'failed', 'pre_evaluation')
+        DEFAULT "pre_evaluation"
+        """,
+        "ALTER TABLE models DROP evaluation_status",
     ),
     step("UPDATE tasks SET has_predictions_upload=1 WHERE task_code='vqa' limit 1"),
 ]

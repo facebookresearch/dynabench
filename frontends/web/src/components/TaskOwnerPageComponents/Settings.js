@@ -25,6 +25,8 @@ const Settings = (props) => {
                   props.task.unpublished_models_in_leaderboard,
                 num_matching_validations: props.task.num_matching_validations,
                 validate_non_fooling: props.task.validate_non_fooling,
+                predictions_upload_instructions_md:
+                  props.task.predictions_upload_instructions_md,
               }}
               onSubmit={props.handleTaskUpdate}
             >
@@ -69,6 +71,35 @@ const Settings = (props) => {
                           </Form.Text>
                         </Col>
                       </Form.Group>
+                      {props.task.has_predictions_upload && (
+                        <Form.Group
+                          as={Row}
+                          controlId="predictions_upload_instructions_md"
+                          className="py-3 my-0"
+                        >
+                          <Form.Label column>
+                            Instructions For Prediction Uploads
+                          </Form.Label>
+                          <Col sm="12">
+                            <Form.Control
+                              as="textarea"
+                              disabled={!props.admin_or_owner}
+                              defaultValue={
+                                values.predictions_upload_instructions_md
+                              }
+                              rows="12"
+                              onChange={handleChange}
+                            />
+                            <Form.Text id="paramsHelpBlock" muted>
+                              <Markdown>
+                                The text will be rendered as
+                                [markdown](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
+                                in the prediction submission interface.
+                              </Markdown>
+                            </Form.Text>
+                          </Col>
+                        </Form.Group>
+                      )}
                       <Form.Group
                         as={Row}
                         controlId="hidden"
