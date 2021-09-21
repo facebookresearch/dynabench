@@ -29,11 +29,7 @@ class TaskCard extends React.Component {
     const task = this.props.task;
     return (
       <Col sm={6} lg={3} key={task.id} className="mb-3">
-        <Card
-          key={task.id}
-          className="task-card"
-          onClick={() => this.props.history.push(`/tasks/${task.task_code}`)}
-        >
+        <Card key={task.id} className="task-card" onClick={this.props.onClick}>
           <h2 className="task-header blue-color text-uppercase text-center">
             {task.name}
           </h2>
@@ -193,7 +189,15 @@ class HomePage extends React.Component {
                       {tasks
                         .filter((t) => t.official)
                         .map((task, index) => (
-                          <TaskCard task={task} key={index} />
+                          <TaskCard
+                            task={task}
+                            key={index}
+                            onClick={() =>
+                              this.props.history.push(
+                                `/tasks/${task.task_code}`
+                              )
+                            }
+                          />
                         ))}
                     </CardGroup>
                     <br />
@@ -207,7 +211,15 @@ class HomePage extends React.Component {
                       {tasks
                         .filter((t) => !t.official)
                         .map((task, index) => (
-                          <TaskCard task={task} key={index} />
+                          <TaskCard
+                            task={task}
+                            key={index}
+                            onClick={() =>
+                              this.props.history.push(
+                                `/tasks/${task.task_code}`
+                              )
+                            }
+                          />
                         ))}
                     </CardGroup>
                   </>
