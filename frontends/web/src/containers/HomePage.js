@@ -24,6 +24,57 @@ import Moment from "react-moment";
 import ReactPlayer from "react-player";
 import { OverlayProvider, BadgeOverlay } from "./Overlay";
 
+class TaskCard extends React.Component {
+  render() {
+    const task = this.props.task;
+    return (
+      <Col sm={6} lg={3} key={task.id} className="mb-3">
+        <Card
+          key={task.id}
+          className="task-card"
+          onClick={() => this.props.history.push(`/tasks/${task.task_code}`)}
+        >
+          <h2 className="task-header blue-color text-uppercase text-center">
+            {task.name}
+          </h2>
+          <Card.Body>
+            <Card.Text className="text-center">{task.desc}</Card.Text>
+            <Table>
+              <thead></thead>
+              <tbody>
+                <tr>
+                  <td>Round:</td>
+                  <td>{task.cur_round}</td>
+                </tr>
+                <tr>
+                  <td>Model error rate:</td>
+                  <td>
+                    {task.round.total_collected > 0
+                      ? (
+                          (100 * task.round.total_fooled) /
+                          task.round.total_collected
+                        ).toFixed(2)
+                      : "0.00"}
+                    % ({task.round.total_fooled}/{task.round.total_collected})
+                  </td>
+                </tr>
+                <tr>
+                  <td>Last activity:</td>
+                  <td>
+                    <Moment utc fromNow>
+                      {task.last_updated}
+                    </Moment>
+                  </td>
+                </tr>
+              </tbody>
+            </Table>
+          </Card.Body>
+        </Card>
+      </Col>
+    );
+  }
+}
+
 class HomePage extends React.Component {
   static contextType = UserContext;
   constructor(props) {
@@ -53,59 +104,6 @@ class HomePage extends React.Component {
     this.setState({ showjumbo: false });
   }
   render() {
-    const taskCards = (tasks) =>
-      !tasks ? (
-        <p>No tasks found</p>
-      ) : (
-        tasks.map((task, index) => (
-          <Col sm={6} lg={3} key={task.id} className="mb-3">
-            <Card
-              key={task.id}
-              className="task-card"
-              onClick={() =>
-                this.props.history.push(`/tasks/${task.task_code}`)
-              }
-            >
-              <h2 className="task-header blue-color text-uppercase text-center">
-                {task.name}
-              </h2>
-              <Card.Body>
-                <Card.Text className="text-center">{task.desc}</Card.Text>
-                <Table>
-                  <thead></thead>
-                  <tbody>
-                    <tr>
-                      <td>Round:</td>
-                      <td>{task.cur_round}</td>
-                    </tr>
-                    <tr>
-                      <td>Model error rate:</td>
-                      <td>
-                        {task.round.total_collected > 0
-                          ? (
-                              (100 * task.round.total_fooled) /
-                              task.round.total_collected
-                            ).toFixed(2)
-                          : "0.00"}
-                        % ({task.round.total_fooled}/
-                        {task.round.total_collected})
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Last activity:</td>
-                      <td>
-                        <Moment utc fromNow>
-                          {task.last_updated}
-                        </Moment>
-                      </td>
-                    </tr>
-                  </tbody>
-                </Table>
-              </Card.Body>
-            </Card>
-          </Col>
-        ))
-      );
     return (
       <OverlayProvider initiallyHide={true}>
         <BadgeOverlay
@@ -187,11 +185,35 @@ class HomePage extends React.Component {
             <h2 className="home-cardgroup-header text-reset mt-0 mb-4 font-weight-light d-block text-center">
               Tasks
             </h2>
-            <CardGroup>
-              <TasksContext.Consumer>
-                {({ tasks }) => (tasks.length ? taskCards(tasks) : "")}
-              </TasksContext.Consumer>
-            </CardGroup>
+            <TasksContext.Consumer>
+              {({ tasks }) =>
+                tasks && (
+                  <>
+                    <CardGroup>
+                      {tasks
+                        .filter((t) => t.official)
+                        .map((task, index) => (
+                          <TaskCard task={task} key={index} />
+                        ))}
+                    </CardGroup>
+                    <br />
+                    {/*
+                    <center>
+                      <u>Contributed tasks</u>
+                    </center>
+                    <br />
+                    */}
+                    <CardGroup>
+                      {tasks
+                        .filter((t) => !t.official)
+                        .map((task, index) => (
+                          <TaskCard task={task} key={index} />
+                        ))}
+                    </CardGroup>
+                  </>
+                )
+              }
+            </TasksContext.Consumer>
           </Container>
         </>
       </OverlayProvider>

@@ -394,6 +394,7 @@ class Task(Base):
     cur_round = db.Column(db.Integer, nullable=False)
 
     hidden = db.Column(db.Boolean, default=True)
+    official = db.Column(db.Boolean, default=False)
     submitable = db.Column(db.Boolean, default=False)
 
     validate_non_fooling = db.Column(db.Boolean, default=False, nullable=False)
