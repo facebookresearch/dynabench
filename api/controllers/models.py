@@ -235,6 +235,7 @@ def get_model_detail(credentials, mid):
             )
         )
         model["deployment_status"] = model["deployment_status"].name
+        model["evaluation_status"] = model["evaluation_status"].name
         return util.json_encode(model)
     except AssertionError:
         logger.exception("Not authorized to access unpublished model detail")

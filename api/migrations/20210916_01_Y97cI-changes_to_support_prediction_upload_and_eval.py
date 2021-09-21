@@ -42,5 +42,13 @@ steps = [
         """,
         "ALTER TABLE models DROP evaluation_status",
     ),
+    step(
+        """UPDATE models SET evaluation_status='failed' WHERE
+        deployment_status='takendown'"""
+    ),
+    step(
+        """UPDATE models SET evaluation_status='completed' WHERE
+        deployment_status in ('created', 'deployed')"""
+    ),
     step("UPDATE tasks SET has_predictions_upload=1 WHERE task_code='vqa' limit 1"),
 ]
