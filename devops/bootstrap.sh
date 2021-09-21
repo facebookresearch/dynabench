@@ -45,7 +45,7 @@ check_installed mysql
 #read -p "Git username:" username
 #read -p "Git password:" token
 #eval "git clone https://$username:$token@github.com/facebookresearch/dynabench.git"
-git checkout master
+git checkout main
 git pull
 
 # 3. MORE CHECKS
