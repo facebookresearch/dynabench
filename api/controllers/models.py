@@ -90,8 +90,11 @@ def do_upload_via_predictions(credentials, tid, model_name):
                 for line in upload.file.read().decode("utf-8").splitlines()
             ]
             for io in parsed_upload:
-                if not task.verify_annotation(
-                    io, mode=AnnotationVerifierMode.predictions_upload
+                if (
+                    not task.verify_annotation(
+                        io, mode=AnnotationVerifierMode.predictions_upload
+                    )
+                    or "uid" not in io
                 ):
                     bottle.abort(400, "Invalid prediction file")
             parsed_uploads[name] = parsed_upload
