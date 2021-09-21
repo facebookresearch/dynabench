@@ -123,6 +123,11 @@ def do_upload_via_predictions(credentials, tid, model_name):
         for name, upload in parsed_uploads.items():
             with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
                 for datum in parsed_upload:
+                    datum["id"] = datum["uid"]  # TODO: right now, dynalab models
+                    # Expect an input with "uid" but output "id" in their predictions.
+                    # Why do we use two seperate names for the same thing? Can we make
+                    # this consistent?
+                    del datum["uid"]
                     tmp.write(json.dumps(datum) + "\n")
                 tmp.close()
                 for dataset in dataset_names:
