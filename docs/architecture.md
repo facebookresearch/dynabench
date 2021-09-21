@@ -2,6 +2,7 @@
 
 ## Overview
 
+```
 ┌───────────┐        ┌────────────┐      ┌──────────────┐       ┌──────────────┐
 │  User w/  │        │            │      │              │       │              │
 │Dynalab CLI├───────►│ Web server ├─────►│ Build server ├──────►│  Sagemaker   │
@@ -19,6 +20,7 @@
                      │ MySQL DB     │◄──────────┘
                      │              │
                      └──────────────┘
+```
 
 Users mostly interact with Dynabench
 through the [Dynalab](https://github.com/facebookresearch/dynalab) CLI.
