@@ -147,6 +147,7 @@ def create(credentials, tid, name):
         config=eval_config,
         eval_server_id=task.eval_server_id,
         logger=logger,
+        reload_datasets=True,
     )
 
     return util.json_encode(

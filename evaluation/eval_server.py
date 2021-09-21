@@ -53,6 +53,14 @@ def main():
                     continue
 
                 logger.info(f"Evaluation server {server_id} received SQS message {msg}")
+
+                if msg.get("reload_datasets", False):
+                    dataset_dict = load_datasets()
+                    while not dataset_dict:
+                        logger.info("Haven't got dataset_dict. Sleep.")
+                        time.sleep(sleep_interval)
+                    requester = Requester(eval_config, dataset_dict)
+
                 requester.request(msg)
                 queue.delete_messages(
                     Entries=[

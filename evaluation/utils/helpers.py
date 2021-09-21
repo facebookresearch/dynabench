@@ -11,7 +11,9 @@ from typing import List
 import boto3
 
 
-def send_eval_request(model_id, dataset_name, config, eval_server_id, logger=None):
+def send_eval_request(
+    model_id, dataset_name, config, eval_server_id, logger=None, reload_datasets=False
+):
     """
     If dataset name is a perturbed dataset with prefix, will evaluate this
     perturbed dataset only;
@@ -40,6 +42,7 @@ def send_eval_request(model_id, dataset_name, config, eval_server_id, logger=Non
         sqs = session.resource("sqs")
         queue = sqs.get_queue_by_name(QueueName=config["evaluation_sqs_queue"])
         msg = {
+            "reload_datasets": reload_datasets,
             "model_id": model_id,
             "dataset_name": dataset_name,
             "eval_server_id": eval_server_id,
