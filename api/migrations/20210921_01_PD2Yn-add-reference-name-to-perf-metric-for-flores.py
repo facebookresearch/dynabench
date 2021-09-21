@@ -21,7 +21,7 @@ steps = [
                 "model_wrong_metric": {"type": "ask_user", "constructor_args": {}},
                 "aggregation_metric": {"type": "dynascore", "constructor_args": {}},
                 "perf_metric": {"type": "sp_bleu", "constructor_args":
-                    {"reference_name": "targetText"},
+                    {"reference_name": "targetText"}},
                 "delta_metrics": [],
                 "context": [
                     {"name": "sourceLanguage", "type": "string",
