@@ -11,6 +11,12 @@ from typing import List
 import boto3
 
 
+def get_predictions_s3_path(endpoint_name, task_code, dataset_name):
+    return os.path.join(
+        "predictions", endpoint_name, "raw", task_code, f"{dataset_name}.jsonl.out"
+    )
+
+
 def send_eval_request(
     model_id, dataset_name, config, eval_server_id, logger=None, reload_datasets=False
 ):

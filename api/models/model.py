@@ -19,6 +19,14 @@ class DeploymentStatusEnum(enum.Enum):
     failed = "failed"
     unknown = "unknown"
     takendown = "takendown"
+    predictions_upload = "predictions_upload"
+
+
+class EvaluationStatusEnum(enum.Enum):
+    evaluating = "evaluating"
+    completed = "completed"
+    pre_evaluation = "pre_evaluation"
+    failed = "failed"
 
 
 class Model(Base):
@@ -52,6 +60,9 @@ class Model(Base):
     endpoint_name = db.Column(db.Text)
     deployment_status = db.Column(
         db.Enum(DeploymentStatusEnum), default=DeploymentStatusEnum.unknown
+    )
+    evaluation_status = db.Column(
+        db.Enum(EvaluationStatusEnum), default=EvaluationStatusEnum.pre_evaluation
     )
 
     secret = db.Column(db.Text)

@@ -237,6 +237,7 @@ class TaskOwnerPage extends React.Component {
       "unpublished_models_in_leaderboard",
       "validate_non_fooling",
       "instructions_md",
+      "predictions_upload_instructions_md",
       "hidden",
       "submitable",
       "create_endpoint",

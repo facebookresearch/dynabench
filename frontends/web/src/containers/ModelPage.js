@@ -25,7 +25,7 @@ import { Link } from "react-router-dom";
 import TasksContext from "./TasksContext";
 import UserContext from "./UserContext";
 import "./ModelPage.css";
-import DeploymentStatus from "./ModelStatus";
+import { DeploymentStatus, EvaluationStatus } from "./ModelStatus";
 import { OverlayProvider, BadgeOverlay } from "./Overlay";
 import { useState } from "react";
 import FloresGrid from "../components/FloresComponents/FloresGrid";
@@ -479,10 +479,18 @@ ${latexTableContent}
                       <thead />
                       <tbody>
                         <tr style={{ border: `none` }}>
-                          <td>Status</td>
+                          <td>Deployment Status</td>
                           <td>
                             <DeploymentStatus
                               deploymentStatus={model.deployment_status}
+                            />
+                          </td>
+                        </tr>
+                        <tr style={{ border: `none` }}>
+                          <td>Evaluation Status</td>
+                          <td>
+                            <EvaluationStatus
+                              evaluationStatus={model.evaluation_status}
                             />
                           </td>
                         </tr>

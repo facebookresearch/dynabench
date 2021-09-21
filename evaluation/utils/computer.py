@@ -12,6 +12,7 @@ from enum import Enum
 
 from metrics.metric_getters import get_job_metrics
 from models.dataset import DatasetModel
+from models.model import EvaluationStatusEnum, ModelModel
 from models.round import RoundModel
 from models.score import ScoreModel
 from utils.evaluator import Job
@@ -54,6 +55,16 @@ class MetricsComputer:
     def update_database_with_metrics(
         self, job, eval_metrics_dict: dict, delta_metrics_dict: dict
     ) -> None:
+        mm = ModelModel()
+        model = mm.get(job.model_id)
+        # Don't change model's evaluation status if it has failed.
+        if model.evaluation_status != EvaluationStatusEnum.failed:
+            if model.evaluation_status != EvaluationStatusEnum.evaluating:
+                model.evaluation_status = EvaluationStatusEnum.evaluating
+                mm.dbs.add(model)
+                mm.dbs.flush()
+                mm.dbs.commit()
+
         dm = DatasetModel()
         d_entry = dm.getByName(job.dataset_name)
         sm = ScoreModel()
@@ -100,6 +111,19 @@ class MetricsComputer:
         if job in self._computing:
             self._computing.remove(job)
         self.dump()
+
+        # Don't change model's evaluation status if it has failed.
+        if model.evaluation_status != EvaluationStatusEnum.failed:
+            model_done_evaluating = True
+            for other_job in self._waiting + self._computing:
+                if other_job.model_id == job.model_id:
+                    model_done_evaluating = False
+            if model_done_evaluating:
+                model.evaluation_status = EvaluationStatusEnum.completed
+                mm.dbs.add(model)
+                mm.dbs.flush()
+                mm.dbs.commit()
+
         logger.info(f"Successfully evaluated {job.job_name}")
 
     def update_status(self, jobs: list):
@@ -112,14 +136,22 @@ class MetricsComputer:
         if job in self._computing:
             self._computing.remove(job)
         self._failed.append(job)
+        mm = ModelModel()
+        model = mm.get(job.model_id)
+        model.evaluation_status = EvaluationStatusEnum.failed
+        mm.dbs.add(model)
+        mm.dbs.flush()
+        mm.dbs.commit()
 
     def compute_one_blocking(self, job) -> None:
         try:
+
             logger.info(f"Evaluating {job.job_name}")
             self._computing.append(job)
             dataset = self.datasets[job.dataset_name]
             eval_metrics, delta_metrics = dataset.compute_job_metrics(job)
             self.update_database_with_metrics(job, eval_metrics, delta_metrics)
+
         except Exception as e:
             self.log_job_error(job, e)
             return

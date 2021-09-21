@@ -16,7 +16,7 @@ import common.helpers as util
 from common.config import config
 from common.logging import logger
 from models.dataset import AccessTypeEnum, DatasetModel
-from models.task import TaskModel
+from models.task import AnnotationVerifierMode, TaskModel
 
 from .tasks import ensure_owner_or_admin
 
@@ -86,7 +86,12 @@ def create(credentials, tid, name):
                 for line in upload.file.read().decode("utf-8").splitlines()
             ]
             for io in parsed_upload:
-                if not task.verify_annotation(io):
+                if (
+                    not task.verify_annotation(
+                        io, mode=AnnotationVerifierMode.dataset_upload
+                    )
+                    or "uid" not in io
+                ):
                     bottle.abort(400, "Invalid dataset file")
             parsed_uploads.append((parsed_upload, perturb_prefix))
 
@@ -104,13 +109,7 @@ def create(credentials, tid, name):
                 region_name=config["eval_aws_region"],
             )
             with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
-                index = 0
                 for datum in parsed_upload:
-                    datum["uid"] = str(
-                        index
-                    )  # NOTE: this means nobody can have an annotation object with the
-                    # name "uid"
-                    index += 1
                     tmp.write(json.dumps(datum) + "\n")
                 tmp.close()
                 response = s3_client.upload_file(

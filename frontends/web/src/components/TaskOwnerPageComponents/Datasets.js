@@ -98,7 +98,20 @@ const Datasets = (props) => {
                         <Form.Label column>
                           Add a new dataset by uploading it here. Files should
                           be a jsonl where each line has fields that match the
-                          model inputs and outputs for your task.
+                          model inputs and outputs for your task. There should
+                          also be an additional field called "uid" that maps to
+                          a value which is unique for each line. This "uid"
+                          field makes it possible for Dynabench to match
+                          unordered model predictions to the correct examples.
+                          <br />
+                          <br />
+                          Some metrics also allow datasets to have targets that
+                          are formatted differently than model outputs, for the
+                          same field name. For example, the SQuAD F1 metric
+                          allows datasets to have a target with a list of
+                          strings (for multiple potential answer candidates),
+                          even though the corresponding model output for that
+                          field name is a single string.
                         </Form.Label>
                       </Form.Group>
                       <Form.Group

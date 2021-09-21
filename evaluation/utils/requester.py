@@ -121,6 +121,7 @@ class Requester:
                         if model.deployment_status in {
                             DeploymentStatusEnum.deployed,
                             DeploymentStatusEnum.created,
+                            DeploymentStatusEnum.predictions_upload,
                         }:
                             self._eval_model_on_dataset(model.id, dataset_name)
                 else:

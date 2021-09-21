@@ -9,6 +9,52 @@ import { Badge, Modal } from "react-bootstrap";
 import "./ModelStatus.css";
 import { useState } from "react";
 
+const EvaluationStatus = ({ evaluationStatus }) => {
+  const [showModal, setShowModal] = useState(false);
+  var buttonVariant;
+  var description;
+  switch (evaluationStatus) {
+    case "completed":
+      buttonVariant = "success";
+      description = "Metrics have been computed from the model's predictions.";
+      break;
+    case "evaluating":
+      buttonVariant = "warning";
+      description =
+        "The server is computing metrics from the model's predictions.";
+      break;
+    case "pre_evaluation":
+      buttonVariant = "warning";
+      description =
+        "The server has not started computing metrics from the model's predictions.";
+      break;
+    case "failed":
+      buttonVariant = "danger";
+      description = "Metrics could not be computed on one or more datasets.";
+      break;
+    default:
+      buttonVariant = "warning";
+      description = "The evaluation status of the model is unknown.";
+  }
+  return (
+    <>
+      <Modal show={showModal} onHide={() => setShowModal(!showModal)}>
+        <Modal.Header closeButton>
+          <Modal.Title>{evaluationStatus}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{description}</Modal.Body>
+      </Modal>
+      <Badge
+        variant={buttonVariant}
+        className="modelStatus pointer"
+        onClick={() => setShowModal(!showModal)}
+      >
+        {evaluationStatus}
+      </Badge>
+    </>
+  );
+};
+
 const DeploymentStatus = ({ deploymentStatus }) => {
   const [showModal, setShowModal] = useState(false);
   var buttonVariant;
@@ -31,10 +77,14 @@ const DeploymentStatus = ({ deploymentStatus }) => {
       buttonVariant = "success";
       description = "You can interact with the model.";
       break;
+    case "predictions_upload":
+      buttonVariant = "success";
+      description = "Only the model's predictions were uploaded.";
+      break;
     case "takendown":
       buttonVariant = "danger";
       description =
-        "The model could not be evaluated on all of the datasets. The model could have bugs.";
+        "The model could not return predictions on all of the datasets. The model could have bugs.";
       break;
     case "failed":
       buttonVariant = "danger";
@@ -42,7 +92,7 @@ const DeploymentStatus = ({ deploymentStatus }) => {
       break;
     default:
       buttonVariant = "warning";
-      description = "The status of the model is unknown.";
+      description = "The deployment status of the model is unknown.";
   }
   return (
     <>
@@ -63,4 +113,4 @@ const DeploymentStatus = ({ deploymentStatus }) => {
   );
 };
 
-export default DeploymentStatus;
+export { DeploymentStatus, EvaluationStatus };

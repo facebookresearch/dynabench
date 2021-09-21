@@ -36,6 +36,7 @@ import TaskModelLeaderboardPage from "./TaskModelLeaderboardPage.js";
 import ForkAndSnapshotRouter from "../components/TaskLeaderboard/ForkAndSnapshotRouter";
 import { Avatar } from "../components/Avatar/Avatar";
 import ReactGA from "react-ga";
+import SubmitInterface from "./SubmitInterface.js";
 
 import qs from "qs";
 
@@ -296,6 +297,10 @@ class App extends React.Component {
                 <Route
                   path="/tasks/:taskCode/models/:modelId/updateModelInfo"
                   component={UpdateModelInfoInterface}
+                />
+                <Route
+                  path="/tasks/:taskId/submit"
+                  component={SubmitInterface}
                 />
                 <Route
                   path="/tasks/:taskCode/models/:modelId"

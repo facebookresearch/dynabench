@@ -154,26 +154,52 @@ const TaskActionButtons = (props) => {
           </OverlayTrigger>
         </Annotation>
       </Nav.Item>
-      <Nav.Item className="task-action-btn">
-        <Annotation
-          placement="right"
-          tooltip="Click here to upload your models for this task."
-        >
-          <OverlayTrigger
-            placement="bottom"
-            delay={{ show: 250, hide: 400 }}
-            overlay={renderSubmitTooltip}
+      {props.task.submitable && (
+        <Nav.Item className="task-action-btn">
+          <Annotation
+            placement="right"
+            tooltip="Click here to upload your models for this task."
           >
-            <Button
-              className="border-0 blue-color font-weight-bold light-gray-bg"
-              href="https://github.com/facebookresearch/dynalab"
-              target="_blank"
+            <OverlayTrigger
+              placement="bottom"
+              delay={{ show: 250, hide: 400 }}
+              overlay={renderSubmitTooltip}
             >
-              <i className="fas fa-upload"></i> Submit Models
-            </Button>
-          </OverlayTrigger>
-        </Annotation>
-      </Nav.Item>
+              <Button
+                className="border-0 blue-color font-weight-bold light-gray-bg"
+                href="https://github.com/facebookresearch/dynalab"
+                target="_blank"
+              >
+                <i className="fas fa-upload"></i> Submit Models
+              </Button>
+            </OverlayTrigger>
+          </Annotation>
+        </Nav.Item>
+      )}
+      {props.task.has_predictions_upload && (
+        <Nav.Item className="task-action-btn">
+          <Annotation
+            placement="top"
+            tooltip={
+              "Click here to submit your model-generated prediction files"
+            }
+          >
+            <OverlayTrigger
+              placement="bottom"
+              delay={{ show: 250, hide: 400 }}
+              overlay={renderVerifyTooltip}
+            >
+              <Button
+                as={Link}
+                className="border-0 blue-color font-weight-bold light-gray-bg"
+                to={"/tasks/" + props.taskCode + "/submit"}
+              >
+                <i className="fa fa-upload"></i> Submit Prediction Files
+              </Button>
+            </OverlayTrigger>
+          </Annotation>
+        </Nav.Item>
+      )}
     </Nav>
   );
 };
@@ -453,32 +479,31 @@ class TaskPage extends React.Component {
           </Row>
           {this.state.task?.active ? (
             <>
-              {this.state.task &&
-                this.state.task.ordered_scoring_datasets?.length > 0 && (
-                  <Row className="justify-content-center">
-                    <Col xs={12} md={12}>
-                      <Annotation
-                        placement="left"
-                        tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
-                      >
-                        {this.props.match?.params.forkOrSnapshotName ? (
-                          <TaskModelForkLeaderboard
-                            {...this.props}
-                            task={this.state.task}
-                            taskCode={this.state.taskCode}
-                            title={"Model Leaderboard (Fork)"}
-                          />
-                        ) : (
-                          <TaskModelDefaultLeaderboard
-                            {...this.props}
-                            task={this.state.task}
-                            taskCode={this.state.taskCode}
-                          />
-                        )}
-                      </Annotation>
-                    </Col>
-                  </Row>
-                )}
+              {this.state.task && (
+                <Row className="justify-content-center">
+                  <Col xs={12} md={12}>
+                    <Annotation
+                      placement="left"
+                      tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
+                    >
+                      {this.props.match?.params.forkOrSnapshotName ? (
+                        <TaskModelForkLeaderboard
+                          {...this.props}
+                          task={this.state.task}
+                          taskCode={this.state.taskCode}
+                          title={"Model Leaderboard (Fork)"}
+                        />
+                      ) : (
+                        <TaskModelDefaultLeaderboard
+                          {...this.props}
+                          task={this.state.task}
+                          taskCode={this.state.taskCode}
+                        />
+                      )}
+                    </Annotation>
+                  </Col>
+                </Row>
+              )}
               <Row>
                 <Col xs={12} md={6}>
                   {this.state.task.id &&

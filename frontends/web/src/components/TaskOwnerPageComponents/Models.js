@@ -7,7 +7,7 @@
 import React from "react";
 import { Container, Row, Form, Col, Card, Badge } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import DeploymentStatus from "../../containers/ModelStatus";
+import { DeploymentStatus } from "../../containers/ModelStatus";
 import "../../containers/ModelStatus.css";
 
 const Models = (props) => {
