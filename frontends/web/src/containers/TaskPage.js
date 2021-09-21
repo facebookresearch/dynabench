@@ -479,32 +479,31 @@ class TaskPage extends React.Component {
           </Row>
           {this.state.task?.active ? (
             <>
-              {this.state.task &&
-                this.state.task.ordered_scoring_datasets?.length > 0 && (
-                  <Row className="justify-content-center">
-                    <Col xs={12} md={12}>
-                      <Annotation
-                        placement="left"
-                        tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
-                      >
-                        {this.props.match?.params.forkOrSnapshotName ? (
-                          <TaskModelForkLeaderboard
-                            {...this.props}
-                            task={this.state.task}
-                            taskCode={this.state.taskCode}
-                            title={"Model Leaderboard (Fork)"}
-                          />
-                        ) : (
-                          <TaskModelDefaultLeaderboard
-                            {...this.props}
-                            task={this.state.task}
-                            taskCode={this.state.taskCode}
-                          />
-                        )}
-                      </Annotation>
-                    </Col>
-                  </Row>
-                )}
+              {this.state.task && (
+                <Row className="justify-content-center">
+                  <Col xs={12} md={12}>
+                    <Annotation
+                      placement="left"
+                      tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
+                    >
+                      {this.props.match?.params.forkOrSnapshotName ? (
+                        <TaskModelForkLeaderboard
+                          {...this.props}
+                          task={this.state.task}
+                          taskCode={this.state.taskCode}
+                          title={"Model Leaderboard (Fork)"}
+                        />
+                      ) : (
+                        <TaskModelDefaultLeaderboard
+                          {...this.props}
+                          task={this.state.task}
+                          taskCode={this.state.taskCode}
+                        />
+                      )}
+                    </Annotation>
+                  </Col>
+                </Row>
+              )}
               <Row>
                 <Col xs={12} md={6}>
                   {this.state.task.id &&

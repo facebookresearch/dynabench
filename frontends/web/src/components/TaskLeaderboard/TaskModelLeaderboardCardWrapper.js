@@ -98,7 +98,12 @@ const loadDefaultData = (
     datasetWeights
   );
 
-  if (orderedMetricWeights && orderedDatasetWeights) {
+  if (
+    orderedMetricWeights &&
+    orderedDatasetWeights &&
+    orderedMetricWeights.length > 0 &&
+    orderedDatasetWeights.length > 0
+  ) {
     api
       .getDynaboardScores(
         taskId,
