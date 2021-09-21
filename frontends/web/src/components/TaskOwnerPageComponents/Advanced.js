@@ -66,7 +66,6 @@ const Advanced = (props) => {
                           ) : (
                             <Form.Control
                               as="textarea"
-                              disabled={!props.admin_or_owner}
                               defaultValue={values.annotation_config_json}
                               rows="24"
                               onChange={handleChange}
@@ -94,7 +93,7 @@ const Advanced = (props) => {
                         </Col>
                       </Form.Group>
                       <Row className="justify-content-md-center">
-                        {dirty && props.admin_or_owner && !props.task.active ? (
+                        {dirty && !props.task.active ? (
                           <Button
                             type="submit"
                             variant="danger"

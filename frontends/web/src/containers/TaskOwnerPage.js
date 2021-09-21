@@ -60,9 +60,18 @@ class TaskOwnerPage extends React.Component {
           "&src=/owner#profile"
       );
     } else {
-      this.refreshData();
-    }
+      this.fetchTask(() => {
+        if (!this.state.admin_or_owner) {
+          this.props.history.push(
+            "/login?msg=" +
+              encodeURIComponent("You are not an admin or owner of this task. Please login with an admin or owner account.") +
+              "&src=/owner#profile"
+          )} else {
+            this.refreshData()
+      }
+    })
   }
+}
 
   fetchTask = (callback = () => {}) => {
     return this.context.api.getTask(this.props.match.params.taskCode).then(
@@ -423,8 +432,7 @@ class TaskOwnerPage extends React.Component {
   };
 
   render() {
-    const navOptions = this.state.admin_or_owner
-      ? [
+    const navOptions = [
           {
             href: "#settings",
             buttonText: "Settings",
@@ -450,12 +458,6 @@ class TaskOwnerPage extends React.Component {
             buttonText: "Datasets",
           },
         ]
-      : [
-          {
-            href: "#settings",
-            buttonText: "Settings",
-          },
-        ];
 
     return (
       <Container fluid>
@@ -481,14 +483,12 @@ class TaskOwnerPage extends React.Component {
           <Col>
             {this.props.location.hash === "#settings" && this.state.task ? (
               <Settings
-                admin_or_owner={this.state.admin_or_owner}
                 task={this.state.task}
                 handleTaskUpdate={this.handleTaskUpdate}
               />
             ) : null}
             {this.props.location.hash === "#advanced" && this.state.task ? (
               <Advanced
-                admin_or_owner={this.state.admin_or_owner}
                 task={this.state.task}
                 handleTaskActivate={this.handleTaskActivate}
               />

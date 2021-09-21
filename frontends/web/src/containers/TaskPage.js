@@ -279,6 +279,7 @@ class TaskPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      admin_or_owner: false,
       taskCode: props.match.params.taskCode,
       task: {},
       trendScore: [],
@@ -311,6 +312,18 @@ class TaskPage extends React.Component {
               this.fetchTrend();
             }
           );
+          this.context.api.getAdminOrOwner(result.id).then(
+            (adminOrOwnerResult) => {
+              this.setState(
+                {
+                  admin_or_owner: adminOrOwnerResult.admin_or_owner,
+                },
+              );
+            },
+            (error) => {
+              console.log(error);
+            }
+          )
         },
         (error) => {
           console.log(error);
@@ -408,6 +421,7 @@ class TaskPage extends React.Component {
                       )}
                     </OverlayContext.Consumer>
                   </Annotation>
+                {this.state.admin_or_owner &&
                   <Button
                     as={Link}
                     to={`/task-owner-interface/${this.state.task.task_code}#settings`}
@@ -416,6 +430,7 @@ class TaskPage extends React.Component {
                   >
                     <i className="fas fa-cog"></i>
                   </Button>
+                }
                 </ButtonGroup>
               </div>
             </Col>
