@@ -64,14 +64,17 @@ class TaskOwnerPage extends React.Component {
         if (!this.state.admin_or_owner) {
           this.props.history.push(
             "/login?msg=" +
-              encodeURIComponent("You are not an admin or owner of this task. Please login with an admin or owner account.") +
+              encodeURIComponent(
+                "You are not an admin or owner of this task. Please login with an admin or owner account."
+              ) +
               "&src=/owner#profile"
-          )} else {
-            this.refreshData()
-      }
-    })
+          );
+        } else {
+          this.refreshData();
+        }
+      });
+    }
   }
-}
 
   fetchTask = (callback = () => {}) => {
     return this.context.api.getTask(this.props.match.params.taskCode).then(
@@ -433,31 +436,31 @@ class TaskOwnerPage extends React.Component {
 
   render() {
     const navOptions = [
-          {
-            href: "#settings",
-            buttonText: "Settings",
-          },
-          {
-            href: "#advanced",
-            buttonText: "Advanced",
-          },
-          {
-            href: "#owners",
-            buttonText: "Owners",
-          },
-          {
-            href: "#rounds",
-            buttonText: "Rounds",
-          },
-          {
-            href: "#models",
-            buttonText: "Models",
-          },
-          {
-            href: "#datasets",
-            buttonText: "Datasets",
-          },
-        ]
+      {
+        href: "#settings",
+        buttonText: "Settings",
+      },
+      {
+        href: "#advanced",
+        buttonText: "Advanced",
+      },
+      {
+        href: "#owners",
+        buttonText: "Owners",
+      },
+      {
+        href: "#rounds",
+        buttonText: "Rounds",
+      },
+      {
+        href: "#models",
+        buttonText: "Models",
+      },
+      {
+        href: "#datasets",
+        buttonText: "Datasets",
+      },
+    ];
 
     return (
       <Container fluid>
