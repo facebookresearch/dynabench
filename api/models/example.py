@@ -137,7 +137,7 @@ class ExampleModel(BaseModel):
             ):  # This means that we have a dynalab model
                 if c.round.task.name == "Hate Speech":
                     dynalab_task = dynalab.tasks.hs
-                elif c.round.task.name == "Natural Language Inference":
+                elif c.round.task.name in ("Natural Language Inference", "Limiting ADC"):
                     dynalab_task = dynalab.tasks.nli
                 elif c.round.task.name == "Sentiment Analysis":
                     dynalab_task = dynalab.tasks.sentiment
