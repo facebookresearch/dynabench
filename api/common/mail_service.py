@@ -63,22 +63,12 @@ def close_mail_session(server):
 
 
 def send(
-    server=None,
-    config=None,
-    contacts=[],
-    cc_contact=None,
-    template_name="",
-    msg_dict={},
-    subject="",
+    server, config, contacts, cc_contact=None, template_name="", msg_dict={}, subject=""
 ):
     """
     Mail handler to send email to specific contacts through smtp service
 
     """
-    app = bottle.default_app()
-    if not config:
-        logger.info("Using default bottle app config for mail config")
-        config = app.config
     if not test_SMTP_conn_open(server):
         logger.error("SMTP service session closed. Reconnecting the server")
         # create another smtp server handler

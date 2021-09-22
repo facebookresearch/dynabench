@@ -109,9 +109,9 @@ if __name__ == "__main__":
                             smtp_secret=config["smtp_secret"],
                         )
                         mail.send(
-                            server=mail_session,
-                            config=config,
-                            contacts=[user.email],
+                            mail_session,
+                            config,
+                            [user.email],
                             cc_contact="dynabench@fb.com",
                             template_name=f"templates/{template}.txt",
                             msg_dict=msg,
