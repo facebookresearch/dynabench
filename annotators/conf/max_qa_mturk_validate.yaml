@@ -20,7 +20,7 @@ dynabench:
   round_id: 3
   block_mobile: True
   frame_height: 0
-  fetching_tags: "qa_r3_val"
+  fetching_tags: "max_test_v3"
   # tag_to_store_with_examples is required
   extra_logging: "tag_to_store_with_examples:max_validate"
 # num_jobs: 10
