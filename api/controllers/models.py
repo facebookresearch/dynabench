@@ -119,7 +119,7 @@ def do_upload_via_predictions(credentials, tid, model_name):
         secret=secrets.token_hex(),
     )
     with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
-        for name, upload in parsed_uploads.items():
+        for dataset_name, upload in parsed_uploads.items():
             with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
                 for datum in parsed_upload:
                     datum["id"] = datum["uid"]  # TODO: right now, dynalab models
@@ -129,9 +129,8 @@ def do_upload_via_predictions(credentials, tid, model_name):
                     del datum["uid"]
                     tmp.write(json.dumps(datum) + "\n")
                 tmp.close()
-                for dataset in dataset_names:
-                    ret = _eval_dataset(dataset, endpoint_name, model, task, tmp.name)
-                    status_dict.update(ret)
+                ret = _eval_dataset(dataset_name, endpoint_name, model, task, tmp.name)
+                status_dict.update(ret)
 
     return util.json_encode({"success": "ok", "model_id": model.id})
 
