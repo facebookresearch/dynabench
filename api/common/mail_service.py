@@ -76,18 +76,18 @@ def send(
 
     """
     app = bottle.default_app()
+    if not config:
+        logger.info("Using default bottle app config for mail config")
+        config = app.config
     if not test_SMTP_conn_open(server):
         logger.error("SMTP service session closed. Reconnecting the server")
         # create another smtp server handler
         server = get_mail_session(
-            host=app.config["smtp_host"],
-            port=app.config["smtp_port"],
-            smtp_user=app.config["smtp_user"],
-            smtp_secret=app.config["smtp_secret"],
+            host=config["smtp_host"],
+            port=config["smtp_port"],
+            smtp_user=config["smtp_user"],
+            smtp_secret=config["smtp_secret"],
         )
-    if not config:
-        logger.info("Using default bottle app config for mail config")
-        config = app.config
     try:
         message_template = read_template(template_name)
         for contact in contacts:
