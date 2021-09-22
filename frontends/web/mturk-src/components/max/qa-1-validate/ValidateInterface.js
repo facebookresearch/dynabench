@@ -13,8 +13,9 @@ import {
   InputGroup,
   Button,
   FormControl,
+  Spinner,
 } from "react-bootstrap";
-import { FaInfoCircle, FaThumbsUp, FaThumbsDown, FaFlag } from "react-icons/fa";
+import { FaInfoCircle, FaThumbsUp, FaThumbsDown, FaFlag, FaBorderNone, FaTruckLoading } from "react-icons/fa";
 
 import { TokenAnnotator, TextAnnotator } from "react-text-annotate";
 
@@ -59,16 +60,22 @@ class ValidateInterface extends React.Component {
       task: {},
       example: {},
       comment: {},
+      curQId: 0,
+      processingResponse: false,
+      processedFirstExample: false,
+      loadingNewExample: true,
     };
     this.getNewExample = this.getNewExample.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
     this.setComment = this.setComment.bind(this);
+    this.handleTaskSubmit = this.handleTaskSubmit.bind(this);
   }
   componentDidMount() {
     this.setState({ taskId: this.props.taskConfig.task_id }, function () {
       this.api.getTask(this.state.taskId).then(
         (result) => {
-          result.targets = result.targets.split("|"); // split targets
+          // console.log("Loaded task: ");
+          // console.log(result);
           this.setState({ task: result }, function () {
             this.state.task.selected_round = this.state.task.cur_round;
             this.getNewExample();
@@ -84,34 +91,50 @@ class ValidateInterface extends React.Component {
     this.setState({ comment: e.target.value });
   }
   getNewExample() {
-    this.api
-      .getRandomExample(
-        this.state.taskId, 
-        this.state.task.cur_round,
-        this.getTagList(this.props),
-        [],
-        this.props.providerWorkerId
-      )
-      .then(
-        (result) => {
-          console.log(result);
-          if (this.state.task.type !== "extract") {
-            result.target = this.state.task.targets[
-              parseInt(result.target_pred)
-            ];
+    this.setState(
+      {
+        loadingNewExample: true,
+      },
+      () => {
+        this.api.getRandomExample(
+          this.state.taskId, 
+          this.state.task.cur_round,
+          this.getTagList(this.props),
+          [],
+          this.props.providerWorkerId
+        )
+        .then(
+          (result) => {
+            console.log("Example: ");
+            console.log(result);
+            this.setState({
+              example: result,
+              curQId: this.state.curQId + 1,
+              processingResponse: false,
+              processedFirstExample: true,
+            });
+          },
+          (error) => {
+            console.log("Error getting new example: ");
+            console.log(error);
+            this.setState({
+              example: {},
+              processingResponse: false,
+              processedFirstExample: true,
+            });
           }
-          this.setState({
-            example: result,
-          });
-        },
-        (error) => {
-          console.log(error);
-          this.setState({
-            example: false,
-          });
-        }
-      );
+        )
+        .finally(
+          () => {
+            this.setState({
+              loadingNewExample: false,
+            });
+          }
+        )
+      }
+    )
   }
+  
   getTagList(props) {
     if (props.taskConfig && props.taskConfig.fetching_tags) {
       return props.taskConfig.fetching_tags.split(",");
@@ -119,40 +142,56 @@ class ValidateInterface extends React.Component {
       return [];
     }
   }
+
   handleResponse(action) {
-    var action_label = null;
-    switch (action) {
-      case "correct":
-        action_label = "C";
-        break;
-      case "incorrect":
-        action_label = "I";
-        break;
-      case "flag":
-        action_label = "F";
-        break;
+    console.log("Processing action: " + action)
+
+    let action_label = null;
+    if (action === "valid") {
+      action_label = "correct";
+    } else if (action === "flagged") {
+      action_label = "flagged";
+    } else {
+      action_label = "incorrect";
     }
-    if (action_label !== null) {
-      this.setState({ label: action_label });
-      var metadata = { annotator_id: this.props.providerWorkerId };
-      this.api
-        .validateExample(
-          this.state.example.id, 
-          action,
-          this.userMode,
-          metadata,
-          this.props.providerWorkerId
-        )
-        .then(
-          (result) => {
-            this.props.onSubmit(this.state);
-          },
-          (error) => {
-            console.log(error);
-          }
-        );
-    }
+
+    const metadata = {
+      annotator_id: this.props.providerWorkerId,
+      mephisto_id: this.props.mephistoWorkerId,
+      agentId: this.props.agentId,
+      assignmentId: this.props.assignmentId,
+      validationState: action,
+      example_tags: this.getTagList(this.props),
+    };
+
+    this.setState(
+      {
+        processingResponse: true,
+      }, () => {
+        this.api
+          .validateExample(
+            this.state.example.id, 
+            action_label,
+            this.userMode,
+            metadata,
+            this.props.providerWorkerId
+          )
+          .then(
+            (result) => {
+              this.getNewExample();
+            },
+            (error) => {
+              console.log(error);
+            }
+          );
+      }
+    )
   }
+
+  handleTaskSubmit() {
+    this.props.onSubmit(this.state);
+  }
+
   render() {
     var content;
     if (this.state.example.context) {
@@ -171,7 +210,7 @@ class ValidateInterface extends React.Component {
         } else if ("activityType" in item && item["activityType"] == "Generated a QA pair") {
           var ans_char_start = item.questionMetadata.metadata_gen.answer_start;
           var ans_char_end = item.questionMetadata.metadata_gen.answer_end;
-          var tokens = this.state.example.context.context.split(/\b|(?<=[\s\(\)])|(?=[\s\(\)])/);
+          var tokens = JSON.parse(this.state.example.context.context_json).context.split(/\b|(?<=[\s\(\)])|(?=[\s\(\)])/);
           var char_to_token_map = [];
           for (let token_id = 0; token_id < tokens.length; token_id++) {
             for (var char_id = 0; char_id < tokens[token_id].length; char_id++) {
@@ -185,81 +224,196 @@ class ValidateInterface extends React.Component {
       }
 
       var answer = [{ start: ans_start, end: ans_end, tag: "ANS" }];
+      var human_ans = JSON.parse(this.state.example.input_json).answer;
+      var model_ans = null;
+      
+      if (example_metadata.model_name !== "none") {
+        model_ans = JSON.parse(this.state.example.output_json).answer;
+      }
+
       content = (
         <ContextInfo
           answer={answer}
-          text={this.state.example.context.context}
+          text={JSON.parse(this.state.example.context.context_json).context}
         />
       );
     }
     return (
       <Container className="mb-5 pb-5">
-        <Col className="m-auto" lg={12}>
-          <Card className="profile-card overflow-hidden">
-            <div className="mb-1 p-3 light-gray-bg">
-              <h6 className="text-uppercase dark-blue-color spaced-header">
-                Context:
-              </h6>
-              <Card.Body>
-                {this.state.example.context && content}
-              </Card.Body>
-            </div>
-            <Card.Body className="overflow-auto pt-2">
-              <Card>
-                {this.state.example ? (
-                  <>
-                    <Card.Body className="p-3">
-                      <Row>
-                        <Col xs={12}>
-                          <div className="mb-3">
-                            <h6 className="text-uppercase dark-blue-color spaced-header">
-                              Question:
-                            </h6>
-                            <p>{this.state.example.text}</p>
-                          </div>
-                        </Col>
-                      </Row>
-                    </Card.Body>
-                    <Card.Footer>
-                      <button
-                        data-index={this.props.index}
-                        onClick={() => this.handleResponse("correct")}
-                        type="button"
-                        className="btn btn-light btn-sm"
-                      >
-                        <i className="fas fa-thumbs-up"></i> Correct
-                      </button>{" "}
-                      <button
-                        data-index={this.props.index}
-                        onClick={() => this.handleResponse("incorrect")}
-                        type="button"
-                        className="btn btn-light btn-sm"
-                      >
-                        <i className="fas fa-thumbs-down"></i> Incorrect
-                      </button>{" "}
-                      <button
-                        data-index={this.props.index}
-                        onClick={() => this.handleResponse("flag")}
-                        type="button"
-                        className="btn btn-light btn-sm"
-                      >
-                        <i className="fas fa-flag"></i> Flag
-                      </button>{" "}
-                    </Card.Footer>
-                  </>
-                ) : (
-                  <Card.Body className="p-3">
-                    <Row>
-                      <Col xs={12}>
-                        <p>No more examples to be verified!</p>
-                      </Col>
-                    </Row>
+        <Row>
+          <Col className="m-auto" lg={12}>
+            {this.state.curQId > this.batchAmount ? 
+             (
+              <>
+                <p>Thank you for completing the HIT. You may now submit it by clicking below:</p>
+                <p>
+                  <Button
+                    className="btn btn-primary btn-success mt-2"
+                    onClick={this.handleTaskSubmit}
+                  >
+                    Submit HIT
+                  </Button>
+                </p>
+              </>
+            ) : (
+              <Card className="profile-card overflow-hidden">
+                <div className="p-3 light-gray-bg">
+                  <h6 className="text-uppercase dark-blue-color spaced-header">
+                    Context:
+                  </h6>
+                  <Card.Body>
+                    {this.state.example.context ? (
+                      content
+                    ) : (
+                      <>
+                        <Spinner
+                          className="mr-2"
+                          animation="border"
+                          role="status"
+                          size="sm"
+                        />
+                        Loading...
+                      </>
+                    )}
+                  </Card.Body>
+                </div>
+
+                {!this.state.processedFirstExample && this.state.loadingNewExample ? null : (
+                  <Card.Body className="overflow-auto pt-2">
+                    <Card>
+                      {this.state.example.context ? (
+                        <>
+                          <Card.Body className="p-3">
+                            <Row>
+                              <Col xs={12}>
+                                <div className="mb-3">
+                                  <h6 className="text-uppercase dark-blue-color spaced-header">
+                                    {this.state.processingResponse ? (
+                                      <Spinner
+                                        className="mr-2"
+                                        animation="border"
+                                        role="status"
+                                        size="sm"
+                                      />
+                                    ) : null}
+                                    Question {this.state.curQId} of {this.batchAmount}:
+                                  </h6>
+                                  <p><b>{JSON.parse(this.state.example.input_json).question}</b></p>
+                                </div>
+                              </Col>
+                            </Row>
+                            <p>
+                              A human answered "<b style={{background: "rgba(132, 210, 255, 0.6)"}}>{human_ans}</b>" 
+                              {model_ans != null ? (
+                                <>and the AI answered "<b style={{background: "rgba(0, 255, 162, 0.8)"}}>{model_ans}</b>"</>
+                              ) : null}
+                              .
+                            </p>
+                            <p><small>Please validate this example below (kindly refer to the instructions if you are unsure what any of the buttons mean). Remember, for an example to be <b>valid</b>, the human answer needs to be correct and the AI answer (if there is one) needs to be wrong. If there is no AI answer, you only need to validate the human answer.</small></p>
+                          </Card.Body>
+                          <Card.Footer>
+                            <button
+                              data-index={this.props.index}
+                              onClick={() => this.handleResponse("valid")}
+                              type="button"
+                              className="btn btn-success btn-sm flex-fill mr-2"
+                            >
+                              <FaThumbsUp /> Valid
+                            </button>{" "}
+
+                            <button
+                              data-index={this.props.index}
+                              onClick={() => this.handleResponse("invalid_badquestion")}
+                              type="button"
+                              className="btn btn-warning btn-sm flex-fill mr-2"
+                            >
+                              <FaThumbsDown /> Invalid: <br />Bad Question
+                            </button>{" "}
+
+                            <button
+                              data-index={this.props.index}
+                              onClick={() => this.handleResponse("invalid_badanswer")}
+                              type="button"
+                              className="btn btn-warning btn-sm flex-fill mr-2"
+                            >
+                              <FaThumbsDown /> Invalid: <br />Bad Human Answer
+                            </button>{" "}
+
+                            {model_ans != null ? (
+                              <button
+                                data-index={this.props.index}
+                                onClick={() => this.handleResponse("invalid_aicorrect")}
+                                type="button"
+                                className="btn btn-warning btn-sm flex-fill mr-2"
+                              >
+                                <FaThumbsDown /> Invalid: <br />AI Correct
+                              </button>
+                            ) : null}
+
+                            <button
+                              data-index={this.props.index}
+                              onClick={() => this.handleResponse("invalid_multiplevalidanswers")}
+                              type="button"
+                              className="btn btn-warning btn-sm flex-fill mr-2"
+                            >
+                              <FaThumbsDown /> Invalid: <br />Multiple Valid Answers
+                            </button>{" "}
+
+                            <button
+                              data-index={this.props.index}
+                              onClick={() => this.handleResponse("invalid_other")}
+                              type="button"
+                              className="btn btn-warning btn-sm flex-fill mr-2"
+                            >
+                              <FaThumbsDown /> Invalid: <br />Other
+                            </button>{" "}
+
+                            <button
+                              data-index={this.props.index}
+                              onClick={() => this.handleResponse("flagged")}
+                              type="button"
+                              className="btn btn-danger btn-sm flex-fill mr-2"
+                            >
+                              <FaFlag /> Flag
+                            </button>{" "}
+                          </Card.Footer>
+                        </>
+                      ) : (
+                        <Card.Body className="p-3">
+                          <Row>
+                            <Col lg={12}>
+                              {this.curQId > 0 ? (
+                                <>
+                                  <p>There are no more examples to be validated!</p>
+                                  <p>Thank you for completing the HIT. You may now submit it by clicking below:</p>
+                                  <p>
+                                    <Button
+                                      className="btn btn-primary btn-success mt-2"
+                                      onClick={this.handleTaskSubmit}
+                                    >
+                                      Submit HIT
+                                    </Button>
+                                  </p>
+                                </>
+                              ) : (
+                                this.state.processedFirstExample ? (
+                                  <>
+                                    <p>Sorry, there are currently no examples for validation.</p>
+                                    <p>We may have more examples ready for validation in the coming days. Thank you for your patience.</p>
+                                  </>
+                                ) : null
+                              )}
+                            </Col>
+                          </Row>
+                        </Card.Body>
+                      )}
+                    </Card>
                   </Card.Body>
                 )}
               </Card>
-            </Card.Body>
-          </Card>
-        </Col>
+            )}
+          </Col>
+        </Row>
       </Container>
     );
   }
