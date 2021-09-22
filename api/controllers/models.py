@@ -27,7 +27,6 @@ from .tasks import ensure_owner_or_admin
 
 
 sys.path.append("../evaluation")  # noqa isort:skip
-from eval_config import eval_config  # noqa isort:skip
 from utils.helpers import get_predictions_s3_path, send_eval_request  # noqa isort:skip
 
 
@@ -146,6 +145,12 @@ def _eval_dataset(dataset_name, endpoint_name, model, task, afile):
             endpoint_name=endpoint_name,
             dataset_name=dataset_name,
         )
+        eval_config = {
+            "aws_access_key_id": config["eval_aws_access_key_id"],
+            "aws_secret_access_key": config["eval_aws_secret_access_key"],
+            "aws_region": config["eval_aws_region"],
+            "evaluation_sqs_queue": config["evaluation_sqs_queue"],
+        }
         ret = send_eval_request(
             eval_server_id=task.eval_server_id,
             model_id=model.id,
@@ -162,9 +167,9 @@ def _eval_dataset(dataset_name, endpoint_name, model, task, afile):
 def _upload_prediction_file(afile, task_code, s3_bucket, endpoint_name, dataset_name):
     client = boto3.client(
         "s3",
-        aws_access_key_id=eval_config["aws_access_key_id"],
-        aws_secret_access_key=eval_config["aws_secret_access_key"],
-        region_name=eval_config["aws_region"],
+        aws_access_key_id=config["eval_aws_access_key_id"],
+        aws_secret_access_key=config["eval_aws_secret_access_key"],
+        region_name=config["eval_aws_region"],
     )
     path = get_predictions_s3_path(
         endpoint_name=endpoint_name, task_code=task_code, dataset_name=dataset_name
