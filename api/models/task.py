@@ -57,6 +57,7 @@ def string_f1(output, target, constructor_args):
 
 def verify_string_f1_config(constructor_args):
     assert "reference_name" in constructor_args
+    assert "threshold" in constructor_args
     assert isinstance(constructor_args["reference_name"], str)
 
 
