@@ -4,12 +4,10 @@
 
 import hashlib
 import json
+import tempfile
 
-import dynalab.tasks.hs
-import dynalab.tasks.nli
-import dynalab.tasks.qa
-import dynalab.tasks.sentiment
 import sqlalchemy as db
+from dynalab.tasks.task_io import TaskIO
 from sqlalchemy import case
 
 from common.logging import logger
@@ -131,27 +129,45 @@ class ExampleModel(BaseModel):
                 logger.error("Improper formatting in model annotation components")
                 return False
 
-            # TODO: can remove this when the dynalab part of dynatask is done
             if model_endpoint_name.startswith(
                 "ts"
             ):  # This means that we have a dynalab model
-                if c.round.task.name == "Hate Speech":
-                    dynalab_task = dynalab.tasks.hs
-                elif c.round.task.name in (
-                    "Natural Language Inference",
-                    "Limiting ADC",
-                ):
-                    dynalab_task = dynalab.tasks.nli
-                elif c.round.task.name == "Sentiment Analysis":
-                    dynalab_task = dynalab.tasks.sentiment
-                elif c.round.task.name == "Question Answering":
-                    dynalab_task = dynalab.tasks.qa
-                else:
-                    logger.error(
-                        "This is a Dynalab model but a Dynalab signature "
-                        + "verification method has not been included for this task."
+
+                with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
+                    annotation_config = json.loads(task.annotation_config_json)
+                    tmp.write(
+                        json.dumps(
+                            {
+                                "annotation_config": annotation_config,
+                                "task": task.task_code,
+                            }
+                        )
                     )
-                    return False
+                    tmp.close()
+                    task_io = TaskIO(task.task_code, task_info_path=tmp.name)
+
+                # This is to check if we have a pre-dynatask dynalab model
+                with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
+                    annotation_config = json.loads(task.annotation_config_json)
+                    if task.task_code in ("hs", "sentiment"):
+                        annotation_config["context"] = []
+                    annotation_config["output"] = [
+                        obj
+                        for obj in annotation_config["output"]
+                        if obj["type"] not in ("multiclass_probs", "conf")
+                    ]
+                    tmp.write(
+                        json.dumps(
+                            {
+                                "annotation_config": annotation_config,
+                                "task": task.task_code,
+                            }
+                        )
+                    )
+                    tmp.close()
+                    pre_dynatask_task_io = TaskIO(
+                        task.task_code, task_info_path=tmp.name
+                    )
 
                 model_secret = (
                     self.dbs.query(Model)
@@ -160,14 +176,29 @@ class ExampleModel(BaseModel):
                     .secret
                 )
                 all_model_annotation_data["signed"] = model_signature
-                if model_signature != dynalab_task.TaskIO().generate_response_signature(
-                    all_model_annotation_data, all_model_annotation_data, model_secret
+                if model_signature not in (
+                    task_io.generate_response_signature(
+                        all_model_annotation_data,
+                        all_model_annotation_data,
+                        model_secret,
+                    ),
+                    pre_dynatask_task_io.generate_response_signature(
+                        all_model_annotation_data,
+                        all_model_annotation_data,
+                        model_secret,
+                    ),
                 ):
                     logger.error(
-                        "Signature does not match (received %s, expected %s)"
+                        "Signature does not match (received %s, expected to be"
+                        + " %s or %s)"
                         % (
                             all_model_annotation_data["signed"],
-                            dynalab_task.TaskIO().generate_response_signature(
+                            task_io.generate_response_signature(
+                                all_model_annotation_data,
+                                all_model_annotation_data,
+                                model_secret,
+                            ),
+                            pre_dynatask_task_io.generate_response_signature(
                                 all_model_annotation_data,
                                 all_model_annotation_data,
                                 model_secret,
@@ -177,10 +208,15 @@ class ExampleModel(BaseModel):
                     return False
                 else:
                     logger.info(
-                        "Signature matches(received %s, expected %s)"
+                        "Signature matches (received %s, expected to be %s or %s)"
                         % (
                             all_model_annotation_data["signed"],
-                            dynalab_task.TaskIO().generate_response_signature(
+                            task_io.generate_response_signature(
+                                all_model_annotation_data,
+                                all_model_annotation_data,
+                                model_secret,
+                            ),
+                            pre_dynatask_task_io.generate_response_signature(
                                 all_model_annotation_data,
                                 all_model_annotation_data,
                                 model_secret,
