@@ -14,11 +14,10 @@ from dynalab_cli.utils import get_tasks
 sys.path.append("..")  # noqa
 sys.path.append("../../api")
 
-import metrics
 from datasets import load_datasets
 from eval_config import eval_config as config
 from models.dataset import DatasetModel
-from models.model import Model, ModelModel
+from models.model import DeploymentStatusEnum, Model, ModelModel
 from models.score import Score, ScoreModel
 from models.task import Task, TaskModel
 from utils import helpers, computer
@@ -46,19 +45,44 @@ def eval(
     model = get_model(mid)
     task = get_task(model)
     if inference:
-        inference_and_eval(mid, task.task_code, dataset)
+        inference_and_eval(mid, task, dataset)
     else:
         compute_metrics(mid, task, blocking=blocking)
 
 
-def inference_and_eval(mid: int, task_code: str, dataset: str) -> None:
-    task_config = metrics.get_task_config_safe(task_code)
+def inference_and_eval(mid: int, task: Task, dataset: str) -> None:
     helpers.send_eval_request(
         model_id=mid,
         dataset_name=dataset,
         config=config,
-        eval_server_id=task_config["eval_server_id"],
+        eval_server_id=task.eval_server_id,
         logger=logger,
+    )
+
+
+def build(mid: int) -> None:
+    model = get_model(mid)
+    task = get_task(model)
+
+    logger.info(
+        f"Changing status of model {model.endpoint_name} ({mid})"
+        f" from {model.deployment_status} to UPLOADED"
+    )
+    model.deployment_status = DeploymentStatusEnum.uploaded
+    # The request is the same for takedown/build, the action taken
+    # depends on the current deployement status of the model
+    s3_uri = f"s3://{task.s3_bucket}/torchserve/models/{task.task_code}/{model.endpoint_name}.tar.gz"
+    # hack the config dict to add the missing build queue name
+    config["builder_sqs_queue"] = "dynabench-build"
+    helpers.send_takedown_model_request(mid, config, s3_uri)
+
+
+def takedown(mid: int) -> None:
+    model = get_model(mid)
+    config["builder_sqs_queue"] = "dynabench-build"
+    helpers.send_takedown_model_request(
+        model_id=mid,
+        config=config,
     )
 
 
@@ -141,4 +165,4 @@ def get_shortname(taskname: str) -> str:
 
 
 if __name__ == "__main__":
-    func_argparse.main(eval, ls)
+    func_argparse.main(eval, ls, build, takedown)
