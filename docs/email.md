@@ -16,15 +16,15 @@ import smtplib
 from email.mime.text import MIMEText
 
 config = {
-    'smtp_host': 'email-smtp.us-west-1.amazonaws.com',
+    'smtp_host': 'email-smtp.us-west-1.amazonaws.com', # or other
     'smtp_port': 587,
-    'smtp_secret': 'BNtB7HuYiqZHFUmcDZa1V7PFRHiw/p/cr19a9edCfI3e',
-    'smtp_user': 'AKIARMY7XGTQPTNJFPA3',
+    'smtp_secret': 'YOUR SECRET',
+    'smtp_user': 'YOUR USER',
 }
 
 msg = MIMEText("If you got this, that means it works!")
 msg['From'] = 'no-reply@dynabench.org'
-msg['To'] = 'douwekiela@gmail.com'
+msg['To'] = 'YOUR EMAIL'
 msg['Subject'] = 'This is a test'
 
 server = smtplib.SMTP(host=config['smtp_host'], port=config['smtp_port'], timeout=1000)
@@ -34,5 +34,5 @@ server.ehlo()
 server.login(config['smtp_user'], config['smtp_secret'])
 server.sendmail(msg['From'], [msg['To']], msg.as_string())
 server.close()
-print("Email sent. Check your inbox.")
+print(f"Email sent to {msg['To']}. Check your inbox.")
 ```
