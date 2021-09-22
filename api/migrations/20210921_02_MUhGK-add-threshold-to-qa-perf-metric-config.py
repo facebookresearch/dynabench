@@ -16,10 +16,10 @@ steps = [
         """UPDATE tasks SET annotation_config_json='
             {
                 "model_wrong_metric": {"type": "string_f1", "constructor_args":
-                    {"reference_name": "answer"}},
+                    {"reference_name": "answer", "threshold": 0.9}},
                 "aggregation_metric": {"type": "dynascore", "constructor_args": {}},
                 "perf_metric": {"type": "squad_f1", "constructor_args":
-                    {"reference_name": "answer", "threshold": 0.9}},
+                    {"reference_name": "answer"}},
                 "delta_metrics": [{"type": "fairness", "constructor_args": {}},
                     {"type": "robustness", "constructor_args": {}}],
                 "goal_message":
