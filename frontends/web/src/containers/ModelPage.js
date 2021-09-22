@@ -507,16 +507,7 @@ ${latexTableContent}
                             <td>Task</td>
                             <td>
                               <Link to={`/tasks/${taskCode}`}>
-                                <TasksContext.Consumer>
-                                  {({ tasks }) => {
-                                    const task =
-                                      model &&
-                                      tasks.filter((e) => e.id === model.tid);
-                                    return (
-                                      task && task.length && task[0].task_code
-                                    );
-                                  }}
-                                </TasksContext.Consumer>
+                                {this.state.task.task_code}
                               </Link>
                             </td>
                           </tr>

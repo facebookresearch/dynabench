@@ -82,9 +82,12 @@ const ModelSubPage = (props) => {
                       <td className="blue-color">{model.name || "Unknown"}</td>
                       <td>
                         <TasksContext.Consumer>
-                          {({ tasks }) => {
+                          {({ tasks_including_hidden }) => {
                             const task =
-                              model && tasks.filter((e) => e.id === model.tid);
+                              model &&
+                              tasks_including_hidden.filter(
+                                (e) => e.id === model.tid
+                              );
                             return task && task.length && task[0].task_code;
                           }}
                         </TasksContext.Consumer>

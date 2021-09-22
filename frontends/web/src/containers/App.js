@@ -78,6 +78,7 @@ class App extends React.Component {
     this.state = {
       user: {},
       tasks: [],
+      tasks_including_hidden: [],
     };
     this.updateState = this.updateState.bind(this);
     this.refreshData = this.refreshData.bind(this);
@@ -103,9 +104,12 @@ class App extends React.Component {
         );
       });
     }
-    this.api.getTasks().then(
+    this.api.getTasks(false).then(
       (result) => {
-        this.setState({ tasks: result });
+        this.setState({
+          tasks: result.filter((task) => !task.hidden),
+          tasks_including_hidden: result,
+        });
       },
       (error) => {
         console.log(error);
@@ -145,6 +149,7 @@ class App extends React.Component {
         <TasksContext.Provider
           value={{
             tasks: this.state.tasks,
+            tasks_including_hidden: this.state.tasks_including_hidden,
           }}
         >
           <BrowserRouter>

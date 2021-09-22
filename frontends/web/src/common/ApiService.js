@@ -123,8 +123,8 @@ export default class ApiService {
     });
   }
 
-  getTasks() {
-    return this.fetch(`${this.domain}/tasks`, {
+  getTasks(exclude_hidden = true) {
+    return this.fetch(`${this.domain}/tasks/list/${+exclude_hidden}`, {
       method: "GET",
     });
   }
