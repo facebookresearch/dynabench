@@ -70,6 +70,8 @@ check_dir_exists $API_DIR/data
 # 4. RELAUNCH BACKEND
 cd $ROOT_DIR
 rm -rf ~/.local # to avoid segfault
+pip3 install -U pip setuptools wheel
+python -mpip install Cython numpy
 pip3 install -r requirements.txt --no-cache-dir
 cd $API_DIR
 screen -S $BACKEND_SERVER_WINDOW_NAME -X quit
