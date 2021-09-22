@@ -1,0 +1,20 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+form.profileForm input[disabled] {
+    background: #fff;
+    border: 0;
+    margin-top: -10px;
+}
+
+.modelTable tr:hover {
+    background-color: #f7f7f7;
+}
+
+.long-text {
+    max-width: 300px;
+    min-width: 300px;
+}

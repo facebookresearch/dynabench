@@ -1,0 +1,14 @@
+{
+    "task": "vqa",
+    "task_id": 12,
+    "round_id": 1,
+    "model_no": 1,
+    "gpu_id": 0,
+    "model_url": "http://dl.fbaipublicfiles.com/dynabench/vqa/movie_mcan_r1_1.tgz",
+    "initial_instance_count" : 1,
+    "gateway_url": "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict",
+    "sagemaker_role": "AmazonSageMaker-ExecutionRole-20200629T161149",
+    "redeploy": true,
+    "instance_type": "ml.g4dn.xlarge",
+    "checkpoint_name": "movie_mcan_final.pth"
+}

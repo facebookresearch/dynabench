@@ -1,0 +1,15 @@
+#@package _global_
+mephisto:
+  blueprint:
+    onboarding_qualification: nli-4-mturk-qualification
+  task:
+    task_name: nli-4-mturk
+    task_title: Write sentences and fool the AI
+    task_description: >
+      You will be trying to beat an AI at a game. The AI is trying to understand English.
+    task_reward: 1.0
+    task_tags: "writing,AI,understand,English,game,ai"
+dynabench:
+  task_name: nli-4-mturk
+  task_id: 1
+  round_id: 4

@@ -1,0 +1,16 @@
+{
+  "extends": ["stylelint-config-standard"],
+  "rules": {
+    "indentation": 4,
+    "font-family-no-missing-generic-family-keyword": [
+      true,
+      {
+        "ignoreFontFamilies": [
+          "OpenSansLight",
+          "OpenSansRegular",
+          "OpenSansSemiBold"
+        ]
+      }
+    ]
+  }
+}

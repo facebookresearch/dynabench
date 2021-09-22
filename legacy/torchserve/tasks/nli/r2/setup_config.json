@@ -1,0 +1,1 @@
+{"model_name": "roberta.large", "mode": "nli", "do_lower_case": "True", "num_labels": 3, "save_mode": "pretrained", "max_length": 512, "my_task_id": 1, "my_round_id": 2}

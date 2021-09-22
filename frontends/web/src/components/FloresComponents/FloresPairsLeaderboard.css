@@ -1,0 +1,43 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+.pairs-leaderboard {
+    min-height: 20vh;
+}
+
+.filter-wrapper {
+    display: inline-block;
+    position: relative;
+}
+
+.lang-dropdown {
+    background-color: #f8f8f8;
+    width: 20vh;
+    height: 28vh;
+    overflow: auto;
+    border-radius: 5%;
+}
+
+.list-icon {
+    color: var(--primary);
+    cursor: pointer;
+}
+
+.search-bar {
+    position: sticky;
+    text-align: center;
+    top: 5%;
+    width: 18vh;
+    z-index: 3;
+}
+
+.dataset-info {
+    font-size: small;
+}
+
+.page-info {
+    font-size: x-small;
+}

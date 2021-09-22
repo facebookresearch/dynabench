@@ -1,0 +1,14 @@
+{
+  "task": "UT",
+  "out_dir": "./tmp/hs",
+  "trans_methods": [
+    "Contraction",
+    "Keyboard",
+    "Ocr",
+    "Punctuation",
+    "SpellingError",
+    "Typos",
+    "WordCase"
+  ],
+  "sub_methods": []
+}

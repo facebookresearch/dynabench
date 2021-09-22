@@ -1,0 +1,12 @@
+{
+    "task": "qa",
+    "task_id": 2,
+    "round_id": 1,
+    "model_no": 2,
+    "model_url": "http://dl.fbaipublicfiles.com/dynabench/qa/roberta_round1.tgz",
+    "initial_instance_count" : 2,
+    "gateway_url": "https://fhcxpbltv0.execute-api.us-west-1.amazonaws.com/predict",
+    "sagemaker_role": "AmazonSageMaker-ExecutionRole-20200629T161149",
+    "redeploy": false,
+    "instance_type": "ml.m5.2xlarge"
+}
