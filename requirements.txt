@@ -15,7 +15,7 @@ yoyo-migrations
 pandas==1.3.0
 sacrebleu
 sklearn
-git+https://github.com/facebookresearch/dynalab.git
+git+https://github.com/facebookresearch/dynalab.git@ab4bb29249eff7238ce3aae116707646e0d9429e
 sentencepiece
 spacy
 textflint
