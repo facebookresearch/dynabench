@@ -369,7 +369,6 @@ ${latexTableContent}
     let orderedNonLeaderboardScores = (non_leaderboard_scores || []).sort(
       (a, b) => a.round_id - b.round_id
     );
-    console.log(model);
     return (
       <OverlayProvider initiallyHide={true}>
         <BadgeOverlay
