@@ -22,7 +22,6 @@ import {
 import Moment from "react-moment";
 import Markdown from "react-markdown";
 import { Link } from "react-router-dom";
-import TasksContext from "./TasksContext";
 import UserContext from "./UserContext";
 import "./ModelPage.css";
 import { DeploymentStatus, EvaluationStatus } from "./ModelStatus";
@@ -506,9 +505,7 @@ ${latexTableContent}
                           <tr style={{ border: `none` }}>
                             <td>Task</td>
                             <td>
-                              <Link to={`/tasks/${taskCode}`}>
-                                {this.state.task.task_code}
-                              </Link>
+                              <Link to={`/tasks/${taskCode}`}>{taskCode}</Link>
                             </td>
                           </tr>
                         )}

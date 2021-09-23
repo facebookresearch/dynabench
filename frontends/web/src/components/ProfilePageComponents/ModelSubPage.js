@@ -13,7 +13,7 @@ import {
   Pagination,
   Table,
 } from "react-bootstrap";
-import TasksContext from "../../containers/TasksContext";
+import { Link } from "react-router-dom";
 
 const ModelSubPage = (props) => {
   const [userModels, setUserModels] = useState([]);
@@ -80,18 +80,7 @@ const ModelSubPage = (props) => {
                       onClick={() => history.push(`/models/${model.id}`)}
                     >
                       <td className="blue-color">{model.name || "Unknown"}</td>
-                      <td>
-                        <TasksContext.Consumer>
-                          {({ tasks_including_hidden }) => {
-                            const task =
-                              model &&
-                              tasks_including_hidden.filter(
-                                (e) => e.id === model.tid
-                              );
-                            return task && task.length && task[0].task_code;
-                          }}
-                        </TasksContext.Consumer>
-                      </td>
+                      <td>{model.task_code}</td>
                       {isSelfModelsTable && (
                         <td className="text-center" width="200px">
                           {model.is_published === true ? (
