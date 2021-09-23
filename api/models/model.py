@@ -76,6 +76,7 @@ class Model(Base):
             if safe and column.name in ["secret", "user"]:
                 continue
             d[column.name] = getattr(self, column.name)
+        d["task"] = self.task.to_dict()
         return d
 
 
