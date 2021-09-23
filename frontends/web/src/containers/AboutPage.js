@@ -480,7 +480,7 @@ const AboutPage = () => (
           Mohit Bansal, Bertie Vidgen, Zeerak Waseem Talat, Zhiyi Ma, Ledell Wu,
           Sonia Kris, Zen Wu, Kawin Ethayarajh, Alberto Lopez, Sasha Sheng, Eric
           Wallace, Pedro Rodriguez, Rebecca Qian, Somya Jain, Guillaume Wenzek,
-          Sahir Gomez, and others.
+          Sahir Gomez, Anmol Gupta, and others.
         </p>
         <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
           How can I help?
