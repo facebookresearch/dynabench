@@ -28,8 +28,8 @@ This manual describes how Task Owners can configure their tasks through the task
 3. Add other task owners, if applicable
 4. Add your relevant (leaderboard/non-leaderboard) datasets
 5. Submit at least one model for evaluation
-6. Create a round of data collection with a model in the loop
-7. If applicable, add contexts
+6. Put one or more models in the loop for data collection, if desired.
+7. Add contexts.
 
 You can now collect new data, or if you like just use Dynabench as a leaderboard platform and start collecting data against your state-of-the-art models at a later stage.
 
@@ -56,11 +56,11 @@ Tasks can collect data over multiple _rounds_. A round of data collection usuall
 
 ## Contexts
 
-Most tasks on Dynabench involve contextualized data collection: a question is written for a given passage or image, a hypothesis is written for a given premise, et cetera. For every round in your task, you can add contexts under the rounds tab by clicking the "Upload Contexts" section. The format for a context corresponds to the fields defined in your [task annotation config](#annotation-config). Optionally, you can specify `tags` and filter for these tags if you customize your data collection frontend (e.g. when you want to collect Mechanical Turker data for a subset of your full dataset). The format for the contexts is `jsonl`. For example, the first two lines for a classification task could read:
+Most tasks on Dynabench involve contextualized data collection: a question is written for a given passage or image, a hypothesis is written for a given premise, et cetera. For every round in your task, you can add contexts under the rounds tab by clicking the "Upload Contexts" section. The format for a context corresponds to the fields defined in your [task annotation config](#annotation-config). Optionally, you can specify `tag` and filter for these tags if you customize your data collection frontend (e.g. when you want to collect Mechanical Turker data for a subset of your full dataset). The format for the contexts is `jsonl`. For example, the first two lines for a classification task could read:
 
 ```
-{'context': {'statement': 'Lorem ipsum dolor et cetera'}, 'tags': ['hello', 'world']}
-{'context': {'statement': 'Some other context'}, 'tags': ['goodbye']}
+{'context': {'statement': 'Lorem ipsum dolor et cetera'}, 'tag': null, 'metadata': {}}
+{'context': {'statement': 'Some other context'}, 'tag': null, 'metadata': {}}
 ```
 
 ## Model evaluation
@@ -75,7 +75,7 @@ Data collection happens for the currently active round. Throughout the data coll
 
 ## Annotation configs
 
-The input/output format for a task, both in terms of what the model expects and how the annotator frontend behaves, are configured in the annotation config under the Advanced tab in the task owners interface. Here are examples of annotator configs for NLI, QA, Sentiment Analysis, Hate Speech Detection, and Machine Translation, followed by an explanation for each of the fields in the example annotation configs:
+The input/output format for a task, both in terms of what the model expects and how the annotator frontend behaves, are configured in the annotation config under the Advanced tab in the task owners interface. Here are examples of annotator configs for NLI, QA, Sentiment Analysis, Hate Speech Detection, and Machine Translation:
 
 * [NLI](https://github.com/facebookresearch/dynabench/blob/main/docs/examples/nli_annotation_config.json)
 
@@ -87,7 +87,7 @@ The input/output format for a task, both in terms of what the model expects and 
 
 * [Machine Translation](https://github.com/facebookresearch/dynabench/blob/main/docs/examples/flores_annotation_config.json)
 
-The annotation config can have the following fields:
+We recommend that you look through the examples before reading further. The annotation config can have the following fields:
 
 1. `goal_message` (optional): a string that is displayed at the top of the create interface as a goal for annotators. [See an example](https://dynabench.org/tasks/qa/create)
 
@@ -95,41 +95,40 @@ The annotation config can have the following fields:
 
 3. `model_wrong_metric`: This defines whether a person fooled a model. There are three options to choose from: `exact_match`, `string_f1`, and `ask_user`:
 
-  * `exact_match` requires `reference_names` as a constructor arg, which is a list of names of the model outputs that you want to compare with the annotator inputs.
+    * `exact_match` requires `reference_names` as a constructor arg. `reference_names` defines which outputs the metric should use.
 
-  * `string_f1` requires `reference_name` as a constructor arg, which is a name of the model output that you want to compare with the annotator input. The `threshold` is  a number between 0 and 1 and is also a required constructor arg.
+    * `string_f1` requires `reference_name` as a constructor arg. `reference_name` defines which output the metric should use. The `threshold` is  a number between 0 and 1 and is also a required constructor arg.
 
-  * `ask_user` does not require any constructor args; it tells the create interface to ask the annotator whether the model was fooled or not.
+    * `ask_user` does not require any constructor args. It tells the create interface to ask the annotator whether the model was fooled or not.
 
 4. `aggregation_metric`: This is a string that defines how the leaderboard ranks models. There is only one aggregation metric to choose: `dynascore`.
 
-5. `perf_metric`: This is the metric that is used to evaluate the performance of an uploaded model. There are six to choose from: `macro_f1`, `squad_f1`, `accuracy`, `bleu`, `sp_bleu`, `vqa_accuracy`.
+5. `perf_metric`: This is the metric that is used to evaluate the performance of an uploaded model. There are six to choose from: `macro_f1`, `squad_f1`, `accuracy`, `bleu`, `sp_bleu`, `vqa_accuracy`. They all require `reference_name` as a constructor arg, which specifies which model output to use to compute the score. The score is computed by comparing the model output keyed by `reference_name` with the gold output keyed by `reference_name` in an uploaded dataset. If you are using `squad_f1`, `accuracy`, or `vqa` accuracy, you have the option of uploading datasets with a list of candidates keyed by `reference_name` instead of just one. For example:
 
-They all require `reference_name` as a constructor arg, which specifies which model output to use to compute the score. The score is computed by comparing the model output keyed by `reference_name` with the gold output keyed by `reference_name` in an uploaded dataset.
+```
+Model output for an example: {“answer”: “the sky is blue”}
+Example in the dataset: {“question”: “What color is the sky?”, “answer”: [“the sky is blue”, “the sky is light blue”, “the sky is cerulean”]}
+```
 
-If you are using `squad_f1`, `accuracy`, or `vqa` accuracy, you have the option of uploading datasets with a list of candidates keyed by `reference_name` instead of just one. For example:
-Model output for an example: `{“answer”: “the sky is blue”}`
-Example in the dataset: `{“question”: “What color is the sky?”, “answer”: [“the sky is blue”, “the sky is light blue”, “the sky is cerulean”]}`
+6. `delta_metrics`: A delta metric returns the value that the perf metric would return, if it was run on a perturbed version of the dataset. There are two to choose from: `fairness` and `robustness`; neither require any constructor_args. If you select either of these delta_metrics, then any datasets that you upload for your task must be accompanied by the corresponding perturbed versions. We have released the tools that we use for perturbing Hate Speech, Question Answering, Natural Language Inference, and Sentiment Analysis datasets in the `evaluation/scripts` directory.
 
-6. `delta_metrics`: A delta metric returns the value that the perf metric would return, if it was run on a perturbed version of the dataset. There are two to choose from: `fairness` and `robustness`; neither require any constructor_args. If you select either of these delta_metrics, then any datasets that you upload for your task must be accompanied by the corresponding perturbed versions. We have released the tools that we use for perturbing Hate Speech, Question Answering, Natural Language Inference, and Sentiment Analysis datasets here: (TODO).
+7. `context`, `input`, `output`: These are lists of objects that define the I/O for a task. There must be at least one object in each list for your task to be valid. This means that all dynabench tasks must have something for the `context`, even if it is a placeholder. `context` is the example information that task owner provides. `input` is the example information that the annotators enter. `output` is what the model outputs, given `input` and `context`. When objects in `input` and `output` have the same name, a model receives the input without these objects. For example: if an annotator is asked to provide a target label in their input and a model is asked to return a label to compare to this target label, the target label is filtered out of the annotator’s input before it is sent to the model.
 
-7. `context`, `input`, `output`: These are lists of objects that define the I/O for a task. There must be at least one object in each list for a task to be valid. `context` is the example information that task owner provides. `input` is the example information that the annotators enter. `output` is what the model outputs, given `input` and `context`. When objects in `input` and `output` have the same name, a model receives the input without these objects. For example: if an annotator is asked to provide a target label in their input and a model is asked to return a label to compare to this target label, the target label is filtered out of the annotator’s input before it is sent to the model.
-
-8. `metadata` is a dictionary containing two lists which are keyed by `create` and `validate`. Just like `context`, `input`, and `output`, these are also lists of objects that define the I/O for a task, except they are optional. The objects defined in `create` appear after an annotator enters an example into the create interface, and so is dependent on a model’s response. For the objects in `create`, you can specify `model_wrong_condition` as `true` or `false` to define whether these objects appear when the annotator’s example is model fooling or not. You can also not specify `model_wrong_condition` if you want any of the objects to always appear in the model response section of the create interface. The objects defined in `validate` appear in the validate interface after a validator has selected `flagged`, `correct`, or `incorrect`. For the objects in `validate`, you can specify `validated_label_condition` as `incorrect`, `correct` or `flagged` to define the conditions where you show these objects to validators. You can also not specify `validated_label_condition` if you want an object to always appear in the validate interface.
+8. `metadata`: A dictionary containing two lists which are keyed by `create` and `validate`. Just like `context`, `input`, and `output`, these are also lists of objects that define the I/O for a task, except they are optional. The objects defined in `create` appear after an annotator enters an example into the create interface, and so are dependent on a model’s response. For the objects in `create`, you can specify `model_wrong_condition` as `true` or `false` to define whether these objects appear when the annotator’s example is model fooling or not. You can also not specify `model_wrong_condition` if you want any of the objects to appear regardless of the model's response. The objects defined in `validate` appear in the validate interface after a validator has selected `flagged`, `correct`, or `incorrect`. For the objects in `validate`, you can specify `validated_label_condition` as `incorrect`, `correct` or `flagged` to define the conditions where you show these objects to validators. You can also not specify `validated_label_condition` if you want an object to always appear in the validate interface.
 
 9. Objects that compose the I/O for a task: In 7 and 8, we explained where to enter objects that compose the I/O for a task. We call them “annotation objects” Here are the options that you can select from:
 
-  * `string`: Data for this type is stored as a string. `placeholder` is a required constructor arg.
+    * `string`: Data for this type is stored as a string. `placeholder` is a required constructor arg.
 
-  * `context_string_selection`: Data for this type is stored as a string; it must be a substring of another annotation object in `context`. `reference_name` designates the name of a string-type object in the context to select from, and it is a required constructor arg.
+    * `context_string_selection`: Data for this type is stored as a string; it must be a substring of another annotation object in `context`. `reference_name` designates the name of a string-type object in the context to select from, and it is a required constructor arg.
 
-  * `target_label`: Data for this type is stored as a string; it must be from a set of owner-defined labels. `labels` is a list of strings that defines the set of available labels, and it is a required constructor arg.
+    * `target_label`: Data for this type is stored as a string; it must be from a set of owner-defined labels. `labels` is a list of strings that defines the set of available labels, and it is a required constructor arg.
 
-  * `multiclass`: Data for this type is stored as a string; it must be from a set of owner-defined labels. The only difference between this type and the `target_label` type is how it is displayed to annotators on the frontend. `target_label` is displayed as a goal message with an embedded dropdown component ([see an example](https://dynabench.org/tasks/nli/create)), and `multiclass` is displayed as a basic multiple choice dropdown component. `labels` is a list of strings that defines the set of available labels, and it is a required constructor arg.
+    * `multiclass`: Data for this type is stored as a string; it must be from a set of owner-defined labels. The only difference between this type and the `target_label` type is how it is displayed to annotators on the frontend. `target_label` is displayed as a goal message with an embedded dropdown component ([see an example](https://dynabench.org/tasks/nli/create)), and `multiclass` is displayed as a basic multiple choice dropdown component. `labels` is a list of strings that defines the set of available labels, and it is a required constructor arg.
 
-  * `multiclass_probs`: Data for this type is stored as a dictionary, where a key is a label name and a value is a float. Values should sum to 1. `reference_name` designates the name of a `multiclass` or `target_label` object to get the labels from, and it is a required constructor arg. This annotation object cannot be used in the `input`.
+    * `multiclass_probs`: Data for this type is stored as a dictionary, where a key is a label name and a value is a float. Values should sum to 1. `reference_name` designates the name of a `multiclass` or `target_label` object to get the labels from, and it is a required constructor arg. This annotation object cannot be used in the `input`.
 
-  * `conf`: Data for this type is stored as a float between 0 and 1. It typically represents the confidence of a model about its answer. This annotation object cannot be used in the `input`.
+    * `conf`: Data for this type is stored as a float between 0 and 1. It typically represents the confidence of a model about its answer. This annotation object cannot be used in the `input`.
 
 ## Frequently Asked Questions
 
