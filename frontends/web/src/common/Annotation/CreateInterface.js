@@ -416,7 +416,9 @@ class CreateInterface extends React.Component {
               .then(
                 (modelWrongResult) =>
                   this.storeExampleWrapper(
-                    modelResponseResult["signed"],
+                    modelResponseResult["signed"]
+                      ? modelResponseResult["signed"]
+                      : modelResponseResult["signature"], // TODO: pre-dynatask models use signed, post-dynatask models use signature. Make this cleaner somehow?
                     modelWrongResult.model_wrong,
                     output,
                     endpoint
