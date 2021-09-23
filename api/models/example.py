@@ -175,7 +175,6 @@ class ExampleModel(BaseModel):
                     .one()
                     .secret
                 )
-                all_model_annotation_data["signed"] = model_signature
                 if model_signature not in (
                     task_io.generate_response_signature(
                         all_model_annotation_data,
@@ -192,7 +191,7 @@ class ExampleModel(BaseModel):
                         "Signature does not match (received %s, expected to be"
                         + " %s or %s)"
                         % (
-                            all_model_annotation_data["signed"],
+                            model_signature,
                             task_io.generate_response_signature(
                                 all_model_annotation_data,
                                 all_model_annotation_data,
@@ -210,7 +209,7 @@ class ExampleModel(BaseModel):
                     logger.info(
                         "Signature matches (received %s, expected to be %s or %s)"
                         % (
-                            all_model_annotation_data["signed"],
+                            model_signature,
                             task_io.generate_response_signature(
                                 all_model_annotation_data,
                                 all_model_annotation_data,
