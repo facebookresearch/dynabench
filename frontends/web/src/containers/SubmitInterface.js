@@ -120,7 +120,7 @@ class SubmitInterface extends React.Component {
           console.log(error);
           setFieldError(
             "accept",
-            "Dataset cound not be added (" + error.error + ")"
+            "Predictions could not be added (" + error.error + ")"
           );
           setSubmitting(false);
         }
