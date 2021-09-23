@@ -159,6 +159,7 @@ const TaskProposalForm = (props) => {
             <Button
               variant="primary"
               onClick={() => setShowCreateModal(!showCreateModal)}
+              style={{margin-bottom: 10px}}
             >
               <i className="fas fa-edit"></i> Propose new task
             </Button>
