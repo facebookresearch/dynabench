@@ -511,30 +511,28 @@ export default class ApiService {
     rid,
     uid,
     cid,
-    hypothesis,
-    target,
-    response,
+    input,
+    output,
+    modelSignature,
     metadata,
+    modelWrong,
     tag = null,
-    dynalab_model = false,
-    dynalab_model_input_data = null,
-    dynalab_model_endpoint_name = null
+    modelEndpointName = null
   ) {
     return this.fetch(`${this.domain}/examples`, {
       method: "POST",
       body: JSON.stringify({
-        hypothesis: hypothesis,
         tid: tid,
         rid: rid,
         cid: cid,
         uid: uid,
-        target: target,
-        response: response,
+        input: input,
+        output: output,
+        model_signature: modelSignature,
         metadata: metadata,
+        model_wrong: modelWrong,
         tag: tag,
-        dynalab_model: dynalab_model,
-        dynalab_model_input_data: JSON.stringify(dynalab_model_input_data),
-        dynalab_model_endpoint_name: dynalab_model_endpoint_name,
+        model_endpoint_name: modelEndpointName,
       }),
     });
   }

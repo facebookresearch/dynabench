@@ -34,7 +34,7 @@ class ContextInfo extends React.Component {
     super(props);
   }
   render() {
-    return this.props.taskType == "extract" ? (
+    return (
       <>
         <TokenAnnotator
           id="tokenAnnotator"
@@ -54,18 +54,7 @@ class ContextInfo extends React.Component {
           </small>
         </p>
       </>
-    ) : (
-      <>
-        <div className="context">{this.props.text}</div>
-        <p>
-          <small>
-            <strong>Your goal:</strong> enter a{" "}
-            <strong>{this.props.targets[this.props.curTarget]}</strong>{" "}
-            statement that fools the model.
-          </small>
-        </p>
-      </>
-    );
+    )
   }
 }
 
@@ -81,12 +70,13 @@ class CreateInterface extends React.Component {
     this.state = {
       answer: [],
       taskId: props.taskConfig.task_id,
+      // extraLogging: props.taskConfig.extra_logging,
       task: {},
       context: null,
-      target: 0,
+      answerText: null,
       modelPredIdx: null,
       modelPredStr: "",
-      hypothesis: "",
+      question: "",
       content: [],
       generatedAnswer: null,
       submitDisabled: true,
@@ -124,11 +114,9 @@ class CreateInterface extends React.Component {
         this.api
           .getRandomContext(this.state.taskId, this.state.task.cur_round)
           .then((result) => {
-            var randomTarget = Math.floor(
-              Math.random() * this.state.task.targets.length
-            );
+            result.context = JSON.parse(result.context_json).context;
             this.setState({
-              target: randomTarget,
+              answerText: null,
               context: result,
               content: [{ cls: "context", text: result.context }],
               submitDisabled: false,
@@ -154,6 +142,55 @@ class CreateInterface extends React.Component {
       }
     );
   }
+
+  getTagList(props) {
+    if (props.taskConfig && props.taskConfig.fetching_tags) {
+      return props.taskConfig.fetching_tags.split(",");
+    } else {
+      return [];
+    }
+  }
+
+  getLoggingTags(context, props) {
+    let input_context_tags = this.getTagList(props);
+    const extra_input_logging = props.taskConfig.extra_logging;
+    if (extra_input_logging === null || extra_input_logging.length === 0) {
+      return { input_context_tags: input_context_tags };
+    }
+
+    let extra_logging_list = extra_input_logging.split(";");
+    const extra_logging = {};
+    extra_logging_list.forEach((entry) => {
+      if (entry === null || entry.length === 0) {
+        return;
+      }
+      let key_values = entry.split(":");
+      if (key_values.length < 2) {
+        return;
+      }
+      let values = key_values[1].split(",");
+      values = values.filter((value) => value.length > 0);
+      extra_logging[key_values[0]] = values;
+    });
+    return {
+      // current_context_tag: context.tag,
+      current_context_tag: "",
+      input_context_tags: input_context_tags,
+      input_extra_info: extra_logging,
+    };
+  }
+
+  getUserInputTag(extra) {
+    let input_info = extra.input_extra_info;
+    let tagToStoreWithExamples = input_info
+      ? input_info.tag_to_store_with_examples
+      : [];
+    if (tagToStoreWithExamples.length > 0) {
+      return tagToStoreWithExamples[0];
+    }
+    return null;
+  }
+
   retractExample(e) {
     e.preventDefault();
     var idx = e.target.getAttribute("data-index");
@@ -179,8 +216,7 @@ class CreateInterface extends React.Component {
   handleModelResponse(e) {
     e.preventDefault();
 
-    // MAXEDIT: to remove
-    console.log(this.state.exampleHistory);
+    // console.log(this.state.exampleHistory);
 
     if (
       this.experiment_mode["generator"] !== "none" &&
@@ -201,22 +237,21 @@ class CreateInterface extends React.Component {
         submitDisabled: true,
         generateDisabled: true,
         refreshDisabled: true,
-        hypothesisNotDetected: false,
+        questionNotDetected: false,
         answerNotSelected: false,
       },
       function () {
-        if (this.state.hypothesis.length == 0) {
+        if (this.state.question.length == 0) {
           this.setState({
             progressSubmitting: false,
             submitDisabled: false,
             generateDisabled: false,
             refreshDisabled: false,
-            hypothesisNotDetected: true,
+            questionNotDetected: true,
           });
           return;
         }
         if (
-          this.state.task.type == "extract" &&
           this.state.answer.length == 0 &&
           !this.state.generatedAnswer
         ) {
@@ -229,53 +264,41 @@ class CreateInterface extends React.Component {
           });
           return;
         }
-        if (this.state.task.type == "extract") {
-          if (this.state.generatedAnswer) {
-            var answer_text = this.state.generatedAnswer.ans;
-          } else {
-            var answer_text = "";
-            if (this.state.answer.length > 0) {
-              var last_answer = this.state.answer[this.state.answer.length - 1];
-              var answer_text = last_answer.tokens.join("").trim(); // NOTE: no spaces required as tokenising by word boundaries
-              // Update the target with the answer text since this is defined by the annotator in QA (unlike NLI)
-              this.setState({
-                target: answer_text,
-              });
-            }
-          }
+        
+        if (this.state.generatedAnswer) {
+          var answer_text = this.state.generatedAnswer.ans;
         } else {
-          var answer_text = null;
+          var answer_text = "";
+          if (this.state.answer.length > 0) {
+            var last_answer = this.state.answer[this.state.answer.length - 1];
+            var answer_text = last_answer.tokens.join("").trim(); // NOTE: no spaces required as tokenising by word boundaries
+            this.setState({
+              answerText: answer_text,
+            });
+          }
         }
         let modelInputs = {
           context: this.state.context.context,
-          hypothesis: this.state.hypothesis,
-          question: this.state.hypothesis,
+          hypothesis: this.state.question,
+          question: this.state.question,
           answer: answer_text,
           insight: false,
         };
-        console.log("model_inputs: ");
-        console.log(modelInputs);
+        // console.log("Model_inputs: ");
+        // console.log(modelInputs);
         // this.model_url was this.state.task.round.url
         this.api
           .getModelResponse(this.model_url, modelInputs)
           .then((result) => {
-            if (this.state.task.type != "extract") {
-              var modelPredIdx = result.prob.indexOf(Math.max(...result.prob));
-              var modelPredStr = this.state.task.targets[modelPredIdx];
-              var modelFooled =
-                result.prob.indexOf(Math.max(...result.prob)) !==
-                this.state.target;
-            } else {
-              var modelPredIdx = null;
-              var modelPredStr = result.answer;
-              var modelFooled = result.eval_f1 <= 0.4;
-              var exactMatch = result.eval_exact >= 1;
-              // TODO: Handle this more elegantly:
-              result.prob = [result.conf, 1 - result.conf];
-              this.state.task.targets = ["confidence", "uncertainty"];
-            }
-            console.log("Got result from model:");
-            console.log(result);
+            var modelPredIdx = null;
+            var modelPredStr = result.answer;
+            var modelFooled = result.eval_f1 <= 0.4;
+            var exactMatch = result.eval_exact >= 1;
+            // TODO: Handle this more elegantly:
+            result.prob = [result.conf, 1 - result.conf];
+
+            // console.log("Got result from model: ");
+            // console.log(result);
             this.setState(
               {
                 progressSubmitting: false,
@@ -288,7 +311,7 @@ class CreateInterface extends React.Component {
                     modelPredIdx: modelPredIdx,
                     modelPredStr: modelPredStr,
                     fooled: modelFooled,
-                    text: this.state.hypothesis,
+                    text: this.state.question,
                     retracted: false,
                     exactMatch: exactMatch,
                     validated: null,
@@ -297,12 +320,9 @@ class CreateInterface extends React.Component {
                 ],
               },
               function () {
-                console.log("Setting state");
                 if (
-                  this.experiment_mode["adversary"] !== "none" &&
-                  exactMatch
+                  this.experiment_mode["adversary"] !== "none" && exactMatch
                 ) {
-                  console.log("Storing example");
                   this.storeExample();
                 } else {
                   this.setState({
@@ -326,14 +346,15 @@ class CreateInterface extends React.Component {
         submitDisabled: true,
         generateDisabled: true,
         refreshDisabled: true,
-        hypothesisNotDetected: false,
+        questionNotDetected: false,
         answerNotSelected: false,
       },
       function () {
         let last_example = this.state.content[this.state.content.length - 1];
-        const old_model_version_response = {
+        const model_output = {
           id: last_example.response.id,
           text: last_example.response.answer,
+          answer: last_example.response.answer,
           prob: last_example.response.conf,
           model_is_correct: !last_example.fooled,
           eval_f1: last_example.response.eval_f1,
@@ -358,30 +379,34 @@ class CreateInterface extends React.Component {
           current_tries: this.state.tries,
           modelInputs: last_example.modelInputs,
           fullresponse: JSON.stringify(last_example.response),
-          validated_by_annotator: last_example.validated,
+          annotatorValidation: last_example.validated,
+          requiresValidation: last_example.response.eval_f1 < 0.6 || last_example.validated == "valid",  // i.e. modelWrong
           exampleHistory: JSON.stringify(this.state.exampleHistory),
         };
-        // console.log("metadata:");
-        // console.log(metadata);
-        // console.log("response:");
-        // console.log(old_model_version_response)
+        let extra = this.getLoggingTags(this.state.context, this.props);
+        let tag = this.getUserInputTag(extra);
+
+        console.log("for validation?: " + metadata.requiresValidation.toString());
         this.api
           .storeExample(
             this.state.task.id,
             this.state.task.cur_round,
             "turk",
             this.state.context.id,
-            this.state.hypothesis,
-            this.state.target,
-            old_model_version_response,
-            metadata
+            {answer: last_example.modelInputs.answer, question: last_example.modelInputs.question},
+            model_output,
+            model_output.signed,
+            metadata,
+            metadata.requiresValidation,
+            tag,
+            this.model_url.replace("https://obws766r82.execute-api.us-west-1.amazonaws.com/predict?model=", "")
           )
           .then((result) => {
             var key = this.state.content.length - 1;
             this.state.tries += 1;
             this.setState(
               {
-                hypothesis: "",
+                question: "",
                 generatedAnswer: null,
                 progressSubmitting: false,
                 submitDisabled: false,
@@ -422,12 +447,11 @@ class CreateInterface extends React.Component {
         submitDisabled: true,
         generateDisabled: true,
         refreshDisabled: true,
-        hypothesisNotDetected: false,
+        questionNotDetected: false,
         answerNotSelected: false,
       },
       function () {
         if (
-          this.state.task.type == "extract" &&
           this.experiment_mode["answerSelect"] === "none" &&
           this.state.answer.length == 0
         ) {
@@ -441,16 +465,14 @@ class CreateInterface extends React.Component {
           return;
         }
         if (
-          this.state.task.type == "extract" &&
           this.experiment_mode["answerSelect"] === "none"
         ) {
           var answer_text = "";
           if (this.state.answer.length > 0) {
             var last_answer = this.state.answer[this.state.answer.length - 1];
             var answer_text = last_answer.tokens.join("").trim(); // NOTE: no spaces required as tokenising by word boundaries
-            // Update the target with the answer text since this is defined by the annotator in QA (unlike NLI)
             this.setState({
-              target: answer_text,
+              answerText: answer_text,
             });
           }
         } else {
@@ -475,14 +497,14 @@ class CreateInterface extends React.Component {
         let modelInputs = {
           context: curContext,
           answer: answer_text,
-          hypothesis: question_cache_id,
+          question: question_cache_id,
           question: question_cache_id,
           statement: this.experiment_mode["filterMode"],
           insight: "3|0.4|0.4", // generate 3 questions per request
         };
 
-        console.log("model inputs:");
-        console.log(modelInputs);
+        // console.log("model inputs:");
+        // console.log(modelInputs);
 
         this.api
           .getModelResponse(this.generator_url, modelInputs)
@@ -526,7 +548,7 @@ class CreateInterface extends React.Component {
                     delete merged["context"];
                   }
                   outerContext.setState({
-                    hypothesis: question,
+                    question: question,
                     progressGenerating: false,
                     submitDisabled: false,
                     generateDisabled: false,
@@ -582,13 +604,13 @@ class CreateInterface extends React.Component {
                 this.setState({
                   answer: answerObj,
                   generatedAnswer: questionMetadata,
-                  target: answer_text,
+                  answerText: answer_text,
                   answerNotSelected: false,
                 });
               }
 
               this.setState({
-                hypothesis: question,
+                question: question,
                 progressGenerating: false,
                 submitDisabled: false,
                 generateDisabled: false,
@@ -609,8 +631,8 @@ class CreateInterface extends React.Component {
               });
             }
 
-            console.log("example history:");
-            console.log(this.state.exampleHistory);
+            // console.log("Example history:");
+            // console.log(this.state.exampleHistory);
           })
           .catch((error) => {
             console.log(error);
@@ -620,8 +642,7 @@ class CreateInterface extends React.Component {
   }
 
   handleVerifyResponse(item_index, action) {
-    console.log("Verifying Response");
-    console.log(action);
+    console.log("Verifying Response: " + action);
 
     const newContent = this.state.content.slice();
     newContent[item_index].validated = action;
@@ -634,7 +655,7 @@ class CreateInterface extends React.Component {
 
   handleResponseChange(e) {
     this.setState({
-      hypothesis: e.target.value,
+      question: e.target.value,
       exampleHistory: [
         ...this.state.exampleHistory,
         {
@@ -664,7 +685,6 @@ class CreateInterface extends React.Component {
     this.api
       .getTask(this.state.taskId)
       .then((result) => {
-        result.targets = result.targets.split("|"); // split targets
         this.setState({ task: result }, function () {
           this.getNewContext();
         });
@@ -706,9 +726,6 @@ class CreateInterface extends React.Component {
           key={index}
           index={item.index}
           text={item.text}
-          targets={this.state.task.targets}
-          curTarget={this.state.target}
-          taskType={this.state.task.type}
           answer={this.state.answer}
           updateAnswer={this.updateAnswer}
         />
@@ -999,7 +1016,7 @@ class CreateInterface extends React.Component {
     }
 
     var errorMessage = "";
-    if (this.state.hypothesisNotDetected === true) {
+    if (this.state.questionNotDetected === true) {
       var errorMessage = (
         <small style={{ color: "red" }}>* Please enter a question</small>
       );
@@ -1044,12 +1061,8 @@ class CreateInterface extends React.Component {
           <InputGroup className="mt-3">
             <FormControl
               autoFocus
-              placeholder={
-                this.state.task.type == "extract"
-                  ? "Ask a question.."
-                  : "Type your question.."
-              }
-              value={this.state.hypothesis}
+              placeholder="Ask a question.."
+              value={this.state.question}
               onChange={this.handleResponseChange}
               disabled={this.state.taskCompleted}
               required

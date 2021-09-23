@@ -785,7 +785,7 @@ class MaxQATaskMain extends React.Component {
         answerSelect: "none",
       },
       // ==========
-      // 14: validation only (generate answer and question)
+      // 14: validation only (generate answer and question): combined generator
       {
         id: 14,
         adversary: "electra-synqa",
@@ -793,6 +793,49 @@ class MaxQATaskMain extends React.Component {
         filterMode: "",
         answerSelect: "enabled",
       },
+      // 15: validation only: adversarial generator
+      {
+        id: 15,
+        adversary: "electra-synqa",
+        generator: "qgen_dcombined",
+        filterMode: "",
+        answerSelect: "enabled",
+      },
+
+      // 16: validation only: combined generator + adversarial sampler
+      {
+        id: 16,
+        adversary: "electra-synqa",
+        generator: "qgen_dcombined_plus_squad_10k",
+        filterMode: "adversarial",
+        answerSelect: "enabled",
+      },
+      // 17: validation only: adversarial generator + adversarial sampler
+      {
+        id: 17,
+        adversary: "electra-synqa",
+        generator: "qgen_dcombined",
+        filterMode: "adversarial",
+        answerSelect: "enabled",
+      },
+
+      // 18: validation only: combined generator + uncertain sampler
+      {
+        id: 18,
+        adversary: "electra-synqa",
+        generator: "qgen_dcombined_plus_squad_10k",
+        filterMode: "uncertain",
+        answerSelect: "enabled",
+      },
+      // 19: validation only: adversarial generator + uncertain sampler
+      {
+        id: 19,
+        adversary: "electra-synqa",
+        generator: "qgen_dcombined",
+        filterMode: "uncertain",
+        answerSelect: "enabled",
+      },
+
     ];
   }
 
@@ -804,10 +847,10 @@ class MaxQATaskMain extends React.Component {
       .map((x) => x.charCodeAt(0))
       .reduce((a, b) => a + b);
 
-    var num_experiments = this.experiment_modes.length; // 15
+    var num_experiments = this.experiment_modes.length; // 20
     var experiment_mode_id = mephistoIdCode % num_experiments;
     // ======================================================================================
-    var experiment_mode_id = 14; // TODO: DISABLE BEFORE LAUNCH
+    // var experiment_mode_id = 14; // TODO: DISABLE BEFORE LAUNCH
     // ======================================================================================
 
     var experiment_mode = this.experiment_modes[experiment_mode_id];
