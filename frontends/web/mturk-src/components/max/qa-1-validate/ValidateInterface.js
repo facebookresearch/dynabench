@@ -182,6 +182,9 @@ class ValidateInterface extends React.Component {
             },
             (error) => {
               console.log(error);
+              this.setState({
+                processingResponse: false,
+              })
             }
           );
       }
@@ -317,6 +320,7 @@ class ValidateInterface extends React.Component {
                               onClick={() => this.handleResponse("valid")}
                               type="button"
                               className="btn btn-success btn-sm flex-fill mr-2"
+                              disabled={this.state.processingResponse}
                             >
                               <FaThumbsUp /> Valid
                             </button>{" "}
@@ -326,6 +330,7 @@ class ValidateInterface extends React.Component {
                               onClick={() => this.handleResponse("invalid_badquestion")}
                               type="button"
                               className="btn btn-warning btn-sm flex-fill mr-2"
+                              disabled={this.state.processingResponse}
                             >
                               <FaThumbsDown /> Invalid: <br />Bad Question
                             </button>{" "}
@@ -335,6 +340,7 @@ class ValidateInterface extends React.Component {
                               onClick={() => this.handleResponse("invalid_badanswer")}
                               type="button"
                               className="btn btn-warning btn-sm flex-fill mr-2"
+                              disabled={this.state.processingResponse}
                             >
                               <FaThumbsDown /> Invalid: <br />Bad Human Answer
                             </button>{" "}
@@ -345,6 +351,7 @@ class ValidateInterface extends React.Component {
                                 onClick={() => this.handleResponse("invalid_aicorrect")}
                                 type="button"
                                 className="btn btn-warning btn-sm flex-fill mr-2"
+                                disabled={this.state.processingResponse}
                               >
                                 <FaThumbsDown /> Invalid: <br />AI Correct
                               </button>
@@ -355,6 +362,7 @@ class ValidateInterface extends React.Component {
                               onClick={() => this.handleResponse("invalid_multiplevalidanswers")}
                               type="button"
                               className="btn btn-warning btn-sm flex-fill mr-2"
+                              disabled={this.state.processingResponse}
                             >
                               <FaThumbsDown /> Invalid: <br />Multiple Valid Answers
                             </button>{" "}
@@ -364,6 +372,7 @@ class ValidateInterface extends React.Component {
                               onClick={() => this.handleResponse("invalid_other")}
                               type="button"
                               className="btn btn-warning btn-sm flex-fill mr-2"
+                              disabled={this.state.processingResponse}
                             >
                               <FaThumbsDown /> Invalid: <br />Other
                             </button>{" "}
@@ -373,6 +382,7 @@ class ValidateInterface extends React.Component {
                               onClick={() => this.handleResponse("flagged")}
                               type="button"
                               className="btn btn-danger btn-sm flex-fill mr-2"
+                              disabled={this.state.processingResponse}
                             >
                               <FaFlag /> Flag
                             </button>{" "}
