@@ -80,7 +80,7 @@ const ModelSubPage = (props) => {
                       onClick={() => history.push(`/models/${model.id}`)}
                     >
                       <td className="blue-color">{model.name || "Unknown"}</td>
-                      <td>{model.task_code}</td>
+                      <td>{model.task.task_code}</td>
                       {isSelfModelsTable && (
                         <td className="text-center" width="200px">
                           {model.is_published === true ? (
