@@ -75,325 +75,17 @@ Data collection happens for the currently active round. Throughout the data coll
 
 ## Annotation configs
 
-The input/output format for a task, both in terms of what the model expects and how the annotator frontend behaves, are configured in the annotation config under the Advanced tab in the task owners interface. Here are examples of annotator configs for NLI, QA, Sentiment Analysis, Hate Speech Detection, and Machine Translation, followed by an explanation for each of the fields in the annotation config:
+The input/output format for a task, both in terms of what the model expects and how the annotator frontend behaves, are configured in the annotation config under the Advanced tab in the task owners interface. Here are examples of annotator configs for NLI, QA, Sentiment Analysis, Hate Speech Detection, and Machine Translation, followed by an explanation for each of the fields in the example annotation configs:
 
-1. NLI:
+* [NLI](https://github.com/facebookresearch/dynabench/blob/main/docs/examples/nli_annotation_config.json)
 
-```
- {
-                "model_wrong_metric": {"type": "exact_match", "constructor_args":
-                    {"reference_names": ["label"]}},
-                "aggregation_metric": {"type": "dynascore", "constructor_args": {}},
-                "perf_metric": {"type": "accuracy", "constructor_args":
-                    {"reference_name": "label"}},
-                "delta_metrics": [{"type": "fairness", "constructor_args": {}},
-                    {"type": "robustness", "constructor_args": {}}],
-                "context": [{"name": "context", "type": "string",
-                    "constructor_args": {"placeholder": "Enter context..."}}],
-                "input": [{"name": "hypothesis", "type": "string",
-                    "constructor_args": {"placeholder": "Enter hypothesis..."}},
-                    {"name": "label", "type": "target_label",
-                    "constructor_args": {
-                        "labels": ["entailed", "neutral", "contradictory"]}}],
-                "output": [
-                    {"name": "label", "type": "target_label",
-                        "constructor_args": {
-                            "labels": ["entailed", "neutral", "contradictory"]}},
-                    {"name": "prob", "type": "multiclass_probs",
-                        "constructor_args": {"reference_name": "label"}}
-                ],
-                "metadata": {
-                "create":
-                [
-                    {"name": "example_explanation", "type": "string",
-                        "constructor_args":
-                            {"placeholder": "Explain why your example is correct..."},
-                        "display_name": "example explanation"},
-                    {"name": "model_explanation_right", "type": "string",
-                        "constructor_args": {"placeholder":
-                        "Explain why you thought the model would make a mistake..."},
-                        "model_wrong_condition": false,
-                        "display_name": "model explanation"},
-                    {"name": "model_explanation_wrong", "type": "string",
-                        "constructor_args": {"placeholder":
-                            "Explain why you think the model made a mistake..."},
-                            "model_wrong_condition": true,
-                            "display_name": "model explanation"}
-                ],
-                "validate":
-                [
-                    {"name": "corrected_label",
-                        "type": "multiclass",
-                        "constructor_args": {
-                            "labels": ["entailed", "neutral", "contradictory"],
-                            "placeholder": "Enter corrected label"
-                            },
-                        "validated_label_condition": "incorrect"},
-                    {"name": "target_explanation", "type": "string",
-                        "constructor_args":
-                            {"placeholder":
-                                "Explain why your proposed target is correct..."},
-                        "validated_label_condition": "incorrect"},
-                    {"name": "flag_reason", "type": "string",
-                        "constructor_args":
-                            {"placeholder": "Enter the reason for flagging..."},
-                        "validated_label_condition": "flagged"},
-                    {"name": "validator_example_explanation", "type": "string",
-                        "constructor_args":
-                            {"placeholder": "Explain why the example is correct..."},
-                        "validated_label_condition": "correct"},
-                    {"name": "validator_model_explanation", "type": "string",
-                        "constructor_args": {"placeholder":
-                        "Enter what you think was done to try to trick the model..."}}
-                ]
-                }
-            }
-```
+* [QA](https://github.com/facebookresearch/dynabench/blob/main/docs/examples/qa_annotation_config.json)
 
-2. QA
+* [Sentiment Analysis](https://github.com/facebookresearch/dynabench/blob/main/docs/examples/sentiment_annotation_config.json)
 
-```
-            {
-                "model_wrong_metric": {"type": "string_f1", "constructor_args":
-                    {"reference_name": "answer", "threshold": 0.9}},
-                "aggregation_metric": {"type": "dynascore", "constructor_args": {}},
-                "perf_metric": {"type": "squad_f1", "constructor_args":
-                    {"reference_name": "answer"}},
-                "delta_metrics": [{"type": "fairness", "constructor_args": {}},
-                    {"type": "robustness", "constructor_args": {}}],
-                "goal_message":
-"enter a question and select an answer in the context, such that the model is fooled.",
-                "context": [{"name": "context", "type": "string",
-                    "constructor_args": {"placeholder": "Enter context..."}}],
-                "input": [{"name": "question", "type": "string",
-                    "constructor_args": {"placeholder": "Enter question..."}},
-                    {"name": "answer", "type": "context_string_selection",
-                    "constructor_args": {
-                        "reference_name": "context"}}],
-                "output": [
-                    {"name": "answer", "type": "context_string_selection",
-                        "constructor_args": {
-                            "reference_name": "context"}},
-                    {"name": "conf", "type": "conf",
-                        "constructor_args": {}}
-                ],
-                "metadata": {
-                "create":
-                [
-                    {"name": "example_explanation", "type": "string",
-                        "constructor_args":
-                            {"placeholder": "Explain why your example is correct..."},
-                        "display_name": "example explanation"},
-                    {"name": "model_explanation_right", "type": "string",
-                        "constructor_args": {"placeholder":
-                        "Explain why you thought the model would make a mistake..."},
-                        "model_wrong_condition": false,
-                        "display_name": "model explanation"},
-                    {"name": "model_explanation_wrong", "type": "string",
-                        "constructor_args": {"placeholder":
-                            "Explain why you think the model made a mistake..."},
-                            "model_wrong_condition": true,
-                            "display_name": "model explanation"}
-                ],
-                "validate":
-                [
-                    {"name": "corrected_answer",
-                        "type": "context_string_selection",
-                        "constructor_args": {"reference_name": "context"},
-                        "validated_label_condition": "incorrect"},
-                    {"name": "target_explanation", "type": "string",
-                        "constructor_args":
-                            {"placeholder":
-                                "Explain why your proposed target is correct..."},
-                        "validated_label_condition": "incorrect"},
-                    {"name": "flag_reason", "type": "string",
-                        "constructor_args":
-                            {"placeholder": "Enter the reason for flagging..."},
-                        "validated_label_condition": "flagged"},
-                    {"name": "validator_example_explanation", "type": "string",
-                        "constructor_args":
-                            {"placeholder": "Explain why the example is correct..."},
-                        "validated_label_condition": "correct"},
-                    {"name": "validator_model_explanation", "type": "string",
-                        "constructor_args": {"placeholder":
-                        "Enter what you think was done to try to trick the model..."}}
-                ]
-                }
-            }
-```
+* [Hate Speech Detection](https://github.com/facebookresearch/dynabench/blob/main/docs/examples/hs_annotation_config.json)
 
-3. Sentiment Analysis
-
-```
-{
-                "model_wrong_metric": {"type": "exact_match", "constructor_args":
-                    {"reference_names": ["label"]}},
-                "aggregation_metric": {"type": "dynascore", "constructor_args": {}},
-                "perf_metric": {"type": "macro_f1", "constructor_args":
-                    {"reference_name": "label"}},
-                "delta_metrics": [{"type": "fairness", "constructor_args": {}},
-                    {"type": "robustness", "constructor_args": {}}],
-                "context": [{"name": "context", "type": "string",
-                    "constructor_args": {"placeholder": "Enter context..."}}],
-                "input": [{"name": "statement", "type": "string",
-                    "constructor_args": {"placeholder": "Enter statement..."}},
-                    {"name": "label", "type": "target_label",
-                    "constructor_args": {
-                        "labels": ["negative", "positive", "neutral"]}}],
-                "output": [
-                    {"name": "label", "type": "target_label",
-                        "constructor_args": {
-                            "labels": ["negative", "positive", "neutral"]}},
-                    {"name": "prob", "type": "multiclass_probs",
-                        "constructor_args": {"reference_name": "label"}}
-                ],
-                "metadata": {
-                "create":
-                [
-                    {"name": "example_explanation", "type": "string",
-                        "constructor_args":
-                            {"placeholder": "Explain why your example is correct..."},
-                        "display_name": "example explanation"},
-                    {"name": "model_explanation_right", "type": "string",
-                        "constructor_args": {"placeholder":
-                        "Explain why you thought the model would make a mistake..."},
-                        "model_wrong_condition": false,
-                        "display_name": "model explanation"},
-                    {"name": "model_explanation_wrong", "type": "string",
-                        "constructor_args": {"placeholder":
-                            "Explain why you think the model made a mistake..."},
-                            "model_wrong_condition": true,
-                            "display_name": "model explanation"}
-                ],
-                "validate":
-                [
-                    {"name": "corrected_label",
-                        "type": "multiclass",
-                        "constructor_args": {
-                            "labels": ["negative", "positive", "entailed"],
-                            "placeholder": "Enter corrected label"
-                            },
-                        "validated_label_condition": "incorrect"},
-                    {"name": "target_explanation", "type": "string",
-                        "constructor_args":
-                            {"placeholder":
-                                "Explain why your proposed target is correct..."},
-                        "validated_label_condition": "incorrect"},
-                    {"name": "flag_reason", "type": "string",
-                        "constructor_args":
-                            {"placeholder": "Enter the reason for flagging..."},
-                        "validated_label_condition": "flagged"},
-                    {"name": "validator_example_explanation", "type": "string",
-                        "constructor_args":
-                            {"placeholder": "Explain why the example is correct..."},
-                        "validated_label_condition": "correct"},
-                    {"name": "validator_model_explanation", "type": "string",
-                        "constructor_args": {"placeholder":
-                        "Enter what you think was done to try to trick the model..."}}
-                ]
-                }
-            }
-```
-
-4. Hate Speech Detection
-
-```
-            {
-                "model_wrong_metric": {"type": "exact_match", "constructor_args":
-                    {"reference_names": ["label"]}},
-                "aggregation_metric": {"type": "dynascore", "constructor_args": {}},
-                "perf_metric": {"type": "macro_f1", "constructor_args":
-                    {"reference_name": "label"}},
-                "delta_metrics": [{"type": "fairness", "constructor_args": {}},
-                    {"type": "robustness", "constructor_args": {}}],
-                "content_warning":
-        "This is sensitive content! If you do not want to see any hateful examples, please switch to another task.", 
-                "context": [{"name": "context", "type": "string",
-                    "constructor_args": {"placeholder": "Enter context..."}}],
-                "input": [{"name": "statement", "type": "string",
-                    "constructor_args": {"placeholder": "Enter statement..."}},
-                    {"name": "label", "type": "target_label",
-                    "constructor_args": {
-                        "labels": ["not-hateful", "hateful"]}}],
-                "output": [
-                    {"name": "label", "type": "target_label",
-                        "constructor_args": {
-                            "labels": ["not-hateful", "hateful"]}},
-                    {"name": "prob", "type": "multiclass_probs",
-                        "constructor_args": {"reference_name": "label"}}
-                ],
-                "metadata": {
-                "create":
-                [
-                    {"name": "example_explanation", "type": "string",
-                        "constructor_args":
-                            {"placeholder": "Explain why your example is correct..."},
-                        "display_name": "example explanation"},
-                    {"name": "model_explanation_right", "type": "string",
-                        "constructor_args": {"placeholder":
-                        "Explain why you thought the model would make a mistake..."},
-                        "model_wrong_condition": false,
-                        "display_name": "model explanation"},
-                    {"name": "model_explanation_wrong", "type": "string",
-                        "constructor_args": {"placeholder":
-                            "Explain why you think the model made a mistake..."},
-                            "model_wrong_condition": true,
-                            "display_name": "model explanation"}
-                ],
-                "validate":
-                [
-                    {"name": "corrected_label",
-                        "type": "multiclass",
-                        "constructor_args": {
-                            "labels": ["not-hateful", "hateful"],
-                            "placeholder": "Enter corrected label"
-                            },
-                        "validated_label_condition": "incorrect"},
-                    {"name": "target_explanation", "type": "string",
-                        "constructor_args":
-                            {"placeholder":
-                                "Explain why your proposed target is correct..."},
-                        "validated_label_condition": "incorrect"},
-                    {"name": "flag_reason", "type": "string",
-                        "constructor_args":
-                            {"placeholder": "Enter the reason for flagging..."},
-                        "validated_label_condition": "flagged"},
-                    {"name": "validator_example_explanation", "type": "string",
-                        "constructor_args":
-                            {"placeholder": "Explain why the example is correct..."},
-                        "validated_label_condition": "correct"},
-                    {"name": "validator_model_explanation", "type": "string",
-                        "constructor_args": {"placeholder":
-                        "Enter what you think was done to try to trick the model..."}}
-                ]
-                }
-            }
-```
-
-5. Machine Translation
-
-```
- {
-                "model_wrong_metric": {"type": "ask_user", "constructor_args": {}},
-                "aggregation_metric": {"type": "dynascore", "constructor_args": {}},
-                "perf_metric": {"type": "sp_bleu", "constructor_args":
-                    {"reference_name": "targetText"}},
-                "delta_metrics": [],
-                "context": [
-                    {"name": "sourceLanguage", "type": "string",
-                    "constructor_args": {"placeholder": "Enter source language..."}},
-                    {"name": "targetLanguage", "type": "string",
-                    "constructor_args": {"placeholder": "Enter target language..."}}],
-                "input": [{"name": "sourceText", "type": "string",
-                    "constructor_args": {"placeholder": "Enter source text..."}},
-                    {"name": "targetText", "type": "string",
-                        "constructor_args": {"placeholder": "Enter target text"}}],
-                "output": [
-                    {"name": "targetText", "type": "string",
-                        "constructor_args": {"placeholder": "Enter target text"}}],
-                "metadata": {"create": [], "validate": []}
-            }
-```
+* [Machine Translation](https://github.com/facebookresearch/dynabench/blob/main/docs/examples/flores_annotation_config.json)
 
 The annotation config can have the following fields:
 
@@ -403,11 +95,11 @@ The annotation config can have the following fields:
 
 3. `model_wrong_metric`: This defines whether a person fooled a model. There are three options to choose from: `exact_match`, `string_f1`, and `ask_user`:
 
-3.1. `exact_match` requires `reference_names` as a constructor arg, which is a list of names of the model outputs that you want to compare with the annotator inputs.
+  1. `exact_match` requires `reference_names` as a constructor arg, which is a list of names of the model outputs that you want to compare with the annotator inputs.
 
-3.2. `string_f1` requires `reference_name` as a constructor arg, which is a name of the model output that you want to compare with the annotator input. The `threshold` is  a number between 0 and 1 and is also a required constructor arg.
+  2. `string_f1` requires `reference_name` as a constructor arg, which is a name of the model output that you want to compare with the annotator input. The `threshold` is  a number between 0 and 1 and is also a required constructor arg.
 
-3.3. `ask_user` does not require any constructor args; it tells the create interface to ask the annotator whether the model was fooled or not.
+  3. `ask_user` does not require any constructor args; it tells the create interface to ask the annotator whether the model was fooled or not.
 
 4. `aggregation_metric`: This is a string that defines how the leaderboard ranks models. There is only one aggregation metric to choose: `dynascore`.
 
@@ -427,17 +119,17 @@ Example in the dataset: `{“question”: “What color is the sky?”, “answe
 
 9. Objects that compose the I/O for a task: In 7 and 8, we explained where to enter objects that compose the I/O for a task. We call them “annotation objects” Here are the options that you can select from:
 
-9.1 `string`: Data for this type is stored as a string. `placeholder` is a required constructor arg.
+  1. `string`: Data for this type is stored as a string. `placeholder` is a required constructor arg.
 
-9.2: `context_string_selection`: Data for this type is stored as a string; it must be a substring of another annotation object in `context`. `reference_name` designates the name of a string-type object in the context to select from, and it is a required constructor arg.
+  2. `context_string_selection`: Data for this type is stored as a string; it must be a substring of another annotation object in `context`. `reference_name` designates the name of a string-type object in the context to select from, and it is a required constructor arg.
 
-9.3: `target_label`: Data for this type is stored as a string; it must be from a set of owner-defined labels. `labels` is a list of strings that defines the set of available labels, and it is a required constructor arg.
+  3. `target_label`: Data for this type is stored as a string; it must be from a set of owner-defined labels. `labels` is a list of strings that defines the set of available labels, and it is a required constructor arg.
 
-9.4: `multiclass`: Data for this type is stored as a string; it must be from a set of owner-defined labels. The only difference between this type and the `target_label` type is how it is displayed to annotators on the frontend. `target_label` is displayed as a goal message with an embedded dropdown component ([see an example](https://dynabench.org/tasks/nli/create)), and `multiclass` is displayed as a basic multiple choice dropdown component. `labels` is a list of strings that defines the set of available labels, and it is a required constructor arg.
+  4. `multiclass`: Data for this type is stored as a string; it must be from a set of owner-defined labels. The only difference between this type and the `target_label` type is how it is displayed to annotators on the frontend. `target_label` is displayed as a goal message with an embedded dropdown component ([see an example](https://dynabench.org/tasks/nli/create)), and `multiclass` is displayed as a basic multiple choice dropdown component. `labels` is a list of strings that defines the set of available labels, and it is a required constructor arg.
 
-9.5: `multiclass_probs`: Data for this type is stored as a dictionary, where a key is a label name and a value is a float. Values should sum to 1. `reference_name` designates the name of a `multiclass` or `target_label` object to get the labels from, and it is a required constructor arg. This annotation object cannot be used in the `input`.
+  5. `multiclass_probs`: Data for this type is stored as a dictionary, where a key is a label name and a value is a float. Values should sum to 1. `reference_name` designates the name of a `multiclass` or `target_label` object to get the labels from, and it is a required constructor arg. This annotation object cannot be used in the `input`.
 
-9.6: `conf`: Data for this type is stored as a float between 0 and 1. It typically represents the confidence of a model about its answer. This annotation object cannot be used in the `input`. 
+  6. `conf`: Data for this type is stored as a float between 0 and 1. It typically represents the confidence of a model about its answer. This annotation object cannot be used in the `input`.
 
 ## Frequently Asked Questions
 

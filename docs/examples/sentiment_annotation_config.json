@@ -1,0 +1,68 @@
+{
+                "model_wrong_metric": {"type": "exact_match", "constructor_args":
+                    {"reference_names": ["label"]}},
+                "aggregation_metric": {"type": "dynascore", "constructor_args": {}},
+                "perf_metric": {"type": "macro_f1", "constructor_args":
+                    {"reference_name": "label"}},
+                "delta_metrics": [{"type": "fairness", "constructor_args": {}},
+                    {"type": "robustness", "constructor_args": {}}],
+                "context": [{"name": "context", "type": "string",
+                    "constructor_args": {"placeholder": "Enter context..."}}],
+                "input": [{"name": "statement", "type": "string",
+                    "constructor_args": {"placeholder": "Enter statement..."}},
+                    {"name": "label", "type": "target_label",
+                    "constructor_args": {
+                        "labels": ["negative", "positive", "neutral"]}}],
+                "output": [
+                    {"name": "label", "type": "target_label",
+                        "constructor_args": {
+                            "labels": ["negative", "positive", "neutral"]}},
+                    {"name": "prob", "type": "multiclass_probs",
+                        "constructor_args": {"reference_name": "label"}}
+                ],
+                "metadata": {
+                "create":
+                [
+                    {"name": "example_explanation", "type": "string",
+                        "constructor_args":
+                            {"placeholder": "Explain why your example is correct..."},
+                        "display_name": "example explanation"},
+                    {"name": "model_explanation_right", "type": "string",
+                        "constructor_args": {"placeholder":
+                        "Explain why you thought the model would make a mistake..."},
+                        "model_wrong_condition": false,
+                        "display_name": "model explanation"},
+                    {"name": "model_explanation_wrong", "type": "string",
+                        "constructor_args": {"placeholder":
+                            "Explain why you think the model made a mistake..."},
+                            "model_wrong_condition": true,
+                            "display_name": "model explanation"}
+                ],
+                "validate":
+                [
+                    {"name": "corrected_label",
+                        "type": "multiclass",
+                        "constructor_args": {
+                            "labels": ["negative", "positive", "entailed"],
+                            "placeholder": "Enter corrected label"
+                            },
+                        "validated_label_condition": "incorrect"},
+                    {"name": "target_explanation", "type": "string",
+                        "constructor_args":
+                            {"placeholder":
+                                "Explain why your proposed target is correct..."},
+                        "validated_label_condition": "incorrect"},
+                    {"name": "flag_reason", "type": "string",
+                        "constructor_args":
+                            {"placeholder": "Enter the reason for flagging..."},
+                        "validated_label_condition": "flagged"},
+                    {"name": "validator_example_explanation", "type": "string",
+                        "constructor_args":
+                            {"placeholder": "Explain why the example is correct..."},
+                        "validated_label_condition": "correct"},
+                    {"name": "validator_model_explanation", "type": "string",
+                        "constructor_args": {"placeholder":
+                        "Enter what you think was done to try to trick the model..."}}
+                ]
+                }
+            }
