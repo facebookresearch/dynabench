@@ -428,7 +428,7 @@ class TaskOwnerPage extends React.Component {
           console.log(error);
           setFieldError(
             "accept",
-            "Dataset cound not be added (" + error.error + ")"
+            "Dataset could not be added (" + error.error + ")"
           );
           setSubmitting(false);
         }
