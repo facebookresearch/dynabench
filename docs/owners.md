@@ -105,10 +105,10 @@ We recommend that you look through the examples before reading further. The anno
 
 5. `perf_metric`: This is the metric that is used to evaluate the performance of an uploaded model. There are six to choose from: `macro_f1`, `squad_f1`, `accuracy`, `bleu`, `sp_bleu`, `vqa_accuracy`. They all require `reference_name` as a constructor arg, which specifies which model output to use to compute the score. The score is computed by comparing the model output keyed by `reference_name` with the gold output keyed by `reference_name` in an uploaded dataset. If you are using `squad_f1`, `accuracy`, or `vqa` accuracy, you have the option of uploading datasets with a list of candidates keyed by `reference_name` instead of just one. For example:
 
-```
-Model output for an example: {“answer”: “the sky is blue”}
-Example in the dataset: {“question”: “What color is the sky?”, “answer”: [“the sky is blue”, “the sky is light blue”, “the sky is cerulean”]}
-```
+    ```
+    Model output for an example: {“answer”: “the sky is blue”}
+    Example in the dataset: {“question”: “What color is the sky?”, “answer”: [“the sky is blue”, “the sky is light blue”, “the sky is cerulean”]}
+    ```
 
 6. `delta_metrics`: A delta metric returns the value that the perf metric would return, if it was run on a perturbed version of the dataset. There are two to choose from: `fairness` and `robustness`; neither require any constructor_args. If you select either of these delta_metrics, then any datasets that you upload for your task must be accompanied by the corresponding perturbed versions. We have released the tools that we use for perturbing Hate Speech, Question Answering, Natural Language Inference, and Sentiment Analysis datasets in the `evaluation/scripts` directory.
 
@@ -131,6 +131,22 @@ Example in the dataset: {“question”: “What color is the sky?”, “answer
     * `conf`: Data for this type is stored as a float between 0 and 1. It typically represents the confidence of a model about its answer. This annotation object cannot be used in the `input`.
 
 ## Frequently Asked Questions
+
+### Can I add a new annotation component?
+
+Yes! Submit a PR, and reach out to us if you need help. We've tried to make adding a new annotation component as easy as possible. You need to provide a frontend definition for your custom component [here](https://github.com/facebookresearch/dynabench/blob/main/frontends/web/src/common/Annotation/AnnotationComponent.js) and a syntax-checker for it [here](https://github.com/facebookresearch/dynabench/blob/main/api/models/task.py#L202) (to ensure that the backend rejects improperly formatted data)
+
+### Can I add a new metric?
+
+Yes! Submit a PR, and reach out to us if you need help. You'll need to add your metric [here](https://github.com/facebookresearch/dynabench/tree/main/evaluation/metrics) and make a syntax checker for it's annotation_config_json specs [here](https://github.com/facebookresearch/dynabench/blob/main/api/models/task.py#L127)
+
+### Can I add a new model-wrong-metric?
+
+Yes! Submit a PR, and reach out to us if you need help. You'll need to add your metric [here](https://github.com/facebookresearch/dynabench/blob/main/api/models/task.py#L32) along with a syntax checker for it's annotation_config_json specs.
+
+### Can I add a new aggregation metric?
+
+Yes! But this might take a while. We have not yet modularized aggregation metrics.
 
 ### Why does my task not show up on the front page?
 
