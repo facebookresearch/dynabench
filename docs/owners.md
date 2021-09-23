@@ -95,11 +95,11 @@ The annotation config can have the following fields:
 
 3. `model_wrong_metric`: This defines whether a person fooled a model. There are three options to choose from: `exact_match`, `string_f1`, and `ask_user`:
 
-  1. `exact_match` requires `reference_names` as a constructor arg, which is a list of names of the model outputs that you want to compare with the annotator inputs.
+  * `exact_match` requires `reference_names` as a constructor arg, which is a list of names of the model outputs that you want to compare with the annotator inputs.
 
-  2. `string_f1` requires `reference_name` as a constructor arg, which is a name of the model output that you want to compare with the annotator input. The `threshold` is  a number between 0 and 1 and is also a required constructor arg.
+  * `string_f1` requires `reference_name` as a constructor arg, which is a name of the model output that you want to compare with the annotator input. The `threshold` is  a number between 0 and 1 and is also a required constructor arg.
 
-  3. `ask_user` does not require any constructor args; it tells the create interface to ask the annotator whether the model was fooled or not.
+  * `ask_user` does not require any constructor args; it tells the create interface to ask the annotator whether the model was fooled or not.
 
 4. `aggregation_metric`: This is a string that defines how the leaderboard ranks models. There is only one aggregation metric to choose: `dynascore`.
 
@@ -119,17 +119,17 @@ Example in the dataset: `{“question”: “What color is the sky?”, “answe
 
 9. Objects that compose the I/O for a task: In 7 and 8, we explained where to enter objects that compose the I/O for a task. We call them “annotation objects” Here are the options that you can select from:
 
-  1. `string`: Data for this type is stored as a string. `placeholder` is a required constructor arg.
+  * `string`: Data for this type is stored as a string. `placeholder` is a required constructor arg.
 
-  2. `context_string_selection`: Data for this type is stored as a string; it must be a substring of another annotation object in `context`. `reference_name` designates the name of a string-type object in the context to select from, and it is a required constructor arg.
+  * `context_string_selection`: Data for this type is stored as a string; it must be a substring of another annotation object in `context`. `reference_name` designates the name of a string-type object in the context to select from, and it is a required constructor arg.
 
-  3. `target_label`: Data for this type is stored as a string; it must be from a set of owner-defined labels. `labels` is a list of strings that defines the set of available labels, and it is a required constructor arg.
+  * `target_label`: Data for this type is stored as a string; it must be from a set of owner-defined labels. `labels` is a list of strings that defines the set of available labels, and it is a required constructor arg.
 
-  4. `multiclass`: Data for this type is stored as a string; it must be from a set of owner-defined labels. The only difference between this type and the `target_label` type is how it is displayed to annotators on the frontend. `target_label` is displayed as a goal message with an embedded dropdown component ([see an example](https://dynabench.org/tasks/nli/create)), and `multiclass` is displayed as a basic multiple choice dropdown component. `labels` is a list of strings that defines the set of available labels, and it is a required constructor arg.
+  * `multiclass`: Data for this type is stored as a string; it must be from a set of owner-defined labels. The only difference between this type and the `target_label` type is how it is displayed to annotators on the frontend. `target_label` is displayed as a goal message with an embedded dropdown component ([see an example](https://dynabench.org/tasks/nli/create)), and `multiclass` is displayed as a basic multiple choice dropdown component. `labels` is a list of strings that defines the set of available labels, and it is a required constructor arg.
 
-  5. `multiclass_probs`: Data for this type is stored as a dictionary, where a key is a label name and a value is a float. Values should sum to 1. `reference_name` designates the name of a `multiclass` or `target_label` object to get the labels from, and it is a required constructor arg. This annotation object cannot be used in the `input`.
+  * `multiclass_probs`: Data for this type is stored as a dictionary, where a key is a label name and a value is a float. Values should sum to 1. `reference_name` designates the name of a `multiclass` or `target_label` object to get the labels from, and it is a required constructor arg. This annotation object cannot be used in the `input`.
 
-  6. `conf`: Data for this type is stored as a float between 0 and 1. It typically represents the confidence of a model about its answer. This annotation object cannot be used in the `input`.
+  * `conf`: Data for this type is stored as a float between 0 and 1. It typically represents the confidence of a model about its answer. This annotation object cannot be used in the `input`.
 
 ## Frequently Asked Questions
 
