@@ -21,6 +21,7 @@ class LeaderboardSnapshot(Base):
 
     id = db.Column(db.Integer, primary_key=True)
     tid = db.Column(db.Integer, db.ForeignKey("tasks.id"), nullable=False)
+    task = db.orm.relationship("Task", foreign_keys="LeaderboardSnapshot.tid")
     uid = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     name = db.Column(db.String(length=255), nullable=False)
 
@@ -35,6 +36,7 @@ class LeaderboardSnapshot(Base):
         d = {}
         for column in self.__table__.columns:
             d[column.name] = getattr(self, column.name)
+        d["task"] = self.task.to_dict()
         return d
 
 

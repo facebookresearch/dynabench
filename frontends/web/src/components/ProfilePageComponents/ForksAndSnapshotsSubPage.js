@@ -4,40 +4,21 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Card, Col, Container, Pagination, Table } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import Moment from "react-moment";
 import ChevronExpandButton from "../Buttons/ChevronExpandButton";
-import UserContext from "../../containers/UserContext";
 import { FLORES_TASK_CODES } from "../../containers/FloresTaskPage";
 
 const ForkOrSnapshotTable = (props) => {
   const { data, isForkList, page, paginate, isEndOfPage } = props;
-  const [taskLookup, setTaskLookup] = useState({});
   const [descriptionConfiguration, setDescriptionConfiguration] = useState({});
-
-  const context = useContext(UserContext);
 
   const usesEllipsis = (elementId) => {
     const e = document.getElementById(elementId);
     return e == null ? false : e.offsetWidth < e.scrollWidth;
   };
-
-  useEffect(() => {
-    context.api.getSubmittableTasks().then(
-      (result) => {
-        const taskLookupObj = result.reduce(
-          (map, obj) => ((map[obj.id] = obj), map),
-          {}
-        );
-        setTaskLookup(taskLookupObj);
-      },
-      (error) => {
-        console.log(error);
-      }
-    );
-  }, [context.api]);
 
   const getRowKey = useCallback(
     (datum) => {
@@ -112,15 +93,12 @@ const ForkOrSnapshotTable = (props) => {
                 const isDescriptionExpanded =
                   descriptionConfiguration[descriptionId]?.isExpanded;
 
-                const task = taskLookup[datum.tid];
-                if (!task) {
-                  return null;
-                }
-
-                const forkOrSnapshotUrl = `https://ldbd.ly/${task?.task_code}/${datum.name}`;
-                const taskPageUrl = FLORES_TASK_CODES.includes(task.task_code)
-                  ? `/flores/${task.task_code}`
-                  : `/tasks/${task.task_code}`;
+                const forkOrSnapshotUrl = `https://ldbd.ly/${datum.task.task_code}/${datum.name}`;
+                const taskPageUrl = FLORES_TASK_CODES.includes(
+                  datum.task.task_code
+                )
+                  ? `/flores/${datum.task.task_code}`
+                  : `/tasks/${datum.task.task_code}`;
 
                 return (
                   <tr key={rowKey}>
@@ -130,7 +108,7 @@ const ForkOrSnapshotTable = (props) => {
                       </span>
                     </td>
                     <td>
-                      <Link to={taskPageUrl}>{task.task_code}</Link>
+                      <Link to={taskPageUrl}>{datum.task.task_code}</Link>
                     </td>
                     <td
                       id={descriptionId}
@@ -196,6 +174,7 @@ const ForksAndSnapshotsSubPage = (props) => {
   useEffect(() => {
     api.getUserForks(userId, pageLimit, forksPage).then(
       (result) => {
+        console.log(result);
         const isEndOfPage = (forksPage + 1) * pageLimit >= (result.count || 0);
         setIsEndOfForksPage(isEndOfPage);
         setUserForks(result.data || []);
