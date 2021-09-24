@@ -477,8 +477,8 @@ const AboutPage = () => (
           Douwe Kiela, Divyansh Kaushik, Max Bartolo, Adina Williams, Yixin Nie,
           Grusha Prasad, Pratik Ringshia, Amanpreet Singh, Robin Jia, Sebastian
           Riedel, Tristan Thrush, Atticus Geiger, Chris Potts, Pontus Stenetorp,
-          Mohit Bansal, Bertie Vidgen, Zeerak Talat, Zhiyi Ma, Ledell Wu,
-          Sonia Kris, Zen Wu, Kawin Ethayarajh, Alberto Lopez, Sasha Sheng, Eric
+          Mohit Bansal, Bertie Vidgen, Zeerak Talat, Zhiyi Ma, Ledell Wu, Sonia
+          Kris, Zen Wu, Kawin Ethayarajh, Alberto Lopez, Sasha Sheng, Eric
           Wallace, Pedro Rodriguez, Rebecca Qian, Somya Jain, Guillaume Wenzek,
           Sahir Gomez, Anmol Gupta, and others.
         </p>
