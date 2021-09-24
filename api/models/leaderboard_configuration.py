@@ -16,6 +16,7 @@ class LeaderboardConfiguration(Base):
     __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_general_ci"}
 
     tid = db.Column(db.Integer, db.ForeignKey("tasks.id"), primary_key=True)
+    task = db.orm.relationship("Task", foreign_keys="LeaderboardConfiguration.tid")
     name = db.Column(db.String(length=255), primary_key=True)
     uid = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
@@ -30,6 +31,7 @@ class LeaderboardConfiguration(Base):
         d = {}
         for column in self.__table__.columns:
             d[column.name] = getattr(self, column.name)
+        d["task"] = self.task.to_dict()
         return d
 
 
