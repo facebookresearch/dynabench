@@ -835,7 +835,6 @@ class MaxQATaskMain extends React.Component {
         filterMode: "uncertain",
         answerSelect: "enabled",
       },
-
     ];
   }
 
@@ -847,6 +846,14 @@ class MaxQATaskMain extends React.Component {
       .map((x) => x.charCodeAt(0))
       .reduce((a, b) => a + b);
 
+
+    // Check validity of all experiment modes
+    this.experiment_modes.forEach((tmp_mode) => {
+      if (!(tmp_mode.hasOwnProperty('id') && tmp_mode.hasOwnProperty('adversary') && tmp_mode.hasOwnProperty('generator') && tmp_mode.hasOwnProperty('filterMode') && tmp_mode.hasOwnProperty('answerSelect'))) {
+        throw 'INVALID EXPERIMENT MODE ' + tmp_mode["id"].toString();
+      }
+    });
+
     var num_experiments = this.experiment_modes.length; // 20
     var experiment_mode_id = mephistoIdCode % num_experiments;
     // ======================================================================================
@@ -854,6 +861,7 @@ class MaxQATaskMain extends React.Component {
     // ======================================================================================
 
     var experiment_mode = this.experiment_modes[experiment_mode_id];
+
     console.log(
       "You are running experiment mode ID: " +
         experiment_mode_id +
