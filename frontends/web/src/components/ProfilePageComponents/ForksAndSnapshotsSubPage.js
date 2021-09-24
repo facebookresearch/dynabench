@@ -174,7 +174,6 @@ const ForksAndSnapshotsSubPage = (props) => {
   useEffect(() => {
     api.getUserForks(userId, pageLimit, forksPage).then(
       (result) => {
-        console.log(result);
         const isEndOfPage = (forksPage + 1) * pageLimit >= (result.count || 0);
         setIsEndOfForksPage(isEndOfPage);
         setUserForks(result.data || []);
