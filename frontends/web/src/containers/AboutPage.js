@@ -204,21 +204,22 @@ const AboutPage = () => (
           Wait, what does this do exactly?
         </h2>
         <p>
-          The basic idea is that we collect data dynamically. Humans are tasked
-          with finding adversarial examples that fool current state-of-the-art
-          models. This offers two benefits: it allows us to gauge how good our
-          current SOTA methods really are; and it yields data that may be used
-          to further train even stronger SOTA models. The process is repeated
-          over multiple rounds: each time a round gets "solved" by the SOTA, we
-          can take those models and adversarially collect a new dataset where
-          they fail. Datasets will be released periodically as new examples are
-          collected.
+          The basic idea is that we collect human data dynamically with models
+          in the loop. Humans can be tasked with finding adversarial examples
+          that fool current state-of-the-art models, for example, or models can
+          be cooperative and help humans find interesting examples. This offers
+          two benefits: it allows us to gauge how good our current SOTA methods
+          really are; and it yields data that may be used to further train even
+          stronger SOTA models. The process is repeated over multiple rounds:
+          each time a round gets "solved" by the SOTA, we can take those models
+          and adversarially collect a new dataset where they fail. Datasets will
+          be released periodically as new examples are collected.
         </p>
         <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
           Where can I read more?
         </h2>
         <p>
-          This platform came out of our paper on{" "}
+          This platform originally came out of our paper on{" "}
           <a
             href="https://arxiv.org/abs/1910.14599"
             target="_blank"
@@ -327,6 +328,56 @@ const AboutPage = () => (
           </a>
           .
         </p>
+        <p>
+          The following papers directly came out of the Dynabench project:
+          <ul>
+            <li>
+              <a href="https://arxiv.org/abs/2104.14337">
+                Dynabench: Rethinking Benchmarking in NLP
+              </a>
+            </li>
+            <li>
+              <a href="https://arxiv.org/abs/2106.06052">
+                Dynaboard: An Evaluation-As-A-Service Platform for Holistic
+                Next-Generation Benchmarking
+              </a>
+            </li>
+            <li>
+              <a href="https://arxiv.org/abs/2106.00872">
+                On the Efficacy of Adversarial Data Collection for Question
+                Answering: Results from a Large-Scale Randomized Study
+              </a>
+            </li>
+            <li>
+              <a href="https://arxiv.org/abs/2012.15349">
+                DynaSent: A Dynamic Benchmark for Sentiment Analysis
+              </a>
+            </li>
+            <li>
+              <a href="https://arxiv.org/abs/2012.15761">
+                Learning from the Worst: Dynamically Generated Datasets to
+                Improve Online Hate Detection
+              </a>
+            </li>
+            <li>
+              <a href="https://arxiv.org/abs/2104.08678">
+                Improving Question Answering Model Robustness with Synthetic
+                Adversarial Data Generation
+              </a>
+            </li>
+            <li>
+              <a href="https://arxiv.org/abs/2106.02280">
+                Human-Adversarial Visual Question Answering
+              </a>
+            </li>
+            <li>
+              <a href="https://arxiv.org/abs/2108.05921">
+                Hatemoji: A Test Suite and Adversarially-Generated Dataset for
+                Benchmarking and Detecting Emoji-based Hate
+              </a>
+            </li>
+          </ul>
+        </p>
         <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
           Won't this lead to unnatural distributions and distributional shift?
         </h2>
@@ -358,12 +409,12 @@ const AboutPage = () => (
         </h2>
         <p>
           Ultimately, that is for the community to decide and we don't want to
-          enforce anything in particular. A suggestion could be that papers
-          report results on numbered datasets, so e.g. "ANLI-1:3" for the first
-          three rounds of NLI. If a new round comes out, as a community we will
-          have to make sure existing state-of-the-art methods are evaluated on
-          each round to facilitate a staggered comparison. We expect this to
-          happen relatively organically.
+          enforce anything in particular. One suggestion would be to rely on the
+          backward compatibility enabled by our{" "}
+          <a href="https://arxiv.org/abs/2106.06052">
+            evaluation-as-a-service cloud
+          </a>
+          .
         </p>
         <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
           Where will this lead?
@@ -377,10 +428,8 @@ const AboutPage = () => (
           Can I add my own task?
         </h2>
         <p>
-          Hopefully, soon you will be able to add your own target models and
-          your own tasks. Please stay tuned, and{" "}
-          <a href="mailto:dynabench@fb.com">let us know</a> if you have any
-          interesting proposals.
+          Absolutely! Please submit your proposal under "Tasks" in your user
+          profile.
         </p>
         <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
           Do you have a data statement?
@@ -397,16 +446,17 @@ const AboutPage = () => (
           are a great idea, and we would like to provide not just one, but one
           for each task round. At the same time we have to be careful about
           respecting people's privacy, different social norms and making sure
-          nobody is excluded. We hope to work this out in more detail in the
-          near future when we start releasing datasets.
+          nobody is excluded, when collecting our data. We encourage task owners
+          to take this very seriously.
         </p>
         <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
           What about other languages? Other modalities?
         </h2>
         <p>
-          For now, Dynabench is English-only, but we are absolutely open to
-          expanding to other languages. Similarly, for now we focus on language
-          and text, but we are very interested in opening this up to other
+          For now, the Dynabench interface is English-only but nothing stops you
+          from collecting multilingual data. We also support images and audio,
+          and have multimodal tasks like visual question answering. We would
+          love to have more tasks in different languages and different
           modalities.
         </p>
         <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
@@ -415,19 +465,9 @@ const AboutPage = () => (
         <p>
           Anyone can use the platform to find or validate model-fooling
           examples. We hope to give linguists and other experts the tools they
-          need to discover weaknesses in AI systems. We will also use
+          need to discover weaknesses in AI systems. We also make it easy for
           crowdworkers to generate additional data, and to validate examples, in
           the same manner.
-        </p>
-        <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
-          Why these tasks?
-        </h2>
-        <p>
-          For now, we decided to focus on a limited set of "official" tasks
-          because we think they cover a representative set of problems for NLP,
-          that are well known and that people care about deeply. The idea is to
-          open this up to any task that the community is interested in in the
-          future.
         </p>
         <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
           Who is on the team?
@@ -437,7 +477,10 @@ const AboutPage = () => (
           Douwe Kiela, Divyansh Kaushik, Max Bartolo, Adina Williams, Yixin Nie,
           Grusha Prasad, Pratik Ringshia, Amanpreet Singh, Robin Jia, Sebastian
           Riedel, Tristan Thrush, Atticus Geiger, Chris Potts, Pontus Stenetorp,
-          Mohit Bansal, Bertie Vidgen, Zeerak Waseem, and others.
+          Mohit Bansal, Bertie Vidgen, Zeerak Waseem Talat, Zhiyi Ma, Ledell Wu,
+          Sonia Kris, Zen Wu, Kawin Ethayarajh, Alberto Lopez, Sasha Sheng, Eric
+          Wallace, Pedro Rodriguez, Rebecca Qian, Somya Jain, Guillaume Wenzek,
+          Sahir Gomez, Anmol Gupta, and others.
         </p>
         <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
           How can I help?
