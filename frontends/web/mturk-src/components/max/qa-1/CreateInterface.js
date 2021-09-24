@@ -380,7 +380,7 @@ class CreateInterface extends React.Component {
           modelInputs: last_example.modelInputs,
           fullresponse: JSON.stringify(last_example.response),
           annotatorValidation: last_example.validated,
-          requiresValidation: last_example.response.eval_f1 < 0.6 || last_example.validated == "valid",  // i.e. modelWrong
+          requiresValidation: last_example.response.eval_f1 <= 0.6 || last_example.validated == "valid",  // i.e. modelWrong
           exampleHistory: JSON.stringify(this.state.exampleHistory),
         };
         let extra = this.getLoggingTags(this.state.context, this.props);

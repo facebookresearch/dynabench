@@ -228,11 +228,7 @@ class ValidateInterface extends React.Component {
 
       var answer = [{ start: ans_start, end: ans_end, tag: "ANS" }];
       var human_ans = JSON.parse(this.state.example.input_json).answer;
-      var model_ans = null;
-      
-      if (example_metadata.model_name !== "none") {
-        model_ans = JSON.parse(this.state.example.output_json).answer;
-      }
+      var model_ans = JSON.parse(this.state.example.output_json).answer;
 
       content = (
         <ContextInfo
@@ -308,7 +304,7 @@ class ValidateInterface extends React.Component {
                             <p>
                               A human answered "<b style={{background: "rgba(132, 210, 255, 0.6)"}}>{human_ans}</b>" 
                               {model_ans != null ? (
-                                <>and the AI answered "<b style={{background: "rgba(0, 255, 162, 0.8)"}}>{model_ans}</b>"</>
+                                <> and the AI answered "<b style={{background: "rgba(0, 255, 162, 0.8)"}}>{model_ans}</b>"</>
                               ) : null}
                               .
                             </p>
