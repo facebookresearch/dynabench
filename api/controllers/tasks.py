@@ -187,7 +187,6 @@ def get_all_rounds(credentials, tid):
 @bottle.get("/tasks/datasets/<tid:int>")
 @_auth.requires_auth
 def get_datasets(credentials, tid):
-    ensure_owner_or_admin(tid, credentials["id"])
     dm = DatasetModel()
     dataset_list = []
     datasets = dm.getByTid(tid)

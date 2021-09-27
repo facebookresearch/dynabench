@@ -119,7 +119,7 @@ def do_upload_via_predictions(credentials, tid, model_name):
         secret=secrets.token_hex(),
     )
     with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
-        for dataset_name, upload in parsed_uploads.items():
+        for dataset_name, parsed_upload in parsed_uploads.items():
             with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
                 for datum in parsed_upload:
                     datum["id"] = datum["uid"]  # TODO: right now, dynalab models
