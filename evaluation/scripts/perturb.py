@@ -14,10 +14,8 @@ import os
 import sys
 
 import boto3
+from augly_perturbation import AuglyPerturbation
 from dynalab_cli.utils import get_tasks
-
-from fairness import FairnessPerturbation
-from textflint_utils.utils import run_textflint
 
 
 sys.path.append("..")  # noqa
@@ -99,15 +97,11 @@ def load_examples(path):
 
 def perturb(path, task, perturb_prefix):
     examples = load_examples(path)
-    if perturb_prefix == "fairness":
-        pert = FairnessPerturbation()
-        perturb_examples = []
-        for example in examples:
-            perturbed = pert.perturb(task, example)
-            perturb_examples.extend(perturbed)
-    else:
-        # Use robustness for textflint perturbation
-        perturb_examples = run_textflint(examples, task)
+    pert = AuglyPerturbation(perturb_prefix, task)
+    perturb_examples = []
+    for example in examples:
+        perturbed = pert.perturb(example)
+        perturb_examples.extend(perturbed)
 
     outpath = os.path.join(
         os.path.dirname(local_path), f"{perturb_prefix}-{os.path.basename(local_path)}"
