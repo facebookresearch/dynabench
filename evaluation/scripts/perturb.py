@@ -12,6 +12,8 @@ import json
 import logging
 import os
 import sys
+import time
+from typing import Any, Dict, List, Optional, Tuple
 
 import boto3
 from augly_perturbation import AuglyPerturbation
@@ -27,7 +29,7 @@ logger = logging.getLogger("perturb")
 perturbations = ["fairness", "robustness"]  # TODO: get this from task config
 
 
-def parse_args():
+def parse_args() -> Any:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--s3-uri", type=str, help="The s3 uri, in the format of s3://<bucket>/<path>"
@@ -45,12 +47,13 @@ def parse_args():
         "--task", type=str, choices=get_tasks(), help="Task code"
     )  # for selecting the perturb function
     parser.add_argument("--perturb-prefix", type=str, choices=perturbations)
+    parser.add_argument("--seed", type=str, default="")
     args = parser.parse_args()
 
     return args
 
 
-def parse_s3_uri(s3_uri):
+def parse_s3_uri(s3_uri: str) -> Tuple[str, str, str]:
     parts = s3_uri.replace("s3://", "").split("/")
     s3_bucket = parts[0]
     s3_path = os.path.join(*parts[1:])
@@ -58,7 +61,11 @@ def parse_s3_uri(s3_uri):
     return s3_bucket, s3_path, s3_filename
 
 
-def download_base_from_s3(args):
+def download_base_from_s3(args: Any) -> Optional[Tuple[str, str]]:
+    # If a local path was passed in, we can just use it
+    if os.path.exists(args.s3_uri):
+        return args.s3_uri, os.path.basename(args.s3_uri)
+        
     try:
         s3_client = boto3.client(
             "s3",
@@ -77,7 +84,7 @@ def download_base_from_s3(args):
                 )
                 if ops != "Y":
                     logger.info("Abandoning current workflow")
-                    return False
+                    return None
 
         if response:
             logger.info(f"Response from S3 download {response}")
@@ -87,21 +94,26 @@ def download_base_from_s3(args):
 
     except Exception as ex:
         logger.exception(f"Failed to download {args.s3_uri} because of {ex}")
-        return False
+        return None
 
 
-def load_examples(path):
+def load_examples(path: str) -> List[Dict[str, Any]]:
     with open(path) as f:
         return [json.loads(line) for line in f]
 
 
-def perturb(path, task, perturb_prefix):
+def perturb(path: str, task: str, perturb_prefix: str, seed: int) -> str:
     examples = load_examples(path)
-    pert = AuglyPerturbation(perturb_prefix, task)
+    num_examples = len(examples)
+    print(f"Loaded {num_examples} to perturb")
+    pert = AuglyPerturbation(perturb_prefix, task, seed)
     perturb_examples = []
-    for example in examples:
+    t0 = time.time()
+    for i, example in enumerate(examples):
         perturbed = pert.perturb(example)
         perturb_examples.extend(perturbed)
+        if i % 10 == 0:
+            print(f"Perturbed {i + 1}/{num_examples} examples; took {(time.time() - t0) / (i + 1)}s/example")
 
     outpath = os.path.join(
         os.path.dirname(local_path), f"{perturb_prefix}-{os.path.basename(local_path)}"
@@ -114,7 +126,7 @@ def perturb(path, task, perturb_prefix):
     return outpath
 
 
-def print_instructions(args, outpath, base_dataset_name):
+def print_instructions(args: Any, outpath: str, base_dataset_name: str) -> None:
     logger.info(
         "Once you are happy with the perturbation, use the following command "
         "to upload the data back to S3 and request evaluation\n"
@@ -126,8 +138,13 @@ def print_instructions(args, outpath, base_dataset_name):
 
 if __name__ == "__main__":
     args = parse_args()
-    local_path, base_dataset_name = download_base_from_s3(args)
-    outpath = perturb(local_path, args.task, args.perturb_prefix)
+    downloaded_dataset = download_base_from_s3(args)
+    assert downloaded_dataset, "Failed to download dataset from S3"
+
+    local_path, base_dataset_name = downloaded_dataset
+    print("Downloaded dataset; now will perturb examples")
+    seed = None if args.seed == "" else int(args.seed)
+    outpath = perturb(local_path, args.task, args.perturb_prefix, seed)
     print_instructions(args, outpath, base_dataset_name)
     ops = input(f"Remove locally downloaded file at {local_path}? [Y/n] ")
     if ops == "Y":

@@ -4,6 +4,7 @@
 
 import os
 import random
+import numpy as np
 from typing import Any, Callable, Dict, List, Optional
 
 import spacy
@@ -53,32 +54,32 @@ class AuglyPerturbation:
                     "class": "ReplaceWords",
                     "mapping": self.get_names_mapping(
                         [
-                            os.path.join(fdir, "male_names.txt"),
-                            os.path.join(fdir, "female_names.txt"),
-                        ]
-                    ),
-                    "name": "SwapGenderedWords",
-                },
-                {
-                    "aug_word_p": 1.0,
-                    "class": "ReplaceWords",
-                    "mapping": self.get_names_mapping(
-                        [
                             os.path.join(fdir, "api_names.txt"),
                             os.path.join(fdir, "black_names.txt"),
                             os.path.join(fdir, "hispanic_names.txt"),
                             os.path.join(fdir, "white_names.txt"),
                         ]
                     ),
-                    "name": "SwapEthnicGroupWords",
+                    "name": "SwapEthnicGroupNames",
+                },
+                {
+                    "aug_word_p": 1.0,
+                    "class": "ReplaceWords",
+                    "mapping": self.get_names_mapping(
+                        [
+                            os.path.join(fdir, "male_names.txt"),
+                            os.path.join(fdir, "female_names.txt"),
+                        ]
+                    ),
+                    "name": "SwapGenderedNames",
                 },
                 {"aug_word_p": 1.0, "class": "SwapGenderedWords"},
             ]
         
         return [
             # TODO: should ChangeCase not be used for QA? (like in old version)
-            {"class": "ChangeCase", "cadence": 3.0, "seed": self.rng.sample(0, 1000)},
-            {"class": "Contractions", "aug_word_p": 1.0},
+            {"class": "ChangeCase", "cadence": 3.0, "seed": self.rng.randint(0, 1000)},
+            {"class": "Contractions", "aug_p": 1.0},
             {"class": "InsertPunctuationChars"},
             {"class": "InsertWhitespaceChars"},
             {"class": "InsertZeroWidthChars"},
