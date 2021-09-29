@@ -5,7 +5,7 @@
  */
 
 import React from "react";
-import { Row, Container, Button, InputGroup } from "react-bootstrap";
+import { Container, Row, Col, Button, InputGroup } from "react-bootstrap";
 
 import { CreateInterface } from "./CreateInterface.js";
 import {
@@ -676,6 +676,7 @@ class MaxQATaskMain extends React.Component {
         generator: "none",
         filterMode: "",
         answerSelect: "none",
+        disabled: false,
       },
       // ==========
       // Investigating generative-assistance in a non-adversarial setting
@@ -686,6 +687,7 @@ class MaxQATaskMain extends React.Component {
         generator: "qgen_squad1",
         filterMode: "",
         answerSelect: "none",
+        disabled: false,
       },
       // 2: no adversary, squad generator + adversarial sampler
       {
@@ -694,6 +696,7 @@ class MaxQATaskMain extends React.Component {
         generator: "qgen_squad1",
         filterMode: "adversarial",
         answerSelect: "none",
+        disabled: false,
       },
       // 3: no adversary, squad generator + uncertainty sampler
       {
@@ -702,6 +705,7 @@ class MaxQATaskMain extends React.Component {
         generator: "qgen_squad1",
         filterMode: "uncertain",
         answerSelect: "none",
+        disabled: false,
       },
       // ==========
       // 4: no generator (standard adversarial annoation)
@@ -711,6 +715,7 @@ class MaxQATaskMain extends React.Component {
         generator: "none",
         filterMode: "",
         answerSelect: "none",
+        disabled: false,
       },      
       // 5: squad generator + no filter
       {
@@ -719,6 +724,7 @@ class MaxQATaskMain extends React.Component {
         generator: "qgen_squad1",
         filterMode: "",
         answerSelect: "none",
+        disabled: false,
       },
       // 6: adversarial generator + no filter
       {
@@ -727,6 +733,7 @@ class MaxQATaskMain extends React.Component {
         generator: "qgen_dcombined",
         filterMode: "",
         answerSelect: "none",
+        disabled: false,
       },
       // 7: combined generator + no filter
       {
@@ -735,6 +742,7 @@ class MaxQATaskMain extends React.Component {
         generator: "qgen_dcombined_plus_squad_10k",
         filterMode: "",
         answerSelect: "none",
+        disabled: false,
       },
       // 8: squad generator + adversarial sampler
       {
@@ -743,6 +751,7 @@ class MaxQATaskMain extends React.Component {
         generator: "qgen_squad1",
         filterMode: "adversarial",
         answerSelect: "none",
+        disabled: false,
       },
       // 9: adversarial generator + adversarial sampler
       {
@@ -751,6 +760,7 @@ class MaxQATaskMain extends React.Component {
         generator: "qgen_dcombined",
         filterMode: "adversarial",
         answerSelect: "none",
+        disabled: false,
       },
       // 10: combined generator + adversarial sampler
       {
@@ -759,6 +769,7 @@ class MaxQATaskMain extends React.Component {
         generator: "qgen_dcombined_plus_squad_10k",
         filterMode: "adversarial",
         answerSelect: "none",
+        disabled: false,
       },
       // 11: squad generator + uncertainty sampler
       {
@@ -767,6 +778,7 @@ class MaxQATaskMain extends React.Component {
         generator: "qgen_squad1",
         filterMode: "uncertain",
         answerSelect: "none",
+        disabled: false,
       },
       // 12: adversarial generator + uncertainty sampler
       {
@@ -775,6 +787,7 @@ class MaxQATaskMain extends React.Component {
         generator: "qgen_dcombined",
         filterMode: "uncertain",
         answerSelect: "none",
+        disabled: false,
       },
       // 13: combined generator + uncertainty sampler
       {
@@ -783,6 +796,7 @@ class MaxQATaskMain extends React.Component {
         generator: "qgen_dcombined_plus_squad_10k",
         filterMode: "uncertain",
         answerSelect: "none",
+        disabled: false,
       },
       // ==========
       // 14: validation only (generate answer and question): combined generator
@@ -792,6 +806,7 @@ class MaxQATaskMain extends React.Component {
         generator: "qgen_dcombined_plus_squad_10k",
         filterMode: "",
         answerSelect: "enabled",
+        disabled: false,
       },
       // 15: validation only: adversarial generator
       {
@@ -800,6 +815,7 @@ class MaxQATaskMain extends React.Component {
         generator: "qgen_dcombined",
         filterMode: "",
         answerSelect: "enabled",
+        disabled: false,
       },
 
       // 16: validation only: combined generator + adversarial sampler
@@ -809,6 +825,7 @@ class MaxQATaskMain extends React.Component {
         generator: "qgen_dcombined_plus_squad_10k",
         filterMode: "adversarial",
         answerSelect: "enabled",
+        disabled: false,
       },
       // 17: validation only: adversarial generator + adversarial sampler
       {
@@ -817,6 +834,7 @@ class MaxQATaskMain extends React.Component {
         generator: "qgen_dcombined",
         filterMode: "adversarial",
         answerSelect: "enabled",
+        disabled: false,
       },
 
       // 18: validation only: combined generator + uncertain sampler
@@ -826,6 +844,7 @@ class MaxQATaskMain extends React.Component {
         generator: "qgen_dcombined_plus_squad_10k",
         filterMode: "uncertain",
         answerSelect: "enabled",
+        disabled: false,
       },
       // 19: validation only: adversarial generator + uncertain sampler
       {
@@ -834,6 +853,7 @@ class MaxQATaskMain extends React.Component {
         generator: "qgen_dcombined",
         filterMode: "uncertain",
         answerSelect: "enabled",
+        disabled: false,
       },
     ];
   }
@@ -849,7 +869,7 @@ class MaxQATaskMain extends React.Component {
 
     // Check validity of all experiment modes
     this.experiment_modes.forEach((tmp_mode) => {
-      if (!(tmp_mode.hasOwnProperty('id') && tmp_mode.hasOwnProperty('adversary') && tmp_mode.hasOwnProperty('generator') && tmp_mode.hasOwnProperty('filterMode') && tmp_mode.hasOwnProperty('answerSelect'))) {
+      if (!(tmp_mode.hasOwnProperty('id') && tmp_mode.hasOwnProperty('adversary') && tmp_mode.hasOwnProperty('generator') && tmp_mode.hasOwnProperty('filterMode') && tmp_mode.hasOwnProperty('answerSelect') && tmp_mode.hasOwnProperty('disabled'))) {
         throw 'INVALID EXPERIMENT MODE ' + tmp_mode["id"].toString();
       }
     });
@@ -898,20 +918,33 @@ class MaxQATaskMain extends React.Component {
         generator_url
     );
 
-    return (
-      <>
-        <ExperimentInstructions experiment_mode={experiment_mode} />
-        <CreateInterface
-          api={this.api}
-          model_name={model_name}
-          model_url={model_url}
-          generator_name={generator_name}
-          generator_url={generator_url}
-          experiment_mode={experiment_mode}
-          {...this.props}
-        />
-      </>
-    );
+    if (experiment_mode.disabled === false) {
+      return (
+        <>
+          <ExperimentInstructions experiment_mode={experiment_mode} />
+          <CreateInterface
+            api={this.api}
+            model_name={model_name}
+            model_url={model_url}
+            generator_name={generator_name}
+            generator_url={generator_url}
+            experiment_mode={experiment_mode}
+            {...this.props}
+          />
+        </>
+      );
+    } else {
+      return (
+        <Container>
+          <Row>
+            <Col lg={12}>
+              <p>Sorry, there are no HITs currently available.</p>
+              <p>We may have more HITs available in the coming days. Thank you for your patience, please try again soon.</p>
+            </Col>
+          </Row>
+        </Container>
+      );
+    }
   }
 }
 
