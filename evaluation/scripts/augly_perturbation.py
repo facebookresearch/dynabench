@@ -131,11 +131,13 @@ class AuglyPerturbation:
             transform_name = aug_kwargs.pop("name", None) or class_name
             transform = getattr(textaugs, class_name)(**aug_kwargs)
 
-            logger.info(f"Applying {transform_name} transform to {num_examples} examples")
+            logger.info(
+                f"Applying {transform_name} transform to {num_examples} examples"
+            )
             t0 = time.time()
             for i, example in enumerate(examples):
                 pt_example = self.apply_augmentation(transform, example, transform_name)
-                if (i + 1) % self.log_every_n == 0:
+                if self.log_every_n is not None and (i + 1) % self.log_every_n == 0:
                     logger.info(
                         f"Perturbed {i + 1}/{num_examples} examples with "
                         f"{transform_name}; took "
@@ -184,7 +186,9 @@ class AuglyPerturbation:
                 ans = [ans]
             if "ignore_words" in kwargs:
                 kwargs["ignore_words"] = kwargs["ignore_words"] + ans
-            self.call_transform(example, perturb_example, "question", transform)
+            self.call_transform(
+                example, perturb_example, "question", transform, **kwargs
+            )
         elif self.task == "nli":
             self.call_transform(example, perturb_example, "hypothesis", transform)
 
@@ -205,7 +209,7 @@ class AuglyPerturbation:
         text = preprocess(text)
 
         # TODO: make ignore_words an arg to __call__()
-        aug_text = transform(text, kwargs)
+        aug_text = transform(text, **kwargs)
 
         if isinstance(aug_text, List):
             assert len(aug_text) == 1
