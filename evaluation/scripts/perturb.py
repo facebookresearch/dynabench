@@ -108,8 +108,9 @@ def perturb(
     examples = load_examples(path)
     num_examples = len(examples)
     logger.info(f"Loaded {num_examples} to perturb")
+
     pert = AuglyPerturbation(perturb_prefix, task, seed, log_every_n)
-    perturbed_examples = pert.perturb(examples4)
+    perturbed_examples = pert.perturb(examples)
 
     outpath = os.path.join(
         os.path.dirname(local_path), f"{perturb_prefix}-{os.path.basename(local_path)}"

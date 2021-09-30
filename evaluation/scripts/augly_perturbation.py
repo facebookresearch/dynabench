@@ -158,6 +158,7 @@ class AuglyPerturbation:
     def apply_augmentation(
         self, transform: Callable, example: Dict[str, Any], transform_name: str
     ) -> Optional[Dict[str, Any]]:
+        kwargs = {}
         if self.perturb_prefix == "fairness":
             kwargs["ignore_words"] = self.get_entity_set(text)
 
@@ -198,11 +199,13 @@ class AuglyPerturbation:
         aug_example: Dict[str, Any],
         key: str,
         transform: Callable,
+        **kwargs,
     ) -> None:
         text = src_example[key]
         text = preprocess(text)
 
-        aug_text = transform(text)
+        # TODO: make ignore_words an arg to __call__()
+        aug_text = transform(text, kwargs)
 
         if isinstance(aug_text, List):
             assert len(aug_text) == 1
