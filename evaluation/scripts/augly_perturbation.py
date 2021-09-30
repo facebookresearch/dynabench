@@ -2,9 +2,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import logging
 import os
 import random
-import numpy as np
+import time
+import zlib
+from collections import defaultdict
 from typing import Any, Callable, Dict, List, Optional
 
 import spacy
@@ -13,9 +16,18 @@ from augly.utils import pathmgr
 from util import postprocess, preprocess
 
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("perturb")
+
+
 class AuglyPerturbation:
     def __init__(
-        self, perturb_prefix: str, task: str, seed: Optional[int] = None, skip_ents=True
+        self,
+        perturb_prefix: str,
+        task: str,
+        seed: Optional[int],
+        log_every_n: int,
+        skip_ents=True,
     ):
         if skip_ents:
             self.ner = spacy.load("en_core_web_sm")
@@ -24,9 +36,11 @@ class AuglyPerturbation:
             self.skip_ents = False
         self.perturb_prefix = perturb_prefix
         self.task = task
-        self.rng = np.random.RandomState(seed) if seed is not None else np.random
+        self.seed = seed if seed is not None else random.randint(0, 1000)
+        random.seed(self.seed)
         self.perturbations = self.get_perturbations()
-    
+        self.log_every_n = log_every_n if log_every_n > 0 else None
+
     def get_names_mapping(self, names: List[str]) -> Dict[str, str]:
         for i, names_i in enumerate(names):
             with pathmgr.open(names_i) as f:
@@ -75,29 +89,30 @@ class AuglyPerturbation:
                 },
                 {"aug_word_p": 1.0, "class": "SwapGenderedWords"},
             ]
-        
+
         return [
-            # TODO: should ChangeCase not be used for QA? (like in old version)
-            {"class": "ChangeCase", "cadence": 3.0, "seed": self.rng.randint(0, 1000)},
+            # TODO: should ChangeCase not be used for QA? (wasn't in the old version of this script)
+            {"class": "ChangeCase", "case": "upper", "cadence": 3.0},
             {"class": "Contractions", "aug_p": 1.0},
-            {"class": "InsertPunctuationChars"},
-            {"class": "InsertWhitespaceChars"},
-            {"class": "InsertZeroWidthChars"},
-            {"class": "ReplaceFunFonts"},
-            {"class": "ReplaceSimilarUnicodeChars"},
-            {"class": "ReplaceUpsideDown"},
-            {"class": "SimulateTypos", "typo_type": "charmix", "name": "CharTypos"},
-            {
-                "class": "SimulateTypos",
-                "typo_type": "keyboard",
-                "name": "KeyboardTypos",
-            },
-            {
-                "class": "SimulateTypos",
-                "typo_type": "misspelling",
-                "name": "MisspellingTypos",
-            },
-            {"class": "SplitWords"},
+            {"class": "InsertPunctuationChars", "cadence": 10.0, "vary_chars": True},
+            {"class": "InsertWhitespaceChars", "cadence": 10.0, "vary_chars": True},
+            {"class": "InsertZeroWidthChars", "cadence": 10.0, "vary_chars": True},
+            # TODO: improve efficiency of these augmentations
+            # {"class": "ReplaceFunFonts", "vary_fonts": True}, (currently 0.2s/example)
+            # {"class": "ReplaceSimilarUnicodeChars"}, (currently 0.2s/example)
+            # {"class": "ReplaceUpsideDown", "granularity": "word"}, (currently 0.2s/example)
+            # {"class": "SimulateTypos", "typo_type": "charmix", "name": "CharTypos"}, (currently 3s/example)
+            # {
+            #     "class": "SimulateTypos",
+            #     "typo_type": "keyboard",
+            #     "name": "KeyboardTypos",
+            # }, (currently 3s/example)
+            # {
+            #     "class": "SimulateTypos",
+            #     "typo_type": "misspelling",
+            #     "name": "MisspellingTypos",
+            # }, (currently 0.2s/example)
+            # {"class": "SplitWords"}, (currently 0.2s/example)
         ]
 
     def get_entity_set(self, text: str) -> Optional[List[str]]:
@@ -107,32 +122,51 @@ class AuglyPerturbation:
         else:
             return None
 
-    def perturb(self, example: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        perturbed = []
+    def perturb(self, examples: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        num_examples = len(examples)
+        perturbed = defaultdict(list)
         for perturbation in self.perturbations:
-            pt_example = self.apply_augmentation(perturbation, example)
+            aug_kwargs = perturbation.copy()
+            class_name = aug_kwargs.pop("class")
+            transform_name = aug_kwargs.pop("name", None) or class_name
+            transform = getattr(textaugs, class_name)(**aug_kwargs)
 
-            if pt_example:
-                perturbed.append(pt_example)
+            logger.info(f"Applying {transform_name} transform to {num_examples} examples")
+            t0 = time.time()
+            for i, example in enumerate(examples):
+                pt_example = self.apply_augmentation(transform, example, transform_name)
+                if (i + 1) % self.log_every_n == 0:
+                    logger.info(
+                        f"Perturbed {i + 1}/{num_examples} examples with "
+                        f"{transform_name}; took "
+                        f"{(time.time() - t0) / (i + 1)}s/example"
+                    )
 
-        return perturbed
+                if pt_example:
+                    perturbed[example["uid"]].append(pt_example)
+
+            logger.info(
+                f"Finished perturbing {num_examples} examples with "
+                f"{transform_name}; took {time.time() - t0}s "
+                f"({(time.time() - t0) / num_examples}s/example)"
+            )
+
+        # Sort examples by UID before returning so they will be grouped by example,
+        # not by perturbation type
+        return [ex for v in perturbed.values() for ex in v]
 
     def apply_augmentation(
-        self, perturbation: Dict[str, Any], example: Dict[str, Any]
+        self, transform: Callable, example: Dict[str, Any], transform_name: str
     ) -> Optional[Dict[str, Any]]:
-        perturbation = perturbation.copy()
-        class_name = perturbation.pop("class")
-        name = perturbation.pop("name", None) or class_name
-        aug_kwargs = perturbation
-
         if self.perturb_prefix == "fairness":
             kwargs["ignore_words"] = self.get_entity_set(text)
 
-        transform = getattr(textaugs, class_name)(**aug_kwargs)
-
         perturb_example = example.copy()
         perturb_example["input_id"] = example["uid"]
-        perturb_example["uid"] = str(example["uid"]) + "_" + name
+        perturb_example["uid"] = f"{example['uid']}_{transform_name}"
+
+        uid_hash = zlib.adler32(perturb_example["uid"].encode())
+        random.seed((self.seed + uid_hash) % 2 ** 32)
 
         # Perturb context for all tasks if it exists
         if "context" in example:
@@ -157,7 +191,7 @@ class AuglyPerturbation:
             return perturb_example
 
         return None
-    
+
     def call_transform(
         self,
         src_example: Dict[str, Any],

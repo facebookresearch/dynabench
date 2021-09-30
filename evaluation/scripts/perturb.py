@@ -12,7 +12,6 @@ import json
 import logging
 import os
 import sys
-import time
 from typing import Any, Dict, List, Optional, Tuple
 
 import boto3
@@ -48,6 +47,7 @@ def parse_args() -> Any:
     )  # for selecting the perturb function
     parser.add_argument("--perturb-prefix", type=str, choices=perturbations)
     parser.add_argument("--seed", type=str, default="")
+    parser.add_argument("--log_every_n", type=int, default=0)
     args = parser.parse_args()
 
     return args
@@ -102,24 +102,20 @@ def load_examples(path: str) -> List[Dict[str, Any]]:
         return [json.loads(line) for line in f]
 
 
-def perturb(path: str, task: str, perturb_prefix: str, seed: int) -> str:
+def perturb(
+    path: str, task: str, perturb_prefix: str, seed: int, log_every_n: Optional[int]
+) -> str:
     examples = load_examples(path)
     num_examples = len(examples)
-    print(f"Loaded {num_examples} to perturb")
-    pert = AuglyPerturbation(perturb_prefix, task, seed)
-    perturb_examples = []
-    t0 = time.time()
-    for i, example in enumerate(examples):
-        perturbed = pert.perturb(example)
-        perturb_examples.extend(perturbed)
-        if i % 10 == 0:
-            print(f"Perturbed {i + 1}/{num_examples} examples; took {(time.time() - t0) / (i + 1)}s/example")
+    logger.info(f"Loaded {num_examples} to perturb")
+    pert = AuglyPerturbation(perturb_prefix, task, seed, log_every_n)
+    perturbed_examples = pert.perturb(examples4)
 
     outpath = os.path.join(
         os.path.dirname(local_path), f"{perturb_prefix}-{os.path.basename(local_path)}"
     )
     with open(outpath, "w") as f:
-        for example in perturb_examples:
+        for example in perturbed_examples:
             f.write(json.dumps(example) + "\n")
     logger.info(f"Wrote perturbed dataset to {outpath}")
 
@@ -142,9 +138,9 @@ if __name__ == "__main__":
     assert downloaded_dataset, "Failed to download dataset from S3"
 
     local_path, base_dataset_name = downloaded_dataset
-    print("Downloaded dataset; now will perturb examples")
+    logger.info("Downloaded dataset; now will perturb examples")
     seed = None if args.seed == "" else int(args.seed)
-    outpath = perturb(local_path, args.task, args.perturb_prefix, seed)
+    outpath = perturb(local_path, args.task, args.perturb_prefix, seed, args.log_every_n)
     print_instructions(args, outpath, base_dataset_name)
     ops = input(f"Remove locally downloaded file at {local_path}? [Y/n] ")
     if ops == "Y":
