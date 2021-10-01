@@ -8,6 +8,7 @@ import random
 import time
 import zlib
 from collections import defaultdict
+from multiprocessing import Pool
 from typing import Any, Callable, Dict, List, Optional
 
 import spacy
@@ -26,7 +27,7 @@ class AuglyPerturbation:
         perturb_prefix: str,
         task: str,
         seed: Optional[int],
-        log_every_n: int,
+        num_threads: int,
         skip_ents=True,
     ):
         if skip_ents:
@@ -39,7 +40,7 @@ class AuglyPerturbation:
         self.seed = seed if seed is not None else random.randint(0, 1000)
         random.seed(self.seed)
         self.perturbations = self.get_perturbations()
-        self.log_every_n = log_every_n if log_every_n > 0 else None
+        self.num_threads = num_threads
 
     def get_names_mapping(self, names: List[str]) -> Dict[str, str]:
         for i, names_i in enumerate(names):
@@ -57,8 +58,19 @@ class AuglyPerturbation:
                 name_mapping[name] = names[new_group][idx]
 
         return name_mapping
+    
+    def get_perturbations(self) -> List[Callable]:
+        pert_cfg = self.get_perturbation_config()
+        perturbations = {}
+        for perturbation in pert_cfg:
+            aug_kwargs = perturbation.copy()
+            class_name = aug_kwargs.pop("class")
+            transform_name = aug_kwargs.pop("name", None) or class_name
+            transform = getattr(textaugs, class_name)(**aug_kwargs)
+            perturbations[transform_name] = transform
+        return perturbations
 
-    def get_perturbations(self) -> Dict[str, List[Dict[str, Any]]]:
+    def get_perturbation_config(self) -> List[Dict[str, Any]]:
         fdir = "./data/"
 
         if self.perturb_prefix == "fairness":
@@ -97,22 +109,21 @@ class AuglyPerturbation:
             {"class": "InsertPunctuationChars", "cadence": 10.0, "vary_chars": True},
             {"class": "InsertWhitespaceChars", "cadence": 10.0, "vary_chars": True},
             {"class": "InsertZeroWidthChars", "cadence": 10.0, "vary_chars": True},
-            # TODO: improve efficiency of these augmentations
-            # {"class": "ReplaceFunFonts", "vary_fonts": True}, (currently 0.2s/example)
-            # {"class": "ReplaceSimilarUnicodeChars"}, (currently 0.2s/example)
-            # {"class": "ReplaceUpsideDown", "granularity": "word"}, (currently 0.2s/example)
-            # {"class": "SimulateTypos", "typo_type": "charmix", "name": "CharTypos"}, (currently 3s/example)
-            # {
-            #     "class": "SimulateTypos",
-            #     "typo_type": "keyboard",
-            #     "name": "KeyboardTypos",
-            # }, (currently 3s/example)
-            # {
-            #     "class": "SimulateTypos",
-            #     "typo_type": "misspelling",
-            #     "name": "MisspellingTypos",
-            # }, (currently 0.2s/example)
-            # {"class": "SplitWords"}, (currently 0.2s/example)
+            {"class": "ReplaceFunFonts", "vary_fonts": True},  # (currently 0.2s/example)
+            {"class": "ReplaceSimilarUnicodeChars"},  # (currently 0.2s/example)
+            {"class": "ReplaceUpsideDown", "granularity": "word"},  # (currently 0.2s/example)
+            {"class": "SimulateTypos", "typo_type": "charmix", "name": "CharTypos"},  # (currently 3s/example)
+            {
+                "class": "SimulateTypos",
+                "typo_type": "keyboard",
+                "name": "KeyboardTypos",
+            },  # (currently 3s/example)
+            {
+                "class": "SimulateTypos",
+                "typo_type": "misspelling",
+                "name": "MisspellingTypos",
+            },  # (currently 0.2s/example)
+            {"class": "SplitWords"},  # (currently 0.2s/example)
         ]
 
     def get_entity_set(self, text: str) -> Optional[List[str]]:
@@ -123,42 +134,25 @@ class AuglyPerturbation:
             return None
 
     def perturb(self, examples: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        num_examples = len(examples)
-        perturbed = defaultdict(list)
-        for perturbation in self.perturbations:
-            aug_kwargs = perturbation.copy()
-            class_name = aug_kwargs.pop("class")
-            transform_name = aug_kwargs.pop("name", None) or class_name
-            transform = getattr(textaugs, class_name)(**aug_kwargs)
+        with Pool(self.num_threads) as pool:
+            perturbed = [
+                el for l in pool.map(self.apply_augmentations, examples) for el in l
+            ]
+        return perturbed
 
-            logger.info(
-                f"Applying {transform_name} transform to {num_examples} examples"
-            )
-            t0 = time.time()
-            for i, example in enumerate(examples):
-                pt_example = self.apply_augmentation(transform, example, transform_name)
-                if self.log_every_n is not None and (i + 1) % self.log_every_n == 0:
-                    logger.info(
-                        f"Perturbed {i + 1}/{num_examples} examples with "
-                        f"{transform_name}; took "
-                        f"{(time.time() - t0) / (i + 1)}s/example"
-                    )
-
-                if pt_example:
-                    perturbed[example["uid"]].append(pt_example)
-
-            logger.info(
-                f"Finished perturbing {num_examples} examples with "
-                f"{transform_name}; took {time.time() - t0}s "
-                f"({(time.time() - t0) / num_examples}s/example)"
-            )
-
-        # Sort examples by UID before returning so they will be grouped by example,
-        # not by perturbation type
-        return [ex for v in perturbed.values() for ex in v]
+    def apply_augmentations(self, example: Dict[str, Any]) -> List[Dict[str, Any]]:
+        pert = []
+        for transform_name, transform in self.perturbations.items():
+            pt_example = self.apply_augmentation(transform, transform_name, example)
+            if pt_example is not None:
+                pert.append(pt_example)
+        return pert
 
     def apply_augmentation(
-        self, transform: Callable, example: Dict[str, Any], transform_name: str
+        self,
+        transform: Callable,
+        transform_name: str,
+        example: Dict[str, Any],
     ) -> Optional[Dict[str, Any]]:
         kwargs = {}
         if self.perturb_prefix == "fairness":
@@ -171,13 +165,19 @@ class AuglyPerturbation:
         uid_hash = zlib.adler32(perturb_example["uid"].encode())
         random.seed((self.seed + uid_hash) % 2 ** 32)
 
+        changed = False
+
         # Perturb context for all tasks if it exists
         if "context" in example:
-            self.call_transform(example, perturb_example, "context", transform)
+            changed = changed or self.call_transform(
+                example, perturb_example, "context", transform
+            )
 
         # Perturb statement for hs and sentiment
         if self.task in ["hs", "sentiment"]:
-            self.call_transform(example, perturb_example, "statement", transform)
+            changed = changed or self.call_transform(
+                example, perturb_example, "statement", transform
+            )
 
         # Perturb additional fields for task "qa" and "nli"
         if self.task == "qa":
@@ -186,13 +186,15 @@ class AuglyPerturbation:
                 ans = [ans]
             if "ignore_words" in kwargs:
                 kwargs["ignore_words"] = kwargs["ignore_words"] + ans
-            self.call_transform(
+            changed = changed or self.call_transform(
                 example, perturb_example, "question", transform, **kwargs
             )
         elif self.task == "nli":
-            self.call_transform(example, perturb_example, "hypothesis", transform)
+            changed = changed or self.call_transform(
+                example, perturb_example, "hypothesis", transform
+            )
 
-        if perturb_example != example:
+        if changed:
             return perturb_example
 
         return None
@@ -204,11 +206,10 @@ class AuglyPerturbation:
         key: str,
         transform: Callable,
         **kwargs,
-    ) -> None:
+    ) -> bool:
         text = src_example[key]
         text = preprocess(text)
 
-        # TODO: make ignore_words an arg to __call__()
         aug_text = transform(text, **kwargs)
 
         if isinstance(aug_text, List):
@@ -216,3 +217,6 @@ class AuglyPerturbation:
             aug_text = aug_text[0]
 
         aug_example[key] = postprocess(aug_text)
+
+        # Return True if text was changed, otherwise False
+        return aug_text != text

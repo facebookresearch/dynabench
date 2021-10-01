@@ -47,7 +47,7 @@ def parse_args() -> Any:
     )  # for selecting the perturb function
     parser.add_argument("--perturb-prefix", type=str, choices=perturbations)
     parser.add_argument("--seed", type=str, default="")
-    parser.add_argument("--log_every_n", type=int, default=0)
+    parser.add_argument("--num_threads", type=int, default=1)
     args = parser.parse_args()
 
     return args
@@ -103,13 +103,17 @@ def load_examples(path: str) -> List[Dict[str, Any]]:
 
 
 def perturb(
-    path: str, task: str, perturb_prefix: str, seed: int, log_every_n: Optional[int]
+    path: str,
+    task: str,
+    perturb_prefix: str,
+    seed: int,
+    num_threads: int,
 ) -> str:
     examples = load_examples(path)
     num_examples = len(examples)
     logger.info(f"Loaded {num_examples} to perturb")
 
-    pert = AuglyPerturbation(perturb_prefix, task, seed, log_every_n)
+    pert = AuglyPerturbation(perturb_prefix, task, seed, num_threads)
     perturbed_examples = pert.perturb(examples)
 
     outpath = os.path.join(
@@ -141,7 +145,13 @@ if __name__ == "__main__":
     local_path, base_dataset_name = downloaded_dataset
     logger.info("Downloaded dataset; now will perturb examples")
     seed = None if args.seed == "" else int(args.seed)
-    outpath = perturb(local_path, args.task, args.perturb_prefix, seed, args.log_every_n)
+    outpath = perturb(
+        local_path,
+        args.task,
+        args.perturb_prefix,
+        seed,
+        args.num_threads,
+    )
     print_instructions(args, outpath, base_dataset_name)
     ops = input(f"Remove locally downloaded file at {local_path}? [Y/n] ")
     if ops == "Y":
