@@ -103,7 +103,6 @@ class AuglyPerturbation:
             ]
 
         return [
-            # TODO: should ChangeCase not be used for QA? (wasn't in the old version of this script)
             {"class": "ChangeCase", "case": "upper", "cadence": 3.0},
             {"class": "Contractions", "aug_p": 1.0},
             {"class": "InsertPunctuationChars", "cadence": 10.0, "vary_chars": True},
@@ -220,5 +219,16 @@ class AuglyPerturbation:
 
         aug_example[key] = postprocess(aug_text)
 
+        # The fairness augs often don't change anything; we don't want to record the
+        # perturbed text if nothing has changed (but `aug_text == text` might be true due
+        # to tokenizing/detokenizing noise), so we check if all the non-whitespace chars
+        # match. But we can't do this for robustness perturbations like `SplitWords`
+        # which inserts spaces, so then we use `aug_text == text`.
+        changed = (
+            "".join(aug_text.split()) != "".join(text.split())
+            if self.perturb_prefix == "fairness"
+            else aug_text != text
+        )
+
         # Return True if text was changed, otherwise False
-        return aug_text != text
+        return changed
