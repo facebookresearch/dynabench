@@ -5,7 +5,15 @@
  */
 
 import React from "react";
-import { Container, Row, Form, Col, Card, Button } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Form,
+  Col,
+  Card,
+  Button,
+  Spinner,
+} from "react-bootstrap";
 import { Formik } from "formik";
 import DragAndDrop from "../DragAndDrop/DragAndDrop";
 
@@ -174,7 +182,15 @@ const Datasets = (props) => {
                               className="submit-btn button-ellipse text-uppercase my-4"
                               disabled={isSubmitting}
                             >
-                              Add New Dataset
+                              {isSubmitting ? (
+                                <Spinner
+                                  as="span"
+                                  animation="border"
+                                  size="sm"
+                                />
+                              ) : (
+                                "Add New Dataset"
+                              )}
                             </Button>
                           ) : null}
                         </Col>
