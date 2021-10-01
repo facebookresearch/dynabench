@@ -109,27 +109,28 @@ class AuglyPerturbation:
             {"class": "InsertPunctuationChars", "cadence": 10.0, "vary_chars": True},
             {"class": "InsertWhitespaceChars", "cadence": 10.0, "vary_chars": True},
             {"class": "InsertZeroWidthChars", "cadence": 10.0, "vary_chars": True},
-            {"class": "ReplaceFunFonts", "vary_fonts": True},  # (currently 0.2s/example)
-            {"class": "ReplaceSimilarUnicodeChars"},  # (currently 0.2s/example)
-            {"class": "ReplaceUpsideDown", "granularity": "word"},  # (currently 0.2s/example)
-            {"class": "SimulateTypos", "typo_type": "charmix", "name": "CharTypos"},  # (currently 3s/example)
+            {"class": "ReplaceFunFonts", "vary_fonts": True},
+            {"class": "ReplaceSimilarUnicodeChars"},
+            {"class": "ReplaceUpsideDown", "granularity": "word"},
+            {"class": "SimulateTypos", "typo_type": "charmix", "name": "CharTypos"},
             {
                 "class": "SimulateTypos",
                 "typo_type": "keyboard",
                 "name": "KeyboardTypos",
-            },  # (currently 3s/example)
+            },
             {
                 "class": "SimulateTypos",
                 "typo_type": "misspelling",
                 "name": "MisspellingTypos",
-            },  # (currently 0.2s/example)
-            {"class": "SplitWords"},  # (currently 0.2s/example)
+            },
+            {"class": "SplitWords"},
         ]
 
     def get_entity_set(self, text: str) -> Optional[List[str]]:
         if self.skip_ents:
             doc = self.ner(text)
-            return [ent.text for ent in doc.ents]
+            ents = [ent.text for ent in doc.ents]
+            return [word for ent in ents for word in ent.split()]
         else:
             return None
 
@@ -142,29 +143,22 @@ class AuglyPerturbation:
 
     def apply_augmentations(self, example: Dict[str, Any]) -> List[Dict[str, Any]]:
         pert = []
-        for transform_name, transform in self.perturbations.items():
-            pt_example = self.apply_augmentation(transform, transform_name, example)
+        for transform_name in self.perturbations.keys():
+            pt_example = self.apply_augmentation(transform_name, example)
             if pt_example is not None:
                 pert.append(pt_example)
         return pert
 
     def apply_augmentation(
-        self,
-        transform: Callable,
-        transform_name: str,
-        example: Dict[str, Any],
+        self, transform_name: str, example: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
-        kwargs = {}
-        if self.perturb_prefix == "fairness":
-            kwargs["ignore_words"] = self.get_entity_set(text)
-
         perturb_example = example.copy()
         perturb_example["input_id"] = example["uid"]
         perturb_example["uid"] = f"{example['uid']}_{transform_name}"
-
         uid_hash = zlib.adler32(perturb_example["uid"].encode())
         random.seed((self.seed + uid_hash) % 2 ** 32)
-
+        transform = self.perturbations[transform_name]
+        
         changed = False
 
         # Perturb context for all tasks if it exists
@@ -181,13 +175,14 @@ class AuglyPerturbation:
 
         # Perturb additional fields for task "qa" and "nli"
         if self.task == "qa":
-            ans = example["answer"]
-            if isinstance(ans, str):
-                ans = [ans]
-            if "ignore_words" in kwargs:
-                kwargs["ignore_words"] = kwargs["ignore_words"] + ans
+            ans = [example["answer"]] if isinstance(ans, str) else example["answer"]
+            ignore_words = ans if self.perturb_prefix == "fairness" else None
             changed = changed or self.call_transform(
-                example, perturb_example, "question", transform, **kwargs
+                example,
+                perturb_example,
+                "question",
+                transform,
+                ignore_words=ignore_words,
             )
         elif self.task == "nli":
             changed = changed or self.call_transform(
@@ -208,8 +203,15 @@ class AuglyPerturbation:
         **kwargs,
     ) -> bool:
         text = src_example[key]
+        if self.perturb_prefix == "fairness":
+            kwargs["ignore_words"] = (
+                kwargs.get("ignore_words", []) + self.get_entity_set(text)
+            )
+        
+        if not kwargs.get("ignore_words", None):
+            kwargs.pop("ignore_words", None)
+        
         text = preprocess(text)
-
         aug_text = transform(text, **kwargs)
 
         if isinstance(aug_text, List):
