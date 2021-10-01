@@ -15,8 +15,9 @@ import sys
 from typing import Any, Dict, List, Optional, Tuple
 
 import boto3
-from augly_perturbation import AuglyPerturbation
 from dynalab_cli.utils import get_tasks
+
+from augly_perturbation import AuglyPerturbation
 
 
 sys.path.append("..")  # noqa
@@ -65,7 +66,7 @@ def download_base_from_s3(args: Any) -> Optional[Tuple[str, str]]:
     # If a local path was passed in, we can just use it
     if os.path.exists(args.s3_uri):
         return args.s3_uri, os.path.basename(args.s3_uri)
-        
+
     try:
         s3_client = boto3.client(
             "s3",
@@ -103,11 +104,7 @@ def load_examples(path: str) -> List[Dict[str, Any]]:
 
 
 def perturb(
-    path: str,
-    task: str,
-    perturb_prefix: str,
-    seed: int,
-    num_threads: int,
+    path: str, task: str, perturb_prefix: str, seed: int, num_threads: int
 ) -> str:
     examples = load_examples(path)
     num_examples = len(examples)
@@ -146,11 +143,7 @@ if __name__ == "__main__":
     logger.info("Downloaded dataset; now will perturb examples")
     seed = None if args.seed == "" else int(args.seed)
     outpath = perturb(
-        local_path,
-        args.task,
-        args.perturb_prefix,
-        seed,
-        args.num_threads,
+        local_path, args.task, args.perturb_prefix, seed, args.num_threads
     )
     print_instructions(args, outpath, base_dataset_name)
     ops = input(f"Remove locally downloaded file at {local_path}? [Y/n] ")

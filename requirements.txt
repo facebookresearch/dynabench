@@ -1,3 +1,4 @@
+augly>=0.1.10
 aiohttp
 bottle
 cheroot
@@ -18,4 +19,3 @@ sklearn
 git+https://github.com/facebookresearch/dynalab.git
 sentencepiece
 spacy
-

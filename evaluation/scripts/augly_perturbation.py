@@ -5,15 +5,14 @@
 import logging
 import os
 import random
-import time
 import zlib
-from collections import defaultdict
 from multiprocessing import Pool
 from typing import Any, Callable, Dict, List, Optional
 
-import spacy
 import augly.text as textaugs
+import spacy
 from augly.utils import pathmgr
+
 from util import postprocess, preprocess
 
 
@@ -58,7 +57,7 @@ class AuglyPerturbation:
                 name_mapping[name] = names[new_group][idx]
 
         return name_mapping
-    
+
     def get_perturbations(self) -> List[Callable]:
         pert_cfg = self.get_perturbation_config()
         perturbations = {}
@@ -157,7 +156,7 @@ class AuglyPerturbation:
         uid_hash = zlib.adler32(perturb_example["uid"].encode())
         random.seed((self.seed + uid_hash) % 2 ** 32)
         transform = self.perturbations[transform_name]
-        
+
         changed = False
 
         # Perturb context for all tasks if it exists
@@ -174,7 +173,11 @@ class AuglyPerturbation:
 
         # Perturb additional fields for task "qa" and "nli"
         if self.task == "qa":
-            ans = [example["answer"]] if isinstance(ans, str) else example["answer"]
+            ans = (
+                [example["answer"]]
+                if isinstance(example["answer"], str)
+                else example["answer"]
+            )
             ignore_words = ans if self.perturb_prefix == "fairness" else None
             changed = changed or self.call_transform(
                 example,
@@ -203,13 +206,13 @@ class AuglyPerturbation:
     ) -> bool:
         text = src_example[key]
         if self.perturb_prefix == "fairness":
-            kwargs["ignore_words"] = (
-                kwargs.get("ignore_words", []) + self.get_entity_set(text)
-            )
-        
+            kwargs["ignore_words"] = kwargs.get(
+                "ignore_words", []
+            ) + self.get_entity_set(text)
+
         if not kwargs.get("ignore_words", None):
             kwargs.pop("ignore_words", None)
-        
+
         text = preprocess(text)
         aug_text = transform(text, **kwargs)
 
@@ -220,10 +223,10 @@ class AuglyPerturbation:
         aug_example[key] = postprocess(aug_text)
 
         # The fairness augs often don't change anything; we don't want to record the
-        # perturbed text if nothing has changed (but `aug_text == text` might be true due
-        # to tokenizing/detokenizing noise), so we check if all the non-whitespace chars
-        # match. But we can't do this for robustness perturbations like `SplitWords`
-        # which inserts spaces, so then we use `aug_text == text`.
+        # perturbed text if nothing has changed (but `aug_text == text` might be true
+        # due to tokenizing/detokenizing noise), so we check if all the non-whitespace
+        # charsmatch. But we can't do this for robustness perturbations like
+        # `SplitWords` which inserts spaces, so then we use `aug_text == text`.
         changed = (
             "".join(aug_text.split()) != "".join(text.split())
             if self.perturb_prefix == "fairness"
