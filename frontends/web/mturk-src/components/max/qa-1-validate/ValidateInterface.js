@@ -61,12 +61,17 @@ class ValidateInterface extends React.Component {
       example: {},
       comment: {},
       curQId: 0,
+      action: null,
+      actionLabel: null,
+      humanAnsValid: false,
       processingResponse: false,
       processedFirstExample: false,
       loadingNewExample: true,
+      showNext: false,
     };
     this.getNewExample = this.getNewExample.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
+    this.handleNextExample = this.handleNextExample.bind(this);
     this.setComment = this.setComment.bind(this);
     this.handleTaskSubmit = this.handleTaskSubmit.bind(this);
   }
@@ -105,20 +110,28 @@ class ValidateInterface extends React.Component {
         )
         .then(
           (result) => {
-            console.log("Example: ");
-            console.log(result);
+            // console.log("Example: ");
+            // console.log(result);
             this.setState({
               example: result,
               curQId: this.state.curQId + 1,
+              action: null,
+              actionLabel: null,
+              humanAnsValid: false,
+              showNext: false,
               processingResponse: false,
               processedFirstExample: true,
             });
           },
           (error) => {
-            console.log("Error getting new example: ");
-            console.log(error);
+            // console.log("Error getting new example: ");
+            // console.log(error);
             this.setState({
               example: {},
+              action: null,
+              actionLabel: null,
+              humanAnsValid: false,
+              showNext: false,
               processingResponse: false,
               processedFirstExample: true,
             });
@@ -146,23 +159,48 @@ class ValidateInterface extends React.Component {
   handleResponse(action) {
     console.log("Processing action: " + action)
 
-    let action_label = null;
-    if (action === "valid") {
-      action_label = "correct";
-    } else if (action === "flagged") {
-      action_label = "flagged";
+    if (action === "humanexample_valid") {
+      this.setState({ 
+        action: null,
+        actionLabel: null,
+        humanAnsValid: true,
+        showNext: false,
+      });
     } else {
-      action_label = "incorrect";
-    }
+      let humanAnsValid = false;
+      if (action === "valid" || action === "invalid_aicorrect") {
+        humanAnsValid = true;
+      }
 
+      let action_label = null;
+      if (action === "valid") {
+        action_label = "correct";
+      } else if (action === "flagged") {
+        action_label = "flagged";
+      } else {
+        action_label = "incorrect";
+      }
+      this.setState({ 
+        action: action,
+        actionLabel: action_label,
+        humanAnsValid: humanAnsValid,
+        showNext: true,
+      });
+    }
+  }
+
+  handleNextExample() {
     const metadata = {
       annotator_id: this.props.providerWorkerId,
       mephisto_id: this.props.mephistoWorkerId,
       agentId: this.props.agentId,
       assignmentId: this.props.assignmentId,
-      validationState: action,
+      validationState: this.state.action,
+      actionLabel: this.state.actionLabel,
       example_tags: this.getTagList(this.props),
     };
+    // console.log("Metadata:");
+    // console.log(metadata);
 
     this.setState(
       {
@@ -171,7 +209,7 @@ class ValidateInterface extends React.Component {
         this.api
           .validateExample(
             this.state.example.id, 
-            action_label,
+            this.state.actionLabel,
             this.userMode,
             metadata,
             this.props.providerWorkerId
@@ -247,7 +285,7 @@ class ValidateInterface extends React.Component {
                 <p>Thank you for completing the HIT. You may now submit it by clicking below:</p>
                 <p>
                   <Button
-                    className="btn btn-primary btn-success mt-2"
+                    className="btn btn-primary btn-success mt-2 py-2"
                     onClick={this.handleTaskSubmit}
                   >
                     Submit HIT
@@ -285,7 +323,7 @@ class ValidateInterface extends React.Component {
                           <Card.Body className="p-3">
                             <Row>
                               <Col xs={12}>
-                                <div className="mb-3">
+                                <div className="mb-2">
                                   <h6 className="text-uppercase dark-blue-color spaced-header">
                                     {this.state.processingResponse ? (
                                       <Spinner
@@ -297,92 +335,123 @@ class ValidateInterface extends React.Component {
                                     ) : null}
                                     Question {this.state.curQId} of {this.batchAmount}:
                                   </h6>
-                                  <p><b>{JSON.parse(this.state.example.input_json).question}</b></p>
+                                  <p className="mb-2"><i>Q</i>: <b>{JSON.parse(this.state.example.input_json).question}</b></p>
                                 </div>
                               </Col>
                             </Row>
-                            <p>
-                              A human answered "<b style={{background: "rgba(132, 210, 255, 0.6)"}}>{human_ans}</b>" 
-                              {model_ans != null ? (
-                                <> and the AI answered "<b style={{background: "rgba(0, 255, 162, 0.8)"}}>{model_ans}</b>"</>
-                              ) : null}
-                              .
-                            </p>
-                            <p><small>Please validate this example below (kindly refer to the instructions if you are unsure what any of the buttons mean). Remember, for an example to be <b>valid</b>, the human answer needs to be correct and the AI answer (if there is one) needs to be wrong. If there is no AI answer, you only need to validate the human answer.</small></p>
-                          </Card.Body>
-                          <Card.Footer>
-                            <button
-                              data-index={this.props.index}
-                              onClick={() => this.handleResponse("valid")}
-                              type="button"
-                              className="btn btn-success btn-sm flex-fill mr-2"
-                              disabled={this.state.processingResponse}
-                            >
-                              <FaThumbsUp /> Valid
-                            </button>{" "}
-
-                            <button
-                              data-index={this.props.index}
-                              onClick={() => this.handleResponse("invalid_badquestion")}
-                              type="button"
-                              className="btn btn-warning btn-sm flex-fill mr-2"
-                              disabled={this.state.processingResponse}
-                            >
-                              <FaThumbsDown /> Invalid: <br />Bad Question
-                            </button>{" "}
-
-                            <button
-                              data-index={this.props.index}
-                              onClick={() => this.handleResponse("invalid_badanswer")}
-                              type="button"
-                              className="btn btn-warning btn-sm flex-fill mr-2"
-                              disabled={this.state.processingResponse}
-                            >
-                              <FaThumbsDown /> Invalid: <br />Bad Human Answer
-                            </button>{" "}
-
-                            {model_ans != null ? (
+                            <p><i>A</i>: <span style={{background: "rgba(132, 210, 255, 0.6)"}}>{human_ans}</span></p>
+                            <p><b>Is this example correct?</b> <small>(please refer to the instructions above if you are unsure)</small></p>
+                            <div style={{display: "flex"}}>
                               <button
                                 data-index={this.props.index}
-                                onClick={() => this.handleResponse("invalid_aicorrect")}
+                                onClick={() => this.handleResponse("humanexample_valid")}
+                                type="button"
+                                className="btn btn-success btn-sm flex-fill mr-2"
+                                disabled={this.state.processingResponse}
+                              >
+                                <FaThumbsUp /> Valid
+                              </button>{" "}
+
+                              <button
+                                data-index={this.props.index}
+                                onClick={() => this.handleResponse("invalid_badquestion")}
                                 type="button"
                                 className="btn btn-warning btn-sm flex-fill mr-2"
                                 disabled={this.state.processingResponse}
                               >
-                                <FaThumbsDown /> Invalid: <br />AI Correct
-                              </button>
-                            ) : null}
+                                <FaThumbsDown /> Invalid: <br />Bad Question
+                              </button>{" "}
 
-                            <button
-                              data-index={this.props.index}
-                              onClick={() => this.handleResponse("invalid_multiplevalidanswers")}
-                              type="button"
-                              className="btn btn-warning btn-sm flex-fill mr-2"
-                              disabled={this.state.processingResponse}
-                            >
-                              <FaThumbsDown /> Invalid: <br />Multiple Valid Answers
-                            </button>{" "}
+                              <button
+                                data-index={this.props.index}
+                                onClick={() => this.handleResponse("invalid_badanswer")}
+                                type="button"
+                                className="btn btn-warning btn-sm flex-fill mr-2"
+                                disabled={this.state.processingResponse}
+                              >
+                                <FaThumbsDown /> Invalid: <br />Bad Human Answer
+                              </button>{" "}                        
 
-                            <button
-                              data-index={this.props.index}
-                              onClick={() => this.handleResponse("invalid_other")}
-                              type="button"
-                              className="btn btn-warning btn-sm flex-fill mr-2"
-                              disabled={this.state.processingResponse}
-                            >
-                              <FaThumbsDown /> Invalid: <br />Other
-                            </button>{" "}
+                              <button
+                                data-index={this.props.index}
+                                onClick={() => this.handleResponse("invalid_multiplevalidanswers")}
+                                type="button"
+                                className="btn btn-warning btn-sm flex-fill mr-2"
+                                disabled={this.state.processingResponse}
+                              >
+                                <FaThumbsDown /> Invalid: <br />Multiple Valid Answers
+                              </button>{" "}
 
-                            <button
-                              data-index={this.props.index}
-                              onClick={() => this.handleResponse("flagged")}
-                              type="button"
-                              className="btn btn-danger btn-sm flex-fill mr-2"
-                              disabled={this.state.processingResponse}
-                            >
-                              <FaFlag /> Flag
-                            </button>{" "}
-                          </Card.Footer>
+                              <button
+                                data-index={this.props.index}
+                                onClick={() => this.handleResponse("invalid_other")}
+                                type="button"
+                                className="btn btn-warning btn-sm flex-fill mr-2"
+                                disabled={this.state.processingResponse}
+                              >
+                                <FaThumbsDown /> Invalid: <br />Other
+                              </button>{" "}
+
+                              <button
+                                data-index={this.props.index}
+                                onClick={() => this.handleResponse("flag")}
+                                type="button"
+                                className="btn btn-danger btn-sm flex-fill mr-2"
+                                disabled={this.state.processingResponse}
+                              >
+                                <FaFlag /> Flag
+                              </button>{" "}
+                            </div>
+
+                            {this.state.humanAnsValid ? (
+                              <>
+                                <p className="mt-4">The AI answered "<span style={{background: "rgba(0, 255, 162, 0.8)"}}>{model_ans}</span>". <b>Is the AI answer also correct?</b></p>
+                                <div style={{display: "flex"}}>
+                                  <button
+                                    data-index={this.props.index}
+                                    onClick={() => this.handleResponse("invalid_aicorrect")}
+                                    type="button"
+                                    className="btn btn-success btn-sm flex-fill mr-2 py-3"
+                                    disabled={this.state.processingResponse}
+                                  >
+                                    <FaThumbsUp /> Yes, the AI answer is correct.
+                                  </button>{" "}
+
+                                  <button
+                                    data-index={this.props.index}
+                                    onClick={() => this.handleResponse("valid")}
+                                    type="button"
+                                    className="btn btn-warning btn-sm flex-fill mr-2 py-3"
+                                    disabled={this.state.processingResponse}
+                                  >
+                                    <FaThumbsDown /> No, the AI answer is wrong.
+                                  </button>{" "}
+                                </div>
+                              </>
+                            ) : null }
+                          </Card.Body>
+
+                          {this.state.showNext ? (
+                            <Card.Footer>
+                              <button
+                                onClick={() => this.handleNextExample()}
+                                type="button"
+                                className="btn btn-primary btn-sm mr-2 py-2"
+                                disabled={this.state.processingResponse}
+                              >
+                                {this.state.processingResponse ? (
+                                  <Spinner
+                                    className="mr-2"
+                                    animation="border"
+                                    role="status"
+                                    size="sm"
+                                  />
+                                ) : null}
+                                Next Example
+                              </button>{" "}
+
+                            </Card.Footer>
+                          ) : null }
                         </>
                       ) : (
                         <Card.Body className="p-3">
@@ -394,7 +463,7 @@ class ValidateInterface extends React.Component {
                                   <p>Thank you for completing the HIT. You may now submit it by clicking below:</p>
                                   <p>
                                     <Button
-                                      className="btn btn-primary btn-success mt-2"
+                                      className="btn btn-primary btn-success mt-2 py-2"
                                       onClick={this.handleTaskSubmit}
                                     >
                                       Submit HIT

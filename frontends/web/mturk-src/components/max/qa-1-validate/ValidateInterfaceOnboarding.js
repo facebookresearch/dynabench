@@ -59,6 +59,7 @@ class ValidateInterfaceOnboarding extends React.Component {
     this.state = {
       example: {},
       label: null,
+      humanAnsValid: false,
     };
     this.getNewExample = this.getNewExample.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
@@ -115,9 +116,19 @@ class ValidateInterfaceOnboarding extends React.Component {
     });
   }
   handleResponse(action) {
-    this.setState({ label: action });
-    if (this.state.example.correct_a == action) {
-      this.props.showOnboardingNext();
+    if (action === "humanexample_valid") {
+      this.setState({ label: null, humanAnsValid: true });
+      this.props.showOnboardingNext(false);
+    } else {
+      this.setState({ label: action });
+      if (!(action === "valid" || action === "invalid_aicorrect")) {
+        this.setState({ humanAnsValid: false });
+      }
+      if (this.state.example.correct_a == action) {
+        this.props.showOnboardingNext(true);
+      } else {
+        this.props.showOnboardingNext(false);
+      }
     }
   }
   render() {
@@ -126,7 +137,7 @@ class ValidateInterfaceOnboarding extends React.Component {
         answer={this.state.example.answer_obj}
       />
     );
-    var answer_correct = <></>;
+    var answer_correct = "";
     if (this.state.label !== null) {
       if (this.state.example.correct_a == this.state.label) {
         answer_correct = (
@@ -158,87 +169,117 @@ class ValidateInterfaceOnboarding extends React.Component {
                     <Card.Body className="p-3">
                       <Row>
                         <Col xs={12}>
-                          <div className="mb-3">
+                          <div className="mb-2">
                             <h6 className="text-uppercase dark-blue-color spaced-header">
                               Question {this.step + 1} of 5:
                             </h6>
-                            <p><b>{this.state.example.text}</b></p>
+                            <p className="mb-2"><i>Q</i>: <b>{this.state.example.text}</b></p>
                           </div>
                         </Col>
                       </Row>
-                      <p>A human answered "<b style={{background: "rgba(132, 210, 255, 0.6)"}}>{this.state.example.a}</b>" and the AI answered "<b style={{background: "rgba(0, 255, 162, 0.8)"}}>{this.state.example.model_a}</b>".</p>
-                      <p><small>Please validate this example below (kindly refer to the instructions if you are unsure what any of the buttons mean). Remember, for an example to be <b>valid</b>, the human answer needs to be correct and the AI answer (if there is one) needs to be wrong.</small></p>
+                      <p><i>A</i>: <span style={{background: "rgba(132, 210, 255, 0.6)"}}>{this.state.example.a}</span></p>
+                      <p><b>Is this example correct?</b> <small>(please refer to the instructions above if you are unsure)</small></p>
+                      <div style={{display: "flex"}}>
+                        <button
+                          data-index={this.props.index}
+                          onClick={() => this.handleResponse("humanexample_valid")}
+                          type="button"
+                          className="btn btn-success btn-sm flex-fill mr-2"
+                        >
+                          <FaThumbsUp /> Valid
+                        </button>{" "}
+
+                        <button
+                          data-index={this.props.index}
+                          onClick={() => this.handleResponse("invalid_badquestion")}
+                          type="button"
+                          className="btn btn-warning btn-sm flex-fill mr-2"
+                        >
+                          <FaThumbsDown /> Invalid: <br />Bad Question
+                        </button>{" "}
+
+                        <button
+                          data-index={this.props.index}
+                          onClick={() => this.handleResponse("invalid_badanswer")}
+                          type="button"
+                          className="btn btn-warning btn-sm flex-fill mr-2"
+                        >
+                          <FaThumbsDown /> Invalid: <br />Bad Human Answer
+                        </button>{" "}                        
+
+                        <button
+                          data-index={this.props.index}
+                          onClick={() => this.handleResponse("invalid_multiplevalidanswers")}
+                          type="button"
+                          className="btn btn-warning btn-sm flex-fill mr-2"
+                        >
+                          <FaThumbsDown /> Invalid: <br />Multiple Valid Answers
+                        </button>{" "}
+
+                        <button
+                          data-index={this.props.index}
+                          onClick={() => this.handleResponse("invalid_other")}
+                          type="button"
+                          className="btn btn-warning btn-sm flex-fill mr-2"
+                        >
+                          <FaThumbsDown /> Invalid: <br />Other
+                        </button>{" "}
+
+                        <button
+                          data-index={this.props.index}
+                          onClick={() => this.handleResponse("flag")}
+                          type="button"
+                          className="btn btn-danger btn-sm flex-fill mr-2"
+                        >
+                          <FaFlag /> Flag
+                        </button>{" "}
+
+                      </div>
+
+                      {this.state.humanAnsValid ? (
+                        <>
+                          <p className="mt-4">The AI answered "<span style={{background: "rgba(0, 255, 162, 0.8)"}}>{this.state.example.model_a}</span>". <b>Is the AI answer also correct?</b></p>
+                          <div style={{display: "flex"}}>
+                            <button
+                              data-index={this.props.index}
+                              onClick={() => this.handleResponse("invalid_aicorrect")}
+                              type="button"
+                              className="btn btn-success btn-sm flex-fill mr-2 py-3"
+                            >
+                              <FaThumbsUp /> Yes, the AI answer is correct.
+                            </button>{" "}
+
+                            <button
+                              data-index={this.props.index}
+                              onClick={() => this.handleResponse("valid")}
+                              type="button"
+                              className="btn btn-warning btn-sm flex-fill mr-2 py-3"
+                            >
+                              <FaThumbsDown /> No, the AI answer is wrong.
+                            </button>{" "}
+                          </div>
+                        </>
+                      ) : null }
+
+                      {answer_correct ? (
+                        <div className="mt-4 pt-2" style={{borderTop: "1px solid #eee"}}>
+                          {answer_correct}
+                        </div>
+                      ) : null}
+
                     </Card.Body>
-                    <Card.Footer>
+
+                    {/* <Card.Footer>
                       <button
-                        data-index={this.props.index}
-                        onClick={() => this.handleResponse("valid")}
+                        onClick={() => this.nextExample()}
                         type="button"
-                        className="btn btn-success btn-sm flex-fill mr-2"
+                        className="btn btn-primary btn-sm mr-2 py-2"
                       >
-                        <FaThumbsUp /> Valid
+                        Next Example
                       </button>{" "}
 
-                      <button
-                        data-index={this.props.index}
-                        onClick={() => this.handleResponse("invalid_badquestion")}
-                        type="button"
-                        className="btn btn-warning btn-sm flex-fill mr-2"
-                      >
-                        <FaThumbsDown /> Invalid: <br />Bad Question
-                      </button>{" "}
-
-                      <button
-                        data-index={this.props.index}
-                        onClick={() => this.handleResponse("invalid_badanswer")}
-                        type="button"
-                        className="btn btn-warning btn-sm flex-fill mr-2"
-                      >
-                        <FaThumbsDown /> Invalid: <br />Bad Human Answer
-                      </button>{" "}
-
-                      <button
-                        data-index={this.props.index}
-                        onClick={() => this.handleResponse("invalid_aicorrect")}
-                        type="button"
-                        className="btn btn-warning btn-sm flex-fill mr-2"
-                      >
-                        <FaThumbsDown /> Invalid: <br />AI Correct
-                      </button>{" "}
-
-                      <button
-                        data-index={this.props.index}
-                        onClick={() => this.handleResponse("invalid_multiplevalidanswers")}
-                        type="button"
-                        className="btn btn-warning btn-sm flex-fill mr-2"
-                      >
-                        <FaThumbsDown /> Invalid: <br />Multiple Valid Answers
-                      </button>{" "}
-
-                      <button
-                        data-index={this.props.index}
-                        onClick={() => this.handleResponse("invalid_other")}
-                        type="button"
-                        className="btn btn-warning btn-sm flex-fill mr-2"
-                      >
-                        <FaThumbsDown /> Invalid: <br />Other
-                      </button>{" "}
-
-                      <button
-                        data-index={this.props.index}
-                        onClick={() => this.handleResponse("flag")}
-                        type="button"
-                        className="btn btn-danger btn-sm flex-fill mr-2"
-                      >
-                        <FaFlag /> Flag
-                      </button>{" "}
-
-                    </Card.Footer>
-                    <div style={{backgroundColor: "rgba(0,0,0,.03)"}}>
-                      <Col xs={12}>
-                        {answer_correct}
-                      </Col>
-                    </div>
+                    </Card.Footer> */}
+                    
                   </>
                 ) : (
                   <Card.Body className="p-3">

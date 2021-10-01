@@ -38,17 +38,18 @@ class TaskInstructions extends React.Component {
         <p>
           You will be shown a passage of text from Wikipedia, and a question.
           A human's answer to the question is highlighted in the passage. 
-          An AI answer will also be shown in some cases.
-          Please validate whether the answer is correct or not. If there is an AI 
-          answer, it has to be incorrect for the example to be valid.
+          Please validate whether the answer is correct or not. 
+          You will then also be shown an AI answer for the question and
+          will be asked to validate whether the AI answer is also correct
+          or whether the AI answer is wrong.
         </p>
         <p>The possible validation options are:</p>
         <ul>
-          <li><b>Valid</b> - The human answer is a correct answer, there is only one valid answer, and the AI answer is incorrect.</li>
+          <li><b>Valid</b> - The question is understandable, the human answer is a correct answer, and there is one entity that is clearly the best answer to the question.</li>
           <li><b>Invalid: Bad Question</b> - You cannot understand the question, or it cannot be answered from the passage.</li>
           <li><b>Invalid: Bad Human Answer</b> - The human answer is incorrect.</li>
-          <li><b>Invalid: AI Correct</b> - The human answer is correct, but the AI answer is also correct.</li>
-          <li><b>Invalid: Multiple Valid Answers</b> - There isn't one answer which is clearly the best answer to the question, but there are multiple equally valid ones.</li>
+          {/* <li><b>Invalid: AI Correct</b> - The human answer is correct, but the AI answer is also correct.</li> */}
+          <li><b>Invalid: Multiple Valid Answers</b> - There isn't one entity which clearly answers the question the best, but there are multiple equally valid ones. For example, if the question is <i>"Give an example of a colour?"</i> and there are multiple different colours listed in the passage (e.g. red, blue, green), then that question has multiple valid answers. However, if the question is <i>"What is the name of the person who is often credited with inventing the telephone?"</i> and the passage contains the text <i>"Alexander Graham Bell is often credited with being the inventor of the telephone..."</i> then while <i>"Alexander"</i>, <i>"Alexander Graham"</i>, and <i>"Alexander Graham Bell"</i> are all correct answers, they refer to the same entity and thus this example is considered <b>valid</b>. However, if the AI provides any of these as the answer then the AI is considered correct.</li>
           <li><b>Invalid: Other</b> - Invalid for any other reason.</li>
           <li><b>Flag</b> - Flag this example as inappropriate.</li>
         </ul>
@@ -90,7 +91,6 @@ class QAValidationTaskOnboarder extends React.Component {
     this.completeOnboarding = this.completeOnboarding.bind(this);
     this.nextOnboarding = this.nextOnboarding.bind(this);
     this.showOnboardingNext = this.showOnboardingNext.bind(this);
-    this.showOnboardingSubmit = this.showOnboardingSubmit.bind(this);
   }
   showInstructions() {
     this.setState({ showInstructions: !this.state.showInstructions });
@@ -101,15 +101,12 @@ class QAValidationTaskOnboarder extends React.Component {
   completeOnboarding() {
     this.props.onSubmit({ success: true }); // if they failed, set to false
   }
-  showOnboardingNext() {
+  showOnboardingNext(action) {
     if (this.state.onboardingStep >= 5) {
-      this.showOnboardingSubmit();
+      this.setState({ showOnboardingSubmit: action, showNext: false });
     } else {
-      this.setState({ showNext: true });
+      this.setState({ showNext: action });
     }
-  }
-  showOnboardingSubmit() {
-    this.setState({ showOnboardingSubmit: true, showNext: false });
   }
   
   render() {
@@ -171,7 +168,7 @@ class QAValidationTaskOnboarder extends React.Component {
             <InputGroup className="px-5">
               {this.state.showNext && (
                 <Button
-                  className="btn btn-primary mt-2 mr-2"
+                  className="btn btn-primary mt-2 py-2 mr-2"
                   onClick={this.nextOnboarding}
                 >
                   Next Example
@@ -181,7 +178,7 @@ class QAValidationTaskOnboarder extends React.Component {
                 <Col lg={12} className="mt-3">
                   <p><b>Congratulations</b>, you have successfully completed onboarding! Please click the button below to proceed to the main task.</p>
                   <Button
-                    className="btn btn-primary btn-success mt-2"
+                    className="btn btn-primary btn-success mt-2 py-2"
                     onClick={this.completeOnboarding}
                   >
                     Complete Onboarding
