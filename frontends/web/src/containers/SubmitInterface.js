@@ -297,7 +297,7 @@ class SubmitInterface extends React.Component {
                                     size="sm"
                                   />
                                 ) : (
-                                  "Add New Dataset"
+                                  "Upload Predictions"
                                 )}
                               </Button>
                             ) : null}
