@@ -44,8 +44,8 @@ Every task has two main types of _datasets_: leaderboard and non-leaderboard dat
 Under the datasets tab in the task owners interface, you will be able to add, modify and remove new datasets for evaluation. New datasets are uploaded in a `jsonl` format, with fields corresponding to the fields defined in your [task annotation config](#annotation-config), as well as a `uid` field designating a unique identifier for the given example. For example, the first two lines for a classification task could read:
 
 ```
-{'uid': '1', 'text': 'Hello world', 'label': 1}
-{'uid': '2', 'text': 'Foo bar', 'label': 0}
+{"uid": '1', "text": "Hello world", "label": 1}
+{"uid": '2', "text": "Foo bar", "label": 0}
 ```
 
 If your task supports fairness and robustness evaluations, for every dataset you upload, you can also upload perturbed versions that will be used for the fairness and robustness metrics. In order to generate perturbations, use the tools in the `evaluation/scripts` directory.
@@ -59,8 +59,8 @@ Tasks can collect data over multiple _rounds_. A round of data collection usuall
 Most tasks on Dynabench involve contextualized data collection: a question is written for a given passage or image, a hypothesis is written for a given premise, et cetera. For every round in your task, you can add contexts under the rounds tab by clicking the "Upload Contexts" section. The format for a context corresponds to the fields defined in your [task annotation config](#annotation-config). Optionally, you can specify `tag` and filter for these tags if you customize your data collection frontend (e.g. when you want to collect Mechanical Turker data for a subset of your full dataset). The format for the contexts is `jsonl`. For example, the first two lines for a classification task could read:
 
 ```
-{'context': {'statement': 'Lorem ipsum dolor et cetera'}, 'tag': null, 'metadata': {}}
-{'context': {'statement': 'Some other context'}, 'tag': null, 'metadata': {}}
+{"context": {"statement": "Lorem ipsum dolor et cetera"}, "tag": null, "metadata": {}}
+{"context": {"statement": "Some other context"}, "tag": null, "metadata": {}}
 ```
 
 ## Model evaluation
@@ -106,8 +106,8 @@ We recommend that you look through the examples before reading further. The anno
 5. `perf_metric`: This is the metric that is used to evaluate the performance of an uploaded model. There are six to choose from: `macro_f1`, `squad_f1`, `accuracy`, `bleu`, `sp_bleu`, `vqa_accuracy`. They all require `reference_name` as a constructor arg, which specifies which model output to use to compute the score. The score is computed by comparing the model output keyed by `reference_name` with the gold output keyed by `reference_name` in an uploaded dataset. If you are using `squad_f1`, `accuracy`, or `vqa` accuracy, you have the option of uploading datasets with a list of candidates keyed by `reference_name` instead of just one. For example:
 
     ```
-    Model output for an example: {“answer”: “the sky is blue”}
-    Example in the dataset: {“question”: “What color is the sky?”, “answer”: [“the sky is blue”, “the sky is light blue”, “the sky is cerulean”]}
+    Model output for an example: {"answer": "the sky is blue"}
+    Example in the dataset: {"question": "What color is the sky?", "answer": ["the sky is blue", "the sky is light blue", "the sky is cerulean"]}
     ```
 
 6. `delta_metrics`: A delta metric returns the value that the perf metric would return, if it was run on a perturbed version of the dataset. There are two to choose from: `fairness` and `robustness`; neither require any constructor_args. If you select either of these delta_metrics, then any datasets that you upload for your task must be accompanied by the corresponding perturbed versions. We have released the tools that we use for perturbing Hate Speech, Question Answering, Natural Language Inference, and Sentiment Analysis datasets in the `evaluation/scripts` directory.
