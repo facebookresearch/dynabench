@@ -110,8 +110,8 @@ class ValidateInterface extends React.Component {
         )
         .then(
           (result) => {
-            // console.log("Example: ");
-            // console.log(result);
+            console.log("Example: ");
+            console.log(result);
             this.setState({
               example: result,
               curQId: this.state.curQId + 1,
@@ -237,7 +237,10 @@ class ValidateInterface extends React.Component {
     var content;
     if (this.state.example.context) {
       var example_metadata = JSON.parse(this.state.example.metadata_json);
-      var exampleHistory = JSON.parse(example_metadata.exampleHistory);
+      var exampleHistory = [];
+      if (exampleHistory in example_metadata) {
+        exampleHistory = JSON.parse(example_metadata.exampleHistory);
+      }
 
       // Get last answer
       var ans_start = null;
@@ -264,7 +267,10 @@ class ValidateInterface extends React.Component {
         }
       }
 
-      var answer = [{ start: ans_start, end: ans_end, tag: "ANS" }];
+      var answer = []
+      if (ans_start !== null) {
+        answer = [{ start: ans_start, end: ans_end, tag: "ANS" }];
+      }
       var human_ans = JSON.parse(this.state.example.input_json).answer;
       var model_ans = JSON.parse(this.state.example.output_json).answer;
 
