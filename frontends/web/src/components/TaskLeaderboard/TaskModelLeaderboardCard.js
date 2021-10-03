@@ -237,11 +237,16 @@ const TaskModelLeaderboardCard = (props) => {
               <Modal.Title>Dynaboard Information</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              This is a <b>dynamic leaderboard</b>. It allows you, the user, to
-              specify your own utility function over a variety of metrics and
-              datasets, which determines the final ranking of models for this
-              particular task. The default initial weights are specified by the
-              task owners.
+              This is a{" "}
+              <b>
+                <a href={"https://arxiv.org/abs/2106.06052"}>
+                  dynamic leaderboard
+                </a>
+              </b>
+              . It allows you, the user, to specify your own utility function
+              over a variety of metrics and datasets, which determines the final
+              ranking of models for this particular task. The default initial
+              weights are specified by the task owners.
               <br />
               <br />
               There are a few important caveats that you should keep in mind
