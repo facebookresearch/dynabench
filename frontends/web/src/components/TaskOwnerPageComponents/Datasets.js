@@ -260,11 +260,7 @@ const Datasets = (props) => {
                             <Col sm="8">
                               <Form.Control
                                 as="select"
-                                value={
-                                  values.rid === 0
-                                    ? props.task.cur_round
-                                    : values.rid
-                                }
+                                value={values.rid}
                                 onChange={handleChange}
                               >
                                 {[
