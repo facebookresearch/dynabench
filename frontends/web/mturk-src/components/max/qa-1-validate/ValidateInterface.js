@@ -238,7 +238,7 @@ class ValidateInterface extends React.Component {
     if (this.state.example.context) {
       var example_metadata = JSON.parse(this.state.example.metadata_json);
       var exampleHistory = [];
-      if (exampleHistory in example_metadata) {
+      if ("exampleHistory" in example_metadata) {
         exampleHistory = JSON.parse(example_metadata.exampleHistory);
       }
 
