@@ -295,17 +295,25 @@ const Datasets = (props) => {
                               <Form.Label column>Round</Form.Label>
                               <Col sm="8">
                                 <Form.Control
-                                  type="number"
-                                  min={1}
-                                  max={props.task.cur_round}
-                                  step={1}
+                                  as="select"
                                   value={
                                     values.rid === 0
                                       ? props.task.cur_round
                                       : values.rid
                                   }
                                   onChange={handleChange}
-                                />
+                                >
+                                  {[
+                                    "None",
+                                    ...[
+                                      ...Array(props.task.cur_round).keys(),
+                                    ].map((i) => i + 1),
+                                  ].map((display, index) => (
+                                    <option key={index} value={index}>
+                                      {display}
+                                    </option>
+                                  ))}
+                                </Form.Control>
                               </Col>
                             </Form.Group>
                           ) : null}
