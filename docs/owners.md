@@ -44,8 +44,8 @@ Every task has two main types of _datasets_: leaderboard and non-leaderboard dat
 Under the datasets tab in the task owners interface, you will be able to add, modify and remove new datasets for evaluation. New datasets are uploaded in a `jsonl` format, with fields corresponding to the fields defined in your [task annotation config](#annotation-config), as well as a `uid` field designating a unique identifier for the given example. For example, the first two lines for a classification task could read:
 
 ```
-{"uid": '1', "text": "Hello world", "label": 1}
-{"uid": '2', "text": "Foo bar", "label": 0}
+{"uid": "1", "text": "Hello world", "label": 1}
+{"uid": "2", "text": "Foo bar", "label": 0}
 ```
 
 If your task supports fairness and robustness evaluations, for every dataset you upload, you can also upload perturbed versions that will be used for the fairness and robustness metrics. In order to generate perturbations, use the tools in the `evaluation/scripts` directory.
