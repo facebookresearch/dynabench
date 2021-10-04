@@ -479,8 +479,8 @@ class ProfilePage extends React.Component {
 
     const initialValues = {
       username: this.state.user.username,
-      realname: this.state.user.realname,
-      affiliation: this.state.user.affiliation,
+      realname: this.state.user.realname || "",
+      affiliation: this.state.user.affiliation || "",
     };
 
     return (
