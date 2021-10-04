@@ -53,19 +53,6 @@ const FileUpload = (props) => {
 };
 
 const Datasets = (props) => {
-  const changeCorrespondsToRound = (
-    corresponds_to_round,
-    default_rid,
-    setFieldValue
-  ) => {
-    const updated_corresponds_to_round = !corresponds_to_round;
-    setFieldValue("corresponds_to_round", updated_corresponds_to_round);
-    if (updated_corresponds_to_round) {
-      setFieldValue("rid", default_rid);
-    } else {
-      setFieldValue("rid", 0); //0 means that the dataset does not correspond to a round.
-    }
-  };
   const delta_metric_configs = JSON.parse(
     props.task.annotation_config_json
   ).delta_metrics;
@@ -213,7 +200,6 @@ const Datasets = (props) => {
                   initialValues={{
                     id: dataset.id,
                     source_url: dataset.source_url,
-                    corresponds_to_round: dataset.rid !== 0,
                     rid: dataset.rid,
                     access_type: dataset.access_type,
                     longdesc: dataset.longdesc,
@@ -283,48 +269,31 @@ const Datasets = (props) => {
                           </Form.Group>
                           <Form.Group
                             as={Row}
+                            controlId="rid"
                             className="py-3 my-0 border-bottom"
                           >
-                            <Form.Label column>
-                              Corresponds to a Round
-                            </Form.Label>
+                            <Form.Label column>Round</Form.Label>
                             <Col sm="8">
-                              <Form.Check
-                                checked={values.corresponds_to_round}
-                                onClick={() =>
-                                  changeCorrespondsToRound(
-                                    values.corresponds_to_round,
-                                    props.task.cur_round,
-                                    setFieldValue
-                                  )
-                                }
+                              <Form.Control
+                                as="select"
+                                value={values.rid}
                                 onChange={handleChange}
-                              />
+                              >
+                                {[
+                                  "None",
+                                  ...Array.from(
+                                    { length: props.task.cur_round },
+                                    (x, i) => i + 1
+                                  ),
+                                ].map((display, index) => (
+                                  <option key={index} value={index}>
+                                    {display}
+                                  </option>
+                                ))}
+                              </Form.Control>
                             </Col>
                           </Form.Group>
-                          {values.corresponds_to_round ? (
-                            <Form.Group
-                              as={Row}
-                              controlId="rid"
-                              className="py-3 my-0 border-bottom"
-                            >
-                              <Form.Label column>Round</Form.Label>
-                              <Col sm="8">
-                                <Form.Control
-                                  type="number"
-                                  min={1}
-                                  max={props.task.cur_round}
-                                  step={1}
-                                  value={
-                                    values.rid === 0
-                                      ? props.task.cur_round
-                                      : values.rid
-                                  }
-                                  onChange={handleChange}
-                                />
-                              </Col>
-                            </Form.Group>
-                          ) : null}
+
                           <Form.Group
                             as={Row}
                             controlId="longdesc"
