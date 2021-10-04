@@ -13,6 +13,7 @@ import {
   Button,
   Form,
   Modal,
+  Spinner,
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { Formik } from "formik";
@@ -289,7 +290,15 @@ class SubmitInterface extends React.Component {
                                 className="submit-btn button-ellipse text-uppercase my-4"
                                 disabled={isSubmitting}
                               >
-                                Save
+                                {isSubmitting ? (
+                                  <Spinner
+                                    as="span"
+                                    animation="border"
+                                    size="sm"
+                                  />
+                                ) : (
+                                  "Upload Predictions"
+                                )}
                               </Button>
                             ) : null}
                           </Col>
