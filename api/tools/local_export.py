@@ -4,11 +4,10 @@
 
 import sys
 
-import common.helpers as util
-
 
 sys.path.append("..")  # noqa
 sys.path.append("../../evaluation")  # noqa
+import common.helpers as util  # noqa isort:skip
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
