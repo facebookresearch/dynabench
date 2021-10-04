@@ -9,9 +9,8 @@ import json
 import os
 
 import sqlalchemy as db
+from sqlalchemy.ext.declarative import declarative_base
 from werkzeug.security import generate_password_hash
-
-from models.base import Base
 
 
 def get_cls_name_helper(ss):
@@ -78,6 +77,7 @@ if __name__ == "__main__":
         # echo_pool=True,
     )
     connection = engine.connect()
+    Base = declarative_base()
     Base.metadata.bind = engine
     mods = {}
     for m in os.listdir("models/"):
