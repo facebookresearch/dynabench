@@ -265,9 +265,10 @@ const Datasets = (props) => {
                               >
                                 {[
                                   "None",
-                                  ...[
-                                    ...Array(props.task.cur_round).keys(),
-                                  ].map((i) => i + 1),
+                                  ...Array.from(
+                                    { length: props.task.cur_round },
+                                    (x, i) => i + 1
+                                  ),
                                 ].map((display, index) => (
                                   <option key={index} value={index}>
                                     {display}
