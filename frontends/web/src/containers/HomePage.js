@@ -16,6 +16,7 @@ import {
   CardGroup,
   Modal,
 } from "react-bootstrap";
+import App from './App';
 import { Link } from "react-router-dom";
 import UserContext from "./UserContext";
 import TasksContext from "./TasksContext";
@@ -172,6 +173,7 @@ class HomePage extends React.Component {
                     >
                       Read more
                     </Button>
+
                   </div>
                 </Col>
               </Row>
@@ -207,7 +209,7 @@ class HomePage extends React.Component {
                     </center>
                     <br />
                     */}
-                    <CardGroup>
+                    <CardGroup id="contributed-tasks">
                       {tasks
                         .filter((t) => !t.official)
                         .map((task, index) => (
