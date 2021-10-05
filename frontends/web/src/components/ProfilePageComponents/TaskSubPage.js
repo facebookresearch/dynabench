@@ -29,62 +29,59 @@ const TaskProposalTable = (props) => {
 
   return (
     <Col className="m-auto" lg={8}>
-        <Card className="profile-card">
-          <Card.Body>
-            <Table className="taskTable mb-0">
-              <thead className="blue-color border-bottom">
+      <Card className="profile-card">
+        <Card.Body>
+          <Table className="taskTable mb-0">
+            <thead className="blue-color border-bottom">
+              <tr>
+                <td>
+                  <b>Name</b>
+                </td>
+                <td>
+                  <b>Description</b>
+                </td>
+              </tr>
+            </thead>
+            <tbody>
+              {!data.length ? (
                 <tr>
-                  <td>
-                    <b>Name</b>
-                  </td>
-                  <td>
-                    <b>Description</b>
+                  <td colSpan="4">
+                    <div className="text-center">No data found</div>
                   </td>
                 </tr>
-              </thead>
-              <tbody>
-                {!data.length ? (
-                  <tr>
-                    <td colSpan="4">
-                      <div className="text-center">No data found</div>
-                    </td>
+              ) : null}
+              {data.map((task) => {
+                return (
+                  <tr
+                    className="cursor-pointer"
+                    key={task.id}
+                    onClick={() => history.push(`/tasks/${task.id}`)}
+                  >
+                    <td className="blue-color">{task.name}</td>
+                    <td>{task.desc || "No description provided"}</td>
                   </tr>
-                ) : null}
-                {data.map((task) => {
-                  return (
-                    <tr
-                      className="cursor-pointer"
-                      key={task.id}
-                      onClick={() => history.push(`/tasks/${task.id}`)}
-                    >
-                      <td className="blue-color">{task.name}</td>
-                      <td>{task.desc || "No description provided"}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </Table>
-          </Card.Body>
-          <Card.Footer className="text-center">
-            <Pagination className="mb-0 float-right" size="sm">
-              <Pagination.Item
-                disabled={!page}
-                onClick={() => paginate("prev")}
-              >
-                Previous
-              </Pagination.Item>
-              <Pagination.Item
-                disabled={isEndOfPage}
-                onClick={() => paginate("next")}
-              >
-                Next
-              </Pagination.Item>
-            </Pagination>
-          </Card.Footer>
-        </Card>
-      </Col>
-  )};
-
+                );
+              })}
+            </tbody>
+          </Table>
+        </Card.Body>
+        <Card.Footer className="text-center">
+          <Pagination className="mb-0 float-right" size="sm">
+            <Pagination.Item disabled={!page} onClick={() => paginate("prev")}>
+              Previous
+            </Pagination.Item>
+            <Pagination.Item
+              disabled={isEndOfPage}
+              onClick={() => paginate("next")}
+            >
+              Next
+            </Pagination.Item>
+          </Pagination>
+        </Card.Footer>
+      </Card>
+    </Col>
+  );
+};
 
 const TaskSubPage = (props) => {
   const [userTasks, setUserTasks] = useState([]);
@@ -110,19 +107,6 @@ const TaskSubPage = (props) => {
     getPage();
   }, [getPage]);
 
-  // useEffect(() => {
-  //   api.getUserTasks(userId, pageLimit, page).then(
-  //     (result) => {
-  //       const isEndOfPage = (page + 1) * pageLimit >= (result.count || 0);
-  //       setIsEndOfPage(isEndOfPage);
-  //       setUserTasks(result.data || []);
-  //     },
-  //     (error) => {
-  //       console.log(error);
-  //     }
-  //   );
-  // }, [userId, page, api, pageLimit]);
-
   const paginate = (state) => {
     const is_next = state === "next";
     const newPage = is_next ? page + 1 : page - 1;
@@ -131,27 +115,26 @@ const TaskSubPage = (props) => {
 
   return (
     <>
-    <Container className="mb-5 pb-5">
-      <h1 className="my-4 pt-3 text-uppercase text-center">Your Tasks</h1>
-      <TaskProposalTable
-        history={history}
-        api={api}
-        data={userTasks}
-        page={page}
-        getPage={getPage}
-        paginate={paginate}
-        isEndOfPage={isEndOfPage}
-      />
-    </Container>
-    <>
-      <TaskProposalSubPage
-        handleProposalSubmit={props.handleProposalSubmit}
-        api={api}
-        history={history}
-      />
+      <Container className="mb-5 pb-5">
+        <h1 className="my-4 pt-3 text-uppercase text-center">Your Tasks</h1>
+        <TaskProposalTable
+          history={history}
+          api={api}
+          data={userTasks}
+          page={page}
+          getPage={getPage}
+          paginate={paginate}
+          isEndOfPage={isEndOfPage}
+        />
+      </Container>
+      <>
+        <TaskProposalSubPage
+          handleProposalSubmit={props.handleProposalSubmit}
+          api={api}
+          history={history}
+        />
+      </>
     </>
-    </>
-    
   );
 };
 
