@@ -3,11 +3,11 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-
 import React from "react";
 import "./App.css";
 import { Navbar, Nav, NavDropdown, Row, Container } from "react-bootstrap";
 import { BrowserRouter, Switch, Route, Link } from "react-router-dom";
+import { HashLink} from 'react-router-hash-link';
 import HomePage from "./HomePage";
 import LoginPage from "./LoginPage";
 import ForgotPassword from "./ForgotPassword";
@@ -116,6 +116,7 @@ class App extends React.Component {
     this.refreshData();
   }
 
+
   render() {
     //href={`/tasks/${taskCode}`}
     var query = qs.parse(window.location.search, {
@@ -186,6 +187,13 @@ class App extends React.Component {
                         className="py-3"
                       >
                         Flores
+                      </NavDropdown.Item>
+                      <NavDropdown.Item
+                        as={HashLink}
+                        to={"/#contributed-tasks"}
+                        className="py-3"
+                      >
+                        Contributed Tasks
                       </NavDropdown.Item>
                     </NavDropdown>
                   </Nav>
