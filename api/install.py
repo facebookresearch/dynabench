@@ -11,8 +11,6 @@ import os
 import sqlalchemy as db
 from werkzeug.security import generate_password_hash
 
-from models.base import Base
-
 
 def get_cls_name_helper(ss):
     ret, ii = "", 0
@@ -58,6 +56,8 @@ if __name__ == "__main__":
     else:
         print("Config already exists.")
         from common.config import config
+
+    from models.base import Base
 
     ##
     # Mark all existing migrations done
