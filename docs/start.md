@@ -37,6 +37,8 @@ cd ~/.ssl
 openssl req -newkey rsa:2048 -x509 -new -nodes -keyout local-cert.key -out local-cert.crt -subj /CN=test1 -sha256 -days 365 -addext "extendedKeyUsage = serverAuth"
 cat local-cert.key local-cert.crt > local-cert.pem
 chmod 600 *
+ln -s local-cert.key dynabench.org-key.pem
+ln -s local-cert.crt dynabench.org.crt
 ```
 
 ### Setting up the API server
