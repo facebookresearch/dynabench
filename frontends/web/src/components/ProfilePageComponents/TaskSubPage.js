@@ -4,40 +4,31 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Card, Col, Container, Pagination, Table } from "react-bootstrap";
 import TaskProposalSubPage from "./TaskProposalSubPage.js";
 
-const TaskSubPage = (props) => {
-  const [userTasks, setUserTasks] = useState([]);
-  const [page, setPage] = useState(0);
-  const [isEndOfPage, setIsEndOfPage] = useState(true);
+const TaskProposalTable = (props) => {
+  const { data, page, getPage, paginate, isEndOfPage, api, history } = props;
 
-  const { api, userId, pageLimit, history } = props;
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
-  useEffect(() => {
-    api.getUserTasks(userId, pageLimit, page).then(
-      (result) => {
-        const isEndOfPage = (page + 1) * pageLimit >= (result.count || 0);
-        setIsEndOfPage(isEndOfPage);
-        setUserTasks(result.data || []);
-      },
-      (error) => {
-        console.log(error);
-      }
+  const [showViewModals, setShowViewModals] = useState(
+    data.map((datum) => false)
+  );
+
+  if (data.length !== showViewModals.length) {
+    setShowViewModals(data.map((datum) => false));
+  }
+
+  const toggleShowViewModal = (index) => {
+    setShowViewModals(
+      showViewModals.map((obj, obj_index) => (index === obj_index ? !obj : obj))
     );
-  }, [userId, page, api, pageLimit]);
-
-  const paginate = (state) => {
-    const is_next = state === "next";
-    const newPage = is_next ? page + 1 : page - 1;
-    setPage(newPage);
   };
 
-  const tasks = (
-    <Container className="mb-5 pb-5">
-      <h1 className="my-4 pt-3 text-uppercase text-center">Your Tasks</h1>
-      <Col className="m-auto" lg={8}>
+  return (
+    <Col className="m-auto" lg={8}>
         <Card className="profile-card">
           <Card.Body>
             <Table className="taskTable mb-0">
@@ -52,14 +43,14 @@ const TaskSubPage = (props) => {
                 </tr>
               </thead>
               <tbody>
-                {!userTasks.length ? (
+                {!data.length ? (
                   <tr>
                     <td colSpan="4">
                       <div className="text-center">No data found</div>
                     </td>
                   </tr>
                 ) : null}
-                {userTasks.map((task) => {
+                {data.map((task) => {
                   return (
                     <tr
                       className="cursor-pointer"
@@ -92,17 +83,75 @@ const TaskSubPage = (props) => {
           </Card.Footer>
         </Card>
       </Col>
-    </Container>
-  );
+  )};
+
+
+const TaskSubPage = (props) => {
+  const [userTasks, setUserTasks] = useState([]);
+  const [page, setPage] = useState(0);
+  const [isEndOfPage, setIsEndOfPage] = useState(true);
+  const { api, userId, history } = props;
+  const pageLimit = 5;
+
+  const getPage = useCallback(() => {
+    api.getUserTasks(userId, pageLimit, page).then(
+      (result) => {
+        const isEndOfPage = (page + 1) * pageLimit >= (result.count || 0);
+        setIsEndOfPage(isEndOfPage);
+        setUserTasks(result.data || []);
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
+  }, [userId, page, api, pageLimit]);
+
+  useEffect(() => {
+    getPage();
+  }, [getPage]);
+
+  // useEffect(() => {
+  //   api.getUserTasks(userId, pageLimit, page).then(
+  //     (result) => {
+  //       const isEndOfPage = (page + 1) * pageLimit >= (result.count || 0);
+  //       setIsEndOfPage(isEndOfPage);
+  //       setUserTasks(result.data || []);
+  //     },
+  //     (error) => {
+  //       console.log(error);
+  //     }
+  //   );
+  // }, [userId, page, api, pageLimit]);
+
+  const paginate = (state) => {
+    const is_next = state === "next";
+    const newPage = is_next ? page + 1 : page - 1;
+    setPage(newPage);
+  };
+
   return (
     <>
-      {tasks}
+    <Container className="mb-5 pb-5">
+      <h1 className="my-4 pt-3 text-uppercase text-center">Your Tasks</h1>
+      <TaskProposalTable
+        history={history}
+        api={api}
+        data={userTasks}
+        page={page}
+        getPage={getPage}
+        paginate={paginate}
+        isEndOfPage={isEndOfPage}
+      />
+    </Container>
+    <>
       <TaskProposalSubPage
         handleProposalSubmit={props.handleProposalSubmit}
         api={api}
         history={history}
       />
     </>
+    </>
+    
   );
 };
 
