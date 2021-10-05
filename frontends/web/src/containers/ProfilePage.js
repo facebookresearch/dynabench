@@ -17,8 +17,6 @@ import {
   Pagination,
   OverlayTrigger,
 } from "react-bootstrap";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { Formik } from "formik";
 import UserContext from "./UserContext";
 import { Avatar } from "../components/Avatar/Avatar";
@@ -265,10 +263,6 @@ class ProfilePage extends React.Component {
     }
   }
 
-  notify() {
-    toast("Your profile has been updated");
-  }
-
   componentDidMount() {
     if (!this.context.api.loggedIn()) {
       this.props.history.push(
@@ -492,7 +486,6 @@ class ProfilePage extends React.Component {
 
     return (
       <Container fluid>
-        <ToastContainer />
         <Row>
           <Col lg={2} className="p-0 border">
             <Nav className="flex-lg-column sidebar-wrapper sticky-top">
