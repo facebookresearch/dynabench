@@ -13,6 +13,9 @@ from sqlalchemy.orm import lazyload
 
 import common.auth as _auth
 from common.logging import logger
+from models.example import ExampleModel
+from models.round import RoundModel
+from models.validation import Validation, ValidationModel
 
 
 def check_fields(data, fields):
@@ -178,3 +181,77 @@ def read_file_content(file_obj, max_limit):
         buf = file_obj.read(BUF_SIZE)
 
     return b"".join(data_blocks)
+
+
+def get_round_data_for_export(tid, rid):
+    e = ExampleModel()
+    examples_with_validation_ids = e.getByTidAndRidWithValidationIds(tid, rid)
+    example_and_validations_dicts = []
+    rm = RoundModel()
+    ro = rm.getByTidAndRid(tid, rid)
+    if ro is False:
+        return False
+    secret = ro.secret
+    vm = ValidationModel()
+    validations = vm.dbs.query(Validation)
+    validation_dict = {}
+    for validation in validations:
+        validation_dict[validation.id] = validation
+    turk_cache = {}
+    cache = {}
+
+    def get_anon_uid_with_cache(secret, uid, cache):
+        if (secret, uid) not in cache:
+            cache[(secret, uid)] = e.get_anon_uid(secret, uid)
+        return cache[(secret, uid)]
+
+    for example, validation_ids in examples_with_validation_ids:
+        if example.uid or (
+            example.metadata_json and json.loads(example.metadata_json)["annotator_id"]
+        ):
+            example_and_validations_dict = example.to_dict()
+            if example.uid:
+                example_and_validations_dict["anon_uid"] = get_anon_uid_with_cache(
+                    secret, example.uid, cache
+                )
+            else:
+                example_and_validations_dict["anon_uid"] = get_anon_uid_with_cache(
+                    secret,
+                    json.loads(example.metadata_json)["annotator_id"],
+                    turk_cache,
+                )
+            example_and_validations_dict["validations"] = []
+            for validation_id in [
+                int(id)
+                for id in filter(lambda item: item != "", validation_ids.split(","))
+            ]:
+                validation = validation_dict[validation_id]
+                if validation.uid or (
+                    validation.metadata_json
+                    and json.loads(validation.metadata_json)["annotator_id"]
+                ):
+                    if validation.uid:
+                        validation_info = [
+                            validation.label.name,
+                            validation.mode.name,
+                            get_anon_uid_with_cache(
+                                secret + "-validator", validation.uid, cache
+                            ),
+                        ]
+                    else:
+                        validation_info = [
+                            validation.label.name,
+                            validation.mode.name,
+                            get_anon_uid_with_cache(
+                                secret + "-validator",
+                                json.loads(validation.metadata_json)["annotator_id"],
+                                cache,
+                            ),
+                        ]
+
+                    if validation.metadata_json:
+                        validation_info.append(json.loads(validation.metadata_json))
+
+                    example_and_validations_dict["validations"].append(validation_info)
+            example_and_validations_dicts.append(example_and_validations_dict)
+    return example_and_validations_dicts
