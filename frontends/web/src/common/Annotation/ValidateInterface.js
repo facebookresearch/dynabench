@@ -24,7 +24,7 @@ import {
   BadgeOverlay,
   Annotation,
 } from "../../containers/Overlay";
-import AnnotationComponent from "./AnnotationComponent.js";
+import { AnnotationComponent } from "./AnnotationComponent.js";
 import initializeData from "./InitializeAnnotationData.js";
 
 class ValidateInterface extends React.Component {

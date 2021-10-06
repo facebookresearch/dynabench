@@ -133,6 +133,10 @@ class ExampleModel(BaseModel):
                 "ts"
             ):  # This means that we have a dynalab model
 
+                all_model_annotation_data = task.convert_to_model_io(
+                    all_model_annotation_data
+                )
+
                 with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
                     annotation_config = ujson.loads(task.annotation_config_json)
                     tmp.write(
