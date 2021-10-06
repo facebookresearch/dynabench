@@ -497,18 +497,19 @@ class CreateInterface extends React.Component {
         let modelInputs = {
           context: curContext,
           answer: answer_text,
-          question: question_cache_id,
-          question: question_cache_id,
+          hypothesis: question_cache_id,
           statement: this.experiment_mode["filterMode"],
           insight: "3|0.4|0.4", // generate 3 questions per request
         };
 
-        // console.log("model inputs:");
+        // console.log("Model inputs:");
         // console.log(modelInputs);
 
         this.api
           .getModelResponse(this.generator_url, modelInputs)
           .then((result) => {
+            // console.log("Generator response:");
+            // console.log(result)
             // if we have generated questions, we need to sort appropriately
             if (
               result["question_type"] === "generated" &&
