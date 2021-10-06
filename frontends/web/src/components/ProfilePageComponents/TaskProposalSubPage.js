@@ -83,9 +83,6 @@ const TaskProposalForm = (props) => {
                       </Form.Label>
                       <Col sm="8">
                         <Form.Control
-                          pattern=".*[a-zA-Z].*"
-                          title="Task code must contain at least one letter"
-                          type="text"
                           onChange={handleChange}
                           defaultValue={values.task_code}
                         />
