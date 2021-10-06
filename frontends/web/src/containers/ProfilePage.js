@@ -347,7 +347,6 @@ class ProfilePage extends React.Component {
         setSubmitting(false);
       }
     );
-    this.notify();
   };
 
   handleProposalSubmit = (
@@ -478,12 +477,6 @@ class ProfilePage extends React.Component {
           },
         ];
 
-    const initialValues = {
-      username: this.state.user.username,
-      realname: this.state.user.realname || "",
-      affiliation: this.state.user.affiliation || "",
-    };
-
     return (
       <Container fluid>
         <Row>
@@ -541,7 +534,11 @@ class ProfilePage extends React.Component {
                     <Card.Body className="mt-4">
                       {this.state.user.email ? (
                         <Formik
-                          initialValues={initialValues}
+                          initialValues={{
+                            username: this.state.user.username,
+                            realname: this.state.user.realname || "",
+                            affiliation: this.state.user.affiliation || "",
+                          }}
                           onSubmit={this.handleSubmit}
                           enableReinitialize
                         >
@@ -552,6 +549,7 @@ class ProfilePage extends React.Component {
                             handleSubmit,
                             isSubmitting,
                             dirty,
+                            initialValues,
                           }) => (
                             <>
                               <form className="px-4" onSubmit={handleSubmit}>
