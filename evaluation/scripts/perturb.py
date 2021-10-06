@@ -5,7 +5,7 @@
 # example usage:
 # python perturb.py
 # --s3-uri s3://evaluation-us-west-1-096166425824/datasets/nli/zm-mnli-dev-matched.jsonl
-# --task nli --perturb-prefix fairness
+# --perturb-prefix fairness --perturb_fields context hypothesis
 
 import argparse
 import json
@@ -26,13 +26,18 @@ from eval_config import eval_config as config  # isort:skip
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("perturb")
 
-perturbations = ["fairness", "robustness"]  # TODO: get this from task config
+perturbations = ["fairness", "robustness"]
 
 
 def parse_args() -> Any:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--s3-uri", type=str, help="The s3 uri, in the format of s3://<bucket>/<path>"
+        "--s3-uri",
+        type=str,
+        help=(
+            "Path to the dataset to perturb; can be a local path "
+            "or an s3 uri in the format of s3://<bucket>/<path>"
+        ),
     )
     parser.add_argument(
         "--local-path",
@@ -44,11 +49,41 @@ def parse_args() -> Any:
         ),
     )
     parser.add_argument(
-        "--task", type=str, choices=get_tasks(), help="Task code"
-    )  # for selecting the perturb function
-    parser.add_argument("--perturb-prefix", type=str, choices=perturbations)
-    parser.add_argument("--seed", type=str, default="")
-    parser.add_argument("--num_threads", type=int, default=1)
+        "--perturb-prefix",
+        type=str,
+        choices=perturbations,
+        help="The type of perturbations to apply",
+    )
+    parser.add_argument(
+        "--seed",
+        type=str,
+        default="",
+        help=(
+            "If provided this will be used to seed the RNG before "
+            "applying the perturbations, ensuring reproducibility"
+        ),
+    )
+    parser.add_argument(
+        "--num_threads",
+        type=int,
+        default=1,
+        help="The number of threads used to perturb the dataset",
+    )
+    parser.add_argument(
+        "--perturb_fields",
+        nargs="+",
+        default=[],
+        help="The fields in the examples to be perturbed",
+    )
+    parser.add_argument(
+        "--ignore_words_fields",
+        nargs="+",
+        default=[],
+        help=(
+            "The fields in the examples to be ignored when perturbing; "
+            "e.g. for the 'qa' task, the 'answer' field should be ignored"
+        ),
+    )
     args = parser.parse_args()
 
     return args
@@ -104,13 +139,20 @@ def load_examples(path: str) -> List[Dict[str, Any]]:
 
 
 def perturb(
-    path: str, task: str, perturb_prefix: str, seed: int, num_threads: int
+    path: str,
+    perturb_prefix: str,
+    seed: int,
+    num_threads: int,
+    perturb_fields: List[str],
+    ignore_words_fields: List[str],
 ) -> str:
     examples = load_examples(path)
     num_examples = len(examples)
     logger.info(f"Loaded {num_examples} to perturb")
 
-    pert = AuglyPerturbation(perturb_prefix, task, seed, num_threads)
+    pert = AuglyPerturbation(
+        perturb_prefix, seed, num_threads, perturb_fields, ignore_words_fields
+    )
     perturbed_examples = pert.perturb(examples)
 
     outpath = os.path.join(
@@ -128,7 +170,7 @@ def print_instructions(args: Any, outpath: str, base_dataset_name: str) -> None:
     logger.info(
         "Once you are happy with the perturbation, use the following command "
         "to upload the data back to S3 and request evaluation\n"
-        f"python request_evaluation.py --path {outpath} --task {args.task} "
+        f"python request_evaluation.py --path {outpath} --task <task> "
         f"--perturb-prefix {args.perturb_prefix} "
         f"--base-dataset-name {base_dataset_name}"
     )
@@ -143,7 +185,12 @@ if __name__ == "__main__":
     logger.info("Downloaded dataset; now will perturb examples")
     seed = None if args.seed == "" else int(args.seed)
     outpath = perturb(
-        local_path, args.task, args.perturb_prefix, seed, args.num_threads
+        local_path,
+        args.perturb_prefix,
+        seed,
+        args.num_threads,
+        args.perturb_fields,
+        args.ignore_words_fields,
     )
     print_instructions(args, outpath, base_dataset_name)
     ops = input(f"Remove locally downloaded file at {local_path}? [Y/n] ")

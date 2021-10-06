@@ -12,7 +12,6 @@ from typing import Any, Callable, Dict, List, Optional
 import augly.text as textaugs
 import spacy
 from augly.utils import pathmgr
-
 from util import postprocess, preprocess
 
 
@@ -24,9 +23,10 @@ class AuglyPerturbation:
     def __init__(
         self,
         perturb_prefix: str,
-        task: str,
         seed: Optional[int],
         num_threads: int,
+        perturb_fields: List[str],
+        ignore_words_fields: List[str],
         skip_ents=True,
     ):
         if skip_ents:
@@ -35,11 +35,12 @@ class AuglyPerturbation:
         else:
             self.skip_ents = False
         self.perturb_prefix = perturb_prefix
-        self.task = task
         self.seed = seed if seed is not None else random.randint(0, 1000)
         random.seed(self.seed)
         self.perturbations = self.get_perturbations()
         self.num_threads = num_threads
+        self.perturb_fields = perturb_fields
+        self.ignore_words_fields = ignore_words_fields
 
     def get_names_mapping(self, names: List[str]) -> Dict[str, str]:
         for i, names_i in enumerate(names):
@@ -133,10 +134,14 @@ class AuglyPerturbation:
             return None
 
     def perturb(self, examples: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        with Pool(self.num_threads) as pool:
-            perturbed = [
-                el for l in pool.map(self.apply_augmentations, examples) for el in l
-            ]
+        if self.num_threads == 1:
+            perturbed = [self.apply_augmentations(example) for example in examples]
+        else:
+            with Pool(self.num_threads) as pool:
+                perturbed = [
+                    el for l in pool.map(self.apply_augmentations, examples) for el in l
+                ]
+
         return perturbed
 
     def apply_augmentations(self, example: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -158,38 +163,20 @@ class AuglyPerturbation:
         transform = self.perturbations[transform_name]
 
         changed = False
-
-        # Perturb context for all tasks if it exists
-        if "context" in example:
-            changed = changed or self.call_transform(
-                example, perturb_example, "context", transform
-            )
-
-        # Perturb statement for hs and sentiment
-        if self.task in ["hs", "sentiment"]:
-            changed = changed or self.call_transform(
-                example, perturb_example, "statement", transform
-            )
-
-        # Perturb additional fields for task "qa" and "nli"
-        if self.task == "qa":
-            ans = (
-                [example["answer"]]
-                if isinstance(example["answer"], str)
-                else example["answer"]
-            )
-            ignore_words = ans if self.perturb_prefix == "fairness" else None
-            changed = changed or self.call_transform(
-                example,
-                perturb_example,
-                "question",
-                transform,
-                ignore_words=ignore_words,
-            )
-        elif self.task == "nli":
-            changed = changed or self.call_transform(
-                example, perturb_example, "hypothesis", transform
-            )
+        for key in self.perturb_fields:
+            ignore_words = []
+            for ignore_field in self.ignore_words_fields:
+                ignore_words = (
+                    [example[ignore_field]]
+                    if isinstance(ignore_words, str)
+                    else example[ignore_field]
+                )
+                ignore_words.extend(ignore_words)
+            if key in example:
+                field_changed = self.call_transform(
+                    example, perturb_example, key, transform, ignore_words=ignore_words
+                )
+                changed = changed or field_changed
 
         if changed:
             return perturb_example
