@@ -72,7 +72,7 @@ def create_task_proposal(credentials):
         bottle.abort(
             400,
             "Invalid task code (no special characters allowed besides underscores "
-            + "and dashes. Atleast one letter required)",
+            + "and dashes. At least one letter required)",
         )
 
     try:
