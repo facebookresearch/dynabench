@@ -638,6 +638,12 @@ export default class ApiService {
     });
   }
 
+  deleteDataset(did) {
+    return this.fetch(`${this.domain}/datasets/delete/${did}`, {
+      method: "DELETE",
+    });
+  }
+
   uploadPredictions(tid, modelName, files) {
     const token = this.getToken();
     const formData = new FormData();
