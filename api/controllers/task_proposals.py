@@ -66,11 +66,13 @@ def create_task_proposal(credentials):
     if tm.getByName(data["name"]):
         bottle.abort(400, "Invalid name; this name is already taken")
 
-    if not bool(re.search("^[a-zA-Z0-9_-]*$", data["task_code"])):
+    if not bool(
+        re.search("(?=^[a-zA-Z0-9_-]*$)(?=.*[a-zA-Z].*).*$", data["task_code"])
+    ):
         bottle.abort(
             400,
             "Invalid task code (no special characters allowed besides underscores "
-            + "and dashes)",
+            + "and dashes. At least one letter required)",
         )
 
     try:
