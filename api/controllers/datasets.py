@@ -48,6 +48,17 @@ def update(credentials, did):
     return util.json_encode({"success": "ok"})
 
 
+@bottle.delete("/datasets/delete/<did:int>")
+@_auth.requires_auth
+def delete(credentials, did):
+    dm = DatasetModel()
+    dataset = dm.get(did)
+    ensure_owner_or_admin(dataset.tid, credentials["id"])
+
+    dm.delete(dataset)
+    return util.json_encode({"success": "ok"})
+
+
 @bottle.post("/datasets/create/<tid:int>/<name>")
 @_auth.requires_auth
 def create(credentials, tid, name):
