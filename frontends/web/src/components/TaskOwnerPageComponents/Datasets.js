@@ -232,7 +232,13 @@ const Datasets = (props) => {
                               />
                             </Col>
                             <Col sm="2">
-                              <Button variant="danger" className="btn-block">
+                              <Button
+                                variant="danger"
+                                className="btn-block"
+                                onClick={() => {
+                                  props.handleDatasetDelete(values.id);
+                                }}
+                              >
                                 Delete <img src="/trash.svg" alt="Delete" />
                               </Button>
                             </Col>
