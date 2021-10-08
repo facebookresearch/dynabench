@@ -160,7 +160,6 @@ class TaskOwnerPage extends React.Component {
     newDict[rid] = true;
     this.setState({ dataExporting: newDict });
 
-    console.log(this.state.dataExporting);
     return this.context.api.exportData(this.state.task.id, rid).then(
       (result) => {
         var newDict = { ...this.state.dataExporting };
