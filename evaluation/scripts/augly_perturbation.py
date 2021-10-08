@@ -59,71 +59,60 @@ class AuglyPerturbation:
 
         return name_mapping
 
-    def get_perturbations(self) -> List[Callable]:
-        pert_cfg = self.get_perturbation_config()
-        perturbations = {}
-        for perturbation in pert_cfg:
-            aug_kwargs = perturbation.copy()
-            class_name = aug_kwargs.pop("class")
-            transform_name = aug_kwargs.pop("name", None) or class_name
-            transform = getattr(textaugs, class_name)(**aug_kwargs)
-            perturbations[transform_name] = transform
-        return perturbations
-
-    def get_perturbation_config(self) -> List[Dict[str, Any]]:
+    def get_perturbations(self) -> Dict[str, List[Callable]]:
         fdir = "./data/"
 
         if self.perturb_prefix == "fairness":
-            return [
-                {
-                    "aug_word_p": 1.0,
-                    "class": "ReplaceWords",
-                    "mapping": self.get_names_mapping(
-                        [
-                            os.path.join(fdir, "api_names.txt"),
-                            os.path.join(fdir, "black_names.txt"),
-                            os.path.join(fdir, "hispanic_names.txt"),
-                            os.path.join(fdir, "white_names.txt"),
-                        ]
+            # Fairness perturbations
+            return {
+                "SwapEthnicGroupNames": [
+                    textaugs.ReplaceWords(
+                        aug_word_p=1.0,
+                        mapping=self.get_names_mapping(
+                            [
+                                os.path.join(fdir, "api_names.txt"),
+                                os.path.join(fdir, "black_names.txt"),
+                                os.path.join(fdir, "hispanic_names.txt"),
+                                os.path.join(fdir, "white_names.txt"),
+                            ]
+                        ),
                     ),
-                    "name": "SwapEthnicGroupNames",
-                },
-                {
-                    "aug_word_p": 1.0,
-                    "class": "ReplaceWords",
-                    "mapping": self.get_names_mapping(
-                        [
-                            os.path.join(fdir, "male_names.txt"),
-                            os.path.join(fdir, "female_names.txt"),
-                        ]
+                ],
+                "SwapGenderedNamesAndWords": [
+                    textaugs.ReplaceWords(
+                        aug_word_p=1.0,
+                        mapping=self.get_names_mapping(
+                            [
+                                os.path.join(fdir, "male_names.txt"),
+                                os.path.join(fdir, "female_names.txt"),
+                            ]
+                        ),
                     ),
-                    "name": "SwapGenderedNames",
-                },
-                {"aug_word_p": 1.0, "class": "SwapGenderedWords"},
-            ]
+                    textaugs.SwapGenderedWords(aug_word_p=1.0),
+                ],
+            }
 
-        return [
-            {"class": "ChangeCase", "case": "upper", "cadence": 3.0},
-            {"class": "Contractions", "aug_p": 1.0},
-            {"class": "InsertPunctuationChars", "cadence": 10.0, "vary_chars": True},
-            {"class": "InsertWhitespaceChars", "cadence": 10.0, "vary_chars": True},
-            {"class": "InsertZeroWidthChars", "cadence": 10.0, "vary_chars": True},
-            {"class": "ReplaceFunFonts", "vary_fonts": True},
-            {"class": "ReplaceSimilarUnicodeChars"},
-            {"class": "ReplaceUpsideDown", "granularity": "word"},
-            {"class": "SimulateTypos", "typo_type": "charmix", "name": "CharTypos"},
-            {
-                "class": "SimulateTypos",
-                "typo_type": "keyboard",
-                "name": "KeyboardTypos",
-            },
-            {
-                "class": "SimulateTypos",
-                "typo_type": "misspelling",
-                "name": "MisspellingTypos",
-            },
-            {"class": "SplitWords"},
-        ]
+        # Robustness perturbations
+        return {
+            "ChangeCase": [ChangeCase(case="upper", cadence=3.0)],
+            "Contractions": [Contractions(aug_p=1.0)],
+            "InsertPunctuationChars": [
+                InsertPunctuationChars(cadence=10.0, vary_chars=True),
+            ],
+            "InsertWhitespaceChars": [
+                InsertWhitespaceChars(cadence=10.0, vary_chars=True)
+            ],
+            "InsertZeroWidthChars": [
+                InsertZeroWidthChars(cadence=10.0, vary_chars=True),
+            ],
+            "ReplaceFunFonts": [ReplaceFunFonts(vary_fonts=True)],
+            "ReplaceSimilarUnicodeChars": [ReplaceSimilarUnicodeChars()],
+            "ReplaceUpsideDown": [ReplaceUpsideDown(granularity="word")],
+            "SimulateTypos": [SimulateTypos(typo_type="charmix", name="CharTypos")],
+            "KeyboardTypos": [SimulateTypos(typo_type="keyboard")],
+            "MisspellingTypos": [SimulateTypos(typo_type="misspelling")],
+            "SplitWords": [SplitWords()],
+        }
 
     def get_entity_set(self, text: str) -> Optional[List[str]]:
         if self.skip_ents:
@@ -160,7 +149,7 @@ class AuglyPerturbation:
         perturb_example["uid"] = f"{example['uid']}_{transform_name}"
         uid_hash = zlib.adler32(perturb_example["uid"].encode())
         random.seed((self.seed + uid_hash) % 2 ** 32)
-        transform = self.perturbations[transform_name]
+        transforms = self.perturbations[transform_name]
 
         changed = False
         for key in self.perturb_fields:
@@ -173,8 +162,8 @@ class AuglyPerturbation:
                 )
                 ignore_words.extend(ignore_words)
             if key in example:
-                field_changed = self.call_transform(
-                    example, perturb_example, key, transform, ignore_words=ignore_words
+                field_changed = self.call_transforms(
+                    example, perturb_example, key, transforms, ignore_words=ignore_words
                 )
                 changed = changed or field_changed
 
@@ -183,12 +172,12 @@ class AuglyPerturbation:
 
         return None
 
-    def call_transform(
+    def call_transforms(
         self,
         src_example: Dict[str, Any],
         aug_example: Dict[str, Any],
         key: str,
-        transform: Callable,
+        transforms: List[Callable],
         **kwargs,
     ) -> bool:
         text = src_example[key]
@@ -200,10 +189,11 @@ class AuglyPerturbation:
         if not kwargs.get("ignore_words", None):
             kwargs.pop("ignore_words", None)
 
-        text = preprocess(text)
-        aug_text = transform(text, **kwargs)
+        aug_text = preprocess(text)
+        for transform in transforms:
+            aug_text = transform(aug_text, **kwargs)
 
-        if isinstance(aug_text, List):
+        if isinstance(aug_text, list):
             assert len(aug_text) == 1
             aug_text = aug_text[0]
 

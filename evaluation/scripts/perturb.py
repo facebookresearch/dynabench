@@ -32,7 +32,7 @@ perturbations = ["fairness", "robustness"]
 def parse_args() -> Any:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--s3-uri",
+        "--dataset_path",
         type=str,
         help=(
             "Path to the dataset to perturb; can be a local path "
@@ -99,8 +99,8 @@ def parse_s3_uri(s3_uri: str) -> Tuple[str, str, str]:
 
 def download_base_from_s3(args: Any) -> Optional[Tuple[str, str]]:
     # If a local path was passed in, we can just use it
-    if os.path.exists(args.s3_uri):
-        return args.s3_uri, os.path.basename(args.s3_uri)
+    if os.path.exists(args.dataset_path):
+        return args.dataset_path, os.path.basename(args.dataset_path)
 
     try:
         s3_client = boto3.client(
@@ -109,14 +109,14 @@ def download_base_from_s3(args: Any) -> Optional[Tuple[str, str]]:
             aws_secret_access_key=config["aws_secret_access_key"],
             region_name=config["aws_region"],
         )
-        s3_bucket, s3_path, s3_filename = parse_s3_uri(args.s3_uri)
+        s3_bucket, s3_path, s3_filename = parse_s3_uri(args.dataset_path)
         local_path = args.local_path if args.local_path else s3_filename
         response = s3_client.download_file(s3_bucket, s3_path, local_path)
         for prefix in perturbations:
             if s3_filename.startswith(args.perturb_prefix):
                 ops = (
-                    f"Looks like your base s3_uri {args.s3_uri} already points "
-                    "to a perturbed version. Continue the workflow? [Y/n] "
+                    f"Looks like your base s3_uri {args.dataset_path} already "
+                    "points to a perturbed version. Continue the workflow? [Y/n] "
                 )
                 if ops != "Y":
                     logger.info("Abandoning current workflow")
@@ -124,12 +124,12 @@ def download_base_from_s3(args: Any) -> Optional[Tuple[str, str]]:
 
         if response:
             logger.info(f"Response from S3 download {response}")
-        logger.info(f"Successfully downloaded {args.s3_uri} to {local_path}")
+        logger.info(f"Successfully downloaded {args.dataset_path} to {local_path}")
 
         return local_path, s3_filename.split(".")[0]
 
     except Exception as ex:
-        logger.exception(f"Failed to download {args.s3_uri} because of {ex}")
+        logger.exception(f"Failed to download {args.dataset_path} because of {ex}")
         return None
 
 
@@ -141,7 +141,7 @@ def load_examples(path: str) -> List[Dict[str, Any]]:
 def perturb(
     path: str,
     perturb_prefix: str,
-    seed: int,
+    seed: Optional[int],
     num_threads: int,
     perturb_fields: List[str],
     ignore_words_fields: List[str],
