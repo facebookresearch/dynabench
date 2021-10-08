@@ -27,6 +27,8 @@ const AdminTaskProposalTable = (props) => {
     data.map((datum) => false)
   );
 
+  const [showChangesModal, setShowChangesModal] = useState(false);
+
   if (data.length !== showViewModals.length) {
     setShowViewModals(data.map((datum) => false));
   }
@@ -141,11 +143,13 @@ const AdminTaskProposalTable = (props) => {
                               Accept
                             </Button>{" "}
                             <Button
+                              variant="danger"
                               onClick={() => {
                                 toggleShowViewModal(index);
-                                api
-                                  .processTaskProposal(datum.id, false)
-                                  .then((result) => getPage());
+                                // api
+                                //   .processTaskProposal(datum.id, false)
+                                //   .then((result) => getPage());
+                                setShowChangesModal(true);
                               }}
                             >
                               Reject
@@ -153,6 +157,34 @@ const AdminTaskProposalTable = (props) => {
                           </Row>
                         </Container>
                       </Modal.Body>
+                    </Modal>
+                    <Modal
+                      show={showChangesModal}
+                      onHide={() => setShowChangesModal(false)}
+                    >
+                      <Modal.Header closeButton>
+                        <Modal.Title>Modal heading</Modal.Title>
+                      </Modal.Header>
+                      <Modal.Body>
+                        Woohoo, you're reading this text in a modal!
+                      </Modal.Body>
+                      <Modal.Footer>
+                        <Button
+                          variant="secondary"
+                          onClick={() => {
+                            setShowChangesModal(false);
+                            toggleShowViewModal(index);
+                          }}
+                        >
+                          Close
+                        </Button>
+                        <Button
+                          variant="primary"
+                          onClick={() => setShowChangesModal(false)}
+                        >
+                          Save Changes
+                        </Button>
+                      </Modal.Footer>
                     </Modal>
                     <td className="text-truncate long-text">
                       <span

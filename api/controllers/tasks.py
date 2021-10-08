@@ -136,6 +136,13 @@ def process_proposal(credentials, tpid):
         tpm.dbs.commit()
         logger.info("Added round (%s)" % (r.id))
 
+    else:
+        """
+        Reject the proposal here.
+        Send an email to the user with the data of the "recommendation"
+        """
+        pass
+
     tpm.dbs.query(TaskProposal).filter(TaskProposal.id == tpid).delete()
     tpm.dbs.flush()
     tpm.dbs.commit()
