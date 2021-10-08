@@ -2,10 +2,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import json
 import secrets
 import sys
 
+import ujson
 from models.base import dbs
 from models.context import Context
 from models.round import Round, RoundModel
@@ -20,7 +20,7 @@ def load_jsonl(filename, debug_num=None):
     with open(filename, encoding="utf-8", mode="r") as in_f:
         print("Load Jsonl:", filename)
         for line in in_f:
-            item = json.loads(line.strip())
+            item = ujson.loads(line.strip())
             d_list.append(item)
             if debug_num is not None and 0 < debug_num == len(d_list):
                 break

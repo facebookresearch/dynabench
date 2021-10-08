@@ -3,11 +3,11 @@
 # LICENSE file in the root directory of this source tree.
 
 import codecs
-import json
 import os
 import secrets
 import sys
 
+import ujson
 from models.context import Context
 from models.round import Round, RoundModel
 from models.task import TaskModel
@@ -21,11 +21,11 @@ contexts = {"1": [], "2": []}
 for n in contexts.keys():
     fpath = os.path.join(fname)
     print(fpath)
-    this_contexts = [json.loads(ll) for ll in codecs.open(fpath, "r", "utf8")]
+    this_contexts = [ujson.loads(ll) for ll in codecs.open(fpath, "r", "utf8")]
     this_contexts = [
         {
             "context": c["passage"],
-            "metadata_json": json.dumps(
+            "metadata_json": ujson.dumps(
                 {
                     "id": c["id"],
                     "title": c["title"],

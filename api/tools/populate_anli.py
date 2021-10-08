@@ -3,11 +3,11 @@
 # LICENSE file in the root directory of this source tree.
 
 import codecs
-import json
 import os
 import secrets
 import sys
 
+import ujson
 from models.base import dbs
 from models.context import Context
 from models.round import Round, RoundModel
@@ -26,7 +26,7 @@ for n in contexts.keys():
         fpath = os.path.join("anli_v0.1", "R" + n, fname)
         print(fpath)
         contexts[n].extend(
-            [json.loads(ll)["context"] for ll in codecs.open(fpath, "r", "utf8")]
+            [ujson.loads(ll)["context"] for ll in codecs.open(fpath, "r", "utf8")]
         )
     contexts[n] = list(set(contexts[n]))
 print({k: len(contexts[k]) for k in contexts.keys()})
