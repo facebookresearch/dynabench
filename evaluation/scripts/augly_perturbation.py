@@ -12,6 +12,7 @@ from typing import Any, Callable, Dict, List, Optional
 import augly.text as textaugs
 import spacy
 from augly.utils import pathmgr
+
 from util import postprocess, preprocess
 
 
@@ -76,7 +77,7 @@ class AuglyPerturbation:
                                 os.path.join(fdir, "white_names.txt"),
                             ]
                         ),
-                    ),
+                    )
                 ],
                 "SwapGenderedNamesAndWords": [
                     textaugs.ReplaceWords(
@@ -97,20 +98,18 @@ class AuglyPerturbation:
             "ChangeCase": [textaugs.ChangeCase(case="upper", cadence=3.0)],
             "Contractions": [textaugs.Contractions(aug_p=1.0)],
             "InsertPunctuationChars": [
-                textaugs.InsertPunctuationChars(cadence=10.0, vary_chars=True),
+                textaugs.InsertPunctuationChars(cadence=10.0, vary_chars=True)
             ],
             "InsertWhitespaceChars": [
                 textaugs.InsertWhitespaceChars(cadence=10.0, vary_chars=True)
             ],
             "InsertZeroWidthChars": [
-                textaugs.InsertZeroWidthChars(cadence=10.0, vary_chars=True),
+                textaugs.InsertZeroWidthChars(cadence=10.0, vary_chars=True)
             ],
             "ReplaceFunFonts": [textaugs.ReplaceFunFonts(vary_fonts=True)],
             "ReplaceSimilarUnicodeChars": [textaugs.ReplaceSimilarUnicodeChars()],
             "ReplaceUpsideDown": [textaugs.ReplaceUpsideDown(granularity="word")],
-            "SimulateTypos": [
-                textaugs.SimulateTypos(typo_type="charmix", name="CharTypos"),
-            ],
+            "CharTypos": [textaugs.SimulateTypos(typo_type="charmix")],
             "KeyboardTypos": [textaugs.SimulateTypos(typo_type="keyboard")],
             "MisspellingTypos": [textaugs.SimulateTypos(typo_type="misspelling")],
             "SplitWords": [textaugs.SplitWords()],
