@@ -94,24 +94,26 @@ class AuglyPerturbation:
 
         # Robustness perturbations
         return {
-            "ChangeCase": [ChangeCase(case="upper", cadence=3.0)],
-            "Contractions": [Contractions(aug_p=1.0)],
+            "ChangeCase": [textaugs.ChangeCase(case="upper", cadence=3.0)],
+            "Contractions": [textaugs.Contractions(aug_p=1.0)],
             "InsertPunctuationChars": [
-                InsertPunctuationChars(cadence=10.0, vary_chars=True),
+                textaugs.InsertPunctuationChars(cadence=10.0, vary_chars=True),
             ],
             "InsertWhitespaceChars": [
-                InsertWhitespaceChars(cadence=10.0, vary_chars=True)
+                textaugs.InsertWhitespaceChars(cadence=10.0, vary_chars=True)
             ],
             "InsertZeroWidthChars": [
-                InsertZeroWidthChars(cadence=10.0, vary_chars=True),
+                textaugs.InsertZeroWidthChars(cadence=10.0, vary_chars=True),
             ],
-            "ReplaceFunFonts": [ReplaceFunFonts(vary_fonts=True)],
-            "ReplaceSimilarUnicodeChars": [ReplaceSimilarUnicodeChars()],
-            "ReplaceUpsideDown": [ReplaceUpsideDown(granularity="word")],
-            "SimulateTypos": [SimulateTypos(typo_type="charmix", name="CharTypos")],
-            "KeyboardTypos": [SimulateTypos(typo_type="keyboard")],
-            "MisspellingTypos": [SimulateTypos(typo_type="misspelling")],
-            "SplitWords": [SplitWords()],
+            "ReplaceFunFonts": [textaugs.ReplaceFunFonts(vary_fonts=True)],
+            "ReplaceSimilarUnicodeChars": [textaugs.ReplaceSimilarUnicodeChars()],
+            "ReplaceUpsideDown": [textaugs.ReplaceUpsideDown(granularity="word")],
+            "SimulateTypos": [
+                textaugs.SimulateTypos(typo_type="charmix", name="CharTypos"),
+            ],
+            "KeyboardTypos": [textaugs.SimulateTypos(typo_type="keyboard")],
+            "MisspellingTypos": [textaugs.SimulateTypos(typo_type="misspelling")],
+            "SplitWords": [textaugs.SplitWords()],
         }
 
     def get_entity_set(self, text: str) -> Optional[List[str]]:
