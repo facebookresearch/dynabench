@@ -170,7 +170,15 @@ const AdminTaskProposalTable = (props) => {
                             changes: "",
                           }}
                           onSubmit={(values) => {
-                            console.log(values);
+                            api
+                              .processTaskProposal(
+                                datum.id,
+                                false,
+                                values.changes
+                              )
+                              .then(() => {
+                                getPage();
+                              });
                           }}
                         >
                           {({
