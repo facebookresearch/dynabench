@@ -122,6 +122,7 @@ def create(credentials, tid, name):
                     logger.info(response)
         except Exception as ex:
             logger.exception(f"Failed to load {name} to S3 due to {ex}.")
+            bottle.abort(400, "Issue loading dataset to S3")
 
     # Create an entry in the db for the dataset, or skip if one already exists.
     d = DatasetModel()

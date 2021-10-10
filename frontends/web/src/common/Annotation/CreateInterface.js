@@ -30,10 +30,7 @@ import {
   BadgeOverlay,
 } from "../../containers/Overlay";
 import Markdown from "react-markdown";
-import {
-  AnnotationComponent,
-  convertToModelIO,
-} from "./AnnotationComponent.js";
+import AnnotationComponent from "./AnnotationComponent.js";
 import initializeData from "./InitializeAnnotationData.js";
 import ResponseInfo from "./ResponseInfo.js";
 import Explainer from "./Explainer.js";
@@ -326,8 +323,9 @@ class CreateInterface extends React.Component {
         this.state.data["hypothesis"] = this.state.data["question"];
       }
       // End hack that can be removed upon full dynalab integration
-      convertToModelIO(this.state.data, this.state.annotationConfig).then(
-        (model_io_result) => {
+      this.context.api
+        .convertToModelIO(this.state.data, this.state.task)
+        .then((model_io_result) => {
           // Begin hack that can be removed upon full dynalab integration
           if (
             !endpoint.startsWith("ts") &&
@@ -472,8 +470,7 @@ class CreateInterface extends React.Component {
               });
             }
           );
-        }
-      );
+        });
     });
   }
 
