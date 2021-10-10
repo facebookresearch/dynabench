@@ -3,10 +3,10 @@
 # LICENSE file in the root directory of this source tree.
 
 import datetime
-import json
 
 import sqlalchemy as db
 
+import ujson
 from common.logging import logger
 
 from .base import Base, BaseModel
@@ -195,14 +195,14 @@ class BadgeModel(BaseModel):
 
     def incrementUserMetadataField(self, user, key, value=1):
         if user.metadata_json:
-            metadata = json.loads(user.metadata_json)
+            metadata = ujson.loads(user.metadata_json)
             if key in metadata:
                 metadata[key] += value
             else:
                 metadata[key] = value
         else:
             metadata = {key: value}
-        user.metadata_json = json.dumps(metadata)
+        user.metadata_json = ujson.dumps(metadata)
         self.dbs.commit()
 
     def getFieldsFromMetadata(self, metadata, value_if_absent, fields):
@@ -267,7 +267,7 @@ class BadgeModel(BaseModel):
 
         for user in users:
             if user.metadata_json:
-                metadata = json.loads(user.metadata_json)
+                metadata = ujson.loads(user.metadata_json)
             else:
                 metadata = {}
 
@@ -457,7 +457,7 @@ class BadgeModel(BaseModel):
                 metadata["async_badges_to_award"] = async_badges_to_award
             else:
                 metadata["async_badges_to_award"] += async_badges_to_award
-            user.metadata_json = json.dumps(metadata)
+            user.metadata_json = ujson.dumps(metadata)
 
         self.createNotificationsAndRemoveBadges(
             badges_to_remove, "BADGE_REMOVED_STREAK"
@@ -473,7 +473,7 @@ class BadgeModel(BaseModel):
         badges_to_remove = []
         existing_badges = self.getByUid(user.id)
         models_published = self.getFieldsFromMetadata(
-            json.loads(user.metadata_json),
+            ujson.loads(user.metadata_json),
             0,
             [
                 task_name + "_models_published"
@@ -486,7 +486,7 @@ class BadgeModel(BaseModel):
             if (
                 (
                     badge.name == "SOTA"
-                    and json.loads(badge.metadata_json)["mid"] == model.id
+                    and ujson.loads(badge.metadata_json)["mid"] == model.id
                 )
                 or (badge.name == "SERIAL_PREDICTOR" and models_published_sum < 2)
                 or (badge.name == "MODEL_BUILDER" and models_published_sum < 1)
@@ -507,7 +507,7 @@ class BadgeModel(BaseModel):
         if (
             self.lengthOfFilteredList(
                 lambda badge: badge.name == "SOTA"
-                and json.loads(badge.metadata_json)["mid"] == model.id,
+                and ujson.loads(badge.metadata_json)["mid"] == model.id,
                 existing_badges,
             )
             == 0
@@ -526,13 +526,13 @@ class BadgeModel(BaseModel):
                     ):
                         badges_to_add.append(
                             self._badgeobj(
-                                user.id, "SOTA", json.dumps({"mid": model.id})
+                                user.id, "SOTA", ujson.dumps({"mid": model.id})
                             )
                         )
                         break
 
         models_published = self.getFieldsFromMetadata(
-            json.loads(user.metadata_json),
+            ujson.loads(user.metadata_json),
             0,
             [
                 task_name + "_models_published"
@@ -578,12 +578,12 @@ class BadgeModel(BaseModel):
         badge_names = []
 
         if user.metadata_json:
-            metadata = json.loads(user.metadata_json)
+            metadata = ujson.loads(user.metadata_json)
             if "async_badges_to_award" in metadata:
                 for name in metadata["async_badges_to_award"]:
                     badge_names.append(name)
                 metadata["async_badges_to_award"] = []
-                user.metadata_json = json.dumps(metadata)
+                user.metadata_json = ujson.dumps(metadata)
                 self.dbs.commit()
 
         return badge_names
@@ -629,7 +629,7 @@ class BadgeModel(BaseModel):
         # Contributor badges
         existing_badges = self.getByUid(user.id)
         if user.metadata_json:
-            metadata = json.loads(user.metadata_json)
+            metadata = ujson.loads(user.metadata_json)
             for task_name in self.task_code_to_badge_name:
                 if task_name + "_fooling_no_verified_incorrect_or_flagged" in metadata:
                     for (
@@ -728,7 +728,7 @@ class BadgeModel(BaseModel):
 
         # Contributor badges
         if user.metadata_json:
-            metadata = json.loads(user.metadata_json)
+            metadata = ujson.loads(user.metadata_json)
             num_created_by_task = self.getFieldsFromMetadata(
                 metadata,
                 0,

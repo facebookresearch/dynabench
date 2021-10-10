@@ -2,7 +2,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import json
 import secrets
 from urllib.parse import parse_qs, quote
 
@@ -12,6 +11,7 @@ import uuid
 
 import common.auth as _auth
 import common.helpers as util
+import ujson
 from common.logging import logger
 from models.dataset import Dataset, DatasetModel
 from models.leaderboard_configuration import LeaderboardConfigurationModel
@@ -428,7 +428,7 @@ def activate(credentials, tid):
         )
 
     try:
-        Task.verify_annotation_config(json.loads(data["annotation_config_json"]))
+        Task.verify_annotation_config(ujson.loads(data["annotation_config_json"]))
     except Exception as ex:
         logger.exception("Invalid annotation config: (%s)" % (ex))
         bottle.abort(400, "Invalid annotation config")
@@ -776,7 +776,7 @@ def get_task_trends(tid):
         for model in sm.dbs.query(Model):
             mid_to_name[model.id] = model.name
 
-        for model_results in json.loads(dynaboard_response)["data"]:
+        for model_results in ujson.loads(dynaboard_response)["data"]:
             for dataset_results in model_results["datasets"]:
                 rid = did_to_rid[dataset_results["id"]]
                 if rid != 0:
@@ -907,7 +907,7 @@ def create_leaderboard_snapshot(credentials, tid):
         data["totalCount"],
         0,
     )
-    dynaboard_info = json.loads(dynaboard_info)
+    dynaboard_info = ujson.loads(dynaboard_info)
     dynaboard_info["metricWeights"] = data["metricWeights"]
     dynaboard_info["datasetWeights"] = data["datasetWeights"]
     dynaboard_info["miscInfoJson"] = {"sort": data["sort"]}
@@ -966,7 +966,7 @@ def construct_model_board_response_json(query_result, total_count):
     for d in query_result:
         obj = dict(zip(fields, d))
         if obj.get("metadata_json", None):
-            obj["metadata_json"] = json.loads(obj["metadata_json"])
+            obj["metadata_json"] = ujson.loads(obj["metadata_json"])
             # Check tags for every model to allow flexibility for adding or
             # removing tags in future
             if "perf_by_tag" in obj["metadata_json"]:

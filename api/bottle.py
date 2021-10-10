@@ -40,6 +40,8 @@ from traceback import format_exc, print_exc
 from types import FunctionType
 from unicodedata import normalize
 
+from ujson import dumps as json_dumps, loads as json_lds
+
 
 __author__ = "Marcel Hellkamp"
 __version__ = "0.13-dev"
@@ -106,11 +108,6 @@ if __name__ == "__main__":
 # Imports and Python 2/3 unification ##########################################
 ###############################################################################
 
-
-try:
-    from ujson import dumps as json_dumps, loads as json_lds
-except ImportError:
-    from json import dumps as json_dumps, loads as json_lds
 
 # inspect.getargspec was removed in Python 3.6, use
 # Signature-based version where we can (Python 3.3+)
