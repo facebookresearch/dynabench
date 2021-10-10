@@ -259,7 +259,7 @@ const Conf = ({ create, data, setData, name, constructorArgs }) => {
   return null;
 };
 
-const Image = ({
+const ImageComponent = ({
   displayName,
   className,
   create,
@@ -293,7 +293,7 @@ const AnnotationComponent = ({
   switch (type) {
     case "image":
       return (
-        <Image
+        <ImageComponent
           displayName={displayName}
           className={className}
           create={create}
@@ -390,70 +390,4 @@ const AnnotationComponent = ({
   }
 };
 
-const getBlobFromUrl = (myImageUrl) => {
-  return new Promise((resolve, reject) => {
-    let request = new XMLHttpRequest();
-    request.open("GET", myImageUrl, true);
-    request.responseType = "blob";
-    request.onload = () => {
-      resolve(request.response);
-    };
-    request.onerror = reject;
-    request.send();
-  });
-};
-
-const getDataFromBlob = (myBlob) => {
-  return new Promise((resolve, reject) => {
-    let reader = new FileReader();
-    reader.onload = () => {
-      resolve(reader.result);
-    };
-    reader.onerror = reject;
-    reader.readAsBinaryString(myBlob);
-  });
-};
-
-const convertUrlToImageData = async (myImageUrl) => {
-  try {
-    let myBlob = await getBlobFromUrl(myImageUrl);
-    let myImageData = await getDataFromBlob(myBlob);
-    return myImageData;
-  } catch (err) {
-    console.log(err);
-    return null;
-  }
-};
-
-async function subConvertToModelIO(type, datum) {
-  switch (type) {
-    case "image":
-      return await convertUrlToImageData(datum);
-    default:
-      return datum;
-  }
-}
-
-async function convertToModelIO(data, annotation_config) {
-  const name_to_type = {};
-  const annotation_config_objs = annotation_config["context"].concat(
-    annotation_config["output"],
-    annotation_config["input"],
-    annotation_config["metadata"]["create"],
-    annotation_config["metadata"]["validate"]
-  );
-  for (const annotation_config_obj of annotation_config_objs) {
-    name_to_type[annotation_config_obj["name"]] = annotation_config_obj["type"];
-  }
-
-  const converted_data = JSON.parse(JSON.stringify(data));
-  for (const [key, value] of Object.entries(converted_data)) {
-    if (name_to_type.hasOwnProperty(key)) {
-      converted_data[key] = await subConvertToModelIO(name_to_type[key], value);
-    }
-  }
-
-  return converted_data;
-}
-
-export { AnnotationComponent, convertToModelIO };
+export default AnnotationComponent;

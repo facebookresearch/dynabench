@@ -3,7 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import sys
-
+import base64
 import enum
 import requests
 import sqlalchemy as db
@@ -208,7 +208,9 @@ class AnnotationComponent:
 class Image(AnnotationComponent):
     @staticmethod
     def convert_to_model_io(url):
-        return requests.get(url).content
+        return base64.encodebytes(requests.get(url, verify=False).content).decode(
+            "utf-8"
+        )
 
     @staticmethod
     def verify(
@@ -566,7 +568,7 @@ class Task(Base):
 
     def convert_to_model_io(self, data):
         name_to_type = {}
-        annotation_config = json.loads(self.annotation_config_json)
+        annotation_config = ujson.loads(self.annotation_config_json)
         annotation_config_objs = (
             annotation_config["context"]
             + annotation_config["output"]
@@ -578,7 +580,7 @@ class Task(Base):
         for annotation_config_obj in annotation_config_objs:
             name_to_type[annotation_config_obj["name"]] = annotation_config_obj["type"]
 
-        converted_data = json.loads(json.dumps(data))
+        converted_data = ujson.loads(ujson.dumps(data))
         for key, value in data.items():
             if key in name_to_type:
                 converted_data[key] = annotation_components[
