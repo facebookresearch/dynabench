@@ -239,7 +239,7 @@ const Datasets = (props) => {
                                   props.handleDatasetDelete(values.id);
                                 }}
                               >
-                                Delete <img src="/trash.svg" alt="Delete" />
+                                Delete <i class="fas fa-trash-alt"></i>
                               </Button>
                             </Col>
                           </Form.Group>
