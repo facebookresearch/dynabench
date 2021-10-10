@@ -55,6 +55,7 @@ class Model(Base):
     source_url = db.Column(db.Text)
 
     is_published = db.Column(db.BOOLEAN, default=False)
+    is_anonymous = db.Column(db.BOOLEAN, default=False)
 
     # deployment
     endpoint_name = db.Column(db.Text)
