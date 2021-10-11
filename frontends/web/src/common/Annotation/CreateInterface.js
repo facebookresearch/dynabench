@@ -324,7 +324,7 @@ class CreateInterface extends React.Component {
       }
       // End hack that can be removed upon full dynalab integration
       this.context.api
-        .convertToModelIO(this.state.data, this.state.task)
+        .convertToModelIO(this.state.task.id, this.state.data)
         .then((model_io_result) => {
           // Begin hack that can be removed upon full dynalab integration
           if (
@@ -332,6 +332,7 @@ class CreateInterface extends React.Component {
             this.state.task.task_code === "vqa"
           ) {
             model_io_result = this.state.data;
+            model_io_result["image_url"] = model_io_result["image"];
           }
           // End hack that can be removed upon full dynalab integration
           this.context.api.getModelResponse(url, model_io_result).then(

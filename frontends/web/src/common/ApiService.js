@@ -44,6 +44,13 @@ export default class ApiService {
     });
   }
 
+  convertToModelIO(tid, data) {
+    return this.fetch(`${this.domain}/tasks/${tid}/convert_to_model_io`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
   register(email, password, username) {
     return this.fetch(`${this.domain}/users`, {
       method: "POST",
