@@ -8,7 +8,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Card, Col, Container, Pagination, Table } from "react-bootstrap";
 import TaskProposalSubPage from "./TaskProposalSubPage.js";
 
-const TaskProposalTable = (props) => {
+const TaskTable = (props) => {
   const { data, page, getPage, paginate, isEndOfPage, api, history } = props;
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -117,7 +117,7 @@ const TaskSubPage = (props) => {
     <>
       <Container className="mb-5 pb-5">
         <h1 className="my-4 pt-3 text-uppercase text-center">Your Tasks</h1>
-        <TaskProposalTable
+        <TaskTable
           history={history}
           api={api}
           data={userTasks}
