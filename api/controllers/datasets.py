@@ -60,7 +60,7 @@ def delete(credentials, did):
 
     delta_metric_types = [
         config["type"]
-        for config in json.loads(task.annotation_config_json)["delta_metrics"]
+        for config in ujson.loads(task.annotation_config_json)["delta_metrics"]
     ]
     delta_metric_types.append(None)
 
@@ -149,7 +149,7 @@ def create(credentials, tid, name):
                 tmp.close()
                 response = s3_client.upload_file(
                     tmp.name,
-                    "dynabench-dev",
+                    task.s3_bucket,
                     get_data_s3_path(task.task_code, name + ".jsonl", perturb_prefix),
                 )
                 os.remove(tmp.name)
