@@ -27,7 +27,7 @@ class TaskOwnerPage extends React.Component {
       model_identifiers: null,
       datasets: null,
       availableDatasetAccessTypes: null,
-      dataExporting: false,
+      dataExporting: {},
     };
   }
 
@@ -156,14 +156,21 @@ class TaskOwnerPage extends React.Component {
   };
 
   exportData = (rid, callback = () => {}) => {
-    this.setState({ dataExporting: true });
+    var newDict = { ...this.state.dataExporting };
+    newDict[rid] = true;
+    this.setState({ dataExporting: newDict });
+
     return this.context.api.exportData(this.state.task.id, rid).then(
       (result) => {
-        this.setState({ dataExporting: false }, callback);
+        var newDict = { ...this.state.dataExporting };
+        newDict[rid] = false;
+        this.setState({ dataExporting: newDict }, callback);
       },
       (error) => {
         console.log(error);
-        this.setState({ dataExporting: false }, callback);
+        var newDict = { ...this.state.dataExporting };
+        newDict[rid] = false;
+        this.setState({ dataExporting: newDict });
       }
     );
   };
