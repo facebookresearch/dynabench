@@ -55,6 +55,30 @@ def delete(credentials, did):
     dataset = dm.get(did)
     ensure_owner_or_admin(dataset.tid, credentials["id"])
 
+    tm = TaskModel()
+    task = tm.get(dataset.tid)
+
+    delta_metric_types = [
+        config["type"]
+        for config in json.loads(task.annotation_config_json)["delta_metrics"]
+    ]
+    delta_metric_types.append(None)
+
+    s3_client = boto3.client(
+        "s3",
+        aws_access_key_id=config["eval_aws_access_key_id"],
+        aws_secret_access_key=config["eval_aws_secret_access_key"],
+        region_name=config["eval_aws_region"],
+    )
+
+    for perturb_prefix in delta_metric_types:
+        s3_client.delete_object(
+            Bucket=task.s3_bucket,
+            Key=get_data_s3_path(
+                task.task_code, dataset.name + ".jsonl", perturb_prefix
+            ),
+        )
+
     dm.delete(dataset)
     return util.json_encode({"success": "ok"})
 
@@ -125,7 +149,7 @@ def create(credentials, tid, name):
                 tmp.close()
                 response = s3_client.upload_file(
                     tmp.name,
-                    task.s3_bucket,
+                    "dynabench-dev",
                     get_data_s3_path(task.task_code, name + ".jsonl", perturb_prefix),
                 )
                 os.remove(tmp.name)
