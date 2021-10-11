@@ -170,6 +170,14 @@ def ensure_owner_or_admin(tid, uid):
             )
 
 
+@bottle.post("/tasks/<tid:int>/convert_to_model_io")
+def convert_to_model_io(tid):
+    data = bottle.request.json
+    tm = TaskModel()
+    task = tm.get(tid)
+    return util.json_encode(task.convert_to_model_io(data))
+
+
 @bottle.get("/tasks/get_all_rounds/<tid:int>")
 @_auth.requires_auth
 def get_all_rounds(credentials, tid):

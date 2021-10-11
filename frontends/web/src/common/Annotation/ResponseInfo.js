@@ -8,7 +8,7 @@ import React from "react";
 import { Row, Col, Card, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import UserContext from "../../containers/UserContext";
-import { AnnotationComponent } from "./AnnotationComponent.js";
+import AnnotationComponent from "./AnnotationComponent.js";
 import initializeData from "./InitializeAnnotationData.js";
 
 class ResponseInfo extends React.Component {
