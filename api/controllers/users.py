@@ -217,7 +217,6 @@ def recover_password():
             "ui_server_host": util.parse_url(bottle.request.url),
             "token": forgot_password_token,
         }
-        logger.info("Using default bottle app config for mail config")
         config = bottle.default_app().config
         mail.send(
             config["mail"],

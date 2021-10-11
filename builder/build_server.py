@@ -114,7 +114,7 @@ if __name__ == "__main__":
 
                     # send email
                     if mail_session:
-                        user = m.getModelUserByMid(model_id)[1]
+                        _, user = m.getModelUserByMid(model_id)
                         mail.send(
                             mail_session,
                             config,
