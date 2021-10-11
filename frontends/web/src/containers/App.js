@@ -181,19 +181,20 @@ class App extends React.Component {
                       {NavItems}
                       <div className="dropdown-divider my-0"></div>
                       <NavDropdown.Item
+                        as={HashLink}
+                        to={"/#contributed-tasks"}
+                        className="py-3"
+                      >
+                        Contributed Tasks
+                      </NavDropdown.Item>
+                      <div className="dropdown-divider my-0"></div>
+                      <NavDropdown.Item
                         key={"FLoRes"}
                         as={Link}
                         to={"/flores"}
                         className="py-3"
                       >
                         Flores
-                      </NavDropdown.Item>
-                      <NavDropdown.Item
-                        as={HashLink}
-                        to={"/#contributed-tasks"}
-                        className="py-3"
-                      >
-                        Contributed Tasks
                       </NavDropdown.Item>
                     </NavDropdown>
                   </Nav>
