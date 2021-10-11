@@ -2,13 +2,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import json
 from urllib.parse import parse_qs
 
 import bottle
 
 import common.auth as _auth
 import common.helpers as util
+import ujson
 from common.logging import logger
 from models.badge import BadgeModel
 from models.context import ContextModel
@@ -134,7 +134,7 @@ def update_example(credentials, eid):
         if credentials["id"] == "turk":
             if not util.check_fields(data, ["uid"]):
                 bottle.abort(400, "Missing data")
-            metadata = json.loads(example.metadata_json)
+            metadata = ujson.loads(example.metadata_json)
             if (
                 "annotator_id" not in metadata
                 or metadata["annotator_id"] != data["uid"]
@@ -168,8 +168,8 @@ def update_example(credentials, eid):
             cm = ContextModel()
             context = cm.get(example.cid)
             all_user_annotation_data = {}
-            all_user_annotation_data.update(json.loads(context.context_json))
-            all_user_annotation_data.update(json.loads(example.input_json))
+            all_user_annotation_data.update(ujson.loads(context.context_json))
+            all_user_annotation_data.update(ujson.loads(example.input_json))
             all_user_annotation_data.update(data["metadata"])
             if (
                 not TaskModel()
@@ -180,10 +180,10 @@ def update_example(credentials, eid):
             # Make sure to keep fields in the metadata_json from before if they aren't
             # in the new metadata_json
             if example.metadata_json is not None:
-                for key, value in json.loads(example.metadata_json).items():
+                for key, value in ujson.loads(example.metadata_json).items():
                     if key not in data["metadata"]:
                         data["metadata"][key] = value
-            data["metadata_json"] = json.dumps(data["metadata"])
+            data["metadata_json"] = ujson.dumps(data["metadata"])
             del data["metadata"]
 
         logger.info(f"Updating example {example.id} with {data}")
@@ -214,7 +214,7 @@ def evaluate_model_correctness():
 
     tm = TaskModel()
     task = tm.get(data["tid"])
-    annotation_config = json.loads(task.annotation_config_json)
+    annotation_config = ujson.loads(task.annotation_config_json)
     model_wrong_metric = model_wrong_metrics[
         annotation_config["model_wrong_metric"]["type"]
     ]

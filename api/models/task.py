@@ -2,13 +2,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import json
 import sys
 
 import enum
 import sqlalchemy as db
 from transformers.data.metrics.squad_metrics import compute_f1
 
+import ujson
 from common.logging import logger
 
 from .base import Base, BaseModel
@@ -501,7 +501,7 @@ class Task(Base):
     def verify_annotation(self, data, mode=AnnotationVerifierMode.default):
         name_to_constructor_args = {}
         name_to_type = {}
-        annotation_config = json.loads(self.annotation_config_json)
+        annotation_config = ujson.loads(self.annotation_config_json)
         annotation_config_objs = (
             annotation_config["context"]
             + annotation_config["output"]
@@ -617,7 +617,7 @@ class TaskModel(BaseModel):
             r_dict = r.to_dict()
             t_dict["ordered_scoring_datasets"] = scoring_dataset_list
             t_dict["ordered_datasets"] = dataset_list
-            annotation_config = json.loads(t_dict["annotation_config_json"])
+            annotation_config = ujson.loads(t_dict["annotation_config_json"])
             # TODO: make the frontend use perf_metric instead of perf_metric_field_name?
             if "perf_metric" in annotation_config:
                 t_dict["perf_metric_field_name"] = annotation_config["perf_metric"][
