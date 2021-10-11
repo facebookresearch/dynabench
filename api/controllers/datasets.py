@@ -86,7 +86,6 @@ def create(credentials, tid, name):
                 for line in upload.file.read().decode("utf-8").splitlines()
             ]
             for io in parsed_upload:
-                print(io)
                 if (
                     not task.verify_annotation(
                         io, mode=AnnotationVerifierMode.dataset_upload
