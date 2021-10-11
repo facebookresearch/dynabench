@@ -56,7 +56,7 @@ Tasks can collect data over multiple _rounds_. A round of data collection usuall
 
 ## Contexts
 
-Most tasks on Dynabench involve contextualized data collection: a question is written for a given passage or image, a hypothesis is written for a given premise, et cetera. For every round in your task, you can add contexts under the rounds tab by clicking the "Upload Contexts" section. The format for a context corresponds to the fields defined in your [task annotation config](#annotation-config). Optionally, you can specify `tag` and filter for these tags if you customize your data collection frontend (e.g. when you want to collect Mechanical Turker data for a subset of your full dataset). The format for the contexts is `jsonl`. For example, the first two lines for a classification task could read:
+Most tasks on Dynabench involve contextualized data collection: a question is written for a given passage or image, a hypothesis is written for a given premise, et cetera. For every round in your task, you can add contexts under the rounds tab by clicking the "Upload Contexts" section. The format for a context corresponds to the fields defined in your [task annotation config](#annotation-config). Optionally, you can specify `tag` and filter for these tags if you customize your data collection frontend (e.g. when you want to collect Mechanical Turker data for a subset of your full dataset). Note that the `tag` key must be in your config, but you can set it to `null`. The format for the contexts is `jsonl`. For example, the first two lines for a classification task could read:
 
 ```
 {"context": {"statement": "Lorem ipsum dolor et cetera"}, "tag": null, "metadata": {}}
