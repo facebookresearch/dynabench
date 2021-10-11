@@ -48,7 +48,6 @@ class AtomicImage extends React.Component {
       return (
         <>
           <img
-            id={"image"}
             src={this.props.src}
             style={{ display: "none" }}
             onLoad={this.onImgLoad}
