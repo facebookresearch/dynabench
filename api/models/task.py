@@ -2,9 +2,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import base64
 import sys
 
 import enum
+import requests
 import sqlalchemy as db
 from transformers.data.metrics.squad_metrics import compute_f1
 
@@ -170,7 +172,7 @@ perf_metric_config_verifiers = {
 
 
 class AnnotationTypeEnum(enum.Enum):
-    image_url = "image_url"
+    image = "image"
     string = "string"
     context_string_selection = "context_string_selection"
     conf = "conf"
@@ -185,192 +187,223 @@ class AnnotationVerifierMode(enum.Enum):
     predictions_upload = "predictions_upload"
 
 
-def verify_image_url(
-    obj,
-    obj_constructor_args,
-    name_to_constructor_args,
-    data,
-    mode=AnnotationVerifierMode.default,
-):
-    assert isinstance(obj, str)
+class AnnotationComponent:
+
+    # This is re-implemented for cases where an annotation component requires that we
+    # store different info in the db compared to the info that we send models.
+    # For example, we might want to send image blobs to a model but store a url
+    # instead of a blob in the db.
+    @staticmethod
+    def convert_to_model_io(obj):
+        return obj
+
+    @staticmethod
+    def verify(obj, obj_constructor_args, name_to_constructor_args):
+        raise NotImplementedError
+
+    @staticmethod
+    def verify_config(obj, obj_constructor_args, name_to_constructor_args):
+        raise NotImplementedError
 
 
-def verify_image_url_config(obj, annotation_config):
-    pass
+class Image(AnnotationComponent):
+    @staticmethod
+    def convert_to_model_io(url):
+        return base64.encodebytes(requests.get(url, verify=False).content).decode(
+            "utf-8"
+        )
 
-
-def verify_string(
-    obj,
-    obj_constructor_args,
-    name_to_constructor_args,
-    data,
-    mode=AnnotationVerifierMode.default,
-):
-    if mode == AnnotationVerifierMode.dataset_upload:
-        if isinstance(obj, str):
-            pass
-        elif isinstance(obj, list):
-            for sub_obj in obj:
-                assert isinstance(sub_obj, str)
-        else:
-            raise ValueError("Wrong type")
-    else:
+    @staticmethod
+    def verify(
+        obj,
+        obj_constructor_args,
+        name_to_constructor_args,
+        data,
+        mode=AnnotationVerifierMode.default,
+    ):
         assert isinstance(obj, str)
 
+    @staticmethod
+    def verify_config(obj, annotation_config):
+        pass
 
-def verify_string_config(obj, annotation_config):
-    pass
+
+class String(AnnotationComponent):
+    @staticmethod
+    def verify(
+        obj,
+        obj_constructor_args,
+        name_to_constructor_args,
+        data,
+        mode=AnnotationVerifierMode.default,
+    ):
+        if mode == AnnotationVerifierMode.dataset_upload:
+            if isinstance(obj, str):
+                pass
+            elif isinstance(obj, list):
+                for sub_obj in obj:
+                    assert isinstance(sub_obj, str)
+            else:
+                raise ValueError("Wrong type")
+        else:
+            assert isinstance(obj, str)
+
+    @staticmethod
+    def verify_config(obj, annotation_config):
+        pass
 
 
-def verify_context_string_selection(
-    obj,
-    constructor_args,
-    name_to_constructor_args,
-    data,
-    mode=AnnotationVerifierMode.default,
-):
-    if mode == AnnotationVerifierMode.dataset_upload:
-        if isinstance(obj, str):
+class ContextStringSelection(AnnotationComponent):
+    @staticmethod
+    def verify(
+        obj,
+        constructor_args,
+        name_to_constructor_args,
+        data,
+        mode=AnnotationVerifierMode.default,
+    ):
+        if mode == AnnotationVerifierMode.dataset_upload:
+            if isinstance(obj, str):
+                assert obj in data[constructor_args["reference_name"]]
+            elif isinstance(obj, list):
+                for sub_obj in obj:
+                    assert isinstance(sub_obj, str)
+                    assert sub_obj in data[constructor_args["reference_name"]]
+            else:
+                raise ValueError("Wrong type")
+        elif mode == AnnotationVerifierMode.predictions_upload:
+            assert isinstance(obj, str)
+        else:
+            assert isinstance(obj, str)
             assert obj in data[constructor_args["reference_name"]]
-        elif isinstance(obj, list):
-            for sub_obj in obj:
-                assert isinstance(sub_obj, str)
-                assert sub_obj in data[constructor_args["reference_name"]]
-        else:
-            raise ValueError("Wrong type")
-    elif mode == AnnotationVerifierMode.predictions_upload:
-        assert isinstance(obj, str)
-    else:
-        assert isinstance(obj, str)
-        assert obj in data[constructor_args["reference_name"]]
+
+    @staticmethod
+    def verify_config(obj, annotation_config):
+        assert "reference_name" in obj["constructor_args"]
+        reference_obj = list(
+            filter(
+                lambda other_obj: other_obj["name"]
+                == obj["constructor_args"]["reference_name"],
+                annotation_config["context"],
+            )
+        )[0]
+        assert reference_obj["type"] == AnnotationTypeEnum.string.name
 
 
-def verify_context_string_selection_config(obj, annotation_config):
-    assert "reference_name" in obj["constructor_args"]
-    reference_obj = list(
-        filter(
+class Conf(AnnotationComponent):
+    @staticmethod
+    def verify(
+        obj,
+        obj_constructor_args,
+        name_to_constructor_args,
+        data,
+        mode=AnnotationVerifierMode.default,
+    ):
+        assert isinstance(obj, float)
+        assert obj > 0 - EPSILON_PREC
+        assert obj < 1 + EPSILON_PREC
+
+    @staticmethod
+    def verify_config(obj, annotation_config):
+        pass
+
+
+class MulticlassProbs(AnnotationComponent):
+    @staticmethod
+    def verify(
+        obj,
+        obj_constructor_args,
+        name_to_constructor_args,
+        data,
+        mode=AnnotationVerifierMode.default,
+    ):
+        assert isinstance(obj, dict)
+        if mode != AnnotationVerifierMode.predictions_upload:
+            assert set(obj.keys()) == set(
+                name_to_constructor_args[obj_constructor_args["reference_name"]][
+                    "labels"
+                ]
+            )
+        assert sum(obj.values()) < 1 + EPSILON_PREC
+        assert sum(obj.values()) > 1 - EPSILON_PREC
+
+    @staticmethod
+    def verify_config(obj, annotation_config):
+        assert "reference_name" in obj["constructor_args"]
+        reference_objs = filter(
             lambda other_obj: other_obj["name"]
             == obj["constructor_args"]["reference_name"],
-            annotation_config["context"],
+            annotation_config["context"]
+            + annotation_config["input"]
+            + annotation_config["output"]
+            + annotation_config["metadata"]["create"]
+            + annotation_config["metadata"]["validate"],
         )
-    )[0]
-    assert reference_obj["type"] == AnnotationTypeEnum.string.name
+        for reference_obj in reference_objs:
+            assert reference_obj["type"] in (
+                AnnotationTypeEnum.multiclass.name,
+                AnnotationTypeEnum.target_label.name,
+            )
 
 
-def verify_conf(
-    obj,
-    obj_constructor_args,
-    name_to_constructor_args,
-    data,
-    mode=AnnotationVerifierMode.default,
-):
-    assert isinstance(obj, float)
-    assert obj > 0 - EPSILON_PREC
-    assert obj < 1 + EPSILON_PREC
-
-
-def verify_conf_config(obj, annotation_config):
-    pass
-
-
-def verify_multiclass_probs(
-    obj,
-    obj_constructor_args,
-    name_to_constructor_args,
-    data,
-    mode=AnnotationVerifierMode.default,
-):
-    assert isinstance(obj, dict)
-    if mode != AnnotationVerifierMode.predictions_upload:
-        assert set(obj.keys()) == set(
-            name_to_constructor_args[obj_constructor_args["reference_name"]]["labels"]
-        )
-    assert sum(obj.values()) < 1 + EPSILON_PREC
-    assert sum(obj.values()) > 1 - EPSILON_PREC
-
-
-def verify_multiclass_probs_config(obj, annotation_config):
-    assert "reference_name" in obj["constructor_args"]
-    reference_objs = filter(
-        lambda other_obj: other_obj["name"]
-        == obj["constructor_args"]["reference_name"],
-        annotation_config["context"]
-        + annotation_config["input"]
-        + annotation_config["output"]
-        + annotation_config["metadata"]["create"]
-        + annotation_config["metadata"]["validate"],
-    )
-    for reference_obj in reference_objs:
-        assert reference_obj["type"] in (
-            AnnotationTypeEnum.multiclass.name,
-            AnnotationTypeEnum.target_label.name,
-        )
-
-
-def verify_multiclass(
-    obj,
-    obj_constructor_args,
-    name_to_constructor_args,
-    data,
-    mode=AnnotationVerifierMode.default,
-):
-    assert isinstance(obj, str)
-    assert obj in obj_constructor_args["labels"]
-
-
-def verify_multiclass_config(obj, annotation_config):
-    assert "labels" in obj["constructor_args"]
-    assert isinstance(obj["constructor_args"]["labels"], list)
-    for item in obj["constructor_args"]["labels"]:
-        assert isinstance(item, str)
-
-
-def verify_target_label(
-    obj,
-    obj_constructor_args,
-    name_to_constructor_args,
-    data,
-    mode=AnnotationVerifierMode.default,
-):
-    if mode == AnnotationVerifierMode.dataset_upload:
-        if isinstance(obj, str):
-            assert obj in obj_constructor_args["labels"]
-        elif isinstance(obj, list):
-            for sub_obj in obj:
-                assert isinstance(sub_obj, str)
-                assert sub_obj in obj_constructor_args["labels"]
-        else:
-            raise ValueError("Wrong type")
-    else:
+class Multiclass(AnnotationComponent):
+    @staticmethod
+    def verify(
+        obj,
+        obj_constructor_args,
+        name_to_constructor_args,
+        data,
+        mode=AnnotationVerifierMode.default,
+    ):
         assert isinstance(obj, str)
         assert obj in obj_constructor_args["labels"]
 
+    @staticmethod
+    def verify_config(obj, annotation_config):
+        assert "labels" in obj["constructor_args"]
+        assert isinstance(obj["constructor_args"]["labels"], list)
+        for item in obj["constructor_args"]["labels"]:
+            assert isinstance(item, str)
 
-def verify_target_label_config(obj, annotation_config):
-    assert "labels" in obj["constructor_args"]
-    assert isinstance(obj["constructor_args"]["labels"], list)
-    for item in obj["constructor_args"]["labels"]:
-        assert isinstance(item, str)
+
+class TargetLabel(AnnotationComponent):
+    @staticmethod
+    def verify(
+        obj,
+        obj_constructor_args,
+        name_to_constructor_args,
+        data,
+        mode=AnnotationVerifierMode.default,
+    ):
+        if mode == AnnotationVerifierMode.dataset_upload:
+            if isinstance(obj, str):
+                assert obj in obj_constructor_args["labels"]
+            elif isinstance(obj, list):
+                for sub_obj in obj:
+                    assert isinstance(sub_obj, str)
+                    assert sub_obj in obj_constructor_args["labels"]
+            else:
+                raise ValueError("Wrong type")
+        else:
+            assert isinstance(obj, str)
+            assert obj in obj_constructor_args["labels"]
+
+    @staticmethod
+    def verify_config(obj, annotation_config):
+        assert "labels" in obj["constructor_args"]
+        assert isinstance(obj["constructor_args"]["labels"], list)
+        for item in obj["constructor_args"]["labels"]:
+            assert isinstance(item, str)
 
 
-annotation_type_verifiers = {
-    AnnotationTypeEnum.image_url.name: verify_image_url,
-    AnnotationTypeEnum.string.name: verify_string,
-    AnnotationTypeEnum.context_string_selection.name: verify_context_string_selection,
-    AnnotationTypeEnum.conf.name: verify_conf,
-    AnnotationTypeEnum.multiclass_probs.name: verify_multiclass_probs,
-    AnnotationTypeEnum.multiclass.name: verify_multiclass,
-    AnnotationTypeEnum.target_label.name: verify_target_label,
-}
-
-annotation_type_config_verifiers = {
-    AnnotationTypeEnum.image_url.name: verify_image_url_config,
-    AnnotationTypeEnum.string.name: verify_string_config,
-    AnnotationTypeEnum.context_string_selection.name: verify_context_string_selection_config,  # noqa
-    AnnotationTypeEnum.conf.name: verify_conf_config,
-    AnnotationTypeEnum.multiclass_probs.name: verify_multiclass_probs_config,
-    AnnotationTypeEnum.multiclass.name: verify_multiclass_config,
-    AnnotationTypeEnum.target_label.name: verify_target_label_config,
+annotation_components = {
+    AnnotationTypeEnum.image.name: Image,
+    AnnotationTypeEnum.string.name: String,
+    AnnotationTypeEnum.context_string_selection.name: ContextStringSelection,
+    AnnotationTypeEnum.conf.name: Conf,
+    AnnotationTypeEnum.multiclass_probs.name: MulticlassProbs,
+    AnnotationTypeEnum.multiclass.name: Multiclass,
+    AnnotationTypeEnum.target_label.name: TargetLabel,
 }
 
 
@@ -496,7 +529,7 @@ class Task(Base):
             assert isinstance(obj["constructor_args"], dict)
             assert "type" in obj
             assert isinstance(obj["type"], str)
-            annotation_type_config_verifiers[obj["type"]](obj, annotation_config)
+            annotation_components[obj["type"]].verify_config(obj, annotation_config)
 
     def verify_annotation(self, data, mode=AnnotationVerifierMode.default):
         name_to_constructor_args = {}
@@ -522,7 +555,7 @@ class Task(Base):
             ):  # TODO This check is necessary for non-dynalab models.
                 # Can be removed when dynatask-dynalab integration is complete.
                 try:
-                    annotation_type_verifiers[name_to_type[name]](
+                    annotation_components[name_to_type[name]].verify(
                         datum,
                         name_to_constructor_args[name],
                         name_to_constructor_args,
@@ -533,6 +566,29 @@ class Task(Base):
                     logger.error(name + " is improperly formatted (" + str(e) + ")")
                     return False
         return True
+
+    def convert_to_model_io(self, data):
+        name_to_type = {}
+        annotation_config = ujson.loads(self.annotation_config_json)
+        annotation_config_objs = (
+            annotation_config["context"]
+            + annotation_config["output"]
+            + annotation_config["input"]
+            + annotation_config["metadata"]["create"]
+            + annotation_config["metadata"]["validate"]
+        )
+
+        for annotation_config_obj in annotation_config_objs:
+            name_to_type[annotation_config_obj["name"]] = annotation_config_obj["type"]
+
+        converted_data = ujson.loads(ujson.dumps(data))
+        for key, value in data.items():
+            if key in name_to_type:
+                converted_data[key] = annotation_components[
+                    name_to_type[key]
+                ].convert_to_model_io(value)
+
+        return converted_data
 
 
 class TaskModel(BaseModel):
