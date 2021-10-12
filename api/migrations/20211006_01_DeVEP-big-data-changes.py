@@ -188,7 +188,7 @@ steps = [
         """,
         """
         UPDATE contexts SET context_json = JSON_INSERT(JSON_REMOVE(context_json,
-        '$.image_url'), '$.image', JSON_EXTRACT(context_json, '$.image_url')) WHERE
+        '$.image'), '$.image_url', JSON_EXTRACT(context_json, '$.image')) WHERE
         r_realid in (SELECT id FROM rounds WHERE tid IN (SELECT id FROM tasks WHERE
         task_code in ('winoground', 'vqa', 'vqa_val')))
         """,
