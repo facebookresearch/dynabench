@@ -120,7 +120,7 @@ We recommend that you look through the examples before reading further. The anno
 
     * `string`: Data for this type is stored as a string. `placeholder` is a required constructor arg.
 
-    * `image`: Data for this type is stored in our database as url to the image. The task owner should upload images in contexts and datasets as urls. But the object that is sent as an input to models is a base64 string representation of the image. You can get this base64 string from this python code: `base64.encodebytes(requests.get(url, verify=False).content).decode("utf-8")`.
+    * `image`: Data for this type is stored in our database as url to the image. The task owner should upload images in contexts and datasets as urls. But the object that is sent as an input to models is a base64 string representation of the image. For model testing purposes, you can get this base64 string from this python code: `base64.encodebytes(requests.get(url, verify=False).content).decode("utf-8")`.
 
     * `context_string_selection`: Data for this type is stored as a string; it must be a substring of another annotation object in `context`. `reference_name` designates the name of a string-type object in the context to select from, and it is a required constructor arg.
 
