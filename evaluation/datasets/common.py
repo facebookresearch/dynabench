@@ -50,6 +50,7 @@ class BaseDataset:
         self._config = config
         self._s3_client = None
         self._check_dataset_on_s3()
+        self.annotation_config = json.loads(self.task.annotation_config_json)
 
     def _check_dataset_on_s3(self):
         # Datasets are now uploaded by task owners from the DynaBench UI, so we don't
@@ -119,19 +120,13 @@ class BaseDataset:
     def get_batch_transform_config(
         self, sagemaker_client, endpoint_name, job_name, perturb_prefix=None
     ) -> dict:
-        input_names = [
-            obj["name"] for obj in json.loads(self.task.annotation_config_json)["input"]
-        ]
-        output_names = [
-            obj["name"]
-            for obj in json.loads(self.task.annotation_config_json)["output"]
-        ]
+        input_names = [obj["name"] for obj in self.annotation_config["input"]]
+        output_names = [obj["name"] for obj in self.annotation_config["output"]]
         input_names_without_target_names = list(
             set(input_names).difference(set(output_names))
         )
         model_input_names = input_names_without_target_names + [
-            obj["name"]
-            for obj in json.loads(self.task.annotation_config_json)["context"]
+            obj["name"] for obj in self.annotation_config["context"]
         ]
         model_input_names.append("uid")  # unique example identifier
         return dict(
@@ -344,13 +339,14 @@ class BaseDataset:
         """
         return {
             "id": example["uid"],
+            # NOTE: For now, the perf_metric defines the output to look for
             "answer": example[
-                json.loads(self.task.annotation_config_json)["perf_metric"][
-                    "constructor_args"
-                ]["reference_name"]
+                self.annotation_config["perf_metric"]["constructor_args"][
+                    "reference_name"
+                ]
             ],
             "tags": example.get("tags", []),
-        }  # NOTE: For now, the perf_metric defines the output to look for
+        }
 
     def pred_field_converter(self, example):
         """
@@ -365,9 +361,7 @@ class BaseDataset:
         """
         return {
             "id": example["id"],
-            "pred": example[
-                json.loads(self.task.annotation_config_json)["perf_metric"][
-                    "constructor_args"
-                ]["reference_name"]
-            ],
-        }  # NOTE: For now, the perf_metric defines the output to look for
+            # NOTE: For now, we assume the metrics are all based on the first
+            # output of the model
+            "pred": example[self.annotation_config["output"][0]["name"]],
+        }
