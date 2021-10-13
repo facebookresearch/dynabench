@@ -120,7 +120,9 @@ class ModelModel(BaseModel):
     def getUserModelsByUid(self, uid, is_current_user=False, n=5, offset=0):
         query_res = self.dbs.query(Model).filter(Model.uid == uid)
         if not is_current_user:
-            query_res = query_res.filter(Model.is_published == True)  # noqa
+            query_res = query_res.filter(
+                db.and_(Model.is_published == True, Model.is_anonymous == False)
+            )  # noqa
         return query_res.limit(n).offset(offset * n), util.get_query_count(query_res)
 
     def getUserModelsByUidAndMid(self, uid, mid, is_current_user=False):
