@@ -245,7 +245,7 @@ class PublishInterface extends React.Component {
                               </Markdown>
                             </Form.Text>
                           </Form.Group>
-                          <Form.Group>
+                          <Form.Group controlId="is_anonymous">
                             <b>
                               <Form.Check
                                 label="Anonymous when Published?"
