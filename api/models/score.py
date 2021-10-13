@@ -403,12 +403,19 @@ class ScoreModel(BaseModel):
             data_list.append(
                 {
                     "model_id": model.id,
-                    "model_name": model.name if model.is_published else None,  # Don't
-                    # give away the users for unpublished models.
-                    "uid": model.uid if model.is_published else None,
-                    "username": uid_to_username[model.uid]
-                    if model.is_published
-                    else None,
+                    "model_name": model.name if model.is_published else None,
+                    # Don't give away the users for unpublished models.
+                    "uid": None
+                    if not model.is_published
+                    else -1
+                    if model.is_anonymous
+                    else model.uid,
+                    "username": None
+                    if not model.is_published
+                    else "anonymous"
+                    if model.is_anonymous
+                    else uid_to_username[model.uid],
+                    # Distinguish between unpublished and published-but-anonymous models
                     "averaged_scores": averaged_scores,
                     "averaged_variances": averaged_variances,
                     "dynascore": dynascore
