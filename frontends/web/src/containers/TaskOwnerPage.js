@@ -346,6 +346,12 @@ class TaskOwnerPage extends React.Component {
     );
   };
 
+  handleDatasetDelete = (did) => {
+    this.context.api.deleteDataset(did).then((result) => {
+      this.fetchDatasets();
+    });
+  };
+
   handleRoundUpdate = (
     values,
     { setFieldError, setSubmitting, setFieldValue, resetForm }
@@ -544,6 +550,7 @@ class TaskOwnerPage extends React.Component {
                     handleUploadAndCreateDataset={
                       this.handleUploadAndCreateDataset
                     }
+                    handleDatasetDelete={this.handleDatasetDelete}
                   />
                 ) : null}
               </>
