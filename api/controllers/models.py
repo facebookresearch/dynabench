@@ -284,6 +284,7 @@ def update_model(credentials, mid):
             license=data["license"],
             source_url=data["source_url"],
             model_card=data["model_card"],
+            is_anonymous=data["is_anonymous"],
             is_published=False,
         )
         return {"status": "success"}
