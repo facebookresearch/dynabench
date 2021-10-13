@@ -206,8 +206,15 @@ def get_model_detail(credentials, mid):
             and query_result[0].uid != credentials["id"]
         ):
             ensure_owner_or_admin(query_result[0].tid, credentials["id"])
-        model["username"] = query_result[1].username
-        model["user_id"] = query_result[1].id
+
+        is_current_user = util.is_current_user(query_result[1].id, credentials)
+
+        if not is_current_user and query_result[0].is_anonymous:
+            model["username"] = "anonymous"
+            model["user_id"] = -1
+        else:
+            model["username"] = query_result[1].username
+            model["user_id"] = query_result[1].id
         # Construct Score information based on model id
         scores = s.getByMid(mid)
         datasets = dm.getByTid(model["tid"])
