@@ -511,22 +511,21 @@ ${latexTableContent}
                           <td>Owner</td>
                           <td>
                             {model.username === "anonymous" &&
-                            model.is_anonymous === true
-                              ? "anonymous"
-                              : null}
-                            {model.username != "anonymous" ? (
+                              model.is_anonymous === true &&
+                              "anonymous"}
+                            {model.username != "anonymous" && (
                               <Link to={`/users/${model.user_id}`}>
                                 {model.username}
                               </Link>
-                            ) : null}
+                            )}
                             {model.username != "anonymous" &&
-                            model.is_anonymous === true ? (
-                              <i>
-                                {" "}
-                                (will be displayed as <b>anonymous</b> to other
-                                users)
-                              </i>
-                            ) : null}
+                              model.is_anonymous === true && (
+                                <i>
+                                  {" "}
+                                  (will be displayed as <b>anonymous</b> to
+                                  other users)
+                                </i>
+                              )}
                           </td>
                         </tr>
                         {!isFlores && (
