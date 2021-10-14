@@ -38,6 +38,19 @@ if __name__ == "__main__":
         for msg in redeployment_queue:  # ask for redeployment
             queue.send_message(MessageBody=json.dumps(msg))
         redeployment_queue = []
+
+    if "smtp_user" in config and config["smtp_user"] != "":
+        mail_session = mail.get_mail_session(
+            host=config["smtp_host"],
+            port=config["smtp_port"],
+            smtp_user=config["smtp_user"],
+            smtp_secret=config["smtp_secret"],
+        )
+    if not mail_session:
+        logger.warning(
+            "Couldn't setup the mail server, will not send mails on build failures !"
+        )
+
     while True:
         for message in queue.receive_messages():
             msg = json.loads(message.body)
@@ -100,18 +113,12 @@ if __name__ == "__main__":
                         eval_queue.send_message(MessageBody=json.dumps(eval_message))
 
                     # send email
-                    user = m.getModelUserByMid(model_id)[1]
-                    if "smtp_user" in config and config["smtp_user"] != "":
-                        mail_session = mail.get_mail_session(
-                            host=config["smtp_host"],
-                            port=config["smtp_port"],
-                            smtp_user=config["smtp_user"],
-                            smtp_secret=config["smtp_secret"],
-                        )
+                    if mail_session:
+                        _, user = m.getModelUserByMid(model_id)
                         mail.send(
-                            server=mail_session,
-                            config=config,
-                            contacts=[user.email],
+                            mail_session,
+                            config,
+                            [user.email],
                             cc_contact="dynabench@fb.com",
                             template_name=f"templates/{template}.txt",
                             msg_dict=msg,

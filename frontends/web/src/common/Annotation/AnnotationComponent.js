@@ -259,7 +259,7 @@ const Conf = ({ create, data, setData, name, constructorArgs }) => {
   return null;
 };
 
-const ImageUrl = ({
+const ImageComponent = ({
   displayName,
   className,
   create,
@@ -291,9 +291,9 @@ const AnnotationComponent = ({
   inputReminder = false,
 }) => {
   switch (type) {
-    case "image_url":
+    case "image":
       return (
-        <ImageUrl
+        <ImageComponent
           displayName={displayName}
           className={className}
           create={create}

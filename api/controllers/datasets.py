@@ -2,7 +2,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import json
 import os
 import re
 import sys
@@ -13,6 +12,7 @@ import bottle
 
 import common.auth as _auth
 import common.helpers as util
+import ujson
 from common.config import config
 from common.logging import logger
 from models.dataset import AccessTypeEnum, DatasetModel
@@ -48,6 +48,41 @@ def update(credentials, did):
     return util.json_encode({"success": "ok"})
 
 
+@bottle.delete("/datasets/delete/<did:int>")
+@_auth.requires_auth
+def delete(credentials, did):
+    dm = DatasetModel()
+    dataset = dm.get(did)
+    ensure_owner_or_admin(dataset.tid, credentials["id"])
+
+    tm = TaskModel()
+    task = tm.get(dataset.tid)
+
+    delta_metric_types = [
+        config["type"]
+        for config in ujson.loads(task.annotation_config_json)["delta_metrics"]
+    ]
+    delta_metric_types.append(None)
+
+    s3_client = boto3.client(
+        "s3",
+        aws_access_key_id=config["eval_aws_access_key_id"],
+        aws_secret_access_key=config["eval_aws_secret_access_key"],
+        region_name=config["eval_aws_region"],
+    )
+
+    for perturb_prefix in delta_metric_types:
+        s3_client.delete_object(
+            Bucket=task.s3_bucket,
+            Key=get_data_s3_path(
+                task.task_code, dataset.name + ".jsonl", perturb_prefix
+            ),
+        )
+
+    dm.delete(dataset)
+    return util.json_encode({"success": "ok"})
+
+
 @bottle.post("/datasets/create/<tid:int>/<name>")
 @_auth.requires_auth
 def create(credentials, tid, name):
@@ -68,7 +103,7 @@ def create(credentials, tid, name):
     delta_dataset_uploads = []
     delta_metric_types = [
         config["type"]
-        for config in json.loads(task.annotation_config_json)["delta_metrics"]
+        for config in ujson.loads(task.annotation_config_json)["delta_metrics"]
     ]
     for delta_metric_type in delta_metric_types:
         delta_dataset_uploads.append(
@@ -82,7 +117,7 @@ def create(credentials, tid, name):
     for upload, perturb_prefix in uploads:
         try:
             parsed_upload = [
-                json.loads(line)
+                ujson.loads(line)
                 for line in upload.file.read().decode("utf-8").splitlines()
             ]
             for io in parsed_upload:
@@ -110,7 +145,7 @@ def create(credentials, tid, name):
             )
             with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
                 for datum in parsed_upload:
-                    tmp.write(json.dumps(datum) + "\n")
+                    tmp.write(ujson.dumps(task.convert_to_model_io(datum)) + "\n")
                 tmp.close()
                 response = s3_client.upload_file(
                     tmp.name,
@@ -122,6 +157,7 @@ def create(credentials, tid, name):
                     logger.info(response)
         except Exception as ex:
             logger.exception(f"Failed to load {name} to S3 due to {ex}.")
+            bottle.abort(400, "Issue loading dataset to S3")
 
     # Create an entry in the db for the dataset, or skip if one already exists.
     d = DatasetModel()

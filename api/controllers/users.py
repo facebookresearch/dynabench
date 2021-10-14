@@ -217,9 +217,11 @@ def recover_password():
             "ui_server_host": util.parse_url(bottle.request.url),
             "token": forgot_password_token,
         }
+        config = bottle.default_app().config
         mail.send(
-            server=bottle.default_app().config["mail"],
-            contacts=[user.email],
+            config["mail"],
+            config,
+            [user.email],
             template_name="templates/forgot_password.txt",
             msg_dict=msg,
             subject=subject,

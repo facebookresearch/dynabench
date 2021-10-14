@@ -2,12 +2,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import json
-
 import bottle
 
 import common.auth as _auth
 import common.helpers as util
+import ujson
 from models.badge import BadgeModel
 from models.context import ContextModel
 from models.example import ExampleModel
@@ -73,7 +72,7 @@ def validate_example(credentials, eid):
     if credentials["id"] == "turk":
         if not util.check_fields(data, ["uid"]):
             bottle.abort(400, "Missing data")
-        example_metadata = json.loads(example.metadata_json)
+        example_metadata = ujson.loads(example.metadata_json)
         if (
             "annotator_id" not in example_metadata
             or example_metadata["annotator_id"] == data["uid"]
@@ -82,7 +81,7 @@ def validate_example(credentials, eid):
         current_validation_metadata["annotator_id"] = data["uid"]
         for validation in validations:
             if (
-                json.loads(validation.metadata_json)["annotator_id"]
+                ujson.loads(validation.metadata_json)["annotator_id"]
                 == current_validation_metadata["annotator_id"]
             ):
                 bottle.abort(
@@ -122,7 +121,7 @@ def validate_example(credentials, eid):
                         example.uid, context.r_realid
                     )
                 if user.metadata_json is not None:
-                    user_metadata = json.loads(user.metadata_json)
+                    user_metadata = ujson.loads(user.metadata_json)
                     if (
                         task.task_code + "_fooling_no_verified_incorrect_or_flagged"
                         in user_metadata
@@ -140,7 +139,7 @@ def validate_example(credentials, eid):
                     user_metadata = {
                         task.task_code + "_fooling_no_verified_incorrect_or_flagged": 0
                     }
-                user.metadata_json = json.dumps(user_metadata)
+                user.metadata_json = ujson.dumps(user_metadata)
                 um.dbs.commit()
 
     ret = example.to_dict()
