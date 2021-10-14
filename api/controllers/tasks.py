@@ -2,16 +2,22 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import os
 import secrets
+import sys
+import tempfile
 from urllib.parse import parse_qs, quote
 
+import boto3
 import bottle
 import sqlalchemy as db
 import uuid
 
 import common.auth as _auth
 import common.helpers as util
+import common.mail_service as mail
 import ujson
+from common.config import config
 from common.logging import logger
 from models.dataset import Dataset, DatasetModel
 from models.leaderboard_configuration import LeaderboardConfigurationModel
@@ -527,14 +533,81 @@ def get_leaderboard_by_task_and_round(tid, rid):
 @bottle.get("/tasks/<tid:int>/rounds/<rid:int>/export")
 @_auth.requires_auth
 def export_current_round_data(credentials, tid, rid):
+    """
+    Exports round data (in CSV format) for a task
+    :param credentials: user credentials
+    :param tid: task id
+    :param rid: round id
+    :return: Json Object
+    """
     um = UserModel()
     user = um.get(credentials["id"])
+
     if not user.admin:
         if (tid, "owner") not in [
             (perm.tid, perm.type) for perm in user.task_permissions
         ]:
             bottle.abort(403, "Access denied")
-    return util.json_encode(util.get_round_data_for_export(tid, rid))
+
+    round_data = util.get_round_data_for_export(tid, rid)
+    size_in_mb = sys.getsizeof(round_data) / (1024.0 * 1024.0)
+
+    if size_in_mb > 1:
+        s3_client = boto3.client(
+            "s3",
+            aws_access_key_id=config["aws_access_key_id"],
+            aws_secret_access_key=config["aws_secret_access_key"],
+            region_name=config["aws_region"],
+        )
+
+        task_json = ujson.loads(get_task(tid))
+        task_s3_bucket = task_json["s3_bucket"]
+        path_to_export_file = "/".join(
+            ("rounds_export", task_json["task_code"], f"round_{rid}.csv")
+        )
+        try:
+            with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
+                tmp.write(ujson.dumps(round_data) + "\n")
+                tmp.close()
+                response = s3_client.upload_file(
+                    tmp.name,
+                    task_s3_bucket,
+                    path_to_export_file,
+                )
+                os.remove(tmp.name)
+                if response:
+                    logger.info(response)
+        except Exception as ex:
+            logger.exception(ex)
+            bottle.abort(400, "Upload Failed")
+
+        try:
+            config_email = bottle.default_app().config
+            config_region = config["aws_region"]
+            mail.send(
+                config_email["mail"],
+                config_email,
+                [user.email],
+                template_name="templates/uploaded_round_data.txt",
+                msg_dict={
+                    "s3_download": f"https://{task_s3_bucket}."
+                    f"s3.{config_region}.amazonaws.com"
+                    f"/{path_to_export_file}",
+                    "rid": rid,
+                    "task_name": task_json["name"],
+                },
+                subject=f"(Dynabench): Round {rid} of Task {tid} Export Finished",
+            )
+            return {"type": "email"}
+        except Exception as error_message:
+            logger.exception(
+                "Sending Export Round Data Email failure "
+                f"({user.email}): ({error_message})"
+            )
+            bottle.abort(403, "Reset password failed")
+
+    else:
+        return {"type": "download", "data": util.json_encode(round_data)}
 
 
 @bottle.get("/tasks/<tid:int>/export")

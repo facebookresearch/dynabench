@@ -1,0 +1,7 @@
+You can use the following link to get your exported round data (task name: $task_name, round $rid):
+
+$s3_download
+
+Thanks,
+
+The Dynabench Team

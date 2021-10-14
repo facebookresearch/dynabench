@@ -418,8 +418,12 @@ export default class ApiService {
     return this.fetch(export_link, {
       method: "GET",
     }).then((res) => {
-      res = new TextEncoder("utf-8").encode(JSON.stringify(res));
-      return download(res, "export.json", "text/json");
+      if (res.type == "download") {
+        const res_data = new TextEncoder("utf-8").encode(
+          JSON.stringify(res.data)
+        );
+        return download(res_data, "export.json", "text/json");
+      }
     });
   }
 
