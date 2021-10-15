@@ -453,8 +453,6 @@ class Task(Base):
     has_predictions_upload = db.Column(db.Boolean, default=False)
     predictions_upload_instructions_md = db.Column(db.Text)
 
-    # nuke
-
     def __repr__(self):
         return f"<Task {self.name}>"
 

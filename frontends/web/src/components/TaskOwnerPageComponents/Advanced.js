@@ -117,6 +117,29 @@ const Advanced = (props) => {
             </Formik>
           </Card.Body>
         </Card>
+        <Card>
+          <Card.Body className="mt-4">
+            <Formik
+              initialValues={{
+                annotation_config_json: props.task.annotation_config_json,
+              }}
+              onSubmit={props.handleMetricUpdate}
+            >
+              {({
+                values,
+                errors,
+                handleChange,
+                handleSubmit,
+                isSubmitting,
+                dirty,
+              }) => (
+                <form className="p-4" onSubmit={handleSubmit}>
+                  <Container>"temp"</Container>
+                </form>
+              )}
+            </Formik>
+          </Card.Body>
+        </Card>
       </Col>
     </Container>
   );
