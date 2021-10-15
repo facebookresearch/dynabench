@@ -2,11 +2,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import json
 import sys
 
 import pandas as pd
 
+import ujson
 from models.context import Context
 from models.round import RoundModel
 from models.task import TaskModel
@@ -23,7 +23,7 @@ data = []
 for review_id, sent in zip(contexts["review_id"], contexts["sentence"]):
     print(review_id, sent)
     data.append(
-        {"context": sent, "metadata_json": json.dumps({"review_id": review_id})}
+        {"context": sent, "metadata_json": ujson.dumps({"review_id": review_id})}
     )
 
 tm = TaskModel()
