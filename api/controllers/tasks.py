@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import secrets
+import smtplib
 from urllib.parse import parse_qs, quote
 
 import bottle
@@ -12,6 +13,7 @@ import uuid
 import common.auth as _auth
 import common.helpers as util
 import ujson
+from common.config import config
 from common.logging import logger
 from models.dataset import Dataset, DatasetModel
 from models.leaderboard_configuration import LeaderboardConfigurationModel
@@ -40,6 +42,8 @@ def process_proposal(credentials, tpid):
         bottle.abort(400, "Missing data")
     tpm = TaskProposalModel()
     tp = tpm.get(tpid)
+    tp_creator = um.get(tp.uid)
+    tp_creator_email = tp_creator.email
 
     if data["accept"]:
         t = Task(
@@ -119,6 +123,33 @@ def process_proposal(credentials, tpid):
             cur_round=1,
             last_updated=db.sql.func.now(),
         )  # Annotation config is sentiment example.
+
+        mySMTP = smtplib.SMTP("smtp.gmail.com", 587)
+        mySMTP.ehlo()
+        mySMTP.starttls()
+        # To set admin mail username and pwd in config.py
+        emailSender = config["smtp_user"]
+        emailSenderPwd = config["smtp_secret"]
+        mySMTP.login(emailSender, emailSenderPwd)
+        emailReceiver = tp_creator_email
+        cc = ["no-reply@dynabench.org"]
+        subject = "Dynabench Task Approval Mail"
+        body = "Your task has been approved successfully."
+        message = (
+            "From: %s\r\n" % emailSender
+            + "To: %s\r\n" % emailReceiver
+            + "CC: %s\r\n" % ",".join(cc)
+            + "Subject: %s\r\n" % subject
+            + "\r\n"
+            + body
+        )
+        emailReceivers = [emailReceiver] + cc
+        try:
+            mySMTP.sendmail(emailSender, emailReceivers, message)
+            print("Email sent successfully!")
+        except smtplib.SMTPException:
+            print("Error: There was an error in sending your email.")
+        mySMTP.quit()
 
         tpm.dbs.add(t)
         tpm.dbs.flush()
