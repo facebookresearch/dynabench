@@ -12,6 +12,7 @@ import uuid
 
 import common.auth as _auth
 import common.helpers as util
+import common.mail_service as mail
 import ujson
 from common.config import config
 from common.logging import logger
@@ -124,32 +125,22 @@ def process_proposal(credentials, tpid):
             last_updated=db.sql.func.now(),
         )  # Annotation config is sentiment example.
 
-        mySMTP = smtplib.SMTP("smtp.gmail.com", 587)
-        mySMTP.ehlo()
-        mySMTP.starttls()
-        # To set admin mail username and pwd in config.py
-        emailSender = config["smtp_user"]
-        emailSenderPwd = config["smtp_secret"]
-        mySMTP.login(emailSender, emailSenderPwd)
         emailReceiver = tp_creator_email
-        cc = ["no-reply@dynabench.org"]
+        cc = "no-reply@dynabench.org"
         subject = "Dynabench Task Approval Mail"
-        body = "Your task has been approved successfully."
-        message = (
-            "From: %s\r\n" % emailSender
-            + "To: %s\r\n" % emailReceiver
-            + "CC: %s\r\n" % ",".join(cc)
-            + "Subject: %s\r\n" % subject
-            + "\r\n"
-            + body
-        )
-        emailReceivers = [emailReceiver] + cc
+
         try:
-            mySMTP.sendmail(emailSender, emailReceivers, message)
+            mail.send(
+                server="",
+                config=config,
+                contacts=[emailReceiver],
+                cc_contact=cc,
+                template_name="templates/task_approval.txt",
+                subject=subject,
+            )
             print("Email sent successfully!")
         except smtplib.SMTPException:
             print("Error: There was an error in sending your email.")
-        mySMTP.quit()
 
         tpm.dbs.add(t)
         tpm.dbs.flush()

@@ -13,7 +13,7 @@ config = { \
         'db_name': '',
         'db_user': '',
         'db_password': '',
-        'smtp_host': '',
+        'smtp_host': 'smtp.gmail.com',
         'smtp_port': 587,
         'smtp_secret': '',
         'smtp_user': '',
