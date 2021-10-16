@@ -7,7 +7,7 @@ import React from "react";
 import "./App.css";
 import { Navbar, Nav, NavDropdown, Row, Container } from "react-bootstrap";
 import { BrowserRouter, Switch, Route, Link } from "react-router-dom";
-import { HashLink} from 'react-router-hash-link';
+import { HashLink } from "react-router-hash-link";
 import HomePage from "./HomePage";
 import LoginPage from "./LoginPage";
 import ForgotPassword from "./ForgotPassword";
@@ -37,7 +37,6 @@ import ForkAndSnapshotRouter from "../components/TaskLeaderboard/ForkAndSnapshot
 import { Avatar } from "../components/Avatar/Avatar";
 import ReactGA from "react-ga";
 import SubmitInterface from "./SubmitInterface.js";
-
 import qs from "qs";
 
 class RouterMonitor extends React.Component {
@@ -115,7 +114,6 @@ class App extends React.Component {
   componentDidMount() {
     this.refreshData();
   }
-
 
   render() {
     //href={`/tasks/${taskCode}`}
