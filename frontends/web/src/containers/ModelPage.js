@@ -364,7 +364,7 @@ ${latexTableContent}
     const { model, task, taskCode } = this.state;
     const isFlores = FLORES_TASK_CODES.includes(task.task_code);
     const isModelOwner =
-      parseInt(this.state.model.user_id) === parseInt(this.state.ctxUserId);
+      parseInt(this.state.model.uid) === parseInt(this.state.ctxUserId);
     const { leaderboard_scores } = this.state.model;
     const { non_leaderboard_scores } = this.state.model;
     let orderedLeaderboardScores = (leaderboard_scores || []).sort(
@@ -512,14 +512,14 @@ ${latexTableContent}
                           <td>
                             {
                               // if model anonymous + viewer should see it as anonymous
-                              model.user_id === -1 &&
+                              model.uid === -1 &&
                                 model.is_anonymous === true &&
                                 "anonymous"
                             }
                             {
                               // if viewer should see it as not anonymous
-                              model.user_id != -1 && (
-                                <Link to={`/users/${model.user_id}`}>
+                              model.uid !== -1 && (
+                                <Link to={`/users/${model.uid}`}>
                                   {model.username}
                                 </Link>
                               )
@@ -528,14 +528,13 @@ ${latexTableContent}
                               // if viewer should see it as not anonymous
                               // and model is anonymous
                               // (aka viewer is model owner or admin)
-                              model.user_id != -1 &&
-                                model.is_anonymous === true && (
-                                  <i>
-                                    {" "}
-                                    (will be displayed as <b>anonymous</b> to
-                                    other users)
-                                  </i>
-                                )
+                              model.uid !== -1 && model.is_anonymous === true && (
+                                <i>
+                                  {" "}
+                                  (will be displayed as <b>anonymous</b> to
+                                  other users)
+                                </i>
+                              )
                             }
                           </td>
                         </tr>

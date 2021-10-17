@@ -211,10 +211,9 @@ def get_model_detail(credentials, mid):
 
         if not is_current_user and query_result[0].is_anonymous:
             model["username"] = "anonymous"
-            model["user_id"] = -1
+            model["uid"] = -1
         else:
             model["username"] = query_result[1].username
-            model["user_id"] = query_result[1].id
         # Construct Score information based on model id
         scores = s.getByMid(mid)
         datasets = dm.getByTid(model["tid"])

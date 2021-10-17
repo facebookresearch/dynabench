@@ -170,11 +170,11 @@ const TaskModelLeaderboardRow = ({ model, metrics, datasetWeights }) => {
           ) : (
             "Unpublished Model " + model.model_id
           )}{" "}
-          {model.user_id &&
-            (model.user_id === -1 ? (
+          {model.uid &&
+            (model.uid === -1 ? (
               "anonymous"
             ) : (
-              <Link to={`/users/${model.user_id}#profile`} className="btn-link">
+              <Link to={`/users/${model.uid}#profile`} className="btn-link">
                 ({model.username})
               </Link>
             ))}
