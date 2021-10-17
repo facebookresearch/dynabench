@@ -4,7 +4,7 @@
 
 # flake8: noqa
 
-import json  # isort:skip
+import ujson  # isort:skip
 import os  # isort:skip
 import sys  # isort:skip
 import sqlalchemy as db
@@ -23,7 +23,7 @@ from models.task import TaskModel  # isort:skip
 def update_tag(filename, dbs, assert_length, old_tag, new_tag):
     anns = None
     with open(filename) as jsonFile:
-        anns = json.load(jsonFile)
+        anns = ujson.load(jsonFile)
 
     images_list = []
     for ann in anns["questions"]:

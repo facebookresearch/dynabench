@@ -66,10 +66,10 @@ const Rounds = (props) => {
                     <Button
                       variant="primary"
                       className="float-right"
-                      disabled={props.dataExporting}
+                      disabled={props.dataExporting[round.rid]}
                       onClick={() => props.exportData(round.rid)}
                     >
-                      {props.dataExporting ? (
+                      {props.dataExporting[round.rid] ? (
                         <Spinner animation="border" />
                       ) : (
                         <i className="fa fa-download" aria-hidden="true"></i>

@@ -50,11 +50,11 @@ def compute_predictions_logits(
     tokenizer,
 ):
     """
-        Adapted from
-        "transformers.data.metrics.squad_metrics import compute_predictions_logits"
-        Fixes include:
-            - returning entire prediction object
-            - calculating model confidence
+    Adapted from
+    "transformers.data.metrics.squad_metrics import compute_predictions_logits"
+    Fixes include:
+        - returning entire prediction object
+        - calculating model confidence
     """
 
     """Write final predictions to the json file and log-odds of null if needed."""

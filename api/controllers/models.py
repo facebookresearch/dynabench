@@ -2,7 +2,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import json
 import secrets
 import sys
 import tempfile
@@ -14,6 +13,7 @@ import sqlalchemy as db
 
 import common.auth as _auth
 import common.helpers as util
+import ujson
 from common.config import config
 from common.logging import logger
 from models.badge import BadgeModel
@@ -85,7 +85,7 @@ def do_upload_via_predictions(credentials, tid, model_name):
     for name, upload in uploads.items():
         try:
             parsed_upload = [
-                json.loads(line)
+                ujson.loads(line)
                 for line in upload.file.read().decode("utf-8").splitlines()
             ]
             for io in parsed_upload:
@@ -127,7 +127,7 @@ def do_upload_via_predictions(credentials, tid, model_name):
                     # Why do we use two seperate names for the same thing? Can we make
                     # this consistent?
                     del datum["uid"]
-                    tmp.write(json.dumps(datum) + "\n")
+                    tmp.write(ujson.dumps(datum) + "\n")
                 tmp.close()
                 ret = _eval_dataset(dataset_name, endpoint_name, model, task, tmp.name)
                 status_dict.update(ret)
@@ -413,7 +413,7 @@ def upload_to_s3(credentials):
     sqs = session.resource("sqs")
     queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
     queue.send_message(
-        MessageBody=json.dumps(
+        MessageBody=ujson.dumps(
             {"model_id": model.id, "s3_uri": f"s3://{bucket_name}/{s3_path}"}
         )
     )

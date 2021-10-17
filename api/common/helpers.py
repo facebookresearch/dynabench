@@ -4,7 +4,6 @@
 
 import datetime
 import decimal
-import json
 from urllib.parse import urlparse
 
 import bottle
@@ -12,6 +11,7 @@ import sqlalchemy as db
 from sqlalchemy.orm import lazyload
 
 import common.auth as _auth
+import ujson
 from common.logging import logger
 from models.example import ExampleModel
 from models.round import RoundModel
@@ -39,7 +39,7 @@ def _alchemyencoder(obj):
 
 
 def json_encode(obj):
-    return json.dumps(obj, default=_alchemyencoder)
+    return ujson.dumps(obj, default=_alchemyencoder)
 
 
 def is_current_user(uid, credentials=None):
@@ -207,7 +207,7 @@ def get_round_data_for_export(tid, rid):
 
     for example, validation_ids in examples_with_validation_ids:
         if example.uid or (
-            example.metadata_json and json.loads(example.metadata_json)["annotator_id"]
+            example.metadata_json and ujson.loads(example.metadata_json)["annotator_id"]
         ):
             example_and_validations_dict = example.to_dict()
             if example.uid:
@@ -217,7 +217,7 @@ def get_round_data_for_export(tid, rid):
             else:
                 example_and_validations_dict["anon_uid"] = get_anon_uid_with_cache(
                     secret,
-                    json.loads(example.metadata_json)["annotator_id"],
+                    ujson.loads(example.metadata_json)["annotator_id"],
                     turk_cache,
                 )
             example_and_validations_dict["validations"] = []
@@ -228,7 +228,7 @@ def get_round_data_for_export(tid, rid):
                 validation = validation_dict[validation_id]
                 if validation.uid or (
                     validation.metadata_json
-                    and json.loads(validation.metadata_json)["annotator_id"]
+                    and ujson.loads(validation.metadata_json)["annotator_id"]
                 ):
                     if validation.uid:
                         validation_info = [
@@ -244,13 +244,13 @@ def get_round_data_for_export(tid, rid):
                             validation.mode.name,
                             get_anon_uid_with_cache(
                                 secret + "-validator",
-                                json.loads(validation.metadata_json)["annotator_id"],
+                                ujson.loads(validation.metadata_json)["annotator_id"],
                                 cache,
                             ),
                         ]
 
                     if validation.metadata_json:
-                        validation_info.append(json.loads(validation.metadata_json))
+                        validation_info.append(ujson.loads(validation.metadata_json))
 
                     example_and_validations_dict["validations"].append(validation_info)
             example_and_validations_dicts.append(example_and_validations_dict)

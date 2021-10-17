@@ -17,7 +17,7 @@ class ResponseInfo extends React.Component {
     super(props);
     this.retractExample = this.retractExample.bind(this);
     this.flagExample = this.flagExample.bind(this);
-    this.updateMetadata = this.updateMetadata.bind(this);
+    this.collectMetadata = this.collectMetadata.bind(this);
     this.updateModelWrong = this.updateModelWrong.bind(this);
     this.state = {
       metadata: {},
@@ -35,11 +35,11 @@ class ResponseInfo extends React.Component {
     this.setState({
       metadata: metadata,
       exampleUpdated: null,
-      feedbackSaved: null,
+      feedbackSaved: true,
     });
   }
 
-  updateMetadata() {
+  collectMetadata() {
     const nonNullMetadata = {};
     this.props.annotationConfig.metadata.create
       .filter(
@@ -53,9 +53,7 @@ class ResponseInfo extends React.Component {
             this.state.metadata[annotationConfigObj.name];
         }
       });
-    this.context.api.updateExample(this.props.exampleId, {
-      metadata: nonNullMetadata,
-    });
+    return nonNullMetadata;
   }
 
   updateModelWrong(modelWrong) {
@@ -231,7 +229,11 @@ class ResponseInfo extends React.Component {
             name={annotationConfigObj.name}
             data={this.state.metadata}
             setData={(data) =>
-              this.setState({ metadata: data, exampleUpdated: false })
+              this.setState({
+                metadata: data,
+                exampleUpdated: false,
+                feedbackSaved: true,
+              })
             }
             type={annotationConfigObj.type}
             constructorArgs={annotationConfigObj.constructor_args}
@@ -250,15 +252,40 @@ class ResponseInfo extends React.Component {
               <span>You can enter more info for your example:</span>
               <button
                 onClick={() => {
-                  this.updateMetadata();
-                  this.setState({ exampleUpdated: true });
+                  this.context.api
+                    .updateExample(this.props.exampleId, {
+                      metadata: this.collectMetadata(),
+                    })
+                    .then(
+                      (result) => {
+                        this.setState({
+                          exampleUpdated: true,
+                          feedbackSaved: true,
+                        });
+                      },
+                      (error) => {
+                        console.log(error);
+                        this.setState({
+                          exampleUpdated: true,
+                          feedbackSaved: false,
+                        });
+                      }
+                    );
                 }}
                 type="button"
                 style={{ float: "right", margin: "5px" }}
-                className="btn btn-outline-primary btn-sm "
+                className={
+                  this.state.feedbackSaved
+                    ? "btn btn-outline-primary btn-sm"
+                    : "btn btn-outline-danger btn-sm"
+                }
                 disabled={this.state.exampleUpdated}
               >
-                {this.state.exampleUpdated ? "Saved!" : "Save Info"}
+                {!this.state.feedbackSaved
+                  ? "Error Saving!"
+                  : this.state.exampleUpdated
+                  ? "Saved!"
+                  : "Save Info"}
               </button>
               {metadataInterface}
             </div>

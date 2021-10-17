@@ -47,7 +47,16 @@ Run the installation script to create your configuration files and ensure all ou
 
 ```
 cd api
-python install.py 
+python install.py
+```
+
+The script will ask you a list of questions to fill in the config file (in `api/common/config.py`). The answers will look like as follows:
+```
+Please enter your db_name: dynabench
+Please enter your db_user: dynabench
+Please enter your db_password: {use the password you set in MySQL install instructions}
+Please enter your ssl_cert_file_path: {home directory path}/.ssl/dynabench.org.crt
+Please enter your ssl_org_pem_file_path: {home directory path}/.ssl/dynabench.org-key.pem
 ```
 
 ### Running the API server

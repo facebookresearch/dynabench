@@ -4,7 +4,7 @@
 
 # flake8: noqa
 
-import json  # isort:skip
+import ujson  # isort:skip
 import os  # isort:skip
 import sys  # isort:skip
 
@@ -19,7 +19,7 @@ from models.task import TaskModel  # isort:skip
 def getImagesFromFile(fileName):
     path = f"annotations/{fileName}.json"
     with open(path) as jsonFile:
-        anns = json.load(jsonFile)
+        anns = ujson.load(jsonFile)
         return anns["images"]
 
 
@@ -67,7 +67,7 @@ def main():
                 data.append(
                     {
                         "context": url,
-                        "metadata_json": json.dumps(
+                        "metadata_json": ujson.dumps(
                             {"id": image["id"], "file_name": fileName}
                         ),
                     }

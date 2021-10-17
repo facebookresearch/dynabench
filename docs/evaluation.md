@@ -1,4 +1,5 @@
 # Evaluation server developer guide
+## [NOTICE] POSSIBLY OUTDATED
 ## Terminology
 A dataset: a single evaluation set that contains input examples and their corresponding labels.
 A task: a collection of evaluation sets. Tasks are identified by a task code on evaluation cloud. Currently we have four published tasks: nli, hs, sentiment and qa.
