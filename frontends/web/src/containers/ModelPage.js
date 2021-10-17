@@ -510,22 +510,33 @@ ${latexTableContent}
                         <tr style={{ border: `none` }}>
                           <td>Owner</td>
                           <td>
-                            {model.username === "anonymous" &&
-                              model.is_anonymous === true &&
-                              "anonymous"}
-                            {model.username != "anonymous" && (
-                              <Link to={`/users/${model.user_id}`}>
-                                {model.username}
-                              </Link>
-                            )}
-                            {model.username != "anonymous" &&
-                              model.is_anonymous === true && (
-                                <i>
-                                  {" "}
-                                  (will be displayed as <b>anonymous</b> to
-                                  other users)
-                                </i>
-                              )}
+                            {
+                              // if model anonymous + viewer should see it as anonymous
+                              model.user_id === -1 &&
+                                model.is_anonymous === true &&
+                                "anonymous"
+                            }
+                            {
+                              // if viewer should see it as not anonymous
+                              model.user_id != -1 && (
+                                <Link to={`/users/${model.user_id}`}>
+                                  {model.username}
+                                </Link>
+                              )
+                            }
+                            {
+                              // if viewer should see it as not anonymous
+                              // and model is anonymous
+                              // (aka viewer is model owner or admin)
+                              model.user_id != -1 &&
+                                model.is_anonymous === true && (
+                                  <i>
+                                    {" "}
+                                    (will be displayed as <b>anonymous</b> to
+                                    other users)
+                                  </i>
+                                )
+                            }
                           </td>
                         </tr>
                         {!isFlores && (
