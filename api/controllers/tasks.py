@@ -448,8 +448,6 @@ def update_annotation_config(credentials, tid):
             "default_weights"
         ] = {}
         for metric, default_weight in data["metric_default_weights"].items():
-
-            print(annotation_config_json["aggregation_metric"])
             annotation_config_json["aggregation_metric"]["constructor_args"][
                 "default_weights"
             ][metric] = default_weight
