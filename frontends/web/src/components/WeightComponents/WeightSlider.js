@@ -14,9 +14,13 @@ import { Form } from "react-bootstrap";
  * @param {(number => void)} onWeightChange weight change handler
  */
 
-export default function WeightSlider({ weight, onWeightChange }) {
+export default function WeightSlider({
+  weight,
+  onWeightChange,
+  className = "d-flex ml-2 float-right",
+}) {
   return (
-    <Form className="d-flex ml-2 float-right">
+    <Form className={className}>
       <Form.Control
         type="range"
         className="flex-grow-1"
