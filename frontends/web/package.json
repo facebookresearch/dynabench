@@ -29,6 +29,7 @@
     "react-player": "^2.6.2",
     "react-powerplug": "^1.0.0",
     "react-router-dom": "^5.2.0",
+    "react-router-hash-link": "^2.4.3",
     "react-scripts": "^4.0.3",
     "react-table": "^7.7.0",
     "react-text-annotate": "^0.3.0",
