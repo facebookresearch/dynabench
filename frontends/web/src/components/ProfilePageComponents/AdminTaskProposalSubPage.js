@@ -222,9 +222,15 @@ const AdminTaskProposalTable = (props) => {
                                   >
                                     Close
                                   </Button>
-                                  <Button variant="primary" type="submit">
-                                    Request Changes
-                                  </Button>
+                                  {dirty && values.changes ? (
+                                    <Button
+                                      type="submit"
+                                      variant="primary"
+                                      disabled={isSubmitting}
+                                    >
+                                      Submit
+                                    </Button>
+                                  ) : null}
                                 </Row>
                               </Container>
                             </form>
