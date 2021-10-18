@@ -7,12 +7,12 @@ from urllib.parse import parse_qs, quote
 
 import bottle
 import sqlalchemy as db
+import ujson
 import uuid
 
 import common.auth as _auth
 import common.helpers as util
 import common.mail_service as mail
-import ujson
 from common.logging import logger
 from models.dataset import Dataset, DatasetModel
 from models.leaderboard_configuration import LeaderboardConfigurationModel
@@ -39,8 +39,11 @@ def process_proposal(credentials, tpid):
     data = bottle.request.json
     if not util.check_fields(data, ["accept"]):
         bottle.abort(400, "Missing data")
+
     tpm = TaskProposalModel()
     tp = tpm.get(tpid)
+    tp_creator = um.get(tp.uid)
+    tp_creator_email = tp_creator.email
 
     if data["accept"]:
         t = Task(
@@ -138,10 +141,6 @@ def process_proposal(credentials, tpid):
         logger.info("Added round (%s)" % (r.id))
 
     else:
-        """
-        Reject the proposal here.
-        Send an email to the user with the data of the "recommendation"
-        """
         config = bottle.default_app().config
         msg = {
             "rejection_message": data["changes"],
@@ -149,8 +148,8 @@ def process_proposal(credentials, tpid):
         mail.send(
             config["mail"],
             config,
-            [user.email],
-            template_name="templates/forgot_password.txt",
+            [tp_creator_email],
+            template_name="templates/task_proposal_rejection.txt",
             msg_dict=msg,
             subject="Your Task Proposal has been Rejected",
         )

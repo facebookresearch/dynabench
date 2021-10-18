@@ -29,6 +29,7 @@
     "react-player": "^2.6.2",
     "react-powerplug": "^1.0.0",
     "react-router-dom": "^5.2.0",
+    "react-router-hash-link": "^2.4.3",
     "react-scripts": "^4.0.3",
     "react-table": "^7.7.0",
     "react-text-annotate": "^0.3.0",
@@ -58,7 +59,7 @@
   },
   "scripts": {
     "webpack": "webpack",
-    "start": "HTTPS=false SSL_CRT_FILE=/home/ubuntu/.ssl/dynabench.org.crt SSL_KEY_FILE=/home/ubuntu/.ssl/dynabench.org-key.pem react-scripts start",
+    "start": "HTTPS=true SSL_CRT_FILE=/home/ubuntu/.ssl/dynabench.org.crt SSL_KEY_FILE=/home/ubuntu/.ssl/dynabench.org-key.pem react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
