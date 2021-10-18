@@ -11,6 +11,7 @@ import uuid
 
 import common.auth as _auth
 import common.helpers as util
+import common.mail_service as mail
 import ujson
 from common.logging import logger
 from models.dataset import Dataset, DatasetModel
@@ -141,7 +142,18 @@ def process_proposal(credentials, tpid):
         Reject the proposal here.
         Send an email to the user with the data of the "recommendation"
         """
-        pass
+        config = bottle.default_app().config
+        msg = {
+            "rejection_message": data["changes"],
+        }
+        mail.send(
+            config["mail"],
+            config,
+            [user.email],
+            template_name="templates/forgot_password.txt",
+            msg_dict=msg,
+            subject="Your Task Proposal has been Rejected",
+        )
 
     tpm.dbs.query(TaskProposal).filter(TaskProposal.id == tpid).delete()
     tpm.dbs.flush()
