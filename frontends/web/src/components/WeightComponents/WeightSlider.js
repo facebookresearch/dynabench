@@ -18,9 +18,10 @@ export default function WeightSlider({
   weight,
   onWeightChange,
   className = "d-flex ml-2 float-right",
+  ComponentType = Form,
 }) {
   return (
-    <Form className={className}>
+    <ComponentType className={className}>
       <Form.Control
         type="range"
         className="flex-grow-1"
@@ -32,6 +33,6 @@ export default function WeightSlider({
           onWeightChange(event.target.valueAsNumber);
         }}
       />
-    </Form>
+    </ComponentType>
   );
 }
