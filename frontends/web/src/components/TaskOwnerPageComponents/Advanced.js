@@ -45,6 +45,7 @@ const Advanced = (props) => {
         <Card>
           <Card.Body className="mt-4">
             <Formik
+              enableReinitialize={true}
               initialValues={{
                 annotation_config_json: props.task.annotation_config_json,
               }}
@@ -75,8 +76,10 @@ const Advanced = (props) => {
                               className="border-bottom"
                             >
                               <span style={{ color: "red" }}>BETA Notice</span>:
-                              Once this task has been activated, the task
-                              configuration can no longer be changed.
+                              Once this task has been activated, only limited
+                              portions of the task can be changed. Currently,
+                              this is the aggregation metric type and its
+                              default weights.
                             </Form.Text>
                           </Col>
                         </Row>
@@ -143,99 +146,102 @@ const Advanced = (props) => {
             </Formik>
           </Card.Body>
         </Card>
-        <Card className="mt-4">
-          <Card.Body className="mt-4">
-            <Formik
-              initialValues={{
-                aggregation_metric_type: props.task.aggregation_metric,
-                metrics: metrics,
-              }}
-              onSubmit={props.handleTaskAnnotationConfigUpdate}
-            >
-              {({
-                values,
-                errors,
-                handleChange,
-                handleSubmit,
-                isSubmitting,
-                setFieldValue,
-                dirty,
-              }) => (
-                <form className="px-2 py-3 my-0" onSubmit={handleSubmit}>
-                  <Container>
-                    <Form.Group className="border-bottom">
-                      <Form.Label>Edit Task Configuration</Form.Label>
-                    </Form.Group>
-                    <Form.Group>
-                      <Form.Label>Aggregation Metric</Form.Label>
-                    </Form.Group>
-                    <Form.Group as={Row} controlId="aggregation_metric_type">
-                      <Form.Label column sm="2">
-                        Type
-                      </Form.Label>
-                      <Form.Control
-                        as="select"
-                        className="col-sm-10"
-                        value={values.aggregation_metric_type}
-                        onChange={handleChange}
-                      >
-                        <option key={1} value="dynascore">
-                          dynascore
-                        </option>
-                        <option key={2} value="lol">
-                          lol
-                        </option>
-                      </Form.Control>
-                    </Form.Group>
-                    <Row>
-                      <Form.Label column sm="2">
-                        Weights
-                      </Form.Label>
-                      <Row className="col-sm-10 d-flex flex-wrap">
-                        {metrics.map((metric) => (
-                          <Form.Group
-                            as={Col}
-                            controlId="default_weight"
-                            className="col-sm-4"
-                          >
-                            <Form.Label className="text-center col-sm-12">
-                              {metric.name}{" "}
-                              <WeightIndicator weight={metric.default_weight} />
-                            </Form.Label>
-                            <WeightSlider
-                              className="d-flex col-sm-12"
-                              weight={metric.default_weight}
-                              onWeightChange={(newWeight) =>
-                                setMetricWeight(
-                                  metric.field_name,
-                                  newWeight,
-                                  setFieldValue
-                                )
-                              }
-                              ComponentType={Container}
-                            />
-                          </Form.Group>
-                        ))}
+        {props.task.active && (
+          <Card className="mt-4">
+            <Card.Body className="mt-4">
+              <Formik
+                initialValues={{
+                  aggregation_metric_type: props.task.aggregation_metric,
+                  metrics: metrics,
+                }}
+                onSubmit={props.handleTaskAnnotationConfigUpdate}
+              >
+                {({
+                  values,
+                  errors,
+                  handleChange,
+                  handleSubmit,
+                  isSubmitting,
+                  setFieldValue,
+                  dirty,
+                }) => (
+                  <form className="px-2 py-3 my-0" onSubmit={handleSubmit}>
+                    <Container>
+                      <Form.Group className="border-bottom">
+                        <Form.Label>Edit Task Configuration</Form.Label>
+                      </Form.Group>
+                      <Form.Group>
+                        <Form.Label>Aggregation Metric</Form.Label>
+                      </Form.Group>
+                      <Form.Group as={Row} controlId="aggregation_metric_type">
+                        <Form.Label column sm="2">
+                          Type
+                        </Form.Label>
+                        <Form.Control
+                          as="select"
+                          className="col-sm-10"
+                          value={values.aggregation_metric_type}
+                          onChange={handleChange}
+                        >
+                          <option key={0} value="dynascore">
+                            dynascore
+                          </option>
+                        </Form.Control>
+                      </Form.Group>
+                      <Row>
+                        <Form.Label column sm="2">
+                          Weights
+                        </Form.Label>
+                        <Row className="col-sm-10 d-flex flex-wrap">
+                          {metrics.map((metric) => (
+                            <Form.Group
+                              as={Col}
+                              controlId="default_weight"
+                              className="col-sm-4"
+                            >
+                              <Form.Label className="text-center col-sm-12">
+                                {metric.name}{" "}
+                                <WeightIndicator
+                                  weight={metric.default_weight}
+                                />
+                              </Form.Label>
+                              <WeightSlider
+                                className="d-flex col-sm-12"
+                                weight={metric.default_weight}
+                                onWeightChange={(newWeight) =>
+                                  setMetricWeight(
+                                    metric.field_name,
+                                    newWeight,
+                                    setFieldValue
+                                  )
+                                }
+                                ComponentType={Container}
+                              />
+                            </Form.Group>
+                          ))}
+                        </Row>
                       </Row>
-                    </Row>
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      className="submit-btn button-ellipse text-uppercase my-4"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <Spinner as="span" animation="border" size="sm" />
-                      ) : (
-                        "Save"
+                      {dirty && (
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          className="submit-btn button-ellipse text-uppercase my-4"
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting ? (
+                            <Spinner as="span" animation="border" size="sm" />
+                          ) : (
+                            "Save"
+                          )}
+                        </Button>
                       )}
-                    </Button>
-                  </Container>
-                </form>
-              )}
-            </Formik>
-          </Card.Body>
-        </Card>
+                    </Container>
+                  </form>
+                )}
+              </Formik>
+            </Card.Body>
+          </Card>
+        )}
       </Col>
     </Container>
   );

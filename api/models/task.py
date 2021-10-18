@@ -632,7 +632,7 @@ class TaskModel(BaseModel):
         self, field_name, perf_metric_field_name, default_weights
     ):
         default_weight = default_weights.get(field_name)
-        if default_weight:
+        if default_weight is not None:
             return default_weight
         if field_name == perf_metric_field_name:
             return 4

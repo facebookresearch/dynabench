@@ -267,16 +267,11 @@ class TaskOwnerPage extends React.Component {
       .then(
         (result) => {
           this.fetchTask(() => {
-            resetForm({ values: values });
             setSubmitting(false);
           });
         },
         (error) => {
           console.log(error);
-          setFieldError(
-            "accept",
-            "Task could not be activated (" + error.error + ")"
-          );
           setSubmitting(false);
         }
       );
