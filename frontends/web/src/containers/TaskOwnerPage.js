@@ -250,6 +250,34 @@ class TaskOwnerPage extends React.Component {
       );
   };
 
+  handleTaskAnnotationConfigUpdate = (
+    values,
+    { setFieldError, setSubmitting, resetForm }
+  ) => {
+    console.log(values);
+    setTimeout(function () {
+      setSubmitting(false);
+    }, 3000);
+    // this.context.api
+    //   .activateTask(this.state.task.id, values.annotation_config_json)
+    //   .then(
+    //     (result) => {
+    //       this.fetchTask(() => {
+    //         resetForm({ values: values });
+    //         setSubmitting(false);
+    //       });
+    //     },
+    //     (error) => {
+    //       console.log(error);
+    //       setFieldError(
+    //         "accept",
+    //         "Task could not be activated (" + error.error + ")"
+    //       );
+    //       setSubmitting(false);
+    //     }
+    //   );
+  };
+
   handleTaskUpdate = (values, { setFieldError, setSubmitting, resetForm }) => {
     const allowed = [
       "num_matching_validations",
@@ -508,6 +536,9 @@ class TaskOwnerPage extends React.Component {
               <Advanced
                 task={this.state.task}
                 handleTaskActivate={this.handleTaskActivate}
+                handleTaskAnnotationConfigUpdate={
+                  this.handleTaskAnnotationConfigUpdate
+                }
               />
             ) : null}
             {this.state.task?.active ? (
