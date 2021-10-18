@@ -111,6 +111,7 @@ class ModelModel(BaseModel):
             self.dbs.query(Model)
             .filter(Model.id == id)
             .filter(Model.is_published == True)  # noqa
+            .filter(Model.is_anonymous == False)  # noqa
             .one()
         )
 
@@ -130,7 +131,9 @@ class ModelModel(BaseModel):
             self.dbs.query(Model).filter(Model.uid == uid).filter(Model.id == mid)
         )
         if not is_current_user:
-            return query_res.filter(Model.is_published == True).one()  # noqa
+            query_res = query_res.filter(
+                db.and_(Model.is_published == True, Model.is_anonymous == False)
+            )  # noqa
         return query_res.one()
 
     def getModelUserByMid(self, id):
