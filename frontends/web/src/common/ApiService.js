@@ -558,6 +558,13 @@ export default class ApiService {
     });
   }
 
+  updateTaskAnnotationConfig(tid, data) {
+    return this.fetch(`${this.domain}/tasks/update_annotation_config/${tid}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
   toggleOwner(tid, username) {
     return this.fetch(`${this.domain}/tasks/toggle_owner/${tid}/${username}`, {
       method: "PUT",

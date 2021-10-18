@@ -417,6 +417,54 @@ def update(credentials, tid):
     return util.json_encode({"success": "ok"})
 
 
+@bottle.put("/tasks/update_annotation_config/<tid:int>")
+@_auth.requires_auth
+def update_annotation_config(credentials, tid):
+    ensure_owner_or_admin(tid, credentials["id"])
+
+    data = bottle.request.json
+    for field in data:
+        if field not in (
+            "aggregation_metric_type",
+            "metric_default_weights",
+        ):
+            bottle.abort(
+                403,
+                """Can only modify aggregation_metric_type,
+                metric_default_weights""",
+            )
+
+    tm = TaskModel()
+    task = tm.get(tid)
+    annotation_config_json = ujson.loads(task.annotation_config_json)
+
+    if "aggregation_metric_type" in data:
+        annotation_config_json["aggregation_metric"]["type"] = data[
+            "aggregation_metric_type"
+        ]
+
+    if "metric_default_weights" in data:
+        annotation_config_json["aggregation_metric"]["constructor_args"][
+            "default_weights"
+        ] = {}
+        for metric, default_weight in data["metric_default_weights"].items():
+
+            print(annotation_config_json["aggregation_metric"])
+            annotation_config_json["aggregation_metric"]["constructor_args"][
+                "default_weights"
+            ][metric] = default_weight
+
+    try:
+        Task.verify_annotation_config(annotation_config_json)
+    except Exception as ex:
+        logger.exception("Invalid annotation config: (%s)" % (ex))
+        bottle.abort(400, "Invalid annotation config")
+
+    tm.update(tid, {"annotation_config_json": util.json_encode(annotation_config_json)})
+
+    return util.json_encode({"success": "ok"})
+
+
 @bottle.put("/tasks/activate/<tid:int>")
 @_auth.requires_auth
 def activate(credentials, tid):

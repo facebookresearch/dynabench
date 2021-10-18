@@ -628,8 +628,12 @@ class TaskModel(BaseModel):
         # TODO:  allow this to be settable by the task owner?
         return 5
 
-    def get_default_metric_weight(self, task, field_name, perf_metric_field_name):
-        # TODO: allow this to be settable by the task owner?
+    def get_default_metric_weight(
+        self, field_name, perf_metric_field_name, default_weights
+    ):
+        default_weight = default_weights.get(field_name)
+        if default_weight:
+            return default_weight
         if field_name == perf_metric_field_name:
             return 4
         return 1
@@ -687,7 +691,11 @@ class TaskModel(BaseModel):
                             # TODO: make the frontend use pretty_name?
                             "field_name": field_name,
                             "default_weight": self.get_default_metric_weight(
-                                t, field_name, t_dict["perf_metric_field_name"]
+                                field_name,
+                                t_dict["perf_metric_field_name"],
+                                annotation_config["aggregation_metric"][
+                                    "constructor_args"
+                                ].get("default_weights", {-1: -1}),
                             ),
                         },
                         **metrics_meta[field_name],

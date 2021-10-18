@@ -255,27 +255,31 @@ class TaskOwnerPage extends React.Component {
     { setFieldError, setSubmitting, resetForm }
   ) => {
     console.log(values);
-    setTimeout(function () {
-      setSubmitting(false);
-    }, 3000);
-    // this.context.api
-    //   .activateTask(this.state.task.id, values.annotation_config_json)
-    //   .then(
-    //     (result) => {
-    //       this.fetchTask(() => {
-    //         resetForm({ values: values });
-    //         setSubmitting(false);
-    //       });
-    //     },
-    //     (error) => {
-    //       console.log(error);
-    //       setFieldError(
-    //         "accept",
-    //         "Task could not be activated (" + error.error + ")"
-    //       );
-    //       setSubmitting(false);
-    //     }
-    //   );
+    values.metric_default_weights = {};
+    values.metrics.forEach((metric) => {
+      values.metric_default_weights[metric.field_name] = metric.default_weight;
+    });
+    delete values.metrics;
+    console.log(values);
+
+    this.context.api
+      .updateTaskAnnotationConfig(this.state.task.id, values)
+      .then(
+        (result) => {
+          this.fetchTask(() => {
+            resetForm({ values: values });
+            setSubmitting(false);
+          });
+        },
+        (error) => {
+          console.log(error);
+          setFieldError(
+            "accept",
+            "Task could not be activated (" + error.error + ")"
+          );
+          setSubmitting(false);
+        }
+      );
   };
 
   handleTaskUpdate = (values, { setFieldError, setSubmitting, resetForm }) => {
