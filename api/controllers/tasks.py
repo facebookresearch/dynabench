@@ -3,7 +3,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import secrets
-import smtplib
 from urllib.parse import parse_qs, quote
 
 import bottle
@@ -14,7 +13,6 @@ import common.auth as _auth
 import common.helpers as util
 import common.mail_service as mail
 import ujson
-from common.config import config
 from common.logging import logger
 from models.dataset import Dataset, DatasetModel
 from models.leaderboard_configuration import LeaderboardConfigurationModel
@@ -125,23 +123,6 @@ def process_proposal(credentials, tpid):
             last_updated=db.sql.func.now(),
         )  # Annotation config is sentiment example.
 
-        emailReceiver = tp_creator_email
-        cc = "no-reply@dynabench.org"
-        subject = "Dynabench Task Approval Mail"
-
-        try:
-            mail.send(
-                server="",
-                config=config,
-                contacts=[emailReceiver],
-                cc_contact=cc,
-                template_name="templates/task_approval.txt",
-                subject=subject,
-            )
-            print("Email sent successfully!")
-        except smtplib.SMTPException:
-            print("Error: There was an error in sending your email.")
-
         tpm.dbs.add(t)
         tpm.dbs.flush()
         logger.info("Added task (%s)" % (t.id))
@@ -157,6 +138,16 @@ def process_proposal(credentials, tpid):
         tpm.dbs.flush()
         tpm.dbs.commit()
         logger.info("Added round (%s)" % (r.id))
+
+        config = bottle.default_app().config
+
+        mail.send(
+            config["mail"],
+            config,
+            [tp_creator_email],
+            template_name="templates/task_proposal_approval.txt",
+            subject="Your Task Proposal has been Accepted",
+        )
 
     tpm.dbs.query(TaskProposal).filter(TaskProposal.id == tpid).delete()
     tpm.dbs.flush()
