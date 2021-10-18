@@ -3,11 +3,11 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-
 import React from "react";
 import "./App.css";
 import { Navbar, Nav, NavDropdown, Row, Container } from "react-bootstrap";
 import { BrowserRouter, Switch, Route, Link } from "react-router-dom";
+import { HashLink } from "react-router-hash-link";
 import HomePage from "./HomePage";
 import LoginPage from "./LoginPage";
 import ForgotPassword from "./ForgotPassword";
@@ -37,7 +37,6 @@ import ForkAndSnapshotRouter from "../components/TaskLeaderboard/ForkAndSnapshot
 import { Avatar } from "../components/Avatar/Avatar";
 import ReactGA from "react-ga";
 import SubmitInterface from "./SubmitInterface.js";
-
 import qs from "qs";
 
 class RouterMonitor extends React.Component {
@@ -178,6 +177,14 @@ class App extends React.Component {
                     </Nav.Item>
                     <NavDropdown title="Tasks" id="basic-nav-dropdown">
                       {NavItems}
+                      <div className="dropdown-divider my-0"></div>
+                      <NavDropdown.Item
+                        as={HashLink}
+                        to={"/#contributed-tasks"}
+                        className="py-3"
+                      >
+                        Contributed Tasks
+                      </NavDropdown.Item>
                       <div className="dropdown-divider my-0"></div>
                       <NavDropdown.Item
                         key={"FLoRes"}
