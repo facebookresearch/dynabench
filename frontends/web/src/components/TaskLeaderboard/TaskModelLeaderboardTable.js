@@ -16,33 +16,10 @@ import React from "react";
 import { useState, useRef } from "react";
 import { Table } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import WeightIndicator from "./WeightIndicator";
+import WeightIndicator from "../WeightComponents/WeightIndicator";
+import WeightSlider from "../WeightComponents/WeightSlider";
 import ChevronExpandButton from "../Buttons/ChevronExpandButton";
 import { SortContainer } from "./SortContainer";
-
-/**
- * Weight Slider UI
- *
- * @param {number} weight current weight
- * @param {(number => void)} onWeightChange weight change handler
- */
-const WeightSlider = ({ weight, onWeightChange }) => {
-  return (
-    <Form className="d-flex ml-2 float-right">
-      <Form.Control
-        type="range"
-        className="flex-grow-1"
-        size="sm"
-        min={0}
-        max={5}
-        value={weight}
-        onInput={(event) => {
-          onWeightChange(event.target.valueAsNumber);
-        }}
-      />
-    </Form>
-  );
-};
 
 /**
  * Popover to show variance for a score component (target)
