@@ -264,11 +264,14 @@ class ContextStringSelection(AnnotationComponent):
     ):
         if mode == AnnotationVerifierMode.dataset_upload:
             if isinstance(obj, str):
-                assert obj in data[constructor_args["reference_name"]]
+                pass
+                # We don't require that the string is part of the context
+                # for dataset uploads.
             elif isinstance(obj, list):
                 for sub_obj in obj:
                     assert isinstance(sub_obj, str)
-                    assert sub_obj in data[constructor_args["reference_name"]]
+                    # We don't require that the string is part of the context
+                    # for dataset uploads.
             else:
                 raise ValueError("Wrong type")
         elif mode == AnnotationVerifierMode.predictions_upload:
