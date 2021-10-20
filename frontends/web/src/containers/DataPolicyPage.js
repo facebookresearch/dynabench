@@ -415,24 +415,26 @@ const DataPolicyPage = () => (
         information. To exercise such rights, you can contact us online at
         dynabench@fb.com. In certain circumstances, you also have the right to
         object to and restrict the processing of your personal information. To
-        exercise these rights you can email dynabench@fb.com or contact our Data
-        Protection Officer at the address provided below. We will not transfer
-        or transmit your personal information to third parties in foreign
-        countries (outside South Africa), unless (i) the recipient of your
-        personal information is subject to a law, binding corporate rules or
-        binding agreement that provides for an adequate level of protection;
+        exercise these rights you can email{" "}
+        <a href="mailto:dynabench@fb.com">dynabench@fb.com</a> or contact our
+        Data Protection Officer at the address provided below. We will not
+        transfer or transmit your personal information to third parties in
+        foreign countries (outside South Africa), unless (i) the recipient of
+        your personal information is subject to a law, binding corporate rules
+        or binding agreement that provides for an adequate level of protection;
         (ii) you consent to the transfer; (iii) the transfer is necessary to
-        fulfill our Dynabench Terms of Use; (iv) the transfer is necessary for
-        the conclusion or performance of a contract which we concluded in your
-        interests with another person; or (v) the transfer is done for your
-        benefit and it is not reasonably practicable to obtain your consent to
-        the transfer and, if it were, you would likely have provided your
-        consent. Facebook Inc. provides our services to you. You also have the
-        right to lodge a complaint with the Information Regulator (South Africa)
-        at the following address: Address: JD House, 27 Stiemens Street,
-        Braamfontein, Johannesburg, 2001 Post: P.O Box 31533, Braamfontein,
-        Johannesburg, 2017 Email: inforeg@justice.gov.za (enquiries) /
-        complaints.IR@justice.gov.za (complaints) Website:
+        fulfill our Dynabench{" "}
+        <a href="https://dynabench.org/termsofuse">Terms of Use</a>; (iv) the
+        transfer is necessary for the conclusion or performance of a contract
+        which we concluded in your interests with another person; or (v) the
+        transfer is done for your benefit and it is not reasonably practicable
+        to obtain your consent to the transfer and, if it were, you would likely
+        have provided your consent. Facebook Inc. provides our services to you.
+        You also have the right to lodge a complaint with the Information
+        Regulator (South Africa) at the following address: Address: JD House, 27
+        Stiemens Street, Braamfontein, Johannesburg, 2001 Post: P.O Box 31533,
+        Braamfontein, Johannesburg, 2017 Email: inforeg@justice.gov.za
+        (enquiries) / complaints.IR@justice.gov.za (complaints) Website:
         https://justice.gov.za/inforeg/index.html
       </p>
       <p>
