@@ -210,8 +210,8 @@ def get_model_detail(credentials, mid):
         is_current_user = util.is_current_user(query_result[1].id, credentials)
 
         if not is_current_user and query_result[0].is_anonymous:
-            model["username"] = "anonymous"
-            model["uid"] = -1
+            model["username"] = None
+            model["uid"] = None
         else:
             model["username"] = query_result[1].username
         # Construct Score information based on model id
