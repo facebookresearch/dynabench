@@ -119,7 +119,6 @@ def do_upload_via_predictions(credentials, tid, model_name):
         deployment_status=DeploymentStatusEnum.predictions_upload,
         secret=secrets.token_hex(),
     )
-
     with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
         for dataset_name, parsed_upload in parsed_uploads.items():
             with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
@@ -241,7 +240,6 @@ def get_model_detail(credentials, mid):
             )
             for d in scores
         ]
-
         model["leaderboard_scores"] = list(
             filter(
                 lambda s_dict: s_dict["dataset_access_type"] == AccessTypeEnum.scoring,

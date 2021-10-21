@@ -105,7 +105,6 @@ class SubmitInterface extends React.Component {
     for (const dataset of this.state.datasets) {
       files[dataset.name] = values[dataset.name];
     }
-
     this.context.api
       .uploadPredictions(this.state.task.id, values.modelName, files)
       .then(
