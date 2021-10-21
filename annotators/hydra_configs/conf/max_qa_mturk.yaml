@@ -2,6 +2,7 @@
 mephisto:
   blueprint:
     onboarding_qualification: max-qa-1-onboarding
+    block_qualification: max-qa-1-val-onboarding
   # architect:
   #   port: 4000
   task:
@@ -22,8 +23,8 @@ dynabench:
   frame_height: 0
   # fetching_tags: "val2017"
   # tag_to_store_with_examples is required
-  extra_logging: "tag_to_store_with_examples:max_scalingannotation_pilot"
-num_jobs: 750
+  extra_logging: "tag_to_store_with_examples:max_scalingannotation_pilot_v4"
+num_jobs: 400
 preselected_qualifications: ["1000_hits_approved", "98_percent_approved", "english_only"]
 # num_jobs: 10
 # preselected_qualifications: []

@@ -2,6 +2,7 @@
 mephisto:
   blueprint:
     onboarding_qualification: max-qa-1-val-onboarding
+    block_qualification: max-qa-1-onboarding
   # architect:
   #   port: 4000
   task:
@@ -11,7 +12,7 @@ mephisto:
       You will be presented with a short passage of text from Wikipedia, a question, and an answer. You will then be asked to validate the example.
     task_reward: 0.40
     assignment_duration_in_seconds: 3600
-    maximum_units_per_worker: 10000
+    maximum_units_per_worker: 100
     max_num_concurrent_units: 1000  # how much it launches at a given time (how many HITs running at any given time)
     task_tags: "question answering, question, reading comprehension, AI, validation"
 dynabench:
@@ -23,7 +24,7 @@ dynabench:
   # fetching_tags: "max_scalingannotation_pilot"
   # tag_to_store_with_examples is required
   extra_logging: "tag_to_store_with_examples:max_validate"
-# num_jobs: 10
-# preselected_qualifications: ["1000_hits_approved", "98_percent_approved", "english_only"]
-num_jobs: 10
-preselected_qualifications: []
+num_jobs: 500
+preselected_qualifications: ["1000_hits_approved", "98_percent_approved", "english_only"]
+# num_jobs: 5
+# preselected_qualifications: []
