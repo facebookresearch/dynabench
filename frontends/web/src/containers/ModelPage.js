@@ -512,13 +512,11 @@ ${latexTableContent}
                           <td>
                             {
                               // if model anonymous + viewer should see it as anonymous
-                              model.uid === -1 &&
-                                model.is_anonymous === true &&
-                                "anonymous"
+                              !model.uid && "anonymous"
                             }
                             {
                               // if viewer should see it as not anonymous
-                              model.uid !== -1 && (
+                              model.uid && (
                                 <Link to={`/users/${model.uid}`}>
                                   {model.username}
                                 </Link>
@@ -526,9 +524,9 @@ ${latexTableContent}
                             }
                             {
                               // if viewer should see it as not anonymous
-                              // and model is anonymous
+                              // but model is anonymous
                               // (aka viewer is model owner or admin)
-                              model.uid !== -1 && model.is_anonymous === true && (
+                              model.uid && model.is_anonymous && (
                                 <i>
                                   {" "}
                                   (will be displayed as <b>anonymous</b> to
