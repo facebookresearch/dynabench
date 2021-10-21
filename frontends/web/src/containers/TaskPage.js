@@ -15,6 +15,7 @@ import {
   ButtonGroup,
   Nav,
   Table,
+  Spinner,
   Tooltip,
   OverlayTrigger,
 } from "react-bootstrap";
@@ -543,7 +544,7 @@ class TaskPage extends React.Component {
             </>
           ) : (
             <Row className="justify-content-center">
-              The task owner still needs to activate this task.
+              <Spinner animation="border" />{" "}
             </Row>
           )}
         </Container>
