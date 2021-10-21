@@ -39,9 +39,17 @@ def update(credentials, did):
 
     data = bottle.request.json
     for field in data:
-        if field not in ("longdesc", "rid", "source_url", "access_type"):
+        if field not in (
+            "longdesc",
+            "rid",
+            "source_url",
+            "access_type",
+            "tag_hierarchy",
+        ):
             bottle.abort(
-                403, """Can only modify longdesc, round, source_url, access_type"""
+                403,
+                """Can only modify longdesc, round, source_url,"""
+                """access_type, tag_hierarchy""",
             )
 
     dm.update(did, data)
@@ -96,6 +104,7 @@ def create(credentials, tid, name):
         )
 
     dataset_upload = bottle.request.files.get("file")
+    tag_hierarchy_upload = bottle.request.files.get("tag_hierarchy")
 
     tm = TaskModel()
     task = tm.get(tid)
@@ -134,6 +143,16 @@ def create(credentials, tid, name):
             logger.exception(ex)
             bottle.abort(400, "Invalid dataset file")
 
+    # Load tag hierarchy (if it exists)
+    tag_hierarchy = None
+
+    if tag_hierarchy_upload:
+        parsed_tag_hierarchy = [
+            ujson.loads(line)
+            for line in tag_hierarchy_upload.file.read().decode("utf-8").splitlines()
+        ]
+        tag_hierarchy = ujson.dumps(parsed_tag_hierarchy[0])
+
     # Upload to s3
     for parsed_upload, perturb_prefix in parsed_uploads:
         try:
@@ -170,6 +189,7 @@ def create(credentials, tid, name):
             access_type=AccessTypeEnum.hidden,
             longdesc=None,
             source_url=None,
+            tag_hierarchy=tag_hierarchy,
         ):
             logger.info(f"Registered {name} in datasets db.")
     else:

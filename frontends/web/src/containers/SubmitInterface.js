@@ -105,6 +105,8 @@ class SubmitInterface extends React.Component {
     for (const dataset of this.state.datasets) {
       files[dataset.name] = values[dataset.name];
     }
+    files["original_dataset"] = values["original_dataset"];
+    console.log(files);
     this.context.api
       .uploadPredictions(this.state.task.id, values.modelName, files)
       .then(
@@ -256,6 +258,16 @@ class SubmitInterface extends React.Component {
                                 <FileUpload
                                   values={values}
                                   filename={dataset.name}
+                                  setFieldValue={setFieldValue}
+                                />
+                              </Col>
+                            </Form.Group>
+                            <Form.Group as={Row} className="py-3 my-0">
+                              <Form.Label column>Original Dataset</Form.Label>
+                              <Col sm={8}>
+                                <FileUpload
+                                  values={values}
+                                  filename={"original_dataset"}
                                   setFieldValue={setFieldValue}
                                 />
                               </Col>

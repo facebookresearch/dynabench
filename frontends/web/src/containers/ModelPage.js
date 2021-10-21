@@ -31,97 +31,121 @@ import FloresGrid from "../components/FloresComponents/FloresGrid";
 import ChevronExpandButton from "../components/Buttons/ChevronExpandButton";
 import { FLORES_TASK_CODES } from "./FloresTaskPage";
 
-const ScoreRow = ({ score }) => {
+const TreeRow = ({ tag }) => {
   const [expanded, setExpanded] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
+  const clickable = tag.subTags.length !== 0;
+
+  return (
+    <Table
+      hover
+      className="mb-0 hover"
+      style={{ tableLayout: "fixed", width: "200%" }}
+    >
+      <tbody>
+        {tag.root ? (
+          <Modal show={showModal} onHide={() => setShowModal(!showModal)}>
+            <Modal.Header closeButton>
+              <Modal.Title>{tag.dataset_name}</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              {tag.dataset_longdesc}
+              <br />
+              <br />
+              {tag.dataset_source_url && tag.dataset_source_url !== "" ? (
+                <Button href={tag.dataset_source_url}>
+                  <i className="fas fa-newspaper"></i> Read Paper
+                </Button>
+              ) : (
+                ""
+              )}
+            </Modal.Body>
+          </Modal>
+        ) : (
+          ""
+        )}
+        <tr style={{ border: `none` }}>
+          <td className="text-right pr-4  text-nowrap">
+            <div className="d-flex align-items-center justify-content-between">
+              {tag.root ? (
+                <span
+                  onClick={() => setShowModal(!showModal)}
+                  className="btn-link dataset-link"
+                >
+                  {expanded ? <b>{tag.dataset_name}</b> : tag.dataset_name}
+                </span>
+              ) : (
+                <span className="d-flex align-items-center">
+                  {tag.tag}&nbsp;
+                </span>
+              )}
+              {clickable ? (
+                <div onClick={() => (clickable ? setExpanded(!expanded) : "")}>
+                  <ChevronExpandButton
+                    expanded={expanded}
+                    containerClassName={"start-100"}
+                  />
+                </div>
+              ) : (
+                ""
+              )}
+            </div>
+          </td>
+          <td className="text-right " key={`score-${tag.tag}-overall`}>
+            <span>{parseFloat(tag.perf).toFixed(2)}</span>
+          </td>
+        </tr>
+        {expanded &&
+          tag.subTags &&
+          tag.subTags.map((new_tag) => {
+            return <TreeRow tag={new_tag} />;
+          })}
+      </tbody>
+    </Table>
+  );
+};
+
+const ScoreRow = ({ score }) => {
   const perf_by_tag =
     score.metadata_json &&
     JSON.parse(score.metadata_json).hasOwnProperty("perf_by_tag")
       ? JSON.parse(score.metadata_json)["perf_by_tag"]
       : [];
 
-  const clickable = perf_by_tag.length !== 0;
+  const tag_hierarchy = JSON.parse(score.dataset_tag_hierarchy);
 
-  return (
-    <Table hover className="mb-0 hover" style={{ tableLayout: "fixed" }}>
-      <tbody>
-        <Modal show={showModal} onHide={() => setShowModal(!showModal)}>
-          <Modal.Header closeButton>
-            <Modal.Title>{score.dataset_name}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            {score.dataset_longdesc}
-            <br />
-            <br />
-            {score.dataset_source_url && score.dataset_source_url !== "" ? (
-              <Button href={score.dataset_source_url}>
-                <i className="fas fa-newspaper"></i> Read Paper
-              </Button>
-            ) : (
-              ""
-            )}
-          </Modal.Body>
-        </Modal>
-        <tr key={score.dataset_name}>
-          <td>
-            <span
-              onClick={() => setShowModal(!showModal)}
-              className="btn-link dataset-link"
-            >
-              {expanded ? <b>{score.dataset_name}</b> : score.dataset_name}
-            </span>{" "}
-            {clickable ? (
-              <div
-                style={{ float: "right" }}
-                onClick={() => (clickable ? setExpanded(!expanded) : "")}
-              >
-                <ChevronExpandButton
-                  expanded={expanded}
-                  containerClassName={"position-absolute start-100"}
-                />
-              </div>
-            ) : (
-              ""
-            )}
-          </td>
-          <td
-            className="text-right t-2"
-            key={`score-${score.dataset_name}-overall`}
-            onClick={() => (clickable ? setExpanded(!expanded) : "")}
-          >
-            <span>
-              {expanded ? (
-                <b>{parseFloat(score.accuracy).toFixed(2)}</b>
-              ) : (
-                parseFloat(score.accuracy).toFixed(2)
-              )}
-            </span>
-          </td>
-        </tr>
-        {expanded &&
-          perf_by_tag.map((perf_and_tag, index) => {
-            return (
-              <tr key={index} style={{ border: `none` }}>
-                <td className="text-right pr-4  text-nowrap">
-                  <div className="d-flex justify-content-end align-items-center">
-                    <span className="d-flex align-items-center">
-                      {perf_and_tag.tag}&nbsp;
-                    </span>
-                  </div>
-                </td>
-                <td
-                  className="text-right "
-                  key={`score-${score.dataset_name}-${perf_and_tag.tag}-overall`}
-                >
-                  <span>{parseFloat(perf_and_tag.perf).toFixed(2)}</span>
-                </td>
-              </tr>
-            );
-          })}
-      </tbody>
-    </Table>
-  );
+  var score_lookup = {};
+  for (const perf_by_tag_elem of perf_by_tag) {
+    score_lookup[perf_by_tag_elem.tag] = perf_by_tag_elem.perf;
+  }
+
+  var q = [];
+
+  for (var root_tag of tag_hierarchy) {
+    q.push(root_tag);
+  }
+
+  while (q.length != 0) {
+    var curr_elem = q.shift();
+    curr_elem.root = false;
+    curr_elem.perf = score_lookup[curr_elem.tag];
+
+    for (var subTag of curr_elem.subTags) {
+      q.push(subTag);
+    }
+  }
+
+  var final_root_object = {
+    root: true,
+    dataset_name: score.dataset_name,
+    dataset_source_url: score.dataset_source_url,
+    dataset_longdesc: score.dataset_longdesc,
+    perf: score.accuracy,
+    subTags: tag_hierarchy,
+  };
+
+  return <TreeRow tag={final_root_object} />;
 };
 
 class ModelPage extends React.Component {

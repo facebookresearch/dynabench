@@ -81,6 +81,7 @@ def do_upload_via_predictions(credentials, tid, model_name):
             bottle.abort(400, "Need to upload predictions for all leaderboard datasets")
 
     parsed_uploads = {}
+
     # Ensure correct format
     for name, upload in uploads.items():
         try:
@@ -118,6 +119,7 @@ def do_upload_via_predictions(credentials, tid, model_name):
         deployment_status=DeploymentStatusEnum.predictions_upload,
         secret=secrets.token_hex(),
     )
+
     with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
         for dataset_name, parsed_upload in parsed_uploads.items():
             with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
@@ -215,12 +217,14 @@ def get_model_detail(credentials, mid):
         did_to_dataset_access_type = {}
         did_to_dataset_longdesc = {}
         did_to_dataset_source_url = {}
+        did_to_dataset_tag_hierarchy = {}
         for dataset in datasets:
 
             did_to_dataset_name[dataset.id] = dataset.name
             did_to_dataset_access_type[dataset.id] = dataset.access_type
             did_to_dataset_longdesc[dataset.id] = dataset.longdesc
             did_to_dataset_source_url[dataset.id] = dataset.source_url
+            did_to_dataset_tag_hierarchy[dataset.id] = dataset.tag_hierarchy
         fields = ["accuracy", "round_id", "did", "metadata_json"]
         s_dicts = [
             dict(
@@ -230,10 +234,14 @@ def get_model_detail(credentials, mid):
                     "dataset_access_type": did_to_dataset_access_type.get(d.did, None),
                     "dataset_longdesc": did_to_dataset_longdesc.get(d.did, None),
                     "dataset_source_url": did_to_dataset_source_url.get(d.did, None),
+                    "dataset_tag_hierarchy": did_to_dataset_tag_hierarchy.get(
+                        d.did, None
+                    ),
                 },
             )
             for d in scores
         ]
+
         model["leaderboard_scores"] = list(
             filter(
                 lambda s_dict: s_dict["dataset_access_type"] == AccessTypeEnum.scoring,

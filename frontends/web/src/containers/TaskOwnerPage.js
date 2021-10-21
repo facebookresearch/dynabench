@@ -317,7 +317,13 @@ class TaskOwnerPage extends React.Component {
     values,
     { setFieldError, setSubmitting, resetForm }
   ) => {
-    const allowed = ["longdesc", "rid", "source_url", "access_type"];
+    const allowed = [
+      "longdesc",
+      "rid",
+      "source_url",
+      "access_type",
+      "tag_hierarchy",
+    ];
 
     const data = Object.keys(values)
       .filter((key) => allowed.includes(key))
@@ -421,10 +427,15 @@ class TaskOwnerPage extends React.Component {
     { setFieldError, setSubmitting, setFieldValue, resetForm }
   ) => {
     const files = { file: values.file };
+
     for (const config of JSON.parse(this.state.task.annotation_config_json)
       .delta_metrics) {
       files[config.type] = values[config.type];
     }
+    if (values.tag_hierarchy != null) {
+      files["tag_hierarchy"] = values.tag_hierarchy;
+    }
+
     this.context.api
       .uploadAndCreateDataset(this.state.task.id, values.name, files)
       .then(

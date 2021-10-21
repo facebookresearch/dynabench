@@ -70,6 +70,7 @@ const Datasets = (props) => {
               initialValues={Object.assign(
                 {
                   file: null,
+                  tag_hierarchy: null,
                   name: "",
                 },
                 delta_files
@@ -148,6 +149,16 @@ const Datasets = (props) => {
                           </Col>
                         </Form.Group>
                       ))}
+                      <Form.Group as={Row} className="py-3 my-0">
+                        <Form.Label column>Tag Hierarchy</Form.Label>
+                        <Col sm={8}>
+                          <FileUpload
+                            values={values}
+                            filename={"tag_hierarchy"}
+                            setFieldValue={setFieldValue}
+                          />
+                        </Col>
+                      </Form.Group>
                       <Form.Group as={Row} className="py-3 my-0">
                         <Col sm="8">
                           <small className="form-text text-muted">
@@ -302,6 +313,19 @@ const Datasets = (props) => {
                                   </option>
                                 ))}
                               </Form.Control>
+                            </Col>
+                          </Form.Group>
+                          <Form.Group
+                            as={Row}
+                            controlId="tag_hierarchy"
+                            className="py-3 my-0 border-bottom"
+                          >
+                            <Form.Label column>Tag Hierarchy</Form.Label>
+                            <Col sm="8">
+                              <Form.Control
+                                onChange={handleChange}
+                                defaultValue={dataset.tag_hierarchy}
+                              />
                             </Col>
                           </Form.Group>
 

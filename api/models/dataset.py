@@ -28,6 +28,7 @@ class Dataset(Base):
     longdesc = db.Column(db.Text)
     source_url = db.Column(db.Text)
     access_type = db.Column(db.Enum(AccessTypeEnum), default=AccessTypeEnum.scoring)
+    tag_hierarchy = db.Column(db.Text)
 
     def __repr__(self):
         return f"<Dataset {self.name}>"
