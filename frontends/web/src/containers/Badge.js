@@ -187,7 +187,7 @@ const Badge = (props) => {
     >
       <img
         src={"/badges/" + props.name + ".png"}
-        style={{ width: 50, marginBottom: 10, cursor: "pointer" }}
+        style={{ width: 50, marginBottom: 10 }}
         alt="badge"
       />
     </OverlayTrigger>
