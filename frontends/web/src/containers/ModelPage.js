@@ -510,30 +510,22 @@ ${latexTableContent}
                         <tr style={{ border: `none` }}>
                           <td>Owner</td>
                           <td>
-                            {
-                              // if model anonymous + viewer should see it as anonymous
-                              !model.uid && "anonymous"
-                            }
-                            {
-                              // if viewer should see it as not anonymous
-                              model.uid && (
+                            {model.uid ? (
+                              <span>
                                 <Link to={`/users/${model.uid}`}>
                                   {model.username}
                                 </Link>
-                              )
-                            }
-                            {
-                              // if viewer should see it as not anonymous
-                              // but model is anonymous
-                              // (aka viewer is model owner or admin)
-                              model.uid && model.is_anonymous && (
-                                <i>
-                                  {" "}
-                                  (will be displayed as <b>anonymous</b> to
-                                  other users)
-                                </i>
-                              )
-                            }
+                                {model.is_anonymous ? (
+                                  <i>
+                                    {" "}
+                                    (will be displayed as <b>anonymous</b> to
+                                    other users)
+                                  </i>
+                                ) : null}
+                              </span>
+                            ) : (
+                              "anonymous"
+                            )}
                           </td>
                         </tr>
                         {!isFlores && (
