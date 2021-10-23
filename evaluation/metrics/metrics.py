@@ -6,6 +6,7 @@ import functools
 import subprocess
 from pathlib import Path
 
+import numpy as np
 import sacrebleu
 import sentencepiece
 from sklearn.metrics import f1_score
@@ -20,6 +21,30 @@ from .vqa_accuracy import VQAEval
 
 
 # eval_metrics, take predictions and targets as input
+def get_dataperf_accuracy(predictions: list, targets: list):
+    """
+    Here, p can be a list of acceptable multilabel lists, instead of just one multilabel
+    list. This is helpful for stochastic models, where we also want to report a
+    variance over the model outputs.
+    """
+    if len(predictions) > 0 and isinstance(predictions[0], list):
+        iterations = len(predictions[0])
+        accuracies = []
+        for iteration in range(iterations):
+            acc = sum(
+                [
+                    p == t
+                    for p, t in zip([pred[iteration] for pred in predictions], targets)
+                ]
+            ) / len(targets)
+            accuracies.append(acc)
+        return accuracies, np.std(accuracies)
+
+    else:
+        acc = sum([p == t for p, t in zip(predictions, targets)]) / len(targets)
+        return round(acc * 100, 2)
+
+
 def get_accuracy(predictions: list, targets: list):
     """
     Here, t can be a list of acceptable labels, instead of just one label. This is
@@ -34,7 +59,7 @@ def get_accuracy(predictions: list, targets: list):
         elif isinstance(t, str):
             return p == t
         else:
-            raise TypeError("t must be a set of strings or a string")
+            raise TypeError("t must be a list of strings or a string")
 
     acc = sum([equality(p, t) for p, t in zip(predictions, targets)]) / len(targets)
     return round(acc * 100, 2)

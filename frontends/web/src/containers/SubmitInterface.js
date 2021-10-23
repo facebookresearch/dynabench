@@ -61,6 +61,7 @@ class SubmitInterface extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      submission_type: this.props.submission_type,
       taskId: null,
       task: {},
       datasets: [],
@@ -74,7 +75,12 @@ class SubmitInterface extends React.Component {
     if (!this.context.api.loggedIn()) {
       this.props.history.push(
         "/login?&src=" +
-          encodeURIComponent("/tasks/" + this.state.task_code + "/submit")
+          encodeURIComponent(
+            "/tasks/" +
+              this.state.task_code +
+              "/submit_" +
+              this.state.submission_type
+          )
       );
     }
 
@@ -105,27 +111,50 @@ class SubmitInterface extends React.Component {
     for (const dataset of this.state.datasets) {
       files[dataset.name] = values[dataset.name];
     }
-    this.context.api
-      .uploadPredictions(this.state.task.id, values.modelName, files)
-      .then(
-        (result) => {
-          values.modelName = "";
-          for (const [fname, _] of Object.entries(files)) {
-            values[fname] = null;
-          }
-          values.submittedModelId = result.model_id;
-          resetForm({ values: values });
-          setSubmitting(false);
-        },
-        (error) => {
-          console.log(error);
-          setFieldError(
-            "accept",
-            "Predictions could not be added (" + error.error + ")"
+
+    this.state.submission_type === "predictions"
+      ? this.context.api
+          .uploadPredictions(this.state.task.id, values.modelName, files)
+          .then(
+            (result) => {
+              values.modelName = "";
+              for (const [fname, _] of Object.entries(files)) {
+                values[fname] = null;
+              }
+              values.submittedModelId = result.model_id;
+              resetForm({ values: values });
+              setSubmitting(false);
+            },
+            (error) => {
+              console.log(error);
+              setFieldError(
+                "accept",
+                "Predictions could not be added (" + error.error + ")"
+              );
+              setSubmitting(false);
+            }
+          )
+      : this.context.api
+          .uploadTrainFiles(this.state.task.id, values.modelName, files)
+          .then(
+            (result) => {
+              values.modelName = "";
+              for (const [fname, _] of Object.entries(files)) {
+                values[fname] = null;
+              }
+              values.submittedModelId = result.model_id;
+              resetForm({ values: values });
+              setSubmitting(false);
+            },
+            (error) => {
+              console.log(error);
+              setFieldError(
+                "accept",
+                "Train files could not be added (" + error.error + ")"
+              );
+              setSubmitting(false);
+            }
           );
-          setSubmitting(false);
-        }
-      );
   };
 
   render() {
@@ -136,7 +165,9 @@ class SubmitInterface extends React.Component {
     return (
       <Container className="mb-5 pb-5">
         <h1 className="my-4 pt-3 text-uppercase text-center">
-          Submit Model Predictions
+          {this.state.submission_type
+            ? "Submit Model Predictions"
+            : "Submit Train Files"}
         </h1>
         <Col>
           <Card className="my-4">
@@ -164,26 +195,50 @@ class SubmitInterface extends React.Component {
                     <form className="px-4" onSubmit={handleSubmit}>
                       <Container>
                         <Form.Group as={Row} className="py-3 my-0">
-                          <p>
-                            Upload predicted answers as a <em>.jsonl</em> file,
-                            where each line has a field for each of the model
-                            output fields. Additionally, there should be a field
-                            called "uid" that matches the "uid" field of the
-                            example that the prediction is for.
-                            <br />
-                            <br />
-                            We require that you upload a prediction file for
-                            each of the leaderboard datasets. You can optionally
-                            upload a prediction file for the other datasets.
-                            <br />
-                            <br />
-                            <Markdown>
-                              {
-                                this.state.task
-                                  .predictions_upload_instructions_md
-                              }
-                            </Markdown>
-                          </p>
+                          {this.state.submission_type ? (
+                            <p>
+                              Upload predicted answers as a <em>.jsonl</em>{" "}
+                              file, where each line has a field for each of the
+                              model output fields. Additionally, there should be
+                              a field called "uid" that matches the "uid" field
+                              of the example that the prediction is for.
+                              <br />
+                              <br />
+                              We require that you upload a prediction file for
+                              each of the leaderboard datasets. You can
+                              optionally upload a prediction file for the other
+                              datasets.
+                              <br />
+                              <br />
+                              <Markdown>
+                                {
+                                  this.state.task
+                                    .predictions_upload_instructions_md
+                                }
+                              </Markdown>
+                            </p>
+                          ) : (
+                            <p>
+                              Upload train files as a <em>.jsonl</em> file,
+                              where each line has a field for each of the model
+                              input and output fields. Additionally, there
+                              should be a field called "uid" that is a unique
+                              identifier for examples.
+                              <br />
+                              <br />
+                              We require that you upload a train file for each
+                              of the leaderboard datasets. You can optionally
+                              upload a train file for the other datasets.
+                              <br />
+                              <br />
+                              <Markdown>
+                                {
+                                  this.state.task
+                                    .train_files_upload_instructions_md
+                                }
+                              </Markdown>
+                            </p>
+                          )}
                         </Form.Group>
                         <Form.Group
                           as={Row}
@@ -251,7 +306,7 @@ class SubmitInterface extends React.Component {
                               </Col>
                             </Form.Group>
                             <Form.Group as={Row} className="py-3 my-0">
-                              <Form.Label column>Predictions</Form.Label>
+                              <Form.Label column>Files</Form.Label>
                               <Col sm={8}>
                                 <FileUpload
                                   values={values}
@@ -297,7 +352,7 @@ class SubmitInterface extends React.Component {
                                     size="sm"
                                   />
                                 ) : (
-                                  "Upload Predictions"
+                                  "Upload"
                                 )}
                               </Button>
                             ) : null}

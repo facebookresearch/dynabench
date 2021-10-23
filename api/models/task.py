@@ -8,10 +8,12 @@ import sys
 import enum
 import requests
 import sqlalchemy as db
+import ujson
 from transformers.data.metrics.squad_metrics import compute_f1
 
 import common.helpers as util
 from common.logging import logger
+from metrics.train_file_metrics import dataperf
 
 from .base import Base, BaseModel
 from .dataset import AccessTypeEnum, DatasetModel
@@ -23,6 +25,22 @@ from metrics.metric_getters import get_task_metrics_meta  # isort:skip
 
 
 EPSILON_PREC = 1e-4
+
+
+class TrainFileMetricEnum(enum.Enum):
+    dataperf = "dataperf"
+
+
+def verify_dataperf_config(constructor_args):
+    assert "reference_name" in constructor_args
+    assert "iterations" in constructor_args
+
+
+train_file_metric_config_verifiers = {
+    TrainFileMetricEnum.dataperf.name: verify_dataperf_config,
+}
+
+train_file_metrics = {TrainFileMetricEnum.dataperf.name: dataperf}
 
 
 class ModelWrongMetricEnum(enum.Enum):
@@ -465,6 +483,14 @@ class Task(Base):
         return d
 
     @staticmethod
+    def verify_train_file_metric_config(train_file_metric_config):
+        assert "type" in train_file_metric_config
+        assert "constructor_args" in train_file_metric_config
+        train_file_metric_config_verifiers[train_file_metric_config["type"]](
+            train_file_metric_config["constructor_args"]
+        )
+
+    @staticmethod
     def verify_model_wrong_metric_config(model_wrong_metric_config):
         assert "type" in model_wrong_metric_config
         assert "constructor_args" in model_wrong_metric_config
@@ -510,6 +536,9 @@ class Task(Base):
 
         assert "delta_metrics" in annotation_config
         Task.verify_delta_metrics_config(annotation_config["delta_metrics"])
+
+        if "train_file_metric" in annotation_config:
+            Task.verify_train_file_metric_config(annotation_config["train_file_metric"])
 
         assert "context" in annotation_config
         assert "input" in annotation_config

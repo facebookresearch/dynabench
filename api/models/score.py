@@ -33,6 +33,7 @@ class Score(Base):
 
     pretty_perf = db.Column(db.String(length=255))
     perf = db.Column(db.Float(), default=0.0)
+    perf_std = db.Column(db.Float)
 
     raw_output_s3_uri = db.Column(db.Text)
     metadata_json = db.Column(db.Text)
