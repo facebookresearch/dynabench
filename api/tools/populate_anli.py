@@ -7,7 +7,7 @@ import os
 import secrets
 import sys
 
-import common.ujson_mod as ujson
+import ujson
 from models.base import dbs
 from models.context import Context
 from models.round import Round, RoundModel

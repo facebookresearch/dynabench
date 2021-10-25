@@ -6,7 +6,8 @@ import datetime
 
 import sqlalchemy as db
 
-import common.ujson_mod as ujson
+import common.helpers as util
+import ujson
 from common.logging import logger
 
 from .base import Base, BaseModel
@@ -202,7 +203,7 @@ class BadgeModel(BaseModel):
                 metadata[key] = value
         else:
             metadata = {key: value}
-        user.metadata_json = ujson.dumps(metadata)
+        user.metadata_json = util.json_encode(metadata)
         self.dbs.commit()
 
     def getFieldsFromMetadata(self, metadata, value_if_absent, fields):
@@ -457,7 +458,7 @@ class BadgeModel(BaseModel):
                 metadata["async_badges_to_award"] = async_badges_to_award
             else:
                 metadata["async_badges_to_award"] += async_badges_to_award
-            user.metadata_json = ujson.dumps(metadata)
+            user.metadata_json = util.json_encode(metadata)
 
         self.createNotificationsAndRemoveBadges(
             badges_to_remove, "BADGE_REMOVED_STREAK"
@@ -526,7 +527,7 @@ class BadgeModel(BaseModel):
                     ):
                         badges_to_add.append(
                             self._badgeobj(
-                                user.id, "SOTA", ujson.dumps({"mid": model.id})
+                                user.id, "SOTA", util.json_encode({"mid": model.id})
                             )
                         )
                         break
@@ -583,7 +584,7 @@ class BadgeModel(BaseModel):
                 for name in metadata["async_badges_to_award"]:
                     badge_names.append(name)
                 metadata["async_badges_to_award"] = []
-                user.metadata_json = ujson.dumps(metadata)
+                user.metadata_json = util.json_encode(metadata)
                 self.dbs.commit()
 
         return badge_names

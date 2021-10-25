@@ -7,7 +7,8 @@ import os
 import secrets
 import sys
 
-import common.ujson_mod as ujson
+import common.helpers as util
+import ujson
 from models.context import Context
 from models.round import Round, RoundModel
 from models.task import TaskModel
@@ -25,7 +26,7 @@ for n in contexts.keys():
     this_contexts = [
         {
             "context": c["passage"],
-            "metadata_json": ujson.dumps(
+            "metadata_json": util.json_encode(
                 {
                     "id": c["id"],
                     "title": c["title"],

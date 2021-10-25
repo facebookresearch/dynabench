@@ -4,7 +4,10 @@
 
 # flake8: noqa
 
-import common.ujson_mod as ujson  # isort:skip
+import ujson
+
+
+import common.helpers as util  # isort:skip
 import os  # isort:skip
 import sys  # isort:skip
 
@@ -67,7 +70,7 @@ def main():
                 data.append(
                     {
                         "context": url,
-                        "metadata_json": ujson.dumps(
+                        "metadata_json": util.json_encode(
                             {"id": image["id"], "file_name": fileName}
                         ),
                     }

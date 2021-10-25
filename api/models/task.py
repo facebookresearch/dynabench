@@ -10,7 +10,8 @@ import requests
 import sqlalchemy as db
 from transformers.data.metrics.squad_metrics import compute_f1
 
-import common.ujson_mod as ujson
+import common.helpers as util
+import ujson
 from common.logging import logger
 
 from .base import Base, BaseModel
@@ -581,7 +582,7 @@ class Task(Base):
         for annotation_config_obj in annotation_config_objs:
             name_to_type[annotation_config_obj["name"]] = annotation_config_obj["type"]
 
-        converted_data = ujson.loads(ujson.dumps(data))
+        converted_data = ujson.loads(util.json_encode(data))
         for key, value in data.items():
             if key in name_to_type:
                 converted_data[key] = annotation_components[

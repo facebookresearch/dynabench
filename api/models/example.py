@@ -9,7 +9,8 @@ import sqlalchemy as db
 from dynalab.tasks.task_io import TaskIO
 from sqlalchemy import case
 
-import common.ujson_mod as ujson
+import common.helpers as util
+import ujson
 from common.logging import logger
 from models.context import Context
 from models.model import Model
@@ -140,7 +141,7 @@ class ExampleModel(BaseModel):
                 with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
                     annotation_config = ujson.loads(task.annotation_config_json)
                     tmp.write(
-                        ujson.dumps(
+                        util.json_encode(
                             {
                                 "annotation_config": annotation_config,
                                 "task": task.task_code,
@@ -161,7 +162,7 @@ class ExampleModel(BaseModel):
                         if obj["type"] not in ("multiclass_probs", "conf")
                     ]
                     tmp.write(
-                        ujson.dumps(
+                        util.json_encode(
                             {
                                 "annotation_config": annotation_config,
                                 "task": task.task_code,
@@ -281,11 +282,11 @@ class ExampleModel(BaseModel):
         try:
             e = Example(
                 context=c,
-                input_json=ujson.dumps(input),
-                output_json=ujson.dumps(output),
+                input_json=util.json_encode(input),
+                output_json=util.json_encode(output),
                 model_wrong=model_wrong,
                 generated_datetime=db.sql.func.now(),
-                metadata_json=ujson.dumps(metadata),
+                metadata_json=util.json_encode(metadata),
                 tag=tag,
                 model_endpoint_name=model_endpoint_name,
             )

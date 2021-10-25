@@ -8,7 +8,7 @@ import sys
 
 import pandas as pd
 
-import common.ujson_mod as ujson
+import common.helpers as util
 from models.context import Context
 from models.round import Round, RoundModel
 from models.task import TaskModel
@@ -30,7 +30,7 @@ for n in contexts.keys():
         this_contexts2.append(
             {
                 "context": c,
-                "metadata_json": ujson.dumps(
+                "metadata_json": util.json_encode(
                     {
                         "id": i,
                         "title": title,

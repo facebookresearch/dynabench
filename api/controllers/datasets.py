@@ -12,7 +12,7 @@ import bottle
 
 import common.auth as _auth
 import common.helpers as util
-import common.ujson_mod as ujson
+import ujson
 from common.config import config
 from common.logging import logger
 from models.dataset import AccessTypeEnum, DatasetModel
@@ -145,7 +145,7 @@ def create(credentials, tid, name):
             )
             with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
                 for datum in parsed_upload:
-                    tmp.write(ujson.dumps(task.convert_to_model_io(datum)) + "\n")
+                    tmp.write(util.json_encode(task.convert_to_model_io(datum)) + "\n")
                 tmp.close()
                 response = s3_client.upload_file(
                     tmp.name,

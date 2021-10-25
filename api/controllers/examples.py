@@ -8,7 +8,7 @@ import bottle
 
 import common.auth as _auth
 import common.helpers as util
-import common.ujson_mod as ujson
+import ujson
 from common.logging import logger
 from models.badge import BadgeModel
 from models.context import ContextModel
@@ -183,7 +183,7 @@ def update_example(credentials, eid):
                 for key, value in ujson.loads(example.metadata_json).items():
                     if key not in data["metadata"]:
                         data["metadata"][key] = value
-            data["metadata_json"] = ujson.dumps(data["metadata"])
+            data["metadata_json"] = util.json_encode(data["metadata"])
             del data["metadata"]
 
         logger.info(f"Updating example {example.id} with {data}")

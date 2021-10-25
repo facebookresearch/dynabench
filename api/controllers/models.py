@@ -13,7 +13,7 @@ import sqlalchemy as db
 
 import common.auth as _auth
 import common.helpers as util
-import common.ujson_mod as ujson
+import ujson
 from common.config import config
 from common.logging import logger
 from models.badge import BadgeModel
@@ -127,7 +127,7 @@ def do_upload_via_predictions(credentials, tid, model_name):
                     # Why do we use two seperate names for the same thing? Can we make
                     # this consistent?
                     del datum["uid"]
-                    tmp.write(ujson.dumps(datum) + "\n")
+                    tmp.write(util.json_encode(datum) + "\n")
                 tmp.close()
                 ret = _eval_dataset(dataset_name, endpoint_name, model, task, tmp.name)
                 status_dict.update(ret)
@@ -412,7 +412,7 @@ def upload_to_s3(credentials):
     sqs = session.resource("sqs")
     queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
     queue.send_message(
-        MessageBody=ujson.dumps(
+        MessageBody=util.json_encode(
             {"model_id": model.id, "s3_uri": f"s3://{bucket_name}/{s3_path}"}
         )
     )

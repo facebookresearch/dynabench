@@ -6,7 +6,7 @@ import bottle
 
 import common.auth as _auth
 import common.helpers as util
-import common.ujson_mod as ujson
+import ujson
 from models.badge import BadgeModel
 from models.context import ContextModel
 from models.example import ExampleModel
@@ -139,7 +139,7 @@ def validate_example(credentials, eid):
                     user_metadata = {
                         task.task_code + "_fooling_no_verified_incorrect_or_flagged": 0
                     }
-                user.metadata_json = ujson.dumps(user_metadata)
+                user.metadata_json = util.json_encode(user_metadata)
                 um.dbs.commit()
 
     ret = example.to_dict()

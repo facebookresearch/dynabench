@@ -5,7 +5,7 @@
 import enum
 import sqlalchemy as db
 
-import common.ujson_mod as ujson
+import common.helpers as util
 from common.logging import logger
 
 from .base import Base, BaseModel
@@ -53,7 +53,10 @@ class ValidationModel(BaseModel):
         try:
             if uid == "turk":
                 validation = Validation(
-                    eid=eid, label=label, mode=mode, metadata_json=ujson.dumps(metadata)
+                    eid=eid,
+                    label=label,
+                    mode=mode,
+                    metadata_json=util.json_encode(metadata),
                 )
             else:
                 validation = Validation(
@@ -61,7 +64,7 @@ class ValidationModel(BaseModel):
                     eid=eid,
                     label=label,
                     mode=mode,
-                    metadata_json=ujson.dumps(metadata),
+                    metadata_json=util.json_encode(metadata),
                 )
             self.dbs.add(validation)
             return self.dbs.commit()
