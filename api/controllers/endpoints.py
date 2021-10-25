@@ -5,7 +5,7 @@
 import bottle
 
 import common.auth as _auth
-import ujson
+import common.ujson_mod as ujson
 from common.logging import logger
 
 

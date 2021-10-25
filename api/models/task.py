@@ -10,7 +10,7 @@ import requests
 import sqlalchemy as db
 from transformers.data.metrics.squad_metrics import compute_f1
 
-import ujson
+import common.ujson_mod as ujson
 from common.logging import logger
 
 from .base import Base, BaseModel

@@ -10,7 +10,7 @@ import os
 import sqlalchemy as db
 from werkzeug.security import generate_password_hash
 
-import ujson
+import common.ujson_mod as ujson
 
 
 def get_cls_name_helper(ss):

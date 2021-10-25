@@ -6,7 +6,7 @@ import sys
 
 import pandas as pd
 
-import ujson
+import common.ujson_mod as ujson
 from models.context import Context
 from models.round import RoundModel
 from models.task import TaskModel

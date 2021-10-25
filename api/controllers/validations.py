@@ -6,7 +6,7 @@ import bottle
 
 import common.auth as _auth
 import common.helpers as util
-import ujson
+import common.ujson_mod as ujson
 from models.badge import BadgeModel
 from models.context import ContextModel
 from models.example import ExampleModel

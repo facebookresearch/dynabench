@@ -8,7 +8,7 @@ import bottle
 
 import common.auth as _auth
 import common.helpers as util
-import ujson
+import common.ujson_mod as ujson
 from common.logging import logger
 from models.context import Context, ContextModel
 from models.round import RoundModel

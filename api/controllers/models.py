@@ -13,7 +13,7 @@ import sqlalchemy as db
 
 import common.auth as _auth
 import common.helpers as util
-import ujson
+import common.ujson_mod as ujson
 from common.config import config
 from common.logging import logger
 from models.badge import BadgeModel

@@ -4,7 +4,7 @@
 
 # flake8: noqa
 
-import ujson  # isort:skip
+import common.ujson_mod as ujson  # isort:skip
 import os  # isort:skip
 import sys  # isort:skip
 

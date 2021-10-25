@@ -7,7 +7,7 @@ import math
 import pandas as pd
 import sqlalchemy as db
 
-import ujson
+import common.ujson_mod as ujson
 from common import helpers as util
 from models.dataset import AccessTypeEnum, Dataset
 from models.round import Round

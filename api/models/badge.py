@@ -6,7 +6,7 @@ import datetime
 
 import sqlalchemy as db
 
-import ujson
+import common.ujson_mod as ujson
 from common.logging import logger
 
 from .base import Base, BaseModel

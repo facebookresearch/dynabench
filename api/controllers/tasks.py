@@ -11,7 +11,7 @@ import uuid
 
 import common.auth as _auth
 import common.helpers as util
-import ujson
+import common.ujson_mod as ujson
 from common.logging import logger
 from models.dataset import Dataset, DatasetModel
 from models.leaderboard_configuration import LeaderboardConfigurationModel

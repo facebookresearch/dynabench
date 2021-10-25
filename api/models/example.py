@@ -9,7 +9,7 @@ import sqlalchemy as db
 from dynalab.tasks.task_io import TaskIO
 from sqlalchemy import case
 
-import ujson
+import common.ujson_mod as ujson
 from common.logging import logger
 from models.context import Context
 from models.model import Model
