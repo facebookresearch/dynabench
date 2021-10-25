@@ -10,7 +10,6 @@ from dynalab.tasks.task_io import TaskIO
 from sqlalchemy import case
 
 import common.helpers as util
-import ujson
 from common.logging import logger
 from models.context import Context
 from models.model import Model
@@ -103,7 +102,7 @@ class ExampleModel(BaseModel):
         tm = TaskModel()
         task = tm.get(tid)
 
-        context = ujson.loads(c.context_json)
+        context = util.json_decode(c.context_json)
 
         all_user_annotation_data = {}
         all_user_annotation_data.update(context)
@@ -139,7 +138,7 @@ class ExampleModel(BaseModel):
                 )
 
                 with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
-                    annotation_config = ujson.loads(task.annotation_config_json)
+                    annotation_config = util.json_decode(task.annotation_config_json)
                     tmp.write(
                         util.json_encode(
                             {
@@ -153,7 +152,7 @@ class ExampleModel(BaseModel):
 
                 # This is to check if we have a pre-dynatask dynalab model
                 with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
-                    annotation_config = ujson.loads(task.annotation_config_json)
+                    annotation_config = util.json_decode(task.annotation_config_json)
                     if task.task_code in ("hs", "sentiment"):
                         annotation_config["context"] = []
                     annotation_config["output"] = [
@@ -311,7 +310,7 @@ class ExampleModel(BaseModel):
         tid = context.round.task.id
         rid = context.round.rid
         secret = context.round.secret
-        context_str = list(ujson.loads(context.context_json).values())[0]
+        context_str = list(util.json_decode(context.context_json).values())[0]
 
         fields_to_sign = []
         fields_to_sign.append(pred_str.encode("utf-8"))

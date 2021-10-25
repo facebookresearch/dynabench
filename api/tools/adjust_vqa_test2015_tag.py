@@ -7,11 +7,10 @@
 import sqlalchemy as db
 from sqlalchemy import JSON
 
-import ujson
 from common.config import config
 
 
-import common.helpers as util  # isort:skip
+import ujson  # isort:skip
 import os  # isort:skip
 import sys  # isort:skip
 

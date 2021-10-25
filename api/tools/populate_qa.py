@@ -8,7 +8,6 @@ import secrets
 import sys
 
 import common.helpers as util
-import ujson
 from models.context import Context
 from models.round import Round, RoundModel
 from models.task import TaskModel
@@ -22,7 +21,7 @@ contexts = {"1": [], "2": []}
 for n in contexts.keys():
     fpath = os.path.join(fname)
     print(fpath)
-    this_contexts = [ujson.loads(ll) for ll in codecs.open(fpath, "r", "utf8")]
+    this_contexts = [util.json_decode(ll) for ll in codecs.open(fpath, "r", "utf8")]
     this_contexts = [
         {
             "context": c["passage"],

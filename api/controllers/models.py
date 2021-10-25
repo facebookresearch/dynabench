@@ -13,7 +13,6 @@ import sqlalchemy as db
 
 import common.auth as _auth
 import common.helpers as util
-import ujson
 from common.config import config
 from common.logging import logger
 from models.badge import BadgeModel
@@ -85,7 +84,7 @@ def do_upload_via_predictions(credentials, tid, model_name):
     for name, upload in uploads.items():
         try:
             parsed_upload = [
-                ujson.loads(line)
+                util.json_decode(line)
                 for line in upload.file.read().decode("utf-8").splitlines()
             ]
             for io in parsed_upload:
