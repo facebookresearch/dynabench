@@ -11,7 +11,7 @@ import sqlalchemy as db
 from sqlalchemy.orm import lazyload
 
 import common.auth as _auth
-import common.ujson_mod as ujson
+import ujson
 from common.logging import logger
 from models.example import ExampleModel
 from models.round import RoundModel
@@ -38,8 +38,12 @@ def _alchemyencoder(obj):
         return float(obj)
 
 
-def json_encode(obj):
-    return ujson.dumps(obj, default=_alchemyencoder)
+def json_encode(
+    obj, *, default=_alchemyencoder, escape_forward_slashes=False, **kwargs
+):
+    return ujson.dumps(
+        obj, default=default, escape_forward_slashes=escape_forward_slashes, **kwargs
+    )
 
 
 def is_current_user(uid, credentials=None):
