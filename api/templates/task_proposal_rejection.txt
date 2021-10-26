@@ -2,8 +2,6 @@ After some consideration, we have decided to reject your task for the following 
 
 $rejection_message
 
-We'd love to see you submit another task proposal with these requested changes.
-
 Thanks,
 
 The Dynabench Team
