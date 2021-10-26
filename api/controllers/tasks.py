@@ -39,6 +39,7 @@ def process_proposal(credentials, tpid):
     data = bottle.request.json
     if not util.check_fields(data, ["accept"]):
         bottle.abort(400, "Missing data")
+
     tpm = TaskProposalModel()
     tp = tpm.get(tpid)
     tp_creator = um.get(tp.uid)
@@ -147,6 +148,20 @@ def process_proposal(credentials, tpid):
             [tp_creator_email],
             template_name="templates/task_proposal_approval.txt",
             subject="Your Task Proposal has been Accepted",
+        )
+
+    else:
+        config = bottle.default_app().config
+        msg = {
+            "rejection_message": data["changes"],
+        }
+        mail.send(
+            config["mail"],
+            config,
+            [tp_creator_email],
+            template_name="templates/task_proposal_rejection.txt",
+            msg_dict=msg,
+            subject="Your Task Proposal has been Rejected",
         )
 
     tpm.dbs.query(TaskProposal).filter(TaskProposal.id == tpid).delete()

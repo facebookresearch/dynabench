@@ -543,9 +543,10 @@ export default class ApiService {
     });
   }
 
-  processTaskProposal(tpid, accept) {
+  processTaskProposal(tpid, accept, changes) {
     let obj = {
       accept: accept,
+      changes: changes || "",
     };
     return this.fetch(`${this.domain}/tasks/process_proposal/${tpid}`, {
       method: "PUT",
