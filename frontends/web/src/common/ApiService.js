@@ -164,6 +164,7 @@ export default class ApiService {
     license,
     source_url,
     model_card,
+    is_anonymous,
   }) {
     return this.fetch(`${this.domain}/models/${modelId}/update`, {
       method: "PUT",
@@ -175,6 +176,7 @@ export default class ApiService {
         license,
         source_url,
         model_card,
+        is_anonymous,
       }),
     });
   }

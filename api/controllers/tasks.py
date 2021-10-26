@@ -7,12 +7,12 @@ from urllib.parse import parse_qs, quote
 
 import bottle
 import sqlalchemy as db
-import ujson
 import uuid
 
 import common.auth as _auth
 import common.helpers as util
 import common.mail_service as mail
+import ujson
 from common.logging import logger
 from models.dataset import Dataset, DatasetModel
 from models.leaderboard_configuration import LeaderboardConfigurationModel
@@ -139,6 +139,16 @@ def process_proposal(credentials, tpid):
         tpm.dbs.flush()
         tpm.dbs.commit()
         logger.info("Added round (%s)" % (r.id))
+
+        config = bottle.default_app().config
+
+        mail.send(
+            config["mail"],
+            config,
+            [tp_creator_email],
+            template_name="templates/task_proposal_approval.txt",
+            subject="Your Task Proposal has been Accepted",
+        )
 
     else:
         config = bottle.default_app().config

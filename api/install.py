@@ -52,7 +52,12 @@ if __name__ == "__main__":
             config[field] = tmp
 
         with open("common/config.py", "w") as fw:
-            fw.write("config = " + ujson.dumps(config, indent=4, sort_keys=True))
+            fw.write(
+                "config = "
+                + ujson.dumps(
+                    config, indent=4, sort_keys=True, escape_forward_slashes=False
+                )
+            )
             print("Wrote config to common/config.py - feel free to edit.")
     else:
         print("Config already exists.")
