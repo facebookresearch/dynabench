@@ -11,6 +11,7 @@ import uuid
 
 import common.auth as _auth
 import common.helpers as util
+import common.mail_service as mail
 from common.logging import logger
 from models.dataset import Dataset, DatasetModel
 from models.leaderboard_configuration import LeaderboardConfigurationModel
@@ -37,8 +38,11 @@ def process_proposal(credentials, tpid):
     data = bottle.request.json
     if not util.check_fields(data, ["accept"]):
         bottle.abort(400, "Missing data")
+
     tpm = TaskProposalModel()
     tp = tpm.get(tpid)
+    tp_creator = um.get(tp.uid)
+    tp_creator_email = tp_creator.email
 
     if data["accept"]:
         t = Task(
@@ -134,6 +138,30 @@ def process_proposal(credentials, tpid):
         tpm.dbs.flush()
         tpm.dbs.commit()
         logger.info("Added round (%s)" % (r.id))
+
+        config = bottle.default_app().config
+
+        mail.send(
+            config["mail"],
+            config,
+            [tp_creator_email],
+            template_name="templates/task_proposal_approval.txt",
+            subject="Your Task Proposal has been Accepted",
+        )
+
+    else:
+        config = bottle.default_app().config
+        msg = {
+            "rejection_message": data["changes"],
+        }
+        mail.send(
+            config["mail"],
+            config,
+            [tp_creator_email],
+            template_name="templates/task_proposal_rejection.txt",
+            msg_dict=msg,
+            subject="Your Task Proposal has been Rejected",
+        )
 
     tpm.dbs.query(TaskProposal).filter(TaskProposal.id == tpid).delete()
     tpm.dbs.flush()
