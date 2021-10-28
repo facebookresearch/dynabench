@@ -80,27 +80,26 @@ m = ModelModel()
 unpublished_models = m.getByPublishStatus(publish_status=False)
 
 for model in unpublished_models:
-    if model.name == "bertstyleqa":  # TODO: remove this
-        if model.deployment_status == DeploymentStatusEnum.deployed:
-            print(f"Removing model: {model.name} at endpoint {model.endpoint_name}")
-            try:
-                # Take down the model endpoint
-                deployer = ModelDeployer(model)
+    if model.deployment_status == DeploymentStatusEnum.deployed:
+        print(f"Removing model: {model.name} at endpoint {model.endpoint_name}")
+        try:
+            # Take down the model endpoint
+            deployer = ModelDeployer(model)
 
-                # This should delete the:
-                # 1) model endpoint
-                # 2) sagemaker model
-                # 3) endpoint config
-                # 4) ecr repository (docker image)
-                delete_existing_endpoints(deployer)
+            # This should delete the:
+            # 1) model endpoint
+            # 2) sagemaker model
+            # 3) endpoint config
+            # 4) ecr repository (docker image)
+            delete_existing_endpoints(deployer)
 
-                # Update the model to have status `taken_down`
-                m.update(model.id, deployment_status=DeploymentStatusEnum.takendown)
+            # Update the model to have status `taken_down`
+            m.update(model.id, deployment_status=DeploymentStatusEnum.takendown)
 
-                # Note that we keep the model on s3, so that we can
-                # redeploy the model whenever we want
+            # Note that we keep the model on s3, so that we can
+            # redeploy the model whenever we want
 
-            except Exception as e:
-                print(f"Ran into exception when taking down model {model.name}")
-                print(traceback.format_exc())
-                print(e)
+        except Exception as e:
+            print(f"Ran into exception when taking down model {model.name}")
+            print(traceback.format_exc())
+            print(e)
