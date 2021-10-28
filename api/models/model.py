@@ -55,6 +55,7 @@ class Model(Base):
     source_url = db.Column(db.Text)
 
     is_published = db.Column(db.BOOLEAN, default=False)
+    is_anonymous = db.Column(db.BOOLEAN, default=False)
 
     # deployment
     endpoint_name = db.Column(db.Text)
@@ -110,6 +111,7 @@ class ModelModel(BaseModel):
             self.dbs.query(Model)
             .filter(Model.id == id)
             .filter(Model.is_published == True)  # noqa
+            .filter(Model.is_anonymous == False)  # noqa
             .one()
         )
 
@@ -119,7 +121,9 @@ class ModelModel(BaseModel):
     def getUserModelsByUid(self, uid, is_current_user=False, n=5, offset=0):
         query_res = self.dbs.query(Model).filter(Model.uid == uid)
         if not is_current_user:
-            query_res = query_res.filter(Model.is_published == True)  # noqa
+            query_res = query_res.filter(
+                db.and_(Model.is_published == True, Model.is_anonymous == False)
+            )  # noqa
         return query_res.limit(n).offset(offset * n), util.get_query_count(query_res)
 
     def getUserModelsByUidAndMid(self, uid, mid, is_current_user=False):
@@ -127,7 +131,9 @@ class ModelModel(BaseModel):
             self.dbs.query(Model).filter(Model.uid == uid).filter(Model.id == mid)
         )
         if not is_current_user:
-            return query_res.filter(Model.is_published == True).one()  # noqa
+            query_res = query_res.filter(
+                db.and_(Model.is_published == True, Model.is_anonymous == False)
+            )  # noqa
         return query_res.one()
 
     def getModelUserByMid(self, id):

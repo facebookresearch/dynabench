@@ -24,7 +24,11 @@ import Markdown from "react-markdown";
 import { Link } from "react-router-dom";
 import UserContext from "./UserContext";
 import "./ModelPage.css";
-import { DeploymentStatus, EvaluationStatus } from "./ModelStatus";
+import {
+  DeploymentStatus,
+  EvaluationStatus,
+  AnonymousStatus,
+} from "./ModelStatus";
 import { OverlayProvider, BadgeOverlay } from "./Overlay";
 import { useState } from "react";
 import FloresGrid from "../components/FloresComponents/FloresGrid";
@@ -360,7 +364,7 @@ ${latexTableContent}
     const { model, task, taskCode } = this.state;
     const isFlores = FLORES_TASK_CODES.includes(task.task_code);
     const isModelOwner =
-      parseInt(this.state.model.user_id) === parseInt(this.state.ctxUserId);
+      parseInt(this.state.model.uid) === parseInt(this.state.ctxUserId);
     const { leaderboard_scores } = this.state.model;
     const { non_leaderboard_scores } = this.state.model;
     let orderedLeaderboardScores = (leaderboard_scores || []).sort(
@@ -477,6 +481,16 @@ ${latexTableContent}
                     <Table hover responsive className="mb-0">
                       <thead />
                       <tbody>
+                        {isModelOwner && (
+                          <tr style={{ border: `none` }} class="border-bottom">
+                            <td>Owner Anonymity</td>
+                            <td>
+                              <AnonymousStatus
+                                anonymousStatus={model.is_anonymous}
+                              />
+                            </td>
+                          </tr>
+                        )}
                         <tr style={{ border: `none` }}>
                           <td>Deployment Status</td>
                           <td>
@@ -496,9 +510,22 @@ ${latexTableContent}
                         <tr style={{ border: `none` }}>
                           <td>Owner</td>
                           <td>
-                            <Link to={`/users/${model.user_id}`}>
-                              {model.username}
-                            </Link>
+                            {model.uid ? (
+                              <span>
+                                <Link to={`/users/${model.uid}`}>
+                                  {model.username}
+                                </Link>
+                                {model.is_anonymous ? (
+                                  <i>
+                                    {" "}
+                                    (will be displayed as <b>anonymous</b> to
+                                    other users)
+                                  </i>
+                                ) : null}
+                              </span>
+                            ) : (
+                              "anonymous"
+                            )}
                           </td>
                         </tr>
                         {!isFlores && (

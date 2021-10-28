@@ -82,7 +82,6 @@ const Settings = (props) => {
                           <Col sm="12">
                             <Form.Control
                               as="textarea"
-                              disabled={!props.admin_or_owner}
                               defaultValue={
                                 values.predictions_upload_instructions_md
                               }

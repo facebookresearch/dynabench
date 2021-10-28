@@ -224,12 +224,23 @@ const Datasets = (props) => {
                             className="py-3 my-0 border-bottom"
                           >
                             <Form.Label column>Name</Form.Label>
-                            <Col sm="8">
+                            <Col sm="6">
                               <Form.Control
                                 disabled
                                 plaintext
                                 defaultValue={dataset.name}
                               />
+                            </Col>
+                            <Col sm="2">
+                              <Button
+                                variant="danger"
+                                className="btn-block"
+                                onClick={() => {
+                                  props.handleDatasetDelete(values.id);
+                                }}
+                              >
+                                <i class="fas fa-trash-alt"></i>
+                              </Button>
                             </Col>
                           </Form.Group>
                           <Form.Group

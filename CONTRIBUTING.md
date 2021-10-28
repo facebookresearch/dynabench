@@ -28,7 +28,7 @@ After this pre-commit hooks will be run before every commit.
 But if for some reason you want to run black and isort separately follow this:
 
 ```
-pip install black==19.3b0 isort==4.3.21
+pip install black==21.9b0 isort==4.3.21
 black ./(mmf|tests|tools)/**/*.py
 isort -rc (mmf|tests|tools)
 ```

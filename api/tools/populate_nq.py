@@ -2,13 +2,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import json
 import os
 import secrets
 import sys
 
 import pandas as pd
 
+import ujson
 from models.context import Context
 from models.round import Round, RoundModel
 from models.task import TaskModel
@@ -30,7 +30,7 @@ for n in contexts.keys():
         this_contexts2.append(
             {
                 "context": c,
-                "metadata_json": json.dumps(
+                "metadata_json": ujson.dumps(
                     {
                         "id": i,
                         "title": title,

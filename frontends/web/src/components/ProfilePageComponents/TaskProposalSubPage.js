@@ -86,6 +86,10 @@ const TaskProposalForm = (props) => {
                           onChange={handleChange}
                           defaultValue={values.task_code}
                         />
+                        <Form.Text id="taskCodeHelpBlock" muted>
+                          This is a short string that will be the url for your
+                          task. e.g "nli" for "Natural Language Inference"
+                        </Form.Text>
                       </Col>
                     </Form.Group>
                     <Form.Group

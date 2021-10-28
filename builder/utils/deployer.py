@@ -198,7 +198,7 @@ class ModelDeployer:
             )
 
         # copy dockerfiles into current folder
-        docker_dir = os.path.join(sys.path[0], "dockerfiles")
+        docker_dir = os.path.join(self.owd, "dockerfiles")
         for f in os.listdir(docker_dir):
             shutil.copyfile(os.path.join(docker_dir, f), os.path.join(self.root_dir, f))
 
@@ -219,6 +219,7 @@ class ModelDeployer:
             requirements=setup_config["requirements"],
             setup=setup_config["setup"],
             my_secret=self.model.secret,
+            task_code=self.model.task.task_code,
         )
         with subprocess.Popen(
             shlex.split(docker_build_command),
