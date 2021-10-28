@@ -165,7 +165,7 @@ class SubmitInterface extends React.Component {
     return (
       <Container className="mb-5 pb-5">
         <h1 className="my-4 pt-3 text-uppercase text-center">
-          {this.state.submission_type
+          {this.state.submission_type === "predictions"
             ? "Submit Model Predictions"
             : "Submit Train Files"}
         </h1>
@@ -195,7 +195,7 @@ class SubmitInterface extends React.Component {
                     <form className="px-4" onSubmit={handleSubmit}>
                       <Container>
                         <Form.Group as={Row} className="py-3 my-0">
-                          {this.state.submission_type ? (
+                          {this.state.submission_type === "predictions" ? (
                             <p>
                               Upload predicted answers as a <em>.jsonl</em>{" "}
                               file, where each line has a field for each of the
@@ -234,7 +234,7 @@ class SubmitInterface extends React.Component {
                               <Markdown>
                                 {
                                   this.state.task
-                                    .train_files_upload_instructions_md
+                                    .train_file_upload_instructions_md
                                 }
                               </Markdown>
                             </p>

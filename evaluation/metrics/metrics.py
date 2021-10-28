@@ -25,24 +25,77 @@ def get_dataperf_accuracy(predictions: list, targets: list):
     """
     Here, p can be a list of acceptable multilabel lists, instead of just one multilabel
     list. This is helpful for stochastic models, where we also want to report a
-    variance over the model outputs.
+    standard deviation over the model outputs.
     """
-    if len(predictions) > 0 and isinstance(predictions[0], list):
-        iterations = len(predictions[0])
-        accuracies = []
-        for iteration in range(iterations):
-            acc = sum(
-                [
-                    p == t
-                    for p, t in zip([pred[iteration] for pred in predictions], targets)
-                ]
-            ) / len(targets)
-            accuracies.append(acc)
-        return accuracies, np.std(accuracies)
 
-    else:
-        acc = sum([p == t for p, t in zip(predictions, targets)]) / len(targets)
-        return round(acc * 100, 2)
+    if not isinstance(predictions[0], list):
+        predictions = [[pred] for pred in predictions]
+
+    tag_f1_scores = {}
+    tag_results = {}
+    for preds in predictions:
+        for pred in preds:
+            for tag in pred:
+                tag_results[tag] = {"t": [], "p": []}
+                tag_f1_scores[tag] = []
+    for tags in targets:
+        for tag in tags:
+            tag_results[tag] = {"t": [], "p": []}
+            tag_f1_scores[tag] = []
+
+    iterations = len(predictions[0])
+    mean_f1s = []
+    for iteration in range(iterations):
+        for tag in tag_results:
+            tag_results[tag] = {"t": [], "p": []}
+        for p, t in zip([pred[iteration] for pred in predictions], targets):
+            for tag in tag_results.keys():
+                if tag in p:
+                    tag_results[tag]["p"].append(1)
+                else:
+                    tag_results[tag]["p"].append(0)
+
+                if tag in t:
+                    tag_results[tag]["t"].append(1)
+                else:
+                    tag_results[tag]["t"].append(0)
+        f1_sum = 0
+        for tag in tag_results.keys():
+            f1 = f1_score(tag_results[tag]["t"], tag_results[tag]["p"], average="macro")
+            f1_sum += f1
+            tag_f1_scores[tag].append(f1)
+
+        mean_f1s.append(f1_sum / len(tag_results.keys()))
+
+    perf_by_tag = []
+    for tag, f1s in tag_f1_scores.items():
+        mean = float(np.mean(f1s)) * 100
+        std = float(np.std(f1s * 100))
+        perf_by_tag.append(
+            {
+                "tag": tag,
+                "pretty_perf": str(mean) + " %",
+                "perf": mean,
+                "perf_std": std if len(predictions[0]) > 1 else None,
+                "perf_dict": {"dataperf_accuracy": mean},
+            }
+        )
+    mean_mean_f1s = float(np.mean(mean_f1s)) * 100
+    return {
+        "dataperf_accuracy": mean_mean_f1s,
+        "perf": mean_mean_f1s,
+        "perf_std": float(np.std(mean_f1s * 100)) if len(predictions[0]) > 1 else None,
+        "perf_by_tag": perf_by_tag,
+    }
+
+
+def get_dataperf_accuracy_meta(task=None):
+    return {
+        "unit": "%",
+        "pretty_name": "Dataperf Accuracy",
+        "utility_direction": 1,
+        "offset": 0,
+    }
 
 
 def get_accuracy(predictions: list, targets: list):

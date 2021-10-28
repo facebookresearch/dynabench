@@ -14,13 +14,15 @@ from metrics.metrics_dicts import (
 
 def get_eval_metrics(task, predictions: list, targets: list) -> tuple:
     perf_metric_type = json.loads(task.annotation_config_json)["perf_metric"]["type"]
-    eval_metrics = [perf_metric_type]  # NOTE:
+    # NOTE:
     # right now, the returned eval metric scores are just the perf metric, but we
     # could add a feature that allows for the display of multiple eval metrics
-    eval_metrics_scores = {
-        key: eval_metrics_dict[key](predictions, targets) for key in eval_metrics
-    }
-    return eval_metrics_scores[perf_metric_type], eval_metrics_scores
+    metric_result = eval_metrics_dict[perf_metric_type](predictions, targets)
+    if isinstance(metric_result, dict):
+        score_dict = metric_result
+    else:
+        score_dict[perf_metric_type] = metric_result
+    return score_dict[perf_metric_type], score_dict
 
 
 def get_job_metrics(job, dataset) -> dict:

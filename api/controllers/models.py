@@ -105,13 +105,23 @@ def do_upload_via_train_files(credentials, tid, model_name):
             ]
             for io in parsed_train_file:
                 if (
-                    not task.verify_annotation(io, mode=AnnotationVerifierMode.dataset)
+                    not task.verify_annotation(
+                        io, mode=AnnotationVerifierMode.dataset_upload
+                    )
                     or "uid" not in io
                 ):
                     bottle.abort(400, "Invalid train file")
 
-            s3_uri = f"s3://{task.s3_bucket}/" + get_data_s3_path(task.task_code, name)
-            parsed_test_file = parse_s3_outfile(s3_uri)
+            s3_uri = f"s3://{task.s3_bucket}/" + get_data_s3_path(
+                task.task_code, name + ".jsonl"
+            )
+            s3_client = boto3.client(
+                "s3",
+                aws_access_key_id=config["aws_access_key_id"],
+                aws_secret_access_key=config["aws_secret_access_key"],
+                region_name=task.aws_region,
+            )
+            parsed_test_file = parse_s3_outfile(s3_client, s3_uri)
             parsed_prediction_file = train_file_metric(
                 parsed_train_file, parsed_test_file, train_file_metric_constructor_args
             )
@@ -119,7 +129,7 @@ def do_upload_via_train_files(credentials, tid, model_name):
 
         except Exception as ex:
             logger.exception(ex)
-            bottle.abort(400, "Invalid prediction file")
+            bottle.abort(400, "Invalid train file")
 
     endpoint_name = f"ts{int(time.time())}-{model_name}"
 
@@ -351,7 +361,8 @@ def get_model_detail(credentials, mid):
             did_to_dataset_access_type[dataset.id] = dataset.access_type
             did_to_dataset_longdesc[dataset.id] = dataset.longdesc
             did_to_dataset_source_url[dataset.id] = dataset.source_url
-        fields = ["accuracy", "round_id", "did", "metadata_json"]
+        fields = ["accuracy", "perf_std", "round_id", "did", "metadata_json"]
+
         s_dicts = [
             dict(
                 zip(fields, d),

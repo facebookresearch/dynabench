@@ -11,11 +11,57 @@ import {
   Dropdown,
   InputGroup,
 } from "react-bootstrap";
+import Select from "react-select";
 import { PieRechart } from "../../components/Rechart.js";
 import { useState } from "react";
 import { TokenAnnotator } from "react-text-annotate";
 import AtomicImage from "./AtomicImage";
 import "./AnnotationComponent.css";
+
+const Multilabel = ({
+  displayName,
+  className,
+  create,
+  data,
+  setData,
+  name,
+  constructorArgs,
+  showName = true,
+  inputReminder = false,
+}) => {
+  const labels = constructorArgs.labels;
+
+  return (
+    <>
+      {!create ? (
+        <>
+          {showName && (
+            <h6 className={"spaced-header " + className}>
+              {displayName ? displayName : name}:
+            </h6>
+          )}
+          {data[name].join(", ")}
+        </>
+      ) : (
+        <div
+          className={inputReminder ? "p-2 border rounded border-danger" : ""}
+        >
+          <Select
+            isMulti
+            name="multilabel"
+            className="basic-multi-select"
+            classNamePrefix="select"
+            options={labels.map((obj) => ({ value: obj, label: obj }))}
+            onChange={(e) => {
+              data[name] = e.map((obj) => obj.value);
+              setData(data);
+            }}
+          />
+        </div>
+      )}
+    </>
+  );
+};
 
 const Multiclass = ({
   displayName,
@@ -308,6 +354,20 @@ const AnnotationComponent = ({
     case "string":
       return (
         <String
+          displayName={displayName}
+          className={className}
+          create={create}
+          name={name}
+          data={data}
+          setData={setData}
+          constructorArgs={constructorArgs}
+          showName={showName}
+          inputReminder={inputReminder}
+        />
+      );
+    case "multilabel":
+      return (
+        <Multilabel
           displayName={displayName}
           className={className}
           create={create}

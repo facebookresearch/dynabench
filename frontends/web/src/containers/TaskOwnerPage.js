@@ -257,6 +257,7 @@ class TaskOwnerPage extends React.Component {
       "validate_non_fooling",
       "instructions_md",
       "predictions_upload_instructions_md",
+      "train_file_upload_instructions_md",
       "hidden",
       "submitable",
       "create_endpoint",

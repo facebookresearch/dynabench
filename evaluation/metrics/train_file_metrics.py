@@ -2,14 +2,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import pickle
-
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.svm import LinearSVC
 
 
 def dataperf(train, test, constructor_args):
-    dataperf_embeddings = pickle.load("dataperf_embeddings.pkl")
+    from .dataperf_embeddings import dataperf_embeddings
+
     labels = set()
     for obj in train + test:
         labels = labels.union(set(obj[constructor_args["reference_name"]]))
@@ -38,11 +37,13 @@ def dataperf(train, test, constructor_args):
     for i in range(constructor_args["iterations"]):
         model = MultiOutputClassifier(LinearSVC(random_state=i)).fit(X, y)
         preds = model.predict(test_X)
-        for preds_index in preds:
+        for preds_index in range(len(preds)):
             pred = preds[preds_index]
             pred_formatted = []
             for pred_index in range(len(pred)):
                 if pred[pred_index] == 1:
                     pred_formatted.append(labels[pred_index])
-            preds_formatted[constructor_args["reference_name"]].append(pred_formatted)
+            preds_formatted[preds_index][constructor_args["reference_name"]].append(
+                pred_formatted
+            )
     return preds_formatted

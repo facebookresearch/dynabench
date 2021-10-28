@@ -267,10 +267,8 @@ class BaseDataset:
                 perf, perf_dict = get_eval_metrics(
                     self.task, predictions, target_labels
                 )
-                if isinstance(perf, tuple):
-                    perf, std = perf
                 score_obj["perf"] = perf
-                score_obj["perf_std"] = perf
+                score_obj["perf_std"] = perf_dict.get("perf_std", None)
                 score_obj["pretty_perf"] = str(perf) + " %"
                 score_obj["metadata_json"] = perf_dict
 
@@ -288,12 +286,14 @@ class BaseDataset:
                         k: get_eval_metrics(self.task, *list(zip(*examples)))
                         for k, examples in examples_by_tag.items()
                     }
-                    score_obj["metadata_json"]["perf_by_tag"] = [
+                    score_obj["metadata_json"]["perf_by_tag"] = score_obj[
+                        "metadata_json"
+                    ].get("perf_by_tag", []) + [
                         {
                             "tag": tag,
                             "pretty_perf": str(perf) + " %",
                             "perf": perf,
-                            "perf_std": std,
+                            "perf_std": perf_dict.get("perf_std", None),
                             "perf_dict": perf_dict,
                         }
                         for tag, (perf, perf_dict) in perf_by_tag_tuple_dict.items()
