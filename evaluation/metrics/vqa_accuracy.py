@@ -202,10 +202,17 @@ class VQAEval(ABC):
         resAns = resAns.strip()
         resAns = self.processPunctuation(resAns)
         resAns = self.processDigitArticle(resAns)
+        processed_gt = []
+        for ans in gt:
+            ans = self.processPunctuation(ans)
+            ans = self.processDigitArticle(ans)
+            processed_gt.append(ans)
         gtAcc = []
         #######################################################
-        for gtAnsDatum in gt:
-            otherGTAns = [item for item in gt if item != gtAnsDatum]
+        for idx, gtAnsDatum in enumerate(processed_gt):
+            otherGTAns = [
+                item for item_idx, item in enumerate(processed_gt) if item_idx != idx
+            ]
             matchingAns = [item for item in otherGTAns if item == resAns]
             acc = min(1, float(len(matchingAns)) / 3)
             gtAcc.append(acc)

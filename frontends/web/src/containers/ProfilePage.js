@@ -536,10 +536,11 @@ class ProfilePage extends React.Component {
                         <Formik
                           initialValues={{
                             username: this.state.user.username,
-                            realname: this.state.user.realname,
-                            affiliation: this.state.user.affiliation,
+                            realname: this.state.user.realname || "",
+                            affiliation: this.state.user.affiliation || "",
                           }}
                           onSubmit={this.handleSubmit}
+                          enableReinitialize
                         >
                           {({
                             values,
@@ -548,6 +549,7 @@ class ProfilePage extends React.Component {
                             handleSubmit,
                             isSubmitting,
                             dirty,
+                            initialValues,
                           }) => (
                             <>
                               <form className="px-4" onSubmit={handleSubmit}>
@@ -631,7 +633,7 @@ class ProfilePage extends React.Component {
                                   </Form.Group>
                                   <Row className="justify-content-md-center">
                                     <Col md={5} sm={12}>
-                                      {dirty ? (
+                                      {dirty && values !== initialValues && (
                                         <Button
                                           type="submit"
                                           variant="primary"
@@ -640,7 +642,7 @@ class ProfilePage extends React.Component {
                                         >
                                           Save
                                         </Button>
-                                      ) : null}
+                                      )}
                                     </Col>
                                   </Row>
                                 </Container>

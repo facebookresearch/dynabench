@@ -44,6 +44,13 @@ export default class ApiService {
     });
   }
 
+  convertToModelIO(tid, data) {
+    return this.fetch(`${this.domain}/tasks/${tid}/convert_to_model_io`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
   register(email, password, username) {
     return this.fetch(`${this.domain}/users`, {
       method: "POST",
@@ -157,6 +164,7 @@ export default class ApiService {
     license,
     source_url,
     model_card,
+    is_anonymous,
   }) {
     return this.fetch(`${this.domain}/models/${modelId}/update`, {
       method: "PUT",
@@ -168,6 +176,7 @@ export default class ApiService {
         license,
         source_url,
         model_card,
+        is_anonymous,
       }),
     });
   }
@@ -534,9 +543,10 @@ export default class ApiService {
     });
   }
 
-  processTaskProposal(tpid, accept) {
+  processTaskProposal(tpid, accept, changes) {
     let obj = {
       accept: accept,
+      changes: changes || "",
     };
     return this.fetch(`${this.domain}/tasks/process_proposal/${tpid}`, {
       method: "PUT",
@@ -635,6 +645,12 @@ export default class ApiService {
       headers: {
         Authorization: token ? "Bearer " + token : "None",
       },
+    });
+  }
+
+  deleteDataset(did) {
+    return this.fetch(`${this.domain}/datasets/delete/${did}`, {
+      method: "DELETE",
     });
   }
 

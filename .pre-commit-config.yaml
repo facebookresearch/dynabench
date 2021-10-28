@@ -50,7 +50,7 @@ repos:
         exclude: ^website
 
 -   repo: https://github.com/ambv/black
-    rev: 19.3b0
+    rev: 21.9b0
     hooks:
     - id: black
       language_version: python3

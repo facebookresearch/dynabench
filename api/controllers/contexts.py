@@ -2,13 +2,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import json
 from urllib.parse import parse_qs
 
 import bottle
 
 import common.auth as _auth
 import common.helpers as util
+import ujson
 from common.logging import logger
 from models.context import Context, ContextModel
 from models.round import RoundModel
@@ -96,7 +96,8 @@ def do_upload(credentials, tid, rid):
 
     try:
         parsed_upload_data = [
-            json.loads(line) for line in upload.file.read().decode("utf-8").splitlines()
+            ujson.loads(line)
+            for line in upload.file.read().decode("utf-8").splitlines()
         ]
         for context_info in parsed_upload_data:
             if (
@@ -118,8 +119,8 @@ def do_upload(credentials, tid, rid):
     for context_info in parsed_upload_data:
         c = Context(
             r_realid=r_realid,
-            context_json=json.dumps(context_info["context"]),
-            metadata_json=json.dumps(context_info["metadata"]),
+            context_json=ujson.dumps(context_info["context"]),
+            metadata_json=ujson.dumps(context_info["metadata"]),
             tag=context_info["tag"],
         )
         contexts_to_add.append(c)

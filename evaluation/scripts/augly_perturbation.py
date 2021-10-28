@@ -59,6 +59,17 @@ class AuglyPerturbation:
 
         return name_mapping
 
+    def get_perturbations(self) -> List[Callable]:
+        pert_cfg = self.get_perturbation_config()
+        perturbations = {}
+        for perturbation in pert_cfg:
+            aug_kwargs = perturbation.copy()
+            class_name = aug_kwargs.pop("class")
+            transform_name = aug_kwargs.pop("name", None) or class_name
+            transform = getattr(textaugs, class_name)(**aug_kwargs)
+            perturbations[transform_name] = transform
+        return perturbations
+
     def get_perturbations(self) -> Dict[str, List[Callable]]:
         fdir = "./data/"
 

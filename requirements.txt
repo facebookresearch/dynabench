@@ -19,3 +19,5 @@ sklearn
 git+https://github.com/facebookresearch/dynalab.git
 sentencepiece
 spacy
+textflint
+ujson>=4.2.0

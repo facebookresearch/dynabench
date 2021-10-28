@@ -2,11 +2,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import json
-
 import bottle
 
 import common.auth as _auth
+import ujson
 from common.logging import logger
 
 
@@ -41,7 +40,7 @@ def invoke_endpoint(credentials, endpoint):
         response = sagemaker_client.invoke_endpoint(
             EndpointName=endpoint,
             ContentType="application/json",
-            Body=json.dumps(payload),
+            Body=ujson.dumps(payload),
         )
     except Exception as error_message:
         logger.info("Error in prediction: %s" % (error_message))
