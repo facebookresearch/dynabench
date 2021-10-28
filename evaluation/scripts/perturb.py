@@ -5,7 +5,7 @@
 # example usage:
 # python perturb.py
 # --s3-uri s3://evaluation-us-west-1-096166425824/datasets/nli/zm-mnli-dev-matched.jsonl
-# --perturb-prefix fairness --perturb_fields context hypothesis
+# --perturb_prefix fairness --perturb_source augly --perturb_fields context hypothesis
 
 import argparse
 import json
@@ -15,9 +15,9 @@ import sys
 from typing import Any, Dict, List, Optional, Tuple
 
 import boto3
-from dynalab_cli.utils import get_tasks
 
 from augly_perturbation import AuglyPerturbation
+from textflint_utils.utils import run_textflint
 
 
 sys.path.append("..")  # noqa
@@ -27,6 +27,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("perturb")
 
 perturbations = ["fairness", "robustness"]
+perturbation_sources = ["augly", "textflint"]
 
 
 def parse_args() -> Any:
@@ -40,7 +41,7 @@ def parse_args() -> Any:
         ),
     )
     parser.add_argument(
-        "--local-path",
+        "--local_path",
         type=str,
         default="",
         help=(
@@ -49,10 +50,17 @@ def parse_args() -> Any:
         ),
     )
     parser.add_argument(
-        "--perturb-prefix",
+        "--perturb_prefix",
         type=str,
         choices=perturbations,
         help="The type of perturbations to apply",
+    )
+    parser.add_argument(
+        "--perturb_source",
+        type=str,
+        default="augly",
+        choices=perturbation_sources,
+        help="The source of perturbations to apply",
     )
     parser.add_argument(
         "--seed",
@@ -83,6 +91,12 @@ def parse_args() -> Any:
             "The fields in the examples to be ignored when perturbing; "
             "e.g. for the 'qa' task, the 'answer' field should be ignored"
         ),
+    )
+    parser.add_argument(
+        "--task",
+        type=str,
+        default="",
+        help="The task name; only must be provided if perturb_source is 'textflint'",
     )
     args = parser.parse_args()
 
@@ -141,19 +155,23 @@ def load_examples(path: str) -> List[Dict[str, Any]]:
 def perturb(
     path: str,
     perturb_prefix: str,
+    perturb_source: str,
     seed: Optional[int],
     num_threads: int,
     perturb_fields: List[str],
     ignore_words_fields: List[str],
+    task: str,
 ) -> str:
     examples = load_examples(path)
     num_examples = len(examples)
     logger.info(f"Loaded {num_examples} to perturb")
-
-    pert = AuglyPerturbation(
-        perturb_prefix, seed, num_threads, perturb_fields, ignore_words_fields
-    )
-    perturbed_examples = pert.perturb(examples)
+    if perturb_source == "augly" or perturb_prefix == "fairness":
+        pert = AuglyPerturbation(
+            perturb_prefix, seed, num_threads, perturb_fields, ignore_words_fields
+        )
+        perturbed_examples = pert.perturb(examples)
+    else:
+        perturbed_examples = run_textflint(examples, task)
 
     outpath = os.path.join(
         os.path.dirname(local_path), f"{perturb_prefix}-{os.path.basename(local_path)}"
@@ -187,10 +205,12 @@ if __name__ == "__main__":
     outpath = perturb(
         local_path,
         args.perturb_prefix,
+        args.perturb_source,
         seed,
         args.num_threads,
         args.perturb_fields,
         args.ignore_words_fields,
+        args.task,
     )
     print_instructions(args, outpath, base_dataset_name)
     ops = input(f"Remove locally downloaded file at {local_path}? [Y/n] ")
