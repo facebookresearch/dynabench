@@ -19,3 +19,4 @@ sklearn
 git+https://github.com/facebookresearch/dynalab.git
 sentencepiece
 spacy
+
