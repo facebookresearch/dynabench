@@ -10,10 +10,10 @@ import time
 import boto3
 import bottle
 import sqlalchemy as db
+import ujson
 
 import common.auth as _auth
 import common.helpers as util
-import ujson
 from common.config import config
 from common.logging import logger
 from models.badge import BadgeModel
