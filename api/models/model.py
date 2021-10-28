@@ -20,7 +20,7 @@ class DeploymentStatusEnum(enum.Enum):
     unknown = "unknown"
     takendown = "takendown"
     predictions_upload = "predictions_upload"
-    takendown_nonactive = "takendownnonactive"
+    takendownnonactive = "takendownnonactive"
 
 
 class EvaluationStatusEnum(enum.Enum):

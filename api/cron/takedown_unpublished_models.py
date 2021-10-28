@@ -25,12 +25,12 @@ def main():
             try:
                 deployer = ModelDeployer(model)
                 deployer.delete_existing_endpoints(
-                    sort_order="Descending", max_results=1
+                    sort_order="Descending", max_results=10
                 )
 
                 # Update the model to have status `taken_down`
                 m.update(
-                    model.id, deployment_status=DeploymentStatusEnum.takendown_nonactive
+                    model.id, deployment_status=DeploymentStatusEnum.takendownnonactive
                 )
 
                 # Note that we keep the model on s3, so that we can
