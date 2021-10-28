@@ -151,6 +151,9 @@ class ModelModel(BaseModel):
             .all()
         )
 
+    def getByPublishStatus(self, publish_status):
+        return self.dbs.query(Model).filter(Model.is_published == publish_status).all()
+
     def getCountByUidTidAndHrDiff(self, uid, tid=-1, hr_diff=24):
         """
         Returns submissions of all time if hr_diff < 0
