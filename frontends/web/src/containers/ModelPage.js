@@ -142,6 +142,7 @@ class ModelPage extends React.Component {
       taskCode: null,
       task: {},
       isLoading: false,
+      modelDeployed: false,
     };
   }
 
@@ -209,8 +210,23 @@ class ModelPage extends React.Component {
             this.state.model.endpoint_name,
           name: this.state.model.name,
         },
+        deployment_status: this.state.model.deployment_status,
       },
     });
+  };
+
+  handleDeployModel = () => {
+    console.log("in deploy model");
+    return this.context.api.deployModel(this.state.modelId).then(
+      (_) => {
+        this.setState({
+          modelDeployed: true,
+        });
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
   };
 
   togglePublish = () => {
@@ -373,6 +389,7 @@ ${latexTableContent}
     let orderedNonLeaderboardScores = (non_leaderboard_scores || []).sort(
       (a, b) => a.round_id - b.round_id
     );
+
     return (
       <OverlayProvider initiallyHide={true}>
         <BadgeOverlay
@@ -405,6 +422,18 @@ ${latexTableContent}
                         onClick={() => this.handleInteract()}
                       >
                         <i className="fas fa-pen"></i> Interact
+                      </Button>
+                    ) : (isModelOwner || model.is_published) &&
+                      model.deployment_status === "takendownnonactive" ? (
+                      <Button
+                        variant="outline-primary mr-2"
+                        onClick={() => this.handleDeployModel()}
+                      >
+                        <i className="fas fa-upload"></i> Deploy Model
+                      </Button>
+                    ) : this.state.modelDeployed ? (
+                      <Button variant="outline-primary mr-2" disabled={true}>
+                        <i className="fas fa-upload"></i> Model Deployed!
                       </Button>
                     ) : (
                       ""

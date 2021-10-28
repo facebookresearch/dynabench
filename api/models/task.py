@@ -8,9 +8,9 @@ import sys
 import enum
 import requests
 import sqlalchemy as db
+import ujson
 from transformers.data.metrics.squad_metrics import compute_f1
 
-import ujson
 from common.logging import logger
 
 from .base import Base, BaseModel
@@ -594,6 +594,12 @@ class Task(Base):
 class TaskModel(BaseModel):
     def __init__(self):
         super().__init__(Task)
+
+    def getBtTaskId(self, tid):
+        try:
+            return self.dbs.query(Task).filter(Task.id == tid).one()
+        except db.orm.exc.NoResultFound:
+            return False
 
     def getByTaskCode(self, task_code):
         try:

@@ -62,7 +62,7 @@ if __name__ == "__main__":
                 m = ModelModel()
                 model = m.getUnpublishedModelByMid(model_id)
 
-                if model.deployment_status == DeploymentStatusEnum.uploaded:
+                if model.deployment_status == DeploymentStatusEnum.uploaded or model.deployment_status == DeploymentStatusEnum.takendownnonactive:
                     # deploy model
                     logger.info(f"Start to deploy model {model_id}")
                     m.update(

@@ -187,6 +187,12 @@ export default class ApiService {
     });
   }
 
+  deployModel(modelId) {
+    return this.fetch(`${this.domain}/models/${modelId}/deploy`, {
+      method: "GET",
+    });
+  }
+
   getTrends(taskId) {
     return this.fetch(`${this.domain}/tasks/${taskId}/trends`, {
       method: "GET",
