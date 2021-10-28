@@ -6,6 +6,7 @@ import hashlib
 import tempfile
 
 import sqlalchemy as db
+import ujson
 from dynalab.tasks.task_io import TaskIO
 from sqlalchemy import case
 
