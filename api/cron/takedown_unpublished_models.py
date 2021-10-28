@@ -3,7 +3,9 @@
 # LICENSE file in the root directory of this source tree.
 
 # This script will take down all unpublished models from sagemaker
-# These models can be redeployed by sending a message to the build server
+# These models can be redeployed by sending a message to the build
+# server, for example:
+# {"model_id": MODEL_ID, "s3_uri": s3_PATH_TO_SAVED_MODEL}
 import sys
 import traceback
 
