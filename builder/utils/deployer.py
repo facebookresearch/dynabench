@@ -112,12 +112,12 @@ class ModelDeployer:
 
         return env
 
-    def delete_existing_endpoints(self):
+    def delete_existing_endpoints(self, sort_order="Ascending", max_results=100):
         # remove endpoint
         endpoint_response = self.env["sagemaker_client"].list_endpoints(
             SortBy="Name",
-            SortOrder="Ascending",
-            MaxResults=100,
+            SortOrder=sort_order,
+            MaxResults=max_results,
             NameContains=self.endpoint_name,
         )
         endpoints = endpoint_response["Endpoints"]
@@ -131,8 +131,8 @@ class ModelDeployer:
         # remove sagemaker model
         model_response = self.env["sagemaker_client"].list_models(
             SortBy="Name",
-            SortOrder="Ascending",
-            MaxResults=100,
+            SortOrder=sort_order,
+            MaxResults=max_results,
             NameContains=self.endpoint_name,
         )
         sm_models = model_response["Models"]
@@ -144,8 +144,8 @@ class ModelDeployer:
         # remove config
         config_response = self.env["sagemaker_client"].list_endpoint_configs(
             SortBy="Name",
-            SortOrder="Ascending",
-            MaxResults=100,
+            SortOrder=sort_order,
+            MaxResults=max_results,
             NameContains=self.endpoint_name,
         )
         endpoint_configs = config_response["EndpointConfigs"]
