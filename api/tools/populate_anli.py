@@ -7,7 +7,7 @@ import os
 import secrets
 import sys
 
-import ujson
+import common.helpers as util
 from models.base import dbs
 from models.context import Context
 from models.round import Round, RoundModel
@@ -26,7 +26,7 @@ for n in contexts.keys():
         fpath = os.path.join("anli_v0.1", "R" + n, fname)
         print(fpath)
         contexts[n].extend(
-            [ujson.loads(ll)["context"] for ll in codecs.open(fpath, "r", "utf8")]
+            [util.json_decode(ll)["context"] for ll in codecs.open(fpath, "r", "utf8")]
         )
     contexts[n] = list(set(contexts[n]))
 print({k: len(contexts[k]) for k in contexts.keys()})

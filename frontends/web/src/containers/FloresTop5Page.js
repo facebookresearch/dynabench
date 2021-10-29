@@ -73,6 +73,7 @@ const FloresTop5Page = (props) => {
           href={`/flores/${task.name}`}
           target="_blank"
           style={{ width: "100%", textDecorationLine: "none" }}
+          rel="noreferrer"
         >
           <FloresModelLeaderBoard
             {...props}

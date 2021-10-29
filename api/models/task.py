@@ -10,7 +10,7 @@ import requests
 import sqlalchemy as db
 from transformers.data.metrics.squad_metrics import compute_f1
 
-import ujson
+import common.helpers as util
 from common.logging import logger
 
 from .base import Base, BaseModel
@@ -534,7 +534,7 @@ class Task(Base):
     def verify_annotation(self, data, mode=AnnotationVerifierMode.default):
         name_to_constructor_args = {}
         name_to_type = {}
-        annotation_config = ujson.loads(self.annotation_config_json)
+        annotation_config = util.json_decode(self.annotation_config_json)
         annotation_config_objs = (
             annotation_config["context"]
             + annotation_config["output"]
@@ -569,7 +569,7 @@ class Task(Base):
 
     def convert_to_model_io(self, data):
         name_to_type = {}
-        annotation_config = ujson.loads(self.annotation_config_json)
+        annotation_config = util.json_decode(self.annotation_config_json)
         annotation_config_objs = (
             annotation_config["context"]
             + annotation_config["output"]
@@ -581,7 +581,7 @@ class Task(Base):
         for annotation_config_obj in annotation_config_objs:
             name_to_type[annotation_config_obj["name"]] = annotation_config_obj["type"]
 
-        converted_data = ujson.loads(ujson.dumps(data))
+        converted_data = util.json_decode(util.json_encode(data))
         for key, value in data.items():
             if key in name_to_type:
                 converted_data[key] = annotation_components[
@@ -673,7 +673,7 @@ class TaskModel(BaseModel):
             r_dict = r.to_dict()
             t_dict["ordered_scoring_datasets"] = scoring_dataset_list
             t_dict["ordered_datasets"] = dataset_list
-            annotation_config = ujson.loads(t_dict["annotation_config_json"])
+            annotation_config = util.json_decode(t_dict["annotation_config_json"])
             # TODO: make the frontend use perf_metric instead of perf_metric_field_name?
             if "perf_metric" in annotation_config:
                 t_dict["perf_metric_field_name"] = annotation_config["perf_metric"][

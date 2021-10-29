@@ -75,6 +75,7 @@ const TaskModelLeaderboardPage = (props) => {
           href={`/tasks/${taskCode}`}
           target="_blank"
           style={{ width: "100%", textDecorationLine: "none" }}
+          rel="noreferrer"
         >
           <TaskModelDefaultLeaderboard
             task={task}
