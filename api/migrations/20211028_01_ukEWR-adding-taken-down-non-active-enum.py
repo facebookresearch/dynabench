@@ -24,9 +24,10 @@ steps = [
         DEFAULT "unknown"
         """,
         """
-        ALTER TABLE models MODIFY deployment_status
+         ALTER TABLE models MODIFY deployment_status
         ENUM('uploaded', 'processing', 'deployed',
-        'created', 'failed', 'unknown', "takendown")
+        'created', 'failed', 'unknown', "takendown",
+        "predictions_upload")
         DEFAULT "unknown"
         """,
     )

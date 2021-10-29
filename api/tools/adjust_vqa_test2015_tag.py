@@ -4,13 +4,15 @@
 
 # flake8: noqa
 
-import ujson  # isort:skip
-import os  # isort:skip
-import sys  # isort:skip
 import sqlalchemy as db
 from sqlalchemy import JSON
 
 from common.config import config
+
+
+import ujson  # isort:skip
+import os  # isort:skip
+import sys  # isort:skip
 
 
 sys.path.append("..")  # isort:skip

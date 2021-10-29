@@ -5,7 +5,7 @@
 import secrets
 import sys
 
-import ujson
+import common.helpers as util
 from models.base import dbs
 from models.context import Context
 from models.round import Round, RoundModel
@@ -20,7 +20,7 @@ def load_jsonl(filename, debug_num=None):
     with open(filename, encoding="utf-8", mode="r") as in_f:
         print("Load Jsonl:", filename)
         for line in in_f:
-            item = ujson.loads(line.strip())
+            item = util.json_decode(line.strip())
             d_list.append(item)
             if debug_num is not None and 0 < debug_num == len(d_list):
                 break
