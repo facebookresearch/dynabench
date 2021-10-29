@@ -23,8 +23,7 @@ class PublishInterface extends React.Component {
   componentDidMount() {
     if (!this.context.api.loggedIn()) {
       this.props.history.push(
-        "/login?&src=" +
-          encodeURIComponent(`/models/${this.state.modelId}`)
+        "/login?&src=" + encodeURIComponent(`/models/${this.state.modelId}`)
       );
     }
     const propState = this.props.location.state;
