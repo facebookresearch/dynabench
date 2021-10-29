@@ -40,7 +40,7 @@ from traceback import format_exc, print_exc
 from types import FunctionType
 from unicodedata import normalize
 
-from common.helpers import json_decode as json_lds, json_encode as json_dumps
+from ujson import dumps as json_dumps, loads as json_lds
 
 
 __author__ = "Marcel Hellkamp"
