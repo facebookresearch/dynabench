@@ -8,10 +8,10 @@ from urllib.parse import urlparse
 
 import bottle
 import sqlalchemy as db
+import ujson
 from sqlalchemy.orm import lazyload
 
 import common.auth as _auth
-import ujson
 from common.logging import logger
 from models.example import ExampleModel
 from models.round import RoundModel
