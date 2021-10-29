@@ -25,15 +25,13 @@ from models.user import UserModel
 from .tasks import ensure_owner_or_admin
 
 
-from utils.helpers import (  # noqa isort:skip
-    get_data_s3_path,
-    get_predictions_s3_path,
-    parse_s3_outfile,
-    send_eval_request,
-)
-
-
 sys.path.append("../evaluation")  # noqa isort:skip
+from utils.helpers import (  # noqa isort:skip
+    get_data_s3_path,  # noqa isort:skip
+    get_predictions_s3_path,  # noqa isort:skip
+    parse_s3_outfile,  # noqa isort:skip
+    send_eval_request,  # noqa isort:skip
+)  # noqa isort:skip
 
 
 @bottle.post("/models/upload_train_files/<tid:int>/<model_name>")

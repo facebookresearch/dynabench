@@ -5,7 +5,6 @@
 # flake8: noqa
 
 import common.helpers as util
-import common.helpers as util
 
 
 import os  # isort:skip
