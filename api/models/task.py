@@ -8,7 +8,6 @@ import sys
 import enum
 import requests
 import sqlalchemy as db
-import ujson
 from transformers.data.metrics.squad_metrics import compute_f1
 
 import common.helpers as util

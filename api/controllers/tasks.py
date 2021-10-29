@@ -7,7 +7,6 @@ from urllib.parse import parse_qs, quote
 
 import bottle
 import sqlalchemy as db
-import ujson
 import uuid
 
 import common.auth as _auth

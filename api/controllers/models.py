@@ -10,7 +10,6 @@ import time
 import boto3
 import bottle
 import sqlalchemy as db
-import ujson
 
 import common.auth as _auth
 import common.helpers as util
@@ -49,7 +48,7 @@ def do_upload_via_train_files(credentials, tid, model_name):
 
     tm = TaskModel()
     task = tm.get(tid)
-    annotation_config = ujson.loads(task.annotation_config_json)
+    annotation_config = util.json_decode(task.annotation_config_json)
     if "train_file_metric" not in annotation_config:
         bottle.abort(
             403,
@@ -100,7 +99,7 @@ def do_upload_via_train_files(credentials, tid, model_name):
     for name, upload in train_files.items():
         try:
             parsed_train_file = [
-                ujson.loads(line)
+                util.json_decode(line)
                 for line in upload.file.read().decode("utf-8").splitlines()
             ]
             for io in parsed_train_file:
@@ -156,7 +155,7 @@ def do_upload_via_train_files(credentials, tid, model_name):
                     # Why do we use two seperate names for the same thing? Can we make
                     # this consistent?
                     del datum["uid"]
-                    tmp.write(ujson.dumps(datum) + "\n")
+                    tmp.write(util.json_encode(datum) + "\n")
                 tmp.close()
                 ret = _eval_dataset(dataset_name, endpoint_name, model, task, tmp.name)
                 status_dict.update(ret)
