@@ -20,6 +20,7 @@ class DeploymentStatusEnum(enum.Enum):
     unknown = "unknown"
     takendown = "takendown"
     predictions_upload = "predictions_upload"
+    takendownnonactive = "takendownnonactive"
 
 
 class EvaluationStatusEnum(enum.Enum):
@@ -150,6 +151,9 @@ class ModelModel(BaseModel):
             .filter(Model.deployment_status == deployment_status)
             .all()
         )
+
+    def getByPublishStatus(self, publish_status):
+        return self.dbs.query(Model).filter(Model.is_published == publish_status).all()
 
     def getCountByUidTidAndHrDiff(self, uid, tid=-1, hr_diff=24):
         """
