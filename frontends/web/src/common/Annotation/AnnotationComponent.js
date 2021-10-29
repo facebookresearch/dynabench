@@ -361,7 +361,7 @@ const ImageComponent = ({
               setData(data);
             }}
           >
-            <i class="fas fa-trash-alt"></i>
+            <i className="fas fa-trash-alt"></i>
           </Button>
           <AtomicImage src={data[name]} />
         </>

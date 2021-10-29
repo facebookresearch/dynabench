@@ -23,9 +23,9 @@ from .vqa_accuracy import VQAEval
 # eval_metrics, take predictions and targets as input
 def get_dataperf_accuracy(predictions: list, targets: list):
     """
-    Here, p can be a list of acceptable multilabel lists, instead of just one multilabel
-    list. This is helpful for stochastic models, where we also want to report a
-    standard deviation over the model outputs.
+    Here, predictions can be a list of lists of acceptable multilabel lists, instead
+    of just a list of multilabel lists. This is helpful for stochastic models, where we
+    also want to report a standard deviation over the model outputs.
     """
 
     if not isinstance(predictions[0], list):

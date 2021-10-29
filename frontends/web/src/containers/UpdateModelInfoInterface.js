@@ -24,7 +24,7 @@ class PublishInterface extends React.Component {
     if (!this.context.api.loggedIn()) {
       this.props.history.push(
         "/login?&src=" +
-          encodeURIComponent(`/tasks/${this.state.taskCode}/submit`)
+          encodeURIComponent(`/models/${this.state.modelId}`)
       );
     }
     const propState = this.props.location.state;
