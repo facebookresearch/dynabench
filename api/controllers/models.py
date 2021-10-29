@@ -2,6 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import datetime
 import secrets
 import sys
 import tempfile
@@ -117,6 +118,7 @@ def do_upload_via_predictions(credentials, tid, model_name):
         endpoint_name=endpoint_name,
         deployment_status=DeploymentStatusEnum.predictions_upload,
         secret=secrets.token_hex(),
+        last_used=datetime.datetime.utcnow(),
     )
     with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
         for dataset_name, parsed_upload in parsed_uploads.items():
@@ -402,6 +404,7 @@ def upload_to_s3(credentials):
         endpoint_name=endpoint_name,
         deployment_status=DeploymentStatusEnum.uploaded,
         secret=secrets.token_hex(),
+        last_used=datetime.datetime.utcnow(),
     )
 
     um = UserModel()
@@ -430,10 +433,12 @@ def deploy_model_from_s3(credentials, mid):
         bottle.abort(404, "User information not found")
 
     m = ModelModel()
-    model = m.getPublishedModel(mid)
+    model = m.getUnpublishedModelByMid(mid)
 
-    if not model.is_published:
-        bottle.abort(403, "Model is not published")
+    model_owner = model.uid == user.id
+
+    if (not model.is_published) and (not model_owner):
+        bottle.abort(403, "Model is not published and user is not model owner")
 
     if not model.deployment_status == DeploymentStatusEnum.takendownnonactive:
         bottle.abort(
@@ -467,3 +472,21 @@ def deploy_model_from_s3(credentials, mid):
             {"model_id": model.id, "s3_uri": f"s3://{bucket_name}/{s3_path}"}
         )
     )
+
+    return {"status": "success"}
+
+
+@bottle.get("/models/<mid:int>/log_interaction")
+def log_model_interaction(mid):
+    m = ModelModel()
+    model = m.getUnpublishedModelByMid(mid)
+
+    # We can only log interactions for deployed, published models
+    if not model.is_published:
+        bottle.abort(403, "Attempting to log interaction a model that is not published")
+
+    if not model.deployment_status == DeploymentStatusEnum.deployed:
+        bottle.abort(403, "Attempting to log interaction a model that is not deployed")
+
+    m.update(model.id, last_used=datetime.datetime.utcnow())
+    return {"status": "success"}

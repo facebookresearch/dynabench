@@ -410,6 +410,7 @@ export default class ApiService {
             Authorization: "Bearer " + trialAuthToken,
             "Content-Type": "application/json",
           };
+
     return this.fetch(modelUrl, {
       method: "POST",
       body: JSON.stringify(data),
@@ -515,6 +516,12 @@ export default class ApiService {
     return this.fetch(`${this.domain}/examples/evaluate`, {
       method: "POST",
       body: JSON.stringify(obj),
+    });
+  }
+
+  logModelInteraction(mid) {
+    return this.fetch(`${this.domain}/models/${mid}/log_interaction`, {
+      method: "GET",
     });
   }
 

@@ -209,16 +209,15 @@ class ModelPage extends React.Component {
             `https://obws766r82.execute-api.${this.state.task.aws_region}.amazonaws.com/predict?model=` +
             this.state.model.endpoint_name,
           name: this.state.model.name,
+          mid: this.state.model.id,
         },
-        deployment_status: this.state.model.deployment_status,
       },
     });
   };
 
   handleDeployModel = () => {
-    console.log("in deploy model");
     return this.context.api.deployModel(this.state.modelId).then(
-      (_) => {
+      (result) => {
         this.setState({
           modelDeployed: true,
         });
@@ -423,6 +422,10 @@ ${latexTableContent}
                       >
                         <i className="fas fa-pen"></i> Interact
                       </Button>
+                    ) : this.state.modelDeployed ? (
+                      <Button variant="outline-primary mr-2" disabled={true}>
+                        <i className="fas fa-upload"></i> Model Deployed!
+                      </Button>
                     ) : (isModelOwner || model.is_published) &&
                       model.deployment_status === "takendownnonactive" ? (
                       <Button
@@ -430,10 +433,6 @@ ${latexTableContent}
                         onClick={() => this.handleDeployModel()}
                       >
                         <i className="fas fa-upload"></i> Deploy Model
-                      </Button>
-                    ) : this.state.modelDeployed ? (
-                      <Button variant="outline-primary mr-2" disabled={true}>
-                        <i className="fas fa-upload"></i> Model Deployed!
                       </Button>
                     ) : (
                       ""

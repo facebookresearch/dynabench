@@ -86,6 +86,11 @@ const DeploymentStatus = ({ deploymentStatus }) => {
       description =
         "The model could not return predictions on all of the datasets. The model could have bugs.";
       break;
+    case "takendownnonactive":
+      buttonVariant = "danger";
+      description =
+        "The model was taken down due to inactivity. Click `Deploy Model` to redeploy model";
+      break;
     case "failed":
       buttonVariant = "danger";
       description = "The model could not be deployed.";

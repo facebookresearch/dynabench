@@ -334,6 +334,7 @@ class CreateInterface extends React.Component {
             model_io_result = this.state.data;
             model_io_result["image_url"] = model_io_result["image"];
           }
+
           // End hack that can be removed upon full dynalab integration
           this.context.api.getModelResponse(url, model_io_result).then(
             (modelResponseResult) => {
@@ -449,6 +450,11 @@ class CreateInterface extends React.Component {
                         fetchPredictionError: true,
                       });
                     }
+                  )
+                  .then(() =>
+                    this.context.api.logModelInteraction(
+                      this.state.selectedModel.mid
+                    )
                   )
                   .then(() => this.smoothlyAnimateToBottom());
               }

@@ -2,6 +2,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from datetime import datetime, timedelta
+
 import enum
 import sqlalchemy as db
 
@@ -66,6 +68,8 @@ class Model(Base):
     evaluation_status = db.Column(
         db.Enum(EvaluationStatusEnum), default=EvaluationStatusEnum.pre_evaluation
     )
+
+    last_used = db.Column(db.DateTime)
 
     secret = db.Column(db.Text)
 
@@ -154,6 +158,16 @@ class ModelModel(BaseModel):
 
     def getByPublishStatus(self, publish_status):
         return self.dbs.query(Model).filter(Model.is_published == publish_status).all()
+
+    def getByNotLastUsedWithinWeek(self):
+        one_week_ago = datetime.utcnow() - timedelta(weeks=1)
+        return (
+            self.dbs.query(Model)
+            .filter(
+                db.or_(Model.last_used < one_week_ago, Model.last_used == None)
+            )  # noqa
+            .all()
+        )
 
     def getCountByUidTidAndHrDiff(self, uid, tid=-1, hr_diff=24):
         """
