@@ -67,7 +67,7 @@ def get_task_metrics_meta(task):
 
     # TODO: make it possible to display some modes with aws metrics and some
     # models without aws metrics on the same leaderboard?
-    if task.has_predictions_upload:
+    if task.has_predictions_upload or "train_file_metric" in annotation_config:
         aws_metric_names = []
 
     ordered_metric_field_names = (
