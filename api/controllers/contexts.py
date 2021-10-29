@@ -8,7 +8,6 @@ import bottle
 
 import common.auth as _auth
 import common.helpers as util
-import ujson
 from common.logging import logger
 from models.context import Context, ContextModel
 from models.round import RoundModel
@@ -96,7 +95,7 @@ def do_upload(credentials, tid, rid):
 
     try:
         parsed_upload_data = [
-            ujson.loads(line)
+            util.json_decode(line)
             for line in upload.file.read().decode("utf-8").splitlines()
         ]
         for context_info in parsed_upload_data:
@@ -119,8 +118,8 @@ def do_upload(credentials, tid, rid):
     for context_info in parsed_upload_data:
         c = Context(
             r_realid=r_realid,
-            context_json=ujson.dumps(context_info["context"]),
-            metadata_json=ujson.dumps(context_info["metadata"]),
+            context_json=util.json_encode(context_info["context"]),
+            metadata_json=util.json_encode(context_info["metadata"]),
             tag=context_info["tag"],
         )
         contexts_to_add.append(c)
