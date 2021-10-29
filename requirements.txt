@@ -1,3 +1,4 @@
+augly>=0.1.10
 aiohttp
 bottle
 cheroot
