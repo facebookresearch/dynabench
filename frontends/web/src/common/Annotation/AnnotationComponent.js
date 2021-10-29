@@ -200,7 +200,6 @@ const ContextStringSelection = ({
   if (data[name] === null && selectionInfo !== "") {
     setSelectionInfo("");
   }
-
   return (
     <>
       {!create ? (
