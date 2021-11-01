@@ -6,10 +6,12 @@
 # These models can be redeployed by sending a message to the build
 # server, for example:
 # {"model_id": MODEL_ID, "s3_uri": s3_PATH_TO_SAVED_MODEL}
+import argparse
 import sys
 import traceback
 
 from models.model import DeploymentStatusEnum, ModelModel
+from models.task import TaskModel
 
 
 sys.path.remove("../evaluation")  # noqa
@@ -18,10 +20,40 @@ sys.path.append("../builder")  # noqa
 from utils.deployer import ModelDeployer  # # noqa isort:skip
 
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--task_code",
+        type=str,
+        default="",
+        help=("Task code to filter models by " "when choosing to delete "),
+    )
+    args = parser.parse_args()
+
+    return args
+
+
 def main():
+    args = parse_args()
     m = ModelModel()
-    unpublished_models = m.getByPublishStatus(publish_status=False)
-    for model in unpublished_models:
+
+    # Takedown all unpublished models
+    models_to_takedown = set(m.getByPublishStatus(publish_status=False))
+
+    if args.task_code.strip() != "":
+        ops = input(
+            f"Take down all models associated with task code {args.task_code}? [y/n]"
+        )
+        if ops.lower() not in ("y", "yes"):
+            print(f"Aborting takedown script")
+            exit(1)
+
+        tm = TaskModel()
+        task = tm.getByTaskCode(args.task_code)
+        task_code_models = set(m.getByTid(task.id))
+        models_to_takedown = models_to_takedown.union(task_code_models)
+
+    for model in models_to_takedown:
         if (
             model.deployment_status == DeploymentStatusEnum.deployed
             or model.deployment_status == DeploymentStatusEnum.created
