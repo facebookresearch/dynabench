@@ -22,7 +22,10 @@ def main():
     m = ModelModel()
     unpublished_models = m.getByPublishStatus(publish_status=False)
     for model in unpublished_models:
-        if model.deployment_status == DeploymentStatusEnum.deployed:
+        if (
+            model.deployment_status == DeploymentStatusEnum.deployed
+            or model.deployment_status == DeploymentStatusEnum.created
+        ):
             print(f"Removing model: {model.name} at endpoint {model.endpoint_name}")
             try:
                 deployer = ModelDeployer(model)
