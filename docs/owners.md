@@ -50,6 +50,16 @@ Under the datasets tab in the task owners interface, you will be able to add, mo
 
 If your task supports fairness and robustness evaluations, for every dataset you upload, you can also upload perturbed versions that will be used for the fairness and robustness metrics. In order to generate perturbations, use the tools in the `evaluation/scripts` directory.
 
+If your dataset supports granular labels for certain inputs (i.e sublabels), you can add these as a list of `tags` for a given entry. For example, the two lines above might turn into:
+```
+{"uid": "1", "text": "Hello world", "label": 1, "tags": ["introduction", "friendly_introduction"]}
+{"uid": "2", "text": "Foo bar", "label": 0, "tags": ["miscellaneous"]}
+```
+You can then see how model performance breaks down across tags (by navigating to the model card). Furthermore, if your dataset supports a tag hierarchy, you can also provide this in `jsonl` file as a dictionary. Each entry in the dicionary should have a `tag` (for example `introduction` or `miscellaneous` from the above example), and a list of `subTags` which represent sublabels for the given tag. For example, the above two lines might have a hierarchy file that looks like:
+```
+[{"tag":"introduction","subTags":[{"tag":"friendly_introduction","subTags":[]}]}, {"tag": "miscellaneous", "subTags": []}]
+```
+
 ## Rounds
 
 Tasks can collect data over multiple _rounds_. A round of data collection usually (but not necessarily) has the same model(s) in the loop, and once finished usually becomes a leaderboard evaluation dataset. Task owners can export round data. Under the rounds tab in the task owners interface, you will be able to configure existing rounds, as well as to start new ones. Here, for example, you would determine what models to use in the loop, what contexts to collect data for, and with what settings.
