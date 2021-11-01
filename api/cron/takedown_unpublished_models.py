@@ -26,7 +26,7 @@ def parse_args():
         "--task_code",
         type=str,
         default="",
-        help=("Task code to filter by when choosing what models to delete "),
+        help=("Task code to filter by when choosing what models to delete."),
     )
     args = parser.parse_args()
 
