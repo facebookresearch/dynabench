@@ -26,7 +26,11 @@ def parse_args():
         "--task_code",
         type=str,
         default="",
-        help=("Task code to filter by when choosing what models to delete."),
+        help=(
+            "The script will take down all unpublished model endpoints for every task."
+            "Here, you can additionally specify a task where you want to take down"
+            "all published model endpoints as well."
+        ),
     )
     args = parser.parse_args()
 
@@ -42,7 +46,8 @@ def main():
 
     if args.task_code.strip() != "":
         ops = input(
-            f"Take down all models associated with task code {args.task_code}? [y/n]"
+            f"Take down all model endpoints associated with task code {args.task_code},"
+            "including published models? [y/n]"
         )
         if ops.lower() not in ("y", "yes"):
             print(f"Aborting takedown script")
