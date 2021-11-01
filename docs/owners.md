@@ -55,7 +55,7 @@ If your dataset supports granular labels for certain inputs (i.e sublabels), you
 {"uid": "1", "text": "Hello world", "label": 1, "tags": ["introduction", "friendly_introduction"]}
 {"uid": "2", "text": "Foo bar", "label": 0, "tags": ["miscellaneous"]}
 ```
-You can then see how model performance breaks down across tags (by navigating to the model card). Furthermore, if your dataset supports a tag hierarchy, you can also provide this in `jsonl` file as a dictionary. Each entry in the dicionary should have a `tag` (for example `introduction` or `miscellaneous` from the above example), and a list of `subTags` which represent sublabels for the given tag. For example, the above two lines might have a hierarchy file that looks like:
+You can then see how model performance breaks down across tags (by navigating to the model card). Furthermore, if your dataset supports a tag hierarchy, you can also provide this in `jsonl` file. The `jsonl` should have one line, which is a dictionary specifying how the tags are structure. Each element should have a `tag` (for example `introduction` or `miscellaneous` from the above example), and a list of `subTags` which represent sublabels for the given tag. For example, the above two lines might have a hierarchy file that looks like:
 ```
 [{"tag":"introduction","subTags":[{"tag":"friendly_introduction","subTags":[]}]}, {"tag": "miscellaneous", "subTags": []}]
 ```
