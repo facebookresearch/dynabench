@@ -110,7 +110,7 @@ class SubmitInterface extends React.Component {
       .then(
         (result) => {
           values.modelName = "";
-          for (const [fname, _] of Object.entries(files)) {
+          for (const [fname] of Object.entries(files)) {
             values[fname] = null;
           }
           values.submittedModelId = result.model_id;

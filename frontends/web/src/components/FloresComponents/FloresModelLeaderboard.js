@@ -40,7 +40,7 @@ const FloresModelLeaderboard = (props) => {
   const [task, setTask] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(0);
-  const [pageLimit, setPageLimit] = useState(10);
+  const [pageLimit] = useState(10);
   const [total, setTotal] = useState(0);
   const [sort, setSort] = useState({
     field: "sp-BLEU",
@@ -265,6 +265,7 @@ const FloresModelLeaderboard = (props) => {
             <img
               src="/Powered_by_Dynabench-Logo.svg"
               style={{ height: "24px" }}
+              alt="dynabench logo"
             />
           )}
           {!isTop5 && (
