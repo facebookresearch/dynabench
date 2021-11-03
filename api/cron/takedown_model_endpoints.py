@@ -12,14 +12,14 @@ from datetime import datetime, timedelta
 
 import boto3
 
-from build_config import build_config
 from models.model import DeploymentStatusEnum, ModelModel
 
 
 sys.path.remove("../evaluation")  # noqa
 sys.path.append("../builder")  # noqa
 
-from utils.deployer import ModelDeployer  # # noqa isort:skip
+from utils.deployer import ModelDeployer  # noqa isort:skip
+from build_config import build_config  # noqa isort:skip
 
 
 def main():
@@ -49,6 +49,8 @@ def main():
                 # Check if the endpoint has been used in the last hour
                 endpoint_response = deployer.env["sagemaker_client"].list_endpoints(
                     SortBy="Name",
+                    SortOrder="Descending",
+                    MaxResults=10,
                     NameContains=model.endpoint_name,
                     StatusEquals="InService",
                 )
