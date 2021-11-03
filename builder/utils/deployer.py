@@ -406,7 +406,9 @@ class ModelDeployer:
                 self.delete_existing_endpoints()
                 os.chdir(self.root_dir)
                 setup_config_handler, setup_config, s3_dir = self.load_model(s3_uri)
-                image_ecr_path = self.build_and_push_docker(setup_config_handler, setup_config)
+                image_ecr_path = self.build_and_push_docker(
+                    setup_config_handler, setup_config
+                )
                 model_s3_path = self.archive_and_upload_model(setup_config, s3_dir)
                 endpoint_url = self.deploy_model(image_ecr_path, model_s3_path)
             else:
