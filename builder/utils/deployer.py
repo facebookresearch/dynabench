@@ -290,6 +290,7 @@ class ModelDeployer:
                 imageScanningConfiguration={"scanOnPush": True},
             )
         except self.env["ecr_client"].exceptions.RepositoryAlreadyExistsException as e:
+            print("OVER HERE REUSING REPO FOR MODEL")
             logger.debug(f"Reuse existing repository since {e}")
         else:
             if response:
@@ -398,24 +399,43 @@ class ModelDeployer:
             )
             return None
 
-    def deploy(self, s3_uri):
+    def deploy(self, s3_uri, endpoint_only=False):
         deployed, delayed, ex_msg = False, False, ""
         try:
-            self.delete_existing_endpoints()
-            os.chdir(self.root_dir)
-            setup_config_handler, setup_config, s3_dir = self.load_model(s3_uri)
-            image_ecr_path = self.build_and_push_docker(
-                setup_config_handler, setup_config
-            )
-            model_s3_path = self.archive_and_upload_model(setup_config, s3_dir)
-            endpoint_url = self.deploy_model(image_ecr_path, model_s3_path)
+            if not endpoint_only:
+                self.delete_existing_endpoints()
+                os.chdir(self.root_dir)
+                setup_config_handler, setup_config, s3_dir = self.load_model(s3_uri)
+                image_ecr_path = self.build_and_push_docker(setup_config_handler, setup_config)
+                model_s3_path = self.archive_and_upload_model(setup_config, s3_dir)
+                endpoint_url = self.deploy_model(image_ecr_path, model_s3_path)
+            else:
+                s3_bucket, s3_path, s3_dir, endpoint_name = self.parse_s3_uri(s3_uri)
+                tarball = f"{self.archive_name}.tar.gz"
+                model_s3_path = f"s3://{self.env['bucket_name']}/{s3_dir}/{tarball}"
+                image_ecr_path = f"{self.env['ecr_registry']}/{self.repository_name}"
+                torchserve_model = Model(
+                    model_data=model_s3_path,
+                    image_uri=image_ecr_path,
+                    role=build_config["sagemaker_role"],
+                    sagemaker_session=self.env["sagemaker_session"],
+                    predictor_cls=Predictor,
+                    name=self.endpoint_name,
+                    enable_network_isolation=True,
+                )
+                torchserve_model.deploy(
+                    instance_type=self.model.task.instance_type,
+                    initial_instance_count=self.model.task.instance_count,
+                    endpoint_name=self.endpoint_name,
+                )
+
         except RuntimeError as e:
             logger.exception(e)
-            self.cleanup_on_failure(s3_uri)
+            # self.cleanup_on_failure(s3_uri)
             ex_msg = e
         except botocore.exceptions.ClientError as e:
             logger.exception(e)
-            self.cleanup_on_failure(s3_uri)
+            # self.cleanup_on_failure(s3_uri)
             if e.response["Error"]["Code"] == "ResourceLimitExceeded":
                 delayed = True
                 ex_msg = f"Model deployment for {self.name} is delayed. You will get an email when it is successfully deployed."
@@ -423,10 +443,11 @@ class ModelDeployer:
                 ex_msg = "Unexpected error"
         except Exception as e:
             logger.exception(e)
-            self.cleanup_on_failure(s3_uri)
+            # self.cleanup_on_failure(s3_uri)
             ex_msg = "Unexpected error"
         else:
-            self.cleanup_post_deployment()
+            if not endpoint_only:
+                self.cleanup_post_deployment()
             deployed = True
         finally:
             os.chdir(self.owd)

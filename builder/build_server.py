@@ -55,21 +55,22 @@ if __name__ == "__main__":
         for message in queue.receive_messages():
             msg = json.loads(message.body)
             logger.info(f"Build server received SQS message {msg}")
-            if set(msg.keys()) == {"model_id", "s3_uri"}:
+            if set(msg.keys()) <= {"model_id", "s3_uri", "endpoint_only"}:
                 model_id = msg["model_id"]
                 s3_uri = msg["s3_uri"]
+                endpoint_only = msg.get("endpoint_only", False)
 
                 m = ModelModel()
                 model = m.getUnpublishedModelByMid(model_id)
 
-                if model.deployment_status == DeploymentStatusEnum.uploaded:
+                if model.deployment_status == DeploymentStatusEnum.uploaded or model.deployment_status == DeploymentStatusEnum.takendownnonactive:
                     # deploy model
                     logger.info(f"Start to deploy model {model_id}")
                     m.update(
                         model_id, deployment_status=DeploymentStatusEnum.processing
                     )
                     deployer = ModelDeployer(model)
-                    response = deployer.deploy(s3_uri)
+                    response = deployer.deploy(s3_uri, endpoint_only=endpoint_only)
 
                     # process deployment result
                     msg["name"] = model.name

@@ -142,6 +142,7 @@ class ModelPage extends React.Component {
       taskCode: null,
       task: {},
       isLoading: false,
+      modelDeployed: false,
     };
   }
 
@@ -208,9 +209,23 @@ class ModelPage extends React.Component {
             `https://obws766r82.execute-api.${this.state.task.aws_region}.amazonaws.com/predict?model=` +
             this.state.model.endpoint_name,
           name: this.state.model.name,
+          mid: this.state.model.id,
         },
       },
     });
+  };
+
+  handleDeployModel = () => {
+    return this.context.api.deployModel(this.state.modelId).then(
+      (result) => {
+        this.setState({
+          modelDeployed: true,
+        });
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
   };
 
   togglePublish = () => {
@@ -405,6 +420,18 @@ ${latexTableContent}
                         onClick={() => this.handleInteract()}
                       >
                         <i className="fas fa-pen"></i> Interact
+                      </Button>
+                    ) : this.state.modelDeployed ? (
+                      <Button variant="outline-primary mr-2" disabled={true}>
+                        <i className="fas fa-upload"></i> Model Deployed!
+                      </Button>
+                    ) : (isModelOwner || model.is_published) &&
+                      model.deployment_status === "takendownnonactive" ? (
+                      <Button
+                        variant="outline-primary mr-2"
+                        onClick={() => this.handleDeployModel()}
+                      >
+                        <i className="fas fa-upload"></i> Deploy Model
                       </Button>
                     ) : (
                       ""

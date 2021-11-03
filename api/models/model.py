@@ -6,6 +6,7 @@ import enum
 import sqlalchemy as db
 
 from common import helpers as util
+from models.round import Round
 from models.user import User
 
 from .base import Base, BaseModel
@@ -154,6 +155,25 @@ class ModelModel(BaseModel):
 
     def getByPublishStatus(self, publish_status):
         return self.dbs.query(Model).filter(Model.is_published == publish_status).all()
+
+    def getByInTheLoopStatus(self, in_the_loop):
+        if in_the_loop:
+            return (
+                self.dbs.query(Model)
+                .join(Round, Round.tid == Model.tid)
+                .filter(Round.url.contains(Model.endpoint_name))
+                .distinct()
+                .all()
+            )
+        else:
+            sub_query = (
+                self.dbs.query(Model.id)
+                .join(Round, Round.tid == Model.tid)
+                .filter(Round.url.contains(Model.endpoint_name))
+                .distinct()
+                .subquery()
+            )
+            return self.dbs.query(Model).filter(db.not_(Model.id.in_(sub_query))).all()
 
     def getCountByUidTidAndHrDiff(self, uid, tid=-1, hr_diff=24):
         """
