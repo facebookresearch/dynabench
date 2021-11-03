@@ -325,6 +325,7 @@ class TaskPage extends React.Component {
               taskCode: result.task_code,
               task: result,
               round: result.round,
+              loading: false,
             },
             function () {
               if (this.props.match.params.taskCode !== this.state.taskCode) {
@@ -336,6 +337,7 @@ class TaskPage extends React.Component {
                   search: this.props.location.search,
                 });
               }
+              this.state.loading = true;
               this.fetchTrend();
             }
           );
@@ -491,7 +493,7 @@ class TaskPage extends React.Component {
               />
             </Col>
           </Row>
-          {this.state.task ? (
+          {this.state.loading ? (
             <>
               {this.state.task?.active ? (
                 <>
