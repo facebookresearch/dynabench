@@ -2,10 +2,20 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-# This script will take down all unused model endpoints
+# This script will take down all:
+#
+# (1) non in the loop models that have not been
+# used in some amount of time (defined by endpoint_last_used_cutoff flag)
+#
+# (2) all endpoints not associated with any model in the DB
+#
+# By "remove" we mean taking down:
+# (1) the endpoint,
+# (2) the endpoint config
+# (3) the sagemaker model
 # These models can be redeployed by sending a message to the build
 # server, for example:
-# {"model_id": MODEL_ID, "s3_uri": s3_PATH_TO_SAVED_MODEL}
+# {"model_id": MODEL_ID, "s3_uri": s3_PATH_TO_SAVED_MODEL, "endpoint_only":True}
 import argparse
 import sys
 import traceback

@@ -290,7 +290,6 @@ class ModelDeployer:
                 imageScanningConfiguration={"scanOnPush": True},
             )
         except self.env["ecr_client"].exceptions.RepositoryAlreadyExistsException as e:
-            print("OVER HERE REUSING REPO FOR MODEL")
             logger.debug(f"Reuse existing repository since {e}")
         else:
             if response:
@@ -433,11 +432,11 @@ class ModelDeployer:
 
         except RuntimeError as e:
             logger.exception(e)
-            # self.cleanup_on_failure(s3_uri)
+            self.cleanup_on_failure(s3_uri)
             ex_msg = e
         except botocore.exceptions.ClientError as e:
             logger.exception(e)
-            # self.cleanup_on_failure(s3_uri)
+            self.cleanup_on_failure(s3_uri)
             if e.response["Error"]["Code"] == "ResourceLimitExceeded":
                 delayed = True
                 ex_msg = f"Model deployment for {self.name} is delayed. You will get an email when it is successfully deployed."
@@ -445,7 +444,7 @@ class ModelDeployer:
                 ex_msg = "Unexpected error"
         except Exception as e:
             logger.exception(e)
-            # self.cleanup_on_failure(s3_uri)
+            self.cleanup_on_failure(s3_uri)
             ex_msg = "Unexpected error"
         else:
             if not endpoint_only:
