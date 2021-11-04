@@ -6,6 +6,7 @@
 # These models can be redeployed by sending a message to the build
 # server, for example:
 # {"model_id": MODEL_ID, "s3_uri": s3_PATH_TO_SAVED_MODEL}
+import argparse
 import sys
 import traceback
 from datetime import datetime, timedelta
@@ -22,13 +23,110 @@ from utils.deployer import ModelDeployer  # noqa isort:skip
 from build_config import build_config  # noqa isort:skip
 
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--region",
+        type=str,
+        default="us-west-1",
+        help=("Region to use when creating AWS session."),
+    )
+    parser.add_argument(
+        "--endpoint_last_used_cutoff",
+        type=int,
+        default=72,
+        help=(
+            "One of the functions of this script is to delete models whose"
+            " been used in a while. How long this cutoff is defined by"
+            " `endpoint_last_used_cutoff` (in hours). For example, setting"
+            " this flag to 1 will delete all endpoints that have not been"
+            " in the last hour."
+        ),
+    )
+
+    # You cannot use `test_run` and `real_run` at the same time
+    feature_parser = parser.add_mutually_exclusive_group(required=False)
+    feature_parser.add_argument("--test_run", dest="test_run", action="store_true")
+    feature_parser.add_argument("--real_run", dest="test_run", action="store_false")
+    parser.set_defaults(test_run=True)
+    args = parser.parse_args()
+
+    return args
+
+
+def dont_touch_endpoint(endpoints_name_not_touch, ep_name):
+    return len(endpoints_name_not_touch) > 0 and (
+        any(ep_name in bad_endpoint for bad_endpoint in endpoints_name_not_touch)
+    )
+
+
+def delete_endpoint(sagemaker_client, endpoint_name):
+    print(f"Removing model endpoint at: {endpoint_name}")
+
+    # Delete endpoint
+    sagemaker_client.delete_endpoint(EndpointName=endpoint_name)
+
+    # Delete Sagemaker model
+    model_response = sagemaker_client.list_models(
+        SortBy="Name",
+        NameContains=endpoint_name,
+    )
+
+    assert len(model_response["Models"]) == 1
+    sagemaker_client.delete_model(ModelName=endpoint_name)
+
+    # Delete Endpoint Config
+    config_response = sagemaker_client.list_endpoint_configs(
+        SortBy="Name",
+        NameContains=endpoint_name,
+    )
+    assert len(config_response["EndpointConfigs"]) == 1
+    sagemaker_client.delete_endpoint_config(EndpointConfigName=endpoint_name)
+
+
 def main():
+    args = parse_args()
+
+    if not args.test_run:
+        ops = input(
+            f"You've chosen to actually delete prod endpoints "
+            "(via flag `--real_run`),"
+            " are you sure? [y/n]"
+        )
+        if ops.lower() not in ("y", "yes"):
+            print(f"Aborting takedown script")
+            exit(1)
+
+    # Parse the DONT_TOUCH_MODELS
+    endpoints_name_not_touch = None
+    with open("cron/DONT_TOUCH_ENDPOINTS.txt") as f:
+        endpoints_name_not_touch = [t.strip() for t in f.readlines()]
+
+    ops = input(
+        "You've chosen not to touch endpoints with names: "
+        + ", ".join(endpoints_name_not_touch)
+        + "\nPlease make sure any additional endpoints you do not want delete are "
+        "added in cron/DONT_TOUCH_ENDPOINTS.txt. Continue? [y/n]"
+    )
+    if ops.lower() not in ("y", "yes"):
+        print(f"Aborting takedown script")
+        exit(1)
+
+    session = boto3.Session(
+        aws_access_key_id=build_config["aws_access_key_id"],
+        aws_secret_access_key=build_config["aws_secret_access_key"],
+        region_name=args.region,
+    )
+
+    sm = session.client("sagemaker")
+    cw = session.client("cloudwatch")
+    endpoint_last_used_cutoff = args.endpoint_last_used_cutoff
+    endpoints_deleted = []
+
     m = ModelModel()
 
     # Get all non in-the-loop models
     models_not_in_loop = m.getByInTheLoopStatus(in_the_loop=False)
-
-    endpoint_last_used_cutoff = 1
 
     for model in models_not_in_loop:
         if (
@@ -36,18 +134,8 @@ def main():
             or model.deployment_status == DeploymentStatusEnum.created
         ):
             try:
-                deployer = ModelDeployer(model)
-                region = model.task.aws_region
-                session = boto3.Session(
-                    aws_access_key_id=build_config["aws_access_key_id"],
-                    aws_secret_access_key=build_config["aws_secret_access_key"],
-                    region_name=region,
-                )
-                sm = deployer.env["sagemaker_client"]
-                cw = session.client("cloudwatch")
-
                 # Check if the endpoint has been used in the last hour
-                endpoint_response = deployer.env["sagemaker_client"].list_endpoints(
+                endpoint_response = sm.list_endpoints(
                     SortBy="Name",
                     SortOrder="Descending",
                     MaxResults=10,
@@ -56,7 +144,9 @@ def main():
                 )
 
                 if len(endpoint_response["Endpoints"]) != 1:
-                    print("Error! Should only be removing one endpoint per iteration")
+                    print(
+                        "Error! Should be considering exactly one endpoint for a model"
+                    )
                     print(
                         f"Skipping model: {model.name} at"
                         f"endpoint {model.endpoint_name}"
@@ -97,27 +187,16 @@ def main():
                     or metric_response["Datapoints"][0]["Sum"] <= 0.0
                 ):
 
-                    # Delete endpoint
-                    print(
-                        f"Removing model endpoint for: {model.name}"
-                        f" at endpoint {model.endpoint_name}"
-                    )
-                    sm.delete_endpoint(EndpointName=model.endpoint_name)
+                    if dont_touch_endpoint(
+                        endpoints_name_not_touch, model.endpoint_name
+                    ):
+                        continue
 
-                    model_response = sm.list_models(
-                        SortBy="Name",
-                        NameContains=model.endpoint_name,
-                    )
+                    endpoints_deleted.append(model.endpoint_name)
+                    if args.test_run:
+                        continue
 
-                    assert len(model_response["Models"]) == 1
-                    sm.delete_model(ModelName=model.endpoint_name)
-
-                    config_response = sm.list_endpoint_configs(
-                        SortBy="Name",
-                        NameContains=model.endpoint_name,
-                    )
-                    assert len(config_response["EndpointConfigs"]) == 1
-                    sm.delete_endpoint_config(EndpointConfigName=model.endpoint_name)
+                    delete_endpoint(sm, model.endpoint_name)
 
                     # Update status to show that model endpoint was deleted
                     m.update(
@@ -126,9 +205,48 @@ def main():
                     )
 
             except Exception as e:
-                print(f"Ran into exception when taking down model {model.name}")
+                print(f"Ran into exception when analyzing model {model.name}")
                 print(traceback.format_exc())
                 print(e)
+
+    # Get all endpoints not associated with any model
+    endpoint_response = sm.list_endpoints(
+        SortBy="Name",
+        SortOrder="Descending",
+        MaxResults=100,
+    )
+
+    endpoints = endpoint_response["Endpoints"]
+    while "NextToken" in endpoint_response:
+        next_token = endpoint_response["NextToken"]
+        endpoint_response = sm.list_endpoints(
+            SortBy="Name", SortOrder="Descending", MaxResults=100, NextToken=next_token
+        )
+
+        endpoints += endpoint_response["Endpoints"]
+
+    for ep in endpoints:
+        ep_name = ep["EndpointName"]
+
+        models_with_endpoint_name = m.getByEndpointName(endpoint_name=ep_name)
+
+        # If the endpoints do not correspond to any model in the DB
+        if len(models_with_endpoint_name) < 1:
+
+            if dont_touch_endpoint(endpoints_name_not_touch, ep_name):
+                continue
+
+            endpoints_deleted.append(ep_name)
+            if args.test_run:
+                continue
+            delete_endpoint(sm, ep_name)
+
+            # We don't update any model status here, because by definition there is no
+            # model in the DB to associate with this endpoint
+
+    print("Endpoints deleted:")
+    print(endpoints_deleted)
+    print(f"# Endpoints deleted is: {len(endpoints_deleted)}")
 
 
 if __name__ == "__main__":

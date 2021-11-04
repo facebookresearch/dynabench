@@ -175,6 +175,9 @@ class ModelModel(BaseModel):
             )
             return self.dbs.query(Model).filter(db.not_(Model.id.in_(sub_query))).all()
 
+    def getByEndpointName(self, endpoint_name):
+        return self.dbs.query(Model).filter(Model.endpoint_name == endpoint_name).all()
+
     def getCountByUidTidAndHrDiff(self, uid, tid=-1, hr_diff=24):
         """
         Returns submissions of all time if hr_diff < 0
