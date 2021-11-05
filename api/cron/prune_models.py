@@ -82,16 +82,17 @@ def delete_endpoint(sagemaker_client, endpoint_name):
         NameContains=endpoint_name,
     )
 
-    assert len(model_response["Models"]) == 1
-    sagemaker_client.delete_model(ModelName=endpoint_name)
+    if len(model_response["Models"]) == 1:
+        sagemaker_client.delete_model(ModelName=endpoint_name)
 
     # Delete Endpoint Config
     config_response = sagemaker_client.list_endpoint_configs(
         SortBy="Name",
         NameContains=endpoint_name,
     )
-    assert len(config_response["EndpointConfigs"]) == 1
-    sagemaker_client.delete_endpoint_config(EndpointConfigName=endpoint_name)
+
+    if len(config_response["EndpointConfigs"]) == 1:
+        sagemaker_client.delete_endpoint_config(EndpointConfigName=endpoint_name)
 
 
 def main():
