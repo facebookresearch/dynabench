@@ -88,7 +88,8 @@ const DeploymentStatus = ({ deploymentStatus }) => {
       break;
     case "takendownnonactive":
       buttonVariant = "danger";
-      description = "The model was taken down due to inactivity.";
+      description =
+        "The model was taken down due to inactivity. Press `Deploy Model` to deploy the model";
       break;
     case "failed":
       buttonVariant = "danger";

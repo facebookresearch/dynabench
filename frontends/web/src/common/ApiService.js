@@ -244,6 +244,12 @@ export default class ApiService {
     });
   }
 
+  deployModel(modelId) {
+    return this.fetch(`${this.domain}/models/${modelId}/deploy`, {
+      method: "GET",
+    });
+  }
+
   getOverallUserLeaderboard(taskId, round, limit, offset) {
     const url =
       round === "overall"

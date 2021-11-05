@@ -601,6 +601,12 @@ class TaskModel(BaseModel):
         except db.orm.exc.NoResultFound:
             return False
 
+    def getByTaskId(self, tid):
+        try:
+            return self.dbs.query(Task).filter(Task.id == tid).one()
+        except db.orm.exc.NoResultFound:
+            return False
+
     def getByName(self, name):
         try:
             return self.dbs.query(Task).filter(Task.name == name).one()
