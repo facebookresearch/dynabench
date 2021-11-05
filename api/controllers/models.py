@@ -437,7 +437,7 @@ def deploy_model_from_s3(credentials, mid):
     if (not model.is_published) and (not model_owner):
         bottle.abort(403, "Model is not published and user is not model owner")
 
-    if not model.deployment_status == DeploymentStatusEnum.takendownnonactive:
+    if model.deployment_status != DeploymentStatusEnum.takendownnonactive:
         bottle.abort(
             403, "Attempting to deploy a model not taken down due to inactivity"
         )
