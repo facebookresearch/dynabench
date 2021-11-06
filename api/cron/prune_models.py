@@ -128,7 +128,6 @@ class ModelPruner:
     def delete_models_not_in_the_loop(self):
         m = ModelModel()
         models_not_in_loop = m.getByInTheLoopStatus(in_the_loop=False)
-
         for model in models_not_in_loop:
             if (
                 model.deployment_status == DeploymentStatusEnum.deployed
