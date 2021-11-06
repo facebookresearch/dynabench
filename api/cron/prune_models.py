@@ -128,6 +128,7 @@ class ModelPruner:
     def delete_models_not_in_the_loop(self):
         m = ModelModel()
         models_not_in_loop = m.getByInTheLoopStatus(in_the_loop=False)
+
         for model in models_not_in_loop:
             if (
                 model.deployment_status == DeploymentStatusEnum.deployed
@@ -214,7 +215,9 @@ class ModelPruner:
             try:
                 ep_name = ep["EndpointName"]
 
-                models_with_endpoint_name = m.getByEndpointName(endpoint_name=ep_name)
+                models_with_endpoint_name = m.getByDeployedAndEndpointName(
+                    endpoint_name=ep_name
+                )
 
                 # If the endpoints do not correspond to any model in the DB
                 if len(models_with_endpoint_name) < 1:
