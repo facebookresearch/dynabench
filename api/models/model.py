@@ -163,7 +163,6 @@ class ModelModel(BaseModel):
                 .join(Round, Round.tid == Model.tid)
                 .filter(Round.url.contains(Model.endpoint_name))
                 .distinct()
-                .all()
             )
         else:
             sub_query = (
@@ -175,8 +174,18 @@ class ModelModel(BaseModel):
             )
             return self.dbs.query(Model).filter(db.not_(Model.id.in_(sub_query))).all()
 
-    def getByEndpointName(self, endpoint_name):
-        return self.dbs.query(Model).filter(Model.endpoint_name == endpoint_name).all()
+    def getByDeployedAndEndpointName(self, endpoint_name):
+        return (
+            self.dbs.query(Model)
+            .filter(Model.endpoint_name == endpoint_name)
+            .filter(
+                db.or_(
+                    Model.deployment_status == DeploymentStatusEnum.deployed,
+                    Model.deployment_status == DeploymentStatusEnum.created,
+                )
+            )
+            .all()
+        )
 
     def getCountByUidTidAndHrDiff(self, uid, tid=-1, hr_diff=24):
         """
