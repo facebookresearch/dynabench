@@ -453,6 +453,8 @@ class Task(Base):
     has_predictions_upload = db.Column(db.Boolean, default=False)
     predictions_upload_instructions_md = db.Column(db.Text)
 
+    unique_validators_for_example_tags = db.Column(db.Boolean, default=False)
+
     def __repr__(self):
         return f"<Task {self.name}>"
 

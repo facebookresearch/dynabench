@@ -58,7 +58,8 @@ def validate_example(credentials, eid):
     validations = vm.getByEid(eid)
     label_counts = {"flagged": 0, "correct": 0, "incorrect": 0}
     for validation in validations:
-        label_counts[validation.label.name] += 1
+        if validation.label.name in label_counts:
+            label_counts[validation.label.name] += 1
         if validation.uid == credentials["id"] and mode != "owner":
             bottle.abort(403, "Access denied (you have already validated this example)")
     label_counts[label] += 1
@@ -95,6 +96,21 @@ def validate_example(credentials, eid):
 
     tm = TaskModel()
     task = tm.get(context.round.task.id)
+
+    if task.unique_validators_for_example_tags:
+        for other_example in em.getByTid(task.id):
+            if (
+                other_example.id != example.id
+                and other_example.tag is not None
+                and other_example.tag == example.tag
+            ):
+                vm.create(
+                    credentials["id"],
+                    other_example.id,
+                    "placeholder",
+                    mode,
+                    current_validation_metadata,
+                )
 
     rm = RoundModel()
     rm.updateLastActivity(context.r_realid)

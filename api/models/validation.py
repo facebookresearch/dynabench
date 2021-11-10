@@ -15,6 +15,7 @@ class LabelEnum(enum.Enum):
     flagged = "flagged"
     correct = "correct"
     incorrect = "incorrect"
+    placeholder = "placeholder"
 
 
 class ModeEnum(enum.Enum):
