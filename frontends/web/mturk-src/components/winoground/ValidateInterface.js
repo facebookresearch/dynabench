@@ -43,8 +43,13 @@ class ValidateInterface extends React.Component {
       data: {},
       loading: true,
       admin_or_owner: false,
-      examplesSubmitted: 0,
+      examplesSubmitted: [],
+      validatorActionsSubmitted: [],
       batchAmount: 10,
+      annotator_id: this.props.providerWorkerId,
+      mephisto_id: this.props.mephistoWorkerId,
+      agentId: this.props.agentId,
+      assignmentId: this.props.assignmentId,
     };
     this.getNewExample = this.getNewExample.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
@@ -191,8 +196,6 @@ class ValidateInterface extends React.Component {
           this.state.data[annotationConfigObj.name];
       }
     }
-    console.log("yo")
-    console.log(this.state.examplesSubmitted)
 
     this.context.api
       .validateExample(
@@ -204,10 +207,9 @@ class ValidateInterface extends React.Component {
       )
       .then(
         (result) => {
-          console.log("yo")
-          console.log(this.state.examplesSubmitted)
-          this.setState({examplesSubmitted: this.state.examplesSubmitted + 1},
-          this.getNewExample());
+          this.state.examplesSubmitted.push(this.state.example)
+          this.state.validatorActionsSubmitted.push(this.state.validatorAction)
+          this.getNewExample();
           if (!!result.badges) {
             this.setState({ showBadges: result.badges });
           }
@@ -353,7 +355,7 @@ class ValidateInterface extends React.Component {
         ></BadgeOverlay>
         <Container className="mb-5 pb-5">
           <Col className="m-auto" lg={12}>
-          {this.state.examplesSubmitted > this.state.batchAmount ?
+          {this.state.examplesSubmitted.length >= this.state.batchAmount ?
            (
             <>
               <p>Thank you for completing the HIT. You may now submit it by clicking below:</p>

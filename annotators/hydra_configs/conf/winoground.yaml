@@ -1,7 +1,7 @@
 #@package _global_
 mephisto:
   blueprint:
-    onboarding_qualification: winoground-qualification-13
+    onboarding_qualification: winoground-qualification-v1
   #architect:
   #  port: 4000
   task:
@@ -9,12 +9,13 @@ mephisto:
     task_title: Decide Whether a Caption Matches an Image
     task_description: >
       Your job is to decide whether a caption matches an image.
-    task_reward: 0.1
+    task_reward: 0.35
     assignment_duration_in_seconds: 3600
-    task_tags: "winoground,testing"
-    maximum_units_per_worker: 100
+    task_tags: "caption,image,image captioning,captioning,image-captioning"
+    maximum_units_per_worker: 400
     max_num_concurrent_units: 1000  # how much it launches at a given time (how many HITs running at any given time)
 dynabench:
   task_name: winoground
   frame_height: 0
-num_jobs: 6
+num_jobs: 1600
+preselected_qualifications: ["1000_hits_approved", "98_percent_approved", "english_only"]

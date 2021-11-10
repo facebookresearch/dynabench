@@ -68,7 +68,7 @@ class TestScriptConfig(RunScriptConfig):
     num_jobs: int = 3
     allow_qualifications: List[str] = ()
     block_qualifications: List[str] = ()
-    preselected_qualifications: List[str] = ("english_only",)
+    preselected_qualifications: List[str] = ("1000_hits_approved", "98_percent_approved", "english_only")
     frontend_dir: str = f"{CURRENT_DIRECTORY}/../frontends"
 
 
