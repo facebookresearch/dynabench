@@ -14,22 +14,23 @@ import {
 
 import { TokenAnnotator, TextAnnotator } from "react-text-annotate";
 
+import "./CreateInterface.css";
+
 class ContextInfoAns extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      text: 'national enquirer the national enquirer ( also commonly known as the enquirer ) is an american supermarket tabloid published by american media inc ( ami ) . founded in 1926 , the tabloid has gone through a number of changes over the years . the " enquirer " openly acknowledges that it will pay sources for tips , a practice generally disapproved of by the mainstream press . the tabloid has struggled with declining circulation figures because of competition from glossy tabloid publications . in may 2014 , american media announced a decision to shift the headquarters of the " national enquirer " from florida , where it had been located since 1971',
+      text:
+        'The National Enquirer (also commonly known as the Enquirer) is an American supermarket tabloid published by American Media Inc (AMI). Founded in 1926, the tabloid has gone through a number of changes over the years. The "Enquirer" openly acknowledges that it will pay sources for tips, a practice generally disapproved of by the mainstream press. The tabloid has struggled with declining circulation figures because of competition from glossy tabloid publications. In May 2014, American Media announced a decision to shift the headquarters of the "National Enquirer" from Florida, where it had been located since 1971.',
     };
   }
   render() {
     return (
       <>
         <TokenAnnotator
-          style={{
-            lineHeight: 1.5,
-          }}
-          className="context"
-          tokens={this.state.text.split(" ")}
+          id="tokenAnnotator"
+          className="mb-1 p-3 light-gray-bg qa-context"
+          tokens={this.state.text.split(/\b|(?<=[\s\(\)])|(?=[\s\(\)])/)}
           value={this.props.answer}
           onChange={this.props.updateAnswer}
           getSpan={(span) => ({
@@ -38,8 +39,8 @@ class ContextInfoAns extends React.Component {
           })}
         />
         <small>
-          Your goal: Select an answer in the context that answers the question
-          below.
+          <b>Your goal:</b> Select the text in the passage above that answers
+          the question below.
         </small>
       </>
     );
@@ -50,23 +51,23 @@ class ContextInfoQues extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      text: 'national enquirer the national enquirer ( also commonly known as the enquirer ) is an american supermarket tabloid published by american media inc ( ami ) . founded in 1926 , the tabloid has gone through a number of changes over the years . the " enquirer " openly acknowledges that it will pay sources for tips , a practice generally disapproved of by the mainstream press . the tabloid has struggled with declining circulation figures because of competition from glossy tabloid publications . in may 2014 , american media announced a decision to shift the headquarters of the " national enquirer " from florida , where it had been located since 1971',
+      text:
+      'The National Enquirer (also commonly known as the Enquirer) is an American supermarket tabloid published by American Media Inc (AMI). Founded in 1926, the tabloid has gone through a number of changes over the years. The "Enquirer" openly acknowledges that it will pay sources for tips, a practice generally disapproved of by the mainstream press. The tabloid has struggled with declining circulation figures because of competition from glossy tabloid publications. In May 2014, American Media announced a decision to shift the headquarters of the "National Enquirer" from Florida, where it had been located since 1971.',
     };
   }
   render() {
     return (
       <>
         <TokenAnnotator
-          style={{
-            lineHeight: 1.5,
-          }}
-          className="context"
-          tokens={this.state.text.split(" ")}
+          id="tokenAnnotator"
+          className="mb-1 p-3 light-gray-bg qa-context"
+          tokens={this.state.text.split(/\b|(?<=[\s\(\)])|(?=[\s\(\)])/)}
           value={this.props.answer}
         />
+
         <small>
-          Your goal: enter a question for which the highlighted span of text in
-          this passage is the correct answer.
+          <b>Your goal:</b> enter a question for which the highlighted span of
+          text in the passage is the correct answer.
         </small>
       </>
     );
@@ -83,16 +84,34 @@ class CreateInterfaceOnboardingAns extends React.Component {
       answer: [],
       answerNotSelected: true,
       target: 0,
+      answerCorrect: false,
     };
     this.handleResponseChange = this.handleResponseChange.bind(this);
     this.updateAnswer = this.updateAnswer.bind(this);
   }
   updateAnswer(value) {
+    const answers = {
+      1: ["mainstream press", "the mainstream press"],
+      2: ["1971"],
+      3: ["American Media Inc (AMI)", "American Media Inc"],
+      4: ["American supermarket tabloid", "an American supermarket tabloid", "supermarket tabloid"],
+      5: [
+        "declining circulation figures because of competition from glossy tabloid publications",
+        "declining circulation figures",
+      ],
+    };
     if (value.length > 0) {
       this.setState({
         answer: [value[value.length - 1]],
         answerNotSelected: false,
       });
+      var answer_text = value[value.length - 1].tokens.join("");
+      console.log(answers[this.props.step]);
+      console.log(answer_text);
+      if (answers[this.props.step].includes(answer_text)) {
+        this.props.showOnboardingNext(true);
+        console.log("Showing Next");
+      }
     } else {
       this.setState({ answer: value, answerNotSelected: false });
     }
@@ -105,8 +124,8 @@ class CreateInterfaceOnboardingAns extends React.Component {
     const answers = {
       1: ["mainstream press", "the mainstream press"],
       2: ["1971"],
-      3: ["american media inc ( ami )", "american media inc"],
-      4: ["american supermarket tabloid", "an american supermarket tabloid"],
+      3: ["American Media Inc (AMI)", "American Media Inc"],
+      4: ["American supermarket tabloid", "an American supermarket tabloid", "supermarket tabloid"],
       5: [
         "declining circulation figures because of competition from glossy tabloid publications",
         "declining circulation figures",
@@ -125,28 +144,38 @@ class CreateInterfaceOnboardingAns extends React.Component {
         updateAnswer={this.updateAnswer}
       />
     );
+
     var answer_correct = <></>;
     if (this.state.answer.length > 0) {
       var last_answer = this.state.answer[this.state.answer.length - 1];
-      var answer_text = last_answer.tokens.join(" ");
+      var answer_text = last_answer.tokens.join("");
       if (answers[this.props.step].includes(answer_text)) {
-        answer_correct = <Row>Correct Answer.</Row>;
+        answer_correct = (
+          <Row>
+            <p><b>Correct Answer!</b></p>
+          </Row>
+        );
       } else if (answer_text.includes(answers[this.props.step][0])) {
         if (this.props.step == 2) {
           answer_correct = (
             <Row>
-              Your answer is partially correct, the correct answer is{" "}
-              {answers[this.props.step][0]}. Remember to select the shortest
-              possible span of text that completely answers the given question.
+              <p>
+                Your answer is partially correct, the correct answer is{" "}
+                {answers[this.props.step][0]}. Remember to select the shortest
+                possible span of text that completely answers the given
+                question.
+              </p>
             </Row>
           );
         } else {
           answer_correct = (
             <Row>
-              Your answer is partially correct, the correct answer is{" "}
-              {answers[this.props.step][0]} or {answers[this.props.step][1]}.
-              Remember to select the shortest possible span of text that
-              completely answers the given question.
+              <p>
+                Your answer is partially correct, the correct answer is{" "}
+                {answers[this.props.step][0]} or {answers[this.props.step][1]}.
+                Remember to select the shortest possible span of text that
+                completely answers the given question.
+              </p>
             </Row>
           );
         }
@@ -154,14 +183,20 @@ class CreateInterfaceOnboardingAns extends React.Component {
         if (this.props.step == 2) {
           answer_correct = (
             <Row>
-              Wrong Answer! Correct answer is {answers[this.props.step][0]}
+              <p>
+                Sorry, <b>wrong answer</b>. The correct answer is{" "}
+                <em>{answers[this.props.step][0]}</em>.
+              </p>
             </Row>
           );
         } else {
           answer_correct = (
             <Row>
-              Wrong Answer! Correct answer is {answers[this.props.step][0]} or{" "}
-              {answers[this.props.step][1]}
+              <p>
+                Sorry, <b>wrong answer</b>. The correct answer is{" "}
+                <em>{answers[this.props.step][0]}</em> or{" "}
+                <em>{answers[this.props.step][1]}</em>.
+              </p>
             </Row>
           );
         }
@@ -170,7 +205,10 @@ class CreateInterfaceOnboardingAns extends React.Component {
     return (
       <Container>
         <Row>
-          <h2>Given the question, highlight the correct answer. 1/5</h2>
+          <h2>
+            Given the question, highlight the correct answer. {this.props.step}
+            /5
+          </h2>
         </Row>
         <Row>
           <CardGroup style={{ marginTop: 20, width: "100%" }}>
@@ -182,9 +220,9 @@ class CreateInterfaceOnboardingAns extends React.Component {
           </CardGroup>
           {this.props.step != 10 && (
             <InputGroup>
-              <br />
-              Question: {questions[this.props.step - 1]}
-              <br />
+              <p className="mt-3">
+                <b>Question:</b> {questions[this.props.step - 1]}
+              </p>
               <br />
             </InputGroup>
           )}
@@ -224,19 +262,22 @@ class CreateInterfaceOnboardingQues extends React.Component {
   }
   handleResponseChange(e) {
     this.setState({ hypothesis: e.target.value });
+    this.props.showOnboardingNext(true);
   }
   render() {
     const answers = {
-      6: [{ start: 0, end: 2, tag: "ANS" }],
-      7: [{ start: 85, end: 87, tag: "ANS" }],
-      8: [{ start: 53, end: 57, tag: "ANS" }],
-      9: [{ start: 78, end: 83, tag: "ANS" }],
+      6: [{ start: 0, end: 5, tag: "ANS" }],
+      7: [{ start: 64, end: 75, tag: "ANS" }],
+      8: [{ start: 49, end: 50, tag: "ANS" }],
+      9: [{ start: 154, end: 157, tag: "ANS" }],
     };
     const content = <ContextInfoQues answer={answers[this.props.step]} />;
     return (
       <Container>
         <Row>
-          <h2>Generate Question for the given answer. 1/4</h2>
+          <h2>
+            Write a Question for the given answer. {this.props.step - 5}/4
+          </h2>
         </Row>
         <Row>
           <CardGroup style={{ marginTop: 20, width: "100%" }}>
@@ -256,7 +297,7 @@ class CreateInterfaceOnboardingQues extends React.Component {
           </InputGroup>
           <InputGroup>
             <small className="form-text text-muted">
-              Please enter your input. Remember, the goal is to generate an
+              Please enter your question. Remember, the goal is to generate an
               example in accordance with the instructions. Load time may be
               slow; please be patient.
             </small>

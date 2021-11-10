@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 
 # Copyright (c) Facebook, Inc. and its affiliates.
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
-
 #
 
 import os
 import subprocess
+import sys
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
@@ -21,6 +19,7 @@ from mephisto.abstractions.blueprints.static_react_task.static_react_blueprint i
 from mephisto.operations.hydra_config import RunScriptConfig, register_script_config
 from mephisto.operations.operator import Operator
 from mephisto.tools.scripts import load_db_and_process_config
+from mephisto.data_model.qualification import QUAL_EXISTS, QUAL_NOT_EXIST, make_qualification_dict
 from omegaconf import DictConfig
 
 from util import get_qualifications
@@ -42,6 +41,7 @@ class DynaBenchConfig:
     task_id: int = 0
     round_id: int = 0
     block_mobile: Optional[bool] = True
+    frame_height: Optional[int] = 1200
     fetching_tags: Optional[str] = None
     fetching_method: Optional[str] = None
     # ; separating dictionary keys;
@@ -56,21 +56,23 @@ class DynaBenchConfig:
 class TestScriptConfig(RunScriptConfig):
     defaults: List[Any] = field(  # noqa
         default_factory=lambda: [
+            "_self_",
             {"mephisto/blueprint": BLUEPRINT_TYPE},
             {"mephisto/architect": "local"},
             {"mephisto/provider": "mock"},
             "conf/base",
-            {"conf": "nli_r1"},
+            {"conf": "winoground"},
         ]
     )
     dynabench: DynaBenchConfig = DynaBenchConfig()
     num_jobs: int = 3
-    preselected_qualifications: List[str] = ("100_hits_approved", "english_only")
+    allow_qualifications: List[str] = ()
+    block_qualifications: List[str] = ()
+    preselected_qualifications: List[str] = ("english_only",)
     frontend_dir: str = f"{CURRENT_DIRECTORY}/../frontends"
 
 
 register_script_config(name="scriptconfig", module=TestScriptConfig)
-
 
 def build_frontend(frontend_dir):
     # automatically build frontend:
@@ -98,8 +100,12 @@ def build_frontend(frontend_dir):
     os.chdir(return_dir)
 
 
-@hydra.main(config_name="scriptconfig")
+@hydra.main(config_path="hydra_configs", config_name='scriptconfig')
 def main(cfg: DictConfig) -> None:
+    print("Config is:")
+    print(cfg)
+    print(f"LAUNCHING {cfg.num_jobs} JOBS!!!")
+
     num_jobs = cfg.num_jobs
     static_task_data = [{} for _ in range(num_jobs)]
     mturk_specific_qualifications = get_qualifications(cfg.preselected_qualifications)
@@ -127,12 +133,36 @@ def main(cfg: DictConfig) -> None:
     )
     # qualifications will be picked up at mturk_provider.py
 
+    # MAXEDIT
+    # Add allow qualifications
+    for allow_qualification in cfg.allow_qualifications:
+        shared_state.qualifications.append(
+            make_qualification_dict(
+                allow_qualification,
+                QUAL_EXISTS,
+                None
+            )
+        )
+    # Add block qualifications
+    for block_qualification in cfg.block_qualifications:
+        shared_state.qualifications.append(
+            make_qualification_dict(
+                block_qualification,
+                QUAL_NOT_EXIST,
+                None
+            )
+        )
+
     build_frontend(cfg.frontend_dir)
 
     db, cfg = load_db_and_process_config(cfg)
     operator = Operator(db)
 
     operator.validate_and_run_config(cfg.mephisto, shared_state)
+
+    print("Qualifications:")
+    print(shared_state.qualifications)
+
     operator.wait_for_runs_then_shutdown(skip_input=True, log_rate=30)
 
 

@@ -18,14 +18,14 @@ import {
   Spinner,
   InputGroup,
 } from "react-bootstrap";
-import UserContext from "../../containers/UserContext";
+import UserContext from "../../../src/containers/UserContext";
 import {
   OverlayProvider,
   BadgeOverlay,
   Annotation,
-} from "../../containers/Overlay";
-import AnnotationComponent from "./AnnotationComponent.js";
-import initializeData from "./InitializeAnnotationData.js";
+} from "../../../src/containers/Overlay";
+import AnnotationComponent from "../../../src/common/Annotation/AnnotationComponent.js";
+import initializeData from "../../../src/common/Annotation/InitializeAnnotationData.js";
 
 class ValidateInterface extends React.Component {
   static contextType = UserContext;
@@ -43,6 +43,8 @@ class ValidateInterface extends React.Component {
       data: {},
       loading: true,
       admin_or_owner: false,
+      examplesSubmitted: 0,
+      batchAmount: 10,
     };
     this.getNewExample = this.getNewExample.bind(this);
     this.handleResponse = this.handleResponse.bind(this);
@@ -53,6 +55,7 @@ class ValidateInterface extends React.Component {
       this.updateOwnerValidationFlagFilter.bind(this);
     this.updateOwnerValidationDisagreementFilter =
       this.updateOwnerValidationDisagreementFilter.bind(this);
+    this.handleTaskSubmit = this.handleTaskSubmit.bind(this);
   }
   componentDidMount() {
     const {
@@ -69,7 +72,6 @@ class ValidateInterface extends React.Component {
           encodeURIComponent(`/tasks/${params.taskCode}/validate`)
       );
     }
-
     if (this.context.user.settings_json) {
       const settings = JSON.parse(this.context.user.settings_json);
       if (settings.hasOwnProperty("owner_validation_flag_filter")) {
@@ -84,7 +86,6 @@ class ValidateInterface extends React.Component {
         });
       }
     }
-
     this.setState({ taskCode: params.taskCode }, function () {
       this.context.api.getTask(this.state.taskCode).then(
         (result) => {
@@ -118,6 +119,10 @@ class ValidateInterface extends React.Component {
         }
       );
     });
+  }
+
+  handleTaskSubmit() {
+    this.props.onSubmit(this.state);
   }
 
   getNewExample() {
@@ -186,6 +191,8 @@ class ValidateInterface extends React.Component {
           this.state.data[annotationConfigObj.name];
       }
     }
+    console.log("yo")
+    console.log(this.state.examplesSubmitted)
 
     this.context.api
       .validateExample(
@@ -197,7 +204,10 @@ class ValidateInterface extends React.Component {
       )
       .then(
         (result) => {
-          this.getNewExample();
+          console.log("yo")
+          console.log(this.state.examplesSubmitted)
+          this.setState({examplesSubmitted: this.state.examplesSubmitted + 1},
+          this.getNewExample());
           if (!!result.badges) {
             this.setState({ showBadges: result.badges });
           }
@@ -296,7 +306,7 @@ class ValidateInterface extends React.Component {
 
     const contextInterface = this.state.annotationConfig?.context.map(
       (annotationConfigObj) => (
-        <div key={annotationConfigObj.name} className="mb-1 mt-1">
+        <div key={annotationConfigObj.name} className="mb-3 mt-3">
           <AnnotationComponent
             displayName={annotationConfigObj.display_name}
             className="name-display-primary"
@@ -343,6 +353,30 @@ class ValidateInterface extends React.Component {
         ></BadgeOverlay>
         <Container className="mb-5 pb-5">
           <Col className="m-auto" lg={12}>
+          {this.state.examplesSubmitted > this.state.batchAmount ?
+           (
+            <>
+              <p>Thank you for completing the HIT. You may now submit it by clicking below:</p>
+              <p>
+                <Button
+                  className="btn btn-primary btn-primary mt-2 py-2"
+                  onClick={this.handleTaskSubmit}
+                >
+                  Submit HIT
+                </Button>
+              </p>
+            </>
+          ) : ( <>
+            <Modal
+              show={!!this.props.warning}
+              onHide={() => {this.props.setWarning(null)}}
+            >
+              <Modal.Header closeButton>
+                <Modal.Title><p style={{ color: "red" }}>
+                  {this.props.warning}
+                </p></Modal.Title>
+              </Modal.Header>
+            </Modal>
             {this.state.admin_or_owner && (
               <div style={{ float: "right" }}>
                 <Annotation
@@ -455,6 +489,7 @@ class ValidateInterface extends React.Component {
                   <>
                     {contextInterface && contextInterface.length > 0 && (
                       <div className="mb-1 p-3 rounded light-gray-bg">
+                        <strong>Instructions:</strong> Select whether the image matches the caption. Pay close attention to the word order.
                         {contextInterface}
                       </div>
                     )}
@@ -463,7 +498,7 @@ class ValidateInterface extends React.Component {
                         <Col xs={12} md={7}>
                           {inputMetadataInterface}
                           <h6 className="text-uppercase dark-blue-color spaced-header">
-                            Actions:
+                            Does the caption match the image?
                           </h6>
                           <InputGroup className="align-items-center">
                             <Form.Check
@@ -474,7 +509,7 @@ class ValidateInterface extends React.Component {
                               }
                             />
                             <i className="fas fa-thumbs-up"></i> &nbsp;{" "}
-                            {this.state.ownerMode && "Verified "} Correct
+                            {this.state.ownerMode && "Verified "} Yes
                           </InputGroup>
                           <InputGroup className="align-items-center">
                             <Form.Check
@@ -487,9 +522,9 @@ class ValidateInterface extends React.Component {
                               }
                             />
                             <i className="fas fa-thumbs-down"></i> &nbsp;{" "}
-                            {this.state.ownerMode && "Verified "} Incorrect
+                            {this.state.ownerMode && "Verified "} No
                           </InputGroup>
-                          {!this.state.ownerMode && (
+                          {false && !this.state.ownerMode && (
                             <InputGroup className="align-items-center">
                               <Form.Check
                                 checked={
@@ -521,12 +556,14 @@ class ValidateInterface extends React.Component {
                       <InputGroup className="align-items-center">
                         <Button
                           type="button"
+                          disabled={!this.state.validatorAction}
                           className="font-weight-bold blue-bg border-0 task-action-btn"
                           onClick={() => this.handleResponse()}
                         >
                           {" "}
                           Submit{" "}
                         </Button>
+                        {false &&
                         <Button
                           data-index={this.props.index}
                           onClick={this.getNewExample}
@@ -535,19 +572,34 @@ class ValidateInterface extends React.Component {
                         >
                           <i className="fas fa-undo-alt"></i> Skip and load new
                           example
-                        </Button>
+                        </Button>}
                       </InputGroup>
                     </Card.Body>
                   </>
                 ) : (
                   <Card.Body className="p-3">
                     <Row>
-                      <Col xs={12} md={7}>
-                        <p>
-                          No more examples to be verified. Please create more
-                          examples!
-                        </p>
-                      </Col>
+                    <Col lg={12}>
+                      {this.state.examplesSubmitted > 0 ? (
+                        <>
+                          <p>There are no more examples to be validated!</p>
+                          <p>Thank you for completing the HIT. You may now submit it by clicking below:</p>
+                          <p>
+                            <Button
+                              className="btn btn-primary btn-success mt-2 py-2"
+                              onClick={this.handleTaskSubmit}
+                            >
+                              Submit HIT
+                            </Button>
+                          </p>
+                        </>
+                      ) : (
+                          <>
+                            <p>Sorry, there are currently no examples for validation.</p>
+                            <p>We may have more examples ready for validation in the coming days. Thank you for your patience.</p>
+                          </>
+                      )}
+                    </Col>
                     </Row>
                   </Card.Body>
                 )
@@ -565,7 +617,7 @@ class ValidateInterface extends React.Component {
                   </p>
                 )}
               </div>
-            </Card>
+            </Card></>)}
           </Col>
         </Container>
       </OverlayProvider>

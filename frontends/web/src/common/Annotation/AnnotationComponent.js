@@ -273,7 +273,7 @@ const ImageComponent = ({
       <h6 className={"spaced-header " + className}>
         {displayName ? displayName : name}:
       </h6>
-      <AtomicImage src={data[name]} />
+      <AtomicImage src={data[name]} maxHeight={500}/>
     </>
   );
 };

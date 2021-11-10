@@ -7,11 +7,6 @@
 import React from "react";
 
 import {
-  YixinTaskPreview,
-  YixinTaskOnboarder,
-  YixinTaskMain,
-} from "./yixin/core.jsx";
-import {
   DivyanshNLITaskPreview,
   DivyanshNLITaskOnboarder,
   DivyanshNLITaskMain,
@@ -27,6 +22,11 @@ import {
   NLITaskMain,
 } from "./nli-1/core.jsx";
 import {
+  WinogroundTaskPreview,
+  WinogroundTaskOnboarder,
+  WinogroundTaskMain,
+} from "./winoground/core.jsx";
+import {
   DivyanshVerifyQATaskPreview,
   DivyanshVerifyQATaskOnboarder,
   DivyanshVerifyQATaskMain,
@@ -41,19 +41,8 @@ import {
   NLIR4TaskOnboarder,
   NLIR4TaskMain,
 } from "./yixin/nli-4-mtuk/core.jsx";
-import {
-  VQATaskPreview,
-  VQATaskOnboarder,
-  VQATaskMain,
-} from "./vqa/vqa-main/core.jsx";
-import {
-  VQAValPreview,
-  VQAValOnboarding,
-  VQAValMain,
-} from "./vqa/vqa-val/core.jsx";
 
 const TaskComponents = {
-  "yixin-1": [YixinTaskPreview, YixinTaskOnboarder, YixinTaskMain],
   "divyansh-nli-1": [
     DivyanshNLITaskPreview,
     DivyanshNLITaskOnboarder,
@@ -70,10 +59,9 @@ const TaskComponents = {
     DivyanshVerifyQATaskMain,
   ],
   "nli-1": [NLITaskPreview, NLITaskOnboarder, NLITaskMain],
+  "winoground": [WinogroundTaskPreview, WinogroundTaskOnboarder, WinogroundTaskMain],
   "nli-4-mturk": [NLIR4TaskPreview, NLIR4TaskOnboarder, NLIR4TaskMain],
   "sa-zen": [SentimentTaskPreview, SentimentTaskOnboarder, SentimentTaskMain],
-  "vqa-1": [VQATaskPreview, VQATaskOnboarder, VQATaskMain],
-  "vqa-val-1": [VQAValPreview, VQAValOnboarding, VQAValMain],
   // TODO: New tasks are added here
 };
 

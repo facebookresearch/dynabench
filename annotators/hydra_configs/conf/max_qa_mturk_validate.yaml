@@ -1,0 +1,31 @@
+#@package _global_
+mephisto:
+  blueprint:
+    onboarding_qualification: max-qa-1-val-onboarding-v2
+    block_qualification: max-qa-1-onboarding-v2
+  # architect:
+  #   port: 4000
+  task:
+    task_name: max-qa-1-validate
+    task_title: Validate Questions and Answers | Reading Comprehension
+    task_description: >
+      You will be presented with a short passage of text from Wikipedia, a question, and an answer. You will then be asked to validate the example.
+    task_reward: 0.40
+    assignment_duration_in_seconds: 3600
+    maximum_units_per_worker: 100
+    max_num_concurrent_units: 1000  # how much it launches at a given time (how many HITs running at any given time)
+    task_tags: "question answering, question, reading comprehension, AI, validation"
+dynabench:
+  task_name: max-qa-1-validate
+  task_id: 2
+  round_id: 3
+  block_mobile: True
+  frame_height: 0
+  # fetching_tags: "max_scalingannotation_pilot"
+  # tag_to_store_with_examples is required
+  extra_logging: "tag_to_store_with_examples:max_validate"
+num_jobs: 500
+preselected_qualifications: ["1000_hits_approved", "98_percent_approved", "english_only"]
+block_qualifications: ["max-worker-blocked", "max-validator-blocked", "max-qa-1-onboarding", "max-qa-1-val-onboarding"]
+# num_jobs: 5
+# preselected_qualifications: []

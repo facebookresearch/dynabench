@@ -6,7 +6,7 @@
 
 import React from "react";
 
-import { CreateInterface } from "../CreateInterface.js";
+import ValidateInterface from "../../../src/common/Annotation/ValidateInterface.js";
 import { Button } from "react-bootstrap";
 
 class NLITaskPreview extends React.Component {
@@ -57,7 +57,7 @@ class NLITaskMain extends React.Component {
     console.log(props);
   }
   render() {
-    return <CreateInterface api={this.api} {...this.props} />;
+    return <ValidateInterface  {...this.props} api={this.api} match={{params: {taskCode: "wino"}}} mturk={true} />;
   }
 }
 
