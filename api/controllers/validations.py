@@ -99,7 +99,6 @@ def validate_example(credentials, eid):
 
     if task.unique_validators_for_example_tags:
         for other_example in em.getByTid(task.id):
-            # TODO: generalize this.
             if (
                 other_example.id != example.id
                 and other_example.tag is not None
