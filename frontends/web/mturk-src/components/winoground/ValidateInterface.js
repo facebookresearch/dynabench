@@ -45,7 +45,7 @@ class ValidateInterface extends React.Component {
       admin_or_owner: false,
       examplesSubmitted: [],
       validatorActionsSubmitted: [],
-      batchAmount: 10,
+      batchAmount: this.props.batchAmount,
       annotator_id: this.props.providerWorkerId,
       mephisto_id: this.props.mephistoWorkerId,
       agentId: this.props.agentId,

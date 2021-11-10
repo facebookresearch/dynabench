@@ -198,7 +198,7 @@ class WinogroundTaskOnboarder extends React.Component {
         </Button>
       </>
     ) :
-    <ValidateInterface  {...this.props} api={this} match={{params: {taskCode: "wino"}}} mturk={true} setWarning={this.setWarning} warning={this.state.warning}/>
+    <ValidateInterface  batchAmount={11} {...this.props} api={this} match={{params: {taskCode: "wino"}}} mturk={true} setWarning={this.setWarning} warning={this.state.warning}/>
   );
   }
 }
@@ -209,8 +209,7 @@ class WinogroundTaskMain extends React.Component {
     this.api = props.api;
   }
   render() {
-    console.log("yo")
-    return <ValidateInterface {...this.props} api={this.api} match={{params: {taskCode: "wino"}}} mturk={true} />;
+    return <ValidateInterface batchAmount={10} {...this.props} api={this.api} match={{params: {taskCode: "wino"}}} mturk={true} />;
   }
 }
 

@@ -9,7 +9,9 @@
     "bootstrap": "^4.5.0",
     "bootstrap-switch-button-react": "^1.2.0",
     "css-loader": "^3.6.0",
+    "dom-helpers": "^5.2.1",
     "downloadjs": "^1.4.7",
+    "esm": "^3.2.25",
     "formik": "^2.1.4",
     "highcharts": "^9.1.0",
     "highcharts-react-official": "^3.0.0",
@@ -17,6 +19,7 @@
     "mephisto-task": "^1.0.10",
     "moment": "^2.24.0",
     "prop-types": "^15.7.2",
+    "prop-types-extra": "^1.1.1",
     "qs": "^6.9.3",
     "react": "^16.13.1",
     "react-bootstrap": "^1.2.2",
@@ -26,6 +29,7 @@
     "react-magnifier": "^3.0.4",
     "react-markdown": "^5.0.2",
     "react-moment": "^0.9.7",
+    "react-overlays": "^5.1.1",
     "react-player": "^2.6.2",
     "react-powerplug": "^1.0.0",
     "react-router-dom": "^5.2.0",
@@ -33,9 +37,11 @@
     "react-scripts": "^4.0.3",
     "react-table": "^7.7.0",
     "react-text-annotate": "^0.3.0",
+    "react-transition-group": "^4.4.2",
     "recharts": "^1.8.5",
     "set-value": "^4.0.1",
-    "style-loader": "^1.2.1"
+    "style-loader": "^1.2.1",
+    "uncontrollable": "^7.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.10.5",
@@ -47,7 +53,8 @@
     "prettier": "^2.2.1",
     "stylelint": "^13.11.0",
     "stylelint-config-prettier": "^8.0.1",
-    "stylelint-config-standard": "^20.0.0"
+    "stylelint-config-standard": "^20.0.0",
+    "webpack-cli": "^4.9.1"
   },
   "eslintConfig": {
     "extends": [
@@ -59,7 +66,7 @@
   },
   "scripts": {
     "webpack": "webpack",
-    "start": "HTTPS=true SSL_CRT_FILE=/home/ubuntu/.ssl/dynabench.org.crt SSL_KEY_FILE=/home/ubuntu/.ssl/dynabench.org-key.pem react-scripts start",
+    "start": "HTTPS=false SSL_CRT_FILE=/home/ubuntu/.ssl/dynabench.org.crt SSL_KEY_FILE=/home/ubuntu/.ssl/dynabench.org-key.pem react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
