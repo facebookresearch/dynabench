@@ -10,10 +10,10 @@ import time
 import boto3
 import bottle
 import sqlalchemy as db
+import ujson
 
 import common.auth as _auth
 import common.helpers as util
-import ujson
 from common.config import config
 from common.logging import logger
 from models.badge import BadgeModel
@@ -85,7 +85,7 @@ def do_upload_via_predictions(credentials, tid, model_name):
     for name, upload in uploads.items():
         try:
             parsed_upload = [
-                ujson.loads(line)
+                util.json_decode(line)
                 for line in upload.file.read().decode("utf-8").splitlines()
             ]
             for io in parsed_upload:
@@ -127,7 +127,7 @@ def do_upload_via_predictions(credentials, tid, model_name):
                     # Why do we use two seperate names for the same thing? Can we make
                     # this consistent?
                     del datum["uid"]
-                    tmp.write(ujson.dumps(datum) + "\n")
+                    tmp.write(util.json_encode(datum) + "\n")
                 tmp.close()
                 ret = _eval_dataset(dataset_name, endpoint_name, model, task, tmp.name)
                 status_dict.update(ret)
@@ -206,8 +206,14 @@ def get_model_detail(credentials, mid):
             and query_result[0].uid != credentials["id"]
         ):
             ensure_owner_or_admin(query_result[0].tid, credentials["id"])
-        model["username"] = query_result[1].username
-        model["user_id"] = query_result[1].id
+
+        is_current_user = util.is_current_user(query_result[1].id, credentials)
+
+        if not is_current_user and query_result[0].is_anonymous:
+            model["username"] = None
+            model["uid"] = None
+        else:
+            model["username"] = query_result[1].username
         # Construct Score information based on model id
         scores = s.getByMid(mid)
         datasets = dm.getByTid(model["tid"])
@@ -284,6 +290,7 @@ def update_model(credentials, mid):
             license=data["license"],
             source_url=data["source_url"],
             model_card=data["model_card"],
+            is_anonymous=data["is_anonymous"],
             is_published=False,
         )
         return {"status": "success"}
@@ -405,7 +412,66 @@ def upload_to_s3(credentials):
     sqs = session.resource("sqs")
     queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
     queue.send_message(
-        MessageBody=ujson.dumps(
+        MessageBody=util.json_encode(
             {"model_id": model.id, "s3_uri": f"s3://{bucket_name}/{s3_path}"}
         )
     )
+
+
+@bottle.get("/models/<mid:int>/deploy")
+@_auth.requires_auth
+def deploy_model_from_s3(credentials, mid):
+    # Authentication (only authenticated users can redeploy models for interaction)
+    u = UserModel()
+    user_id = credentials["id"]
+    user = u.get(user_id)
+    if not user:
+        logger.error("Invalid user detail for id (%s)" % (user_id))
+        bottle.abort(404, "User information not found")
+
+    m = ModelModel()
+    model = m.getUnpublishedModelByMid(mid)
+
+    model_owner = model.uid == user.id
+
+    if (not model.is_published) and (not model_owner):
+        bottle.abort(403, "Model is not published and user is not model owner")
+
+    if model.deployment_status != DeploymentStatusEnum.takendownnonactive:
+        bottle.abort(
+            403, "Attempting to deploy a model not taken down due to inactivity"
+        )
+
+    model_name = model.name
+
+    t = TaskModel()
+    task = t.getByTaskId(model.tid)
+    task_code = task.task_code
+    bucket_name = task.s3_bucket
+
+    endpoint_name = model.endpoint_name
+    s3_filename = f"{endpoint_name}.tar.gz"
+    s3_path = f"torchserve/models/{task_code}/{s3_filename}"
+
+    # Update database entry
+    session = boto3.Session(
+        aws_access_key_id=config["aws_access_key_id"],
+        aws_secret_access_key=config["aws_secret_access_key"],
+        region_name=config["aws_region"],
+    )
+
+    # send SQS message
+    logger.info(f"Send message to sqs - enqueue model {model_name} for re-deployment")
+    sqs = session.resource("sqs")
+    queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
+    queue.send_message(
+        MessageBody=ujson.dumps(
+            {
+                "model_id": model.id,
+                "s3_uri": f"s3://{bucket_name}/{s3_path}",
+                "endpoint_only": True,
+            }
+        )
+    )
+
+    return {"status": "success"}

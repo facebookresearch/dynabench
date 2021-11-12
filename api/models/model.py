@@ -6,6 +6,7 @@ import enum
 import sqlalchemy as db
 
 from common import helpers as util
+from models.round import Round
 from models.user import User
 
 from .base import Base, BaseModel
@@ -20,6 +21,7 @@ class DeploymentStatusEnum(enum.Enum):
     unknown = "unknown"
     takendown = "takendown"
     predictions_upload = "predictions_upload"
+    takendownnonactive = "takendownnonactive"
 
 
 class EvaluationStatusEnum(enum.Enum):
@@ -55,6 +57,7 @@ class Model(Base):
     source_url = db.Column(db.Text)
 
     is_published = db.Column(db.BOOLEAN, default=False)
+    is_anonymous = db.Column(db.BOOLEAN, default=False)
 
     # deployment
     endpoint_name = db.Column(db.Text)
@@ -110,6 +113,7 @@ class ModelModel(BaseModel):
             self.dbs.query(Model)
             .filter(Model.id == id)
             .filter(Model.is_published == True)  # noqa
+            .filter(Model.is_anonymous == False)  # noqa
             .one()
         )
 
@@ -119,7 +123,9 @@ class ModelModel(BaseModel):
     def getUserModelsByUid(self, uid, is_current_user=False, n=5, offset=0):
         query_res = self.dbs.query(Model).filter(Model.uid == uid)
         if not is_current_user:
-            query_res = query_res.filter(Model.is_published == True)  # noqa
+            query_res = query_res.filter(
+                db.and_(Model.is_published == True, Model.is_anonymous == False)
+            )  # noqa
         return query_res.limit(n).offset(offset * n), util.get_query_count(query_res)
 
     def getUserModelsByUidAndMid(self, uid, mid, is_current_user=False):
@@ -127,7 +133,9 @@ class ModelModel(BaseModel):
             self.dbs.query(Model).filter(Model.uid == uid).filter(Model.id == mid)
         )
         if not is_current_user:
-            return query_res.filter(Model.is_published == True).one()  # noqa
+            query_res = query_res.filter(
+                db.and_(Model.is_published == True, Model.is_anonymous == False)
+            )  # noqa
         return query_res.one()
 
     def getModelUserByMid(self, id):
@@ -142,6 +150,40 @@ class ModelModel(BaseModel):
         return (
             self.dbs.query(Model)
             .filter(Model.deployment_status == deployment_status)
+            .all()
+        )
+
+    def getByPublishStatus(self, publish_status):
+        return self.dbs.query(Model).filter(Model.is_published == publish_status).all()
+
+    def getByInTheLoopStatus(self, in_the_loop):
+        if in_the_loop:
+            return (
+                self.dbs.query(Model)
+                .join(Round, Round.tid == Model.tid)
+                .filter(Round.url.contains(Model.endpoint_name))
+                .distinct()
+            )
+        else:
+            sub_query = (
+                self.dbs.query(Model.id)
+                .join(Round, Round.tid == Model.tid)
+                .filter(Round.url.contains(Model.endpoint_name))
+                .distinct()
+                .subquery()
+            )
+            return self.dbs.query(Model).filter(db.not_(Model.id.in_(sub_query))).all()
+
+    def getByDeployedAndEndpointName(self, endpoint_name):
+        return (
+            self.dbs.query(Model)
+            .filter(Model.endpoint_name == endpoint_name)
+            .filter(
+                db.or_(
+                    Model.deployment_status == DeploymentStatusEnum.deployed,
+                    Model.deployment_status == DeploymentStatusEnum.created,
+                )
+            )
             .all()
         )
 

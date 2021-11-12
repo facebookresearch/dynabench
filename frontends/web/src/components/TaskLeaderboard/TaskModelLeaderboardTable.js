@@ -145,13 +145,16 @@ const TaskModelLeaderboardRow = ({ model, metrics, datasetWeights }) => {
               {model.model_name}
             </Link>
           ) : (
-            "Anonymous Model " + model.model_id
+            "Unpublished Model " + model.model_id
           )}{" "}
-          {model.username && (
-            <Link to={`/users/${model.uid}#profile`} className="btn-link">
-              ({model.username})
-            </Link>
-          )}
+          {model.model_name &&
+            (!model.uid ? (
+              "anonymous"
+            ) : (
+              <Link to={`/users/${model.uid}#profile`} className="btn-link">
+                ({model.username})
+              </Link>
+            ))}
           <div style={{ float: "right" }}>
             <ChevronExpandButton
               expanded={expanded}

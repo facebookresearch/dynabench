@@ -12,7 +12,6 @@ import bottle
 
 import common.auth as _auth
 import common.helpers as util
-import ujson
 from common.config import config
 from common.logging import logger
 from models.dataset import AccessTypeEnum, DatasetModel
@@ -60,7 +59,7 @@ def delete(credentials, did):
 
     delta_metric_types = [
         config["type"]
-        for config in ujson.loads(task.annotation_config_json)["delta_metrics"]
+        for config in util.json_decode(task.annotation_config_json)["delta_metrics"]
     ]
     delta_metric_types.append(None)
 
@@ -103,7 +102,7 @@ def create(credentials, tid, name):
     delta_dataset_uploads = []
     delta_metric_types = [
         config["type"]
-        for config in ujson.loads(task.annotation_config_json)["delta_metrics"]
+        for config in util.json_decode(task.annotation_config_json)["delta_metrics"]
     ]
     for delta_metric_type in delta_metric_types:
         delta_dataset_uploads.append(
@@ -117,7 +116,7 @@ def create(credentials, tid, name):
     for upload, perturb_prefix in uploads:
         try:
             parsed_upload = [
-                ujson.loads(line)
+                util.json_decode(line)
                 for line in upload.file.read().decode("utf-8").splitlines()
             ]
             for io in parsed_upload:
@@ -145,7 +144,7 @@ def create(credentials, tid, name):
             )
             with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
                 for datum in parsed_upload:
-                    tmp.write(ujson.dumps(task.convert_to_model_io(datum)) + "\n")
+                    tmp.write(util.json_encode(task.convert_to_model_io(datum)) + "\n")
                 tmp.close()
                 response = s3_client.upload_file(
                     tmp.name,

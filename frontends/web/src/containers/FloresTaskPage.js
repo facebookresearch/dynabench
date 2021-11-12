@@ -181,6 +181,7 @@ const FloresTaskPage = (props) => {
               <a
                 href="http://data.statmt.org/wmt21/multilingual-task/"
                 target="_blank"
+                rel="noreferrer"
               >
                 multilingual data page
               </a>{" "}

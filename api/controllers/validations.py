@@ -6,7 +6,6 @@ import bottle
 
 import common.auth as _auth
 import common.helpers as util
-import ujson
 from models.badge import BadgeModel
 from models.context import ContextModel
 from models.example import ExampleModel
@@ -59,7 +58,8 @@ def validate_example(credentials, eid):
     validations = vm.getByEid(eid)
     label_counts = {"flagged": 0, "correct": 0, "incorrect": 0}
     for validation in validations:
-        label_counts[validation.label.name] += 1
+        if validation.label.name in label_counts:
+            label_counts[validation.label.name] += 1
         if validation.uid == credentials["id"] and mode != "owner":
             bottle.abort(403, "Access denied (you have already validated this example)")
     label_counts[label] += 1
@@ -72,7 +72,7 @@ def validate_example(credentials, eid):
     if credentials["id"] == "turk":
         if not util.check_fields(data, ["uid"]):
             bottle.abort(400, "Missing data")
-        example_metadata = ujson.loads(example.metadata_json)
+        example_metadata = util.json_decode(example.metadata_json)
         if (
             "annotator_id" not in example_metadata
             or example_metadata["annotator_id"] == data["uid"]
@@ -81,7 +81,7 @@ def validate_example(credentials, eid):
         current_validation_metadata["annotator_id"] = data["uid"]
         for validation in validations:
             if (
-                ujson.loads(validation.metadata_json)["annotator_id"]
+                util.json_decode(validation.metadata_json)["annotator_id"]
                 == current_validation_metadata["annotator_id"]
             ):
                 bottle.abort(
@@ -96,6 +96,21 @@ def validate_example(credentials, eid):
 
     tm = TaskModel()
     task = tm.get(context.round.task.id)
+
+    if task.unique_validators_for_example_tags:
+        for other_example in em.getByTid(task.id):
+            if (
+                other_example.id != example.id
+                and other_example.tag is not None
+                and other_example.tag == example.tag
+            ):
+                vm.create(
+                    credentials["id"],
+                    other_example.id,
+                    "placeholder",
+                    mode,
+                    current_validation_metadata,
+                )
 
     rm = RoundModel()
     rm.updateLastActivity(context.r_realid)
@@ -121,7 +136,7 @@ def validate_example(credentials, eid):
                         example.uid, context.r_realid
                     )
                 if user.metadata_json is not None:
-                    user_metadata = ujson.loads(user.metadata_json)
+                    user_metadata = util.json_decode(user.metadata_json)
                     if (
                         task.task_code + "_fooling_no_verified_incorrect_or_flagged"
                         in user_metadata
@@ -139,7 +154,7 @@ def validate_example(credentials, eid):
                     user_metadata = {
                         task.task_code + "_fooling_no_verified_incorrect_or_flagged": 0
                     }
-                user.metadata_json = ujson.dumps(user_metadata)
+                user.metadata_json = util.json_encode(user_metadata)
                 um.dbs.commit()
 
     ret = example.to_dict()

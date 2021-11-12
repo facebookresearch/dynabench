@@ -7,8 +7,7 @@ import math
 import pandas as pd
 import sqlalchemy as db
 
-import ujson
-from common import helpers as util
+import common.helpers as util
 from models.dataset import AccessTypeEnum, Dataset
 from models.round import Round
 from models.task import TaskModel
@@ -116,7 +115,7 @@ class ScoreModel(BaseModel):
             if dataset.name not in dataset_name_to_tag_performances:
                 dataset_name_to_tag_performances[dataset.name] = {}
             if score.metadata_json is not None:
-                metadata = ujson.loads(score.metadata_json)
+                metadata = util.json_decode(score.metadata_json)
                 for tag_perf_dict in metadata.get("perf_by_tag", []):
 
                     # if we want only the top performance for a specific tag,
@@ -294,7 +293,7 @@ class ScoreModel(BaseModel):
             for metric_info in ordered_metrics_with_weight_and_conversion:
                 if (score.to_dict().get(metric_info["field_name"], None) is None) and (
                     score.metadata_json is None
-                    or ujson.loads(score.metadata_json).get(
+                    or util.json_decode(score.metadata_json).get(
                         metric_info["field_name"], None
                     )
                     is None
@@ -331,7 +330,7 @@ class ScoreModel(BaseModel):
                 for field_name in dataset_results_dict[dataset.id]:
                     result = score.to_dict().get(field_name, None)
                     if result is None:
-                        result = ujson.loads(score.metadata_json)[field_name]
+                        result = util.json_decode(score.metadata_json)[field_name]
                     dataset_results_dict[dataset.id][field_name].append(result)
 
         # Average the results accross datasets.
@@ -403,11 +402,13 @@ class ScoreModel(BaseModel):
             data_list.append(
                 {
                     "model_id": model.id,
-                    "model_name": model.name if model.is_published else None,  # Don't
-                    # give away the users for unpublished models.
-                    "uid": model.uid if model.is_published else None,
+                    "model_name": model.name if model.is_published else None,
+                    # Don't give away the users for unpublished models.
+                    "uid": model.uid
+                    if model.is_published and not model.is_anonymous
+                    else None,
                     "username": uid_to_username[model.uid]
-                    if model.is_published
+                    if model.is_published and not model.is_anonymous
                     else None,
                     "averaged_scores": averaged_scores,
                     "averaged_variances": averaged_variances,

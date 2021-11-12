@@ -10,7 +10,7 @@ import os
 import sqlalchemy as db
 from werkzeug.security import generate_password_hash
 
-import ujson
+import common.helpers as util
 
 
 def get_cls_name_helper(ss):
@@ -52,7 +52,7 @@ if __name__ == "__main__":
             config[field] = tmp
 
         with open("common/config.py", "w") as fw:
-            fw.write("config = " + ujson.dumps(config, indent=4, sort_keys=True))
+            fw.write("config = " + util.json_encode(config, indent=4, sort_keys=True))
             print("Wrote config to common/config.py - feel free to edit.")
     else:
         print("Config already exists.")
@@ -116,7 +116,7 @@ if __name__ == "__main__":
         name="Test",
         task_code="test",
         desc="Your test task",
-        annotation_config_json=ujson.dumps({}),
+        annotation_config_json=util.json_encode({}),
         cur_round=1,
     )
     dbs.add(t)
