@@ -22,7 +22,11 @@ const Advanced = (props) => {
               initialValues={{
                 annotation_config_json: props.task.annotation_config_json,
               }}
-              onSubmit={props.task.active ? props.handleAnnotationConfigUpdate : props.handleTaskActivate}
+              onSubmit={
+                props.task.active
+                  ? props.handleTaskUpdate
+                  : props.handleTaskActivate
+              }
             >
               {({
                 values,
@@ -43,15 +47,13 @@ const Advanced = (props) => {
                         <Row>
                           <Form.Label column>Task Configuration</Form.Label>
                           <Col sm="12">
-                            <Form.Text
-                              id="paramsHelpBlock"
-                              muted
-                            >
+                            <Form.Text id="paramsHelpBlock" muted>
                               <span style={{ color: "red" }}>BETA Notice</span>:
-                              {props.task.active ? " This task has been activated. Therefore, ": " Once this task has been activated, "}
-                              the task
-                              configuration can no longer be changed except for
-                              the following properties:
+                              {props.task.active
+                                ? " This task has been activated. Therefore, "
+                                : " Once this task has been activated, "}
+                              the task configuration can no longer be changed
+                              except for the following properties:
                               <ul>
                                 <li>
                                   aggregation_metric.constructor_args.default_weights
@@ -81,24 +83,27 @@ const Advanced = (props) => {
                           a Github issue if you have any questions.
                         </Form.Text>
                       </Form.Group>
-                      {errors.accept && (<Form.Group as={Row} className="py-3 my-0">
-                        <Col sm="8">
-                          <small className="form-text text-muted">
-                            {errors.accept}
-                          </small>
-                        </Col>
-                      </Form.Group>)}
-                        <Row className="justify-content-md-center">
-                          {dirty && (props.task.active ?
-                            (<Button
+                      {errors.accept && (
+                        <Form.Group as={Row} className="py-3 my-0">
+                          <Col sm="8">
+                            <small className="form-text text-muted">
+                              {errors.accept}
+                            </small>
+                          </Col>
+                        </Form.Group>
+                      )}
+                      <Row className="justify-content-md-center">
+                        {dirty &&
+                          (props.task.active ? (
+                            <Button
                               type="submit"
                               variant="primary"
                               className="text-uppercase my-4"
                               disabled={isSubmitting}
                             >
-                            Save
-                          </Button>)
-                             : (
+                              Save
+                            </Button>
+                          ) : (
                             <Button
                               type="submit"
                               variant="danger"
@@ -115,7 +120,7 @@ const Advanced = (props) => {
                               </small>
                             </Button>
                           ))}
-                        </Row>
+                      </Row>
                     </Container>
                   </form>
                 </>
