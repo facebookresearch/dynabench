@@ -260,6 +260,7 @@ class TaskOwnerPage extends React.Component {
       "hidden",
       "submitable",
       "create_endpoint",
+      "annotation_config_json",
     ];
 
     const data = Object.keys(values)

@@ -88,7 +88,13 @@ class AggregationMetricEnum(enum.Enum):
 
 
 def verify_dynascore_config(constructor_args):
-    pass
+    if "default_weights" in constructor_args:
+        for metric, default_weight in constructor_args["default_weights"].items():
+            assert metric in tuple(PerfMetricEnum.__members__) + tuple(
+                DeltaMetricEnum.__members__
+            ) + ("examples_per_second", "memory_utilization")
+
+            assert 0 <= default_weight <= 5
 
 
 aggregation_metric_config_verifiers = {
