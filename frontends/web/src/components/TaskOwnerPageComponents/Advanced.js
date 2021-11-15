@@ -22,7 +22,7 @@ const Advanced = (props) => {
               initialValues={{
                 annotation_config_json: props.task.annotation_config_json,
               }}
-              onSubmit={props.handleTaskActivate}
+              onSubmit={props.task.active ? props.handleAnnotationConfigUpdate : props.handleTaskActivate}
             >
               {({
                 values,
@@ -46,32 +46,28 @@ const Advanced = (props) => {
                             <Form.Text
                               id="paramsHelpBlock"
                               muted
-                              className="border-bottom"
                             >
                               <span style={{ color: "red" }}>BETA Notice</span>:
-                              Once this task has been activated, the task
-                              configuration can no longer be changed.
+                              {props.task.active ? " This task has been activated. Therefore, ": " Once this task has been activated, "}
+                              the task
+                              configuration can no longer be changed except for
+                              the following properties:
+                              <ul>
+                                <li>
+                                  aggregation_metric.constructor_args.default_weights
+                                </li>
+                              </ul>
                             </Form.Text>
                           </Col>
                         </Row>
                         <Col sm="12" className="light-gray-bg">
-                          {props.task.active ? (
-                            <Form.Control
-                              plaintext
-                              disabled
-                              rows="24"
-                              as="textarea"
-                              defaultValue={values.annotation_config_json}
-                            />
-                          ) : (
-                            <Form.Control
-                              as="textarea"
-                              defaultValue={values.annotation_config_json}
-                              rows="24"
-                              onChange={handleChange}
-                              style={{ fontSize: 10 }}
-                            />
-                          )}
+                          <Form.Control
+                            as="textarea"
+                            defaultValue={values.annotation_config_json}
+                            rows="24"
+                            onChange={handleChange}
+                            style={{ fontSize: 10 }}
+                          />
                         </Col>
                         <Form.Text id="paramsHelpBlock" muted>
                           DynaTask configuration strings are JSON objects that
@@ -85,31 +81,41 @@ const Advanced = (props) => {
                           a Github issue if you have any questions.
                         </Form.Text>
                       </Form.Group>
-                      <Form.Group as={Row} className="py-3 my-0">
+                      {errors.accept && (<Form.Group as={Row} className="py-3 my-0">
                         <Col sm="8">
                           <small className="form-text text-muted">
                             {errors.accept}
                           </small>
                         </Col>
-                      </Form.Group>
-                      <Row className="justify-content-md-center">
-                        {dirty && !props.task.active ? (
-                          <Button
-                            type="submit"
-                            variant="danger"
-                            size="lg"
-                            className="text-uppercase my-4"
-                            disabled={isSubmitting}
-                          >
+                      </Form.Group>)}
+                        <Row className="justify-content-md-center">
+                          {dirty && (props.task.active ?
+                            (<Button
+                              type="submit"
+                              variant="primary"
+                              className="text-uppercase my-4"
+                              disabled={isSubmitting}
+                            >
                             Save
-                            <br />{" "}
-                            <small>
-                              (WARNING: You will not be able to change this
-                              config while we're in beta)
-                            </small>
-                          </Button>
-                        ) : null}
-                      </Row>
+                          </Button>)
+                             : (
+                            <Button
+                              type="submit"
+                              variant="danger"
+                              size="lg"
+                              className="text-uppercase my-4"
+                              disabled={isSubmitting}
+                            >
+                              Activate Task
+                              <br />{" "}
+                              <small>
+                                (WARNING: You will not be able to change this
+                                config while we're in beta beyond the fields
+                                listed above)
+                              </small>
+                            </Button>
+                          ))}
+                        </Row>
                     </Container>
                   </form>
                 </>

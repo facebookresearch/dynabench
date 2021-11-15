@@ -250,6 +250,13 @@ class TaskOwnerPage extends React.Component {
       );
   };
 
+  handleAnnotationConfigUpdate = (
+    values,
+    { setFieldError, setSubmitting, resetForm }
+  ) => {
+    console.log(values)
+  }
+
   handleTaskUpdate = (values, { setFieldError, setSubmitting, resetForm }) => {
     const allowed = [
       "num_matching_validations",
@@ -508,6 +515,7 @@ class TaskOwnerPage extends React.Component {
               <Advanced
                 task={this.state.task}
                 handleTaskActivate={this.handleTaskActivate}
+                handleAnnotationConfigUpdate={this.handleAnnotationConfigUpdate}
               />
             ) : null}
             {this.state.task?.active ? (
