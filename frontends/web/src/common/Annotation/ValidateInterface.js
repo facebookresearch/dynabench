@@ -98,8 +98,8 @@ class ValidateInterface extends React.Component {
               this.setState((prevState) => ({
                 task: {
                   ...prevState.task,
-                  selected_round: prevState.task.cur_round
-                }
+                  selected_round: prevState.task.cur_round,
+                },
               }));
               this.getNewExample();
               if (params.taskCode !== this.state.taskCode) {
