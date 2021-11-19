@@ -21,7 +21,7 @@ from .vqa_accuracy import VQAEval
 
 
 # eval_metrics, take predictions and targets as input
-def get_dataperf_accuracy(predictions: list, targets: list):
+def get_dataperf_f1(predictions: list, targets: list):
     """
     Here, predictions can be a list of lists of acceptable multilabel lists, instead
     of just a list of multilabel lists. This is helpful for stochastic models, where we
@@ -61,7 +61,7 @@ def get_dataperf_accuracy(predictions: list, targets: list):
                     tag_results[tag]["t"].append(0)
         f1_sum = 0
         for tag in tag_results.keys():
-            f1 = f1_score(tag_results[tag]["t"], tag_results[tag]["p"], average="macro")
+            f1 = f1_score(tag_results[tag]["t"], tag_results[tag]["p"], average="micro")
             f1_sum += f1
             tag_f1_scores[tag].append(f1)
 
@@ -77,22 +77,22 @@ def get_dataperf_accuracy(predictions: list, targets: list):
                 "pretty_perf": str(mean) + " %",
                 "perf": mean,
                 "perf_std": std if len(predictions[0]) > 1 else None,
-                "perf_dict": {"dataperf_accuracy": mean},
+                "perf_dict": {"dataperf_f1": mean},
             }
         )
     mean_mean_f1s = float(np.mean(mean_f1s)) * 100
     return {
-        "dataperf_accuracy": mean_mean_f1s,
+        "dataperf_f1": mean_mean_f1s,
         "perf": mean_mean_f1s,
         "perf_std": float(np.std(mean_f1s * 100)) if len(predictions[0]) > 1 else None,
         "perf_by_tag": perf_by_tag,
     }
 
 
-def get_dataperf_accuracy_meta(task=None):
+def get_dataperf_f1_meta(task=None):
     return {
         "unit": "%",
-        "pretty_name": "Dataperf Accuracy",
+        "pretty_name": "Dataperf F1",
         "utility_direction": 1,
         "offset": 0,
     }

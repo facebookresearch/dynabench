@@ -32,7 +32,7 @@ class TrainFileMetricEnum(enum.Enum):
 
 def verify_dataperf_config(constructor_args):
     assert "reference_name" in constructor_args
-    assert "iterations" in constructor_args
+    assert "seeds" in constructor_args
 
 
 train_file_metric_config_verifiers = {
@@ -141,7 +141,7 @@ class PerfMetricEnum(enum.Enum):
     sp_bleu = "sp_bleu"
     bleu = "bleu"
     vqa_accuracy = "vqa_accuracy"
-    dataperf_accuracy = "dataperf_accuracy"
+    dataperf_f1 = "dataperf_f1"
 
 
 def verify_macro_f1_config(constructor_args):
@@ -150,7 +150,7 @@ def verify_macro_f1_config(constructor_args):
     # is a string or string selection
 
 
-def verify_dataperf_accuracy_config(constructor_args):
+def verify_dataperf_f1_config(constructor_args):
     assert "reference_name" in constructor_args
     # TODO: could do more verification to ensure that the type of the referenced object
     # is a string or string selection
@@ -189,7 +189,7 @@ def verify_bleu_config(constructor_args):
 perf_metric_config_verifiers = {
     PerfMetricEnum.macro_f1.name: verify_macro_f1_config,
     PerfMetricEnum.squad_f1.name: verify_squad_f1_config,
-    PerfMetricEnum.dataperf_accuracy.name: verify_dataperf_accuracy_config,
+    PerfMetricEnum.dataperf_f1.name: verify_dataperf_f1_config,
     PerfMetricEnum.vqa_accuracy.name: verify_vqa_accuracy_config,
     PerfMetricEnum.accuracy.name: verify_accuracy_config,
     PerfMetricEnum.sp_bleu.name: verify_sp_bleu_config,

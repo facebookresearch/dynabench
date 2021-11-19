@@ -96,19 +96,6 @@ def do_upload_via_train_files(credentials, tid, model_name):
     # Ensure correct format
     for name, upload in train_files.items():
         try:
-            parsed_train_file = [
-                util.json_decode(line)
-                for line in upload.file.read().decode("utf-8").splitlines()
-            ]
-            for io in parsed_train_file:
-                if (
-                    not task.verify_annotation(
-                        io, mode=AnnotationVerifierMode.dataset_upload
-                    )
-                    or "uid" not in io
-                ):
-                    bottle.abort(400, "Invalid train file")
-
             s3_uri = f"s3://{task.s3_bucket}/" + get_data_s3_path(
                 task.task_code, name + ".jsonl"
             )
@@ -120,7 +107,9 @@ def do_upload_via_train_files(credentials, tid, model_name):
             )
             parsed_test_file = parse_s3_outfile(s3_client, s3_uri)
             parsed_prediction_file = train_file_metric(
-                parsed_train_file, parsed_test_file, train_file_metric_constructor_args
+                util.json_decode(upload.file.read().decode("utf-8")),
+                parsed_test_file,
+                train_file_metric_constructor_args,
             )
             parsed_uploads[name] = parsed_prediction_file
 
