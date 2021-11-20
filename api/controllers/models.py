@@ -10,7 +10,6 @@ import time
 import boto3
 import bottle
 import sqlalchemy as db
-import ujson
 
 import common.auth as _auth
 import common.helpers as util
@@ -20,14 +19,135 @@ from models.badge import BadgeModel
 from models.dataset import AccessTypeEnum, DatasetModel
 from models.model import DeploymentStatusEnum, ModelModel
 from models.score import ScoreModel
-from models.task import AnnotationVerifierMode, TaskModel
+from models.task import AnnotationVerifierMode, TaskModel, train_file_metrics
 from models.user import UserModel
 
 from .tasks import ensure_owner_or_admin
 
 
 sys.path.append("../evaluation")  # noqa isort:skip
-from utils.helpers import get_predictions_s3_path, send_eval_request  # noqa isort:skip
+from utils.helpers import (  # noqa isort:skip
+    get_data_s3_path,  # noqa isort:skip
+    get_predictions_s3_path,  # noqa isort:skip
+    parse_s3_outfile,  # noqa isort:skip
+    send_eval_request,  # noqa isort:skip
+)  # noqa isort:skip
+
+
+@bottle.post("/models/upload_train_files/<tid:int>/<model_name>")
+@_auth.requires_auth
+def do_upload_via_train_files(credentials, tid, model_name):
+    u = UserModel()
+    user_id = credentials["id"]
+    user = u.get(user_id)
+    if not user:
+        logger.error("Invalid user detail for id (%s)" % (user_id))
+        bottle.abort(404, "User information not found")
+
+    tm = TaskModel()
+    task = tm.get(tid)
+    annotation_config = util.json_decode(task.annotation_config_json)
+    if "train_file_metric" not in annotation_config:
+        bottle.abort(
+            403,
+            """This task does not allow train file uploads. Submit a model instead.""",
+        )
+
+    train_file_metric = train_file_metrics[
+        annotation_config["train_file_metric"]["type"]
+    ]
+    train_file_metric_constructor_args = annotation_config["train_file_metric"][
+        "constructor_args"
+    ]
+
+    m = ModelModel()
+    if (
+        bottle.default_app().config["mode"] == "prod"
+        and m.getCountByUidTidAndHrDiff(
+            user_id, tid=task.id, hr_diff=task.dynalab_hr_diff
+        )
+        >= task.dynalab_threshold
+    ):
+        logger.error("Submission limit reached for user (%s)" % (user_id))
+        bottle.abort(429, "Submission limit reached")
+
+    train_files = {}
+    dm = DatasetModel()
+    datasets = list(dm.getByTid(tid))
+    dataset_names = [dataset.name for dataset in datasets]
+    for name in dataset_names:
+        train_files[name] = bottle.request.files.get(name)
+
+    # Users don't need to upload train sets for all datasets.
+    train_files = {
+        name: train_files[name]
+        for name, upload in train_files.items()
+        if train_files[name] is not None
+    }
+
+    for dataset in datasets:
+        if (
+            dataset.access_type == AccessTypeEnum.scoring
+            and dataset.name not in train_files.keys()
+        ):
+            bottle.abort(400, "Need to upload train files for all leaderboard datasets")
+
+    parsed_uploads = {}
+    # Ensure correct format
+    for name, upload in train_files.items():
+        try:
+            s3_uri = f"s3://{task.s3_bucket}/" + get_data_s3_path(
+                task.task_code, name + ".jsonl"
+            )
+            s3_client = boto3.client(
+                "s3",
+                aws_access_key_id=config["aws_access_key_id"],
+                aws_secret_access_key=config["aws_secret_access_key"],
+                region_name=task.aws_region,
+            )
+            parsed_test_file = parse_s3_outfile(s3_client, s3_uri)
+            parsed_prediction_file = train_file_metric(
+                util.json_decode(upload.file.read().decode("utf-8")),
+                parsed_test_file,
+                train_file_metric_constructor_args,
+            )
+            parsed_uploads[name] = parsed_prediction_file
+
+        except Exception as ex:
+            logger.exception(ex)
+            bottle.abort(400, "Invalid train file")
+
+    endpoint_name = f"ts{int(time.time())}-{model_name}"
+
+    status_dict = {}
+    # Create local model db object
+    model = m.create(
+        task_id=tid,
+        user_id=user_id,
+        name=model_name,
+        shortname="",
+        longdesc="",
+        desc="",
+        upload_datetime=db.sql.func.now(),
+        endpoint_name=endpoint_name,
+        deployment_status=DeploymentStatusEnum.predictions_upload,
+        secret=secrets.token_hex(),
+    )
+    with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
+        for dataset_name, parsed_upload in parsed_uploads.items():
+            with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
+                for datum in parsed_upload:
+                    datum["id"] = datum["uid"]  # TODO: right now, dynalab models
+                    # Expect an input with "uid" but output "id" in their predictions.
+                    # Why do we use two seperate names for the same thing? Can we make
+                    # this consistent?
+                    del datum["uid"]
+                    tmp.write(util.json_encode(datum) + "\n")
+                tmp.close()
+                ret = _eval_dataset(dataset_name, endpoint_name, model, task, tmp.name)
+                status_dict.update(ret)
+
+    return util.json_encode({"success": "ok", "model_id": model.id})
 
 
 @bottle.post("/models/upload_predictions/<tid:int>/<model_name>")
@@ -227,7 +347,8 @@ def get_model_detail(credentials, mid):
             did_to_dataset_access_type[dataset.id] = dataset.access_type
             did_to_dataset_longdesc[dataset.id] = dataset.longdesc
             did_to_dataset_source_url[dataset.id] = dataset.source_url
-        fields = ["accuracy", "round_id", "did", "metadata_json"]
+        fields = ["accuracy", "perf_std", "round_id", "did", "metadata_json"]
+
         s_dicts = [
             dict(
                 zip(fields, d),
@@ -465,7 +586,7 @@ def deploy_model_from_s3(credentials, mid):
     sqs = session.resource("sqs")
     queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
     queue.send_message(
-        MessageBody=ujson.dumps(
+        MessageBody=util.json_encode(
             {
                 "model_id": model.id,
                 "s3_uri": f"s3://{bucket_name}/{s3_path}",

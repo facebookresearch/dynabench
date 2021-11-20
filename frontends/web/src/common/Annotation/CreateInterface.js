@@ -650,6 +650,7 @@ class CreateInterface extends React.Component {
     );
     const tooTallForResponseInfoPlaceholder =
       this.state.annotationConfig?.context
+        .concat(this.state.annotationConfig?.input)
         .map((annotationConfigObj) => annotationConfigObj.type)
         .includes("image");
     const contextInterface = this.state.annotationConfig?.context

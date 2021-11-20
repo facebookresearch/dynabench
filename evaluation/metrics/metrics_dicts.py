@@ -13,6 +13,7 @@ eval_metrics_dict = {
     "bleu": metrics.get_bleu,
     "sp_bleu": metrics.get_sp_bleu,
     "vqa_accuracy": metrics.get_vqa_accuracy,
+    "dataperf_f1": metrics.get_dataperf_f1,
 }
 
 delta_metrics_dict = {
@@ -36,4 +37,5 @@ metrics_meta_dict = {
     "fairness": metrics.get_fairness_meta,
     "robustness": metrics.get_robustness_meta,
     "vqa_accuracy": metrics.get_vqa_accuracy_meta,
+    "dataperf_f1": metrics.get_dataperf_f1_meta,
 }

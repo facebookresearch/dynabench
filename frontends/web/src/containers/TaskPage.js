@@ -192,7 +192,7 @@ const TaskActionButtons = (props) => {
               <Button
                 as={Link}
                 className="border-0 blue-color font-weight-bold light-gray-bg"
-                to={"/tasks/" + props.taskCode + "/submit"}
+                to={"/tasks/" + props.taskCode + "/submit_predictions"}
               >
                 <i className="fa fa-upload"></i> Submit Prediction Files
               </Button>
@@ -200,6 +200,34 @@ const TaskActionButtons = (props) => {
           </Annotation>
         </Nav.Item>
       )}
+      {props.task.annotation_config_json &&
+        JSON.parse(props.task.annotation_config_json).hasOwnProperty(
+          "train_file_metric"
+        ) && (
+          <Nav.Item className="task-action-btn">
+            <Annotation
+              placement="top"
+              tooltip={
+                "Click here to submit your train files to trigger the training of" +
+                " a model and evaluation on our datasets"
+              }
+            >
+              <OverlayTrigger
+                placement="bottom"
+                delay={{ show: 250, hide: 400 }}
+                overlay={renderVerifyTooltip}
+              >
+                <Button
+                  as={Link}
+                  className="border-0 blue-color font-weight-bold light-gray-bg"
+                  to={"/tasks/" + props.taskCode + "/submit_train_files"}
+                >
+                  <i className="fa fa-upload"></i> Submit Train Files
+                </Button>
+              </OverlayTrigger>
+            </Annotation>
+          </Nav.Item>
+        )}
     </Nav>
   );
 };

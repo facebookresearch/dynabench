@@ -6,6 +6,7 @@ import functools
 import subprocess
 from pathlib import Path
 
+import numpy as np
 import sacrebleu
 import sentencepiece
 from sklearn.metrics import f1_score
@@ -20,6 +21,81 @@ from .vqa_accuracy import VQAEval
 
 
 # eval_metrics, take predictions and targets as input
+def get_dataperf_f1(predictions: list, targets: list):
+    """
+    Here, predictions can be a list of lists of acceptable multilabel lists, instead
+    of just a list of multilabel lists. This is helpful for stochastic models, where we
+    also want to report a standard deviation over the model outputs.
+    """
+
+    if not isinstance(predictions[0], list):
+        predictions = [[pred] for pred in predictions]
+
+    tag_f1_scores = {}
+    tag_results = {}
+
+    for tags in targets:
+        for tag in tags:
+            tag_results[tag] = {"t": [], "p": []}
+            tag_f1_scores[tag] = []
+
+    iterations = len(predictions[0])
+    mean_f1s = []
+    for iteration in range(iterations):
+        for tag in tag_results:
+            tag_results[tag] = {"t": [], "p": []}
+        for p, t in zip([pred[iteration] for pred in predictions], targets):
+            for tag in tag_results.keys():
+                if tag in p:
+                    tag_results[tag]["p"].append(1)
+                else:
+                    tag_results[tag]["p"].append(0)
+
+                if tag in t:
+                    tag_results[tag]["t"].append(1)
+                else:
+                    tag_results[tag]["t"].append(0)
+        f1_sum = 0
+        for tag in tag_results.keys():
+            f1 = f1_score(tag_results[tag]["t"], tag_results[tag]["p"], average="micro")
+            f1_sum += f1
+            tag_f1_scores[tag].append(f1)
+
+        mean_f1s.append(f1_sum / len(tag_results.keys()))
+
+    perf_by_tag = []
+    for tag, f1s in tag_f1_scores.items():
+        mean = float(np.mean(f1s)) * 100
+        std = float(np.std(f1s * 100))
+        perf_by_tag.append(
+            {
+                "tag": tag,
+                "pretty_perf": str(round(mean, 2)) + " %",
+                "perf": round(mean, 2),
+                "perf_std": round(std, 2) if len(predictions[0]) > 1 else None,
+                "perf_dict": {"dataperf_f1": round(mean, 2)},
+            }
+        )
+    mean_mean_f1s = float(np.mean(mean_f1s)) * 100
+    return {
+        "dataperf_f1": round(mean_mean_f1s, 2),
+        "perf": round(mean_mean_f1s, 2),
+        "perf_std": round(float(np.std(mean_f1s * 100)), 2)
+        if len(predictions[0]) > 1
+        else None,
+        "perf_by_tag": perf_by_tag,
+    }
+
+
+def get_dataperf_f1_meta(task=None):
+    return {
+        "unit": "%",
+        "pretty_name": "Dataperf F1",
+        "utility_direction": 1,
+        "offset": 0,
+    }
+
+
 def get_accuracy(predictions: list, targets: list):
     """
     Here, t can be a list of acceptable labels, instead of just one label. This is
@@ -34,7 +110,7 @@ def get_accuracy(predictions: list, targets: list):
         elif isinstance(t, str):
             return p == t
         else:
-            raise TypeError("t must be a set of strings or a string")
+            raise TypeError("t must be a list of strings or a string")
 
     acc = sum([equality(p, t) for p, t in zip(predictions, targets)]) / len(targets)
     return round(acc * 100, 2)
