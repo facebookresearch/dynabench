@@ -2,6 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import numpy as np
 from sklearn.linear_model import LogisticRegression
 
 from eval_config import eval_config
@@ -9,21 +10,33 @@ from eval_config import eval_config
 from .dataperf_dataloader import OpenImagesDataset
 
 
-dataperf_metadata_path = eval_config.get("dataperf_metadata_path", None)
-dataperf_train_path = eval_config.get("dataperf_train_path", None)
-dataperf_test_path = eval_config.get("dataperf_test_path", None)
+dataperf_data_path = eval_config.get("dataperf_data_path", None)
 
-if (
-    dataperf_metadata_path is not None
-    and dataperf_train_path is not None
-    and dataperf_test_path is not None
-):
-    train_dataset = OpenImagesDataset(
-        dataperf_metadata_path, dataperf_train_path, split="train"
-    )
-    test_dataset = OpenImagesDataset(
-        dataperf_metadata_path, dataperf_test_path, split="test"
-    )
+if dataperf_data_path is not None:
+    train_dataset_embeddings = OpenImagesDataset(
+        dataperf_data_path + "/saved_metadata",
+        dataperf_data_path + "/saved_embeddings/train",
+        split="train",
+    ).embeddings
+    test_dataset_embeddings = OpenImagesDataset(
+        dataperf_data_path + "/saved_metadata",
+        dataperf_data_path + "/saved_embeddings/test",
+        split="test",
+    ).embeddings
+
+
+def get_train_dataset_embeddings(index):
+    return np.random.rand(
+        256
+    )  # TODO make this come from the actual embeddings when dataperf finalizes
+    # their dataset
+
+
+def get_test_dataset_embeddings(index):
+    return np.random.rand(
+        256
+    )  # TODO make this come from the actual embeddings when dataperf finalizes
+    # their dataset
 
 
 def dataperf(train, test, constructor_args):
@@ -44,7 +57,7 @@ def dataperf(train, test, constructor_args):
         train_X = []
         train_y = []
         for unique_id, is_present in data.items():
-            train_X.append(train_dataset.embeddings[int(unique_id)])
+            train_X.append(get_train_dataset_embeddings(int(unique_id)))
             train_y.append(is_present)
         differently_seeded_classifiers = []
         for i in range(constructor_args["seeds"]):
@@ -63,7 +76,7 @@ def dataperf(train, test, constructor_args):
                 differently_seeded_classifiers,
             ) in label_to_binary_classifiers.items():
                 if differently_seeded_classifiers[i].predict(
-                    [test_dataset.embeddings[int(obj["uid"])]]
+                    [get_test_dataset_embeddings(int(obj["uid"]))]
                 ):
                     differently_seeded_predictions[-1].append(label)
         preds_formatted.append(

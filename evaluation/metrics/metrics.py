@@ -33,11 +33,7 @@ def get_dataperf_f1(predictions: list, targets: list):
 
     tag_f1_scores = {}
     tag_results = {}
-    for preds in predictions:
-        for pred in preds:
-            for tag in pred:
-                tag_results[tag] = {"t": [], "p": []}
-                tag_f1_scores[tag] = []
+
     for tags in targets:
         for tag in tags:
             tag_results[tag] = {"t": [], "p": []}
@@ -74,17 +70,19 @@ def get_dataperf_f1(predictions: list, targets: list):
         perf_by_tag.append(
             {
                 "tag": tag,
-                "pretty_perf": str(mean) + " %",
-                "perf": mean,
-                "perf_std": std if len(predictions[0]) > 1 else None,
-                "perf_dict": {"dataperf_f1": mean},
+                "pretty_perf": str(round(mean, 2)) + " %",
+                "perf": round(mean, 2),
+                "perf_std": round(std, 2) if len(predictions[0]) > 1 else None,
+                "perf_dict": {"dataperf_f1": round(mean, 2)},
             }
         )
     mean_mean_f1s = float(np.mean(mean_f1s)) * 100
     return {
-        "dataperf_f1": mean_mean_f1s,
-        "perf": mean_mean_f1s,
-        "perf_std": float(np.std(mean_f1s * 100)) if len(predictions[0]) > 1 else None,
+        "dataperf_f1": round(mean_mean_f1s, 2),
+        "perf": round(mean_mean_f1s, 2),
+        "perf_std": round(float(np.std(mean_f1s * 100)), 2)
+        if len(predictions[0]) > 1
+        else None,
         "perf_by_tag": perf_by_tag,
     }
 

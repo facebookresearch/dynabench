@@ -219,13 +219,6 @@ class SubmitInterface extends React.Component {
                             </p>
                           ) : (
                             <p>
-                              Upload train files as a <em>.jsonl</em> file,
-                              where each line has a field for each of the model
-                              input and output fields. Additionally, there
-                              should be a field called "uid" that is a unique
-                              identifier for examples.
-                              <br />
-                              <br />
                               We require that you upload a train file for each
                               of the leaderboard datasets. You can optionally
                               upload a train file for the other datasets.
