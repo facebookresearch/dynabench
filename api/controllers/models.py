@@ -586,7 +586,7 @@ def deploy_model_from_s3(credentials, mid):
     sqs = session.resource("sqs")
     queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
     queue.send_message(
-        MessageBody=ujson.dumps(
+        MessageBody=util.json_encode(
             {
                 "model_id": model.id,
                 "s3_uri": f"s3://{bucket_name}/{s3_path}",
