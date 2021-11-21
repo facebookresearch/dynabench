@@ -21,7 +21,7 @@ def get_eval_metrics(task, predictions: list, targets: list) -> tuple:
     if isinstance(metric_result, dict):
         score_dict = metric_result
     else:
-        score_dict[perf_metric_type] = metric_result
+        score_dict = {perf_metric_type: metric_result}
     return score_dict[perf_metric_type], score_dict
 
 
