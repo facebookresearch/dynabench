@@ -15,6 +15,7 @@ import {
   ButtonGroup,
   Nav,
   Table,
+  Spinner,
   Tooltip,
   OverlayTrigger,
 } from "react-bootstrap";
@@ -352,6 +353,7 @@ class TaskPage extends React.Component {
               taskCode: result.task_code,
               task: result,
               round: result.round,
+              loading: false,
             },
             function () {
               if (this.props.match.params.taskCode !== this.state.taskCode) {
@@ -363,6 +365,7 @@ class TaskPage extends React.Component {
                   search: this.props.location.search,
                 });
               }
+              this.state.loading = true;
               this.fetchTrend();
             }
           );
@@ -518,60 +521,68 @@ class TaskPage extends React.Component {
               />
             </Col>
           </Row>
-          {this.state.task?.active ? (
+          {this.state.loading ? (
             <>
-              {this.state.task && (
-                <Row className="justify-content-center">
-                  <Col xs={12} md={12}>
-                    <Annotation
-                      placement="left"
-                      tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
-                    >
-                      {this.props.match?.params.forkOrSnapshotName ? (
-                        <TaskModelForkLeaderboard
-                          {...this.props}
-                          task={this.state.task}
-                          taskCode={this.state.taskCode}
-                          title={"Model Leaderboard (Fork)"}
-                        />
-                      ) : (
-                        <TaskModelDefaultLeaderboard
-                          {...this.props}
-                          task={this.state.task}
-                          taskCode={this.state.taskCode}
-                        />
+              {this.state.task?.active ? (
+                <>
+                  {this.state.task && (
+                    <Row className="justify-content-center">
+                      <Col xs={12} md={12}>
+                        <Annotation
+                          placement="left"
+                          tooltip="This shows how models have performed on this task - the top-performing models are the ones we’ll use for the next round"
+                        >
+                          {this.props.match?.params.forkOrSnapshotName ? (
+                            <TaskModelForkLeaderboard
+                              {...this.props}
+                              task={this.state.task}
+                              taskCode={this.state.taskCode}
+                              title={"Model Leaderboard (Fork)"}
+                            />
+                          ) : (
+                            <TaskModelDefaultLeaderboard
+                              {...this.props}
+                              task={this.state.task}
+                              taskCode={this.state.taskCode}
+                            />
+                          )}
+                        </Annotation>
+                      </Col>
+                    </Row>
+                  )}
+                  <Row>
+                    <Col xs={12} md={6}>
+                      {this.state.task.id &&
+                        this.state.task.round &&
+                        this.state.task.cur_round && (
+                          <UserLeaderboardCard
+                            taskId={this.state.task.id}
+                            round={this.state.task.round}
+                            cur_round={this.state.task.cur_round}
+                          />
+                        )}
+                    </Col>
+                    <Col xs={12} md={6}>
+                      {this.state.trendScore.length > 0 && (
+                        <Annotation
+                          placement="top-end"
+                          tooltip="As tasks progress over time, we can follow their trend, which is shown here"
+                        >
+                          <TaskTrend data={this.state.trendScore} />
+                        </Annotation>
                       )}
-                    </Annotation>
-                  </Col>
+                    </Col>
+                  </Row>
+                </>
+              ) : (
+                <Row className="justify-content-center">
+                  The task owner still needs to activate this task
                 </Row>
               )}
-              <Row>
-                <Col xs={12} md={6}>
-                  {this.state.task.id &&
-                    this.state.task.round &&
-                    this.state.task.cur_round && (
-                      <UserLeaderboardCard
-                        taskId={this.state.task.id}
-                        round={this.state.task.round}
-                        cur_round={this.state.task.cur_round}
-                      />
-                    )}
-                </Col>
-                <Col xs={12} md={6}>
-                  {this.state.trendScore.length > 0 && (
-                    <Annotation
-                      placement="top-end"
-                      tooltip="As tasks progress over time, we can follow their trend, which is shown here"
-                    >
-                      <TaskTrend data={this.state.trendScore} />
-                    </Annotation>
-                  )}
-                </Col>
-              </Row>
             </>
           ) : (
             <Row className="justify-content-center">
-              The task owner still needs to activate this task.
+              <Spinner animation="border" />{" "}
             </Row>
           )}
         </Container>
