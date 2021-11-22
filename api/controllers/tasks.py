@@ -430,6 +430,9 @@ def update(credentials, tid):
             "hidden",
             "submitable",
             "create_endpoint",
+            "build_sqs_queue",
+            "eval_sqs_queue",
+            "decen_task_bucket",
         ):
             bottle.abort(
                 403,
@@ -1043,3 +1046,68 @@ def construct_trends_response_json(query_result):
         )
     else:
         return util.json_encode([])
+
+
+@bottle.get("/tasks/decen_eaas/listdatasets")
+def decen_eaas_list_datasets():
+    dm = DatasetModel()
+    tm = TaskModel()
+    data = bottle.request.json
+
+    # The only thing so far we need to update is the deployment_status
+    if set(data.keys()) != {"task_code"}:
+        bottle.abort(401, "Operation not authorized")
+
+    try:
+        task_code = data["task_code"]
+
+        # Get the TID for the task code
+        task = tm.getByTaskCode(task_code)
+        print(task.id)
+
+        # Get all datasets related to the task code
+        datasets = dm.getByTid(task.id)
+        json_encoded_datasets = []
+        for dataset in datasets:
+            json_encoded_datasets.append(util.json_encode(dm.as_dict(dataset)))
+
+        return util.json_encode(json_encoded_datasets)
+
+    except Exception as e:
+        logger.exception("Could not retrieve datasets: %s" % (e))
+        bottle.abort(400, "Could not retrieve datasets: %s" % (e))
+
+
+@bottle.get("/tasks/decen_eaas/listmodelsids")
+def decen_eaas_list_model_ids():
+    mm = ModelModel()
+    tm = TaskModel()
+    data = bottle.request.json
+
+    # The only thing so far we need to update is the deployment_status
+    if set(data.keys()) != {"task_code"}:
+        bottle.abort(401, "Operation not authorized")
+
+    try:
+        task_code = data["task_code"]
+
+        # Get the TID for the task code
+        task = tm.getByTaskCode(task_code)
+        print(task.id)
+
+        # Get all datasets related to the task code
+        models = mm.getByTid(task.id)
+        model_ids = []
+        for model in models:
+            if model.deployment_status in {
+                DeploymentStatusEnum.deployed,
+                DeploymentStatusEnum.created,
+                DeploymentStatusEnum.predictions_upload,
+            }:
+                model_ids.append(model.id)
+
+        return util.json_encode(model_ids)
+
+    except Exception as e:
+        logger.exception("Could not retrieve models: %s" % (e))
+        bottle.abort(400, "Could not retrieve models: %s" % (e))

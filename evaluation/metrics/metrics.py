@@ -4,6 +4,7 @@
 
 import functools
 import subprocess
+from datetime import datetime
 from pathlib import Path
 
 import sacrebleu
@@ -182,12 +183,19 @@ def get_sp_bleu_meta(task=None):
 
 
 # job_metrics, takes raw job and dataset as input
-def get_memory_utilization(job, dataset):
-    mem = (
-        sum(job.aws_metrics["MemoryUtilization"])
-        / 100
-        * instance_property[dataset.task.instance_type]["memory_gb"]
-    )
+def get_memory_utilization(job, dataset, decen=False):
+    if decen:
+        mem = (
+            sum(job.aws_metrics["MemoryUtilization"])
+            / 100
+            * instance_property[dataset.task_instance_type]["memory_gb"]
+        )
+    else:
+        mem = (
+            sum(job.aws_metrics["MemoryUtilization"])
+            / 100
+            * instance_property[dataset.task.instance_type]["memory_gb"]
+        )
     return round(mem, 2)
 
 
@@ -200,14 +208,26 @@ def get_memory_utilization_meta(task):
     }
 
 
-def get_examples_per_second(job, dataset):
-    n_examples = dataset.get_n_examples()
-    eps = (
-        n_examples
-        / (
-            job.status["TransformEndTime"] - job.status["TransformStartTime"]
-        ).total_seconds()
-    )
+def get_examples_per_second(job, dataset, decen=False):
+    n_examples = None
+    if decen:
+        n_examples = dataset.get_n_examples
+        transform_start_time = datetime.strptime(
+            job.status["TransformStartTime"], "%Y-%m-%d %H:%M:%S.%f%z"
+        )
+        transform_end_time = datetime.strptime(
+            job.status["TransformEndTime"], "%Y-%m-%d %H:%M:%S.%f%z"
+        )
+        eps = n_examples / (transform_end_time - transform_start_time).total_seconds()
+    else:
+        n_examples = dataset.get_n_examples()
+        eps = (
+            n_examples
+            / (
+                job.status["TransformEndTime"] - job.status["TransformStartTime"]
+            ).total_seconds()
+        )
+
     return round(eps, 2)
 
 

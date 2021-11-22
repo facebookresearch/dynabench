@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 from typing import List
 
 import boto3
+import requests
+import ujson
 
 
 def get_predictions_s3_path(endpoint_name, task_code, dataset_name):
@@ -190,3 +192,47 @@ def upload_predictions(s3_client, s3_uri: str, predictions: List[dict]) -> None:
     s3_client.upload_file(parsed_pred_file, s3_bucket, s3_path)
     os.close(fd)
     os.remove(parsed_pred_file)
+
+
+def api_model_eval_update(DYNABENCH_API, model_id, evaluation_status, prod=False):
+    data = {"evaluation_status": evaluation_status}
+
+    _ = requests.get(
+        f"{DYNABENCH_API}/models/{model_id}/update_evaluation_status",
+        data=json.dumps(data),
+        headers={"Content-Type": "application/json"},
+        verify=prod,
+    )
+
+
+def api_update_database_with_metrics(DYNABENCH_API, data_pkg, prod=False):
+    r = requests.post(
+        f"{DYNABENCH_API}/models/update_database_with_metrics",
+        data=json.dumps(data_pkg),
+        headers={"Content-Type": "application/json"},
+        verify=prod,
+    )
+
+    return r.json()
+
+
+def api_get_next_job_score_entry(DYNABENCH_API, job, prod=False):
+
+    r = requests.get(
+        f"{DYNABENCH_API}/models/eval_score_entry",
+        data=ujson.dumps(job, default=str),
+        headers={"Content-Type": "application/json"},
+        verify=prod,
+    )
+
+    return r.json()
+
+
+def api_model_endpoint_name(DYNABENCH_API, model_id, prod=False):
+    r = requests.get(
+        f"{DYNABENCH_API}/models/{model_id}/get_model_info",
+        headers={"Content-Type": "application/json"},
+        verify=prod,
+    )
+
+    return r.json()

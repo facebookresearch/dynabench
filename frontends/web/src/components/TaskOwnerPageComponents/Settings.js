@@ -27,6 +27,9 @@ const Settings = (props) => {
                 validate_non_fooling: props.task.validate_non_fooling,
                 predictions_upload_instructions_md:
                   props.task.predictions_upload_instructions_md,
+                build_sqs_queue: props.task.build_sqs_queue,
+                eval_sqs_queue: props.task.eval_sqs_queue,
+                decen_task_bucket: props.task.decen_task_bucket,
               }}
               onSubmit={props.handleTaskUpdate}
             >
@@ -167,6 +170,63 @@ const Settings = (props) => {
                         <Col sm="6">
                           <Form.Check
                             checked={values.submitable}
+                            onChange={handleChange}
+                          />
+                        </Col>
+                      </Form.Group>
+                      <Form.Group
+                        as={Row}
+                        controlId="build_sqs_queue"
+                        className="py-3 my-0 border-bottom"
+                      >
+                        <Form.Label column>
+                          Build queues
+                          <Form.Text id="paramsHelpBlock" muted>
+                            build queue
+                          </Form.Text>
+                        </Form.Label>
+                        <Col sm="6">
+                          <Form.Control
+                            type="text"
+                            defaultValue={values.build_sqs_queue}
+                            onChange={handleChange}
+                          />
+                        </Col>
+                      </Form.Group>
+                      <Form.Group
+                        as={Row}
+                        controlId="eval_sqs_queue"
+                        className="py-3 my-0 border-bottom"
+                      >
+                        <Form.Label column>
+                          Eval queues
+                          <Form.Text id="paramsHelpBlock" muted>
+                            eval queue
+                          </Form.Text>
+                        </Form.Label>
+                        <Col sm="6">
+                          <Form.Control
+                            type="text"
+                            defaultValue={values.eval_sqs_queue}
+                            onChange={handleChange}
+                          />
+                        </Col>
+                      </Form.Group>
+                      <Form.Group
+                        as={Row}
+                        controlId="decen_task_bucket"
+                        className="py-3 my-0 border-bottom"
+                      >
+                        <Form.Label column>
+                          s3 bucket
+                          <Form.Text id="paramsHelpBlock" muted>
+                            s3 bucket
+                          </Form.Text>
+                        </Form.Label>
+                        <Col sm="6">
+                          <Form.Control
+                            type="text"
+                            defaultValue={values.decen_task_bucket}
                             onChange={handleChange}
                           />
                         </Col>

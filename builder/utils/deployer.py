@@ -113,63 +113,64 @@ class ModelDeployer:
         return env
 
     def delete_existing_endpoints(self, sort_order="Ascending", max_results=100):
+        logger.info(f"Fake calling delete existing endpoints here")
         # remove endpoint
-        endpoint_response = self.env["sagemaker_client"].list_endpoints(
-            SortBy="Name",
-            SortOrder=sort_order,
-            MaxResults=max_results,
-            NameContains=self.endpoint_name,
-        )
-        endpoints = endpoint_response["Endpoints"]
-        for endpoint in endpoints:
-            if endpoint["EndpointName"] == self.endpoint_name:
-                logger.info(f"- Deleting the endpoint {self.endpoint_name:}")
-                self.env["sagemaker_client"].delete_endpoint(
-                    EndpointName=self.endpoint_name
-                )
+        # endpoint_response = self.env["sagemaker_client"].list_endpoints(
+        #     SortBy="Name",
+        #     SortOrder=sort_order,
+        #     MaxResults=max_results,
+        #     NameContains=self.endpoint_name,
+        # )
+        # endpoints = endpoint_response["Endpoints"]
+        # for endpoint in endpoints:
+        #     if endpoint["EndpointName"] == self.endpoint_name:
+        #         logger.info(f"- Deleting the endpoint {self.endpoint_name:}")
+        #         self.env["sagemaker_client"].delete_endpoint(
+        #             EndpointName=self.endpoint_name
+        #         )
 
-        # remove sagemaker model
-        model_response = self.env["sagemaker_client"].list_models(
-            SortBy="Name",
-            SortOrder=sort_order,
-            MaxResults=max_results,
-            NameContains=self.endpoint_name,
-        )
-        sm_models = model_response["Models"]
-        for sm_model in sm_models:
-            if sm_model["ModelName"] == self.endpoint_name:
-                logger.info(f"- Deleting the model {self.endpoint_name:}")
-                self.env["sagemaker_client"].delete_model(ModelName=self.endpoint_name)
+        # # remove sagemaker model
+        # model_response = self.env["sagemaker_client"].list_models(
+        #     SortBy="Name",
+        #     SortOrder=sort_order,
+        #     MaxResults=max_results,
+        #     NameContains=self.endpoint_name,
+        # )
+        # sm_models = model_response["Models"]
+        # for sm_model in sm_models:
+        #     if sm_model["ModelName"] == self.endpoint_name:
+        #         logger.info(f"- Deleting the model {self.endpoint_name:}")
+        #         self.env["sagemaker_client"].delete_model(ModelName=self.endpoint_name)
 
-        # remove config
-        config_response = self.env["sagemaker_client"].list_endpoint_configs(
-            SortBy="Name",
-            SortOrder=sort_order,
-            MaxResults=max_results,
-            NameContains=self.endpoint_name,
-        )
-        endpoint_configs = config_response["EndpointConfigs"]
-        for endpoint_config in endpoint_configs:
-            if endpoint_config["EndpointConfigName"] == self.endpoint_name:
-                logger.info(f"- Deleting the endpoint config {self.endpoint_name:}")
-                self.env["sagemaker_client"].delete_endpoint_config(
-                    EndpointConfigName=self.endpoint_name
-                )
+        # # remove config
+        # config_response = self.env["sagemaker_client"].list_endpoint_configs(
+        #     SortBy="Name",
+        #     SortOrder=sort_order,
+        #     MaxResults=max_results,
+        #     NameContains=self.endpoint_name,
+        # )
+        # endpoint_configs = config_response["EndpointConfigs"]
+        # for endpoint_config in endpoint_configs:
+        #     if endpoint_config["EndpointConfigName"] == self.endpoint_name:
+        #         logger.info(f"- Deleting the endpoint config {self.endpoint_name:}")
+        #         self.env["sagemaker_client"].delete_endpoint_config(
+        #             EndpointConfigName=self.endpoint_name
+        #         )
 
         # remove docker image
         # TODO: manage deletion by version
-        try:
-            response = self.env["ecr_client"].delete_repository(
-                repositoryName=self.repository_name, force=True
-            )
-            logger.info(f"- Deleting the docker repository {self.repository_name:}")
-        except self.env["ecr_client"].exceptions.RepositoryNotFoundException:
-            logger.info(
-                f"Repository {self.repository_name} not found. If deploying, this will be created"
-            )
-        else:
-            if response:
-                logger.info(f"Response from deleting ECR repository {response}")
+        # try:
+        #     response = self.env["ecr_client"].delete_repository(
+        #         repositoryName=self.repository_name, force=True
+        #     )
+        #     logger.info(f"- Deleting the docker repository {self.repository_name:}")
+        # except self.env["ecr_client"].exceptions.RepositoryNotFoundException:
+        #     logger.info(
+        #         f"Repository {self.repository_name} not found. If deploying, this will be created"
+        #     )
+        # else:
+        #     if response:
+        #         logger.info(f"Response from deleting ECR repository {response}")
 
     def build_docker(self, setup_config_handler, setup_config):
         # tarball current folder but exclude checkpoints

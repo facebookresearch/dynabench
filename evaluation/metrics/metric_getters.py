@@ -23,12 +23,18 @@ def get_eval_metrics(task, predictions: list, targets: list) -> tuple:
     return eval_metrics_scores[perf_metric_type], eval_metrics_scores
 
 
-def get_job_metrics(job, dataset) -> dict:
+def get_job_metrics(job, dataset, decen=False) -> dict:
     if not job.aws_metrics:
         return {}
-    instance_config = instance_property[dataset.task.instance_type]
+
+    if decen:
+        instance_config = instance_property[dataset.task_instance_type]
+    else:
+        instance_config = instance_property[dataset.task.instance_type]
     job_metrics = instance_config["aws_metrics"]
-    return {key: job_metrics_dict[key](job, dataset) for key in job_metrics}
+    return {
+        key: job_metrics_dict[key](job, dataset, decen=decen) for key in job_metrics
+    }
 
 
 def get_delta_metrics(

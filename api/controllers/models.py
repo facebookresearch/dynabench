@@ -14,11 +14,14 @@ import ujson
 
 import common.auth as _auth
 import common.helpers as util
+import common.mail_service as mail
 from common.config import config
 from common.logging import logger
 from models.badge import BadgeModel
 from models.dataset import AccessTypeEnum, DatasetModel
-from models.model import DeploymentStatusEnum, ModelModel
+from models.model import DeploymentStatusEnum, EvaluationStatusEnum, ModelModel
+from models.notification import NotificationModel
+from models.round import RoundModel
 from models.score import ScoreModel
 from models.task import AnnotationVerifierMode, TaskModel
 from models.user import UserModel
@@ -26,8 +29,23 @@ from models.user import UserModel
 from .tasks import ensure_owner_or_admin
 
 
+from utils.helpers import (  # noqa isort:skip
+    get_predictions_s3_path,
+    send_eval_request,
+    update_metadata_json_string,
+)
+
+
 sys.path.append("../evaluation")  # noqa isort:skip
-from utils.helpers import get_predictions_s3_path, send_eval_request  # noqa isort:skip
+from metrics.metric_getters import get_job_metrics  # noqa isort:skip
+
+
+class dotdict(dict):
+    """dot.notation access to dictionary attributes"""
+
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
 
 
 @bottle.post("/models/upload_predictions/<tid:int>/<model_name>")
@@ -374,21 +392,34 @@ def upload_to_s3(credentials):
     bucket_name = task.s3_bucket
     logger.info(f"Using AWS bucket {bucket_name} for task {task_code}")
 
-    endpoint_name = f"ts{int(time.time())}-{model_name}"[:63]
+    # endpoint_name = f"ts{int(time.time())}-{model_name}"[:63]
+    endpoint_name = "ts1636663327-bertstyleqadecen"
     s3_filename = f"{endpoint_name}.tar.gz"
     s3_path = f"torchserve/models/{task_code}/{s3_filename}"
 
     logger.info(f"Uploading {model_name} to S3 at {s3_path} for user {user_id}")
 
-    try:
-        s3_client = session.client("s3")
-        tarball = bottle.request.files.get("tarball")
-        response = s3_client.upload_fileobj(tarball.file, bucket_name, s3_path)
-        if response:
-            logger.info(f"Response from the mar file upload to s3 {response}")
-    except Exception as ex:
-        logger.exception(ex)
-        bottle.abort(400, "upload failed")
+    # try:
+    #     s3_client = session.client("s3")
+    #     tarball = bottle.request.files.get("tarball")
+    #     response =
+    # s3_client.upload_fileobj(tarball.file, bucket_name, s3_path)
+    #     if response:
+    #         logger.info(f"Response from
+    # the mar file upload to s3 {response}")
+
+    #     # If this task is run in decentralized EaaS,
+    # then upload the model to task owners s3_bucket
+    #     if task.decen_task_bucket:
+    #         response_decen_eaas =
+    # s3_client.upload_fileobj(tarball.file, task.decen_task_bucket, s3_path)
+    #         if response_decen_eaas:
+    #             logger.info(f"Response from
+    # the mar file upload to decen eaas s3 {response}")
+
+    # except Exception as ex:
+    #     logger.exception(ex)
+    #     bottle.abort(400, "normal s3 upload failed")
 
     # Update database entry
     model = m.create(
@@ -407,15 +438,38 @@ def upload_to_s3(credentials):
     um = UserModel()
     um.incrementModelSubmitCount(user.to_dict()["id"])
 
-    # send SQS message
-    logger.info(f"Send message to sqs - enqueue model {model_name} for deployment")
-    sqs = session.resource("sqs")
-    queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
-    queue.send_message(
-        MessageBody=util.json_encode(
-            {"model_id": model.id, "s3_uri": f"s3://{bucket_name}/{s3_path}"}
+    if task.build_sqs_queue:
+        model_dict = m.as_dict(model)
+        task_dict = m.as_dict(model.task)
+        full_model_info = util.json_encode(model_dict)
+        full_task_info = util.json_encode(task_dict)
+
+        # If the decen eaas build queue is provided,
+        # # send the message to that build queue
+        logger.info(f"Send message to sqs - enqueue model {model_name} for deployment")
+        sqs = session.resource("sqs")
+        queue = sqs.get_queue_by_name(QueueName=task.build_sqs_queue)
+        queue.send_message(
+            MessageBody=util.json_encode(
+                {
+                    "model_id": model.id,
+                    "s3_uri": f"s3://{bucket_name}/{s3_path}",
+                    "decen_eaas": True,
+                    "model_info": full_model_info,
+                    "task_info": full_task_info,
+                }
+            )
         )
-    )
+    else:
+        # send SQS message
+        logger.info(f"Send message to sqs - enqueue model {model_name} for deployment")
+        sqs = session.resource("sqs")
+        queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
+        queue.send_message(
+            MessageBody=util.json_encode(
+                {"model_id": model.id, "s3_uri": f"s3://{bucket_name}/{s3_path}"}
+            )
+        )
 
 
 @bottle.get("/models/<mid:int>/deploy")
@@ -460,18 +514,280 @@ def deploy_model_from_s3(credentials, mid):
         region_name=config["aws_region"],
     )
 
-    # send SQS message
-    logger.info(f"Send message to sqs - enqueue model {model_name} for re-deployment")
-    sqs = session.resource("sqs")
-    queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
-    queue.send_message(
-        MessageBody=ujson.dumps(
-            {
-                "model_id": model.id,
-                "s3_uri": f"s3://{bucket_name}/{s3_path}",
-                "endpoint_only": True,
-            }
+    if task.build_sqs_queue:
+        model_dict = m.as_dict(model)
+        task_dict = m.as_dict(model.task)
+        full_model_info = util.json_encode(model_dict)
+        full_task_info = util.json_encode(task_dict)
+
+        # If the decen eaas build queue is provided,
+        # send the message to that build queue
+        logger.info(f"Send message to sqs - enqueue model {model_name} for deployment")
+        sqs = session.resource("sqs")
+        queue = sqs.get_queue_by_name(QueueName=task.build_sqs_queue)
+        queue.send_message(
+            MessageBody=util.json_encode(
+                {
+                    "model_id": model.id,
+                    "s3_uri": f"s3://{bucket_name}/{s3_path}",
+                    "decen_eaas": True,
+                    "model_info": full_model_info,
+                    "task_info": full_task_info,
+                    "endpoint_only": True,
+                }
+            )
         )
-    )
+    else:
+        # send SQS message
+        logger.info(f"Send message to sqs - enqueue model {model_name} for deployment")
+        sqs = session.resource("sqs")
+        queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
+        queue.send_message(
+            MessageBody=util.json_encode(
+                {"model_id": model.id, "s3_uri": f"s3://{bucket_name}/{s3_path}"}
+            )
+        )
+
+    # send SQS message
+    # logger.info(f"Send message to sqs - enqueue model {model_name} for re-deployment")
+    # sqs = session.resource("sqs")
+    # queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
+    # queue.send_message(
+    #     MessageBody=ujson.dumps(
+    #         {
+    #             "model_id": model.id,
+    #             "s3_uri": f"s3://{bucket_name}/{s3_path}",
+    #             "endpoint_only": True,
+    #         }
+    #     )
+    # )
 
     return {"status": "success"}
+
+
+@bottle.post("/models/<mid:int>/update_decen_eaas")
+def update_model_decen_eaas(mid):
+    m = ModelModel()
+    data = bottle.request.json
+
+    # The only thing so far we need to update is the deployment_status
+    if set(data.keys()) != {"deployment_status", "secret"}:
+        bottle.abort(401, "Operation not authorized")
+
+    try:
+        model = m.getUnpublishedModelByMid(mid)
+        if model.secret != data["secret"]:
+            logger.error(
+                "Original secret ({}) and secret provided is ({})".format(
+                    model.secret, data["secret"]
+                )
+            )
+            bottle.abort(401, "Operation not authorized")
+
+        m.update(
+            model.id,
+            deployment_status=data["deployment_status"],
+        )
+
+        return {"status": "success"}
+
+    except Exception as e:
+        logger.exception("Could not update model details: %s" % (e))
+        bottle.abort(400, "Could not update model details: %s" % (e))
+
+
+@bottle.post("/models/<mid:int>/email_decen_eaas")
+def email_decen_eaas(mid):
+    m = ModelModel()
+    data = bottle.request.json
+
+    if set(data.keys()) != {"secret", "template", "msg", "subject"}:
+        bottle.abort(401, "Operation not authorized")
+
+    try:
+        # Make sure the process that is sending an email
+        # has the model secret
+        model = m.getUnpublishedModelByMid(mid)
+        if model.secret != data["secret"]:
+            logger.error(
+                "Original secret ({}) and secret provided is ({})".format(
+                    model.secret, data["secret"]
+                )
+            )
+            bottle.abort(401, "Operation not authorized")
+
+        _, user = m.getModelUserByMid(mid)
+        config = bottle.default_app().config
+        template = data["template"]
+        msg = data["msg"]
+        subject = data["subject"]
+        mail.send(
+            config["mail"],
+            config,
+            [user.email],
+            cc_contact="dynabench@fb.com",
+            template_name=f"templates/{template}.txt",
+            msg_dict=msg,
+            subject=subject,
+        )
+        nm = NotificationModel()
+        nm.create(user.id, "MODEL_DEPLOYMENT_STATUS", template.upper())
+
+        return {"status": "success"}
+
+    except Exception as e:
+        logger.exception("Could not update model details: %s" % (e))
+        bottle.abort(400, "Could not update model details: %s" % (e))
+
+
+@bottle.post("/models/update_database_with_metrics")
+def update_database_with_metrics():
+    try:
+        data = bottle.request.json
+
+        if set(data.keys()) != {
+            "job",
+            "eval_metrics_dict",
+            "delta_metrics_dict",
+            "dataset",
+        }:
+            bottle.abort(401, "Operation not authorized")
+
+        print("---------------------------")
+        print("in model update metrics")
+        print(data)
+
+        job = ujson.loads(data["job"])
+        json_acceptable_string = job["aws_metrics"].replace("'", '"')
+        job["aws_metrics"] = ujson.loads(json_acceptable_string)
+        dataset = ujson.loads(data["dataset"])
+        eval_metrics_dict = ujson.loads(data["eval_metrics_dict"])
+        delta_metrics_dict = ujson.loads(data["delta_metrics_dict"])
+
+        # turn job and dataset into dotdicts
+        # TODO slight security concern
+        # (because could put anything into this technically)
+        job = dotdict(job)
+        dataset = dotdict(dataset)
+
+        mm = ModelModel()
+        model = mm.get(job.model_id)
+        # Don't change model's evaluation status if it has failed.
+        if model.evaluation_status != EvaluationStatusEnum.failed:
+            if model.evaluation_status != EvaluationStatusEnum.evaluating:
+                model.evaluation_status = EvaluationStatusEnum.evaluating
+                mm.dbs.add(model)
+                mm.dbs.flush()
+                mm.dbs.commit()
+
+        dm = DatasetModel()
+        d_entry = dm.getByName(job.dataset_name)
+        sm = ScoreModel()
+        s = sm.getOneByModelIdAndDataset(job.model_id, d_entry.id)
+
+        # dataset = self.datasets[job.dataset_name]
+        if job.perturb_prefix:
+            assert s is not None
+            eval_metadata_json = ujson.loads(eval_metrics_dict["metadata_json"])
+            eval_metadata_json = {
+                f"{job.perturb_prefix}-{metric}": eval_metadata_json[metric]
+                for metric in eval_metadata_json
+            }
+            metadata_json = update_metadata_json_string(
+                s.metadata_json,
+                [ujson.dumps(eval_metadata_json), delta_metrics_dict["metadata_json"]],
+            )
+            score_obj = {**delta_metrics_dict, "metadata_json": metadata_json}
+            sm.update(s.id, **score_obj)
+        else:
+            job_metrics_dict = get_job_metrics(job, dataset, decen=True)
+            score_obj = {**eval_metrics_dict, **job_metrics_dict}
+            if s:
+                score_obj["metadata_json"] = update_metadata_json_string(
+                    s.metadata_json, [score_obj["metadata_json"]]
+                )
+                sm.update(s.id, **score_obj)
+            else:
+                score_obj["model_id"] = job.model_id
+                score_obj["did"] = d_entry.id
+                score_obj["raw_output_s3_uri"] = dataset.get_output_s3_url
+
+                rm = RoundModel()
+                if dataset.round_id != 0:
+                    score_obj["r_realid"] = rm.getByTidAndRid(
+                        d_entry.tid, d_entry.rid
+                    ).id
+                else:
+                    score_obj["r_realid"] = 0
+                sm.create(**score_obj)
+
+        return util.json_encode(mm.as_dict(model))
+
+    except Exception as e:
+        logger.exception("Could not update model details: %s" % (e))
+        bottle.abort(400, "Could not update model details: %s" % (e))
+
+
+@bottle.get("/models/<mid:int>/update_evaluation_status")
+def update_evaluation_status(mid):
+    m = ModelModel()
+    data = bottle.request.json
+
+    # TODO: add secret here so it is not unauthorized
+    if set(data.keys()) != {"evaluation_status"}:
+        bottle.abort(401, "Operation not authorized")
+
+    try:
+        model = m.getUnpublishedModelByMid(mid)
+        m.update(
+            model.id,
+            evaluation_status=data["evaluation_status"],
+        )
+
+        return {"status": "success"}
+
+    except Exception as e:
+        logger.exception("Could not update model details: %s" % (e))
+        bottle.abort(400, "Could not update model details: %s" % (e))
+
+
+@bottle.get("/models/eval_score_entry")
+def eval_score_entry():
+    dm = DatasetModel()
+    sm = ScoreModel()
+    # job = bottle.request.json
+    # print(job)
+    job = dotdict(bottle.request.json)
+    # print(data)
+    # job = ujson.loads(str(data))
+
+    # TODO: add secret here so it is not unauthorized
+    if not ({"dataset_name", "model_id"} <= set(job.keys())):
+        bottle.abort(401, "Operation not authorized")
+
+    try:
+        d_entry = dm.getByName(job.dataset_name)
+        score_entry = sm.getOneByModelIdAndDataset(job.model_id, d_entry.id)
+
+        return util.json_encode(score_entry)
+
+    except Exception as e:
+        logger.exception("Could not update model details: %s" % (e))
+        bottle.abort(400, "Could not update model details: %s" % (e))
+
+
+@bottle.get("/models/<mid:int>/get_model_info")
+def get_model_info(mid):
+    m = ModelModel()
+
+    try:
+        model = m.getUnpublishedModelByMid(mid)
+        endpoint_name = model.endpoint_name
+        deployment_status = model.deployment_status
+
+        resp = {"endpoint_name": endpoint_name, "deployment_status": deployment_status}
+        return util.json_encode(resp)
+
+    except Exception as e:
+        logger.exception("Could not update model details: %s" % (e))
+        bottle.abort(400, "Could not update model details: %s" % (e))

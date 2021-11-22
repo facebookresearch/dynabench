@@ -452,6 +452,9 @@ class Task(Base):
 
     has_predictions_upload = db.Column(db.Boolean, default=False)
     predictions_upload_instructions_md = db.Column(db.Text)
+    build_sqs_queue = db.Column(db.Text)
+    eval_sqs_queue = db.Column(db.Text)
+    decen_task_bucket = db.Column(db.Text)
 
     def __repr__(self):
         return f"<Task {self.name}>"
@@ -706,3 +709,9 @@ class TaskModel(BaseModel):
             return t_dict
         except db.orm.exc.NoResultFound:
             return False
+
+    def as_dict(self, model):
+        task_dict = {}
+        for c in model.__table__.columns:
+            task_dict[c.name] = getattr(model, c.name)
+        return task_dict

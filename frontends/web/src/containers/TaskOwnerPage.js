@@ -260,7 +260,11 @@ class TaskOwnerPage extends React.Component {
       "hidden",
       "submitable",
       "create_endpoint",
+      "build_sqs_queue",
+      "eval_sqs_queue",
+      "decen_task_bucket",
     ];
+    console.log("values are " + values);
 
     const data = Object.keys(values)
       .filter((key) => allowed.includes(key))
