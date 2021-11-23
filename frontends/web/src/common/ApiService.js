@@ -295,6 +295,12 @@ export default class ApiService {
     );
   }
 
+  getAllTaskTags(tid, rid) {
+    return this.fetch(`${this.domain}/contexts/${tid}/${rid}/tags`, {
+      method: "GET",
+    });
+  }
+
   getRandomExample(
     tid,
     rid,

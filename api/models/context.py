@@ -6,6 +6,7 @@ import sqlalchemy as db
 from sqlalchemy import case
 
 from .base import Base, BaseModel
+from .round import Round
 
 
 class Context(Base):
@@ -106,6 +107,11 @@ class ContextModel(BaseModel):
             .limit(n)
             .all()
         )
+
+    def getTags(self, rid, tid):
+        result = self.dbs.query(Context).join(Round).filter(Round.tid == tid).all()
+        for i in result:
+            print(i.tag)
 
     def getContextValidationResults(
         self, num_matching_validations, validate_non_fooling=False, example_tags=None

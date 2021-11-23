@@ -24,6 +24,11 @@ def getContext(tid, rid):
     return _getContext(tid, rid, tags=tags)
 
 
+@bottle.get("/contexts/<tid:int>/<rid:int>/tags")
+def getTag(tid, rid):
+    return _getTag(tid, rid)
+
+
 @bottle.get("/contexts/<tid:int>/<rid:int>/uniform")
 @_auth.requires_auth_or_turk
 def getUniformContext(credentials, tid, rid):
@@ -74,6 +79,15 @@ def _getContext(tid, rid, method="min", tags=None):
         bottle.abort(500, f"No contexts available ({round.id})")
     context = context[0].to_dict()
     return util.json_encode(context)
+
+
+def _getTag(tid, rid):
+    rm = RoundModel()
+    round = rm.getByTidAndRid(tid, rid)
+
+    c = ContextModel()
+
+    c.getTags(round.id, tid)
 
 
 @bottle.post("/contexts/upload/<tid:int>/<rid:int>")
