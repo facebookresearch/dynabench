@@ -879,7 +879,7 @@ class CreateInterface extends React.Component {
                             </OverlayTrigger>
                           )}
 
-                          {this.state.task.cur_round > 1 && (
+                          {/* {this.state.task.cur_round > 1 && (
                             <OverlayTrigger
                               placement="bottom"
                               delay={{ show: 250, hide: 400 }}
@@ -907,7 +907,7 @@ class CreateInterface extends React.Component {
                                 </DropdownButton>
                               </Annotation>
                             </OverlayTrigger>
-                          )}
+                          )} */}
                         </InputGroup>
                       </Col>
                       <Col xs={6}>
