@@ -530,6 +530,7 @@ class TaskOwnerPage extends React.Component {
                     handleRoundUpdate={this.handleRoundUpdate}
                     exportData={this.exportData}
                     dataExporting={this.state.dataExporting}
+                    tid={this.state.task.id}
                   />
                 ) : null}
                 {this.props.location.hash === "#models" &&

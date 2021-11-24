@@ -95,10 +95,6 @@ class CreateInterface extends React.Component {
     this.setState(
       { loading: true, submitDisabled: true, refreshDisabled: true },
       () => {
-        this.context.api.getAllTaskTags(
-          this.state.task.id,
-          this.state.task.selected_round
-        );
         this.context.api
           .getRandomContext(this.state.task.id, this.state.task.selected_round)
           .then(

@@ -253,6 +253,7 @@ const Rounds = (props) => {
                               setFieldValue={setFieldValue}
                               errors={errors}
                               setValues={setValues}
+                              tid={props.tid}
                             />
                           ) : null}
                           <Form.Group

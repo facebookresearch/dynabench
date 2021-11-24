@@ -4,11 +4,27 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import React from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Container, Row, Form, Col, Card, Button } from "react-bootstrap";
 import DragAndDrop from "../DragAndDrop/DragAndDrop";
+import UserContext from "../../containers/UserContext";
 
 const Contexts = (props) => {
+  async function fetchTags(tid, rid) {
+    let result = await context.api.getAllTaskTags(tid, rid);
+    console.log(result);
+    return result;
+  }
+
+  useEffect(() => {
+    fetchTags(props.tid, props.values.rid).then((result) => {
+      setTags(result);
+    });
+  });
+
+  const context = useContext(UserContext);
+  const [tags, setTags] = useState([]);
+
   return (
     <Container>
       <Form.Group controlId="contexts_file">
@@ -56,6 +72,25 @@ const Contexts = (props) => {
             Drag
           </DragAndDrop>
         )}
+      </Form.Group>
+      <p>
+        You can also select the tags of the contexts you want to be shown in
+        this round.
+      </p>
+      <Form.Group controlId="selected_tags">
+        {tags.map((tag) => {
+          return (
+            <Form.Check
+              type="checkbox"
+              label={tag}
+              name="selected_tags"
+              value={tag}
+              onChange={(event) => {
+                props.setFieldValue("selected_tags", event.target.value);
+              }}
+            />
+          );
+        })}
       </Form.Group>
     </Container>
   );

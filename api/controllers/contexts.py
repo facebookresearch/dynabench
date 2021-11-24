@@ -25,8 +25,8 @@ def getContext(tid, rid):
 
 
 @bottle.get("/contexts/<tid:int>/<rid:int>/tags")
-def getTag(tid, rid):
-    return _getTag(tid, rid)
+def getAllTags(tid, rid):
+    return _getAllTags(tid, rid)
 
 
 @bottle.get("/contexts/<tid:int>/<rid:int>/uniform")
@@ -81,13 +81,14 @@ def _getContext(tid, rid, method="min", tags=None):
     return util.json_encode(context)
 
 
-def _getTag(tid, rid):
+def _getAllTags(tid, rid):
     rm = RoundModel()
     round = rm.getByTidAndRid(tid, rid)
 
     c = ContextModel()
 
-    c.getTags(round.id, tid)
+    all_tags = c.getTags(round.id, tid)
+    return util.json_encode(all_tags)
 
 
 @bottle.post("/contexts/upload/<tid:int>/<rid:int>")

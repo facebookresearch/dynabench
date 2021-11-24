@@ -110,8 +110,8 @@ class ContextModel(BaseModel):
 
     def getTags(self, rid, tid):
         result = self.dbs.query(Context).join(Round).filter(Round.tid == tid).all()
-        for i in result:
-            print(i.tag)
+        tags = [x.tag for x in result]
+        return tags
 
     def getContextValidationResults(
         self, num_matching_validations, validate_non_fooling=False, example_tags=None
