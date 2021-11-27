@@ -63,7 +63,6 @@ class CreateInterface extends React.Component {
     this.handleResponse = this.handleResponse.bind(this);
     this.switchLiveMode = this.switchLiveMode.bind(this);
     this.updateRetainInput = this.updateRetainInput.bind(this);
-    this.updateSelectedRound = this.updateSelectedRound.bind(this);
     this.initializeDataWrapper = this.initializeDataWrapper.bind(this);
     this.getInputData = this.getInputData.bind(this);
     this.storeExampleWrapper = this.storeExampleWrapper.bind(this);
@@ -150,25 +149,6 @@ class CreateInterface extends React.Component {
     this.setState({ retainInput: retainInput });
   }
 
-  updateSelectedRound(e) {
-    const selected = parseInt(e.target.getAttribute("index"));
-    if (selected !== this.state.task.selected_round) {
-      this.context.api.getTaskRound(this.state.task.id, selected).then(
-        (result) => {
-          var task = { ...this.state.task };
-          task.round = result;
-          task.selected_round = selected;
-          this.setState({ task: task }, function () {
-            this.getNewContext();
-          });
-        },
-        (error) => {
-          console.log(error);
-        }
-      );
-    }
-  }
-
   pickModel = (modelUrls) => {
     const models = modelUrls.split("|");
     const model = models[Math.floor(Math.random() * models.length)];
@@ -235,6 +215,7 @@ class CreateInterface extends React.Component {
         return this.context.api
           .storeExample(
             this.state.task.id,
+            this.state.task.cur_round,
             this.state.task.selected_round,
             this.context.user.id,
             this.state.context.id,
@@ -564,31 +545,6 @@ class CreateInterface extends React.Component {
       .filter((item) => item !== undefined);
     // sentinel value of undefined filtered out after to preserve index values
     const rounds = (this.state.task.round && this.state.task.cur_round) || 0;
-    const roundNavs = [];
-    for (let i = rounds; i > 0; i--) {
-      let cur = "";
-      let active = false;
-      if (i === this.state.task.cur_round) {
-        cur = " (active)";
-      }
-      if (i === this.state.task.selected_round) {
-        active = true;
-      }
-      roundNavs.push(
-        <Dropdown.Item
-          key={i}
-          index={i}
-          onClick={this.updateSelectedRound}
-          active={active}
-        >
-          Round {i}
-          {cur}
-        </Dropdown.Item>
-      );
-      if (i === this.state.task.cur_round) {
-        roundNavs.push(<Dropdown.Divider key={"div" + i} />);
-      }
-    }
 
     function renderTooltip(props, text) {
       return (
@@ -599,12 +555,6 @@ class CreateInterface extends React.Component {
     }
     function renderSandboxTooltip(props) {
       return renderTooltip(props, "Switch in and out of sandbox mode.");
-    }
-    function renderSwitchRoundTooltip(props) {
-      return renderTooltip(
-        props,
-        "Switch to other rounds of this task, including no longer active ones."
-      );
     }
     function renderSwitchContextTooltip(props) {
       return renderTooltip(props, "Don't like this context? Try another one.");
@@ -878,36 +828,6 @@ class CreateInterface extends React.Component {
                               </span>
                             </OverlayTrigger>
                           )}
-
-                          {/* {this.state.task.cur_round > 1 && (
-                            <OverlayTrigger
-                              placement="bottom"
-                              delay={{ show: 250, hide: 400 }}
-                              overlay={renderSwitchRoundTooltip}
-                            >
-                              <Annotation
-                                placement="right"
-                                tooltip="Want to try talking to previous rounds? You can switch here."
-                              >
-                                <DropdownButton
-                                  variant="light"
-                                  className="border-0 blue-color font-weight-bold light-gray-bg"
-                                  style={{ marginRight: 10 }}
-                                  id="dropdown-basic-button"
-                                  title={
-                                    "Round " +
-                                    this.state.task.selected_round +
-                                    (this.state.task.selected_round ===
-                                    this.state.task.cur_round
-                                      ? " (active)"
-                                      : "")
-                                  }
-                                >
-                                  {roundNavs}
-                                </DropdownButton>
-                              </Annotation>
-                            </OverlayTrigger>
-                          )} */}
                         </InputGroup>
                       </Col>
                       <Col xs={6}>
@@ -955,15 +875,6 @@ class CreateInterface extends React.Component {
                     </Row>
                   </Form>
                   <div className="p-2">
-                    {this.state.task.cur_round !==
-                      this.state.task.selected_round &&
-                      !this.state.selectedModel && (
-                        <p style={{ color: "red" }}>
-                          WARNING: You are talking to an outdated model for a
-                          round that is no longer active. Examples you generate
-                          may be less useful.
-                        </p>
-                      )}
                     {!this.state.livemode && (
                       <p style={{ color: "red" }}>
                         WARNING: You are in "just playing" sandbox mode. Your
