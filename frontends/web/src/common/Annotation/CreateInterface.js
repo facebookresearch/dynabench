@@ -215,7 +215,6 @@ class CreateInterface extends React.Component {
         return this.context.api
           .storeExample(
             this.state.task.id,
-            this.state.task.cur_round,
             this.state.task.selected_round,
             this.context.user.id,
             this.state.context.id,
