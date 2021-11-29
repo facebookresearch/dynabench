@@ -95,7 +95,7 @@ class CreateInterface extends React.Component {
       { loading: true, submitDisabled: true, refreshDisabled: true },
       () => {
         this.context.api
-          .getRandomContext(this.state.task.id, this.state.task.selected_round)
+          .getRandomContext(this.state.task.id, this.state.task.cur_round)
           .then(
             (result) => {
               const randomTargetModel =
@@ -215,7 +215,7 @@ class CreateInterface extends React.Component {
         return this.context.api
           .storeExample(
             this.state.task.id,
-            this.state.task.selected_round,
+            this.state.task.cur_round,
             this.context.user.id,
             this.state.context.id,
             this.getInputData(),
@@ -505,7 +505,6 @@ class CreateInterface extends React.Component {
           this.setState(
             { task: result, taskCode: result.task_code },
             function () {
-              this.state.task.selected_round = this.state.task.cur_round;
               this.getNewContext();
               if (params.taskCode !== this.state.taskCode) {
                 this.props.history.replace({
