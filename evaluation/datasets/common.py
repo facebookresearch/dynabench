@@ -306,6 +306,7 @@ class BaseDataset:
             raw_output_s3_uri = self.get_output_s3_url(
                 job.endpoint_name, raw=True, perturb_prefix=perturb_prefix
             )
+            print(raw_output_s3_uri)
             predictions = parse_s3_outfile(self.s3_client, raw_output_s3_uri)
             output_s3_uri = self.get_output_s3_url(
                 job.endpoint_name, raw=False, perturb_prefix=perturb_prefix

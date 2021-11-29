@@ -642,6 +642,7 @@ def email_decen_eaas(mid):
 
 @bottle.post("/models/update_database_with_metrics")
 def update_database_with_metrics():
+    mm = ModelModel()
     try:
         data = bottle.request.json
 
@@ -670,7 +671,12 @@ def update_database_with_metrics():
         job = dotdict(job)
         dataset = dotdict(dataset)
 
-        mm = ModelModel()
+        print("*********************")
+        print("here now")
+        print(dataset)
+        print(dataset.round_id)
+        print("******************")
+
         model = mm.get(job.model_id)
         # Don't change model's evaluation status if it has failed.
         if model.evaluation_status != EvaluationStatusEnum.failed:
@@ -718,13 +724,14 @@ def update_database_with_metrics():
                         d_entry.tid, d_entry.rid
                     ).id
                 else:
-                    score_obj["r_realid"] = 0
+                    score_obj["r_realid"] = 1
                 sm.create(**score_obj)
 
         return util.json_encode(mm.as_dict(model))
 
     except Exception as e:
         logger.exception("Could not update model details: %s" % (e))
+        mm.dbs.rollback()
         bottle.abort(400, "Could not update model details: %s" % (e))
 
 
@@ -755,11 +762,9 @@ def update_evaluation_status(mid):
 def eval_score_entry():
     dm = DatasetModel()
     sm = ScoreModel()
-    # job = bottle.request.json
-    # print(job)
+
+    # TODO: this is a little overboard
     job = dotdict(bottle.request.json)
-    # print(data)
-    # job = ujson.loads(str(data))
 
     # TODO: add secret here so it is not unauthorized
     if not ({"dataset_name", "model_id"} <= set(job.keys())):
@@ -768,8 +773,11 @@ def eval_score_entry():
     try:
         d_entry = dm.getByName(job.dataset_name)
         score_entry = sm.getOneByModelIdAndDataset(job.model_id, d_entry.id)
+        print(score_entry)
 
-        return util.json_encode(score_entry)
+        found_score_entry = True if score_entry else False
+        resp = {"status": "success", "found_score_entry": found_score_entry}
+        return util.json_encode(resp)
 
     except Exception as e:
         logger.exception("Could not update model details: %s" % (e))

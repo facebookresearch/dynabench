@@ -202,7 +202,14 @@ class MetricsComputer:
         """
         # dm = DatasetModel()
         # sm = ScoreModel()
+        # print("******************")
+        # print(self._waiting)
+        # while self._waiting:
+        #     self._waiting.pop(0)
+        # print(self._waiting)
+        # print("***************")
 
+        # import pdb; pdb.set_trace()
         n = len(self._waiting)
         traversed = 0
         while self._waiting and traversed < n:
@@ -212,8 +219,9 @@ class MetricsComputer:
             # d_entry = dm.getByName(job.dataset_name)
             # score_entry = sm.getOneByModelIdAndDataset(job.model_id, d_entry.id)
             score_entry = api_get_next_job_score_entry(DYNABENCH_API, job.as_dict())
+            print(score_entry)
 
-            if job.perturb_prefix and not score_entry:
+            if job.perturb_prefix and not score_entry["found_score_entry"]:
                 logger.info(
                     f"Haven't received original evaluation for {job.job_name}. "
                     f"Postpone computation."

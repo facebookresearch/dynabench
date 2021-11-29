@@ -20,6 +20,8 @@ from utils.requester_decen import Requester
 
 # TODO: [BE] strong typing on all interfce methods
 
+# TODO we might want to make this a bit bigger
+# because a lot of people will be requesting
 sleep_interval = 5
 scheduler_update_interval = 300
 logger = logging.getLogger("evaluation")
