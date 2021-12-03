@@ -244,6 +244,12 @@ export default class ApiService {
     });
   }
 
+  deployModel(modelId) {
+    return this.fetch(`${this.domain}/models/${modelId}/deploy`, {
+      method: "GET",
+    });
+  }
+
   getOverallUserLeaderboard(taskId, round, limit, offset) {
     const url =
       round === "overall"
@@ -652,6 +658,24 @@ export default class ApiService {
     return this.fetch(`${this.domain}/datasets/delete/${did}`, {
       method: "DELETE",
     });
+  }
+
+  uploadTrainFiles(tid, modelName, files) {
+    const token = this.getToken();
+    const formData = new FormData();
+    for (const [name, file] of Object.entries(files)) {
+      formData.append(name, file);
+    }
+    return this.fetch(
+      `${this.domain}/models/upload_train_files/${tid}/${modelName}`,
+      {
+        method: "POST",
+        body: formData,
+        headers: {
+          Authorization: token ? "Bearer " + token : "None",
+        },
+      }
+    );
   }
 
   uploadPredictions(tid, modelName, files) {

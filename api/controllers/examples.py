@@ -87,6 +87,8 @@ def get_random_example(credentials, tid, rid):
             task.num_matching_validations,
             n=1,
             tags=tags,
+            my_uid=query_dict["annotator_id"][0],
+            turk=True,
         )
     if not example:
         bottle.abort(500, f"No examples available ({round.id})")

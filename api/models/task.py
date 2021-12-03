@@ -20,9 +20,26 @@ from .round import Round
 
 sys.path.append("../evaluation")  # noqa
 from metrics.metric_getters import get_task_metrics_meta  # isort:skip
+from metrics.train_file_metrics import dataperf  # isort:skip
 
 
 EPSILON_PREC = 1e-4
+
+
+class TrainFileMetricEnum(enum.Enum):
+    dataperf = "dataperf"
+
+
+def verify_dataperf_config(constructor_args):
+    assert "reference_name" in constructor_args
+    assert "seeds" in constructor_args
+
+
+train_file_metric_config_verifiers = {
+    TrainFileMetricEnum.dataperf.name: verify_dataperf_config,
+}
+
+train_file_metrics = {TrainFileMetricEnum.dataperf.name: dataperf}
 
 
 class ModelWrongMetricEnum(enum.Enum):
@@ -124,9 +141,16 @@ class PerfMetricEnum(enum.Enum):
     sp_bleu = "sp_bleu"
     bleu = "bleu"
     vqa_accuracy = "vqa_accuracy"
+    dataperf_f1 = "dataperf_f1"
 
 
 def verify_macro_f1_config(constructor_args):
+    assert "reference_name" in constructor_args
+    # TODO: could do more verification to ensure that the type of the referenced object
+    # is a string or string selection
+
+
+def verify_dataperf_f1_config(constructor_args):
     assert "reference_name" in constructor_args
     # TODO: could do more verification to ensure that the type of the referenced object
     # is a string or string selection
@@ -165,6 +189,8 @@ def verify_bleu_config(constructor_args):
 perf_metric_config_verifiers = {
     PerfMetricEnum.macro_f1.name: verify_macro_f1_config,
     PerfMetricEnum.squad_f1.name: verify_squad_f1_config,
+    PerfMetricEnum.dataperf_f1.name: verify_dataperf_f1_config,
+    PerfMetricEnum.vqa_accuracy.name: verify_vqa_accuracy_config,
     PerfMetricEnum.accuracy.name: verify_accuracy_config,
     PerfMetricEnum.sp_bleu.name: verify_sp_bleu_config,
     PerfMetricEnum.bleu.name: verify_bleu_config,
@@ -177,6 +203,7 @@ class AnnotationTypeEnum(enum.Enum):
     context_string_selection = "context_string_selection"
     conf = "conf"
     multiclass_probs = "multiclass_probs"
+    multilabel = "multilabel"
     multiclass = "multiclass"
     target_label = "target_label"
 
@@ -346,6 +373,27 @@ class MulticlassProbs(AnnotationComponent):
             )
 
 
+class Multilabel(AnnotationComponent):
+    @staticmethod
+    def verify(
+        obj,
+        obj_constructor_args,
+        name_to_constructor_args,
+        data,
+        mode=AnnotationVerifierMode.default,
+    ):
+        assert isinstance(obj, list)
+        for item in obj:
+            assert item in obj_constructor_args["labels"]
+
+    @staticmethod
+    def verify_config(obj, annotation_config):
+        assert "labels" in obj["constructor_args"]
+        assert isinstance(obj["constructor_args"]["labels"], list)
+        for item in obj["constructor_args"]["labels"]:
+            assert isinstance(item, str)
+
+
 class Multiclass(AnnotationComponent):
     @staticmethod
     def verify(
@@ -402,6 +450,7 @@ annotation_components = {
     AnnotationTypeEnum.context_string_selection.name: ContextStringSelection,
     AnnotationTypeEnum.conf.name: Conf,
     AnnotationTypeEnum.multiclass_probs.name: MulticlassProbs,
+    AnnotationTypeEnum.multilabel.name: Multilabel,
     AnnotationTypeEnum.multiclass.name: Multiclass,
     AnnotationTypeEnum.target_label.name: TargetLabel,
 }
@@ -453,6 +502,9 @@ class Task(Base):
     has_predictions_upload = db.Column(db.Boolean, default=False)
     predictions_upload_instructions_md = db.Column(db.Text)
 
+    unique_validators_for_example_tags = db.Column(db.Boolean, default=False)
+    train_file_upload_instructions_md = db.Column(db.Text)
+
     def __repr__(self):
         return f"<Task {self.name}>"
 
@@ -461,6 +513,14 @@ class Task(Base):
         for column in self.__table__.columns:
             d[column.name] = getattr(self, column.name)
         return d
+
+    @staticmethod
+    def verify_train_file_metric_config(train_file_metric_config):
+        assert "type" in train_file_metric_config
+        assert "constructor_args" in train_file_metric_config
+        train_file_metric_config_verifiers[train_file_metric_config["type"]](
+            train_file_metric_config["constructor_args"]
+        )
 
     @staticmethod
     def verify_model_wrong_metric_config(model_wrong_metric_config):
@@ -508,6 +568,9 @@ class Task(Base):
 
         assert "delta_metrics" in annotation_config
         Task.verify_delta_metrics_config(annotation_config["delta_metrics"])
+
+        if "train_file_metric" in annotation_config:
+            Task.verify_train_file_metric_config(annotation_config["train_file_metric"])
 
         assert "context" in annotation_config
         assert "input" in annotation_config
@@ -598,6 +661,12 @@ class TaskModel(BaseModel):
     def getByTaskCode(self, task_code):
         try:
             return self.dbs.query(Task).filter(Task.task_code == task_code).one()
+        except db.orm.exc.NoResultFound:
+            return False
+
+    def getByTaskId(self, tid):
+        try:
+            return self.dbs.query(Task).filter(Task.id == tid).one()
         except db.orm.exc.NoResultFound:
             return False
 
