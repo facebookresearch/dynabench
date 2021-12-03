@@ -318,17 +318,17 @@ class CreateInterface extends React.Component {
           this.state.task.task_code === "sentiment")
       ) {
         this.setState((prevState) => ({
-          task: {
-            ...prevState.task,
-            hypothesis: prevState.statement,
+          data: {
+            ...prevState.data,
+            hypothesis: prevState.data.statement,
           },
         }));
       }
       if (!endpoint.startsWith("ts") && this.state.task.task_code === "qa") {
         this.setState((prevState) => ({
-          task: {
-            ...prevState.task,
-            hypothesis: prevState.statement,
+          data: {
+            ...prevState.data,
+            hypothesis: prevState.data.question,
           },
         }));
       }
