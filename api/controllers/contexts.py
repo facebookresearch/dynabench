@@ -82,12 +82,9 @@ def _getContext(tid, rid, method="min", tags=None):
 
 
 def _getAllTags(tid, rid):
-    rm = RoundModel()
-    round = rm.getByTidAndRid(tid, rid)
-
     c = ContextModel()
 
-    all_tags = c.getTags(round.id, tid)
+    all_tags = c.getTags(rid, tid)
     return util.json_encode(all_tags)
 
 
@@ -142,3 +139,9 @@ def do_upload(credentials, tid, rid):
     rm.dbs.bulk_save_objects(contexts_to_add)
     rm.dbs.commit()
     return util.json_encode({"success": "ok"})
+
+
+@bottle.post("/tags/selected/<tid:int>/<rid:int>")
+@_auth.requires_auth
+def upload_selected_tags(credentials, tid, rid):
+    ensure_owner_or_admin(tid, credentials["id"])

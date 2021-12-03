@@ -12,7 +12,6 @@ import UserContext from "../../containers/UserContext";
 const Contexts = (props) => {
   async function fetchTags(tid, rid) {
     let result = await context.api.getAllTaskTags(tid, rid);
-    console.log(result);
     return result;
   }
 
@@ -20,7 +19,7 @@ const Contexts = (props) => {
     fetchTags(props.tid, props.values.rid).then((result) => {
       setTags(result);
     });
-  });
+  }, []);
 
   const context = useContext(UserContext);
   const [tags, setTags] = useState([]);

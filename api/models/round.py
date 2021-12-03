@@ -32,6 +32,8 @@ class Round(Base):
     start_datetime = db.Column(db.DateTime, nullable=True)
     end_datetime = db.Column(db.DateTime, nullable=True)
 
+    selected_rounds = db.Column(db.Text)
+
     def __repr__(self):
         return f"<Round {self.tid} {self.rid}>"
 
