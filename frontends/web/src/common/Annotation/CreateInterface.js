@@ -880,6 +880,14 @@ class CreateInterface extends React.Component {
                     </Row>
                   </Form>
                   <div className="p-2">
+                    {!this.state.selectedModel && (
+                      <p style={{ color: "red" }}>
+                        WARNING: You are talking to a randomly selected model.
+                        If you would like to interact with a specific model for
+                        this task, please navigate to that model card and press
+                        `Interact`
+                      </p>
+                    )}
                     {!this.state.livemode && (
                       <p style={{ color: "red" }}>
                         WARNING: You are in "just playing" sandbox mode. Your
