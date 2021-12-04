@@ -13,7 +13,6 @@ import {
   Pagination,
   Table,
 } from "react-bootstrap";
-import { Link } from "react-router-dom";
 
 const ModelSubPage = (props) => {
   const [userModels, setUserModels] = useState([]);

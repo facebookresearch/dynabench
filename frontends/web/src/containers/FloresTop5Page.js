@@ -34,6 +34,7 @@ const FloresTop5Page = (props) => {
             FLORES_TASK_CODES.includes(t.task_code)
           );
           const taskLookup = floresTasks.reduce(
+            // eslint-disable-next-line
             (map, obj) => ((map[obj.task_code] = obj), map),
             {}
           );

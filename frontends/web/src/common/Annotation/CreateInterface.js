@@ -317,10 +317,20 @@ class CreateInterface extends React.Component {
         (this.state.task.task_code === "hs" ||
           this.state.task.task_code === "sentiment")
       ) {
-        this.state.data["hypothesis"] = this.state.data["statement"];
+        this.setState((prevState) => ({
+          data: {
+            ...prevState.data,
+            hypothesis: prevState.data.statement,
+          },
+        }));
       }
       if (!endpoint.startsWith("ts") && this.state.task.task_code === "qa") {
-        this.state.data["hypothesis"] = this.state.data["question"];
+        this.setState((prevState) => ({
+          data: {
+            ...prevState.data,
+            hypothesis: prevState.data.question,
+          },
+        }));
       }
       // End hack that can be removed upon full dynalab integration
       this.context.api
@@ -525,7 +535,12 @@ class CreateInterface extends React.Component {
           this.setState(
             { task: result, taskCode: result.task_code },
             function () {
-              this.state.task.selected_round = this.state.task.cur_round;
+              this.setState((prevState) => ({
+                task: {
+                  ...prevState.task,
+                  selected_round: prevState.task.cur_round,
+                },
+              }));
               this.getNewContext();
               if (params.taskCode !== this.state.taskCode) {
                 this.props.history.replace({
