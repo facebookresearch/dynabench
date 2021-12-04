@@ -432,7 +432,7 @@ class TaskOwnerPage extends React.Component {
         () => {
           this.refreshData();
           values.name = "";
-          for (const [fname, _] of Object.entries(files)) {
+          for (const fname of Object.keys(files)) {
             values[fname] = null;
           }
           resetForm({ values: values });

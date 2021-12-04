@@ -297,10 +297,20 @@ class CreateInterface extends React.Component {
         (this.state.task.task_code === "hs" ||
           this.state.task.task_code === "sentiment")
       ) {
-        this.state.data["hypothesis"] = this.state.data["statement"];
+        this.setState((prevState) => ({
+          data: {
+            ...prevState.data,
+            hypothesis: prevState.data.statement,
+          },
+        }));
       }
       if (!endpoint.startsWith("ts") && this.state.task.task_code === "qa") {
-        this.state.data["hypothesis"] = this.state.data["question"];
+        this.setState((prevState) => ({
+          data: {
+            ...prevState.data,
+            hypothesis: prevState.data.question,
+          },
+        }));
       }
       // End hack that can be removed upon full dynalab integration
       this.context.api

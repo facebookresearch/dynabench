@@ -15,14 +15,11 @@ import {
   Button,
   Form,
   Row,
-  InputGroup,
 } from "react-bootstrap";
 import { Formik } from "formik";
 
 const AdminTaskProposalTable = (props) => {
   const { data, page, getPage, paginate, isEndOfPage, api } = props;
-
-  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const [showViewModals, setShowViewModals] = useState(
     data.map((datum) => false)
