@@ -666,6 +666,24 @@ export default class ApiService {
     });
   }
 
+  uploadTrainFiles(tid, modelName, files) {
+    const token = this.getToken();
+    const formData = new FormData();
+    for (const [name, file] of Object.entries(files)) {
+      formData.append(name, file);
+    }
+    return this.fetch(
+      `${this.domain}/models/upload_train_files/${tid}/${modelName}`,
+      {
+        method: "POST",
+        body: formData,
+        headers: {
+          Authorization: token ? "Bearer " + token : "None",
+        },
+      }
+    );
+  }
+
   uploadPredictions(tid, modelName, files) {
     const token = this.getToken();
     const formData = new FormData();

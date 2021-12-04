@@ -51,6 +51,7 @@ class AtomicImage extends React.Component {
             src={this.props.src}
             style={{ display: "none" }}
             onLoad={this.onImgLoad}
+            alt="annotation"
           />
           <div
             className="d-flex align-items-center justify-content-center"

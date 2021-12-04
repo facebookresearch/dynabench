@@ -39,6 +39,7 @@ if __name__ == "__main__":
             queue.send_message(MessageBody=json.dumps(msg))
         redeployment_queue = []
 
+    mail_session = None
     if "smtp_user" in config and config["smtp_user"] != "":
         mail_session = mail.get_mail_session(
             host=config["smtp_host"],

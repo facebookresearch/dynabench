@@ -27,6 +27,8 @@ const Settings = (props) => {
                 validate_non_fooling: props.task.validate_non_fooling,
                 predictions_upload_instructions_md:
                   props.task.predictions_upload_instructions_md,
+                train_file_upload_instructions_md:
+                  props.task.train_file_upload_instructions_md,
               }}
               onSubmit={props.handleTaskUpdate}
             >
@@ -98,6 +100,37 @@ const Settings = (props) => {
                           </Col>
                         </Form.Group>
                       )}
+                      {props.task.annotation_config_json &&
+                        JSON.parse(
+                          props.task.annotation_config_json
+                        ).hasOwnProperty("train_file_metric") && (
+                          <Form.Group
+                            as={Row}
+                            controlId="train_file_upload_instructions_md"
+                            className="py-3 my-0"
+                          >
+                            <Form.Label column>
+                              Instructions For Train File Uploads
+                            </Form.Label>
+                            <Col sm="12">
+                              <Form.Control
+                                as="textarea"
+                                defaultValue={
+                                  values.train_file_upload_instructions_md
+                                }
+                                rows="12"
+                                onChange={handleChange}
+                              />
+                              <Form.Text id="paramsHelpBlock" muted>
+                                <Markdown>
+                                  The text will be rendered as
+                                  [markdown](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
+                                  in the train file submission interface.
+                                </Markdown>
+                              </Form.Text>
+                            </Col>
+                          </Form.Group>
+                        )}
                       <Form.Group
                         as={Row}
                         controlId="hidden"
