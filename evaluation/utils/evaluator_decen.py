@@ -12,7 +12,6 @@ import boto3
 import botocore
 from dateutil.tz import tzlocal
 
-from eval_config import eval_config
 from utils.helpers import (
     api_model_endpoint_name,
     process_aws_metrics,
@@ -22,8 +21,6 @@ from utils.helpers import (
 
 
 logger = logging.getLogger("evaluator")
-DYNABENCH_API = eval_config["DYNABENCH_API"]
-decen_eaas_secret = eval_config["decen_eaas_secret"]
 
 
 class Job:
@@ -31,9 +28,7 @@ class Job:
 
     def __init__(self, model_id, dataset_name, perturb_prefix=None):
         self.model_id = model_id
-        model_endpoint_name = api_model_endpoint_name(
-            DYNABENCH_API, decen_eaas_secret, model_id
-        )["endpoint_name"]
+        model_endpoint_name = api_model_endpoint_name(model_id)["endpoint_name"]
         self.endpoint_name = model_endpoint_name
         self.dataset_name = dataset_name
         self.perturb_prefix = perturb_prefix
@@ -128,9 +123,7 @@ class JobScheduler:
             self.dump()
 
     def is_predictions_upload(self, model_id):
-        model_deployment_status = api_model_endpoint_name(
-            DYNABENCH_API, decen_eaas_secret, model_id
-        )["deployment_status"]
+        model_deployment_status = api_model_endpoint_name(model_id)["deployment_status"]
         return model_deployment_status == "predictions_upload"
 
     def _set_jobname_with_unique_timestamp(self, job: Job) -> None:

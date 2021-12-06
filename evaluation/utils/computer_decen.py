@@ -10,7 +10,6 @@ from typing import Optional
 import ujson
 from enum import Enum
 
-from eval_config import eval_config
 from utils.evaluator import Job
 from utils.helpers import (
     api_get_next_job_score_entry,
@@ -20,8 +19,6 @@ from utils.helpers import (
 
 
 logger = logging.getLogger("computer")
-DYNABENCH_API = eval_config["DYNABENCH_API"]
-decen_eaas_secret = eval_config["decen_eaas_secret"]
 
 
 class ComputeStatusEnum(Enum):
@@ -64,9 +61,7 @@ class MetricsComputer:
             "delta_metrics_dict": ujson.dumps(delta_metrics_dict, default=str),
             "dataset": ujson.dumps(dataset.as_dict(job.endpoint_name), default=str),
         }
-        model_json = api_update_database_with_metrics(
-            DYNABENCH_API, decen_eaas_secret, data
-        )
+        model_json = api_update_database_with_metrics(data)
 
         if job in self._computing:
             self._computing.remove(job)
@@ -79,9 +74,7 @@ class MetricsComputer:
                 if other_job.model_id == job.model_id:
                     model_done_evaluating = False
             if model_done_evaluating:
-                api_model_eval_update(
-                    DYNABENCH_API, decen_eaas_secret, model_json["id"], "completed"
-                )
+                api_model_eval_update(model_json["id"], "completed")
 
         logger.info(f"Successfully evaluated {job.job_name}")
 
@@ -95,7 +88,7 @@ class MetricsComputer:
         if job in self._computing:
             self._computing.remove(job)
         self._failed.append(job)
-        api_model_eval_update(DYNABENCH_API, decen_eaas_secret, job.model_id, "failed")
+        api_model_eval_update(job.model_id, "failed")
 
     def compute_one_blocking(self, job) -> None:
         try:
@@ -146,9 +139,7 @@ class MetricsComputer:
             job = self._waiting.pop(0)
             traversed += 1
 
-            score_entry = api_get_next_job_score_entry(
-                DYNABENCH_API, decen_eaas_secret, job.as_dict()
-            )
+            score_entry = api_get_next_job_score_entry(job.as_dict())
 
             if job.perturb_prefix and not score_entry["found_score_entry"]:
                 logger.info(

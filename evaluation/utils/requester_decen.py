@@ -6,7 +6,6 @@ import json
 import logging
 
 from common.config import config
-from eval_config import eval_config
 from utils.computer_decen import MetricsComputer
 from utils.evaluator_decen import JobScheduler
 from utils.helpers import (
@@ -17,8 +16,6 @@ from utils.helpers import (
 
 
 logger = logging.getLogger("requester")
-DYNABENCH_API = eval_config["DYNABENCH_API"]
-decen_eaas_secret = eval_config["decen_eaas_secret"]
 
 
 class Requester:
@@ -141,7 +138,7 @@ class Requester:
             remaining_submitted_job_ids = []
             remaining_evaluating_job_ids = []
             for mid in failed_models:
-                api_model_update(DYNABENCH_API, decen_eaas_secret, mid, "completed")
+                api_model_update(mid, "completed")
                 send_takedown_model_request(model_id=mid, config=config, logger=logger)
                 for i, job in enumerate(self.scheduler._queued):
                     if job.model_id != mid:

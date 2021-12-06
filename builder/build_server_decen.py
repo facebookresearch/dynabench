@@ -1,10 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
-import os
 import pickle
-import subprocess
-import sys
 import time
 
 import boto3
@@ -31,9 +28,6 @@ if __name__ == "__main__":
         for msg in redeployment_queue:  # ask for redeployment
             queue.send_message(MessageBody=json.dumps(msg))
         redeployment_queue = []
-
-    DYNABENCH_API = build_config["DYNABENCH_API"]
-    decen_eaas_secret = build_config["decen_eaas_secret"]
 
     while True:
         for message in queue.receive_messages():
@@ -64,7 +58,7 @@ if __name__ == "__main__":
                         model_task_bucket = model.task.s3_bucket
 
                         logger.info("Starting to download the model to s3 bucket")
-                        model_download_filename = api_download_model(DYNABENCH_API, decen_eaas_secret, model_id, model_secret)
+                        model_download_filename = api_download_model(model_id, model_secret)
 
                         s3_filename = f"{model_endpoint_name}.tar.gz"
                         s3_path = f"torchserve/models/{model_task_code}/{s3_filename}"
@@ -82,7 +76,7 @@ if __name__ == "__main__":
 
                     # deploy model
                     logger.info(f"Start to deploy model {model_id}")
-                    api_model_update(DYNABENCH_API, decen_eaas_secret, model, "processing")
+                    api_model_update(model, "processing")
                     deployer = ModelDeployer(model)
                     response = deployer.deploy(s3_uri, endpoint_only=endpoint_only)
 
@@ -95,11 +89,11 @@ if __name__ == "__main__":
                         pickle.dump(
                             redeployment_queue, open(build_config["queue_dump"], "wb")
                         )
-                        api_model_update(DYNABENCH_API, decen_eaas_secret, model, "uploaded")   
+                        api_model_update(model, "uploaded")   
                         subject = f"Model {model.name} deployment delayed"
                         template = "model_deployment_fail"
                     elif response["status"] == "failed":
-                        api_model_update(DYNABENCH_API, decen_eaas_secret, model, "failed")
+                        api_model_update(model, "failed")
                         subject = f"Model {model.name} deployment failed"
                         template = "model_deployment_fail"
                     elif (
@@ -107,9 +101,9 @@ if __name__ == "__main__":
                         or response["status"] == "created"
                     ):
                         if response["status"] == "deployed":
-                            api_model_update(DYNABENCH_API, decen_eaas_secret, model, "deployed")
+                            api_model_update(model, "deployed")
                         else:
-                            api_model_update(DYNABENCH_API, decen_eaas_secret, model, "created")
+                            api_model_update(model, "created")
                         subject = f"Model {model.name} deployment successful"
                         template = "model_deployment_successful"
                         eval_message = {
@@ -119,12 +113,12 @@ if __name__ == "__main__":
                         eval_queue.send_message(MessageBody=json.dumps(eval_message))
 
                     # send email
-                    api_send_email(DYNABENCH_API, decen_eaas_secret, model, msg, subject, template)
+                    api_send_email(model, msg, subject, template)
                 elif model.deployment_status == "failed":
                     logger.info(f"Clean up failed model {model.endpoint_name}")
                     deployer = ModelDeployer(model)
                     deployer.cleanup_on_failure(s3_uri)
-                    api_model_update(DYNABENCH_API, decen_eaas_secret, model, "takendown")
+                    api_model_update(model, "takendown")
             queue.delete_messages(
                 Entries=[
                     {"Id": str(uuid.uuid4()), "ReceiptHandle": message.receipt_handle}

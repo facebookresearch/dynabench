@@ -2,10 +2,10 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import hashlib
 import json
 import logging
 import multiprocessing
+import sys
 import time
 
 import boto3
@@ -15,14 +15,14 @@ from datasets.common import BaseDataset
 
 import common.helpers as util
 from eval_config import eval_config
+from utils.helpers import load_models_ids_for_task_owners
 from utils.logging import init_logger
 from utils.requester_decen import Requester
 
 
-# TODO: [BE] strong typing on all interfce methods
+sys.path.append("../api")  # noqa
 
-# TODO we might want to make this a bit bigger
-# because a lot of people will be requesting
+# TODO: [BE] strong typing on all interfce methods
 sleep_interval = 5
 scheduler_update_interval = 300
 logger = logging.getLogger("evaluation")
@@ -31,31 +31,15 @@ DYNABENCH_API = eval_config["DYNABENCH_API"]
 decen_eaas_secret = eval_config["decen_eaas_secret"]
 
 
-def wrap_data(data, secret):
-    data_signature = generate_signature(data, secret)
-
-    final_data = {}
-    final_data["data"] = data
-    final_data["signature"] = data_signature
-    return final_data
-
-
-def generate_signature(data, secret):
-    h = hashlib.sha1()
-    h.update(f"{data}{secret}".encode("utf-8"))
-    signed = h.hexdigest()
-    return signed
-
-
 def load_datasets_for_task_owner():
     task_code = eval_config["task_code"]
     data = {"task_code": task_code}
 
     r = requests.get(
         f"{DYNABENCH_API}/tasks/decen_eaas/listdatasets",
-        data=json.dumps(wrap_data(data, decen_eaas_secret)),
+        data=json.dumps(util.wrap_data(data, decen_eaas_secret)),
         headers={"Content-Type": "application/json"},
-        verify=False,  # TODO: change this to true
+        verify=False,
     )
 
     jsonResponse = r.json()
@@ -72,22 +56,6 @@ def load_datasets_for_task_owner():
             )
 
     return datasets_dict
-
-
-def load_models_ids_for_task_owners():
-    task_code = eval_config["task_code"]
-    data = {"task_code": task_code}
-
-    r = requests.get(
-        f"{DYNABENCH_API}/tasks/decen_eaas/listmodelsids",
-        data=json.dumps(wrap_data(data, decen_eaas_secret)),
-        headers={"Content-Type": "application/json"},
-        verify=False,  # TODO: change this to true
-    )
-
-    model_ids_list = r.json()
-
-    return model_ids_list
 
 
 def main():

@@ -1,10 +1,17 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
-import hashlib
-
+import sys
 import pickle
 import requests
 import json
+
+from build_config import build_config
+
+DYNABENCH_API = build_config["DYNABENCH_API"]
+decen_eaas_secret = build_config["decen_eaas_secret"]
+
+sys.path.append("../api")  # noqa
+from common.helpers import wrap_data
 
 class dotdict(dict):
     """dot.notation access to dictionary attributes"""
@@ -25,7 +32,7 @@ def load_queue_dump(path, logger=None):
         return []
 
 # Decentralized Eaas Helpers
-def api_model_update(DYNABENCH_API, decen_eaas_secret, model, model_status, prod=False):
+def api_model_update(model, model_status, prod=False):
     data = {"deployment_status": model_status}
 
     r = requests.post(
@@ -35,7 +42,7 @@ def api_model_update(DYNABENCH_API, decen_eaas_secret, model, model_status, prod
         verify=prod
     )
  
-def api_send_email(DYNABENCH_API, decen_eaas_secret, model, msg, subject, template, prod=False):
+def api_send_email(model, msg, subject, template, prod=False):
     data = {
         "secret": model.secret, 
         "template": template,
@@ -50,7 +57,7 @@ def api_send_email(DYNABENCH_API, decen_eaas_secret, model, msg, subject, templa
         verify=prod
     )
 
-def api_download_model(DYNABENCH_API, decen_eaas_secret, model_id, model_secret, prod=False):
+def api_download_model(model_id, model_secret, prod=False):
     data = {
         "model_id": model_id,
         "secret": model_secret
@@ -69,17 +76,3 @@ def api_download_model(DYNABENCH_API, decen_eaas_secret, model_id, model_secret,
             for chunk in r.iter_content(chunk_size=8192): 
                 f.write(chunk)
         return download_filename
-
-def wrap_data(data, secret):
-    data_signature = generate_signature(data, secret)
-
-    final_data = {}
-    final_data["data"] = data
-    final_data["signature"] = data_signature
-    return final_data
-
-def generate_signature(data, secret):
-    h = hashlib.sha1()
-    h.update(f"{data}{secret}".encode("utf-8"))
-    signed = h.hexdigest()
-    return signed
