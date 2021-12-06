@@ -262,7 +262,7 @@ class TaskOwnerPage extends React.Component {
       "create_endpoint",
       "build_sqs_queue",
       "eval_sqs_queue",
-      "decen_task_bucket",
+      "is_decen_task",
     ];
     console.log("values are " + values);
 

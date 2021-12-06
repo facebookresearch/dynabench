@@ -4,12 +4,20 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import React from "react";
+import React, { useContext, useState } from "react";
 import { Container, Row, Form, Col, Card, Button } from "react-bootstrap";
 import Markdown from "react-markdown";
 import { Formik } from "formik";
+import UserContext from "../../containers/UserContext";
 
 const Settings = (props) => {
+  const context = useContext(UserContext);
+  const [decentoken, setDecenToken] = useState("");
+
+  context.api.getAPIToken().then((result) => {
+    setDecenToken(result.api_token);
+  });
+
   return (
     <Container className="mb-5 pb-5">
       <h1 className="my-4 pt-3 text-uppercase text-center">Settings</h1>
@@ -29,7 +37,7 @@ const Settings = (props) => {
                   props.task.predictions_upload_instructions_md,
                 build_sqs_queue: props.task.build_sqs_queue,
                 eval_sqs_queue: props.task.eval_sqs_queue,
-                decen_task_bucket: props.task.decen_task_bucket,
+                is_decen_task: props.task.is_decen_task,
               }}
               onSubmit={props.handleTaskUpdate}
             >
@@ -214,23 +222,30 @@ const Settings = (props) => {
                       </Form.Group>
                       <Form.Group
                         as={Row}
-                        controlId="decen_task_bucket"
+                        controlId="is_decen_task"
                         className="py-3 my-0 border-bottom"
                       >
                         <Form.Label column>
-                          s3 bucket
-                          <Form.Text id="paramsHelpBlock" muted>
-                            s3 bucket
-                          </Form.Text>
+                          Is this a Decentralized Task?
                         </Form.Label>
                         <Col sm="6">
-                          <Form.Control
-                            type="text"
-                            defaultValue={values.decen_task_bucket}
+                          <Form.Check
+                            checked={values.is_decen_task}
                             onChange={handleChange}
                           />
                         </Col>
                       </Form.Group>
+                      {values.is_decen_task && (
+                        <Form.Group
+                          as={Row}
+                          className="py-3 my-0 border-bottom"
+                        >
+                          <Form.Label column>Decen Eaas Token:</Form.Label>
+                          <Col sm="6">
+                            <Form.Control disabled value={decentoken} />
+                          </Col>
+                        </Form.Group>
+                      )}
                       <Form.Group
                         as={Row}
                         controlId="num_matching_validations"

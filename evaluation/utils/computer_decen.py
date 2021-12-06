@@ -21,6 +21,7 @@ from utils.helpers import (
 
 logger = logging.getLogger("computer")
 DYNABENCH_API = eval_config["DYNABENCH_API"]
+decen_eaas_secret = eval_config["decen_eaas_secret"]
 
 
 class ComputeStatusEnum(Enum):
@@ -56,7 +57,6 @@ class MetricsComputer:
     def update_database_with_metrics(
         self, job, eval_metrics_dict: dict, delta_metrics_dict: dict
     ) -> None:
-        # cal api with job, eval metrics dict, delta metrics dict
         dataset = self.datasets[job.dataset_name]
         data = {
             "job": ujson.dumps(job.as_dict(), default=str),
@@ -64,61 +64,9 @@ class MetricsComputer:
             "delta_metrics_dict": ujson.dumps(delta_metrics_dict, default=str),
             "dataset": ujson.dumps(dataset.as_dict(job.endpoint_name), default=str),
         }
-        model_json = api_update_database_with_metrics(DYNABENCH_API, data)
-        print("in update db with metrics")
-        print(model_json)
-        # mm = ModelModel()
-        # model = mm.get(job.model_id)
-        # # Don't change model's evaluation status if it has failed.
-        # if model.evaluation_status != EvaluationStatusEnum.failed:
-        #     if model.evaluation_status != EvaluationStatusEnum.evaluating:
-        #         model.evaluation_status = EvaluationStatusEnum.evaluating
-        #         mm.dbs.add(model)
-        #         mm.dbs.flush()
-        #         mm.dbs.commit()
-
-        # dm = DatasetModel()
-        # d_entry = dm.getByName(job.dataset_name)
-        # sm = ScoreModel()
-        # s = sm.getOneByModelIdAndDataset(job.model_id, d_entry.id)
-
-        # dataset = self.datasets[job.dataset_name]
-        # if job.perturb_prefix:
-        #     assert s is not None
-        #     eval_metadata_json = json.loads(eval_metrics_dict["metadata_json"])
-        #     eval_metadata_json = {
-        #         f"{job.perturb_prefix}-{metric}": eval_metadata_json[metric]
-        #         for metric in eval_metadata_json
-        #     }
-        #     metadata_json = update_metadata_json_string(
-        #         s.metadata_json,
-        #         [json.dumps(eval_metadata_json), delta_metrics_dict["metadata_json"]],
-        #     )
-        #     score_obj = {**delta_metrics_dict, "metadata_json": metadata_json}
-        #     sm.update(s.id, **score_obj)
-        # else:
-        #     job_metrics_dict = get_job_metrics(job, dataset)
-        #     score_obj = {**eval_metrics_dict, **job_metrics_dict}
-        #     if s:
-        #         score_obj["metadata_json"] = update_metadata_json_string(
-        #             s.metadata_json, [score_obj["metadata_json"]]
-        #         )
-        #         sm.update(s.id, **score_obj)
-        #     else:
-        #         score_obj["model_id"] = job.model_id
-        #         score_obj["did"] = d_entry.id
-        #         score_obj["raw_output_s3_uri"] = dataset.get_output_s3_url(
-        #             job.endpoint_name
-        #         )
-
-        #         rm = RoundModel()
-        #         if dataset.round_id != 0:
-        #             score_obj["r_realid"] = rm.getByTidAndRid(
-        #                 d_entry.tid, d_entry.rid
-        #             ).id
-        #         else:
-        #             score_obj["r_realid"] = 0
-        #         sm.create(**score_obj)
+        model_json = api_update_database_with_metrics(
+            DYNABENCH_API, decen_eaas_secret, data
+        )
 
         if job in self._computing:
             self._computing.remove(job)
@@ -131,11 +79,9 @@ class MetricsComputer:
                 if other_job.model_id == job.model_id:
                     model_done_evaluating = False
             if model_done_evaluating:
-                api_model_eval_update(DYNABENCH_API, model_json["id"], "completed")
-                # model.evaluation_status = EvaluationStatusEnum.completed
-                # mm.dbs.add(model)
-                # mm.dbs.flush()
-                # mm.dbs.commit()
+                api_model_eval_update(
+                    DYNABENCH_API, decen_eaas_secret, model_json["id"], "completed"
+                )
 
         logger.info(f"Successfully evaluated {job.job_name}")
 
@@ -149,13 +95,7 @@ class MetricsComputer:
         if job in self._computing:
             self._computing.remove(job)
         self._failed.append(job)
-        api_model_eval_update(DYNABENCH_API, job.model_id, "failed")
-        # mm = ModelModel()
-        # model = mm.get(job.model_id)
-        # model.evaluation_status = EvaluationStatusEnum.failed
-        # mm.dbs.add(model)
-        # mm.dbs.flush()
-        # mm.dbs.commit()
+        api_model_eval_update(DYNABENCH_API, decen_eaas_secret, job.model_id, "failed")
 
     def compute_one_blocking(self, job) -> None:
         try:
@@ -200,26 +140,15 @@ class MetricsComputer:
         Note: the job returned doesn't belong anymore to any of the internal lists
         and need to be added back (eg by passing it to `compute_one_async`)
         """
-        # dm = DatasetModel()
-        # sm = ScoreModel()
-        # print("******************")
-        # print(self._waiting)
-        # while self._waiting:
-        #     self._waiting.pop(0)
-        # print(self._waiting)
-        # print("***************")
-
-        # import pdb; pdb.set_trace()
         n = len(self._waiting)
         traversed = 0
         while self._waiting and traversed < n:
             job = self._waiting.pop(0)
             traversed += 1
 
-            # d_entry = dm.getByName(job.dataset_name)
-            # score_entry = sm.getOneByModelIdAndDataset(job.model_id, d_entry.id)
-            score_entry = api_get_next_job_score_entry(DYNABENCH_API, job.as_dict())
-            print(score_entry)
+            score_entry = api_get_next_job_score_entry(
+                DYNABENCH_API, decen_eaas_secret, job.as_dict()
+            )
 
             if job.perturb_prefix and not score_entry["found_score_entry"]:
                 logger.info(

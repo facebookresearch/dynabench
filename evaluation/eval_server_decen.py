@@ -2,6 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import hashlib
 import json
 import logging
 import multiprocessing
@@ -27,24 +28,37 @@ scheduler_update_interval = 300
 logger = logging.getLogger("evaluation")
 
 DYNABENCH_API = eval_config["DYNABENCH_API"]
+decen_eaas_secret = eval_config["decen_eaas_secret"]
+
+
+def wrap_data(data, secret):
+    data_signature = generate_signature(data, secret)
+
+    final_data = {}
+    final_data["data"] = data
+    final_data["signature"] = data_signature
+    return final_data
+
+
+def generate_signature(data, secret):
+    h = hashlib.sha1()
+    h.update(f"{data}{secret}".encode("utf-8"))
+    signed = h.hexdigest()
+    return signed
 
 
 def load_datasets_for_task_owner():
-    # TODO: secure this (make it so only the correct task owner can do this)
     task_code = eval_config["task_code"]
     data = {"task_code": task_code}
 
     r = requests.get(
         f"{DYNABENCH_API}/tasks/decen_eaas/listdatasets",
-        data=json.dumps(data),
+        data=json.dumps(wrap_data(data, decen_eaas_secret)),
         headers={"Content-Type": "application/json"},
         verify=False,  # TODO: change this to true
     )
 
-    # print(r)
-
     jsonResponse = r.json()
-    # print(jsonResponse)
 
     datasets_dict = {}
 
@@ -61,13 +75,12 @@ def load_datasets_for_task_owner():
 
 
 def load_models_ids_for_task_owners():
-    # TODO: secure this (make it so only the correct task owner can do this)
     task_code = eval_config["task_code"]
     data = {"task_code": task_code}
 
     r = requests.get(
         f"{DYNABENCH_API}/tasks/decen_eaas/listmodelsids",
-        data=json.dumps(data),
+        data=json.dumps(wrap_data(data, decen_eaas_secret)),
         headers={"Content-Type": "application/json"},
         verify=False,  # TODO: change this to true
     )
@@ -138,10 +151,14 @@ def main():
             if timer >= scheduler_update_interval:
                 requester.update_status()
                 timer = 0
-            # Evaluate one job
-            job = requester.computer.find_next_ready_job()
-            if job:
-                requester.computer.compute_one_async(pool, job)
+            try:
+                # Evaluate one job
+                job = requester.computer.find_next_ready_job()
+                if job:
+                    requester.computer.compute_one_async(pool, job)
+            except Exception as e:
+                print(e)
+
             time.sleep(sleep_interval)
             timer += sleep_interval
 

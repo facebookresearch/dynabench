@@ -21,7 +21,7 @@ steps = [
         "ALTER TABLE tasks DROP eval_sqs_queue",
     ),
     step(
-        "ALTER TABLE tasks ADD COLUMN decen_task_bucket TEXT",
-        "ALTER TABLE tasks DROP decen_task_bucket",
+        "ALTER TABLE tasks ADD COLUMN is_decen_task BOOLEAN DEFAULT false",
+        "ALTER TABLE tasks DROP is_decen_task",
     ),
 ]

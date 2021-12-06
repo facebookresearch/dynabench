@@ -432,7 +432,7 @@ def update(credentials, tid):
             "create_endpoint",
             "build_sqs_queue",
             "eval_sqs_queue",
-            "decen_task_bucket",
+            "is_decen_task",
         ):
             bottle.abort(
                 403,
@@ -1048,23 +1048,41 @@ def construct_trends_response_json(query_result):
         return util.json_encode([])
 
 
+def get_secret_for_task_id(tid):
+    tm = TaskModel()
+    tups = (
+        tm.dbs.query(TaskUserPermission)
+        .filter(
+            db.and_(TaskUserPermission.type == "owner", TaskUserPermission.tid == tid)
+        )
+        .all()
+    )
+    assert len(tups) == 1
+    um = UserModel()
+    user = um.get(tups[0].uid)
+    return user.api_token
+
+
 @bottle.get("/tasks/decen_eaas/listdatasets")
 def decen_eaas_list_datasets():
     dm = DatasetModel()
     tm = TaskModel()
-    data = bottle.request.json
+    req_data = bottle.request.json
+    data = req_data["data"]
+    task_code = data["task_code"]
+
+    # Get the TID for the task code
+    task = tm.getByTaskCode(task_code)
+    task_secret = get_secret_for_task_id(task.id)
+
+    if not util.verified_data(req_data, task_secret):
+        bottle.abort(401, "Operation not authorized")
 
     # The only thing so far we need to update is the deployment_status
     if set(data.keys()) != {"task_code"}:
         bottle.abort(401, "Operation not authorized")
 
     try:
-        task_code = data["task_code"]
-
-        # Get the TID for the task code
-        task = tm.getByTaskCode(task_code)
-        print(task.id)
-
         # Get all datasets related to the task code
         datasets = dm.getByTid(task.id)
         json_encoded_datasets = []
@@ -1074,26 +1092,30 @@ def decen_eaas_list_datasets():
         return util.json_encode(json_encoded_datasets)
 
     except Exception as e:
-        logger.exception("Could not retrieve datasets: %s" % (e))
-        bottle.abort(400, "Could not retrieve datasets: %s" % (e))
+        logger.exception("Could not retrieve datasets for task: %s" % (e))
+        bottle.abort(400, "Could not retrieve datasets for task: %s" % (e))
 
 
 @bottle.get("/tasks/decen_eaas/listmodelsids")
 def decen_eaas_list_model_ids():
     mm = ModelModel()
     tm = TaskModel()
-    data = bottle.request.json
+    req_data = bottle.request.json
+    data = req_data["data"]
+    task_code = data["task_code"]
+
+    # Get the TID for the task code
+    task = tm.getByTaskCode(task_code)
+    task_secret = get_secret_for_task_id(task.id)
+
+    if not util.verified_data(req_data, task_secret):
+        bottle.abort(401, "Operation not authorized")
 
     # The only thing so far we need to update is the deployment_status
     if set(data.keys()) != {"task_code"}:
         bottle.abort(401, "Operation not authorized")
 
     try:
-        task_code = data["task_code"]
-
-        # Get the TID for the task code
-        task = tm.getByTaskCode(task_code)
-        print(task.id)
 
         # Get all datasets related to the task code
         models = mm.getByTid(task.id)
@@ -1109,5 +1131,5 @@ def decen_eaas_list_model_ids():
         return util.json_encode(model_ids)
 
     except Exception as e:
-        logger.exception("Could not retrieve models: %s" % (e))
-        bottle.abort(400, "Could not retrieve models: %s" % (e))
+        logger.exception("Could not list model ids for task: %s" % (e))
+        bottle.abort(400, "Could not list model ids for task: %s" % (e))

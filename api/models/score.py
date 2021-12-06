@@ -67,6 +67,11 @@ class ScoreModel(BaseModel):
         u.update(kwargs)
         self.dbs.commit()
 
+    def delete(self, score):
+        self.dbs.delete(score)
+        self.dbs.commit()
+        return True
+
     def bulk_create(self, model_id, score_objs=[], raw_upload_data=""):
         self.dbs.add_all(
             [
@@ -520,3 +525,9 @@ class ScoreModel(BaseModel):
             .filter(Score.mid == mid)
             .all()
         )
+
+    def getByDid(self, did):
+        try:
+            return self.dbs.query(Score).filter(Score.did == did).all()
+        except db.orm.exc.NoResultFound:
+            return False

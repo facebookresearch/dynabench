@@ -454,7 +454,7 @@ class Task(Base):
     predictions_upload_instructions_md = db.Column(db.Text)
     build_sqs_queue = db.Column(db.Text)
     eval_sqs_queue = db.Column(db.Text)
-    decen_task_bucket = db.Column(db.Text)
+    is_decen_task = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         return f"<Task {self.name}>"

@@ -4,6 +4,7 @@
 
 import datetime
 import decimal
+import hashlib
 from urllib.parse import urlparse
 
 import bottle
@@ -263,3 +264,14 @@ def get_round_data_for_export(tid, rid):
                     example_and_validations_dict["validations"].append(validation_info)
             example_and_validations_dicts.append(example_and_validations_dict)
     return example_and_validations_dicts
+
+
+def generate_signature(data, secret):
+    h = hashlib.sha1()
+    h.update(f"{data}{secret}".encode("utf-8"))
+    signed = h.hexdigest()
+    return signed
+
+
+def verified_data(data, secret):
+    return generate_signature(data["data"], secret) == data["signature"]

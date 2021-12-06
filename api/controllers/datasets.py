@@ -15,6 +15,7 @@ import common.helpers as util
 from common.config import config
 from common.logging import logger
 from models.dataset import AccessTypeEnum, DatasetModel
+from models.score import ScoreModel
 from models.task import AnnotationVerifierMode, TaskModel
 
 from .tasks import ensure_owner_or_admin
@@ -56,6 +57,12 @@ def delete(credentials, did):
 
     tm = TaskModel()
     task = tm.get(dataset.tid)
+
+    # Delete all scores that reference this dataset first
+    sm = ScoreModel()
+    scores_to_delete = sm.getByDid(did)
+    for score in scores_to_delete:
+        sm.delete(score)
 
     delta_metric_types = [
         config["type"]
