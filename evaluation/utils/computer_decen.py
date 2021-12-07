@@ -141,7 +141,10 @@ class MetricsComputer:
 
             score_entry = api_get_next_job_score_entry(job.as_dict())
 
-            if job.perturb_prefix and not score_entry["found_score_entry"]:
+            if job.perturb_prefix and (
+                "found_score_entry" not in score_entry
+                or not score_entry["found_score_entry"]
+            ):
                 logger.info(
                     f"Haven't received original evaluation for {job.job_name}. "
                     f"Postpone computation."

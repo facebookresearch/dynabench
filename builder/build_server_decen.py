@@ -9,7 +9,13 @@ import uuid
 
 from build_config import build_config
 from utils.deployer import ModelDeployer
-from utils.helpers import load_queue_dump, dotdict, api_model_update, api_send_email, api_download_model
+from utils.helpers import (
+    load_queue_dump,
+    dotdict,
+    api_model_update,
+    api_send_email,
+    api_download_model,
+)
 from utils.logging import init_logger, logger
 
 if __name__ == "__main__":
@@ -34,7 +40,14 @@ if __name__ == "__main__":
             msg = json.loads(message.body)
             logger.info(f"Build server received SQS message {msg}")
 
-            if set(msg.keys()) <= {"model_id", "s3_uri", "model_info", "task_info", "endpoint_only", "decen_eaas"}:
+            if set(msg.keys()) <= {
+                "model_id",
+                "s3_uri",
+                "model_info",
+                "task_info",
+                "endpoint_only",
+                "decen_eaas",
+            }:
                 model_id = msg["model_id"]
                 s3_uri = msg["s3_uri"]
                 endpoint_only = msg.get("endpoint_only", False)
@@ -46,10 +59,9 @@ if __name__ == "__main__":
 
                 if (
                     model.deployment_status == "uploaded"
-                    or model.deployment_status
-                    == "takendownnonactive"
+                    or model.deployment_status == "takendownnonactive"
                 ):
-                    
+
                     if model.deployment_status == "uploaded":
                         model_id = model.id
                         model_secret = model.secret
@@ -58,7 +70,9 @@ if __name__ == "__main__":
                         model_task_bucket = model.task.s3_bucket
 
                         logger.info("Starting to download the model to s3 bucket")
-                        model_download_filename = api_download_model(model_id, model_secret)
+                        model_download_filename = api_download_model(
+                            model_id, model_secret
+                        )
 
                         s3_filename = f"{model_endpoint_name}.tar.gz"
                         s3_path = f"torchserve/models/{model_task_code}/{s3_filename}"
@@ -70,9 +84,13 @@ if __name__ == "__main__":
                             region_name=build_config["aws_region"],
                         )
                         s3_client = session.client("s3")
-                        response = s3_client.upload_fileobj(open(model_download_filename, "rb"), bucket_name, s3_path)
+                        response = s3_client.upload_fileobj(
+                            open(model_download_filename, "rb"), bucket_name, s3_path
+                        )
                         if response:
-                            logger.info(f"Response from the mar file upload to s3 {response}")
+                            logger.info(
+                                f"Response from the mar file upload to s3 {response}"
+                            )
 
                     # deploy model
                     logger.info(f"Start to deploy model {model_id}")
@@ -89,7 +107,7 @@ if __name__ == "__main__":
                         pickle.dump(
                             redeployment_queue, open(build_config["queue_dump"], "wb")
                         )
-                        api_model_update(model, "uploaded")   
+                        api_model_update(model, "uploaded")
                         subject = f"Model {model.name} deployment delayed"
                         template = "model_deployment_fail"
                     elif response["status"] == "failed":
