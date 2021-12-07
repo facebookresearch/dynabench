@@ -90,11 +90,12 @@ def create(credentials, tid, name):
     if not bool(re.fullmatch("[a-zA-Z0-9]{1,62}", name)):
         bottle.abort(
             400,
-            "Invalid dataset name - (must be purely alphanumeric "
-            + "and shorter than 63 characters)",
+            "Invalid dataset name - must be purely alphanumeric "
+            + "and shorter than 63 characters",
         )
 
     dataset_upload = bottle.request.files.get("file")
+
     tm = TaskModel()
     task = tm.get(tid)
 
