@@ -402,6 +402,7 @@ class ExampleModel(BaseModel):
         n=1,
         my_uid=None,
         tags=None,
+        turk=False,
     ):
         cnt_correct = db.sql.func.sum(
             case([(Validation.label == LabelEnum.correct, 1)], else_=0)
@@ -441,9 +442,26 @@ class ExampleModel(BaseModel):
             )
         )
         if my_uid is not None:
-            cnt_uid = db.sql.func.sum(
-                case([(Validation.uid == my_uid, 1)], else_=0)
-            ).label("cnt_uid")
+            if turk:
+                c = case(
+                    [
+                        (
+                            db.text(
+                                "validations.metadata_json is not NULL and "
+                                + "JSON_EXTRACT(validations.metadata_json, "
+                                + "'$.annotator_id') = "
+                                + '"'
+                                + my_uid
+                                + '"'
+                            ),
+                            1,
+                        )
+                    ],
+                    else_=0,
+                )
+            else:
+                c = case([(Validation.uid == my_uid, 1)], else_=0)
+            cnt_uid = db.sql.func.sum(c).label("cnt_uid")
             result_partially_validated = result_partially_validated.group_by(
                 Validation.eid
             ).having(cnt_uid == 0)
@@ -452,7 +470,19 @@ class ExampleModel(BaseModel):
         )
         result = result_partially_validated.union(result_not_validated)
         if my_uid is not None:
-            result = result.filter(Example.uid != my_uid)
+            if turk:
+                result = result.filter(
+                    db.text(
+                        "examples_metadata_json is NULL "
+                        + "or JSON_EXTRACT(examples_metadata_json, "
+                        + "'$.annotator_id') != "
+                        + '"'
+                        + my_uid
+                        + '"'
+                    )
+                )
+            else:
+                result = result.filter(Example.uid != my_uid)
         result = (
             result.order_by(
                 db.not_(Example.model_wrong),

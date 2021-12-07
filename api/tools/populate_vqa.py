@@ -7,7 +7,6 @@
 import common.helpers as util
 
 
-import ujson  # isort:skip
 import os  # isort:skip
 import sys  # isort:skip
 
@@ -22,7 +21,7 @@ from models.task import TaskModel  # isort:skip
 def getImagesFromFile(fileName):
     path = f"annotations/{fileName}.json"
     with open(path) as jsonFile:
-        anns = ujson.load(jsonFile)
+        anns = util.json_decode(jsonFile)
         return anns["images"]
 
 

@@ -27,7 +27,6 @@ config = { \
         'eval_aws_access_key_id': '',
         'eval_aws_secret_access_key': '',
         'eval_aws_region': '',
-        'evaluation_sqs_queue': '',
         'profile_img_max_size': 5 * 1024 * 1024, # 5 MB
         'ssl_cert_file_path': '', # Configuring the ssl certificate path
         'ssl_org_pem_file_path': '',
