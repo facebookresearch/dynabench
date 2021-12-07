@@ -13,14 +13,14 @@ import requests
 import uuid
 from datasets.common import BaseDataset
 
-import common.helpers as util
 from eval_config import eval_config
 from utils.helpers import load_models_ids_for_task_owners
 from utils.logging import init_logger
 from utils.requester_decen import Requester
 
 
-sys.path.append("../api")  # noqa
+sys.path.append("../api")  # noqa isort:skip
+import common.helpers as util  # noqa isort:skip
 
 # TODO: [BE] strong typing on all interfce methods
 sleep_interval = 5

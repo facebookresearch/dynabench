@@ -10,13 +10,14 @@ import uuid
 from build_config import build_config
 from utils.deployer import ModelDeployer
 from utils.helpers import (
-    load_queue_dump,
-    dotdict,
+    api_download_model,
     api_model_update,
     api_send_email,
-    api_download_model,
+    dotdict,
+    load_queue_dump,
 )
 from utils.logging import init_logger, logger
+
 
 if __name__ == "__main__":
     init_logger("builder")
