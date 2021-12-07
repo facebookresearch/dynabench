@@ -12,6 +12,6 @@ from yoyo import step
 __depends__ = {"20211103_01_pdUwN-add-placeholder-validation"}
 
 steps = [
-    step("ALTER TABLE rounds DROP COLUMN selected_rounds"),
-    step("ALTER TABLE rounds ADD COLUMN selected_rounds TEXT"),
+    step("ALTER TABLE rounds DROP COLUMN IF EXISTS selected_tags"),
+    step("ALTER TABLE rounds ADD COLUMN selected_tags TEXT"),
 ]

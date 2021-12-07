@@ -32,7 +32,7 @@ class Round(Base):
     start_datetime = db.Column(db.DateTime, nullable=True)
     end_datetime = db.Column(db.DateTime, nullable=True)
 
-    selected_rounds = db.Column(db.Text)
+    selected_tags = db.Column(db.Text)
 
     def __repr__(self):
         return f"<Round {self.tid} {self.rid}>"
@@ -99,4 +99,15 @@ class RoundModel(BaseModel):
         r = self.get(r_realid)
         if r:
             r.task.last_updated = db.sql.func.now()
+            self.dbs.commit()
+
+    def getSelectedTags(self, tid, rid):
+        r = self.getByTidAndRid(tid, rid)
+        if r:
+            return r.selected_tags
+
+    def updateSelectedTags(self, tid, rid, tags):
+        r = self.getByTidAndRid(tid, rid)
+        if r:
+            r.selected_tags = str(tags)
             self.dbs.commit()

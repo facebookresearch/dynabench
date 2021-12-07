@@ -4,7 +4,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import React from "react";
+import React, { useContext } from "react";
 import { Container, Row, Form, Col, Card, Button } from "react-bootstrap";
 import Markdown from "react-markdown";
 import { Formik } from "formik";
@@ -13,6 +13,7 @@ import { useState } from "react";
 import ChevronExpandButton from "../Buttons/ChevronExpandButton";
 import Contexts from "./Contexts";
 import { Spinner } from "react-bootstrap";
+import UserContext from "../../containers/UserContext";
 
 const Rounds = (props) => {
   const [showModelSelectRound, setShowModelSelectRound] = useState(
@@ -34,6 +35,13 @@ const Rounds = (props) => {
     model_identifiers[index].is_target = !model_identifiers[index].is_target;
     setFieldValue("model_identifiers", model_identifiers);
   };
+
+  async function fetchSelectedTags(tid, rid) {
+    let result = await context.api.getAllRoundTags(tid, rid);
+    return result;
+  }
+
+  const context = useContext(UserContext);
 
   return (
     <Container className="mb-5 pb-5">
@@ -85,6 +93,8 @@ const Rounds = (props) => {
                     longdesc: round.longdesc,
                     model_identifiers:
                       props.model_identifiers_for_target_selection[round.rid],
+                    selected_tags:
+                      fetchSelectedTags(props.tid, round.rid) || [],
                   }}
                   onSubmit={props.handleRoundUpdate}
                 >

@@ -51,6 +51,14 @@ def getRandomValidationFailedContext(tid, rid):
     return _getContext(tid, rid, "validation_failed", tags=tags)
 
 
+@bottle.get("/tags/get_selected/<tid:int>/<rid:int>")
+@_auth.requires_auth
+def getSelectedTags(credentials, tid, rid):
+    ensure_owner_or_admin(tid, credentials["id"])
+
+    return _getSelectedTags(tid, rid)
+
+
 def _getTags(query_dict):
     tags = None
     if "tags" in query_dict and len(query_dict["tags"]) > 0:
@@ -86,6 +94,13 @@ def _getAllTags(tid, rid):
 
     all_tags = c.getTags(rid, tid)
     return util.json_encode(all_tags)
+
+
+def _getSelectedTags(tid, rid):
+    rm = RoundModel()
+
+    selected_tags = rm.getSelectedTags(tid, rid)
+    return util.json_encode(selected_tags)
 
 
 @bottle.post("/contexts/upload/<tid:int>/<rid:int>")
@@ -143,5 +158,17 @@ def do_upload(credentials, tid, rid):
 
 @bottle.post("/tags/selected/<tid:int>/<rid:int>")
 @_auth.requires_auth
-def upload_selected_tags(credentials, tid, rid):
+def update_selected_tags(credentials, tid, rid):
     ensure_owner_or_admin(tid, credentials["id"])
+
+    data = bottle.request.json
+
+    if not util.check_fields(data, ["selected_tags"]):
+        bottle.abort(400, "Invalid data")
+
+    selected_tags = str(data["selected_tags"])
+    print(selected_tags)
+
+    rm = RoundModel()
+
+    rm.updateSelectedTags(tid, rid, selected_tags)

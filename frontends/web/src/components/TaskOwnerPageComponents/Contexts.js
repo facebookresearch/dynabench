@@ -15,14 +15,28 @@ const Contexts = (props) => {
     return result;
   }
 
+  async function fetchSelectedTags(tid, rid) {
+    let result = await context.api.getAllRoundTags(tid, rid);
+    return result;
+  }
+
   useEffect(() => {
     fetchTags(props.tid, props.values.rid).then((result) => {
       setTags(result);
     });
-  }, []);
+
+    fetchSelectedTags(props.tid, props.values.rid).then((result) => {
+      if (result) {
+        setSelectedTags(result);
+      } else {
+        setSelectedTags([]);
+      }
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const context = useContext(UserContext);
   const [tags, setTags] = useState([]);
+  const [selectedTags, setSelectedTags] = useState([]);
 
   return (
     <Container>
@@ -78,14 +92,26 @@ const Contexts = (props) => {
       </p>
       <Form.Group controlId="selected_tags">
         {tags.map((tag) => {
+          let checked = false;
+          if (selectedTags.includes(tag)) {
+            checked = true;
+          }
           return (
             <Form.Check
               type="checkbox"
+              checked={checked}
               label={tag}
               name="selected_tags"
               value={tag}
               onChange={(event) => {
-                props.setFieldValue("selected_tags", event.target.value);
+                if (event.target.checked) {
+                  setSelectedTags([...selectedTags, event.target.value]);
+                } else {
+                  setSelectedTags(
+                    selectedTags.filter((t) => t !== event.target.value)
+                  );
+                }
+                props.setFieldValue("selected_tags", selectedTags);
               }}
             />
           );

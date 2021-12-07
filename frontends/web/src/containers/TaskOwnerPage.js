@@ -359,6 +359,8 @@ class TaskOwnerPage extends React.Component {
   ) => {
     const model_ids = [];
 
+    console.log(values);
+
     for (const model_identifier of values.model_identifiers) {
       if (model_identifier.is_target) {
         model_ids.push(model_identifier.model_id);

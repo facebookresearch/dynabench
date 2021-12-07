@@ -301,6 +301,24 @@ export default class ApiService {
     });
   }
 
+  getAllRoundTags(tid, rid) {
+    return this.fetch(`${this.domain}/tags/get_selected/${tid}/${rid}`, {
+      method: "GET",
+    }).then((result) => {
+      return JSON.parse(result);
+    });
+  }
+
+  updateSelectedTags(tid, rid, tags) {
+    let body = {
+      selected_tags: tags,
+    };
+    return this.fetch(`${this.domain}/tags/selected/${tid}/${rid}`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  }
+
   getRandomExample(
     tid,
     rid,
