@@ -113,7 +113,6 @@ class ModelDeployer:
         return env
 
     def delete_existing_endpoints(self, sort_order="Ascending", max_results=100):
-        logger.info(f"Fake calling delete existing endpoints here")
         # remove endpoint
         endpoint_response = self.env["sagemaker_client"].list_endpoints(
             SortBy="Name",

@@ -12,8 +12,7 @@ sys.path.append("../api")  # noqa
 from models.dataset import DatasetModel  # isort:skip
 from models.task import TaskModel  # isort:skip
 from datasets.common import BaseDataset  # isort:skip
-
-# from datasets.mt import flores  # isort:skip
+from datasets.mt import flores  # isort:skip
 
 
 def load_datasets():
@@ -28,15 +27,15 @@ def load_datasets():
         task_dict[task["id"]] = task
 
     datasets_dict = {
-        # "flores101-full-dev": flores.Flores101FullDev(),
-        # "flores101-full-devtest": flores.Flores101FullDevTest(),
-        # "flores101-full-test": flores.Flores101FullTest(),
-        # "flores101-small1-dev": flores.Flores101Small1Dev(),
-        # "flores101-small1-devtest": flores.Flores101Small1DevTest(),
-        # "flores101-small1-test": flores.Flores101Small1Test(),
-        # "flores101-small2-dev": flores.Flores101Small2Dev(),
-        # "flores101-small2-devtest": flores.Flores101Small2DevTest(),
-        # "flores101-small2-test": flores.Flores101Small2Test(),
+        "flores101-full-dev": flores.Flores101FullDev(),
+        "flores101-full-devtest": flores.Flores101FullDevTest(),
+        "flores101-full-test": flores.Flores101FullTest(),
+        "flores101-small1-dev": flores.Flores101Small1Dev(),
+        "flores101-small1-devtest": flores.Flores101Small1DevTest(),
+        "flores101-small1-test": flores.Flores101Small1Test(),
+        "flores101-small2-dev": flores.Flores101Small2Dev(),
+        "flores101-small2-devtest": flores.Flores101Small2DevTest(),
+        "flores101-small2-test": flores.Flores101Small2Test(),
     }
 
     for dataset in datasets:

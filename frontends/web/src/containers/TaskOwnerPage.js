@@ -264,7 +264,6 @@ class TaskOwnerPage extends React.Component {
       "eval_sqs_queue",
       "is_decen_task",
     ];
-    console.log("values are " + values);
 
     const data = Object.keys(values)
       .filter((key) => allowed.includes(key))
