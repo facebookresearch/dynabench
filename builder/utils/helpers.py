@@ -1,17 +1,19 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
-import sys
-import pickle
-import requests
 import json
+import pickle
+import sys
+
+import requests
 
 from build_config import build_config
+
 
 DYNABENCH_API = build_config["DYNABENCH_API"]
 decen_eaas_secret = build_config["decen_eaas_secret"]
 
 sys.path.append("../api")  # noqa isort:skip
-from common.helpers import wrap_data # noqa isort:skip
+from common.helpers import wrap_data  # noqa isort:skip
 
 
 class dotdict(dict):
