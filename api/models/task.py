@@ -505,6 +505,8 @@ class Task(Base):
     unique_validators_for_example_tags = db.Column(db.Boolean, default=False)
     train_file_upload_instructions_md = db.Column(db.Text)
 
+    data_collection_heroku_url = db.Column(db.Text)
+
     def __repr__(self):
         return f"<Task {self.name}>"
 
@@ -767,5 +769,19 @@ class TaskModel(BaseModel):
                 t_dict["ordered_metrics"] = ordered_metrics
             t_dict["round"] = r_dict
             return t_dict
+        except db.orm.exc.NoResultFound:
+            return False
+
+    def get_non_null_heroku_domains(self):
+        try:
+            return [
+                url
+                for url, in self.dbs.query(Task.data_collection_heroku_url).filter(
+                    db.and_(
+                        Task.data_collection_heroku_url.isnot(None),
+                        Task.data_collection_heroku_url != "",
+                    )
+                )
+            ]
         except db.orm.exc.NoResultFound:
             return False

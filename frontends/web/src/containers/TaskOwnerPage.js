@@ -261,6 +261,7 @@ class TaskOwnerPage extends React.Component {
       "hidden",
       "submitable",
       "create_endpoint",
+      "data_collection_heroku_url",
     ];
 
     const data = Object.keys(values)

@@ -431,6 +431,7 @@ def update(credentials, tid):
             "hidden",
             "submitable",
             "create_endpoint",
+            "data_collection_heroku_url",
         ):
             bottle.abort(
                 403,

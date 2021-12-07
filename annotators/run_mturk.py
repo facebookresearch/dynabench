@@ -100,6 +100,33 @@ def build_frontend(frontend_dir):
 
 @hydra.main(config_name="scriptconfig")
 def main(cfg: DictConfig) -> None:
+    # Argument checks
+    if cfg.mephisto.architect._architect_type == "heroku":
+        # Ensure that the user ran with specifying heroku app name
+        heroku_app_name = cfg.mephisto.architect.get("heroku_app_name", None)
+        if not heroku_app_name:
+            print(
+                "Error! Please specify a heroku_app_name by adding a command line "
+                "argument `mephisto.architect.heroku_app_name=[PUT_RANDOMAPPNAME_HERE]"
+            )
+            print(
+                "Then, please go to your task owner settings page in Dynabench, and "
+                "enter the app name you ran data collection with"
+            )
+            return
+
+        # Check that user added heroku app name in task owner settings page
+        ops = input(
+            "Did you add your heroku app name to your task owner setttings page? [y/n]"
+        )
+
+        if ops.lower() not in ("y", "yes"):
+            print(
+                f"Please go to https://dynabench.org/ and add your heroku app name to "
+                "your task in the task owner setting page"
+            )
+            exit(1)
+
     num_jobs = cfg.num_jobs
     static_task_data = [{} for _ in range(num_jobs)]
     mturk_specific_qualifications = get_qualifications(cfg.preselected_qualifications)

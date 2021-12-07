@@ -29,6 +29,8 @@ const Settings = (props) => {
                   props.task.predictions_upload_instructions_md,
                 train_file_upload_instructions_md:
                   props.task.train_file_upload_instructions_md,
+                data_collection_heroku_url:
+                  props.task.data_collection_heroku_url,
               }}
               onSubmit={props.handleTaskUpdate}
             >
@@ -200,6 +202,27 @@ const Settings = (props) => {
                         <Col sm="6">
                           <Form.Check
                             checked={values.submitable}
+                            onChange={handleChange}
+                          />
+                        </Col>
+                      </Form.Group>
+                      <Form.Group
+                        as={Row}
+                        controlId="data_collection_heroku_url"
+                        className="py-3 my-0 border-bottom"
+                      >
+                        <Form.Label column>
+                          Data Collection Heroku URL
+                          <Form.Text id="paramsHelpBlock" muted>
+                            If this task is being used for data collection via
+                            Mechanical Turk, entire the heroku app domain name
+                            here
+                          </Form.Text>
+                        </Form.Label>
+                        <Col sm="6">
+                          <Form.Control
+                            type="text"
+                            defaultValue={values.data_collection_heroku_url}
                             onChange={handleChange}
                           />
                         </Col>

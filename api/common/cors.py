@@ -6,6 +6,8 @@ import urllib
 
 import bottle
 
+from common.helpers import get_heroku_cors_headers
+
 
 @bottle.route("/<:re:.*>", method="OPTIONS")
 def enable_cors_generic_route():
@@ -21,12 +23,14 @@ def add_cors_headers():
     mode = bottle.default_app().config["mode"]
     valid_hostnames = []
     if mode == "prod":
+        heroku_headers = get_heroku_cors_headers()
         valid_hostnames = [
             "dynabench.org",
             "dev.dynabench.org",
             "www.dynabench.org",
             "beta.dynabench.org",
-        ]
+        ] + heroku_headers
+
     else:
         valid_hostnames = ["localhost"]
 

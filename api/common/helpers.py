@@ -15,6 +15,7 @@ import common.auth as _auth
 from common.logging import logger
 from models.example import ExampleModel
 from models.round import RoundModel
+from models.task import TaskModel
 from models.validation import Validation, ValidationModel
 
 
@@ -263,3 +264,8 @@ def get_round_data_for_export(tid, rid):
                     example_and_validations_dict["validations"].append(validation_info)
             example_and_validations_dicts.append(example_and_validations_dict)
     return example_and_validations_dicts
+
+
+def get_heroku_cors_headers():
+    tm = TaskModel()
+    return tm.get_non_null_heroku_domains()
