@@ -106,14 +106,14 @@ const Contexts = (props) => {
               value={tag}
               onChange={async (event) => {
                 if (event.target.checked === true) {
-                  setSelectedTags([...selectedTags, event.target.value]);
+                  await setSelectedTags([...selectedTags, event.target.value]);
                 } else {
-                  setSelectedTags(
+                  await setSelectedTags(
                     selectedTags.filter((t) => t !== event.target.value)
                   );
                 }
 
-                await props.setFieldValue("selected_tags", selectedTags);
+                props.setFieldValue("selected_tags", selectedTags);
               }}
             />
           );
