@@ -36,8 +36,8 @@ const Rounds = (props) => {
     setFieldValue("model_identifiers", model_identifiers);
   };
 
-  async function fetchSelectedTags(tid, rid) {
-    let result = await context.api.getAllRoundTags(tid, rid);
+  function fetchSelectedTags(tid, rid) {
+    let result = context.api.getAllRoundTags(tid, rid);
     return result;
   }
 
@@ -93,8 +93,7 @@ const Rounds = (props) => {
                     longdesc: round.longdesc,
                     model_identifiers:
                       props.model_identifiers_for_target_selection[round.rid],
-                    selected_tags:
-                      fetchSelectedTags(props.tid, round.rid) || [],
+                    selected_tags: fetchSelectedTags(props.tid, round.rid),
                   }}
                   onSubmit={props.handleRoundUpdate}
                 >
@@ -103,6 +102,7 @@ const Rounds = (props) => {
                     errors,
                     handleChange,
                     setFieldValue,
+                    setFieldTouched,
                     handleSubmit,
                     isSubmitting,
                     setValues,
@@ -263,6 +263,7 @@ const Rounds = (props) => {
                               setFieldValue={setFieldValue}
                               errors={errors}
                               setValues={setValues}
+                              setFieldTouched={setFieldTouched}
                               tid={props.tid}
                             />
                           ) : null}

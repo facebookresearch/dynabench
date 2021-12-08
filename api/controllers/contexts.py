@@ -167,7 +167,6 @@ def update_selected_tags(credentials, tid, rid):
         bottle.abort(400, "Invalid data")
 
     selected_tags = str(data["selected_tags"])
-    print(selected_tags)
 
     rm = RoundModel()
 

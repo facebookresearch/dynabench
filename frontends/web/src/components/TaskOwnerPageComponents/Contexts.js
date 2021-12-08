@@ -91,7 +91,7 @@ const Contexts = (props) => {
         this round.
       </p>
       <Form.Group controlId="selected_tags">
-        {tags.map((tag) => {
+        {tags.map((tag, index) => {
           let checked = false;
           if (selectedTags.includes(tag)) {
             checked = true;
@@ -99,19 +99,21 @@ const Contexts = (props) => {
           return (
             <Form.Check
               type="checkbox"
+              key={index}
               checked={checked}
               label={tag}
               name="selected_tags"
               value={tag}
-              onChange={(event) => {
-                if (event.target.checked) {
+              onChange={async (event) => {
+                if (event.target.checked === true) {
                   setSelectedTags([...selectedTags, event.target.value]);
                 } else {
                   setSelectedTags(
                     selectedTags.filter((t) => t !== event.target.value)
                   );
                 }
-                props.setFieldValue("selected_tags", selectedTags);
+
+                await props.setFieldValue("selected_tags", selectedTags);
               }}
             />
           );

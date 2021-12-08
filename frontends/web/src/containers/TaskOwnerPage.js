@@ -406,6 +406,14 @@ class TaskOwnerPage extends React.Component {
         setSubmitting(false);
       }
     );
+
+    console.log(values);
+
+    this.context.api.updateSelectedTags(
+      this.state.task.id,
+      values.rid,
+      values.selected_tags
+    );
   };
 
   createRound = () => {
