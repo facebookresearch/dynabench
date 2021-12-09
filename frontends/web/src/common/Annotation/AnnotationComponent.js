@@ -10,12 +10,59 @@ import {
   DropdownButton,
   Dropdown,
   InputGroup,
+  Button,
 } from "react-bootstrap";
+import Select from "react-select";
 import { PieRechart } from "../../components/Rechart.js";
 import { useState } from "react";
 import { TokenAnnotator } from "react-text-annotate";
 import AtomicImage from "./AtomicImage";
 import "./AnnotationComponent.css";
+
+const Multilabel = ({
+  displayName,
+  className,
+  create,
+  data,
+  setData,
+  name,
+  constructorArgs,
+  showName = true,
+  inputReminder = false,
+}) => {
+  const labels = constructorArgs.labels;
+
+  return (
+    <>
+      {!create ? (
+        <>
+          {showName && (
+            <h6 className={"spaced-header " + className}>
+              {displayName ? displayName : name}:
+            </h6>
+          )}
+          {data[name].join(", ")}
+        </>
+      ) : (
+        <div
+          className={inputReminder ? "p-2 border rounded border-danger" : ""}
+        >
+          <Select
+            isMulti
+            name="multilabel"
+            className="basic-multi-select"
+            classNamePrefix="select"
+            options={labels.map((obj) => ({ value: obj, label: obj }))}
+            onChange={(e) => {
+              data[name] = e.map((obj) => obj.value);
+              setData(data);
+            }}
+          />
+        </div>
+      )}
+    </>
+  );
+};
 
 const Multiclass = ({
   displayName,
@@ -259,6 +306,31 @@ const Conf = ({ create, data, setData, name, constructorArgs }) => {
   return null;
 };
 
+function isImageUrl(url, successCallback) {
+  const timeout = 5000;
+  var timedOut = false,
+    timer;
+  var img = new Image();
+  img.onerror = img.onabort = function () {
+    if (!timedOut) {
+      clearTimeout(timer);
+    }
+  };
+  img.onload = function () {
+    if (!timedOut) {
+      clearTimeout(timer);
+      successCallback();
+    }
+  };
+  img.src = url;
+  timer = setTimeout(function () {
+    timedOut = true;
+    // reset .src to invalid URL so it stops previous
+    // loading, but doesn't trigger new load
+    img.src = "//!!!!/test.jpg";
+  }, timeout);
+}
+
 const ImageComponent = ({
   displayName,
   className,
@@ -267,13 +339,53 @@ const ImageComponent = ({
   setData,
   name,
   constructorArgs,
+  showName = true,
+  inputReminder = false,
 }) => {
   return (
     <>
-      <h6 className={"spaced-header " + className}>
-        {displayName ? displayName : name}:
-      </h6>
-      <AtomicImage src={data[name]} />
+      {!create ? (
+        <>
+          {showName && (
+            <h6 className={"spaced-header " + className}>
+              {displayName ? displayName : name}:
+            </h6>
+          )}
+          <AtomicImage src={data[name]} />
+        </>
+      ) : data[name] ? (
+        <>
+          <Button
+            onClick={(event) => {
+              data[name] = null;
+              setData(data);
+            }}
+          >
+            <i className="fas fa-trash-alt"></i>
+          </Button>
+          <AtomicImage src={data[name]} />
+        </>
+      ) : (
+        <div
+          className={inputReminder ? "p-2 border rounded border-danger" : ""}
+        >
+          <FormControl
+            className={"rounded-1 thick-border p-3 " + className}
+            placeholder={
+              "Enter link to image (we only allow pasteing of valid image urls)..."
+            }
+            value={data[name] ? data[name] : ""}
+            onChange={(event) => {
+              const url = event.target.value;
+              isImageUrl(url, () => {
+                data[name] = url;
+                setData(data);
+              });
+            }}
+            required={true}
+          />
+        </div>
+      )}
     </>
   );
 };
@@ -308,6 +420,20 @@ const AnnotationComponent = ({
     case "string":
       return (
         <String
+          displayName={displayName}
+          className={className}
+          create={create}
+          name={name}
+          data={data}
+          setData={setData}
+          constructorArgs={constructorArgs}
+          showName={showName}
+          inputReminder={inputReminder}
+        />
+      );
+    case "multilabel":
+      return (
+        <Multilabel
           displayName={displayName}
           className={className}
           create={create}

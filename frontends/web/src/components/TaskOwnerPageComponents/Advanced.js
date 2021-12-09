@@ -6,7 +6,6 @@
 
 import React from "react";
 import { Container, Row, Form, Col, Card, Button } from "react-bootstrap";
-import Markdown from "react-markdown";
 import { Formik } from "formik";
 
 const Advanced = (props) => {

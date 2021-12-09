@@ -144,7 +144,7 @@ def update_metadata_json_string(original_json_string, new_json_string_list):
 
 
 def parse_s3_outfile(s3_client, s3_uri: str) -> List[dict]:
-    """Download raw predictions file from S3 and parse it.
+    """Download raw predictions/dataset file from S3 and parse it.
 
     We parse batch transform output by balancing brackets,
     since torchserve outputs pretty printed json by default
@@ -154,7 +154,7 @@ def parse_s3_outfile(s3_client, s3_uri: str) -> List[dict]:
     s3_client.download_file(raw_s3_bucket, raw_s3_path, local_file)
     os.close(fd)
 
-    predictions = []
+    data = []
     json_lines = True
     with open(local_file) as f:
         tmp = ""
@@ -164,7 +164,7 @@ def parse_s3_outfile(s3_client, s3_uri: str) -> List[dict]:
                 json_lines = False
             if json_lines:
                 # One json per line
-                predictions.append(json.loads(line))
+                data.append(json.loads(line))
                 continue
             line = line.strip()
             if line.startswith("{") or line.endswith("{"):
@@ -173,12 +173,12 @@ def parse_s3_outfile(s3_client, s3_uri: str) -> List[dict]:
                 lb -= 1
             if lb == 0 and tmp:
                 tmp += line
-                predictions.append(json.loads(tmp))
+                data.append(json.loads(tmp))
                 tmp = ""
             elif line:
                 tmp += line
     os.remove(local_file)
-    return predictions
+    return data
 
 
 def upload_predictions(s3_client, s3_uri: str, predictions: List[dict]) -> None:

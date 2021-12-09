@@ -96,9 +96,13 @@ const ScoreRow = ({ score }) => {
           >
             <span>
               {expanded ? (
-                <b>{parseFloat(score.accuracy).toFixed(2)}</b>
+                <b>
+                  {parseFloat(score.accuracy).toFixed(2) +
+                    (score.perf_std !== null ? "\xB1" + score.perf_std : "")}
+                </b>
               ) : (
-                parseFloat(score.accuracy).toFixed(2)
+                parseFloat(score.accuracy).toFixed(2) +
+                (score.perf_std !== null ? "\xB1" + score.perf_std : "")
               )}
             </span>
           </td>
@@ -118,7 +122,10 @@ const ScoreRow = ({ score }) => {
                   className="text-right "
                   key={`score-${score.dataset_name}-${perf_and_tag.tag}-overall`}
                 >
-                  <span>{parseFloat(perf_and_tag.perf).toFixed(2)}</span>
+                  <span>
+                    {parseFloat(perf_and_tag.perf).toFixed(2) +
+                      (score.perf_std !== null ? "\xB1" + score.perf_std : "")}
+                  </span>
                 </td>
               </tr>
             );

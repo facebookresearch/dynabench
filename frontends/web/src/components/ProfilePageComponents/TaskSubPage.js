@@ -9,9 +9,7 @@ import { Card, Col, Container, Pagination, Table } from "react-bootstrap";
 import TaskProposalSubPage from "./TaskProposalSubPage.js";
 
 const TaskTable = (props) => {
-  const { data, page, getPage, paginate, isEndOfPage, api, history } = props;
-
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const { data, page, paginate, isEndOfPage, history } = props;
 
   const [showViewModals, setShowViewModals] = useState(
     data.map((datum) => false)
@@ -20,12 +18,6 @@ const TaskTable = (props) => {
   if (data.length !== showViewModals.length) {
     setShowViewModals(data.map((datum) => false));
   }
-
-  const toggleShowViewModal = (index) => {
-    setShowViewModals(
-      showViewModals.map((obj, obj_index) => (index === obj_index ? !obj : obj))
-    );
-  };
 
   return (
     <Col className="m-auto" lg={8}>

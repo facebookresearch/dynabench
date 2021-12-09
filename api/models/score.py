@@ -33,6 +33,7 @@ class Score(Base):
 
     pretty_perf = db.Column(db.String(length=255))
     perf = db.Column(db.Float(), default=0.0)
+    perf_std = db.Column(db.Float)
 
     raw_output_s3_uri = db.Column(db.Text)
     metadata_json = db.Column(db.Text)
@@ -515,7 +516,9 @@ class ScoreModel(BaseModel):
 
     def getByMid(self, mid):
         return (
-            self.dbs.query(Score.perf, Round.rid, Score.did, Score.metadata_json)
+            self.dbs.query(
+                Score.perf, Score.perf_std, Round.rid, Score.did, Score.metadata_json
+            )
             .join(Round, Round.id == Score.r_realid, isouter=True)
             .filter(Score.mid == mid)
             .all()

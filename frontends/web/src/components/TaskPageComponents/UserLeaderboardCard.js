@@ -21,7 +21,7 @@ import { Link } from "react-router-dom";
 
 const UserLeaderboardCard = (props) => {
   const context = useContext(UserContext);
-  const [pageLimit, setPageLimit] = useState(7);
+  const [pageLimit] = useState(7);
   const [isEndOfUserLeaderPage, setIsEndOfUserLeaderPage] = useState(true);
   const [userLeaderBoardData, setUserLeaderBoardData] = useState([]);
   const [displayRound, setDisplayRound] = useState("overall");
