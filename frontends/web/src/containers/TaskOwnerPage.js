@@ -261,6 +261,7 @@ class TaskOwnerPage extends React.Component {
       "hidden",
       "submitable",
       "create_endpoint",
+      "annotation_config_json",
     ];
 
     const data = Object.keys(values)
@@ -509,6 +510,7 @@ class TaskOwnerPage extends React.Component {
               <Advanced
                 task={this.state.task}
                 handleTaskActivate={this.handleTaskActivate}
+                handleTaskUpdate={this.handleTaskUpdate}
               />
             ) : null}
             {this.state.task?.active ? (
