@@ -55,7 +55,8 @@ const Advanced = (props) => {
                               except for the following properties:
                               <ul>
                                 <li>
-                                  aggregation_metric.constructor_args.default_weights (this should be a dict)
+                                  aggregation_metric.constructor_args.default_weights
+                                  (this should be a dict)
                                 </li>
                               </ul>
                             </Form.Text>
