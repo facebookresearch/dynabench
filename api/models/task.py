@@ -771,7 +771,7 @@ class TaskModel(BaseModel):
                                 t_dict["perf_metric_field_name"],
                                 annotation_config["aggregation_metric"][
                                     "constructor_args"
-                                ].get("default_weights", {-1: -1}),
+                                ].get("default_weights", {-1: 1}),
                             ),
                         },
                         **metrics_meta[field_name],

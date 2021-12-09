@@ -438,7 +438,6 @@ def update(credentials, tid):
                 """Can only modify unpublished_models_in_leaderboard,
                 validate_non_fooling, num_matching_validations,
                 instructions_md, hidden, predictions_upload_instructions_md,
-                submitable, create_endpoint, annotation_config_json""",
                 train_file_upload_instructions_md, submitable,
                 create_endpoint, annotation_config_json""",
             )

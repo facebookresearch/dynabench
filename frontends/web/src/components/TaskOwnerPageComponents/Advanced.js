@@ -47,7 +47,7 @@ const Advanced = (props) => {
                           <Form.Label column>Task Configuration</Form.Label>
                           <Col sm="12">
                             <Form.Text id="paramsHelpBlock" muted>
-                              <span style={{ color: "red" }}>BETA Notice</span>:
+                              <span style={{ color: "red" }}>Note</span>:
                               {props.task.active
                                 ? " This task has been activated. Therefore, "
                                 : " Once this task has been activated, "}
@@ -55,7 +55,7 @@ const Advanced = (props) => {
                               except for the following properties:
                               <ul>
                                 <li>
-                                  aggregation_metric.constructor_args.default_weights
+                                  aggregation_metric.constructor_args.default_weights (this should be a dict)
                                 </li>
                               </ul>
                             </Form.Text>
