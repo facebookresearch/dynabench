@@ -87,11 +87,11 @@ def delete(credentials, did):
 def create(credentials, tid, name):
     ensure_owner_or_admin(tid, credentials["id"])
 
-    if len(name) > 27 or not bool(re.search("^[a-zA-Z0-9_-]*$", name)):
+    if not bool(re.fullmatch("[a-zA-Z0-9]{1,62}", name)):
         bottle.abort(
             400,
-            "Invalid name (no special characters allowed besides underscores "
-            + "and dashes, must be shorter than 28 characters)",
+            "Invalid dataset name - must be purely alphanumeric "
+            + "and shorter than 63 characters",
         )
 
     dataset_upload = bottle.request.files.get("file")
