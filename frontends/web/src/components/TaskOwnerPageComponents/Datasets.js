@@ -119,6 +119,7 @@ const Datasets = (props) => {
                           <Form.Control
                             value={values.name}
                             onChange={handleChange}
+                            placeholder="[a-zA-Z0-9]{1,62}"
                           />
                         </Col>
                       </Form.Group>
@@ -149,7 +150,7 @@ const Datasets = (props) => {
                         </Form.Group>
                       ))}
                       <Form.Group as={Row} className="py-3 my-0">
-                        <Col sm="8">
+                        <Col sm="12">
                           <small className="form-text text-muted">
                             {errors.accept}
                           </small>
