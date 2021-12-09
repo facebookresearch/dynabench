@@ -54,7 +54,6 @@ def getRandomValidationFailedContext(tid, rid):
 @bottle.get("/tags/get_selected/<tid:int>/<rid:int>")
 @_auth.requires_auth
 def getSelectedTags(credentials, tid, rid):
-    ensure_owner_or_admin(tid, credentials["id"])
 
     return _getSelectedTags(tid, rid)
 

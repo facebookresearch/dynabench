@@ -96,12 +96,12 @@ class CreateInterface extends React.Component {
       async () => {
         let selectedTags = await this.context.api.getAllRoundTags(
           this.state.task.id,
-          this.state.task.selected_round
+          this.state.task.cur_round
         );
         this.context.api
           .getRandomContext(
             this.state.task.id,
-            this.state.task.selected_round,
+            this.state.task.cur_round,
             selectedTags
           )
           .then(
