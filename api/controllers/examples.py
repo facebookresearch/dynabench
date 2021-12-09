@@ -81,13 +81,20 @@ def get_random_example(credentials, tid, rid):
             tags=tags,
         )
     else:
+        curr_uid = None
+
+        if "annotator_id" in query_dict and isinstance(
+            query_dict["annotator_id"], list
+        ):
+            curr_uid = query_dict["annotator_id"][0]
+
         example = em.getRandom(
             round.id,
             task.validate_non_fooling,
             task.num_matching_validations,
             n=1,
             tags=tags,
-            my_uid=query_dict["annotator_id"][0],
+            my_uid=curr_uid,
             turk=True,
         )
     if not example:
