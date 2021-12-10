@@ -23,8 +23,7 @@ class PublishInterface extends React.Component {
   componentDidMount() {
     if (!this.context.api.loggedIn()) {
       this.props.history.push(
-        "/login?&src=" +
-          encodeURIComponent(`/tasks/${this.state.taskCode}/submit`)
+        "/login?&src=" + encodeURIComponent(`/models/${this.state.modelId}`)
       );
     }
     const propState = this.props.location.state;
@@ -65,6 +64,7 @@ class PublishInterface extends React.Component {
       license: values.license,
       source_url: values.source_url,
       model_card: values.model_card,
+      is_anonymous: values.is_anonymous,
     };
     this.context.api.updateModel(reqObj).then(
       (result) => {
@@ -116,6 +116,7 @@ class PublishInterface extends React.Component {
                       license: model.license || "",
                       source_url: model.source_url || "",
                       model_card: model.model_card || modelCardTemplate,
+                      is_anonymous: model.is_anonymous || false,
                     }}
                     validate={this.handleValidation}
                     onSubmit={this.handleSubmit}
@@ -242,6 +243,15 @@ class PublishInterface extends React.Component {
                                 cards](https://arxiv.org/abs/1810.03993).
                               </Markdown>
                             </Form.Text>
+                          </Form.Group>
+                          <Form.Group controlId="is_anonymous">
+                            <b>
+                              <Form.Check
+                                label="Anonymous when Published?"
+                                checked={values.is_anonymous}
+                                onChange={handleChange}
+                              />
+                            </b>
                           </Form.Group>
                           <Button
                             type="submit"

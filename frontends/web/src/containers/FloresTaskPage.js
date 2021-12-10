@@ -84,6 +84,7 @@ const FloresTaskPage = (props) => {
             FLORES_TASK_NAMES.includes(t.name)
           );
           const taskLookup = floresTasks.reduce(
+            // eslint-disable-next-line
             (map, obj) => ((map[obj.name] = obj), map),
             {}
           );
@@ -136,6 +137,7 @@ const FloresTaskPage = (props) => {
             <img
               src="/flores_logo.png"
               style={{ height: "60px", marginTop: "48px" }}
+              alt="flores logo"
             />
             <div style={{ float: "right", marginTop: 30 }}>
               <ButtonGroup>
@@ -181,6 +183,7 @@ const FloresTaskPage = (props) => {
               <a
                 href="http://data.statmt.org/wmt21/multilingual-task/"
                 target="_blank"
+                rel="noreferrer"
               >
                 multilingual data page
               </a>{" "}

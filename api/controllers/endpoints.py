@@ -5,7 +5,7 @@
 import bottle
 
 import common.auth as _auth
-import ujson
+import common.helpers as util
 from common.logging import logger
 
 
@@ -40,7 +40,7 @@ def invoke_endpoint(credentials, endpoint):
         response = sagemaker_client.invoke_endpoint(
             EndpointName=endpoint,
             ContentType="application/json",
-            Body=ujson.dumps(payload),
+            Body=util.json_encode(payload),
         )
     except Exception as error_message:
         logger.info("Error in prediction: %s" % (error_message))

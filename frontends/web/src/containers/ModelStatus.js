@@ -86,6 +86,11 @@ const DeploymentStatus = ({ deploymentStatus }) => {
       description =
         "The model could not return predictions on all of the datasets. The model could have bugs.";
       break;
+    case "takendownnonactive":
+      buttonVariant = "danger";
+      description =
+        "The model was taken down due to inactivity. Press `Deploy Model` to deploy the model";
+      break;
     case "failed":
       buttonVariant = "danger";
       description = "The model could not be deployed.";
@@ -113,4 +118,46 @@ const DeploymentStatus = ({ deploymentStatus }) => {
   );
 };
 
-export { DeploymentStatus, EvaluationStatus };
+const AnonymousStatus = ({ anonymousStatus }) => {
+  const [showModal, setShowModal] = useState(false);
+  var buttonText;
+  var buttonVariant;
+  var description;
+  switch (anonymousStatus) {
+    case true:
+      buttonText = "anonymous";
+      buttonVariant = "dark";
+      description =
+        "Identity of model owner is anonymised when model is published.";
+      break;
+    case false:
+      buttonText = "identity public";
+      buttonVariant = "light";
+      description =
+        "Identity of model owner is public when model is published.";
+      break;
+    default:
+      buttonText = "Unknown";
+      buttonVariant = "warning";
+      description = "The owner anonymity of the model is unknown.";
+  }
+  return (
+    <>
+      <Modal show={showModal} onHide={() => setShowModal(!showModal)}>
+        <Modal.Header closeButton>
+          <Modal.Title>{buttonText}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{description}</Modal.Body>
+      </Modal>
+      <Badge
+        variant={buttonVariant}
+        className="modelStatus pointer"
+        onClick={() => setShowModal(!showModal)}
+      >
+        {buttonText}
+      </Badge>
+    </>
+  );
+};
+
+export { DeploymentStatus, EvaluationStatus, AnonymousStatus };

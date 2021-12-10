@@ -175,8 +175,7 @@ const TaskProposalForm = (props) => {
 };
 
 const TaskProposalTable = (props) => {
-  const { data, page, getPage, paginate, isEndOfPage, handleProposalSubmit } =
-    props;
+  const { data, page, paginate, isEndOfPage } = props;
 
   const [showViewModals, setShowViewModals] = useState(
     data.map((datum) => false)

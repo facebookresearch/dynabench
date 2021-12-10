@@ -257,9 +257,11 @@ class TaskOwnerPage extends React.Component {
       "validate_non_fooling",
       "instructions_md",
       "predictions_upload_instructions_md",
+      "train_file_upload_instructions_md",
       "hidden",
       "submitable",
       "create_endpoint",
+      "annotation_config_json",
     ];
 
     const data = Object.keys(values)
@@ -440,7 +442,7 @@ class TaskOwnerPage extends React.Component {
         () => {
           this.refreshData();
           values.name = "";
-          for (const [fname, _] of Object.entries(files)) {
+          for (const fname of Object.keys(files)) {
             values[fname] = null;
           }
           resetForm({ values: values });
@@ -517,6 +519,7 @@ class TaskOwnerPage extends React.Component {
               <Advanced
                 task={this.state.task}
                 handleTaskActivate={this.handleTaskActivate}
+                handleTaskUpdate={this.handleTaskUpdate}
               />
             ) : null}
             {this.state.task?.active ? (

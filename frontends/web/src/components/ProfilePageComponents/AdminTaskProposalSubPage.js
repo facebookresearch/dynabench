@@ -15,17 +15,17 @@ import {
   Button,
   Form,
   Row,
-  InputGroup,
 } from "react-bootstrap";
+import { Formik } from "formik";
 
 const AdminTaskProposalTable = (props) => {
   const { data, page, getPage, paginate, isEndOfPage, api } = props;
 
-  const [showCreateModal, setShowCreateModal] = useState(false);
-
   const [showViewModals, setShowViewModals] = useState(
     data.map((datum) => false)
   );
+
+  const [showChangesModal, setShowChangesModal] = useState(false);
 
   if (data.length !== showViewModals.length) {
     setShowViewModals(data.map((datum) => false));
@@ -134,24 +134,105 @@ const AdminTaskProposalTable = (props) => {
                               onClick={() => {
                                 toggleShowViewModal(index);
                                 api
-                                  .processTaskProposal(datum.id, true)
+                                  .processTaskProposal(datum.id, true, null)
                                   .then((result) => getPage());
                               }}
                             >
                               Accept
                             </Button>{" "}
                             <Button
+                              variant="danger"
                               onClick={() => {
                                 toggleShowViewModal(index);
-                                api
-                                  .processTaskProposal(datum.id, false)
-                                  .then((result) => getPage());
+                                setShowChangesModal(true);
                               }}
                             >
                               Reject
                             </Button>
                           </Row>
                         </Container>
+                      </Modal.Body>
+                    </Modal>
+                    <Modal
+                      show={showChangesModal}
+                      size="lg"
+                      onHide={() => setShowChangesModal(false)}
+                    >
+                      <Modal.Header closeButton>
+                        <Modal.Title>Request Changes</Modal.Title>
+                      </Modal.Header>
+                      <Modal.Body>
+                        <Formik
+                          initialValues={{
+                            changes: "",
+                          }}
+                          onSubmit={(values) => {
+                            api
+                              .processTaskProposal(
+                                datum.id,
+                                false,
+                                values.changes
+                              )
+                              .then(() => {
+                                getPage();
+                              });
+                          }}
+                        >
+                          {({
+                            values,
+                            errors,
+                            handleChange,
+                            handleSubmit,
+                            isSubmitting,
+                            dirty,
+                          }) => (
+                            <form className="px-4" onSubmit={handleSubmit}>
+                              <Container>
+                                <Form.Group
+                                  as={Row}
+                                  controlId="changes"
+                                  className="py-3 my-0"
+                                >
+                                  <Form.Label column>
+                                    <b>Changes</b>
+                                  </Form.Label>
+                                  <Col sm="8">
+                                    <Form.Control
+                                      rows={12}
+                                      as="textarea"
+                                      onChange={handleChange}
+                                      defaultValue={values.changes}
+                                    />
+                                  </Col>
+                                </Form.Group>
+                                <Row
+                                  className="float-right"
+                                  style={{ paddingRight: 15 }}
+                                >
+                                  <Button
+                                    style={{ marginRight: 10 }}
+                                    variant="secondary"
+                                    onClick={() => {
+                                      setShowChangesModal(false);
+                                      toggleShowViewModal(index);
+                                    }}
+                                  >
+                                    Close
+                                  </Button>
+                                  {dirty && values.changes ? (
+                                    <Button
+                                      type="submit"
+                                      variant="primary"
+                                      disabled={isSubmitting}
+                                    >
+                                      Submit
+                                    </Button>
+                                  ) : null}
+                                </Row>
+                              </Container>
+                            </form>
+                          )}
+                        </Formik>
                       </Modal.Body>
                     </Modal>
                     <td className="text-truncate long-text">

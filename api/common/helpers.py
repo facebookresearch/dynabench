@@ -8,10 +8,10 @@ from urllib.parse import urlparse
 
 import bottle
 import sqlalchemy as db
+import ujson
 from sqlalchemy.orm import lazyload
 
 import common.auth as _auth
-import ujson
 from common.logging import logger
 from models.example import ExampleModel
 from models.round import RoundModel
@@ -38,8 +38,16 @@ def _alchemyencoder(obj):
         return float(obj)
 
 
-def json_encode(obj):
-    return ujson.dumps(obj, default=_alchemyencoder)
+def json_encode(
+    obj, *, default=_alchemyencoder, escape_forward_slashes=False, **kwargs
+):
+    return ujson.dumps(
+        obj, default=default, escape_forward_slashes=escape_forward_slashes, **kwargs
+    )
+
+
+def json_decode(*args, **kwargs):
+    return ujson.loads(*args, **kwargs)
 
 
 def is_current_user(uid, credentials=None):
@@ -207,7 +215,7 @@ def get_round_data_for_export(tid, rid):
 
     for example, validation_ids in examples_with_validation_ids:
         if example.uid or (
-            example.metadata_json and ujson.loads(example.metadata_json)["annotator_id"]
+            example.metadata_json and json_decode(example.metadata_json)["annotator_id"]
         ):
             example_and_validations_dict = example.to_dict()
             if example.uid:
@@ -217,7 +225,7 @@ def get_round_data_for_export(tid, rid):
             else:
                 example_and_validations_dict["anon_uid"] = get_anon_uid_with_cache(
                     secret,
-                    ujson.loads(example.metadata_json)["annotator_id"],
+                    json_decode(example.metadata_json)["annotator_id"],
                     turk_cache,
                 )
             example_and_validations_dict["validations"] = []
@@ -228,7 +236,7 @@ def get_round_data_for_export(tid, rid):
                 validation = validation_dict[validation_id]
                 if validation.uid or (
                     validation.metadata_json
-                    and ujson.loads(validation.metadata_json)["annotator_id"]
+                    and json_decode(validation.metadata_json)["annotator_id"]
                 ):
                     if validation.uid:
                         validation_info = [
@@ -244,13 +252,13 @@ def get_round_data_for_export(tid, rid):
                             validation.mode.name,
                             get_anon_uid_with_cache(
                                 secret + "-validator",
-                                ujson.loads(validation.metadata_json)["annotator_id"],
+                                json_decode(validation.metadata_json)["annotator_id"],
                                 cache,
                             ),
                         ]
 
                     if validation.metadata_json:
-                        validation_info.append(ujson.loads(validation.metadata_json))
+                        validation_info.append(json_decode(validation.metadata_json))
 
                     example_and_validations_dict["validations"].append(validation_info)
             example_and_validations_dicts.append(example_and_validations_dict)

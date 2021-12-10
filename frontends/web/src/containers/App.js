@@ -306,8 +306,22 @@ class App extends React.Component {
                   component={UpdateModelInfoInterface}
                 />
                 <Route
-                  path="/tasks/:taskId/submit"
-                  component={SubmitInterface}
+                  path="/tasks/:taskId/submit_predictions"
+                  render={(props) => (
+                    <SubmitInterface
+                      match={props.match}
+                      submission_type="predictions"
+                    />
+                  )}
+                />
+                <Route
+                  path="/tasks/:taskId/submit_train_files"
+                  render={(props) => (
+                    <SubmitInterface
+                      match={props.match}
+                      submission_type="train_files"
+                    />
+                  )}
                 />
                 <Route
                   path="/tasks/:taskCode/models/:modelId"

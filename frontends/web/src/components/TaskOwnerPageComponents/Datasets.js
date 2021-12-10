@@ -120,6 +120,7 @@ const Datasets = (props) => {
                           <Form.Control
                             value={values.name}
                             onChange={handleChange}
+                            placeholder="[a-zA-Z0-9]{1,62}"
                           />
                         </Col>
                       </Form.Group>

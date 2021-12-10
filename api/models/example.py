@@ -9,7 +9,7 @@ import sqlalchemy as db
 from dynalab.tasks.task_io import TaskIO
 from sqlalchemy import case
 
-import ujson
+import common.helpers as util
 from common.logging import logger
 from models.context import Context
 from models.model import Model
@@ -102,7 +102,7 @@ class ExampleModel(BaseModel):
         tm = TaskModel()
         task = tm.get(tid)
 
-        context = ujson.loads(c.context_json)
+        context = util.json_decode(c.context_json)
 
         all_user_annotation_data = {}
         all_user_annotation_data.update(context)
@@ -138,9 +138,9 @@ class ExampleModel(BaseModel):
                 )
 
                 with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
-                    annotation_config = ujson.loads(task.annotation_config_json)
+                    annotation_config = util.json_decode(task.annotation_config_json)
                     tmp.write(
-                        ujson.dumps(
+                        util.json_encode(
                             {
                                 "annotation_config": annotation_config,
                                 "task": task.task_code,
@@ -152,7 +152,7 @@ class ExampleModel(BaseModel):
 
                 # This is to check if we have a pre-dynatask dynalab model
                 with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
-                    annotation_config = ujson.loads(task.annotation_config_json)
+                    annotation_config = util.json_decode(task.annotation_config_json)
                     if task.task_code in ("hs", "sentiment"):
                         annotation_config["context"] = []
                     annotation_config["output"] = [
@@ -161,7 +161,7 @@ class ExampleModel(BaseModel):
                         if obj["type"] not in ("multiclass_probs", "conf")
                     ]
                     tmp.write(
-                        ujson.dumps(
+                        util.json_encode(
                             {
                                 "annotation_config": annotation_config,
                                 "task": task.task_code,
@@ -281,11 +281,11 @@ class ExampleModel(BaseModel):
         try:
             e = Example(
                 context=c,
-                input_json=ujson.dumps(input),
-                output_json=ujson.dumps(output),
+                input_json=util.json_encode(input),
+                output_json=util.json_encode(output),
                 model_wrong=model_wrong,
                 generated_datetime=db.sql.func.now(),
-                metadata_json=ujson.dumps(metadata),
+                metadata_json=util.json_encode(metadata),
                 tag=tag,
                 model_endpoint_name=model_endpoint_name,
             )
@@ -310,7 +310,7 @@ class ExampleModel(BaseModel):
         tid = context.round.task.id
         rid = context.round.rid
         secret = context.round.secret
-        context_str = list(ujson.loads(context.context_json).values())[0]
+        context_str = list(util.json_decode(context.context_json).values())[0]
 
         fields_to_sign = []
         fields_to_sign.append(pred_str.encode("utf-8"))
@@ -402,6 +402,7 @@ class ExampleModel(BaseModel):
         n=1,
         my_uid=None,
         tags=None,
+        turk=False,
     ):
         cnt_correct = db.sql.func.sum(
             case([(Validation.label == LabelEnum.correct, 1)], else_=0)
@@ -441,9 +442,26 @@ class ExampleModel(BaseModel):
             )
         )
         if my_uid is not None:
-            cnt_uid = db.sql.func.sum(
-                case([(Validation.uid == my_uid, 1)], else_=0)
-            ).label("cnt_uid")
+            if turk:
+                c = case(
+                    [
+                        (
+                            db.text(
+                                "validations.metadata_json is not NULL and "
+                                + "JSON_EXTRACT(validations.metadata_json, "
+                                + "'$.annotator_id') = "
+                                + '"'
+                                + my_uid
+                                + '"'
+                            ),
+                            1,
+                        )
+                    ],
+                    else_=0,
+                )
+            else:
+                c = case([(Validation.uid == my_uid, 1)], else_=0)
+            cnt_uid = db.sql.func.sum(c).label("cnt_uid")
             result_partially_validated = result_partially_validated.group_by(
                 Validation.eid
             ).having(cnt_uid == 0)
@@ -452,7 +470,19 @@ class ExampleModel(BaseModel):
         )
         result = result_partially_validated.union(result_not_validated)
         if my_uid is not None:
-            result = result.filter(Example.uid != my_uid)
+            if turk:
+                result = result.filter(
+                    db.text(
+                        "examples_metadata_json is NULL "
+                        + "or JSON_EXTRACT(examples_metadata_json, "
+                        + "'$.annotator_id') != "
+                        + '"'
+                        + my_uid
+                        + '"'
+                    )
+                )
+            else:
+                result = result.filter(Example.uid != my_uid)
         result = (
             result.order_by(
                 db.not_(Example.model_wrong),

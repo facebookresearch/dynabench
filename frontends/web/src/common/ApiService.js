@@ -164,6 +164,7 @@ export default class ApiService {
     license,
     source_url,
     model_card,
+    is_anonymous,
   }) {
     return this.fetch(`${this.domain}/models/${modelId}/update`, {
       method: "PUT",
@@ -175,6 +176,7 @@ export default class ApiService {
         license,
         source_url,
         model_card,
+        is_anonymous,
       }),
     });
   }
@@ -238,6 +240,12 @@ export default class ApiService {
         ? `/models?limit=${limit || 10}&offset=${offset || 0}`
         : `/rounds/${round}/models?limit=${limit || 10}&offset=${offset || 0}`;
     return this.fetch(`${this.domain}/tasks/${taskId}${url}`, {
+      method: "GET",
+    });
+  }
+
+  deployModel(modelId) {
+    return this.fetch(`${this.domain}/models/${modelId}/deploy`, {
       method: "GET",
     });
   }
@@ -541,9 +549,10 @@ export default class ApiService {
     });
   }
 
-  processTaskProposal(tpid, accept) {
+  processTaskProposal(tpid, accept, changes) {
     let obj = {
       accept: accept,
+      changes: changes || "",
     };
     return this.fetch(`${this.domain}/tasks/process_proposal/${tpid}`, {
       method: "PUT",
@@ -649,6 +658,24 @@ export default class ApiService {
     return this.fetch(`${this.domain}/datasets/delete/${did}`, {
       method: "DELETE",
     });
+  }
+
+  uploadTrainFiles(tid, modelName, files) {
+    const token = this.getToken();
+    const formData = new FormData();
+    for (const [name, file] of Object.entries(files)) {
+      formData.append(name, file);
+    }
+    return this.fetch(
+      `${this.domain}/models/upload_train_files/${tid}/${modelName}`,
+      {
+        method: "POST",
+        body: formData,
+        headers: {
+          Authorization: token ? "Bearer " + token : "None",
+        },
+      }
+    );
   }
 
   uploadPredictions(tid, modelName, files) {

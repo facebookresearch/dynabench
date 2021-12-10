@@ -9,10 +9,10 @@ import tempfile
 
 import boto3
 import bottle
+import ujson
 
 import common.auth as _auth
 import common.helpers as util
-import ujson
 from common.config import config
 from common.logging import logger
 from models.dataset import AccessTypeEnum, DatasetModel
@@ -68,7 +68,7 @@ def delete(credentials, did):
 
     delta_metric_types = [
         config["type"]
-        for config in ujson.loads(task.annotation_config_json)["delta_metrics"]
+        for config in util.json_decode(task.annotation_config_json)["delta_metrics"]
     ]
     delta_metric_types.append(None)
 
@@ -96,11 +96,11 @@ def delete(credentials, did):
 def create(credentials, tid, name):
     ensure_owner_or_admin(tid, credentials["id"])
 
-    if len(name) > 27 or not bool(re.search("^[a-zA-Z0-9_-]*$", name)):
+    if not bool(re.fullmatch("[a-zA-Z0-9]{1,62}", name)):
         bottle.abort(
             400,
-            "Invalid name (no special characters allowed besides underscores "
-            + "and dashes, must be shorter than 28 characters)",
+            "Invalid dataset name - must be purely alphanumeric "
+            + "and shorter than 63 characters",
         )
 
     dataset_upload = bottle.request.files.get("file")
@@ -112,7 +112,7 @@ def create(credentials, tid, name):
     delta_dataset_uploads = []
     delta_metric_types = [
         config["type"]
-        for config in ujson.loads(task.annotation_config_json)["delta_metrics"]
+        for config in util.json_decode(task.annotation_config_json)["delta_metrics"]
     ]
     for delta_metric_type in delta_metric_types:
         delta_dataset_uploads.append(
@@ -126,7 +126,7 @@ def create(credentials, tid, name):
     for upload, perturb_prefix in uploads:
         try:
             parsed_upload = [
-                ujson.loads(line)
+                util.json_decode(line)
                 for line in upload.file.read().decode("utf-8").splitlines()
             ]
             for io in parsed_upload:
@@ -164,7 +164,7 @@ def create(credentials, tid, name):
             )
             with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
                 for datum in parsed_upload:
-                    tmp.write(ujson.dumps(task.convert_to_model_io(datum)) + "\n")
+                    tmp.write(util.json_encode(task.convert_to_model_io(datum)) + "\n")
                 tmp.close()
                 response = s3_client.upload_file(
                     tmp.name,
