@@ -297,20 +297,10 @@ class CreateInterface extends React.Component {
         (this.state.task.task_code === "hs" ||
           this.state.task.task_code === "sentiment")
       ) {
-        this.setState((prevState) => ({
-          data: {
-            ...prevState.data,
-            hypothesis: prevState.data.statement,
-          },
-        }));
+        this.state.data["hypothesis"] = this.state.data["statement"];
       }
       if (!endpoint.startsWith("ts") && this.state.task.task_code === "qa") {
-        this.setState((prevState) => ({
-          data: {
-            ...prevState.data,
-            hypothesis: prevState.data.question,
-          },
-        }));
+        this.state.data["hypothesis"] = this.state.data["question"];
       }
       // End hack that can be removed upon full dynalab integration
       this.context.api
@@ -890,14 +880,6 @@ class CreateInterface extends React.Component {
                     </Row>
                   </Form>
                   <div className="p-2">
-                    {!this.state.selectedModel && (
-                      <p style={{ color: "red" }}>
-                        WARNING: You are talking to a randomly selected model.
-                        If you would like to interact with a specific model for
-                        this task, please navigate to that model card and press
-                        `Interact`
-                      </p>
-                    )}
                     {!this.state.livemode && (
                       <p style={{ color: "red" }}>
                         WARNING: You are in "just playing" sandbox mode. Your
