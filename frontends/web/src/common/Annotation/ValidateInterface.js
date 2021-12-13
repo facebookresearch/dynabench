@@ -95,12 +95,7 @@ class ValidateInterface extends React.Component {
                 .then((result) => {
                   this.setState({ admin_or_owner: result.admin_or_owner });
                 });
-              this.setState((prevState) => ({
-                task: {
-                  ...prevState.task,
-                  selected_round: prevState.task.cur_round,
-                },
-              }));
+              this.state.task.selected_round = this.state.task.cur_round;
               this.getNewExample();
               if (params.taskCode !== this.state.taskCode) {
                 this.props.history.replace({
