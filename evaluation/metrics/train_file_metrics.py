@@ -73,6 +73,15 @@ def dataperf(train, test, constructor_args):
 
     preds_formatted: [{"uid": test_id_0, "labels": ["Cat", "Dog", ...]}, ...]
     """
+
+    # For Dataperf, we want to cap the number of train examples to 1000 for each
+    # dataset.
+    total_number_of_train_examples = 0
+    for _, value in train.items():
+        for _, _ in value.items():
+            total_number_of_train_examples += 1
+            assert total_number_of_train_examples <= 1000
+
     train_memo = {}
 
     def get_train_dataset_embedding(uid):
