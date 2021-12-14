@@ -309,6 +309,9 @@ class App extends React.Component {
                   path="/tasks/:taskId/submit_predictions"
                   render={(props) => (
                     <SubmitInterface
+                      history={props.history}
+                      location={props.location}
+                      staticContext={props.staticContext}
                       match={props.match}
                       submission_type="predictions"
                     />
@@ -318,6 +321,9 @@ class App extends React.Component {
                   path="/tasks/:taskId/submit_train_files"
                   render={(props) => (
                     <SubmitInterface
+                      history={props.history}
+                      location={props.location}
+                      staticContext={props.staticContext}
                       match={props.match}
                       submission_type="train_files"
                     />
