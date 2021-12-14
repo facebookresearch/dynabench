@@ -3,6 +3,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
+import urllib
 from datetime import datetime, timedelta
 
 import bottle
@@ -192,6 +193,24 @@ def recover_password():
     :return: Success if true else raise exception
     """
 
+    # only allow sending recover password emails from certain domains
+    parsed_origin_url = urllib.parse.urlparse(bottle.request.get_header("origin"))
+    if (bottle.default_app().config["mode"] == "prod") and not (
+        (hasattr(parsed_origin_url, "hostname"))
+        and (parsed_origin_url.hostname is not None)
+        and (
+            parsed_origin_url.hostname
+            in [
+                "dynabench.org",
+                "dev.dynabench.org",
+                "www.dynabench.org",
+                "beta.dynabench.org",
+                "api.dynabench.org",
+            ]
+        )
+    ):
+        bottle.abort(403, "Invalid recover password attempt")
+
     data = bottle.request.json
     if not data or "email" not in data:
         bottle.abort(400, "Missing email")
@@ -211,12 +230,14 @@ def recover_password():
                 "forgot_password_token_expiry_date": expiry_datetime,
             },
         )
+
         #  send email
         subject = "Password Reset Request"
         msg = {
             "ui_server_host": util.parse_url(bottle.request.url),
             "token": forgot_password_token,
         }
+
         config = bottle.default_app().config
         mail.send(
             config["mail"],
