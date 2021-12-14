@@ -31,6 +31,7 @@ const FileUpload = (props) => {
               <Col md={10}>{props.values[props.filename].name}</Col>
               <Col md={2}>
                 <Button
+                  disabled={props.disabled}
                   variant="outline-danger"
                   size="sm"
                   onClick={(event) => {
@@ -47,6 +48,7 @@ const FileUpload = (props) => {
     </div>
   ) : (
     <DragAndDrop
+      disabled={props.disabled}
       handleChange={(event) => {
         props.setFieldValue(props.filename, event.currentTarget.files[0]);
       }}
@@ -112,49 +114,45 @@ class SubmitInterface extends React.Component {
       files[dataset.name] = values[dataset.name];
     }
 
-    this.state.submission_type === "predictions"
-      ? this.context.api
-          .uploadPredictions(this.state.task.id, values.modelName, files)
-          .then(
-            (result) => {
-              values.modelName = "";
-              for (const [fname, _] of Object.entries(files)) {
-                values[fname] = null;
-              }
-              values.submittedModelId = result.model_id;
-              resetForm({ values: values });
-              setSubmitting(false);
-            },
-            (error) => {
-              console.log(error);
-              setFieldError(
-                "accept",
-                "Predictions could not be added (" + error.error + ")"
-              );
-              setSubmitting(false);
+    if (this.state.submission_type === "predictions") {
+      this.context.api
+        .uploadPredictions(this.state.task.id, values.modelName, files)
+        .then(
+          (result) => {
+            values.modelName = "";
+            for (const [fname, _] of Object.entries(files)) {
+              values[fname] = null;
             }
-          )
-      : this.context.api
-          .uploadTrainFiles(this.state.task.id, values.modelName, files)
-          .then(
-            (result) => {
-              values.modelName = "";
-              for (const [fname, _] of Object.entries(files)) {
-                values[fname] = null;
-              }
-              values.submittedModelId = result.model_id;
-              resetForm({ values: values });
-              setSubmitting(false);
-            },
-            (error) => {
-              console.log(error);
-              setFieldError(
-                "accept",
-                "Train files could not be added (" + error.error + ")"
-              );
-              setSubmitting(false);
-            }
-          );
+            values.submittedModelId = result.model_id;
+            resetForm({ values: values });
+            setSubmitting(false);
+          },
+          (error) => {
+            console.log(error);
+            setFieldValue(
+              "accept",
+              "Predictions could not be added (" + error.error + ")"
+            );
+            setSubmitting(false);
+          }
+        );
+    } else {
+      this.context.api.uploadTrainFiles(
+        this.state.task.id,
+        values.modelName,
+        files
+      );
+      values.modelName = "";
+      for (const [fname, _] of Object.entries(files)) {
+        values[fname] = null;
+      }
+      resetForm({ values: values });
+      setSubmitting(false);
+      setFieldError(
+        "accept",
+        "Thank you. You will soon recieve an email about the status of your submission."
+      );
+    }
   };
 
   render() {
@@ -241,6 +239,7 @@ class SubmitInterface extends React.Component {
                           <Form.Label column>Model Name</Form.Label>
                           <Col sm={8}>
                             <Form.Control
+                              disabled={isSubmitting}
                               value={values.modelName}
                               onChange={handleChange}
                             />
@@ -302,6 +301,7 @@ class SubmitInterface extends React.Component {
                               <Form.Label column>Files</Form.Label>
                               <Col sm={8}>
                                 <FileUpload
+                                  disabled={isSubmitting}
                                   values={values}
                                   filename={dataset.name}
                                   setFieldValue={setFieldValue}
@@ -314,6 +314,11 @@ class SubmitInterface extends React.Component {
                           <Col sm="8">
                             <small className="form-text text-muted">
                               {errors.accept}
+                            </small>
+                          </Col>
+                          <Col sm="8">
+                            <small className="form-text text-muted">
+                              {values.accept}
                             </small>
                           </Col>
                           {values.submittedModelId && (
