@@ -446,6 +446,7 @@ const TaskModelLeaderboardCard = (props) => {
           setDatasetWeight={setDatasetWeight}
           sort={sort}
           toggleSort={toggleSort}
+          modelColumnTitle={props.modelColumnTitle}
         />
       </Card.Body>
       <Card.Footer className="text-center">
