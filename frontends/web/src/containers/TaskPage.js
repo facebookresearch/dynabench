@@ -113,6 +113,12 @@ const TaskActionButtons = (props) => {
     return renderTooltip(props, "Submit models for this task");
   }
 
+  const hasTrainFileUpload =
+    props.task.annotation_config_json &&
+    JSON.parse(props.task.annotation_config_json).hasOwnProperty(
+      "train_file_metric"
+    );
+
   return (
     <Nav className="my-4">
       <Nav.Item className="task-action-btn">
@@ -201,34 +207,31 @@ const TaskActionButtons = (props) => {
           </Annotation>
         </Nav.Item>
       )}
-      {props.task.annotation_config_json &&
-        JSON.parse(props.task.annotation_config_json).hasOwnProperty(
-          "train_file_metric"
-        ) && (
-          <Nav.Item className="task-action-btn">
-            <Annotation
-              placement="top"
-              tooltip={
-                "Click here to submit your train files to trigger the training of" +
-                " a model and evaluation on our datasets"
-              }
+      {hasTrainFileUpload && (
+        <Nav.Item className="task-action-btn">
+          <Annotation
+            placement="top"
+            tooltip={
+              "Click here to submit your train files to trigger the training of" +
+              " a model and evaluation on our datasets"
+            }
+          >
+            <OverlayTrigger
+              placement="bottom"
+              delay={{ show: 250, hide: 400 }}
+              overlay={renderVerifyTooltip}
             >
-              <OverlayTrigger
-                placement="bottom"
-                delay={{ show: 250, hide: 400 }}
-                overlay={renderVerifyTooltip}
+              <Button
+                as={Link}
+                className="border-0 blue-color font-weight-bold light-gray-bg"
+                to={"/tasks/" + props.taskCode + "/submit_train_files"}
               >
-                <Button
-                  as={Link}
-                  className="border-0 blue-color font-weight-bold light-gray-bg"
-                  to={"/tasks/" + props.taskCode + "/submit_train_files"}
-                >
-                  <i className="fa fa-upload"></i> Submit Train Files
-                </Button>
-              </OverlayTrigger>
-            </Annotation>
-          </Nav.Item>
-        )}
+                <i className="fa fa-upload"></i> Submit Train Files
+              </Button>
+            </OverlayTrigger>
+          </Annotation>
+        </Nav.Item>
+      )}
     </Nav>
   );
 };
@@ -436,6 +439,11 @@ class TaskPage extends React.Component {
       "Sentiment Analysis":
         "https://paperswithcode.com/task/sentiment-analysis/latest",
     };
+    const hasTrainFileUpload =
+      this.state.task.annotation_config_json &&
+      JSON.parse(this.state.task.annotation_config_json).hasOwnProperty(
+        "train_file_metric"
+      );
     return (
       <OverlayProvider initiallyHide={true} delayMs="1700">
         <Container>
@@ -537,13 +545,28 @@ class TaskPage extends React.Component {
                               {...this.props}
                               task={this.state.task}
                               taskCode={this.state.taskCode}
-                              title={"Model Leaderboard (Fork)"}
+                              title={
+                                hasTrainFileUpload
+                                  ? "Coreset Selection Algorithm Leaderboard (Fork)"
+                                  : "Model Leaderboard (Fork)"
+                              }
+                              modelColumnTitle={
+                                hasTrainFileUpload ? "Algorithm" : "Model"
+                              }
                             />
                           ) : (
                             <TaskModelDefaultLeaderboard
                               {...this.props}
                               task={this.state.task}
                               taskCode={this.state.taskCode}
+                              title={
+                                hasTrainFileUpload
+                                  ? "Coreset Selection Algorithm Leaderboard"
+                                  : "Model Leaderboard"
+                              }
+                              modelColumnTitle={
+                                hasTrainFileUpload ? "Algorithm" : "Model"
+                              }
                             />
                           )}
                         </Annotation>
