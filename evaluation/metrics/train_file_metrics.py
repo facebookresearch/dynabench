@@ -2,6 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import os
 import tempfile
 
 import boto3
@@ -10,7 +11,6 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
 from eval_config import eval_config
-from utils.helpers import download_s3_dir
 
 
 s3_client = boto3.client(
@@ -19,6 +19,45 @@ s3_client = boto3.client(
     aws_secret_access_key=eval_config["dataperf_aws_secret_access_key"],
     region_name=eval_config["dataperf_aws_region"],
 )
+
+
+def download_s3_dir(bucket, prefix, local):
+    """
+    params:
+    - prefix: pattern to match in s3
+    - local: local path to folder in which to place files
+    - bucket: s3 bucket with target contents
+    - client: initialized s3 client object
+    """
+    keys = []
+    dirs = []
+    next_token = ""
+    base_kwargs = {
+        "Bucket": bucket,
+        "Prefix": prefix,
+    }
+    while next_token is not None:
+        kwargs = base_kwargs.copy()
+        if next_token != "":
+            kwargs.update({"ContinuationToken": next_token})
+        results = s3_client.list_objects_v2(**kwargs)
+        contents = results.get("Contents")
+        for i in contents:
+            k = i.get("Key")
+            if k[-1] != "/":
+                keys.append(k)
+            else:
+                dirs.append(k)
+        next_token = results.get("NextContinuationToken")
+    for d in dirs:
+        dest_pathname = os.path.join(local, d)
+        if not os.path.exists(os.path.dirname(dest_pathname)):
+            os.makedirs(os.path.dirname(dest_pathname))
+    for k in keys:
+        dest_pathname = os.path.join(local, k)
+        if not os.path.exists(os.path.dirname(dest_pathname)):
+            os.makedirs(os.path.dirname(dest_pathname))
+        s3_client.download_file(bucket, k, dest_pathname)
 
 
 def dataperf(train, test, constructor_args):
