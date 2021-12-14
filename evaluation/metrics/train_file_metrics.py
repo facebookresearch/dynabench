@@ -98,7 +98,7 @@ def dataperf(train, test, constructor_args):
             return test_memo[uid]
         for label in constructor_args["test_labels"]:
             with tempfile.TemporaryDirectory() as td:
-                download_s3_dir("dataperf-embeddings", label + "_test", td, s3_client)
+                download_s3_dir("dataperf-embeddings", label + "_test", td)
                 df = pd.read_parquet(td, engine="pyarrow")
                 for _, row in df.iterrows():
                     array = np.array(row["Embedding"])
