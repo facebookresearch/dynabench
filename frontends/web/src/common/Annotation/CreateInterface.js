@@ -830,13 +830,6 @@ class CreateInterface extends React.Component {
                       </Col>
                       <Col xs={6}>
                         <InputGroup className="d-flex justify-content-end">
-                          <span style={{ marginRight: 10, marginBottom: 5 }}>
-                            <Card style={{ width: "12rem" }}>
-                              <Card.Header>
-                                You are on Round {this.state.task.cur_round}
-                              </Card.Header>
-                            </Card>
-                          </span>
                           <OverlayTrigger
                             placement="bottom"
                             delay={{ show: 250, hide: 400 }}
