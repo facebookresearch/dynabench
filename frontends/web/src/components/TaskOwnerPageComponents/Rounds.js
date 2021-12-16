@@ -36,13 +36,6 @@ const Rounds = (props) => {
     setFieldValue("model_identifiers", model_identifiers);
   };
 
-  function fetchSelectedTags(tid, rid) {
-    let result = context.api.getAllRoundTags(tid, rid);
-    return result;
-  }
-
-  const context = useContext(UserContext);
-
   return (
     <Container className="mb-5 pb-5">
       <h1 className="my-4 pt-3 text-uppercase text-center">Rounds</h1>
@@ -93,7 +86,7 @@ const Rounds = (props) => {
                     longdesc: round.longdesc,
                     model_identifiers:
                       props.model_identifiers_for_target_selection[round.rid],
-                    selected_tags: fetchSelectedTags(props.tid, round.rid),
+                    selected_tags: props.task.round.selected_tags,
                   }}
                   onSubmit={props.handleRoundUpdate}
                 >
@@ -264,7 +257,8 @@ const Rounds = (props) => {
                               errors={errors}
                               setValues={setValues}
                               setFieldTouched={setFieldTouched}
-                              tid={props.tid}
+                              task={props.task}
+                              allTaskTags={props.allTaskTags}
                             />
                           ) : null}
                           <Form.Group

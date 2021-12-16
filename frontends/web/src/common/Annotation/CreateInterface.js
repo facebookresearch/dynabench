@@ -14,8 +14,6 @@ import {
   Form,
   InputGroup,
   ButtonGroup,
-  DropdownButton,
-  Dropdown,
   OverlayTrigger,
   Tooltip,
   Modal,
@@ -94,15 +92,11 @@ class CreateInterface extends React.Component {
     this.setState(
       { loading: true, submitDisabled: true, refreshDisabled: true },
       async () => {
-        let selectedTags = await this.context.api.getAllRoundTags(
-          this.state.task.id,
-          this.state.task.cur_round
-        );
         this.context.api
           .getRandomContext(
             this.state.task.id,
             this.state.task.cur_round,
-            selectedTags
+            JSON.parse(this.state.task.round.selected_tags)
           )
           .then(
             (result) => {

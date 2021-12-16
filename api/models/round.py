@@ -101,11 +101,6 @@ class RoundModel(BaseModel):
             r.task.last_updated = db.sql.func.now()
             self.dbs.commit()
 
-    def getSelectedTags(self, tid, rid):
-        r = self.getByTidAndRid(tid, rid)
-        if r:
-            return r.selected_tags
-
     def updateSelectedTags(self, tid, rid, tags):
         r = self.getByTidAndRid(tid, rid)
         if r:

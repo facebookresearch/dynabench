@@ -304,6 +304,10 @@ def update_round(credentials, tid, rid):
         else:
             round.url = "|".join(endpoint_urls)
 
+    if "selected_tags" in data:
+        selected_tags = str(data["selected_tags"])
+        rm.updateSelectedTags(tid, rid, selected_tags)
+
     round.longdesc = data.get("longdesc", round.longdesc)
     rm.dbs.add(round)
     rm.dbs.flush()

@@ -28,6 +28,7 @@ class TaskOwnerPage extends React.Component {
       datasets: null,
       availableDatasetAccessTypes: null,
       dataExporting: {},
+      tags: [],
     };
   }
 
@@ -41,7 +42,9 @@ class TaskOwnerPage extends React.Component {
       return this.fetchTask(() => this.fetchOwners());
     } else if (this.props.location.hash === "#rounds") {
       return this.fetchTask(() =>
-        this.fetchRounds(() => this.fetchModelIdentifiersForTargetSelection())
+        this.fetchRounds(() =>
+          this.fetchModelIdentifiersForTargetSelection(() => this.fetchTags())
+        )
       );
     } else if (this.props.location.hash === "#models") {
       return this.fetchTask(() => this.fetchModelIdentifiers());
@@ -121,6 +124,19 @@ class TaskOwnerPage extends React.Component {
       }
     );
   };
+
+  fetchTags(callback = () => {}) {
+    return this.context.api
+      .getAllTaskTags(this.state.task.id, this.state.task.round.rid)
+      .then(
+        (result) => {
+          this.setState({ tags: result }, callback);
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
+  }
 
   fetchDatasets = (callback = () => {}) => {
     return this.context.api.getDatasets(this.state.task.id).then(
@@ -359,8 +375,6 @@ class TaskOwnerPage extends React.Component {
   ) => {
     const model_ids = [];
 
-    console.log(values);
-
     for (const model_identifier of values.model_identifiers) {
       if (model_identifier.is_target) {
         model_ids.push(model_identifier.model_id);
@@ -370,6 +384,7 @@ class TaskOwnerPage extends React.Component {
     const data = {
       model_ids: model_ids,
       longdesc: values.longdesc,
+      selected_tags: values.selected_tags,
     };
 
     this.context.api.updateRound(this.state.task.id, values.rid, data).then(
@@ -405,14 +420,6 @@ class TaskOwnerPage extends React.Component {
         );
         setSubmitting(false);
       }
-    );
-
-    console.log(values);
-
-    this.context.api.updateSelectedTags(
-      this.state.task.id,
-      values.rid,
-      values.selected_tags
     );
   };
 
@@ -538,10 +545,12 @@ class TaskOwnerPage extends React.Component {
                       this.state.model_identifiers_for_target_selection
                     }
                     createRound={this.createRound}
+                    task={this.state.task}
                     handleRoundUpdate={this.handleRoundUpdate}
                     exportData={this.exportData}
                     dataExporting={this.state.dataExporting}
                     tid={this.state.task.id}
+                    allTaskTags={this.state.tags}
                   />
                 ) : null}
                 {this.props.location.hash === "#models" &&

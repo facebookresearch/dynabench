@@ -10,33 +10,21 @@ import DragAndDrop from "../DragAndDrop/DragAndDrop";
 import UserContext from "../../containers/UserContext";
 
 const Contexts = (props) => {
-  async function fetchTags(tid, rid) {
-    let result = await context.api.getAllTaskTags(tid, rid);
-    return result;
-  }
-
-  async function fetchSelectedTags(tid, rid) {
-    let result = await context.api.getAllRoundTags(tid, rid);
-    return result;
+  function fetchTags(tid, rid) {
+    return context.api.getAllTaskTags(tid, rid);
   }
 
   useEffect(() => {
-    fetchTags(props.tid, props.values.rid).then((result) => {
-      setTags(result);
-    });
-
-    fetchSelectedTags(props.tid, props.values.rid).then((result) => {
-      if (result) {
-        setSelectedTags(result);
-      } else {
-        setSelectedTags([]);
-      }
-    });
+    // fetchTags(props.task.id, props.values.rid).then((result) => {
+    //   setTags(result);
+    // });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const context = useContext(UserContext);
-  const [tags, setTags] = useState([]);
-  const [selectedTags, setSelectedTags] = useState([]);
+  const [tags, setTags] = useState(props.allTaskTags);
+  const [selectedTags, setSelectedTags] = useState(
+    JSON.parse(props.task.round.selected_tags)
+  );
 
   return (
     <Container>
@@ -112,7 +100,7 @@ const Contexts = (props) => {
                   var newTags = selectedTags.filter(
                     (t) => t !== event.target.value
                   );
-                  setSelectedTags(newTags.length === 0 ? [] : newTags);
+                  setSelectedTags(newTags);
                 }
 
                 props.setFieldValue("selected_tags", newTags);

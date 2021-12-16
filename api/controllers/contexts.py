@@ -26,7 +26,10 @@ def getContext(tid, rid):
 
 @bottle.get("/contexts/<tid:int>/<rid:int>/tags")
 def getAllTags(tid, rid):
-    return _getAllTags(tid, rid)
+    c = ContextModel()
+
+    all_tags = c.getTags(rid, tid)
+    return util.json_encode(all_tags)
 
 
 @bottle.get("/contexts/<tid:int>/<rid:int>/uniform")
@@ -49,13 +52,6 @@ def getRandomValidationFailedContext(tid, rid):
     query_dict = parse_qs(bottle.request.query_string)
     tags = _getTags(query_dict)
     return _getContext(tid, rid, "validation_failed", tags=tags)
-
-
-@bottle.get("/tags/get_selected/<tid:int>/<rid:int>")
-@_auth.requires_auth
-def getSelectedTags(credentials, tid, rid):
-
-    return _getSelectedTags(tid, rid)
 
 
 def _getTags(query_dict):
@@ -86,20 +82,6 @@ def _getContext(tid, rid, method="min", tags=None):
         bottle.abort(500, f"No contexts available ({round.id})")
     context = context[0].to_dict()
     return util.json_encode(context)
-
-
-def _getAllTags(tid, rid):
-    c = ContextModel()
-
-    all_tags = c.getTags(rid, tid)
-    return util.json_encode(all_tags)
-
-
-def _getSelectedTags(tid, rid):
-    rm = RoundModel()
-
-    selected_tags = rm.getSelectedTags(tid, rid)
-    return util.json_encode(selected_tags)
 
 
 @bottle.post("/contexts/upload/<tid:int>/<rid:int>")
@@ -153,20 +135,3 @@ def do_upload(credentials, tid, rid):
     rm.dbs.bulk_save_objects(contexts_to_add)
     rm.dbs.commit()
     return util.json_encode({"success": "ok"})
-
-
-@bottle.post("/tags/selected/<tid:int>/<rid:int>")
-@_auth.requires_auth
-def update_selected_tags(credentials, tid, rid):
-    ensure_owner_or_admin(tid, credentials["id"])
-
-    data = bottle.request.json
-
-    if not util.check_fields(data, ["selected_tags"]):
-        bottle.abort(400, "Invalid data")
-
-    selected_tags = str(data["selected_tags"])
-
-    rm = RoundModel()
-
-    rm.updateSelectedTags(tid, rid, selected_tags)
