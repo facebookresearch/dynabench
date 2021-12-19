@@ -18,15 +18,25 @@ def enable_cors_after_request_hook():
 
 
 def add_cors_headers():
+    mode = bottle.default_app().config["mode"]
+    valid_hostnames = []
+    if mode == "prod":
+        valid_hostnames = [
+            "dynabench.org",
+            "dev.dynabench.org",
+            "www.dynabench.org",
+            "beta.dynabench.org",
+            "api.dynabench.org",
+        ]
+    else:
+        valid_hostnames = ["localhost"]
+
     parsed_origin_url = urllib.parse.urlparse(bottle.request.get_header("origin"))
+
     if (
         hasattr(parsed_origin_url, "hostname")
         and parsed_origin_url.hostname is not None
-        and (
-            parsed_origin_url.hostname.endswith("dynabench.org")
-            or parsed_origin_url.hostname.endswith("herokuapp.com")
-            or parsed_origin_url.hostname == "localhost"
-        )
+        and (parsed_origin_url.hostname in valid_hostnames)
     ):
         origin = bottle.request.get_header("origin")
     else:

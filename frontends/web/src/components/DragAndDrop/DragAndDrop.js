@@ -19,6 +19,7 @@ const DragAndDrop = (props) => {
       >
         <div>Drag & drop your files here</div>
         <input
+          disabled={props.disabled}
           type="file"
           name={props.name}
           className="upload"

@@ -435,17 +435,40 @@ def update(credentials, tid):
             "hidden",
             "submitable",
             "create_endpoint",
+            "annotation_config_json",
         ):
             bottle.abort(
                 403,
                 """Can only modify unpublished_models_in_leaderboard,
                 validate_non_fooling, num_matching_validations,
                 instructions_md, hidden, predictions_upload_instructions_md,
-                train_file_upload_instructions_md,
-                submitable, create_endpoint""",
+                train_file_upload_instructions_md, submitable,
+                create_endpoint, annotation_config_json""",
             )
 
     tm = TaskModel()
+
+    if "annotation_config_json" in data:
+        new_config = util.json_decode(data["annotation_config_json"])
+        try:
+            Task.verify_annotation_config(new_config)
+        except Exception as ex:
+            logger.exception("Invalid annotation config: (%s)" % (ex))
+            bottle.abort(400, "Invalid annotation config")
+        task = tm.get(tid)
+        old_config = util.json_decode(task.annotation_config_json)
+        allowed_fields = ("aggregation_metric",)
+
+        # ensure only allowed_fields changed
+        if {k: v for k, v in new_config.items() if k not in allowed_fields} != {
+            k: v for k, v in old_config.items() if k not in allowed_fields
+        }:
+            bottle.abort(
+                400,
+                f"You can only modify the {allowed_fields} fields "
+                + "of the annotation config",
+            )
+
     tm.update(tid, data)
     return util.json_encode({"success": "ok"})
 

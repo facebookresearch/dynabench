@@ -357,6 +357,7 @@ const TaskModelLeaderboardTable = ({
   setDatasetWeight,
   sort,
   toggleSort,
+  modelColumnTitle,
 }) => {
   const total = metrics?.reduce((sum, metric) => sum + metric.weight, 0);
 
@@ -374,7 +375,7 @@ const TaskModelLeaderboardTable = ({
                 toggleSort={toggleSort}
                 currentSort={sort}
               >
-                Model
+                {modelColumnTitle ? modelColumnTitle : "Model"}
               </SortContainer>
             </th>
           )}
