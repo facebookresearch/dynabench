@@ -100,9 +100,3 @@ class RoundModel(BaseModel):
         if r:
             r.task.last_updated = db.sql.func.now()
             self.dbs.commit()
-
-    def updateSelectedTags(self, tid, rid, tags):
-        r = self.getByTidAndRid(tid, rid)
-        if r:
-            r.selected_tags = str(tags).replace("'", '"')
-            self.dbs.commit()

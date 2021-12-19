@@ -384,7 +384,9 @@ class TaskOwnerPage extends React.Component {
     const data = {
       model_ids: model_ids,
       longdesc: values.longdesc,
-      selected_tags: values.selected_tags,
+      selected_tags: Object.keys(values.selected_tags).filter(
+        (k) => values.selected_tags[k]
+      ),
     };
 
     this.context.api.updateRound(this.state.task.id, values.rid, data).then(

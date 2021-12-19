@@ -15,13 +15,18 @@ const Contexts = (props) => {
   }
 
   useEffect(() => {
-    // fetchTags(props.task.id, props.values.rid).then((result) => {
-    //   setTags(result);
-    // });
+    let initStatus = tags.reduce((a, v) => ({ ...a, [v]: false }), {});
+    let selectedTagObj = selectedTags.reduce(
+      (a, v) => ({ ...a, [v]: true }),
+      {}
+    );
+    Object.assign(initStatus, selectedTagObj);
+    setTagStatus(initStatus);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const context = useContext(UserContext);
   const [tags, setTags] = useState(props.allTaskTags);
+  const [tagStatus, setTagStatus] = useState({});
   const [selectedTags, setSelectedTags] = useState(
     JSON.parse(props.task.round.selected_tags)
   );
@@ -79,31 +84,32 @@ const Contexts = (props) => {
         this round.
       </p>
       <Form.Group controlId="selected_tags">
-        {tags.map((tag, index) => {
-          let checked = false;
-          if (selectedTags.includes(tag)) {
-            checked = true;
-          }
+        {Object.keys(tagStatus).map((key, index) => {
+          let checked = tagStatus[key];
           return (
             <Form.Check
               type="checkbox"
               key={index}
               checked={checked}
-              label={tag}
+              label={key}
               name="selected_tags"
-              value={tag}
+              value={key}
               onChange={(event) => {
-                if (event.target.checked === true) {
-                  var newTags = [...selectedTags, event.target.value];
-                  setSelectedTags(newTags);
-                } else {
-                  var newTags = selectedTags.filter(
-                    (t) => t !== event.target.value
-                  );
-                  setSelectedTags(newTags);
-                }
-
-                props.setFieldValue("selected_tags", newTags);
+                // if (event.target.checked) {
+                //   var newTags = [...selectedTags, event.target.value];
+                //   setSelectedTags(newTags);
+                // } else {
+                //   var newTags = selectedTags.filter(
+                //     (t) => t !== event.target.value
+                //   );
+                //   setSelectedTags(newTags);
+                // }
+                let newTagStatus = {
+                  ...tagStatus,
+                  [key]: event.target.checked,
+                };
+                setTagStatus(newTagStatus);
+                props.setFieldValue("selected_tags", newTagStatus);
               }}
             />
           );
