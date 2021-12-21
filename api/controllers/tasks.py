@@ -23,7 +23,7 @@ from models.score import ScoreModel
 from models.task import Task, TaskModel
 from models.task_proposal import TaskProposal, TaskProposalModel
 from models.task_user_permission import TaskUserPermission
-from models.user import UserModel
+from models.user import User, UserModel
 
 
 @bottle.put("/tasks/process_proposal/<tpid:int>")
@@ -1053,19 +1053,21 @@ def construct_trends_response_json(query_result):
 def get_secret_for_task_id(tid):
     tm = TaskModel()
     tups = (
-        tm.dbs.query(TaskUserPermission)
+        tm.dbs.query(User.api_token)
+        .join(TaskUserPermission, TaskUserPermission.uid == User.id)
         .filter(
             db.and_(TaskUserPermission.type == "owner", TaskUserPermission.tid == tid)
         )
         .all()
     )
-    assert len(tups) == 1
-    um = UserModel()
-    user = um.get(tups[0].uid)
-    return user.api_token
+
+    ret = [tup[0] for tup in tups]
+    print(ret)
+
+    return ret
 
 
-@bottle.get("/tasks/decen_eaas/listdatasets")
+@bottle.get("/tasks/listdatasets")
 def decen_eaas_list_datasets():
     dm = DatasetModel()
     tm = TaskModel()
@@ -1075,9 +1077,15 @@ def decen_eaas_list_datasets():
 
     # Get the TID for the task code
     task = tm.getByTaskCode(task_code)
-    task_secret = get_secret_for_task_id(task.id)
+    task_secrets = get_secret_for_task_id(task.id)
 
-    if not util.verified_data(req_data, task_secret):
+    verified_across_keys = False
+    for task_sec in task_secrets:
+        if util.verified_data(req_data, task_sec):
+            verified_across_keys = True
+            break
+
+    if not verified_across_keys:
         bottle.abort(401, "Operation not authorized")
 
     # The only thing so far we need to update is the deployment_status
@@ -1089,7 +1097,7 @@ def decen_eaas_list_datasets():
         datasets = dm.getByTid(task.id)
         json_encoded_datasets = []
         for dataset in datasets:
-            json_encoded_datasets.append(util.json_encode(dm.as_dict(dataset)))
+            json_encoded_datasets.append(util.json_encode(dm.to_dict(dataset)))
 
         return util.json_encode(json_encoded_datasets)
 
@@ -1098,7 +1106,7 @@ def decen_eaas_list_datasets():
         bottle.abort(400, "Could not retrieve datasets for task: %s" % (e))
 
 
-@bottle.get("/tasks/decen_eaas/listmodelsids")
+@bottle.get("/tasks/listmodelsids")
 def decen_eaas_list_model_ids():
     mm = ModelModel()
     tm = TaskModel()
@@ -1108,9 +1116,16 @@ def decen_eaas_list_model_ids():
 
     # Get the TID for the task code
     task = tm.getByTaskCode(task_code)
-    task_secret = get_secret_for_task_id(task.id)
 
-    if not util.verified_data(req_data, task_secret):
+    task_secrets = get_secret_for_task_id(task.id)
+
+    verified_across_keys = False
+    for task_sec in task_secrets:
+        if util.verified_data(req_data, task_sec):
+            verified_across_keys = True
+            break
+
+    if not verified_across_keys:
         bottle.abort(401, "Operation not authorized")
 
     # The only thing so far we need to update is the deployment_status

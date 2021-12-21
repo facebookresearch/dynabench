@@ -211,7 +211,7 @@ def api_model_eval_update(model_id, evaluation_status, prod=False):
 
     _ = requests.get(
         f"{DYNABENCH_API}/models/{model_id}/update_evaluation_status",
-        data=json.dumps(util.wrap_data(data, decen_eaas_secret)),
+        data=json.dumps(util.wrap_data_with_signature(data, decen_eaas_secret)),
         headers={"Content-Type": "application/json"},
         verify=prod,
     )
@@ -220,7 +220,7 @@ def api_model_eval_update(model_id, evaluation_status, prod=False):
 def api_update_database_with_metrics(data_pkg, prod=False):
     r = requests.post(
         f"{DYNABENCH_API}/models/update_database_with_metrics",
-        data=json.dumps(util.wrap_data(data_pkg, decen_eaas_secret)),
+        data=json.dumps(util.wrap_data_with_signature(data_pkg, decen_eaas_secret)),
         headers={"Content-Type": "application/json"},
         verify=prod,
     )
@@ -233,7 +233,9 @@ def api_get_next_job_score_entry(job, prod=False):
 
     r = requests.get(
         f"{DYNABENCH_API}/models/eval_score_entry",
-        data=ujson.dumps(util.wrap_data(str_encoded_obj, decen_eaas_secret)),
+        data=ujson.dumps(
+            util.wrap_data_with_signature(str_encoded_obj, decen_eaas_secret)
+        ),
         headers={"Content-Type": "application/json"},
         verify=prod,
     )
@@ -246,7 +248,7 @@ def api_model_endpoint_name(model_id, prod=False):
 
     r = requests.get(
         f"{DYNABENCH_API}/models/{model_id}/get_model_info",
-        data=json.dumps(util.wrap_data(data, decen_eaas_secret)),
+        data=json.dumps(util.wrap_data_with_signature(data, decen_eaas_secret)),
         headers={"Content-Type": "application/json"},
         verify=prod,
     )
@@ -259,7 +261,7 @@ def api_model_update(mid, model_status, prod=False):
 
     _ = requests.post(
         f"{DYNABENCH_API}/models/{mid}/update_decen_eaas",
-        data=json.dumps(util.wrap_data(data, decen_eaas_secret)),
+        data=json.dumps(util.wrap_data_with_signature(data, decen_eaas_secret)),
         headers={"Content-Type": "application/json"},
         verify=prod,
     )
@@ -270,8 +272,8 @@ def load_models_ids_for_task_owners():
     data = {"task_code": task_code}
 
     r = requests.get(
-        f"{DYNABENCH_API}/tasks/decen_eaas/listmodelsids",
-        data=json.dumps(util.wrap_data(data, decen_eaas_secret)),
+        f"{DYNABENCH_API}/tasks/listmodelsids",
+        data=json.dumps(util.wrap_data_with_signature(data, decen_eaas_secret)),
         headers={"Content-Type": "application/json"},
         verify=False,
     )

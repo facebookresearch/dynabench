@@ -56,10 +56,10 @@ class MetricsComputer:
     ) -> None:
         dataset = self.datasets[job.dataset_name]
         data = {
-            "job": ujson.dumps(job.as_dict(), default=str),
+            "job": ujson.dumps(job.to_dict(), default=str),
             "eval_metrics_dict": ujson.dumps(eval_metrics_dict, default=str),
             "delta_metrics_dict": ujson.dumps(delta_metrics_dict, default=str),
-            "dataset": ujson.dumps(dataset.as_dict(job.endpoint_name), default=str),
+            "dataset": ujson.dumps(dataset.to_dict(job.endpoint_name), default=str),
         }
         model_json = api_update_database_with_metrics(data)
 
@@ -139,7 +139,7 @@ class MetricsComputer:
             job = self._waiting.pop(0)
             traversed += 1
 
-            score_entry = api_get_next_job_score_entry(job.as_dict())
+            score_entry = api_get_next_job_score_entry(job.to_dict())
 
             if job.perturb_prefix and (
                 "found_score_entry" not in score_entry

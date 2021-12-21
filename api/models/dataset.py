@@ -88,7 +88,7 @@ class DatasetModel(BaseModel):
         except db.orm.exc.NoResultFound:
             return False
 
-    def as_dict(self, dataset):
+    def to_dict(self, dataset):
         model_dict = {}
         for c in dataset.__table__.columns:
             model_dict[c.name] = getattr(dataset, c.name)

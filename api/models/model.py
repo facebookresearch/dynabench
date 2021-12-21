@@ -202,7 +202,7 @@ class ModelModel(BaseModel):
             base_query = base_query.filter(Model.tid == tid)
         return base_query.scalar()
 
-    def as_dict(self, model):
+    def to_dict(self, model):
         model_dict = {}
         for c in model.__table__.columns:
             if c.name == "deployment_status" or c.name == "evaluation_status":

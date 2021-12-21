@@ -36,8 +36,8 @@ def load_datasets_for_task_owner():
     data = {"task_code": task_code}
 
     r = requests.get(
-        f"{DYNABENCH_API}/tasks/decen_eaas/listdatasets",
-        data=json.dumps(util.wrap_data(data, decen_eaas_secret)),
+        f"{DYNABENCH_API}/tasks/listdatasets",
+        data=json.dumps(util.wrap_data_with_signature(data, decen_eaas_secret)),
         headers={"Content-Type": "application/json"},
         verify=False,
     )

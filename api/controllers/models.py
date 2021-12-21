@@ -547,8 +547,8 @@ def upload_to_s3(credentials):
     um.incrementModelSubmitCount(user.to_dict()["id"])
 
     if task.is_decen_task:
-        model_dict = m.as_dict(model)
-        task_dict = m.as_dict(model.task)
+        model_dict = m.to_dict(model)
+        task_dict = m.to_dict(model.task)
         full_model_info = util.json_encode(model_dict)
         full_task_info = util.json_encode(task_dict)
 
@@ -622,9 +622,9 @@ def deploy_model_from_s3(credentials, mid):
         region_name=config["aws_region"],
     )
 
-    if task.build_sqs_queue:
-        model_dict = m.as_dict(model)
-        task_dict = m.as_dict(model.task)
+    if task.is_decen_task:
+        model_dict = m.to_dict(model)
+        task_dict = m.to_dict(model.task)
         full_model_info = util.json_encode(model_dict)
         full_task_info = util.json_encode(task_dict)
 
@@ -824,7 +824,7 @@ def update_database_with_metrics():
                     score_obj["r_realid"] = 1
                 sm.create(**score_obj)
 
-        return util.json_encode(mm.as_dict(model))
+        return util.json_encode(mm.to_dict(model))
 
     except Exception as e:
         logger.exception("Could not update model score metrics: %s" % (e))

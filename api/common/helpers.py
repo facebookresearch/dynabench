@@ -277,7 +277,7 @@ def verified_data(data, secret):
     return generate_signature(data["data"], secret) == data["signature"]
 
 
-def wrap_data(data, secret):
+def wrap_data_with_signature(data, secret):
     data_signature = generate_signature(data, secret)
 
     final_data = {}

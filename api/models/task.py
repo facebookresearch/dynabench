@@ -773,7 +773,7 @@ class TaskModel(BaseModel):
         except db.orm.exc.NoResultFound:
             return False
 
-    def as_dict(self, model):
+    def to_dict(self, model):
         task_dict = {}
         for c in model.__table__.columns:
             task_dict[c.name] = getattr(model, c.name)

@@ -376,7 +376,7 @@ class BaseDataset:
             ],
         }  # NOTE: For now, the perf_metric defines the output to look for
 
-    def as_dict(self, endpoint_name):
+    def to_dict(self, endpoint_name):
         return {
             "round_id": self.round_id,
             "get_output_s3_url": self.get_output_s3_url(endpoint_name),

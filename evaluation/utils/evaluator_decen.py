@@ -42,7 +42,7 @@ class Job:
     def __repr__(self) -> str:
         return f"<Job: {self.job_name}>"
 
-    def as_dict(self):
+    def to_dict(self):
         return {
             "model_id": self.model_id,
             "endpoint_name": self.endpoint_name,
