@@ -18,6 +18,7 @@ from models.validation import ValidationModel
 
 @bottle.put("/validations/<eid:int>")
 @_auth.requires_auth_or_turk
+@_auth.turk_endpoint
 def validate_example(credentials, eid):
     data = bottle.request.json
 

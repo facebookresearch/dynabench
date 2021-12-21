@@ -43,7 +43,10 @@ def add_cors_headers():
         origin = "https://dynabench.org"
 
     bottle.default_app()
-    bottle.response.headers["Access-Control-Allow-Origin"] = origin
+
+    if not ("Access-Control-Allow-Origin" in bottle.response.headers):
+        bottle.response.headers["Access-Control-Allow-Origin"] = origin
+
     bottle.response.headers[
         "Access-Control-Allow-Methods"
     ] = "GET, POST, PUT, DELETE, OPTIONS"

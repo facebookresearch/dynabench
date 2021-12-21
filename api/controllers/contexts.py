@@ -18,6 +18,7 @@ from .tasks import ensure_owner_or_admin
 
 @bottle.get("/contexts/<tid:int>/<rid:int>")
 @bottle.get("/contexts/<tid:int>/<rid:int>/min")
+@_auth.turk_endpoint
 def getContext(tid, rid):
     query_dict = parse_qs(bottle.request.query_string)
     tags = _getTags(query_dict)
@@ -26,6 +27,7 @@ def getContext(tid, rid):
 
 @bottle.get("/contexts/<tid:int>/<rid:int>/uniform")
 @_auth.requires_auth_or_turk
+@_auth.turk_endpoint
 def getUniformContext(credentials, tid, rid):
     query_dict = parse_qs(bottle.request.query_string)
     tags = _getTags(query_dict)

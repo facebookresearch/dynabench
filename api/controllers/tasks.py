@@ -515,6 +515,7 @@ def get_submitable_tasks():
 
 
 @bottle.get("/tasks/<task_id_or_code>")
+@_auth.turk_endpoint
 def get_task(task_id_or_code):
     t = TaskModel()
     task = t.getWithRoundAndMetricMetadata(task_id_or_code)
