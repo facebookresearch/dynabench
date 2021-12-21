@@ -95,7 +95,7 @@ const UserLeaderboardCard = (props) => {
     >
       <Card className="my-4">
         <Card.Header className="light-gray-bg d-flex align-items-center">
-          <h2 className="text-uppercase m-0 text-reset">User Leaderboard</h2>
+          <h2 className="text-uppercase m-0 text-reset">Example Leaderboard</h2>
           <div className="d-flex justify-content-end flex-fill">
             <OverlayTrigger
               placement="top"

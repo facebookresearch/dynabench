@@ -264,6 +264,7 @@ class TaskOwnerPage extends React.Component {
       "build_sqs_queue",
       "eval_sqs_queue",
       "is_decen_task",
+      "annotation_config_json",
     ];
 
     const data = Object.keys(values)
@@ -512,6 +513,7 @@ class TaskOwnerPage extends React.Component {
               <Advanced
                 task={this.state.task}
                 handleTaskActivate={this.handleTaskActivate}
+                handleTaskUpdate={this.handleTaskUpdate}
               />
             ) : null}
             {this.state.task?.active ? (

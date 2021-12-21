@@ -102,8 +102,14 @@ def do_upload_via_train_files(credentials, tid, model_name):
         ):
             bottle.abort(400, "Need to upload train files for all leaderboard datasets")
 
+    mail_session = mail.get_mail_session(
+        host=config["smtp_host"],
+        port=config["smtp_port"],
+        smtp_user=config["smtp_user"],
+        smtp_secret=config["smtp_secret"],
+    )
+
     parsed_uploads = {}
-    # Ensure correct format
     for name, upload in train_files.items():
         try:
             s3_uri = f"s3://{task.s3_bucket}/" + get_data_s3_path(
@@ -124,6 +130,15 @@ def do_upload_via_train_files(credentials, tid, model_name):
             parsed_uploads[name] = parsed_prediction_file
 
         except Exception as ex:
+            mail.send(
+                mail_session,
+                config,
+                [user.email],
+                cc_contact="dynabench@fb.com",
+                template_name="templates/model_train_failed.txt",
+                msg_dict={"name": model_name},
+                subject=f"Model {model_name} training failed.",
+            )
             logger.exception(ex)
             bottle.abort(400, "Invalid train file")
 
@@ -156,7 +171,15 @@ def do_upload_via_train_files(credentials, tid, model_name):
                 tmp.close()
                 ret = _eval_dataset(dataset_name, endpoint_name, model, task, tmp.name)
                 status_dict.update(ret)
-
+    mail.send(
+        mail_session,
+        config,
+        [user.email],
+        cc_contact="dynabench@fb.com",
+        template_name="templates/model_train_successful.txt",
+        msg_dict={"name": model_name, "model_id": model.id},
+        subject=f"Model {model_name} training succeeded.",
+    )
     return util.json_encode({"success": "ok", "model_id": model.id})
 
 
