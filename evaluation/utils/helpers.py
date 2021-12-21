@@ -206,6 +206,14 @@ def upload_predictions(s3_client, s3_uri: str, predictions: List[dict]) -> None:
 
 
 # Decentralized Eaas Helpers
+class dotdict(dict):
+    """dot.notation access to dictionary attributes"""
+
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+
 def api_model_eval_update(model_id, evaluation_status, prod=False):
     data = {"evaluation_status": evaluation_status}
 

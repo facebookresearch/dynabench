@@ -1062,8 +1062,6 @@ def get_secret_for_task_id(tid):
     )
 
     ret = [tup[0] for tup in tups]
-    print(ret)
-
     return ret
 
 

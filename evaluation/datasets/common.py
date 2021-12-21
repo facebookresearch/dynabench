@@ -14,6 +14,7 @@ from metrics.metric_getters import get_delta_metrics, get_eval_metrics
 from models.dataset import AccessTypeEnum
 from models.task import TaskModel
 from utils.helpers import (
+    dotdict,
     get_data_s3_path,
     get_perturbed_filename,
     parse_s3_outfile,
@@ -381,5 +382,5 @@ class BaseDataset:
             "round_id": self.round_id,
             "get_output_s3_url": self.get_output_s3_url(endpoint_name),
             "get_n_examples": self.get_n_examples(),
-            "task_instance_type": self.task.instance_type,
+            "task": dotdict({"instance_type": self.task.instance_type}),
         }

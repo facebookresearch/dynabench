@@ -37,18 +37,11 @@ from utils.helpers import (  # noqa isort:skip
     parse_s3_outfile,  # noqa isort:skip
     send_eval_request,  # noqa isort:skip
     update_metadata_json_string,  # noqa isort:skip
+    dotdict,  # noqa isort:skip
 )  # noqa isort:skip
 
 sys.path.append("../evaluation")  # noqa isort:skip
 from metrics.metric_getters import get_job_metrics  # noqa isort:skip
-
-
-class dotdict(dict):
-    """dot.notation access to dictionary attributes"""
-
-    __getattr__ = dict.get
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
 
 
 @bottle.post("/models/upload_train_files/<tid:int>/<model_name>")
