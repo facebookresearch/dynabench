@@ -819,7 +819,7 @@ def update_database_with_metrics():
             score_obj = {**delta_metrics_dict, "metadata_json": metadata_json}
             sm.update(s.id, **score_obj)
         else:
-            job_metrics_dict = get_job_metrics(job, dataset, decen=True)
+            job_metrics_dict = get_job_metrics(job, dataset)
             score_obj = {**eval_metrics_dict, **job_metrics_dict}
             if s:
                 score_obj["metadata_json"] = update_metadata_json_string(

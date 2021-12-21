@@ -259,19 +259,12 @@ def get_sp_bleu_meta(task=None):
 
 
 # job_metrics, takes raw job and dataset as input
-def get_memory_utilization(job, dataset, decen=False):
-    if decen:
-        mem = (
-            sum(job.aws_metrics["MemoryUtilization"])
-            / 100
-            * instance_property[dataset.task_instance_type]["memory_gb"]
-        )
-    else:
-        mem = (
-            sum(job.aws_metrics["MemoryUtilization"])
-            / 100
-            * instance_property[dataset.task.instance_type]["memory_gb"]
-        )
+def get_memory_utilization(job, dataset):
+    mem = (
+        sum(job.aws_metrics["MemoryUtilization"])
+        / 100
+        * instance_property[dataset.task.instance_type]["memory_gb"]
+    )
     return round(mem, 2)
 
 
