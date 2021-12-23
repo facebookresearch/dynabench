@@ -21,8 +21,6 @@ from textflint_utils.utils import run_textflint
 
 
 sys.path.append("..")  # noqa
-from eval_config import eval_config as config  # isort:skip
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("perturb")
 
@@ -114,9 +112,11 @@ def parse_s3_uri(s3_uri: str) -> Tuple[str, str, str]:
 def download_base_from_s3(args: Any) -> Optional[Tuple[str, str]]:
     # If a local path was passed in, we can just use it
     if os.path.exists(args.dataset_path):
-        return args.dataset_path, os.path.basename(args.dataset_path)
+        return args.dataset_path, os.path.basename(args.dataset_path), True
 
     try:
+        from eval_config import eval_config as config  # isort:skip
+
         s3_client = boto3.client(
             "s3",
             aws_access_key_id=config["aws_access_key_id"],
@@ -140,7 +140,7 @@ def download_base_from_s3(args: Any) -> Optional[Tuple[str, str]]:
             logger.info(f"Response from S3 download {response}")
         logger.info(f"Successfully downloaded {args.dataset_path} to {local_path}")
 
-        return local_path, s3_filename.split(".")[0]
+        return local_path, s3_filename.split(".")[0], False
 
     except Exception as ex:
         logger.exception(f"Failed to download {args.dataset_path} because of {ex}")
@@ -164,7 +164,9 @@ def perturb(
 ) -> str:
     examples = load_examples(path)
     num_examples = len(examples)
-    logger.info(f"Loaded {num_examples} to perturb")
+    print(
+        f"Loaded {num_examples} to perturb with {perturb_source} and {perturb_prefix}"
+    )
     if perturb_source == "augly" or perturb_prefix == "fairness":
         pert = AuglyPerturbation(
             perturb_prefix, seed, num_threads, perturb_fields, ignore_words_fields
@@ -176,10 +178,22 @@ def perturb(
     outpath = os.path.join(
         os.path.dirname(local_path), f"{perturb_prefix}-{os.path.basename(local_path)}"
     )
+    print(f"N perturbed: {len(perturbed_examples)}")
+    flattened_examples = []
+    for example in perturbed_examples:
+        if isinstance(example, list):
+            for variant in example:
+                flattened_examples.append(variant)
+        elif isinstance(example, dict):
+            flattened_examples.append(example)
+        else:
+            raise ValueError(f"Invalid example: {example}")
+
+    print(f"N Flattened Examples: {len(flattened_examples)}")
     with open(outpath, "w") as f:
-        for example in perturbed_examples:
+        for example in flattened_examples:
             f.write(json.dumps(example) + "\n")
-    logger.info(f"Wrote perturbed dataset to {outpath}")
+    print(f"Wrote perturbed dataset to {outpath}")
 
     return outpath
 
@@ -199,7 +213,7 @@ if __name__ == "__main__":
     downloaded_dataset = download_base_from_s3(args)
     assert downloaded_dataset, "Failed to download dataset from S3"
 
-    local_path, base_dataset_name = downloaded_dataset
+    local_path, base_dataset_name, is_local_file = downloaded_dataset
     logger.info("Downloaded dataset; now will perturb examples")
     seed = None if args.seed == "" else int(args.seed)
     outpath = perturb(
@@ -213,7 +227,8 @@ if __name__ == "__main__":
         args.task,
     )
     print_instructions(args, outpath, base_dataset_name)
-    ops = input(f"Remove locally downloaded file at {local_path}? [Y/n] ")
-    if ops == "Y":
-        os.remove(local_path)
-        logger.info(f"Removed locally downloaded {local_path}")
+    if not is_local_file:
+        ops = input(f"Remove locally downloaded file at {local_path}? [Y/n] ")
+        if ops == "Y":
+            os.remove(local_path)
+            logger.info(f"Removed locally downloaded {local_path}")
