@@ -60,6 +60,7 @@ def get_random_filtered_example(
 
 @bottle.get("/examples/<tid:int>/<rid:int>")
 @_auth.requires_auth_or_turk
+@_auth.turk_endpoint
 def get_random_example(credentials, tid, rid):
     query_dict = parse_qs(bottle.request.query_string)
     tags = None
@@ -122,6 +123,7 @@ def get_example_metadata(credentials, eid):
 
 @bottle.put("/examples/<eid:int>")
 @_auth.requires_auth_or_turk
+@_auth.turk_endpoint
 def update_example(credentials, eid):
     try:
         em = ExampleModel()
@@ -248,6 +250,7 @@ def evaluate_model_correctness():
 
 @bottle.post("/examples")
 @_auth.requires_auth_or_turk
+@_auth.turk_endpoint
 def post_example(credentials):
     data = bottle.request.json
     if not util.check_fields(
