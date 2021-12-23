@@ -2,6 +2,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+# Note that the source for most of this file is
+# https://github.com/pre-commit/pre-commit-hooks/blob/master/pre_commit_hooks/detect_aws_credentials.py
+
 import argparse
 import os
 from typing import List, NamedTuple, Optional, Sequence, Set
@@ -39,6 +42,7 @@ def get_aws_secrets_from_env() -> Set[str]:
     return keys
 
 
+# Changed this function because our config are formatted differently
 def get_aws_secrets_from_file(credentials_file: str) -> Set[str]:
     """Extract AWS secrets from configuration files.
     Read an ini-style configuration file and return a set with all found AWS
@@ -77,6 +81,11 @@ def check_file_for_aws_keys(
     bad_files = []
 
     for filename in filenames:
+        # ignore this file, since it will get flagged for having
+        # the text `aws_access_key_id` and such in the above function
+        if filename == "detect_aws_credentials.py":
+            continue
+
         with open(filename, "rb") as content:
             text_body = content.read()
             for key in keys:
@@ -93,6 +102,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     parser = argparse.ArgumentParser()
     parser.add_argument("filenames", nargs="+", help="Filenames to run")
+
+    # Changed this default to fit our codebase
     parser.add_argument(
         "--credentials-file",
         dest="credentials_file",
@@ -134,6 +145,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         )
         return 2
     keys_b = {key.encode() for key in keys}
+    print(args.filenames)
     bad_filenames = check_file_for_aws_keys(args.filenames, keys_b)
     if bad_filenames:
         for bad_file in bad_filenames:
