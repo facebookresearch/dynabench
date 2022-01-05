@@ -98,6 +98,17 @@ const Datasets = (props) => {
                           a value which is unique for each line. This "uid"
                           field makes it possible for Dynabench to match
                           unordered model predictions to the correct examples.
+                          If you are uploading fairness and/or robustness files,
+                          you can use this script{" "}
+                          <a href="https://github.com/facebookresearch/dynabench/blob/main/evaluation/scripts/perturb.py">
+                            here
+                          </a>{" "}
+                          to generate them, or you can upload your own. Files
+                          for fairness and robustness need to have every field
+                          that the normal files have (including “uid”), but they
+                          must also have an additional field: “input_id”.
+                          “input_id” should be the “uid” of the original
+                          example, before a fairness or robustness perturbation.
                           <br />
                           <br />
                           Some metrics also allow datasets to have targets that
