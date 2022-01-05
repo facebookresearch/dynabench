@@ -30,11 +30,11 @@ const EvaluationStatus = ({ evaluationStatus }) => {
       break;
     case "failed":
       buttonVariant = "danger";
-      description = "Metrics could not be computed on one or more datasets.";
+      description = "Metrics could not be computed on this dataset.";
       break;
     default:
       buttonVariant = "warning";
-      description = "The evaluation status of the model is unknown.";
+      description = "The evaluation status of this dataset is unknown.";
   }
   return (
     <>

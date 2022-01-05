@@ -365,7 +365,38 @@ def get_model_detail(credentials, mid):
         did_to_dataset_access_type = {}
         did_to_dataset_longdesc = {}
         did_to_dataset_source_url = {}
+        model["leaderboard_evaluation_statuses"] = []
+        model["non_leaderboard_evaluation_statuses"] = []
+        model["hidden_evaluation_statuses"] = []
+
         for dataset in datasets:
+            if model["evaluation_status_json"]:
+                evaluation_status = util.json_decode(
+                    model["evaluation_status_json"]
+                ).get(dataset.name, "pre_evaluation")
+                if (
+                    evaluation_status != "completed"
+                    or dataset.access_type == AccessTypeEnum.hidden
+                ):
+                    if dataset.access_type == AccessTypeEnum.scoring:
+                        evaluation_status_access_type = (
+                            "leaderboard_evaluation_statuses"
+                        )
+                    elif dataset.access_type == AccessTypeEnum.standard:
+                        evaluation_status_access_type = (
+                            "non_leaderboard_evaluation_statuses"
+                        )
+                    else:
+                        evaluation_status_access_type = "hidden_evaluation_statuses"
+
+                    model[evaluation_status_access_type].append(
+                        {
+                            "dataset_name": dataset.name,
+                            "dataset_longdesc": dataset.longdesc,
+                            "dataset_source_url": dataset.source_url,
+                            "evaluation_status": evaluation_status,
+                        }
+                    )
 
             did_to_dataset_name[dataset.id] = dataset.name
             did_to_dataset_access_type[dataset.id] = dataset.access_type
@@ -398,7 +429,6 @@ def get_model_detail(credentials, mid):
             )
         )
         model["deployment_status"] = model["deployment_status"].name
-        model["evaluation_status"] = model["evaluation_status"].name
         return util.json_encode(model)
     except AssertionError:
         logger.exception("Not authorized to access unpublished model detail")

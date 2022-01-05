@@ -24,13 +24,6 @@ class DeploymentStatusEnum(enum.Enum):
     takendownnonactive = "takendownnonactive"
 
 
-class EvaluationStatusEnum(enum.Enum):
-    evaluating = "evaluating"
-    completed = "completed"
-    pre_evaluation = "pre_evaluation"
-    failed = "failed"
-
-
 class Model(Base):
     __tablename__ = "models"
     __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_general_ci"}
@@ -48,6 +41,9 @@ class Model(Base):
     longdesc = db.Column(db.Text)
     papers = db.Column(db.Text)
 
+    # Dataset eval info
+    evaluation_status_json = db.Column(db.Text)
+
     # Model cards
     params = db.Column(db.BigInteger)
     languages = db.Column(db.Text)
@@ -63,9 +59,6 @@ class Model(Base):
     endpoint_name = db.Column(db.Text)
     deployment_status = db.Column(
         db.Enum(DeploymentStatusEnum), default=DeploymentStatusEnum.unknown
-    )
-    evaluation_status = db.Column(
-        db.Enum(EvaluationStatusEnum), default=EvaluationStatusEnum.pre_evaluation
     )
 
     secret = db.Column(db.Text)
