@@ -93,7 +93,6 @@ def check_file_for_aws_keys(
                 # naively match the entire file, low chance of incorrect
                 # collision
                 if key in text_body:
-                    print(key)
                     key_hidden = key.decode()[:4].ljust(28, "*")
                     bad_files.append(BadFile(filename, key_hidden))
     return bad_files
@@ -128,8 +127,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     # Add the credentials files configured via environment variables to the set
     # of files to to gather AWS secrets from.
     credential_files |= get_aws_cred_files_from_env()
-
-    print("HIHIH")
 
     keys: Set[str] = set()
     for credential_file in credential_files:
