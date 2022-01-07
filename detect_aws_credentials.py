@@ -65,7 +65,8 @@ def get_aws_secrets_from_file(credentials_file: str) -> Set[str]:
             ):
 
                 key_info = line.split(":")[1][2:-3].strip()
-                keys.add(key_info)
+                if key_info != "":
+                    keys.add(key_info)
 
     return keys
 
@@ -92,6 +93,7 @@ def check_file_for_aws_keys(
                 # naively match the entire file, low chance of incorrect
                 # collision
                 if key in text_body:
+                    print(key)
                     key_hidden = key.decode()[:4].ljust(28, "*")
                     bad_files.append(BadFile(filename, key_hidden))
     return bad_files
@@ -127,6 +129,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     # of files to to gather AWS secrets from.
     credential_files |= get_aws_cred_files_from_env()
 
+    print("HIHIH")
+
     keys: Set[str] = set()
     for credential_file in credential_files:
         keys |= get_aws_secrets_from_file(credential_file)
@@ -144,6 +148,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             "setting for --credentials-file",
         )
         return 2
+
     keys_b = {key.encode() for key in keys}
     print(args.filenames)
     bad_filenames = check_file_for_aws_keys(args.filenames, keys_b)
