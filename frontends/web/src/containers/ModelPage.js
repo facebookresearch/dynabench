@@ -516,7 +516,7 @@ ${latexTableContent}
                       <thead />
                       <tbody>
                         {isModelOwner && (
-                          <tr style={{ border: `none` }} class="border-bottom">
+                          <tr style={{ border: `none` }}>
                             <td>Owner Anonymity</td>
                             <td>
                               <AnonymousStatus
