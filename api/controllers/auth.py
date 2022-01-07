@@ -49,7 +49,7 @@ def get_trial_auth_token():
 def refresh_auth():
     payload = _auth.get_expired_token_payload()
     refresh_token = _auth.get_refresh_token()
-    logger.info(f"Received refresh token request with token {refresh_token} {payload}")
+    logger.info(f"Received refresh token request with token")
     rtm = RefreshTokenModel()
     rt = rtm.getByToken(refresh_token)
     if rt:
