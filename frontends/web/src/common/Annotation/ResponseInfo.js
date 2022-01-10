@@ -176,7 +176,7 @@ class ResponseInfo extends React.Component {
       ));
 
     const outputToCompareToTargetInterface =
-      this.props.obj.url !== null &&
+      this.props.obj.modelInTheLoop &&
       this.props.annotationConfig.input
         .filter((annotatorConfigObj) =>
           targetNames.includes(annotatorConfigObj.name)
@@ -195,7 +195,7 @@ class ResponseInfo extends React.Component {
         ));
 
     const otherModelOutputInterface =
-      this.props.obj.url !== null &&
+      this.props.obj.modelInTheLoop &&
       this.props.annotationConfig.output
         .filter(
           (annotatorConfigObj) => !targetNames.includes(annotatorConfigObj.name)
@@ -246,7 +246,7 @@ class ResponseInfo extends React.Component {
     var userFeedback = (
       <>
         {this.props.obj.livemode &&
-          (this.state.modelWrong !== null || this.props.obj.url === null) &&
+          (this.state.modelWrong !== null || !this.props.obj.modelInTheLoop) &&
           metadataInterface.length > 0 && (
             <div className="mt-3">
               <span>You can enter more info for your example:</span>
@@ -312,7 +312,7 @@ class ResponseInfo extends React.Component {
         </span>
       );
     } else {
-      if (this.props.obj.url === null) {
+      if (!this.props.obj.modelInTheLoop) {
         title = (
           <span>
             <strong>Thank you for your example</strong>
@@ -419,7 +419,7 @@ class ResponseInfo extends React.Component {
     return (
       <Card className={classNames} style={{ minHeight: 120 }}>
         <Card.Body className="p-3">
-          {this.props.obj.url === null ? (
+          {!this.props.obj.modelInTheLoop ? (
             <Row>
               <Col xs={12} md={9}>
                 {title !== null && <div className="mb-3">{title}</div>}
