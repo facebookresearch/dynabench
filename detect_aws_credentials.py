@@ -65,7 +65,8 @@ def get_aws_secrets_from_file(credentials_file: str) -> Set[str]:
             ):
 
                 key_info = line.split(":")[1][2:-3].strip()
-                keys.add(key_info)
+                if key_info != "":
+                    keys.add(key_info)
 
     return keys
 
@@ -144,6 +145,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             "setting for --credentials-file",
         )
         return 2
+
     keys_b = {key.encode() for key in keys}
     print(args.filenames)
     bad_filenames = check_file_for_aws_keys(args.filenames, keys_b)
