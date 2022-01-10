@@ -14,8 +14,6 @@ import {
   Form,
   InputGroup,
   ButtonGroup,
-  DropdownButton,
-  Dropdown,
   OverlayTrigger,
   Tooltip,
   Modal,
@@ -191,7 +189,8 @@ class CreateInterface extends React.Component {
             modelWrong: modelWrong,
             input: this.getInputData(),
             output: output,
-            url: this.state.randomTargetModel,
+            modelInTheLoop:
+              this.state.randomTargetModel || this.state.selectedModel,
             retracted: false,
           },
         ],
