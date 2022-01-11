@@ -232,19 +232,22 @@ def do_upload_via_predictions(credentials, tid, model_name):
                 util.json_decode(line)
                 for line in upload.file.read().decode("utf-8").splitlines()
             ]
-            for io in parsed_upload:
-                if (
-                    not task.verify_annotation(
-                        io, mode=AnnotationVerifierMode.predictions_upload
-                    )
-                    or "uid" not in io
-                ):
-                    bottle.abort(400, "Invalid prediction file")
-            parsed_uploads[name] = parsed_upload
-
         except Exception as ex:
             logger.exception(ex)
-            bottle.abort(400, "Invalid prediction file")
+            bottle.abort(400, "Could not parse prediction file. Is it a utf-8 jsonl?")
+
+        for io in parsed_upload:
+            try:
+                assert "uid" in io, "'uid' must be present for every example"
+            except Exception as ex:
+                bottle.abort(400, str(ex))
+
+            verified, message = task.verify_annotation(
+                io, mode=AnnotationVerifierMode.predictions_upload
+            )
+            if not verified:
+                bottle.abort(400, message)
+        parsed_uploads[name] = parsed_upload
 
     endpoint_name = f"ts{int(time.time())}-{model_name}"
 
