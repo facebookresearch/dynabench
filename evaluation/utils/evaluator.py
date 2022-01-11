@@ -2,7 +2,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import json
 import logging
 import math
 import pickle
@@ -14,7 +13,12 @@ import botocore
 from dateutil.tz import tzlocal
 
 from models.model import DeploymentStatusEnum, ModelModel
-from utils.helpers import process_aws_metrics, round_end_dt, round_start_dt
+from utils.helpers import (
+    process_aws_metrics,
+    round_end_dt,
+    round_start_dt,
+    update_evaluation_status,
+)
 
 
 logger = logging.getLogger("evaluator")
@@ -56,19 +60,6 @@ class JobScheduler:
         self._clients = {"sagemaker": {}, "logs": {}, "cloudwatch": {}}
         self.cloudwatch_namespace = "/aws/sagemaker/TransformJobs"
         self._last_submission = 0
-
-    def update_evaluation_status(self, mid, dataset_name, evaluation_status):
-        mm = ModelModel()
-        model = mm.get(mid)
-        if model.evaluation_status_json:
-            eval_statuses = json.loads(model.evaluation_status_json)
-        else:
-            eval_statuses = {}
-        eval_statuses[dataset_name] = evaluation_status
-        model.evaluation_status_json = json.dumps(eval_statuses)
-        mm.dbs.add(model)
-        mm.dbs.flush()
-        mm.dbs.commit()
 
     def client(self, kind: str, dataset_name: str):
         """Returns the corresponding client for a dataset.
@@ -112,7 +103,6 @@ class JobScheduler:
             self._completed.append(job)
             # Although the job is completed here, scores still need to be calculated,
             # so the status is still "evaluating"
-            self.update_evaluation_status(job.model_id, job.dataset_name, "evaluating")
             logger.info(
                 f"Queued {job.job_name} for completion instead of "
                 + f"submission, as this is just a predictions upload and not a "
@@ -120,8 +110,8 @@ class JobScheduler:
             )
         else:
             self._queued.append(job)
-            self.update_evaluation_status(job.model_id, job.dataset_name, "evaluating")
             logger.info(f"Queued {job.job_name} for submission")
+        update_evaluation_status(job.model_id, job.dataset_name, "evaluating")
 
         if dump:
             self.dump()
@@ -159,9 +149,7 @@ class JobScheduler:
                     f"Requeueing job {job.job_name} due to AWS limit exceeds: {ex}"
                 )
                 self._queued.append(job)
-                self.update_evaluation_status(
-                    job.model_id, job.dataset_name, "evaluating"
-                )
+                update_evaluation_status(job.model_id, job.dataset_name, "evaluating")
                 return False
             except sagemaker.exceptions.ResourceInUse as ex:
                 logger.exception(
@@ -169,9 +157,7 @@ class JobScheduler:
                 )
                 logger.debug(f"{ex}")
                 self._submitted.append(job)
-                self.update_evaluation_status(
-                    job.model_id, job.dataset_name, "evaluating"
-                )
+                update_evaluation_status(job.model_id, job.dataset_name, "evaluating")
                 return True
             except botocore.exceptions.ClientError as ex:
                 if ex.response["Error"]["Code"] == "ThrottlingException":
@@ -181,7 +167,7 @@ class JobScheduler:
                     )
                     logger.debug(f"{ex}")
                     self._queued.append(job)
-                    self.update_evaluation_status(
+                    update_evaluation_status(
                         job.model_id, job.dataset_name, "evaluating"
                     )
                     time.sleep(2)
@@ -190,21 +176,17 @@ class JobScheduler:
                         f"Exception in submitting job {job.job_name}: {ex}"
                     )
                     self._failed.append(job)
-                    self.update_evaluation_status(
-                        job.model_id, job.dataset_name, "failed"
-                    )
+                    update_evaluation_status(job.model_id, job.dataset_name, "failed")
                 return False
             except Exception as ex:
                 logger.exception(f"Exception in submitting job {job.job_name}: {ex}")
                 self._failed.append(job)
-                self.update_evaluation_status(job.model_id, job.dataset_name, "failed")
+                update_evaluation_status(job.model_id, job.dataset_name, "failed")
                 return False
             else:
                 logger.info(f"Submitted {job.job_name} for batch transform.")
                 self._submitted.append(job)
-                self.update_evaluation_status(
-                    job.model_id, job.dataset_name, "evaluating"
-                )
+                update_evaluation_status(job.model_id, job.dataset_name, "evaluating")
                 return True
 
         # Submit remaining jobs
@@ -248,7 +230,7 @@ class JobScheduler:
                 if job.status["TransformJobStatus"] != "InProgress":
                     if job.status["TransformJobStatus"] != "Completed":
                         self._failed.append(job)
-                        self.update_evaluation_status(
+                        update_evaluation_status(
                             job.model_id, job.dataset_name, "failed"
                         )
                         done_job_names.add(job.job_name)
@@ -256,9 +238,10 @@ class JobScheduler:
                         job.status["TransformEndTime"]
                     ) < datetime.now(tzlocal()):
                         self._completed.append(job)
-                        # Although the job is completed here, scores still need to be
-                        # calculated, so the status is still "evaluating"
-                        self.update_evaluation_status(
+                        # Although this particular job is completed here, scores
+                        # still need to be calculated, so the status is now
+                        # "evaluating"
+                        update_evaluation_status(
                             job.model_id, job.dataset_name, "evaluating"
                         )
                         done_job_names.add(job.job_name)
