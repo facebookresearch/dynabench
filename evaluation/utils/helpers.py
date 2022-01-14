@@ -10,6 +10,22 @@ from typing import List
 
 import boto3
 
+from models.model import ModelModel
+
+
+def update_evaluation_status(mid, dataset_name, evaluation_status):
+    mm = ModelModel()
+    model = mm.get(mid)
+    if model.evaluation_status_json:
+        eval_statuses = json.loads(model.evaluation_status_json)
+    else:
+        eval_statuses = {}
+    eval_statuses[dataset_name] = evaluation_status
+    model.evaluation_status_json = json.dumps(eval_statuses)
+    mm.dbs.add(model)
+    mm.dbs.flush()
+    mm.dbs.commit()
+
 
 def get_predictions_s3_path(endpoint_name, task_code, dataset_name):
     return os.path.join(

@@ -12,11 +12,10 @@ from enum import Enum
 
 from metrics.metric_getters import get_job_metrics
 from models.dataset import DatasetModel
-from models.model import EvaluationStatusEnum, ModelModel
 from models.round import RoundModel
 from models.score import ScoreModel
 from utils.evaluator import Job
-from utils.helpers import update_metadata_json_string
+from utils.helpers import update_evaluation_status, update_metadata_json_string
 
 
 logger = logging.getLogger("computer")
@@ -55,15 +54,6 @@ class MetricsComputer:
     def update_database_with_metrics(
         self, job, eval_metrics_dict: dict, delta_metrics_dict: dict
     ) -> None:
-        mm = ModelModel()
-        model = mm.get(job.model_id)
-        # Don't change model's evaluation status if it has failed.
-        if model.evaluation_status != EvaluationStatusEnum.failed:
-            if model.evaluation_status != EvaluationStatusEnum.evaluating:
-                model.evaluation_status = EvaluationStatusEnum.evaluating
-                mm.dbs.add(model)
-                mm.dbs.flush()
-                mm.dbs.commit()
 
         dm = DatasetModel()
         d_entry = dm.getByName(job.dataset_name)
@@ -112,23 +102,15 @@ class MetricsComputer:
             self._computing.remove(job)
         self.dump()
 
-        # Don't change model's evaluation status if it has failed.
-        if model.evaluation_status != EvaluationStatusEnum.failed:
-            model_done_evaluating = True
-            for other_job in self._waiting + self._computing:
-                if other_job.model_id == job.model_id:
-                    model_done_evaluating = False
-            if model_done_evaluating:
-                model.evaluation_status = EvaluationStatusEnum.completed
-                mm.dbs.add(model)
-                mm.dbs.flush()
-                mm.dbs.commit()
+        update_evaluation_status(job.model_id, job.dataset_name, "completed")
 
         logger.info(f"Successfully evaluated {job.job_name}")
 
     def update_status(self, jobs: list):
         if jobs:
             self._waiting.extend(jobs)
+            for job in jobs:
+                update_evaluation_status(job.model_id, job.dataset_name, "evaluating")
             self.dump()
 
     def log_job_error(self, job, ex):
@@ -136,18 +118,14 @@ class MetricsComputer:
         if job in self._computing:
             self._computing.remove(job)
         self._failed.append(job)
-        mm = ModelModel()
-        model = mm.get(job.model_id)
-        model.evaluation_status = EvaluationStatusEnum.failed
-        mm.dbs.add(model)
-        mm.dbs.flush()
-        mm.dbs.commit()
+        update_evaluation_status(job.model_id, job.dataset_name, "failed")
 
     def compute_one_blocking(self, job) -> None:
         try:
 
             logger.info(f"Evaluating {job.job_name}")
             self._computing.append(job)
+            update_evaluation_status(job.model_id, job.dataset_name, "evaluating")
             dataset = self.datasets[job.dataset_name]
             eval_metrics, delta_metrics = dataset.compute_job_metrics(job)
             self.update_database_with_metrics(job, eval_metrics, delta_metrics)
@@ -167,6 +145,7 @@ class MetricsComputer:
             )
         except Exception as e:
             self._failed.append(job)
+            update_evaluation_status(job.model_id, job.dataset_name, "failed")
             logger.error(
                 f"Couldn't start the final evaluation for {job}."
                 " Probably due to a pickling error"
@@ -176,6 +155,7 @@ class MetricsComputer:
             return
 
         self._computing.append(job)
+        update_evaluation_status(job.model_id, job.dataset_name, "evaluating")
         self.dump()
 
     def find_next_ready_job(self) -> Optional[Job]:
@@ -203,6 +183,7 @@ class MetricsComputer:
                     f"Postpone computation."
                 )
                 self._waiting.append(job)
+                update_evaluation_status(job.model_id, job.dataset_name, "evaluating")
             else:
                 self.dump()
                 return job

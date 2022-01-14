@@ -35,6 +35,49 @@ import FloresGrid from "../components/FloresComponents/FloresGrid";
 import ChevronExpandButton from "../components/Buttons/ChevronExpandButton";
 import { FLORES_TASK_CODES } from "./FloresTaskPage";
 
+const EvalStatusRow = ({ status }) => {
+  const [showModal, setShowModal] = useState(false);
+
+  return (
+    <Table hover className="mb-0 hover" style={{ tableLayout: "fixed" }}>
+      <tbody>
+        <Modal show={showModal} onHide={() => setShowModal(!showModal)}>
+          <Modal.Header closeButton>
+            <Modal.Title>{status.dataset_name}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {status.dataset_longdesc}
+            <br />
+            <br />
+            {status.dataset_source_url && status.dataset_source_url !== "" ? (
+              <Button href={status.dataset_source_url}>
+                <i className="fas fa-newspaper"></i> Read Paper
+              </Button>
+            ) : (
+              ""
+            )}
+          </Modal.Body>
+        </Modal>
+        <tr key={status.dataset_name}>
+          <td>
+            <span
+              onClick={() => setShowModal(!showModal)}
+              className="btn-link dataset-link"
+            >
+              {status.dataset_name}
+            </span>{" "}
+          </td>
+          <td className="text-right t-2" key={`status-${status.dataset_name}`}>
+            <span>
+              <EvaluationStatus evaluationStatus={status.evaluation_status} />
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </Table>
+  );
+};
+
 const ScoreRow = ({ score }) => {
   const [expanded, setExpanded] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -389,6 +432,9 @@ ${latexTableContent}
       parseInt(this.state.model.uid) === parseInt(this.state.ctxUserId);
     const { leaderboard_scores } = this.state.model;
     const { non_leaderboard_scores } = this.state.model;
+    const { leaderboard_evaluation_statuses } = this.state.model;
+    const { non_leaderboard_evaluation_statuses } = this.state.model;
+    const { hidden_evaluation_statuses } = this.state.model;
     let orderedLeaderboardScores = (leaderboard_scores || []).sort(
       (a, b) => a.round_id - b.round_id
     );
@@ -534,14 +580,6 @@ ${latexTableContent}
                           </td>
                         </tr>
                         <tr style={{ border: `none` }}>
-                          <td>Evaluation Status</td>
-                          <td>
-                            <EvaluationStatus
-                              evaluationStatus={model.evaluation_status}
-                            />
-                          </td>
-                        </tr>
-                        <tr style={{ border: `none` }}>
                           <td>Owner</td>
                           <td>
                             {model.uid ? (
@@ -598,44 +636,85 @@ ${latexTableContent}
                         </tr>
                       </tbody>
                     </Table>
-                    <span className={"w-100 mt-5 mx-4"}>
-                      <DropdownButton
-                        alignRight={true}
-                        variant="outline-primary"
-                        className="mr-2 float-right"
-                        title={"Export"}
-                      >
-                        <Dropdown.Item onClick={this.downloadCsv}>
-                          {"CSV"}
-                        </Dropdown.Item>
-                        <Dropdown.Item onClick={this.downloadLatex}>
-                          {"LaTeX"}
-                        </Dropdown.Item>
-                      </DropdownButton>
-                    </span>
-                    <Table>
-                      <tbody>
-                        <tr>
-                          <td colSpan={2}>
-                            <h5>Leaderboard Datasets</h5>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </Table>
+                    {orderedLeaderboardScores.length > 0 ||
+                    orderedNonLeaderboardScores.length ? (
+                      <span className={"w-100 mt-5 mx-4"}>
+                        <DropdownButton
+                          alignRight={true}
+                          variant="outline-primary"
+                          className="mr-2 float-right"
+                          title={"Export"}
+                        >
+                          <Dropdown.Item onClick={this.downloadCsv}>
+                            {"CSV"}
+                          </Dropdown.Item>
+                          <Dropdown.Item onClick={this.downloadLatex}>
+                            {"LaTeX"}
+                          </Dropdown.Item>
+                        </DropdownButton>
+                      </span>
+                    ) : (
+                      ""
+                    )}
+                    {orderedLeaderboardScores.length > 0 ||
+                    leaderboard_evaluation_statuses.length ? (
+                      <Table>
+                        <tbody>
+                          <tr>
+                            <td colSpan={2}>
+                              <h5>Leaderboard Datasets</h5>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </Table>
+                    ) : (
+                      ""
+                    )}
                     {orderedLeaderboardScores.map((score, index) => (
                       <ScoreRow key={index} score={score} />
                     ))}
-                    <Table>
-                      <tbody>
-                        <tr>
-                          <td colSpan={2}>
-                            <h5>Non-Leaderboard Datasets</h5>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </Table>
+                    {leaderboard_evaluation_statuses.map((status, index) => (
+                      <EvalStatusRow key={index} status={status} />
+                    ))}
+                    {orderedNonLeaderboardScores.length > 0 ||
+                    non_leaderboard_evaluation_statuses.length ? (
+                      <Table>
+                        <tbody>
+                          <tr>
+                            <td colSpan={2}>
+                              <h5>Non-Leaderboard Datasets</h5>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </Table>
+                    ) : (
+                      ""
+                    )}
                     {orderedNonLeaderboardScores.map((score, index) => (
                       <ScoreRow score={score} key={index} />
+                    ))}
+                    {non_leaderboard_evaluation_statuses.map(
+                      (status, index) => (
+                        <EvalStatusRow key={index} status={status} />
+                      )
+                    )}
+                    {hidden_evaluation_statuses.length ? (
+                      <Table>
+                        <tbody>
+                          <tr>
+                            <td colSpan={2}>
+                              <h5>
+                                Hidden Dataset Incomplete Evaluation Statuses
+                              </h5>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </Table>
+                    ) : (
+                      ""
+                    )}
+                    {hidden_evaluation_statuses.map((status, index) => (
+                      <EvalStatusRow key={index} status={status} />
                     ))}
                   </InputGroup>
                 ) : (
