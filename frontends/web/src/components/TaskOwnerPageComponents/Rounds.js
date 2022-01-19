@@ -224,29 +224,34 @@ const Rounds = (props) => {
                               </Form.Group>
                             </Container>
                           ) : null}
-                          <Form.Group
-                            as={Row}
-                            className="py-3 my-0 border-top"
-                            onClick={() =>
-                              setShowContextUploadRound(
-                                showContextUploadRound.map((obj, rid) =>
-                                  rid === round.rid - 1
-                                    ? !showContextUploadRound[round.rid - 1]
-                                    : obj
+                          {JSON.parse(props.task.annotation_config_json).context
+                            .length !== 0 && (
+                            <Form.Group
+                              as={Row}
+                              className="py-3 my-0 border-top"
+                              onClick={() =>
+                                setShowContextUploadRound(
+                                  showContextUploadRound.map((obj, rid) =>
+                                    rid === round.rid - 1
+                                      ? !showContextUploadRound[round.rid - 1]
+                                      : obj
+                                  )
                                 )
-                              )
-                            }
-                          >
-                            <Form.Label column>Upload Contexts</Form.Label>
-                            <Col sm="8">
-                              <ChevronExpandButton
-                                expanded={showContextUploadRound[round.rid - 1]}
-                                containerClassName={
-                                  "py-2 position-absolute start-100"
-                                }
-                              />
-                            </Col>
-                          </Form.Group>
+                              }
+                            >
+                              <Form.Label column>Upload Contexts</Form.Label>
+                              <Col sm="8">
+                                <ChevronExpandButton
+                                  expanded={
+                                    showContextUploadRound[round.rid - 1]
+                                  }
+                                  containerClassName={
+                                    "py-2 position-absolute start-100"
+                                  }
+                                />
+                              </Col>
+                            </Form.Group>
+                          )}
                           {showContextUploadRound[round.rid - 1] ? (
                             <Contexts
                               values={values}

@@ -829,24 +829,28 @@ class CreateInterface extends React.Component {
                       </Col>
                       <Col xs={6}>
                         <InputGroup className="d-flex justify-content-end">
-                          <OverlayTrigger
-                            placement="bottom"
-                            delay={{ show: 250, hide: 400 }}
-                            overlay={renderSwitchContextTooltip}
-                          >
-                            <Annotation
-                              placement="left"
-                              tooltip="Don’t like this context? Try another one."
-                            >
-                              <Button
-                                className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"
-                                onClick={this.getNewContext}
-                                disabled={this.state.refreshDisabled}
+                          {this.state.annotationConfig &&
+                            this.state.annotationConfig.context.length !==
+                              0 && (
+                              <OverlayTrigger
+                                placement="bottom"
+                                delay={{ show: 250, hide: 400 }}
+                                overlay={renderSwitchContextTooltip}
                               >
-                                Switch to next context
-                              </Button>
-                            </Annotation>
-                          </OverlayTrigger>
+                                <Annotation
+                                  placement="left"
+                                  tooltip="Don’t like this context? Try another one."
+                                >
+                                  <Button
+                                    className="font-weight-bold blue-color light-gray-bg border-0 task-action-btn"
+                                    onClick={this.getNewContext}
+                                    disabled={this.state.refreshDisabled}
+                                  >
+                                    Switch to next context
+                                  </Button>
+                                </Annotation>
+                              </OverlayTrigger>
+                            )}
                           <Annotation
                             placement="top"
                             tooltip="When you’re done, you can submit the example and we’ll find out what the model thinks!"
