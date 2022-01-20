@@ -96,12 +96,28 @@ def get_latest_job_log(credentials, mid, did):
                         logStreamName=log_stream["logStreamName"],
                     )
                     if log_stream["logStreamName"].endswith("data-log"):
-                        assert (
-                            "sagemaker_log" not in logs_from_latest_job
-                        ), "too many logs"
+                        if "sagemaker_log" in logs_from_latest_job:
+                            logger.error(
+                                """Too many logs for the same job.
+                                Not sure which one to choose."""
+                            )
+                            bottle.abort(
+                                400,
+                                """Too many logs for the same job.
+                                Not sure which one to choose.""",
+                            )
                         logs_from_latest_job["sagemaker_log"] = log
                     else:
-                        assert "log" not in logs_from_latest_job, "too many logs"
+                        if "log" in logs_from_latest_job:
+                            logger.error(
+                                """Too many logs for the same job.
+                                Not sure which one to choose."""
+                            )
+                            bottle.abort(
+                                400,
+                                """Too many logs for the same job.
+                                Not sure which one to choose.""",
+                            )
                         logs_from_latest_job["log"] = log
                 else:
                     break
