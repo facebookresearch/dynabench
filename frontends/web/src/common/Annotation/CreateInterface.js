@@ -761,7 +761,7 @@ class CreateInterface extends React.Component {
                 </div>
               )}
             </div>
-            <Card className="profile-card overflow-hidden">
+            <Card className="profile-card">
               {this.state.loading ? (
                 <div className="mx-auto my-3">
                   <Spinner animation="border" />{" "}
