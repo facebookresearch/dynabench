@@ -17,7 +17,7 @@ import common.mail_service as mail
 from common.config import config
 from common.logging import logger
 from models.badge import BadgeModel
-from models.dataset import AccessTypeEnum, DatasetModel
+from models.dataset import AccessTypeEnum, DatasetModel, LogAccessTypeEnum
 from models.model import DeploymentStatusEnum, ModelModel
 from models.score import ScoreModel
 from models.task import AnnotationVerifierMode, TaskModel, train_file_metrics
@@ -32,7 +32,82 @@ from utils.helpers import (  # noqa isort:skip
     get_predictions_s3_path,  # noqa isort:skip
     parse_s3_outfile,  # noqa isort:skip
     send_eval_request,  # noqa isort:skip
+    generate_job_name,  # noqa isort:skip
 )  # noqa isort:skip
+
+
+@bottle.get("/models/latest_job_log/<mid:int>/<did:int>")
+@_auth.requires_auth
+def get_latest_job_log(credentials, mid, did):
+    u = UserModel()
+    uid = credentials["id"]
+    user = u.get(uid)
+    if not user:
+        logger.error("Invalid user detail for id (%s)" % (uid))
+        bottle.abort(404, "User information not found")
+
+    mm = ModelModel()
+    model = mm.get(mid)
+    if model.uid != uid:
+        ensure_owner_or_admin(model.tid, uid)
+
+    dm = DatasetModel()
+    dataset = dm.get(did)
+    if dataset.log_access_type == LogAccessTypeEnum.owner:
+        ensure_owner_or_admin(model.tid, uid)
+
+    tm = TaskModel()
+    task = tm.get(model.tid)
+
+    delta_metric_types = [
+        config["type"]
+        for config in util.json_decode(task.annotation_config_json)["delta_metrics"]
+    ]
+    delta_metric_types.append(None)
+
+    perturb_prefix_to_logs = {}
+    for perturb_prefix in delta_metric_types:
+
+        job_name_without_timestamp_suffix = generate_job_name(
+            model.endpoint_name, perturb_prefix, dataset.name, timestamp=""
+        )
+        client = boto3.client(
+            "logs",
+            aws_access_key_id=config["eval_aws_access_key_id"],
+            aws_secret_access_key=config["eval_aws_secret_access_key"],
+            region_name=config["eval_aws_region"],
+        )
+        log_streams = client.describe_log_streams(
+            logGroupName="/aws/sagemaker/TransformJobs",
+            logStreamNamePrefix=job_name_without_timestamp_suffix,
+            descending=True,
+        )["logStreams"]
+
+        logs_from_latest_job = {}
+        if log_streams:
+            latest_job_timestamp = (
+                log_streams[0]["logStreamName"].split("/")[0].split("-")[-1]
+            )
+            for log_stream in log_streams:
+                job_timestamp = log_stream["logStreamName"].split("/")[0].split("-")[-1]
+                if job_timestamp == latest_job_timestamp:
+                    log = client.get_log_events(
+                        logGroupName="/aws/sagemaker/TransformJobs",
+                        logStreamName=log_stream["logStreamName"],
+                    )
+                    if log_stream["logStreamName"].endswith("data-log"):
+                        assert (
+                            "sagemaker_log" not in logs_from_latest_job
+                        ), "too many logs"
+                        logs_from_latest_job["sagemaker_log"] = log
+                    else:
+                        assert "log" not in logs_from_latest_job, "too many logs"
+                        logs_from_latest_job["log"] = log
+                else:
+                    break
+            perturb_prefix_to_logs[perturb_prefix] = logs_from_latest_job
+
+    return util.json_encode(perturb_prefix_to_logs)
 
 
 @bottle.post("/models/upload_train_files/<tid:int>/<model_name>")
@@ -363,6 +438,7 @@ def get_model_detail(credentials, mid):
         datasets = dm.getByTid(model["tid"])
         did_to_dataset_name = {}
         did_to_dataset_access_type = {}
+        did_to_dataset_log_access_type = {}
         did_to_dataset_longdesc = {}
         did_to_dataset_source_url = {}
         model["leaderboard_evaluation_statuses"] = []
@@ -391,15 +467,18 @@ def get_model_detail(credentials, mid):
 
                     model[evaluation_status_access_type].append(
                         {
+                            "dataset_id": dataset.id,
                             "dataset_name": dataset.name,
                             "dataset_longdesc": dataset.longdesc,
                             "dataset_source_url": dataset.source_url,
+                            "dataset_log_access_type": dataset.log_access_type,
                             "evaluation_status": evaluation_status,
                         }
                     )
 
             did_to_dataset_name[dataset.id] = dataset.name
             did_to_dataset_access_type[dataset.id] = dataset.access_type
+            did_to_dataset_log_access_type[dataset.id] = dataset.log_access_type
             did_to_dataset_longdesc[dataset.id] = dataset.longdesc
             did_to_dataset_source_url[dataset.id] = dataset.source_url
         fields = ["accuracy", "perf_std", "round_id", "did", "metadata_json"]
@@ -408,8 +487,12 @@ def get_model_detail(credentials, mid):
             dict(
                 zip(fields, d),
                 **{
+                    "dataset_id": d.did,
                     "dataset_name": did_to_dataset_name.get(d.did, None),
                     "dataset_access_type": did_to_dataset_access_type.get(d.did, None),
+                    "dataset_log_access_type": did_to_dataset_log_access_type.get(
+                        d.did, None
+                    ),
                     "dataset_longdesc": did_to_dataset_longdesc.get(d.did, None),
                     "dataset_source_url": did_to_dataset_source_url.get(d.did, None),
                 },

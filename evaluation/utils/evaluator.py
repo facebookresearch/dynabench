@@ -14,6 +14,7 @@ from dateutil.tz import tzlocal
 
 from models.model import DeploymentStatusEnum, ModelModel
 from utils.helpers import (
+    generate_job_name,
     process_aws_metrics,
     round_end_dt,
     round_start_dt,
@@ -36,7 +37,12 @@ class Job:
         self.perturb_prefix = perturb_prefix
         # Generate a temporary name, the scheduler will put a proper timestamp
         # at the time of submission
-        self.job_name = generate_job_name(self, timestamp=self.TEMP_JOB_NAME_SUFFIX)
+        self.job_name = generate_job_name(
+            self.endpoint_name,
+            self.perturb_prefix,
+            self.dataset_name,
+            timestamp=self.TEMP_JOB_NAME_SUFFIX,
+        )
 
         self.status = None  # will update once job is successfully submitted
         self.aws_metrics = {}  # will update once job is completed
@@ -131,7 +137,12 @@ class JobScheduler:
         if time.time() - self._last_submission < 1:
             time.sleep(1.1)
         submission_timestamp = int(time.time())
-        job.job_name = generate_job_name(job, submission_timestamp)
+        job.job_name = generate_job_name(
+            self.endpoint_name,
+            self.perturb_prefix,
+            self.dataset_name,
+            submission_timestamp,
+        )
         self._last_submission = submission_timestamp
 
     def submit(self):
@@ -359,18 +370,3 @@ class JobScheduler:
         )
         pickle.dump(status, open(self._status_dump, "wb"))
         print(f"Scheduler dumped status to {self._status_dump}")
-
-
-def generate_job_name(job: Job, timestamp: int):
-    """Generate the job name with a given timestamp.
-
-    The timestamp need to be properly spaced out, because they need to be unique
-    across all jobs in the same AWS region.
-    This is taken care of by `_set_jobname_with_unique_timestamp`
-    """
-    suffix = f"-{timestamp}"
-    prefix = "-".join(
-        filter(None, (job.endpoint_name, job.perturb_prefix, job.dataset_name))
-    )
-    # :63 is AWS requirement, and we want to keep the timestamp intact
-    return prefix[: 63 - len(suffix)] + suffix

@@ -28,6 +28,7 @@ export default class ApiService {
     this.setMturkMode = this.setMturkMode.bind(this);
     this.updating_already = false;
     this.mode = "normal";
+    this.exportDatasetLog = this.exportDatasetLog.bind(this);
   }
 
   setMturkMode() {
@@ -448,6 +449,15 @@ export default class ApiService {
     });
   }
 
+  exportDatasetLog(mid, did) {
+    return this.fetch(`${this.domain}/models/latest_job_log/${mid}/${did}`, {
+      method: "GET",
+    }).then((res) => {
+      res = new TextEncoder("utf-8").encode(JSON.stringify(res));
+      return download(res, "log.json", "text/json");
+    });
+  }
+
   getExampleMetadata(id) {
     return this.fetch(`${this.domain}/examples/${id}/metadata`, {
       method: "GET",
@@ -649,6 +659,12 @@ export default class ApiService {
 
   getAvailableDatasetAccessTypes() {
     return this.fetch(`${this.domain}/datasets/get_access_types`, {
+      method: "GET",
+    });
+  }
+
+  getAvailableDatasetLogAccessTypes() {
+    return this.fetch(`${this.domain}/datasets/get_log_access_types`, {
       method: "GET",
     });
   }

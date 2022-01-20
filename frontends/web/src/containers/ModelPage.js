@@ -35,9 +35,15 @@ import FloresGrid from "../components/FloresComponents/FloresGrid";
 import ChevronExpandButton from "../components/Buttons/ChevronExpandButton";
 import { FLORES_TASK_CODES } from "./FloresTaskPage";
 
-const EvalStatusRow = ({ status }) => {
+const EvalStatusRow = ({
+  status,
+  downloadLog,
+  isModelOwner,
+  isAdminOrTaskOwner,
+  modelId,
+}) => {
   const [showModal, setShowModal] = useState(false);
-
+  const [showSpinner, setShowSpinner] = useState(false);
   return (
     <Table hover className="mb-0 hover" style={{ tableLayout: "fixed" }}>
       <tbody>
@@ -68,6 +74,34 @@ const EvalStatusRow = ({ status }) => {
             </span>{" "}
           </td>
           <td className="text-right t-2" key={`status-${status.dataset_name}`}>
+            {(isAdminOrTaskOwner ||
+              (status.dataset_log_access_type === "user" && isModelOwner)) && (
+              <Button
+                variant="outline-primary"
+                size="sm"
+                disabled={showSpinner}
+                onClick={() => {
+                  setShowSpinner(
+                    true,
+                    downloadLog(modelId, status.dataset_id).then(
+                      (result) => {
+                        setShowSpinner(false);
+                      },
+                      (error) => {
+                        console.log(error);
+                        setShowSpinner(false);
+                      }
+                    )
+                  );
+                }}
+              >
+                {showSpinner ? (
+                  <Spinner animation="border" size="sm" />
+                ) : (
+                  <i className="fas fa-file-download"></i>
+                )}
+              </Button>
+            )}{" "}
             <span>
               <EvaluationStatus evaluationStatus={status.evaluation_status} />
             </span>
@@ -78,10 +112,16 @@ const EvalStatusRow = ({ status }) => {
   );
 };
 
-const ScoreRow = ({ score }) => {
+const ScoreRow = ({
+  score,
+  downloadLog,
+  isModelOwner,
+  isAdminOrTaskOwner,
+  modelId,
+}) => {
   const [expanded, setExpanded] = useState(false);
   const [showModal, setShowModal] = useState(false);
-
+  const [showSpinner, setShowSpinner] = useState(false);
   const perf_by_tag =
     score.metadata_json &&
     JSON.parse(score.metadata_json).hasOwnProperty("perf_by_tag")
@@ -137,6 +177,34 @@ const ScoreRow = ({ score }) => {
             key={`score-${score.dataset_name}-overall`}
             onClick={() => (clickable ? setExpanded(!expanded) : "")}
           >
+            {(isAdminOrTaskOwner ||
+              (score.dataset_log_access_type === "user" && isModelOwner)) && (
+              <Button
+                variant="outline-primary"
+                size="sm"
+                disabled={showSpinner}
+                onClick={() => {
+                  setShowSpinner(
+                    true,
+                    downloadLog(modelId, score.dataset_id).then(
+                      (result) => {
+                        setShowSpinner(false);
+                      },
+                      (error) => {
+                        console.log(error);
+                        setShowSpinner(false);
+                      }
+                    )
+                  );
+                }}
+              >
+                {showSpinner ? (
+                  <Spinner animation="border" size="sm" />
+                ) : (
+                  <i className="fas fa-file-download"></i>
+                )}
+              </Button>
+            )}{" "}
             <span>
               {expanded ? (
                 <b>
@@ -430,6 +498,9 @@ ${latexTableContent}
     const isFlores = FLORES_TASK_CODES.includes(task.task_code);
     const isModelOwner =
       parseInt(this.state.model.uid) === parseInt(this.state.ctxUserId);
+    const isAdminOrTaskOwner = this.state.model.tid
+      ? this.context.api.getAdminOrOwner(parseInt(this.state.model.tid))
+      : false;
     const { leaderboard_scores } = this.state.model;
     const { non_leaderboard_scores } = this.state.model;
     const { leaderboard_evaluation_statuses } = this.state.model;
@@ -671,10 +742,24 @@ ${latexTableContent}
                       ""
                     )}
                     {orderedLeaderboardScores.map((score, index) => (
-                      <ScoreRow key={index} score={score} />
+                      <ScoreRow
+                        key={index}
+                        score={score}
+                        downloadLog={this.context.api.exportDatasetLog}
+                        isModelOwner={isModelOwner}
+                        isAdminOrTaskOwner={isAdminOrTaskOwner}
+                        modelId={this.state.modelId}
+                      />
                     ))}
                     {leaderboard_evaluation_statuses.map((status, index) => (
-                      <EvalStatusRow key={index} status={status} />
+                      <EvalStatusRow
+                        key={index}
+                        status={status}
+                        downloadLog={this.context.api.exportDatasetLog}
+                        isModelOwner={isModelOwner}
+                        isAdminOrTaskOwner={isAdminOrTaskOwner}
+                        modelId={this.state.modelId}
+                      />
                     ))}
                     {orderedNonLeaderboardScores.length > 0 ||
                     non_leaderboard_evaluation_statuses.length ? (
@@ -691,11 +776,25 @@ ${latexTableContent}
                       ""
                     )}
                     {orderedNonLeaderboardScores.map((score, index) => (
-                      <ScoreRow score={score} key={index} />
+                      <ScoreRow
+                        key={index}
+                        score={score}
+                        downloadLog={this.context.api.exportDatasetLog}
+                        isModelOwner={isModelOwner}
+                        isAdminOrTaskOwner={isAdminOrTaskOwner}
+                        modelId={this.state.modelId}
+                      />
                     ))}
                     {non_leaderboard_evaluation_statuses.map(
                       (status, index) => (
-                        <EvalStatusRow key={index} status={status} />
+                        <EvalStatusRow
+                          key={index}
+                          status={status}
+                          downloadLog={this.context.api.exportDatasetLog}
+                          isModelOwner={isModelOwner}
+                          isAdminOrTaskOwner={isAdminOrTaskOwner}
+                          modelId={this.state.modelId}
+                        />
                       )
                     )}
                     {hidden_evaluation_statuses.length ? (

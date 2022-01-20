@@ -214,6 +214,7 @@ const Datasets = (props) => {
                     source_url: dataset.source_url,
                     rid: dataset.rid,
                     access_type: dataset.access_type,
+                    log_access_type: dataset.log_access_type,
                     longdesc: dataset.longdesc,
                   }}
                   onSubmit={props.handleDatasetUpdate}
@@ -288,6 +289,36 @@ const Datasets = (props) => {
                                   )
                                 )}
                               </Form.Control>
+                            </Col>
+                          </Form.Group>
+                          <Form.Group
+                            as={Row}
+                            controlId="log_access_type"
+                            className="py-3 my-0 border-bottom"
+                          >
+                            <Form.Label column>Log Access Type</Form.Label>
+                            <Col sm="8">
+                              <Form.Control
+                                as="select"
+                                onChange={handleChange}
+                                value={values.log_access_type}
+                              >
+                                {props.availableLogAccessTypes.map(
+                                  (type, index) => (
+                                    <option key={index} value={type}>
+                                      {type}
+                                    </option>
+                                  )
+                                )}
+                              </Form.Control>
+                              <Form.Text id="paramsHelpBlock" muted>
+                                <span style={{ color: "red" }}>Warning</span>:
+                                Setting "Log Access Type" to "user" will give
+                                users access to their model failure logs for
+                                this dataset, for debugging purposes. Users
+                                could use those failure logs to view the
+                                contents of this dataset.
+                              </Form.Text>
                             </Col>
                           </Form.Group>
                           <Form.Group
