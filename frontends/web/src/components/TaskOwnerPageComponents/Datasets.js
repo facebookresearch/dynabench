@@ -252,7 +252,7 @@ const Datasets = (props) => {
                                   props.handleDatasetDelete(values.id);
                                 }}
                               >
-                                <i class="fas fa-trash-alt"></i>
+                                <i className="fas fa-trash-alt"></i>
                               </Button>
                             </Col>
                           </Form.Group>

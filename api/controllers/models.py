@@ -471,7 +471,7 @@ def get_model_detail(credentials, mid):
                             "dataset_name": dataset.name,
                             "dataset_longdesc": dataset.longdesc,
                             "dataset_source_url": dataset.source_url,
-                            "dataset_log_access_type": dataset.log_access_type,
+                            "dataset_log_access_type": dataset.log_access_type.name,
                             "evaluation_status": evaluation_status,
                         }
                     )
@@ -489,10 +489,12 @@ def get_model_detail(credentials, mid):
                 **{
                     "dataset_id": d.did,
                     "dataset_name": did_to_dataset_name.get(d.did, None),
-                    "dataset_access_type": did_to_dataset_access_type.get(d.did, None),
-                    "dataset_log_access_type": did_to_dataset_log_access_type.get(
-                        d.did, None
+                    "dataset_access_type": did_to_dataset_access_type.get(
+                        d.did, AccessTypeEnum.hidden
                     ),
+                    "dataset_log_access_type": did_to_dataset_log_access_type.get(
+                        d.did, LogAccessTypeEnum.owner
+                    ).name,
                     "dataset_longdesc": did_to_dataset_longdesc.get(d.did, None),
                     "dataset_source_url": did_to_dataset_source_url.get(d.did, None),
                 },

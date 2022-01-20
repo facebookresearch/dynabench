@@ -335,7 +335,13 @@ class TaskOwnerPage extends React.Component {
     values,
     { setFieldError, setSubmitting, resetForm }
   ) => {
-    const allowed = ["longdesc", "rid", "source_url", "access_type"];
+    const allowed = [
+      "longdesc",
+      "rid",
+      "source_url",
+      "access_type",
+      "log_access_type",
+    ];
 
     const data = Object.keys(values)
       .filter((key) => allowed.includes(key))

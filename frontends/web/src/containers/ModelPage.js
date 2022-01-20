@@ -165,6 +165,7 @@ const ScoreRow = ({
               >
                 <ChevronExpandButton
                   expanded={expanded}
+                  onClick={() => (clickable ? setExpanded(!expanded) : "")}
                   containerClassName={"position-absolute start-100"}
                 />
               </div>
@@ -175,7 +176,6 @@ const ScoreRow = ({
           <td
             className="text-right t-2"
             key={`score-${score.dataset_name}-overall`}
-            onClick={() => (clickable ? setExpanded(!expanded) : "")}
           >
             {(isAdminOrTaskOwner ||
               (score.dataset_log_access_type === "user" && isModelOwner)) && (
@@ -261,6 +261,7 @@ class ModelPage extends React.Component {
       task: {},
       isLoading: false,
       modelDeployed: false,
+      isAdminOrTaskOwner: false,
     };
   }
 
@@ -275,30 +276,44 @@ class ModelPage extends React.Component {
     this.context.api.getModel(this.state.modelId).then(
       (result) => {
         this.setState({ model: result, isLoading: false }, function () {
-          this.context.api.getTask(this.state.model.tid).then(
-            (result) => {
-              this.setState({
-                taskCode: result.task_code,
-                task: result,
-              });
-              const taskCodeFromParams = this.props.match.params.taskCode;
-              if (
-                taskCodeFromParams &&
-                taskCodeFromParams !== result.task_code
-              ) {
-                this.props.history.replace({
-                  pathname: this.props.location.pathname.replace(
-                    `/tasks/${taskCodeFromParams}`,
-                    `/tasks/${result.task_code}`
-                  ),
-                  search: this.props.location.search,
+          this.context.api
+            .getTask(this.state.model.tid)
+            .then(
+              (result) => {
+                this.setState({
+                  taskCode: result.task_code,
+                  task: result,
                 });
+                const taskCodeFromParams = this.props.match.params.taskCode;
+                if (
+                  taskCodeFromParams &&
+                  taskCodeFromParams !== result.task_code
+                ) {
+                  this.props.history.replace({
+                    pathname: this.props.location.pathname.replace(
+                      `/tasks/${taskCodeFromParams}`,
+                      `/tasks/${result.task_code}`
+                    ),
+                    search: this.props.location.search,
+                  });
+                }
+              },
+              (error) => {
+                console.log(error);
               }
-            },
-            (error) => {
-              console.log(error);
-            }
-          );
+            )
+            .then(
+              this.context.api.getAdminOrOwner(this.state.model.tid).then(
+                (adminOrOwnerResult) => {
+                  this.setState({
+                    isAdminOrTaskOwner: adminOrOwnerResult.admin_or_owner,
+                  });
+                },
+                (error) => {
+                  console.log(error);
+                }
+              )
+            );
         });
       },
       (error) => {
@@ -498,9 +513,7 @@ ${latexTableContent}
     const isFlores = FLORES_TASK_CODES.includes(task.task_code);
     const isModelOwner =
       parseInt(this.state.model.uid) === parseInt(this.state.ctxUserId);
-    const isAdminOrTaskOwner = this.state.model.tid
-      ? this.context.api.getAdminOrOwner(parseInt(this.state.model.tid))
-      : false;
+
     const { leaderboard_scores } = this.state.model;
     const { non_leaderboard_scores } = this.state.model;
     const { leaderboard_evaluation_statuses } = this.state.model;
@@ -747,7 +760,7 @@ ${latexTableContent}
                         score={score}
                         downloadLog={this.context.api.exportDatasetLog}
                         isModelOwner={isModelOwner}
-                        isAdminOrTaskOwner={isAdminOrTaskOwner}
+                        isAdminOrTaskOwner={this.state.isAdminOrTaskOwner}
                         modelId={this.state.modelId}
                       />
                     ))}
@@ -757,7 +770,7 @@ ${latexTableContent}
                         status={status}
                         downloadLog={this.context.api.exportDatasetLog}
                         isModelOwner={isModelOwner}
-                        isAdminOrTaskOwner={isAdminOrTaskOwner}
+                        isAdminOrTaskOwner={this.state.isAdminOrTaskOwner}
                         modelId={this.state.modelId}
                       />
                     ))}
@@ -781,7 +794,7 @@ ${latexTableContent}
                         score={score}
                         downloadLog={this.context.api.exportDatasetLog}
                         isModelOwner={isModelOwner}
-                        isAdminOrTaskOwner={isAdminOrTaskOwner}
+                        isAdminOrTaskOwner={this.state.isAdminOrTaskOwner}
                         modelId={this.state.modelId}
                       />
                     ))}
@@ -792,7 +805,7 @@ ${latexTableContent}
                           status={status}
                           downloadLog={this.context.api.exportDatasetLog}
                           isModelOwner={isModelOwner}
-                          isAdminOrTaskOwner={isAdminOrTaskOwner}
+                          isAdminOrTaskOwner={this.state.isAdminOrTaskOwner}
                           modelId={this.state.modelId}
                         />
                       )
