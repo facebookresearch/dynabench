@@ -13,6 +13,7 @@ import common.auth as _auth
 import common.helpers as util
 import common.mail_service as mail
 from common.logging import logger
+from models.context import Context
 from models.dataset import Dataset, DatasetModel
 from models.leaderboard_configuration import LeaderboardConfigurationModel
 from models.leaderboard_snapshot import LeaderboardSnapshotModel
@@ -496,6 +497,24 @@ def activate(credentials, tid):
     tm.update(
         tid, {"annotation_config_json": data["annotation_config_json"], "active": True}
     )
+
+    if len(util.json_decode(data["annotation_config_json"])["context"]) == 0:
+        # If there is no context in the config, then add an empty context.
+        # The task owner should not need to do this, because we already know
+        # that the context will be empty.
+        rm = RoundModel()
+        round = rm.getByTidAndRid(tid, task.cur_round)
+        r_realid = round.id
+        context = Context(
+            r_realid=r_realid,
+            context_json=util.json_encode({}),
+            metadata_json=util.json_encode({}),
+            tag=None,
+        )
+
+        rm.dbs.add(context)
+        rm.dbs.flush()
+        rm.dbs.commit()
 
     return util.json_encode({"success": "ok"})
 

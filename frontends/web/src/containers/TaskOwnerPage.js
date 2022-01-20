@@ -526,6 +526,7 @@ class TaskOwnerPage extends React.Component {
                 this.state.model_identifiers_for_target_selection ? (
                   <Rounds
                     rounds={this.state.rounds}
+                    task={this.state.task}
                     model_identifiers_for_target_selection={
                       this.state.model_identifiers_for_target_selection
                     }
