@@ -13,6 +13,21 @@ import boto3
 from models.model import ModelModel
 
 
+def generate_job_name(
+    endpoint_name: str, perturb_prefix: str, dataset_name: str, timestamp: int
+):
+    """Generate the job name with a given timestamp.
+
+    The timestamp need to be properly spaced out, because they need to be unique
+    across all jobs in the same AWS region.
+    This is taken care of by `_set_jobname_with_unique_timestamp`
+    """
+    suffix = f"-{timestamp}"
+    prefix = "-".join(filter(None, (endpoint_name, perturb_prefix, dataset_name)))
+    # :63 is AWS requirement, and we want to keep the timestamp intact
+    return prefix[: 63 - len(suffix)] + suffix
+
+
 def update_evaluation_status(mid, dataset_name, evaluation_status):
     mm = ModelModel()
     model = mm.get(mid)

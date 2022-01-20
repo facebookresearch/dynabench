@@ -14,7 +14,7 @@ import common.auth as _auth
 import common.helpers as util
 from common.config import config
 from common.logging import logger
-from models.dataset import AccessTypeEnum, DatasetModel
+from models.dataset import AccessTypeEnum, DatasetModel, LogAccessTypeEnum
 from models.task import AnnotationVerifierMode, TaskModel
 
 from .tasks import ensure_owner_or_admin
@@ -29,6 +29,11 @@ def get_access_types():
     return util.json_encode([enum.name for enum in AccessTypeEnum])
 
 
+@bottle.get("/datasets/get_log_access_types")
+def get_log_access_types():
+    return util.json_encode([enum.name for enum in LogAccessTypeEnum])
+
+
 @bottle.put("/datasets/update/<did:int>")
 @_auth.requires_auth
 def update(credentials, did):
@@ -38,9 +43,18 @@ def update(credentials, did):
 
     data = bottle.request.json
     for field in data:
-        if field not in ("longdesc", "rid", "source_url", "access_type"):
+        if field not in (
+            "longdesc",
+            "rid",
+            "source_url",
+            "access_type",
+            "log_access_type",
+        ):
             bottle.abort(
-                403, """Can only modify longdesc, round, source_url, access_type"""
+                403,
+                """
+            Can only modify longdesc, round, source_url, access_type, log_access_type
+            """,
             )
 
     dm.update(did, data)

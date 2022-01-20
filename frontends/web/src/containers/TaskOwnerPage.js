@@ -27,6 +27,7 @@ class TaskOwnerPage extends React.Component {
       model_identifiers: null,
       datasets: null,
       availableDatasetAccessTypes: null,
+      availableDatasetLogAccessTypes: null,
       dataExporting: {},
     };
   }
@@ -47,7 +48,11 @@ class TaskOwnerPage extends React.Component {
       return this.fetchTask(() => this.fetchModelIdentifiers());
     } else if (this.props.location.hash === "#datasets") {
       return this.fetchTask(() =>
-        this.fetchDatasets(() => this.fetchAvailableDatasetAccessTypes())
+        this.fetchDatasets(() =>
+          this.fetchAvailableDatasetAccessTypes(() =>
+            this.fetchAvailableDatasetLogAccessTypes()
+          )
+        )
       );
     }
   }
@@ -137,6 +142,17 @@ class TaskOwnerPage extends React.Component {
     return this.context.api.getAvailableDatasetAccessTypes().then(
       (result) => {
         this.setState({ availableDatasetAccessTypes: result }, callback);
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
+  };
+
+  fetchAvailableDatasetLogAccessTypes = (callback = () => {}) => {
+    return this.context.api.getAvailableDatasetLogAccessTypes().then(
+      (result) => {
+        this.setState({ availableDatasetLogAccessTypes: result }, callback);
       },
       (error) => {
         console.log(error);
@@ -319,7 +335,13 @@ class TaskOwnerPage extends React.Component {
     values,
     { setFieldError, setSubmitting, resetForm }
   ) => {
-    const allowed = ["longdesc", "rid", "source_url", "access_type"];
+    const allowed = [
+      "longdesc",
+      "rid",
+      "source_url",
+      "access_type",
+      "log_access_type",
+    ];
 
     const data = Object.keys(values)
       .filter((key) => allowed.includes(key))
@@ -543,12 +565,16 @@ class TaskOwnerPage extends React.Component {
                 {this.props.location.hash === "#datasets" &&
                 this.state.task &&
                 this.state.datasets &&
-                this.state.availableDatasetAccessTypes ? (
+                this.state.availableDatasetAccessTypes &&
+                this.state.availableDatasetLogAccessTypes ? (
                   <Datasets
                     task={this.state.task}
                     datasets={this.state.datasets}
                     availableAccessTypes={
                       this.state.availableDatasetAccessTypes
+                    }
+                    availableLogAccessTypes={
+                      this.state.availableDatasetLogAccessTypes
                     }
                     handleDatasetUpdate={this.handleDatasetUpdate}
                     handleUploadAndCreateDataset={
