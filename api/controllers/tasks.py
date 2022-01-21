@@ -450,8 +450,8 @@ def update(credentials, tid):
         try:
             Task.verify_annotation_config(new_config)
         except Exception as ex:
-            logger.exception("Invalid annotation config: (%s)" % (ex))
-            bottle.abort(400, "Invalid annotation config")
+            logger.exception(str(ex))
+            bottle.abort(400, str(ex))
         task = tm.get(tid)
         old_config = util.json_decode(task.annotation_config_json)
         allowed_fields = ("aggregation_metric",)
@@ -491,8 +491,8 @@ def activate(credentials, tid):
     try:
         Task.verify_annotation_config(util.json_decode(data["annotation_config_json"]))
     except Exception as ex:
-        logger.exception("Invalid annotation config: (%s)" % (ex))
-        bottle.abort(400, "Invalid annotation config")
+        logger.exception(str(ex))
+        bottle.abort(400, str(ex))
 
     tm.update(
         tid, {"annotation_config_json": data["annotation_config_json"], "active": True}

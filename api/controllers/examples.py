@@ -181,12 +181,13 @@ def update_example(credentials, eid):
             all_user_annotation_data.update(util.json_decode(context.context_json))
             all_user_annotation_data.update(util.json_decode(example.input_json))
             all_user_annotation_data.update(data["metadata"])
-            if (
-                not TaskModel()
+            verified, message = (
+                TaskModel()
                 .get(example.context.round.tid)
                 .verify_annotation(all_user_annotation_data)
-            ):
-                bottle.abort(403, "metadata_jon is not properly formatted")
+            )
+            if not verified:
+                bottle.abort(403, message)
             # Make sure to keep fields in the metadata_json from before if they aren't
             # in the new metadata_json
             if example.metadata_json is not None:

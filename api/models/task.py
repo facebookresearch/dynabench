@@ -31,8 +31,13 @@ class TrainFileMetricEnum(enum.Enum):
 
 
 def verify_dataperf_config(constructor_args):
-    assert "reference_name" in constructor_args
-    assert "seeds" in constructor_args
+    prefixed_message = "in dataperf config: "
+    assert "reference_name" in constructor_args, (
+        prefixed_message + "reference_name must be in constructor_args"
+    )
+    assert "seeds" in constructor_args, (
+        prefixed_message + "seeds must be in constructor_args"
+    )
 
 
 train_file_metric_config_verifiers = {
@@ -58,10 +63,17 @@ def exact_match(output, target, constructor_args):
 
 
 def verify_exact_match_config(constructor_args):
-    assert "reference_names" in constructor_args
-    assert isinstance(constructor_args["reference_names"], list)
+    prefixed_message = "in exact_match config: "
+    assert "reference_names" in constructor_args, (
+        prefixed_message + "reference_names must be in constructor_args"
+    )
+    assert isinstance(constructor_args["reference_names"], list), (
+        prefixed_message + "reference_names must be a list"
+    )
     for name in constructor_args["reference_names"]:
-        isinstance(name, str)
+        assert isinstance(name, str), (
+            prefixed_message + "items in reference_names must be strings"
+        )
 
 
 def string_f1(output, target, constructor_args):
@@ -75,8 +87,13 @@ def string_f1(output, target, constructor_args):
 
 
 def verify_string_f1_config(constructor_args):
-    assert "reference_name" in constructor_args
-    assert isinstance(constructor_args["reference_name"], str)
+    prefixed_message = "in string_f1 config: "
+    assert "reference_name" in constructor_args, (
+        prefixed_message + "reference_name must be in constructor_args"
+    )
+    assert isinstance(constructor_args["reference_name"], str), (
+        prefixed_message + "reference_name must be a string"
+    )
 
 
 def ask_user(output, target, constructor_args):
@@ -105,13 +122,23 @@ class AggregationMetricEnum(enum.Enum):
 
 
 def verify_dynascore_config(constructor_args):
+    prefixed_message = "in dynascore config: "
     if "default_weights" in constructor_args:
+        assert isinstance(constructor_args["default_weights"]), (
+            prefixed_message + "default_weights must be a dict"
+        )
         for metric, default_weight in constructor_args["default_weights"].items():
             assert metric in tuple(PerfMetricEnum.__members__) + tuple(
                 DeltaMetricEnum.__members__
-            ) + ("examples_per_second", "memory_utilization")
+            ) + ("examples_per_second", "memory_utilization"), (
+                prefixed_message
+                + "at least one of the provided metric names is not recognized"
+            )
 
-            assert 0 <= default_weight <= 5
+            assert 0 <= default_weight <= 5, (
+                prefixed_message
+                + "all default weights must be between 0 and 5, inclusive"
+            )
 
 
 aggregation_metric_config_verifiers = {
@@ -151,43 +178,64 @@ class PerfMetricEnum(enum.Enum):
 
 
 def verify_macro_f1_config(constructor_args):
-    assert "reference_name" in constructor_args
+    prefixed_message = "in macro_f1 config: "
+    assert "reference_name" in constructor_args, (
+        prefixed_message + "reference_name must be in constructor_args"
+    )
     # TODO: could do more verification to ensure that the type of the referenced object
     # is a string or string selection
 
 
 def verify_dataperf_f1_config(constructor_args):
-    assert "reference_name" in constructor_args
+    prefixed_message = "in dataperf_f1 config: "
+    assert "reference_name" in constructor_args, (
+        prefixed_message + "reference_name must be in constructor_args"
+    )
     # TODO: could do more verification to ensure that the type of the referenced object
     # is a string or string selection
 
 
 def verify_vqa_accuracy_config(constructor_args):
-    assert "reference_name" in constructor_args
+    prefixed_message = "in vqa_accuracy config: "
+    assert "reference_name" in constructor_args, (
+        prefixed_message + "reference_name must be in constructor_args"
+    )
     # TODO: could do more verification to ensure that the type of the referenced object
     # is a string or string selection
 
 
 def verify_squad_f1_config(constructor_args):
-    assert "reference_name" in constructor_args
+    prefixed_message = "in squad_f1 config: "
+    assert "reference_name" in constructor_args, (
+        prefixed_message + "reference_name must be in constructor_args"
+    )
     # TODO: could do more verification to ensure that the type of the referenced object
     # is a string or string selection
 
 
 def verify_accuracy_config(constructor_args):
-    assert "reference_name" in constructor_args
+    prefixed_message = "in accuracy config: "
+    assert "reference_name" in constructor_args, (
+        prefixed_message + "reference_name must be in constructor_args"
+    )
     # TODO: could do more verification to ensure that the type of the referenced object
     # is a string or string selection
 
 
 def verify_sp_bleu_config(constructor_args):
-    assert "reference_name" in constructor_args
+    prefixed_message = "in sp_bleu config: "
+    assert "reference_name" in constructor_args, (
+        prefixed_message + "reference_name must be in constructor_args"
+    )
     # TODO: could do more verification to ensure that the type of the referenced object
     # is a string or string selection
 
 
 def verify_bleu_config(constructor_args):
-    assert "reference_name" in constructor_args
+    prefixed_message = "in bleu config: "
+    assert "reference_name" in constructor_args, (
+        prefixed_message + "reference_name must be in constructor_args"
+    )
     # TODO: could do more verification to ensure that the type of the referenced object
     # is a string or string selection
 
@@ -254,7 +302,11 @@ class Image(AnnotationComponent):
         data,
         mode=AnnotationVerifierMode.default,
     ):
-        assert isinstance(obj, str)
+        prefixed_message = "in image: "
+        assert isinstance(obj, str), (
+            prefixed_message
+            + "the value must be a string that is a url pointing to an image"
+        )
 
     @staticmethod
     def verify_config(obj, annotation_config):
@@ -270,16 +322,20 @@ class String(AnnotationComponent):
         data,
         mode=AnnotationVerifierMode.default,
     ):
+        prefixed_message = "in string: "
         if mode == AnnotationVerifierMode.dataset_upload:
             if isinstance(obj, str):
                 pass
             elif isinstance(obj, list):
                 for sub_obj in obj:
-                    assert isinstance(sub_obj, str)
+                    assert isinstance(sub_obj, str), (
+                        prefixed_message
+                        + "the value must be a string or list of strings"
+                    )
             else:
                 raise ValueError("Wrong type")
         else:
-            assert isinstance(obj, str)
+            assert isinstance(obj, str), prefixed_message + "the value must be a string"
 
     @staticmethod
     def verify_config(obj, annotation_config):
@@ -295,24 +351,36 @@ class ContextStringSelection(AnnotationComponent):
         data,
         mode=AnnotationVerifierMode.default,
     ):
+        prefixed_message = "in context_string_selection: "
         if mode == AnnotationVerifierMode.dataset_upload:
             if isinstance(obj, str):
-                assert obj in data[constructor_args["reference_name"]]
+                assert obj in data[constructor_args["reference_name"]], (
+                    prefixed_message + "the selected string is not in the context"
+                )
             elif isinstance(obj, list):
                 for sub_obj in obj:
-                    assert isinstance(sub_obj, str)
-                    assert sub_obj in data[constructor_args["reference_name"]]
+                    assert isinstance(sub_obj, str), (
+                        prefixed_message + "the value must be a string"
+                    )
+                    assert sub_obj in data[constructor_args["reference_name"]], (
+                        prefixed_message + "the selected string is not in the context"
+                    )
             else:
                 raise ValueError("Wrong type")
         elif mode == AnnotationVerifierMode.predictions_upload:
-            assert isinstance(obj, str)
+            assert isinstance(obj, str), prefixed_message + "the value must be a string"
         else:
-            assert isinstance(obj, str)
-            assert obj in data[constructor_args["reference_name"]]
+            assert isinstance(obj, str), prefixed_message + "the value must be a string"
+            assert obj in data[constructor_args["reference_name"]], (
+                prefixed_message + "the selected string is not in the context"
+            )
 
     @staticmethod
     def verify_config(obj, annotation_config):
-        assert "reference_name" in obj["constructor_args"]
+        prefixed_message = "in context_string_selection config: "
+        assert "reference_name" in obj["constructor_args"], (
+            prefixed_message + "reference_name must be in constructor_args"
+        )
         reference_obj = list(
             filter(
                 lambda other_obj: other_obj["name"]
@@ -320,7 +388,9 @@ class ContextStringSelection(AnnotationComponent):
                 annotation_config["context"],
             )
         )[0]
-        assert reference_obj["type"] == AnnotationTypeEnum.string.name
+        assert reference_obj["type"] == AnnotationTypeEnum.string.name, (
+            prefixed_message + "the type of the context to select from must be a string"
+        )
 
 
 class Conf(AnnotationComponent):
@@ -332,9 +402,14 @@ class Conf(AnnotationComponent):
         data,
         mode=AnnotationVerifierMode.default,
     ):
-        assert isinstance(obj, float)
-        assert obj > 0 - EPSILON_PREC
-        assert obj < 1 + EPSILON_PREC
+        prefixed_message = "in conf: "
+        assert isinstance(obj, float), prefixed_message + "the value must be a float"
+        assert obj > 0 - EPSILON_PREC, (
+            prefixed_message + "the value must be greater than 0"
+        )
+        assert obj < 1 + EPSILON_PREC, (
+            prefixed_message + "the value must be less than 1"
+        )
 
     @staticmethod
     def verify_config(obj, annotation_config):
@@ -350,19 +425,30 @@ class MulticlassProbs(AnnotationComponent):
         data,
         mode=AnnotationVerifierMode.default,
     ):
-        assert isinstance(obj, dict)
+        prefixed_message = "in multiclass_probs: "
+        assert isinstance(obj, dict), prefixed_message + "the value must be a dict"
         if mode != AnnotationVerifierMode.predictions_upload:
             assert set(obj.keys()) == set(
                 name_to_constructor_args[obj_constructor_args["reference_name"]][
                     "labels"
                 ]
+            ), (
+                prefixed_message
+                + "the set of keys in the probability dict must match the set of labels"
             )
-        assert sum(obj.values()) < 1 + EPSILON_PREC
-        assert sum(obj.values()) > 1 - EPSILON_PREC
+        assert sum(obj.values()) < 1 + EPSILON_PREC, (
+            prefixed_message + "the probabilities must sum to 1"
+        )
+        assert sum(obj.values()) > 1 - EPSILON_PREC, (
+            prefixed_message + "the probabilities must sum to 1"
+        )
 
     @staticmethod
     def verify_config(obj, annotation_config):
-        assert "reference_name" in obj["constructor_args"]
+        prefixed_message = "in multiclass_probs config: "
+        assert "reference_name" in obj["constructor_args"], (
+            prefixed_message + "reference_name must be in constructor_args"
+        )
         reference_objs = filter(
             lambda other_obj: other_obj["name"]
             == obj["constructor_args"]["reference_name"],
@@ -376,6 +462,10 @@ class MulticlassProbs(AnnotationComponent):
             assert reference_obj["type"] in (
                 AnnotationTypeEnum.multiclass.name,
                 AnnotationTypeEnum.target_label.name,
+            ), (
+                prefixed_message
+                + "reference_name must point to an annotation component that is"
+                + "either the multiclass or target_label type"
             )
 
 
@@ -388,16 +478,26 @@ class Multilabel(AnnotationComponent):
         data,
         mode=AnnotationVerifierMode.default,
     ):
-        assert isinstance(obj, list)
+        prefixed_message = "in multilabel: "
+        assert isinstance(obj, list), prefixed_message + "the value must be a list"
         for item in obj:
-            assert item in obj_constructor_args["labels"]
+            assert item in obj_constructor_args["labels"], (
+                prefixed_message + "labels must match those defined in constructor_args"
+            )
 
     @staticmethod
     def verify_config(obj, annotation_config):
-        assert "labels" in obj["constructor_args"]
-        assert isinstance(obj["constructor_args"]["labels"], list)
+        prefixed_message = "in multilabel config: "
+        assert "labels" in obj["constructor_args"], (
+            prefixed_message + "labels must be a field in constructor_args"
+        )
+        assert isinstance(obj["constructor_args"]["labels"], list), (
+            prefixed_message + "labels must be a list"
+        )
         for item in obj["constructor_args"]["labels"]:
-            assert isinstance(item, str)
+            assert isinstance(item, str), (
+                prefixed_message + "labels must be a list of strings"
+            )
 
 
 class Multiclass(AnnotationComponent):
@@ -409,15 +509,25 @@ class Multiclass(AnnotationComponent):
         data,
         mode=AnnotationVerifierMode.default,
     ):
-        assert isinstance(obj, str)
-        assert obj in obj_constructor_args["labels"]
+        prefixed_message = "in multiclass: "
+        assert isinstance(obj, str), prefixed_message + "the value must be a string"
+        assert obj in obj_constructor_args["labels"], (
+            prefixed_message + "the value must be in constructor_args"
+        )
 
     @staticmethod
     def verify_config(obj, annotation_config):
-        assert "labels" in obj["constructor_args"]
-        assert isinstance(obj["constructor_args"]["labels"], list)
+        prefixed_message = "in multiclass config: "
+        assert "labels" in obj["constructor_args"], (
+            prefixed_message + "labels must be a field in constructor_args"
+        )
+        assert isinstance(obj["constructor_args"]["labels"], list), (
+            prefixed_message + "labels must be a list"
+        )
         for item in obj["constructor_args"]["labels"]:
-            assert isinstance(item, str)
+            assert isinstance(item, str), (
+                prefixed_message + "labels must be a list of strings"
+            )
 
 
 class TargetLabel(AnnotationComponent):
@@ -429,25 +539,42 @@ class TargetLabel(AnnotationComponent):
         data,
         mode=AnnotationVerifierMode.default,
     ):
+        prefixed_message = "in target_label: "
         if mode == AnnotationVerifierMode.dataset_upload:
             if isinstance(obj, str):
-                assert obj in obj_constructor_args["labels"]
+                assert obj in obj_constructor_args["labels"], (
+                    prefixed_message
+                    + "labels must match those defined in constructor_args"
+                )
             elif isinstance(obj, list):
                 for sub_obj in obj:
-                    assert isinstance(sub_obj, str)
-                    assert sub_obj in obj_constructor_args["labels"]
+                    assert isinstance(sub_obj, str), (
+                        prefixed_message
+                        + "labels must match those defined in constructor_args"
+                    )
+                    assert sub_obj in obj_constructor_args["labels"], (
+                        prefixed_message
+                        + "labels must match those defined in constructor_args"
+                    )
             else:
                 raise ValueError("Wrong type")
         else:
-            assert isinstance(obj, str)
-            assert obj in obj_constructor_args["labels"]
+            assert isinstance(obj, str), prefixed_message + "value must be a string"
+            assert obj in obj_constructor_args["labels"], (
+                prefixed_message + "labels must match those defined in constructor_args"
+            )
 
     @staticmethod
     def verify_config(obj, annotation_config):
-        assert "labels" in obj["constructor_args"]
-        assert isinstance(obj["constructor_args"]["labels"], list)
+        prefixed_message = "in target_label config: "
+        assert "labels" in obj["constructor_args"], (
+            prefixed_message + "labels must be a field in constructor_args"
+        )
+        assert isinstance(obj["constructor_args"]["labels"], list), (
+            prefixed_message + "labels must be a list"
+        )
         for item in obj["constructor_args"]["labels"]:
-            assert isinstance(item, str)
+            assert isinstance(item, str), prefixed_message + "a label must be a string"
 
 
 annotation_components = {
@@ -522,68 +649,119 @@ class Task(Base):
 
     @staticmethod
     def verify_train_file_metric_config(train_file_metric_config):
-        assert "type" in train_file_metric_config
-        assert "constructor_args" in train_file_metric_config
+        prefixed_message = "in train_file_metric config: "
+        assert "type" in train_file_metric_config, (
+            prefixed_message + "type must be a field in train_file_metric_config"
+        )
+        assert "constructor_args" in train_file_metric_config, (
+            prefixed_message
+            + "constructor_args must be a field in train_file_metric_config"
+        )
         train_file_metric_config_verifiers[train_file_metric_config["type"]](
             train_file_metric_config["constructor_args"]
         )
 
     @staticmethod
     def verify_model_wrong_metric_config(model_wrong_metric_config):
-        assert "type" in model_wrong_metric_config
-        assert "constructor_args" in model_wrong_metric_config
+        prefixed_message = "in model_wrong_metric config: "
+        assert "type" in model_wrong_metric_config, (
+            prefixed_message + "type must be a field in model_wrong_metric_config"
+        )
+        assert "constructor_args" in model_wrong_metric_config, (
+            prefixed_message
+            + "constructor_args must be a field in model_wrong_metric_config"
+        )
         model_wrong_metric_config_verifiers[model_wrong_metric_config["type"]](
             model_wrong_metric_config["constructor_args"]
         )
 
     @staticmethod
     def verify_aggregation_metric_config(aggregation_metric_config):
-        assert "type" in aggregation_metric_config
-        assert "constructor_args" in aggregation_metric_config
+        prefixed_message = "in aggregation_metric config: "
+        assert "type" in aggregation_metric_config, (
+            prefixed_message + "type must be a field in aggregation_metric_config"
+        )
+        assert "constructor_args" in aggregation_metric_config, (
+            prefixed_message
+            + "constructor_args must be a field in aggregation_metric_config"
+        )
         aggregation_metric_config_verifiers[aggregation_metric_config["type"]](
             aggregation_metric_config["constructor_args"]
         )
 
     @staticmethod
     def verify_perf_metric_config(perf_metric_config):
-        assert "type" in perf_metric_config
-        assert "constructor_args" in perf_metric_config
+        prefixed_message = "in perf_metric config: "
+        assert "type" in perf_metric_config, (
+            prefixed_message + "type must be a field in aggregation_metric_config"
+        )
+        assert "constructor_args" in perf_metric_config, (
+            prefixed_message
+            + "constructor_args must be a field in aggregation_metric_config"
+        )
         perf_metric_config_verifiers[perf_metric_config["type"]](
             perf_metric_config["constructor_args"]
         )
 
     @staticmethod
     def verify_delta_metrics_config(delta_metrics_config):
+        prefixed_message = "in delta_metrics config: "
         for delta_metric_config in delta_metrics_config:
-            assert "type" in delta_metric_config
-            assert "constructor_args" in delta_metric_config
+            assert "type" in delta_metric_config, (
+                prefixed_message + "type must be a field in delta_metric_config"
+            )
+            assert "constructor_args" in delta_metric_config, (
+                prefixed_message
+                + "constructor_args must be a field in delta_metric_config"
+            )
             delta_metric_config_verifiers[delta_metric_config["type"]](
                 delta_metric_config["constructor_args"]
             )
 
     @staticmethod
     def verify_annotation_config(annotation_config):
-        assert "aggregation_metric" in annotation_config
+        prefixed_message = "in annotation config: "
+        assert "aggregation_metric" in annotation_config, (
+            prefixed_message + "aggregation must be a field in annotation_config"
+        )
         Task.verify_aggregation_metric_config(annotation_config["aggregation_metric"])
 
-        assert "model_wrong_metric" in annotation_config
+        assert "model_wrong_metric" in annotation_config, (
+            prefixed_message + "model_wrong_metric must be a field in annotation_config"
+        )
         Task.verify_model_wrong_metric_config(annotation_config["model_wrong_metric"])
 
-        assert "perf_metric" in annotation_config
+        assert "perf_metric" in annotation_config, (
+            prefixed_message + "perf_metric must be a field in annotation_config"
+        )
         Task.verify_perf_metric_config(annotation_config["perf_metric"])
 
-        assert "delta_metrics" in annotation_config
+        assert "delta_metrics" in annotation_config, (
+            prefixed_message + "delta_metrics be a field in annotation_config"
+        )
         Task.verify_delta_metrics_config(annotation_config["delta_metrics"])
 
         if "train_file_metric" in annotation_config:
             Task.verify_train_file_metric_config(annotation_config["train_file_metric"])
 
-        assert "context" in annotation_config
-        assert "input" in annotation_config
-        assert "output" in annotation_config
-        assert "metadata" in annotation_config
-        assert "create" in annotation_config["metadata"]
-        assert "validate" in annotation_config["metadata"]
+        assert "context" in annotation_config, (
+            prefixed_message + "context must be a field in annotation_config"
+        )
+        assert "input" in annotation_config, (
+            prefixed_message + "input must be a field in annotation_config"
+        )
+        assert "output" in annotation_config, (
+            prefixed_message + "output must be a field in annotation_config"
+        )
+        assert "metadata" in annotation_config, (
+            prefixed_message + "metadata must be a field in annotation_config"
+        )
+        assert "create" in annotation_config["metadata"], (
+            prefixed_message + "create must be a field in metadat"
+        )
+        assert "validate" in annotation_config["metadata"], (
+            prefixed_message + "validate must be a field in metadata"
+        )
         annotation_config_objs = (
             annotation_config["context"]
             + annotation_config["output"]
@@ -592,12 +770,25 @@ class Task(Base):
             + annotation_config["metadata"]["validate"]
         )
         for obj in annotation_config_objs:
-            assert "name" in obj
-            assert isinstance(obj["name"], str)
-            assert "constructor_args" in obj
-            assert isinstance(obj["constructor_args"], dict)
-            assert "type" in obj
-            assert isinstance(obj["type"], str)
+            assert "name" in obj, (
+                prefixed_message + "name must be a field in annotation_config objects"
+            )
+            assert isinstance(obj["name"], str), (
+                prefixed_message + "name must be a string"
+            )
+            assert "constructor_args" in obj, (
+                prefixed_message
+                + "constructor_args must be a field in annotation_config objects"
+            )
+            assert isinstance(obj["constructor_args"], dict), (
+                prefixed_message + "name must be a field in annotation_config objects"
+            )
+            assert "type" in obj, (
+                prefixed_message + "type must be a field in annotation_config objects"
+            )
+            assert isinstance(obj["type"], str), (
+                prefixed_message + "type must be a string"
+            )
             annotation_components[obj["type"]].verify_config(obj, annotation_config)
 
     def verify_annotation(self, data, mode=AnnotationVerifierMode.default):
@@ -632,9 +823,9 @@ class Task(Base):
                         mode,
                     )
                 except Exception as e:
-                    logger.error(name + " is improperly formatted (" + str(e) + ")")
-                    return False
-        return True
+                    logger.error(e)
+                    return False, str(e)
+        return True, "no problems detected"
 
     def convert_to_model_io(self, data):
         name_to_type = {}

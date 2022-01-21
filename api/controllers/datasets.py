@@ -133,19 +133,33 @@ def create(credentials, tid, name):
                 util.json_decode(line)
                 for line in upload.file.read().decode("utf-8").splitlines()
             ]
-            for io in parsed_upload:
-                if (
-                    not task.verify_annotation(
-                        io, mode=AnnotationVerifierMode.dataset_upload
-                    )
-                    or "uid" not in io
-                ):
-                    bottle.abort(400, "Invalid dataset file")
-            parsed_uploads.append((parsed_upload, perturb_prefix))
-
         except Exception as ex:
             logger.exception(ex)
-            bottle.abort(400, "Invalid dataset file")
+            bottle.abort(400, "Could not parse dataset file. Is it a utf-8 jsonl?")
+
+        for io in parsed_upload:
+            try:
+                assert "uid" in io, "'uid' must be present for every example"
+                assert (
+                    "tags" in io
+                ), "there must be a field called 'tags' on every line of the jsonl"
+                assert isinstance(
+                    io["tags"], list
+                ), "'tags' must be a list on every line of the jsonl"
+                if perturb_prefix is not None:
+                    assert "input_id" in io, (
+                        "'input_id' must be present for every example for"
+                        + " perturbed dataset uploads"
+                    )
+            except Exception as ex:
+                bottle.abort(400, str(ex))
+
+            verified, message = task.verify_annotation(
+                io, mode=AnnotationVerifierMode.dataset_upload
+            )
+            if not verified:
+                bottle.abort(400, message)
+        parsed_uploads.append((parsed_upload, perturb_prefix))
 
     # Upload to s3
     for parsed_upload, perturb_prefix in parsed_uploads:
