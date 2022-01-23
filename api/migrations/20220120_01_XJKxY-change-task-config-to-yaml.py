@@ -53,6 +53,16 @@ def apply_step(conn):
                         if value != []:
                             simplified_config_dict[key] = []
                             for obj in value:
+                                if "type" in obj:
+                                    if obj["type"] == "multiclass_probs":
+                                        obj["type"] = "prob"
+                                    elif obj["type"] == "conf":
+                                        obj["type"] = "prob"
+                                        obj["single_prob"] = True
+                                    elif obj["type"] == "target_label":
+                                        obj["type"] = "multiclass"
+                                        obj["as_goal_message"] = True
+
                                 if key == "output" and obj["name"] in [
                                     o["name"]
                                     for o in config_dict["input"]

@@ -161,7 +161,7 @@ class ExampleModel(BaseModel):
                     task_config["output"] = [
                         obj
                         for obj in task_config.get("output", [])
-                        if obj["type"] not in ("multiclass_probs", "conf")
+                        if obj["type"] not in ("prob")
                     ]
                     tmp.write(
                         util.json_encode(

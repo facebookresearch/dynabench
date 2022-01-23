@@ -7,7 +7,10 @@
 export default function initializeData(annotationConfigObjs) {
   const data = {};
   for (const annotationConfigObj of annotationConfigObjs) {
-    if (annotationConfigObj.type === "target_label") {
+    if (
+      annotationConfigObj.type === "multiclass" &&
+      annotationConfigObj.as_goal_message
+    ) {
       const random =
         annotationConfigObj.labels[
           Math.floor(Math.random() * annotationConfigObj.labels.length)

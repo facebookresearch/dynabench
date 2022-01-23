@@ -585,10 +585,13 @@ class CreateInterface extends React.Component {
       return renderTooltip(props, "Don't like this context? Try another one.");
     }
 
-    // The target_label type is special. We want this object to
-    // appear in a special place in the interface.
+    // The multiclass type is special when as_goal_message is true. We want this
+    // object to appear in a special place in the interface.
     const goalMessageInterface = this.state.taskConfig?.input
-      .filter((taskConfigObj) => taskConfigObj.type === "target_label")
+      .filter(
+        (taskConfigObj) =>
+          taskConfigObj.type === "multiclass" && taskConfigObj.as_goal_message
+      )
       .map((taskConfigObj) => (
         <div key={taskConfigObj.name} className="mb-1 mt-1">
           <AnnotationComponent
@@ -652,8 +655,9 @@ class CreateInterface extends React.Component {
     const belowModelResponseInterface = this.state.taskConfig?.input
       .filter(
         (taskConfigObj) =>
-          !["target_label", "context_string_selection"].includes(
-            taskConfigObj.type
+          taskConfigObj.type !== "context_string_selection" &&
+          !(
+            taskConfigObj.type === "multiclass" && taskConfigObj.as_goal_message
           )
       )
       .map((taskConfigObj) => (

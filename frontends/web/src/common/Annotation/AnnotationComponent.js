@@ -81,61 +81,12 @@ const Multiclass = ({
   if (data[name] === null && choice !== configObj.placeholder) {
     setChoice(configObj.placeholder);
   }
-  return (
-    <>
-      {!create ? (
-        <>
-          {showName && (
-            <h6 className={"spaced-header " + className}>
-              {displayName ? displayName : name}:
-            </h6>
-          )}
-          {data[name]}
-        </>
-      ) : (
-        <div
-          className={inputReminder ? "p-2 border rounded border-danger" : ""}
-        >
-          <DropdownButton variant="light" className="p-1" title={choice}>
-            {labels
-              .filter((label) => label !== choice)
-              .map((label, index) => (
-                <Dropdown.Item
-                  key={index}
-                  onClick={() => {
-                    setChoice(label);
-                    data[name] = label;
-                    setData(data);
-                  }}
-                  name={index}
-                  index={index}
-                >
-                  {label}
-                </Dropdown.Item>
-              ))}
-          </DropdownButton>
-        </div>
-      )}
-    </>
-  );
-};
 
-const TargetLabel = ({
-  displayName,
-  className,
-  create,
-  data,
-  setData,
-  name,
-  configObj,
-  showName = true,
-  inputReminder = false,
-}) => {
-  const labels = configObj.labels;
-  const [choice, setChoice] = useState(data[name]);
+  //The following consts are only used for the case where as_goal_message is true.
+  const [labelChoice, setLabelChoice] = useState(data[name]);
 
   // This ensures that the UI resets when the value externally changes
-  if (choice !== data[name]) {
+  if (labelChoice !== data[name]) {
     setChoice(data[name]);
   }
 
@@ -145,6 +96,7 @@ const TargetLabel = ({
   const otherLabelsStr =
     otherLabels.slice(0, otherLabels.length - 2).join(", ") +
     otherLabels.slice(otherLabels.length - 2, otherLabels.length).join(" or ");
+
   return (
     <>
       {!create ? (
@@ -160,17 +112,39 @@ const TargetLabel = ({
         <div
           className={inputReminder ? "p-2 border rounded border-danger" : ""}
         >
-          <InputGroup className="align-items-center">
-            <i className="fas fa-flag-checkered mr-1"></i>
-            Your goal: enter {indefiniteArticle}
-            <DropdownButton variant="light" className="p-1" title={choice}>
+          {configObj.as_goal_message ? (
+            <InputGroup className="align-items-center">
+              <i className="fas fa-flag-checkered mr-1"></i>
+              Your goal: enter {indefiniteArticle}
+              <DropdownButton variant="light" className="p-1" title={choice}>
+                {labels
+                  .filter((label) => label !== choice)
+                  .map((label, index) => (
+                    <Dropdown.Item
+                      key={index}
+                      onClick={() => {
+                        setChoice(label);
+                        data[name] = label;
+                        setData(data);
+                      }}
+                      name={index}
+                      index={index}
+                    >
+                      {label}
+                    </Dropdown.Item>
+                  ))}
+              </DropdownButton>
+              example that fools the model into predicting {otherLabelsStr}.
+            </InputGroup>
+          ) : (
+            <DropdownButton variant="light" className="p-1" title={labelChoice}>
               {labels
-                .filter((label) => label !== choice)
+                .filter((label) => label !== labelChoice)
                 .map((label, index) => (
                   <Dropdown.Item
                     key={index}
                     onClick={() => {
-                      setChoice(label);
+                      setLabelChoice(label);
                       data[name] = label;
                       setData(data);
                     }}
@@ -181,8 +155,7 @@ const TargetLabel = ({
                   </Dropdown.Item>
                 ))}
             </DropdownButton>
-            example that fools the model into predicting {otherLabelsStr}.
-          </InputGroup>
+          )}
         </div>
       )}
     </>
@@ -288,19 +261,14 @@ const ContextStringSelection = ({
   );
 };
 
-const MulticlassProbs = ({ create, data, setData, name, configObj }) => {
+const Prob = ({ create, data, setData, name, configObj }) => {
   if (data[name]) {
-    const labels = Object.keys(data[name]);
-    const probs = labels.map((key) => data[name][key]);
-    return <PieRechart data={probs} labels={labels} />;
-  }
-  return null;
-};
-
-const Conf = ({ create, data, setData, name, configObj }) => {
-  if (data[name]) {
-    const labels = ["confidence", "uncertianty"];
-    const probs = [data[name], 1 - data[name]];
+    const labels = configObj.single_prob
+      ? ["confidence", "uncertianty"]
+      : Object.keys(data[name]);
+    const probs = configObj.single_prob
+      ? [data[name], 1 - data[name]]
+      : labels.map((key) => data[name][key]);
     return <PieRechart data={probs} labels={labels} />;
   }
   return null;
@@ -459,20 +427,6 @@ const AnnotationComponent = ({
           inputReminder={inputReminder}
         />
       );
-    case "target_label":
-      return (
-        <TargetLabel
-          displayName={displayName}
-          className={className}
-          create={create}
-          name={name}
-          data={data}
-          setData={setData}
-          configObj={configObj}
-          showName={showName}
-          inputReminder={inputReminder}
-        />
-      );
     case "context_string_selection":
       return (
         <ContextStringSelection
@@ -487,21 +441,9 @@ const AnnotationComponent = ({
           inputReminder={inputReminder}
         />
       );
-    case "multiclass_probs":
+    case "prob":
       return (
-        <MulticlassProbs
-          create={create}
-          name={name}
-          data={data}
-          setData={setData}
-          configObj={configObj}
-          showName={showName}
-          inputReminder={inputReminder}
-        />
-      );
-    case "conf":
-      return (
-        <Conf
+        <Prob
           create={create}
           name={name}
           data={data}

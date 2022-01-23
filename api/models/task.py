@@ -254,11 +254,9 @@ class AnnotationTypeEnum(enum.Enum):
     image = "image"
     string = "string"
     context_string_selection = "context_string_selection"
-    conf = "conf"
-    multiclass_probs = "multiclass_probs"
+    prob = "prob"
     multilabel = "multilabel"
     multiclass = "multiclass"
-    target_label = "target_label"
 
 
 class AnnotationVerifierMode(enum.Enum):
@@ -417,31 +415,7 @@ class ContextStringSelection(AnnotationComponent):
         )
 
 
-class Conf(AnnotationComponent):
-    @staticmethod
-    def verify(
-        name,
-        config,
-        data,
-        mode=AnnotationVerifierMode.default,
-    ):
-        prefixed_message = "in conf: "
-        assert isinstance(data[name], float), (
-            prefixed_message + "the value must be a float"
-        )
-        assert data[name] > 0 - EPSILON_PREC, (
-            prefixed_message + "the value must be greater than 0"
-        )
-        assert data[name] < 1 + EPSILON_PREC, (
-            prefixed_message + "the value must be less than 1"
-        )
-
-    @staticmethod
-    def verify_config(config_obj, config):
-        pass
-
-
-class MulticlassProbs(AnnotationComponent):
+class Prob(AnnotationComponent):
     @staticmethod
     def verify(
         name,
@@ -450,47 +424,61 @@ class MulticlassProbs(AnnotationComponent):
         mode=AnnotationVerifierMode.default,
     ):
         name_to_config_obj = get_name_to_full_annotation_config_obj(config)
-        prefixed_message = "in multiclass_probs: "
-        assert isinstance(data[name], dict), (
-            prefixed_message + "the value must be a dict"
-        )
-        if mode != AnnotationVerifierMode.predictions_upload:
-            assert set(data[name].keys()) == set(
-                name_to_config_obj[name_to_config_obj[name]["reference_name"]]["labels"]
-            ), (
-                prefixed_message
-                + "the set of keys in the probability dict must match the set of labels"
+        prefixed_message = "in prob: "
+        if name_to_config_obj[name].get("single_prob", False):
+            assert isinstance(data[name], float), (
+                prefixed_message + "the value must be a float"
             )
-        assert sum(data[name].values()) < 1 + EPSILON_PREC, (
-            prefixed_message + "the probabilities must sum to 1"
-        )
-        assert sum(data[name].values()) > 1 - EPSILON_PREC, (
-            prefixed_message + "the probabilities must sum to 1"
-        )
+            assert data[name] > 0 - EPSILON_PREC, (
+                prefixed_message + "the value must be greater than 0"
+            )
+            assert data[name] < 1 + EPSILON_PREC, (
+                prefixed_message + "the value must be less than 1"
+            )
+        else:
+            assert isinstance(data[name], dict), (
+                prefixed_message + "the value must be a dict"
+            )
+            if mode != AnnotationVerifierMode.predictions_upload:
+                assert set(data[name].keys()) == set(
+                    name_to_config_obj[name_to_config_obj[name]["reference_name"]][
+                        "labels"
+                    ]
+                ), (
+                    prefixed_message
+                    + "the set of keys in the probability dict must match the set of"
+                    + " labels"
+                )
+            assert sum(data[name].values()) < 1 + EPSILON_PREC, (
+                prefixed_message + "the probabilities must sum to 1"
+            )
+            assert sum(data[name].values()) > 1 - EPSILON_PREC, (
+                prefixed_message + "the probabilities must sum to 1"
+            )
 
     @staticmethod
     def verify_config(config_obj, config):
-        prefixed_message = "in multiclass_probs config: "
-        assert "reference_name" in config_obj, (
-            prefixed_message + "reference_name must be in object config object"
-        )
-        reference_objs = filter(
-            lambda other_obj: other_obj["name"] == config_obj["reference_name"],
-            config.get("context", [])
-            + config.get("output", [])
-            + config.get("input", [])
-            + config.get("metadata", {}).get("create", [])
-            + config.get("metadata", {}).get("validate", []),
-        )
-        for reference_obj in reference_objs:
-            assert reference_obj["type"] in (
-                AnnotationTypeEnum.multiclass.name,
-                AnnotationTypeEnum.target_label.name,
-            ), (
-                prefixed_message
-                + "reference_name must point to an annotation component that is"
-                + "either the multiclass or target_label type"
+        if config_obj.get("single_prob", False):
+            pass
+        else:
+            prefixed_message = "in prob config: "
+            assert "reference_name" in config_obj, (
+                prefixed_message + "reference_name must be in object config object"
             )
+            reference_objs = filter(
+                lambda other_obj: other_obj["name"] == config_obj["reference_name"],
+                config.get("context", [])
+                + config.get("output", [])
+                + config.get("input", [])
+                + config.get("metadata", {}).get("create", [])
+                + config.get("metadata", {}).get("validate", []),
+            )
+            for reference_obj in reference_objs:
+                assert reference_obj["type"] in (AnnotationTypeEnum.multiclass.name,), (
+                    prefixed_message
+                    + "reference_name must point to an annotation component that is"
+                    + " the multiclass type"
+                )
 
 
 class Multilabel(AnnotationComponent):
@@ -536,38 +524,6 @@ class Multiclass(AnnotationComponent):
     ):
         name_to_config_obj = get_name_to_full_annotation_config_obj(config)
         prefixed_message = "in multiclass: "
-        assert isinstance(data[name], str), (
-            prefixed_message + "the value must be a string"
-        )
-        assert data[name] in name_to_config_obj[name]["labels"], (
-            prefixed_message + "the value must be in config object"
-        )
-
-    @staticmethod
-    def verify_config(config_obj, config):
-        prefixed_message = "in multiclass config: "
-        assert "labels" in config_obj, (
-            prefixed_message + "labels must be a field in config object"
-        )
-        assert isinstance(config_obj["labels"], list), (
-            prefixed_message + "labels must be a list"
-        )
-        for item in config_obj["labels"]:
-            assert isinstance(item, str), (
-                prefixed_message + "labels must be a list of strings"
-            )
-
-
-class TargetLabel(AnnotationComponent):
-    @staticmethod
-    def verify(
-        name,
-        config,
-        data,
-        mode=AnnotationVerifierMode.default,
-    ):
-        name_to_config_obj = get_name_to_full_annotation_config_obj(config)
-        prefixed_message = "in target_label: "
         if mode == AnnotationVerifierMode.dataset_upload:
             if isinstance(data[name], str):
                 assert data[name] in name_to_config_obj[name]["labels"], (
@@ -596,7 +552,7 @@ class TargetLabel(AnnotationComponent):
 
     @staticmethod
     def verify_config(config_obj, config):
-        prefixed_message = "in target_label config: "
+        prefixed_message = "in multiclass config: "
         assert "labels" in config_obj, (
             prefixed_message + "labels must be a field in config object"
         )
@@ -611,11 +567,9 @@ annotation_components = {
     AnnotationTypeEnum.image.name: Image,
     AnnotationTypeEnum.string.name: String,
     AnnotationTypeEnum.context_string_selection.name: ContextStringSelection,
-    AnnotationTypeEnum.conf.name: Conf,
-    AnnotationTypeEnum.multiclass_probs.name: MulticlassProbs,
+    AnnotationTypeEnum.prob.name: Prob,
     AnnotationTypeEnum.multilabel.name: Multilabel,
     AnnotationTypeEnum.multiclass.name: Multiclass,
-    AnnotationTypeEnum.target_label.name: TargetLabel,
 }
 
 
