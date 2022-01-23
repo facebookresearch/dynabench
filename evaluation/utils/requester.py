@@ -76,10 +76,10 @@ class Requester:
             if not perturb_prefix:
                 dataset = self.datasets[dataset_name]
                 delta_metric_types = [
-                    config["type"]
-                    for config in json.loads(dataset.task.annotation_config_json)[
-                        "delta_metrics"
-                    ]
+                    obj["type"]
+                    for obj in json.loads(dataset.task.config_yaml).get(
+                        "delta_metrics", []
+                    )
                 ]
                 for prefix in delta_metric_types:
                     if dataset.dataset_available_on_s3(prefix):

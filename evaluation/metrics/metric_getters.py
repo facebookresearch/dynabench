@@ -1,7 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-import json
+import yaml
 
 from metrics.instance_property import instance_property
 from metrics.metrics_dicts import (
@@ -13,7 +13,9 @@ from metrics.metrics_dicts import (
 
 
 def get_eval_metrics(task, predictions: list, targets: list) -> tuple:
-    perf_metric_type = json.loads(task.annotation_config_json)["perf_metric"]["type"]
+    perf_metric_type = yaml.load(task.config_yaml, yaml.SafeLoader)["perf_metric"][
+        "type"
+    ]
     # NOTE:
     # right now, the returned eval metric scores are just the perf metric, but we
     # could add a feature that allows for the display of multiple eval metrics
@@ -40,7 +42,9 @@ def get_delta_metrics(
     predictions: a list of list of predictions
     targets: a list of labels
     """
-    perf_metric_type = json.loads(task.annotation_config_json)["perf_metric"]["type"]
+    perf_metric_type = yaml.load(task.config_yaml, yaml.SafeLoader)["perf_metric"][
+        "type"
+    ]
     perf_metric = eval_metrics_dict[perf_metric_type]
     delta_metrics_scores = {
         perturb_prefix: delta_metrics_dict[perturb_prefix](
@@ -52,22 +56,14 @@ def get_delta_metrics(
 
 def get_task_metrics_meta(task):
     instance_config = instance_property[task.instance_type]
-    annotation_config = json.loads(task.annotation_config_json)
-    perf_metric_type = (
-        annotation_config["perf_metric"]["type"]
-        if "perf_metric" in annotation_config
-        else "accuracy"
-    )
-    delta_metric_types = (
-        []
-        if "delta_metrics" not in annotation_config
-        else [x["type"] for x in annotation_config["delta_metrics"]]
-    )
+    task_config = yaml.load(task.config_yaml, yaml.SafeLoader)
+    perf_metric_type = task_config["perf_metric"]["type"]
+    delta_metric_types = [obj["type"] for obj in task_config.get("delta_metrics", [])]
     aws_metric_names = instance_config["aws_metrics"]
 
     # TODO: make it possible to display some modes with aws metrics and some
     # models without aws metrics on the same leaderboard?
-    if task.has_predictions_upload or "train_file_metric" in annotation_config:
+    if task.has_predictions_upload or "train_file_metric" in task_config:
         aws_metric_names = []
 
     ordered_metric_field_names = (

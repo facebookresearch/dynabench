@@ -8,6 +8,7 @@ from urllib.parse import parse_qs, quote
 import bottle
 import sqlalchemy as db
 import uuid
+import yaml
 
 import common.auth as _auth
 import common.helpers as util
@@ -50,75 +51,78 @@ def process_proposal(credentials, tpid):
             task_code=tp.task_code,
             name=tp.name,
             desc=tp.desc,
-            annotation_config_json="""
-            {
-                "model_wrong_metric": {"type": "exact_match", "constructor_args":
-                    {"reference_names": ["label"]}},
-                "aggregation_metric": {"type": "dynascore", "constructor_args": {}},
-                "perf_metric": {"type": "macro_f1", "constructor_args":
-                    {"reference_name": "label"}},
-                "delta_metrics": [{"type": "fairness", "constructor_args": {}},
-                    {"type": "robustness", "constructor_args": {}}],
-                "context": [{"name": "context", "type": "string",
-                    "constructor_args": {"placeholder": "Enter context..."}}],
-                "input": [{"name": "statement", "type": "string",
-                    "constructor_args": {"placeholder": "Enter statement..."}},
-                    {"name": "label", "type": "target_label",
-                    "constructor_args": {
-                        "labels": ["negative", "positive", "neutral"]}}],
-                "output": [
-                    {"name": "label", "type": "target_label",
-                        "constructor_args": {
-                            "labels": ["negative", "positive", "neutral"]}},
-                    {"name": "prob", "type": "multiclass_probs",
-                        "constructor_args": {"reference_name": "label"}}
-                ],
-                "metadata": {
-                "create":
-                [
-                    {"name": "example_explanation", "type": "string",
-                        "constructor_args":
-                            {"placeholder": "Explain why your example is correct..."},
-                        "display_name": "example explanation"},
-                    {"name": "model_explanation_right", "type": "string",
-                        "constructor_args": {"placeholder":
-                        "Explain why you thought the model would make a mistake..."},
-                        "model_wrong_condition": false,
-                        "display_name": "model explanation"},
-                    {"name": "model_explanation_wrong", "type": "string",
-                        "constructor_args": {"placeholder":
-                            "Explain why you think the model made a mistake..."},
-                            "model_wrong_condition": true,
-                            "display_name": "model explanation"}
-                ],
-                "validate":
-                [
-                    {"name": "corrected_label",
-                        "type": "multiclass",
-                        "constructor_args": {
-                            "labels": ["negative", "positive", "entailed"],
-                            "placeholder": "Enter corrected label"
-                            },
-                        "validated_label_condition": "incorrect"},
-                    {"name": "target_explanation", "type": "string",
-                        "constructor_args":
-                            {"placeholder":
-                                "Explain why your proposed target is correct..."},
-                        "validated_label_condition": "incorrect"},
-                    {"name": "flag_reason", "type": "string",
-                        "constructor_args":
-                            {"placeholder": "Enter the reason for flagging..."},
-                        "validated_label_condition": "flagged"},
-                    {"name": "validator_example_explanation", "type": "string",
-                        "constructor_args":
-                            {"placeholder": "Explain why the example is correct..."},
-                        "validated_label_condition": "correct"},
-                    {"name": "validator_model_explanation", "type": "string",
-                        "constructor_args": {"placeholder":
-                        "Enter what you think was done to try to trick the model..."}}
-                ]
-                }
-            }
+            config_yaml="""
+            aggregation_metric:
+              type: dynascore
+            context:
+            - name: context
+              placeholder: Enter context...
+              type: string
+            delta_metrics:
+            - type: fairness
+            - type: robustness
+            input:
+            - name: statement
+              placeholder: Enter statement...
+              type: string
+            - labels:
+              - negative
+              - positive
+              - neutral
+              name: label
+              type: target_label
+            metadata:
+              create:
+              - display_name: example explanation
+                name: example_explanation
+                placeholder: Explain why your example is correct...
+                type: string
+              - display_name: model explanation
+                model_wrong_condition: false
+                name: model_explanation_right
+                placeholder: Explain why you thought the model would make a mistake...
+                type: string
+              - display_name: model explanation
+                model_wrong_condition: true
+                name: model_explanation_wrong
+                placeholder: Explain why you think the model made a mistake...
+                type: string
+              validate:
+              - labels:
+                - negative
+                - positive
+                - entailed
+                name: corrected_label
+                placeholder: Enter corrected label
+                type: multiclass
+                validated_label_condition: incorrect
+              - name: target_explanation
+                placeholder: Explain why your proposed target is correct...
+                type: string
+                validated_label_condition: incorrect
+              - name: flag_reason
+                placeholder: Enter the reason for flagging...
+                type: string
+                validated_label_condition: flagged
+              - name: validator_example_explanation
+                placeholder: Explain why the example is correct...
+                type: string
+                validated_label_condition: correct
+              - name: validator_model_explanation
+                placeholder: Enter what you think was done to try to trick the model...
+                type: string
+            model_wrong_metric:
+              reference_names:
+              - label
+              type: exact_match
+            output:
+            - name: label
+            - name: prob
+              reference_name: label
+              type: multiclass_probs
+            perf_metric:
+              reference_name: label
+              type: macro_f1
             """,
             cur_round=1,
             last_updated=db.sql.func.now(),
@@ -432,7 +436,7 @@ def update(credentials, tid):
             "hidden",
             "submitable",
             "create_endpoint",
-            "annotation_config_json",
+            "config_yaml",
         ):
             bottle.abort(
                 403,
@@ -440,20 +444,20 @@ def update(credentials, tid):
                 validate_non_fooling, num_matching_validations,
                 instructions_md, hidden, predictions_upload_instructions_md,
                 train_file_upload_instructions_md, submitable,
-                create_endpoint, annotation_config_json""",
+                create_endpoint, config_yaml""",
             )
 
     tm = TaskModel()
 
-    if "annotation_config_json" in data:
-        new_config = util.json_decode(data["annotation_config_json"])
+    if "config_yaml" in data:
+        new_config = yaml.load(data["config_yaml"], yaml.SafeLoader)
         try:
-            Task.verify_annotation_config(new_config)
+            Task.verify_config(new_config)
         except Exception as ex:
             logger.exception(str(ex))
             bottle.abort(400, str(ex))
         task = tm.get(tid)
-        old_config = util.json_decode(task.annotation_config_json)
+        old_config = yaml.load(task.config_yaml, yaml.SafeLoader)
         allowed_fields = ("aggregation_metric",)
 
         # ensure only allowed_fields changed
@@ -474,7 +478,7 @@ def update(credentials, tid):
 @_auth.requires_auth
 def activate(credentials, tid):
     data = bottle.request.json
-    if not util.check_fields(data, ["annotation_config_json"]):
+    if not util.check_fields(data, ["config_yaml"]):
         bottle.abort(400, "Missing data")
 
     ensure_owner_or_admin(tid, credentials["id"])
@@ -484,21 +488,19 @@ def activate(credentials, tid):
     if task.active:
         bottle.abort(
             403,
-            """Access denied. Cannot change the annotation_config_json of an
+            """Access denied. Cannot change the config_yaml of an
             already active task.""",
         )
 
     try:
-        Task.verify_annotation_config(util.json_decode(data["annotation_config_json"]))
+        Task.verify_config(yaml.load(data["config_yaml"], yaml.SafeLoader))
     except Exception as ex:
         logger.exception(str(ex))
         bottle.abort(400, str(ex))
 
-    tm.update(
-        tid, {"annotation_config_json": data["annotation_config_json"], "active": True}
-    )
+    tm.update(tid, {"config_yaml": data["config_yaml"], "active": True})
 
-    if len(util.json_decode(data["annotation_config_json"])["context"]) == 0:
+    if len(util.json_decode(data["config_yaml"])["context"]) == 0:
         # If there is no context in the config, then add an empty context.
         # The task owner should not need to do this, because we already know
         # that the context will be empty.

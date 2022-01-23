@@ -26,10 +26,10 @@ class ResponseInfo extends React.Component {
   }
   componentDidMount() {
     const metadata = initializeData(
-      this.props.annotationConfig.metadata.create.filter(
-        (annotationConfigObj) =>
-          annotationConfigObj.model_wrong_condition === undefined ||
-          annotationConfigObj.model_wrong_condition === this.state.modelWrong
+      this.props.taskConfig.metadata.create.filter(
+        (taskConfigObj) =>
+          taskConfigObj.model_wrong_condition === undefined ||
+          taskConfigObj.model_wrong_condition === this.state.modelWrong
       )
     );
     this.setState({
@@ -41,16 +41,16 @@ class ResponseInfo extends React.Component {
 
   collectMetadata() {
     const nonNullMetadata = {};
-    this.props.annotationConfig.metadata.create
+    this.props.taskConfig.metadata.create
       .filter(
-        (annotationConfigObj) =>
-          annotationConfigObj.model_wrong_condition === undefined ||
-          annotationConfigObj.model_wrong_condition === this.state.modelWrong
+        (taskConfigObj) =>
+          taskConfigObj.model_wrong_condition === undefined ||
+          taskConfigObj.model_wrong_condition === this.state.modelWrong
       )
-      .forEach((annotationConfigObj) => {
-        if (this.state.metadata[annotationConfigObj.name] !== null) {
-          nonNullMetadata[annotationConfigObj.name] =
-            this.state.metadata[annotationConfigObj.name];
+      .forEach((taskConfigObj) => {
+        if (this.state.metadata[taskConfigObj.name] !== null) {
+          nonNullMetadata[taskConfigObj.name] =
+            this.state.metadata[taskConfigObj.name];
         }
       });
     return nonNullMetadata;
@@ -132,101 +132,99 @@ class ResponseInfo extends React.Component {
       );
     }
 
-    const outputNames = this.props.annotationConfig.output.map(
+    const outputNames = this.props.taskConfig.output.map(
       (annotationConfObj) => annotationConfObj.name
     );
-    const targetNames = this.props.annotationConfig.input
+    const targetNames = this.props.taskConfig.input
       .map((annotationConfObj) => annotationConfObj.name)
       .filter((name) => outputNames.includes(name));
 
-    const modelInputInterface = this.props.annotationConfig.input
+    const modelInputInterface = this.props.taskConfig.input
       .filter(
         (annotatorConfigObj) => !outputNames.includes(annotatorConfigObj.name)
       )
-      .map((annotationConfigObj) => (
+      .map((taskConfigObj) => (
         <AnnotationComponent
-          displayName={annotationConfigObj.display_name}
+          displayName={taskConfigObj.display_name}
           className="name-display-secondary"
-          key={annotationConfigObj.name}
-          name={annotationConfigObj.name}
+          key={taskConfigObj.name}
+          name={taskConfigObj.name}
           data={this.props.obj.input}
-          type={annotationConfigObj.type}
-          constructorArgs={annotationConfigObj.constructor_args}
-          showName={
-            this.props.annotationConfig.input.length - targetNames.lengh > 1
-          }
+          type={taskConfigObj.type}
+          configObj={taskConfigObj}
+          showName={this.props.taskConfig.input.length - targetNames.lengh > 1}
         />
       ));
 
-    const targetInterface = this.props.annotationConfig.input
+    const targetInterface = this.props.taskConfig.input
       .filter((annotatorConfigObj) =>
         outputNames.includes(annotatorConfigObj.name)
       )
-      .map((annotationConfigObj) => (
+      .map((taskConfigObj) => (
         <AnnotationComponent
-          displayName={annotationConfigObj.display_name}
+          displayName={taskConfigObj.display_name}
           className="name-display-secondary"
-          key={annotationConfigObj.name}
-          name={annotationConfigObj.name}
+          key={taskConfigObj.name}
+          name={taskConfigObj.name}
           data={this.props.obj.input}
-          type={annotationConfigObj.type}
-          constructorArgs={annotationConfigObj.constructor_args}
+          type={taskConfigObj.type}
+          configObj={taskConfigObj}
           showName={targetNames.lengh > 1}
         />
       ));
 
     const outputToCompareToTargetInterface =
       this.props.obj.modelInTheLoop &&
-      this.props.annotationConfig.input
+      this.props.taskConfig.input
         .filter((annotatorConfigObj) =>
           targetNames.includes(annotatorConfigObj.name)
         )
-        .map((annotationConfigObj) => (
+        .map((taskConfigObj) => (
           <AnnotationComponent
-            displayName={annotationConfigObj.display_name}
+            displayName={taskConfigObj.display_name}
             className="name-display-secondary"
-            key={annotationConfigObj.name}
-            name={annotationConfigObj.name}
+            key={taskConfigObj.name}
+            name={taskConfigObj.name}
             data={this.props.obj.output}
-            type={annotationConfigObj.type}
-            constructorArgs={annotationConfigObj.constructor_args}
+            type={taskConfigObj.type}
+            configObj={taskConfigObj}
             showName={targetNames.lengh > 1}
           />
         ));
 
     const otherModelOutputInterface =
       this.props.obj.modelInTheLoop &&
-      this.props.annotationConfig.output
+      this.props.taskConfig.output
         .filter(
           (annotatorConfigObj) => !targetNames.includes(annotatorConfigObj.name)
         )
-        .map((annotationConfigObj) => (
+        .map((taskConfigObj) => (
           <AnnotationComponent
-            displayName={annotationConfigObj.display_name}
+            displayName={taskConfigObj.display_name}
             className="name-display-secondary"
-            key={annotationConfigObj.name}
-            name={annotationConfigObj.name}
+            key={taskConfigObj.name}
+            name={taskConfigObj.name}
             data={this.props.obj.output}
-            type={annotationConfigObj.type}
-            constructorArgs={annotationConfigObj.constructor_args}
+            type={taskConfigObj.type}
+            configObj={taskConfigObj}
             showName={outputNames.length - targetNames.lengh > 1}
           />
         ));
 
-    const metadataInterface = this.props.annotationConfig.metadata.create
+    const metadataInterface = this.props.taskConfig.metadata.create
       .filter(
-        (annotationConfigObj) =>
-          annotationConfigObj.model_wrong_condition === undefined ||
-          annotationConfigObj.model_wrong_condition === this.state.modelWrong
+        (taskConfigObj) =>
+          taskConfigObj.model_wrong_condition === undefined ||
+          taskConfigObj.model_wrong_condition === this.state.modelWrong
       )
-      .map((annotationConfigObj) => (
-        <div key={annotationConfigObj.name} className="mb-1 mt-1">
+      .map((taskConfigObj) => (
+        <div key={taskConfigObj.name} className="mb-1 mt-1">
           <AnnotationComponent
-            displayName={annotationConfigObj.display_name}
+            displayName={taskConfigObj.display_name}
             className="user-input-secondary"
-            key={annotationConfigObj.name}
+            key={taskConfigObj.name}
             create={true}
-            name={annotationConfigObj.name}
+            name={taskConfigObj.name}
             data={this.state.metadata}
             setData={(data) =>
               this.setState({
@@ -235,8 +233,8 @@ class ResponseInfo extends React.Component {
                 feedbackSaved: true,
               })
             }
-            type={annotationConfigObj.type}
-            constructorArgs={annotationConfigObj.constructor_args}
+            type={taskConfigObj.type}
+            configObj={taskConfigObj}
           />
         </div>
       ));

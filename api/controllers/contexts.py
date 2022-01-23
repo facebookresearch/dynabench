@@ -5,6 +5,7 @@
 from urllib.parse import parse_qs
 
 import bottle
+import yaml
 
 import common.auth as _auth
 import common.helpers as util
@@ -118,10 +119,10 @@ def do_upload(credentials, tid, rid):
             assert isinstance(
                 context_info["metadata"], dict
             ), "'metadata' must be a dict on every line of the jsonl"
-            for item in util.json_decode(task.annotation_config_json)["context"]:
+            for item in yaml.load(task.config_yaml, yaml.SafeLoader).get("context", []):
                 assert item["name"] in context_info, (
                     "for every line, 'context' must have all of the fields defined"
-                    + " in the task's annotation_config"
+                    + " in the task's config"
                 )
         except Exception as ex:
             bottle.abort(400, str(ex))

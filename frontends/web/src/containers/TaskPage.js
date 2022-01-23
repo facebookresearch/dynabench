@@ -29,6 +29,7 @@ import {
   TaskModelForkLeaderboard,
 } from "../components/TaskLeaderboard/TaskModelLeaderboardCardWrapper";
 import UserLeaderboardCard from "../components/TaskPageComponents/UserLeaderboardCard";
+const yaml = require("js-yaml");
 
 const chartSizes = {
   xs: { fontSize: 10 },
@@ -114,10 +115,8 @@ const TaskActionButtons = (props) => {
   }
 
   const hasTrainFileUpload =
-    props.task.annotation_config_json &&
-    JSON.parse(props.task.annotation_config_json).hasOwnProperty(
-      "train_file_metric"
-    );
+    props.task.config_yaml &&
+    yaml.load(props.task.config_yaml).hasOwnProperty("train_file_metric");
 
   return (
     <Nav className="my-4">
@@ -440,10 +439,10 @@ class TaskPage extends React.Component {
         "https://paperswithcode.com/task/sentiment-analysis/latest",
     };
     const hasTrainFileUpload =
-      this.state.task.annotation_config_json &&
-      JSON.parse(this.state.task.annotation_config_json).hasOwnProperty(
-        "train_file_metric"
-      );
+      this.state.task.config_yaml &&
+      yaml
+        .load(this.state.task.config_yaml)
+        .hasOwnProperty("train_file_metric");
     return (
       <OverlayProvider initiallyHide={true} delayMs="1700">
         <Container>

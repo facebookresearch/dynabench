@@ -9,10 +9,8 @@ export default function initializeData(annotationConfigObjs) {
   for (const annotationConfigObj of annotationConfigObjs) {
     if (annotationConfigObj.type === "target_label") {
       const random =
-        annotationConfigObj.constructor_args.labels[
-          Math.floor(
-            Math.random() * annotationConfigObj.constructor_args.labels.length
-          )
+        annotationConfigObj.labels[
+          Math.floor(Math.random() * annotationConfigObj.labels.length)
         ];
       data[annotationConfigObj.name] = random;
     } else {

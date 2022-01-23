@@ -26,11 +26,11 @@ const Multilabel = ({
   data,
   setData,
   name,
-  constructorArgs,
+  configObj,
   showName = true,
   inputReminder = false,
 }) => {
-  const labels = constructorArgs.labels;
+  const labels = configObj.labels;
 
   return (
     <>
@@ -71,15 +71,15 @@ const Multiclass = ({
   data,
   setData,
   name,
-  constructorArgs,
+  configObj,
   showName = true,
   inputReminder = false,
 }) => {
-  const [choice, setChoice] = useState(constructorArgs.placeholder);
-  const labels = constructorArgs.labels;
+  const [choice, setChoice] = useState(configObj.placeholder);
+  const labels = configObj.labels;
   // This ensures that the UI resets when the value goes back to null
-  if (data[name] === null && choice !== constructorArgs.placeholder) {
-    setChoice(constructorArgs.placeholder);
+  if (data[name] === null && choice !== configObj.placeholder) {
+    setChoice(configObj.placeholder);
   }
   return (
     <>
@@ -127,11 +127,11 @@ const TargetLabel = ({
   data,
   setData,
   name,
-  constructorArgs,
+  configObj,
   showName = true,
   inputReminder = false,
 }) => {
-  const labels = constructorArgs.labels;
+  const labels = configObj.labels;
   const [choice, setChoice] = useState(data[name]);
 
   // This ensures that the UI resets when the value externally changes
@@ -196,7 +196,7 @@ const String = ({
   data,
   setData,
   name,
-  constructorArgs,
+  configObj,
   showName = true,
   inputReminder = false,
 }) => {
@@ -217,7 +217,7 @@ const String = ({
         >
           <FormControl
             className={"rounded-1 thick-border p-3 " + className}
-            placeholder={constructorArgs.placeholder}
+            placeholder={configObj.placeholder}
             value={data[name] ? data[name] : ""}
             onChange={(event) => {
               data[name] = event.target.value;
@@ -238,7 +238,7 @@ const ContextStringSelection = ({
   data,
   setData,
   name,
-  constructorArgs,
+  configObj,
   showName = true,
   inputReminder = false,
 }) => {
@@ -264,11 +264,11 @@ const ContextStringSelection = ({
         >
           <h6 className={"spaced-header " + className}>
             Select {displayName ? displayName : name} in{" "}
-            {constructorArgs.reference_name}:
+            {configObj.reference_name}:
           </h6>
           <TokenAnnotator
             className="mb-1 p-3 light-gray-bg"
-            tokens={data[constructorArgs.reference_name].split(/\b/)}
+            tokens={data[configObj.reference_name].split(/\b/)}
             value={selectionInfo}
             onChange={(value) => {
               if (value.length > 0) {
@@ -288,7 +288,7 @@ const ContextStringSelection = ({
   );
 };
 
-const MulticlassProbs = ({ create, data, setData, name, constructorArgs }) => {
+const MulticlassProbs = ({ create, data, setData, name, configObj }) => {
   if (data[name]) {
     const labels = Object.keys(data[name]);
     const probs = labels.map((key) => data[name][key]);
@@ -297,7 +297,7 @@ const MulticlassProbs = ({ create, data, setData, name, constructorArgs }) => {
   return null;
 };
 
-const Conf = ({ create, data, setData, name, constructorArgs }) => {
+const Conf = ({ create, data, setData, name, configObj }) => {
   if (data[name]) {
     const labels = ["confidence", "uncertianty"];
     const probs = [data[name], 1 - data[name]];
@@ -338,7 +338,7 @@ const ImageComponent = ({
   data,
   setData,
   name,
-  constructorArgs,
+  configObj,
   showName = true,
   inputReminder = false,
 }) => {
@@ -398,7 +398,7 @@ const AnnotationComponent = ({
   setData,
   name,
   type,
-  constructorArgs,
+  configObj,
   showName = true,
   inputReminder = false,
 }) => {
@@ -412,7 +412,7 @@ const AnnotationComponent = ({
           name={name}
           data={data}
           setData={setData}
-          constructorArgs={constructorArgs}
+          configObj={configObj}
           showName={showName}
           inputReminder={inputReminder}
         />
@@ -426,7 +426,7 @@ const AnnotationComponent = ({
           name={name}
           data={data}
           setData={setData}
-          constructorArgs={constructorArgs}
+          configObj={configObj}
           showName={showName}
           inputReminder={inputReminder}
         />
@@ -440,7 +440,7 @@ const AnnotationComponent = ({
           name={name}
           data={data}
           setData={setData}
-          constructorArgs={constructorArgs}
+          configObj={configObj}
           showName={showName}
           inputReminder={inputReminder}
         />
@@ -454,7 +454,7 @@ const AnnotationComponent = ({
           name={name}
           data={data}
           setData={setData}
-          constructorArgs={constructorArgs}
+          configObj={configObj}
           showName={showName}
           inputReminder={inputReminder}
         />
@@ -468,7 +468,7 @@ const AnnotationComponent = ({
           name={name}
           data={data}
           setData={setData}
-          constructorArgs={constructorArgs}
+          configObj={configObj}
           showName={showName}
           inputReminder={inputReminder}
         />
@@ -482,7 +482,7 @@ const AnnotationComponent = ({
           name={name}
           data={data}
           setData={setData}
-          constructorArgs={constructorArgs}
+          configObj={configObj}
           showName={showName}
           inputReminder={inputReminder}
         />
@@ -494,7 +494,7 @@ const AnnotationComponent = ({
           name={name}
           data={data}
           setData={setData}
-          constructorArgs={constructorArgs}
+          configObj={configObj}
           showName={showName}
           inputReminder={inputReminder}
         />
@@ -506,7 +506,7 @@ const AnnotationComponent = ({
           name={name}
           data={data}
           setData={setData}
-          constructorArgs={constructorArgs}
+          configObj={configObj}
           showName={showName}
           inputReminder={inputReminder}
         />
