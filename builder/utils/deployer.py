@@ -9,12 +9,12 @@ import subprocess
 import sys
 import tempfile
 import time
-import yaml
 from pathlib import Path
 
 import boto3
 import botocore
 import sagemaker
+import yaml
 from dynalab_cli.utils import SetupConfigHandler
 from sagemaker.model import Model
 from sagemaker.predictor import Predictor
