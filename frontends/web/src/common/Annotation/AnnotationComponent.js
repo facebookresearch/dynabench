@@ -75,44 +75,39 @@ const Multiclass = ({
   showName = true,
   inputReminder = false,
 }) => {
-  const [choice, setChoice] = useState(configObj.placeholder);
   const labels = configObj.labels;
-  // This ensures that the UI resets when the value goes back to null
-  if (data[name] === null && choice !== configObj.placeholder) {
-    setChoice(configObj.placeholder);
-  }
+  const [choice, setChoice] = useState(
+    configObj.as_goal_message ? data[name] : configObj.placeholder
+  );
+  if (configObj.as_goal_message) {
+    // This ensures that the UI resets when the value externally changes
+    if (choice !== data[name]) {
+      setChoice(data[name]);
+    }
 
-  //The following consts are only used for the case where as_goal_message is true.
-  const [labelChoice, setLabelChoice] = useState(data[name]);
-
-  // This ensures that the UI resets when the value externally changes
-  if (labelChoice !== data[name]) {
-    setChoice(data[name]);
-  }
-
-  const vowels = ["a", "e", "i", "o", "u"];
-  const indefiniteArticle = vowels.indexOf(choice[0]) >= 0 ? "an" : "a";
-  const otherLabels = labels.filter((label) => label !== choice);
-  const otherLabelsStr =
-    otherLabels.slice(0, otherLabels.length - 2).join(", ") +
-    otherLabels.slice(otherLabels.length - 2, otherLabels.length).join(" or ");
-
-  return (
-    <>
-      {!create ? (
-        <>
-          {showName && (
-            <h6 className={"spaced-header " + className}>
-              {displayName ? displayName : name}:
-            </h6>
-          )}
-          {data[name]}
-        </>
-      ) : (
-        <div
-          className={inputReminder ? "p-2 border rounded border-danger" : ""}
-        >
-          {configObj.as_goal_message ? (
+    const vowels = ["a", "e", "i", "o", "u"];
+    const indefiniteArticle = vowels.indexOf(choice[0]) >= 0 ? "an" : "a";
+    const otherLabels = labels.filter((label) => label !== choice);
+    const otherLabelsStr =
+      otherLabels.slice(0, otherLabels.length - 2).join(", ") +
+      otherLabels
+        .slice(otherLabels.length - 2, otherLabels.length)
+        .join(" or ");
+    return (
+      <>
+        {!create ? (
+          <>
+            {showName && (
+              <h6 className={"spaced-header " + className}>
+                {displayName ? displayName : name}:
+              </h6>
+            )}
+            {data[name]}
+          </>
+        ) : (
+          <div
+            className={inputReminder ? "p-2 border rounded border-danger" : ""}
+          >
             <InputGroup className="align-items-center">
               <i className="fas fa-flag-checkered mr-1"></i>
               Your goal: enter {indefiniteArticle}
@@ -136,15 +131,38 @@ const Multiclass = ({
               </DropdownButton>
               example that fools the model into predicting {otherLabelsStr}.
             </InputGroup>
-          ) : (
-            <DropdownButton variant="light" className="p-1" title={labelChoice}>
+          </div>
+        )}
+      </>
+    );
+  } else {
+    // This ensures that the UI resets when the value goes back to null
+    if (data[name] === null && choice !== configObj.placeholder) {
+      setChoice(configObj.placeholder);
+    }
+    return (
+      <>
+        {!create ? (
+          <>
+            {showName && (
+              <h6 className={"spaced-header " + className}>
+                {displayName ? displayName : name}:
+              </h6>
+            )}
+            {data[name]}
+          </>
+        ) : (
+          <div
+            className={inputReminder ? "p-2 border rounded border-danger" : ""}
+          >
+            <DropdownButton variant="light" className="p-1" title={choice}>
               {labels
-                .filter((label) => label !== labelChoice)
+                .filter((label) => label !== choice)
                 .map((label, index) => (
                   <Dropdown.Item
                     key={index}
                     onClick={() => {
-                      setLabelChoice(label);
+                      setChoice(label);
                       data[name] = label;
                       setData(data);
                     }}
@@ -155,11 +173,11 @@ const Multiclass = ({
                   </Dropdown.Item>
                 ))}
             </DropdownButton>
-          )}
-        </div>
-      )}
-    </>
-  );
+          </div>
+        )}
+      </>
+    );
+  }
 };
 
 const String = ({
