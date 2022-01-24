@@ -69,7 +69,7 @@ class ModelDeployer:
             config_handler = SetupConfigHandler(self.name)
             config = config_handler.load_config()
             if decen:
-                assert (decen_task_info is not None)
+                assert decen_task_info is not None
                 logger.info("Decen task ... parsing task from message")
                 task_decoded = json.loads(decen_task_info)
                 task_code = task_decoded["task_code"]
@@ -392,7 +392,7 @@ class ModelDeployer:
 
     def deploy_model(self, image_ecr_path, model_s3_path):
         logger.info(f"Deploying model {self.name} to Sagemaker")
- 
+
         torchserve_model = Model(
             model_data=model_s3_path,
             image_uri=image_ecr_path,
@@ -425,7 +425,9 @@ class ModelDeployer:
             if not endpoint_only:
                 self.delete_existing_endpoints()
                 os.chdir(self.root_dir)
-                setup_config_handler, setup_config, s3_dir = self.load_model(s3_uri, decen=decen, decen_task_info=decen_task_info)
+                setup_config_handler, setup_config, s3_dir = self.load_model(
+                    s3_uri, decen=decen, decen_task_info=decen_task_info
+                )
                 image_ecr_path = self.build_and_push_docker(
                     setup_config_handler, setup_config
                 )

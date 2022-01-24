@@ -68,7 +68,9 @@ class MetricsComputer:
         self.dump()
 
         # Don't change model's evaluation status if it has failed.
-        if ("evaluation_status" not in model_json) or (model_json["evaluation_status"] != "failed"):
+        if ("evaluation_status" not in model_json) or (
+            model_json["evaluation_status"] != "failed"
+        ):
             model_done_evaluating = True
             for other_job in self._waiting + self._computing:
                 if other_job.model_id == job.model_id:

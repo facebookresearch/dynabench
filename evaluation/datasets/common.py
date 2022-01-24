@@ -38,7 +38,7 @@ class BaseDataset:
         longdesc=None,
         source_url=None,
         db_connection_avail=True,
-        db_connection_not_avail_task_info=None
+        db_connection_not_avail_task_info=None,
     ):
         self.name = name
         self.round_id = round_id
@@ -51,7 +51,7 @@ class BaseDataset:
             self.task = tm.getByTaskCode(task_code)
         else:
             self.task = db_connection_not_avail_task_info
-        
+
         self.s3_url = self._get_data_s3_url()
         self.longdesc = longdesc
         self.source_url = source_url
