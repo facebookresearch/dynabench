@@ -351,3 +351,23 @@ def load_models_ids_for_task_owners():
     model_ids_list = r.json()
 
     return model_ids_list
+
+
+def api_download_dataset(dataset_id, perturb_prefix, prod=False):
+    data = {"dataset_id": dataset_id, "perturb_prefix": perturb_prefix}
+
+    with requests.get(
+        f"{DYNABENCH_API}/datasets/{dataset_id}/download",
+        data=json.dumps(util.wrap_data_with_signature(data, decen_eaas_secret)),
+        headers={"Content-Type": "application/json"},
+        verify=prod,
+        stream=True,
+    ) as r:
+        download_filename = (
+            f"/tmp/datasetdownloadid_{dataset_id}_perturbprefix_{perturb_prefix}.tar.gz"
+        )
+        r.raise_for_status()
+        with open(download_filename, "wb") as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
+        return download_filename
