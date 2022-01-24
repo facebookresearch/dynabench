@@ -98,6 +98,6 @@ def send(
         logger.info("Email send successful (%s)", contacts)
         return True
 
-    except Exception as message:
-        logger.exception(" Mail sending failed : (%s)", message)
+    except Exception:
+        logger.exception(" Mail sending failed")
         return False

@@ -92,6 +92,18 @@ def requires_auth_or_turk(f):
     return decorated
 
 
+def turk_endpoint(f):
+    def decorated(*args, **kwargs):
+        if bottle.request.headers.get("Authorization") == "turk":
+            # add Access Control as *
+            bottle.default_app()
+            bottle.response.headers["Access-Control-Allow-Origin"] = "*"
+
+        return f(*args, **kwargs)
+
+    return decorated
+
+
 def auth_optional(f):
     def decorated(*args, **kwargs):
         try:

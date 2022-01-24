@@ -16,6 +16,13 @@ repos:
         args: ['--maxkb=500']
     -   id: end-of-file-fixer
 
+-   repo: local
+    hooks:
+    -   id: detect-aws
+        name: Detect AWS Credentials
+        entry: python -m detect_aws_credentials
+        language: system
+
 -   repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.1.7
     hooks:

@@ -13,6 +13,7 @@ import common.auth as _auth
 import common.helpers as util
 import common.mail_service as mail
 from common.logging import logger
+from models.context import Context
 from models.dataset import Dataset, DatasetModel
 from models.leaderboard_configuration import LeaderboardConfigurationModel
 from models.leaderboard_snapshot import LeaderboardSnapshotModel
@@ -453,8 +454,8 @@ def update(credentials, tid):
         try:
             Task.verify_annotation_config(new_config)
         except Exception as ex:
-            logger.exception("Invalid annotation config: (%s)" % (ex))
-            bottle.abort(400, "Invalid annotation config")
+            logger.exception(str(ex))
+            bottle.abort(400, str(ex))
         task = tm.get(tid)
         old_config = util.json_decode(task.annotation_config_json)
         allowed_fields = ("aggregation_metric",)
@@ -494,12 +495,30 @@ def activate(credentials, tid):
     try:
         Task.verify_annotation_config(util.json_decode(data["annotation_config_json"]))
     except Exception as ex:
-        logger.exception("Invalid annotation config: (%s)" % (ex))
-        bottle.abort(400, "Invalid annotation config")
+        logger.exception(str(ex))
+        bottle.abort(400, str(ex))
 
     tm.update(
         tid, {"annotation_config_json": data["annotation_config_json"], "active": True}
     )
+
+    if len(util.json_decode(data["annotation_config_json"])["context"]) == 0:
+        # If there is no context in the config, then add an empty context.
+        # The task owner should not need to do this, because we already know
+        # that the context will be empty.
+        rm = RoundModel()
+        round = rm.getByTidAndRid(tid, task.cur_round)
+        r_realid = round.id
+        context = Context(
+            r_realid=r_realid,
+            context_json=util.json_encode({}),
+            metadata_json=util.json_encode({}),
+            tag=None,
+        )
+
+        rm.dbs.add(context)
+        rm.dbs.flush()
+        rm.dbs.commit()
 
     return util.json_encode({"success": "ok"})
 
@@ -519,6 +538,7 @@ def get_submitable_tasks():
 
 
 @bottle.get("/tasks/<task_id_or_code>")
+@_auth.turk_endpoint
 def get_task(task_id_or_code):
     t = TaskModel()
     task = t.getWithRoundAndMetricMetadata(task_id_or_code)
@@ -1088,6 +1108,7 @@ def get_secret_for_task_id(tid):
     ret = [tup[0] for tup in tups]
     return ret
 
+
 @bottle.get("/tasks/listdatasets")
 def decen_eaas_list_datasets():
     dm = DatasetModel()
@@ -1122,7 +1143,7 @@ def decen_eaas_list_datasets():
 
         resp = {
             "datasets_metadata": json_encoded_datasets,
-            "task_metadata": util.json_encode(tm.to_dict(task))
+            "task_metadata": util.json_encode(tm.to_dict(task)),
         }
 
         return util.json_encode(resp)

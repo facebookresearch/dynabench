@@ -14,6 +14,11 @@ class AccessTypeEnum(enum.Enum):
     hidden = "hidden"
 
 
+class LogAccessTypeEnum(enum.Enum):
+    owner = "owner"
+    user = "user"
+
+
 class Dataset(Base):
     __tablename__ = "datasets"
     __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_general_ci"}
@@ -28,6 +33,9 @@ class Dataset(Base):
     longdesc = db.Column(db.Text)
     source_url = db.Column(db.Text)
     access_type = db.Column(db.Enum(AccessTypeEnum), default=AccessTypeEnum.scoring)
+    log_access_type = db.Column(
+        db.Enum(LogAccessTypeEnum), default=LogAccessTypeEnum.owner
+    )
 
     def __repr__(self):
         return f"<Dataset {self.name}>"
@@ -35,7 +43,10 @@ class Dataset(Base):
     def to_dict(self, safe=True):
         d = {}
         for column in self.__table__.columns:
-            if column.name == "access_type" and getattr(self, column.name) is not None:
+            if (
+                column.name in ("access_type", "log_access_type")
+                and getattr(self, column.name) is not None
+            ):
                 d[column.name] = getattr(self, column.name).name
             else:
                 d[column.name] = getattr(self, column.name)

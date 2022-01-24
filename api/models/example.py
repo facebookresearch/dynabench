@@ -107,7 +107,8 @@ class ExampleModel(BaseModel):
         all_user_annotation_data = {}
         all_user_annotation_data.update(context)
         all_user_annotation_data.update(input)
-        if not task.verify_annotation(all_user_annotation_data):
+        verified, _ = task.verify_annotation(all_user_annotation_data)
+        if not verified:
             logger.error("Improper formatting in user annotation components")
             return False
 
@@ -125,7 +126,8 @@ class ExampleModel(BaseModel):
             all_model_annotation_data.update(input)
             all_model_annotation_data.update(output)  # this overwrites any user
             # inputs that are also model outputs
-            if not task.verify_annotation(all_model_annotation_data):
+            verified, _ = task.verify_annotation(all_model_annotation_data)
+            if not verified:
                 logger.error("Improper formatting in model annotation components")
                 return False
 

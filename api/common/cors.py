@@ -7,6 +7,20 @@ import urllib
 import bottle
 
 
+# Add Access-Control-Allow-Origin for turk endpoints OPTIONS
+@bottle.route("/contexts/<tid:int>/<rid:int>/min", method="OPTIONS")
+@bottle.route("/contexts/<tid:int>/<rid:int>", method="OPTIONS")
+@bottle.route("/examples/<tid:int>/<rid:int>", method="OPTIONS")
+@bottle.route("/examples/<eid:int>", method="OPTIONS")
+@bottle.route("/examples", method="OPTIONS")
+@bottle.route("/tasks/<task_id_or_code>", method="OPTIONS")
+@bottle.route("/validations/<eid:int>", method="OPTIONS")
+def turk_preflight(**args):
+    bottle.default_app()
+    bottle.response.headers["Access-Control-Allow-Origin"] = "*"
+    add_cors_headers()
+
+
 @bottle.route("/<:re:.*>", method="OPTIONS")
 def enable_cors_generic_route():
     add_cors_headers()
@@ -32,18 +46,24 @@ def add_cors_headers():
         valid_hostnames = ["localhost"]
 
     parsed_origin_url = urllib.parse.urlparse(bottle.request.get_header("origin"))
-
-    if (
+    req_from_known_hostname = (
         hasattr(parsed_origin_url, "hostname")
         and parsed_origin_url.hostname is not None
         and (parsed_origin_url.hostname in valid_hostnames)
-    ):
+    )
+
+    if req_from_known_hostname:
         origin = bottle.request.get_header("origin")
     else:
         origin = "https://dynabench.org"
 
     bottle.default_app()
-    bottle.response.headers["Access-Control-Allow-Origin"] = origin
+
+    if (req_from_known_hostname) or (
+        "Access-Control-Allow-Origin" not in bottle.response.headers
+    ):
+        bottle.response.headers["Access-Control-Allow-Origin"] = origin
+
     bottle.response.headers[
         "Access-Control-Allow-Methods"
     ] = "GET, POST, PUT, DELETE, OPTIONS"

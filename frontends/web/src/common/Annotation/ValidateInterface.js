@@ -430,10 +430,6 @@ class ValidateInterface extends React.Component {
               <h2 className="task-page-header d-block ml-0 mt-0 text-reset">
                 Validate examples
               </h2>
-              <p>
-                If a model was fooled, we need to make sure that the example is
-                correct.
-              </p>
             </div>
             {this.state.annotationConfig?.content_warning && (
               <p className="mt-3 p-3 light-red-bg rounded white-color">

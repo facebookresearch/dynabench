@@ -18,6 +18,7 @@ from .tasks import ensure_owner_or_admin
 
 @bottle.get("/contexts/<tid:int>/<rid:int>")
 @bottle.get("/contexts/<tid:int>/<rid:int>/min")
+@_auth.turk_endpoint
 def getContext(tid, rid):
     query_dict = parse_qs(bottle.request.query_string)
     tags = _getTags(query_dict)
@@ -98,18 +99,36 @@ def do_upload(credentials, tid, rid):
             util.json_decode(line)
             for line in upload.file.read().decode("utf-8").splitlines()
         ]
-        for context_info in parsed_upload_data:
-            if (
-                "context" not in context_info
-                or "tag" not in context_info
-                or "metadata" not in context_info
-                or not task.verify_annotation(context_info["context"])
-            ):
-                bottle.abort(400, "Invalid contexts file")
 
     except Exception as ex:
         logger.exception(ex)
-        bottle.abort(400, "Invalid contexts file")
+        bottle.abort(400, "Could not parse contexts file. Is it a utf-8 jsonl?")
+
+    for context_info in parsed_upload_data:
+        try:
+            assert (
+                "context" in context_info
+            ), "there must be a field called 'context' on every line of the jsonl"
+            assert (
+                "tag" in context_info
+            ), "there must be a field called 'tag' on every line of the jsonl"
+            assert (
+                "metadata" in context_info
+            ), "there must be a field called 'metadata' on every line of the jsonl"
+            assert isinstance(
+                context_info["metadata"], dict
+            ), "'metadata' must be a dict on every line of the jsonl"
+            for item in util.json_decode(task.annotation_config_json)["context"]:
+                assert item["name"] in context_info, (
+                    "for every line, 'context' must have all of the fields defined"
+                    + " in the task's annotation_config"
+                )
+        except Exception as ex:
+            bottle.abort(400, str(ex))
+
+        verified, message = task.verify_annotation(context_info["context"])
+        if not verified:
+            bottle.abort(400, message)
 
     rm = RoundModel()
     round = rm.getByTidAndRid(tid, rid)

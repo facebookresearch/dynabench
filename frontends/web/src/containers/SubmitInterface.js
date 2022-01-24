@@ -129,7 +129,7 @@ class SubmitInterface extends React.Component {
           },
           (error) => {
             console.log(error);
-            setFieldValue(
+            setFieldError(
               "accept",
               "Predictions could not be added (" + error.error + ")"
             );

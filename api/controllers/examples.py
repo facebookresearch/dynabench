@@ -60,6 +60,7 @@ def get_random_filtered_example(
 
 @bottle.get("/examples/<tid:int>/<rid:int>")
 @_auth.requires_auth_or_turk
+@_auth.turk_endpoint
 def get_random_example(credentials, tid, rid):
     query_dict = parse_qs(bottle.request.query_string)
     tags = None
@@ -81,13 +82,20 @@ def get_random_example(credentials, tid, rid):
             tags=tags,
         )
     else:
+        curr_uid = None
+
+        if "annotator_id" in query_dict and isinstance(
+            query_dict["annotator_id"], list
+        ):
+            curr_uid = query_dict["annotator_id"][0]
+
         example = em.getRandom(
             round.id,
             task.validate_non_fooling,
             task.num_matching_validations,
             n=1,
             tags=tags,
-            my_uid=query_dict["annotator_id"][0],
+            my_uid=curr_uid,
             turk=True,
         )
     if not example:
@@ -122,6 +130,7 @@ def get_example_metadata(credentials, eid):
 
 @bottle.put("/examples/<eid:int>")
 @_auth.requires_auth_or_turk
+@_auth.turk_endpoint
 def update_example(credentials, eid):
     try:
         em = ExampleModel()
@@ -172,12 +181,13 @@ def update_example(credentials, eid):
             all_user_annotation_data.update(util.json_decode(context.context_json))
             all_user_annotation_data.update(util.json_decode(example.input_json))
             all_user_annotation_data.update(data["metadata"])
-            if (
-                not TaskModel()
+            verified, message = (
+                TaskModel()
                 .get(example.context.round.tid)
                 .verify_annotation(all_user_annotation_data)
-            ):
-                bottle.abort(403, "metadata_jon is not properly formatted")
+            )
+            if not verified:
+                bottle.abort(403, message)
             # Make sure to keep fields in the metadata_json from before if they aren't
             # in the new metadata_json
             if example.metadata_json is not None:
@@ -248,6 +258,7 @@ def evaluate_model_correctness():
 
 @bottle.post("/examples")
 @_auth.requires_auth_or_turk
+@_auth.turk_endpoint
 def post_example(credentials):
     data = bottle.request.json
     if not util.check_fields(

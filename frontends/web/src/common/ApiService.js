@@ -28,6 +28,7 @@ export default class ApiService {
     this.setMturkMode = this.setMturkMode.bind(this);
     this.updating_already = false;
     this.mode = "normal";
+    this.exportDatasetLog = this.exportDatasetLog.bind(this);
   }
 
   setMturkMode() {
@@ -80,13 +81,18 @@ export default class ApiService {
   }
 
   updateExample(id, data, uid = null) {
+    const includeCredentials = this.mode !== "mturk";
     if (this.mode === "mturk") {
       data.uid = uid;
     }
-    return this.fetch(`${this.domain}/examples/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    });
+    return this.doFetch(
+      `${this.domain}/examples/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(data),
+      },
+      includeCredentials
+    );
   }
 
   updateUser(userId, body) {
@@ -271,9 +277,14 @@ export default class ApiService {
   }
 
   getTask(idOrCode) {
-    return this.fetch(`${this.domain}/tasks/${idOrCode}`, {
-      method: "GET",
-    });
+    const includeCredentials = this.mode !== "mturk";
+    return this.doFetch(
+      `${this.domain}/tasks/${idOrCode}`,
+      {
+        method: "GET",
+      },
+      includeCredentials
+    );
   }
 
   getTaskRound(id, rid) {
@@ -283,7 +294,9 @@ export default class ApiService {
   }
 
   getRandomContext(tid, rid, tags = [], method = "min") {
-    return this.fetch(
+    const includeCredentials = this.mode !== "mturk";
+
+    return this.doFetch(
       `${
         this.domain
       }/contexts/${tid}/${rid}/${method}?tags=${encodeURIComponent(
@@ -291,7 +304,8 @@ export default class ApiService {
       )}`,
       {
         method: "GET",
-      }
+      },
+      includeCredentials
     );
   }
 
@@ -302,18 +316,22 @@ export default class ApiService {
     context_tags = [],
     annotator_id = null
   ) {
+    const includeCredentials = this.mode !== "mturk";
+
     let annotator_query = annotator_id ? `&annotator_id=${annotator_id}` : "";
     let context_tags_query =
       context_tags.length > 0
         ? `&context_tags=${encodeURIComponent(context_tags.join("|"))}`
         : "";
-    return this.fetch(
+    return this.doFetch(
       `${this.domain}/examples/${tid}/${rid}?tags=${encodeURIComponent(
         tags.join("|")
       )}${context_tags_query}${annotator_query}`,
       {
         method: "GET",
-      }
+      },
+      {},
+      includeCredentials
     );
   }
 
@@ -431,6 +449,15 @@ export default class ApiService {
     });
   }
 
+  exportDatasetLog(mid, did) {
+    return this.fetch(`${this.domain}/models/latest_job_log/${mid}/${did}`, {
+      method: "GET",
+    }).then((res) => {
+      res = new TextEncoder("utf-8").encode(JSON.stringify(res));
+      return download(res, "log.json", "text/json");
+    });
+  }
+
   getExampleMetadata(id) {
     return this.fetch(`${this.domain}/examples/${id}/metadata`, {
       method: "GET",
@@ -459,17 +486,23 @@ export default class ApiService {
   }
 
   retractExample(id, uid = null) {
+    const includeCredentials = this.mode !== "mturk";
     let obj = { retracted: true };
     if (this.mode === "mturk") {
       obj.uid = uid;
     }
-    return this.fetch(`${this.domain}/examples/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(obj),
-    });
+    return this.doFetch(
+      `${this.domain}/examples/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(obj),
+      },
+      includeCredentials
+    );
   }
 
   validateExample(id, label, mode, metadata = {}, uid = null) {
+    const includeCredentials = this.mode !== "mturk";
     let obj = {
       label: label,
       mode: mode,
@@ -478,10 +511,14 @@ export default class ApiService {
     if (this.mode === "mturk") {
       obj.uid = uid;
     }
-    return this.fetch(`${this.domain}/validations/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(obj),
-    });
+    return this.doFetch(
+      `${this.domain}/validations/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(obj),
+      },
+      includeCredentials
+    );
   }
 
   flagExample(id, uid = null) {
@@ -626,6 +663,12 @@ export default class ApiService {
     });
   }
 
+  getAvailableDatasetLogAccessTypes() {
+    return this.fetch(`${this.domain}/datasets/get_log_access_types`, {
+      method: "GET",
+    });
+  }
+
   getDatasets(tid) {
     return this.fetch(`${this.domain}/tasks/datasets/${tid}`, {
       method: "GET",
@@ -709,22 +752,27 @@ export default class ApiService {
     tag = null,
     modelEndpointName = null
   ) {
-    return this.fetch(`${this.domain}/examples`, {
-      method: "POST",
-      body: JSON.stringify({
-        tid: tid,
-        rid: rid,
-        cid: cid,
-        uid: uid,
-        input: input,
-        output: output,
-        model_signature: modelSignature,
-        metadata: metadata,
-        model_wrong: modelWrong,
-        tag: tag,
-        model_endpoint_name: modelEndpointName,
-      }),
-    });
+    const includeCredentials = this.mode !== "mturk";
+    return this.doFetch(
+      `${this.domain}/examples`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          tid: tid,
+          rid: rid,
+          cid: cid,
+          uid: uid,
+          input: input,
+          output: output,
+          model_signature: modelSignature,
+          metadata: metadata,
+          model_wrong: modelWrong,
+          tag: tag,
+          model_endpoint_name: modelEndpointName,
+        }),
+      },
+      includeCredentials
+    );
   }
 
   createLeaderboardConfiguration(tid, name, configuration_json, description) {
@@ -888,6 +936,7 @@ export default class ApiService {
 
   doFetch(url, options, includeCredentials = false) {
     const token = this.mode !== "mturk" ? this.getToken() : null;
+
     const headers = {
       Accept: "application/json",
       "Content-Type": "application/json",

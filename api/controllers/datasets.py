@@ -15,20 +15,32 @@ import common.auth as _auth
 import common.helpers as util
 from common.config import config
 from common.logging import logger
-from models.dataset import AccessTypeEnum, DatasetModel
+from models.dataset import AccessTypeEnum, DatasetModel, LogAccessTypeEnum
 from models.score import ScoreModel
 from models.task import AnnotationVerifierMode, TaskModel
 
 from .tasks import ensure_owner_or_admin, get_secret_for_task_id
 
 
+from utils.helpers import (  # noqa isort:skip
+    decen_send_eval_download_dataset_request,
+    decen_send_reload_dataset_request,
+    get_data_s3_path,
+    send_eval_request,
+)
+
+
 sys.path.append("../evaluation")  # noqa isort:skip
-from utils.helpers import get_data_s3_path, send_eval_request, decen_send_eval_download_dataset_request, decen_send_reload_dataset_request  # noqa isort:skip
 
 
 @bottle.get("/datasets/get_access_types")
 def get_access_types():
     return util.json_encode([enum.name for enum in AccessTypeEnum])
+
+
+@bottle.get("/datasets/get_log_access_types")
+def get_log_access_types():
+    return util.json_encode([enum.name for enum in LogAccessTypeEnum])
 
 
 @bottle.put("/datasets/update/<did:int>")
@@ -40,9 +52,18 @@ def update(credentials, did):
 
     data = bottle.request.json
     for field in data:
-        if field not in ("longdesc", "rid", "source_url", "access_type"):
+        if field not in (
+            "longdesc",
+            "rid",
+            "source_url",
+            "access_type",
+            "log_access_type",
+        ):
             bottle.abort(
-                403, """Can only modify longdesc, round, source_url, access_type"""
+                403,
+                """
+            Can only modify longdesc, round, source_url, access_type, log_access_type
+            """,
             )
 
     dm.update(did, data)
@@ -95,7 +116,7 @@ def delete(credentials, did):
             "aws_secret_access_key": config["aws_secret_access_key"],
             "aws_region": config["aws_region"],
         }
-        
+
         decen_send_reload_dataset_request(task=task, config=eval_config, logger=logger)
 
     return util.json_encode({"success": "ok"})
@@ -138,19 +159,33 @@ def create(credentials, tid, name):
                 util.json_decode(line)
                 for line in upload.file.read().decode("utf-8").splitlines()
             ]
-            for io in parsed_upload:
-                if (
-                    not task.verify_annotation(
-                        io, mode=AnnotationVerifierMode.dataset_upload
-                    )
-                    or "uid" not in io
-                ):
-                    bottle.abort(400, "Invalid dataset file")
-            parsed_uploads.append((parsed_upload, perturb_prefix))
-
         except Exception as ex:
             logger.exception(ex)
-            bottle.abort(400, "Invalid dataset file")
+            bottle.abort(400, "Could not parse dataset file. Is it a utf-8 jsonl?")
+
+        for io in parsed_upload:
+            try:
+                assert "uid" in io, "'uid' must be present for every example"
+                assert (
+                    "tags" in io
+                ), "there must be a field called 'tags' on every line of the jsonl"
+                assert isinstance(
+                    io["tags"], list
+                ), "'tags' must be a list on every line of the jsonl"
+                if perturb_prefix is not None:
+                    assert "input_id" in io, (
+                        "'input_id' must be present for every example for"
+                        + " perturbed dataset uploads"
+                    )
+            except Exception as ex:
+                bottle.abort(400, str(ex))
+
+            verified, message = task.verify_annotation(
+                io, mode=AnnotationVerifierMode.dataset_upload
+            )
+            if not verified:
+                bottle.abort(400, message)
+        parsed_uploads.append((parsed_upload, perturb_prefix))
 
     # Upload to s3
 
@@ -175,7 +210,11 @@ def create(credentials, tid, name):
                     get_data_s3_path(task.task_code, name + ".jsonl", perturb_prefix),
                 )
                 if task.is_decen_task:
-                    s3_paths.append(get_data_s3_path(task.task_code, name + ".jsonl", perturb_prefix))
+                    s3_paths.append(
+                        get_data_s3_path(
+                            task.task_code, name + ".jsonl", perturb_prefix
+                        )
+                    )
                 os.remove(tmp.name)
                 if response:
                     logger.info(response)
@@ -199,7 +238,6 @@ def create(credentials, tid, name):
     else:
         updated_existing_dataset = True
 
-   
     if task.is_decen_task:
 
         # Evaluate all models
@@ -244,7 +282,6 @@ def create(credentials, tid, name):
     )
 
 
-
 @bottle.get("/datasets/<did:int>/download")
 def download_dataset(did):
     dm = DatasetModel()
@@ -276,7 +313,7 @@ def download_dataset(did):
             aws_secret_access_key=config["aws_secret_access_key"],
             region_name=config["aws_region"],
         )
-        
+
         s3_path = get_data_s3_path(task.task_code, name + ".jsonl", perturb_prefix)
         temp_file_path = name + ".jsonl"
         final_filepath = f"/tmp/{temp_file_path}"

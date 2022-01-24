@@ -19,7 +19,7 @@ import common.mail_service as mail
 from common.config import config
 from common.logging import logger
 from models.badge import BadgeModel
-from models.dataset import AccessTypeEnum, DatasetModel
+from models.dataset import AccessTypeEnum, DatasetModel, LogAccessTypeEnum
 from models.model import DeploymentStatusEnum, EvaluationStatusEnum, ModelModel
 from models.notification import NotificationModel
 from models.round import RoundModel
@@ -38,10 +38,101 @@ from utils.helpers import (  # noqa isort:skip
     send_eval_request,  # noqa isort:skip
     update_metadata_json_string,  # noqa isort:skip
     dotdict,  # noqa isort:skip
+    generate_job_name,  # noqa isort:skip
 )  # noqa isort:skip
 
 sys.path.append("../evaluation")  # noqa isort:skip
 from metrics.metric_getters import get_job_metrics  # noqa isort:skip
+
+
+@bottle.get("/models/latest_job_log/<mid:int>/<did:int>")
+@_auth.requires_auth
+def get_latest_job_log(credentials, mid, did):
+    u = UserModel()
+    uid = credentials["id"]
+    user = u.get(uid)
+    if not user:
+        logger.error("Invalid user detail for id (%s)" % (uid))
+        bottle.abort(404, "User information not found")
+
+    mm = ModelModel()
+    model = mm.get(mid)
+    if model.uid != uid:
+        ensure_owner_or_admin(model.tid, uid)
+
+    dm = DatasetModel()
+    dataset = dm.get(did)
+    if dataset.log_access_type == LogAccessTypeEnum.owner:
+        ensure_owner_or_admin(model.tid, uid)
+
+    tm = TaskModel()
+    task = tm.get(model.tid)
+
+    delta_metric_types = [
+        config["type"]
+        for config in util.json_decode(task.annotation_config_json)["delta_metrics"]
+    ]
+    delta_metric_types.append(None)
+
+    perturb_prefix_to_logs = {}
+    for perturb_prefix in delta_metric_types:
+
+        job_name_without_timestamp_suffix = generate_job_name(
+            model.endpoint_name, perturb_prefix, dataset.name, timestamp=""
+        )
+        client = boto3.client(
+            "logs",
+            aws_access_key_id=config["eval_aws_access_key_id"],
+            aws_secret_access_key=config["eval_aws_secret_access_key"],
+            region_name=config["eval_aws_region"],
+        )
+        log_streams = client.describe_log_streams(
+            logGroupName="/aws/sagemaker/TransformJobs",
+            logStreamNamePrefix=job_name_without_timestamp_suffix,
+            descending=True,
+        )["logStreams"]
+
+        logs_from_latest_job = {}
+        if log_streams:
+            latest_job_timestamp = (
+                log_streams[0]["logStreamName"].split("/")[0].split("-")[-1]
+            )
+            for log_stream in log_streams:
+                job_timestamp = log_stream["logStreamName"].split("/")[0].split("-")[-1]
+                if job_timestamp == latest_job_timestamp:
+                    log = client.get_log_events(
+                        logGroupName="/aws/sagemaker/TransformJobs",
+                        logStreamName=log_stream["logStreamName"],
+                    )
+                    if log_stream["logStreamName"].endswith("data-log"):
+                        if "sagemaker_log" in logs_from_latest_job:
+                            logger.error(
+                                """Too many logs for the same job.
+                                Not sure which one to choose."""
+                            )
+                            bottle.abort(
+                                400,
+                                """Too many logs for the same job.
+                                Not sure which one to choose.""",
+                            )
+                        logs_from_latest_job["sagemaker_log"] = log
+                    else:
+                        if "log" in logs_from_latest_job:
+                            logger.error(
+                                """Too many logs for the same job.
+                                Not sure which one to choose."""
+                            )
+                            bottle.abort(
+                                400,
+                                """Too many logs for the same job.
+                                Not sure which one to choose.""",
+                            )
+                        logs_from_latest_job["log"] = log
+                else:
+                    break
+            perturb_prefix_to_logs[perturb_prefix] = logs_from_latest_job
+
+    return util.json_encode(perturb_prefix_to_logs)
 
 
 @bottle.post("/models/upload_train_files/<tid:int>/<model_name>")
@@ -241,19 +332,22 @@ def do_upload_via_predictions(credentials, tid, model_name):
                 util.json_decode(line)
                 for line in upload.file.read().decode("utf-8").splitlines()
             ]
-            for io in parsed_upload:
-                if (
-                    not task.verify_annotation(
-                        io, mode=AnnotationVerifierMode.predictions_upload
-                    )
-                    or "uid" not in io
-                ):
-                    bottle.abort(400, "Invalid prediction file")
-            parsed_uploads[name] = parsed_upload
-
         except Exception as ex:
             logger.exception(ex)
-            bottle.abort(400, "Invalid prediction file")
+            bottle.abort(400, "Could not parse prediction file. Is it a utf-8 jsonl?")
+
+        for io in parsed_upload:
+            try:
+                assert "uid" in io, "'uid' must be present for every example"
+            except Exception as ex:
+                bottle.abort(400, str(ex))
+
+            verified, message = task.verify_annotation(
+                io, mode=AnnotationVerifierMode.predictions_upload
+            )
+            if not verified:
+                bottle.abort(400, message)
+        parsed_uploads[name] = parsed_upload
 
     endpoint_name = f"ts{int(time.time())}-{model_name}"
 
@@ -312,7 +406,7 @@ def _eval_dataset(dataset_name, endpoint_name, model, task, afile):
                 logger=logger,
                 decen=True,
                 decen_queue_name=task.eval_sqs_queue,
-                decen_queue_aws_account_id=task.task_aws_account_id
+                decen_queue_aws_account_id=task.task_aws_account_id,
             )
         else:
             ret = send_eval_request(
@@ -384,12 +478,47 @@ def get_model_detail(credentials, mid):
         datasets = dm.getByTid(model["tid"])
         did_to_dataset_name = {}
         did_to_dataset_access_type = {}
+        did_to_dataset_log_access_type = {}
         did_to_dataset_longdesc = {}
         did_to_dataset_source_url = {}
+        model["leaderboard_evaluation_statuses"] = []
+        model["non_leaderboard_evaluation_statuses"] = []
+        model["hidden_evaluation_statuses"] = []
+
         for dataset in datasets:
+            if model["evaluation_status_json"]:
+                evaluation_status = util.json_decode(
+                    model["evaluation_status_json"]
+                ).get(dataset.name, "pre_evaluation")
+                if (
+                    evaluation_status != "completed"
+                    or dataset.access_type == AccessTypeEnum.hidden
+                ):
+                    if dataset.access_type == AccessTypeEnum.scoring:
+                        evaluation_status_access_type = (
+                            "leaderboard_evaluation_statuses"
+                        )
+                    elif dataset.access_type == AccessTypeEnum.standard:
+                        evaluation_status_access_type = (
+                            "non_leaderboard_evaluation_statuses"
+                        )
+                    else:
+                        evaluation_status_access_type = "hidden_evaluation_statuses"
+
+                    model[evaluation_status_access_type].append(
+                        {
+                            "dataset_id": dataset.id,
+                            "dataset_name": dataset.name,
+                            "dataset_longdesc": dataset.longdesc,
+                            "dataset_source_url": dataset.source_url,
+                            "dataset_log_access_type": dataset.log_access_type.name,
+                            "evaluation_status": evaluation_status,
+                        }
+                    )
 
             did_to_dataset_name[dataset.id] = dataset.name
             did_to_dataset_access_type[dataset.id] = dataset.access_type
+            did_to_dataset_log_access_type[dataset.id] = dataset.log_access_type
             did_to_dataset_longdesc[dataset.id] = dataset.longdesc
             did_to_dataset_source_url[dataset.id] = dataset.source_url
         fields = ["accuracy", "perf_std", "round_id", "did", "metadata_json"]
@@ -398,8 +527,14 @@ def get_model_detail(credentials, mid):
             dict(
                 zip(fields, d),
                 **{
+                    "dataset_id": d.did,
                     "dataset_name": did_to_dataset_name.get(d.did, None),
-                    "dataset_access_type": did_to_dataset_access_type.get(d.did, None),
+                    "dataset_access_type": did_to_dataset_access_type.get(
+                        d.did, AccessTypeEnum.hidden
+                    ),
+                    "dataset_log_access_type": did_to_dataset_log_access_type.get(
+                        d.did, LogAccessTypeEnum.owner
+                    ).name,
                     "dataset_longdesc": did_to_dataset_longdesc.get(d.did, None),
                     "dataset_source_url": did_to_dataset_source_url.get(d.did, None),
                 },
@@ -419,7 +554,6 @@ def get_model_detail(credentials, mid):
             )
         )
         model["deployment_status"] = model["deployment_status"].name
-        model["evaluation_status"] = model["evaluation_status"].name
         return util.json_encode(model)
     except AssertionError:
         logger.exception("Not authorized to access unpublished model detail")
@@ -583,12 +717,16 @@ def upload_to_s3(credentials):
         # If the decen eaas build queue is provided,
         # send the message to the task owner's build queue
         logger.info(
-            f"Send message to sqs with queue name {task.build_sqs_queue} and AWS account id {task.task_aws_account_id}"
+            f"Send message to sqs with queue name {task.build_sqs_queue}"
+            " and AWS account id {task.task_aws_account_id}"
             " - enqueue model {model_name} for deployment"
         )
         sqs = session.resource("sqs")
 
-        queue = sqs.get_queue_by_name(QueueName=task.build_sqs_queue, QueueOwnerAWSAccountId=task.task_aws_account_id)
+        queue = sqs.get_queue_by_name(
+            QueueName=task.build_sqs_queue,
+            QueueOwnerAWSAccountId=task.task_aws_account_id,
+        )
         queue.send_message(
             MessageBody=util.json_encode(
                 {
