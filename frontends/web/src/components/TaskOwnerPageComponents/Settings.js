@@ -38,6 +38,7 @@ const Settings = (props) => {
                 build_sqs_queue: props.task.build_sqs_queue,
                 eval_sqs_queue: props.task.eval_sqs_queue,
                 is_decen_task: props.task.is_decen_task,
+                task_aws_account_id: props.task.task_aws_account_id,
                 train_file_upload_instructions_md:
                   props.task.train_file_upload_instructions_md,
               }}
@@ -223,7 +224,7 @@ const Settings = (props) => {
                         <Form.Label column>
                           Build queues
                           <Form.Text id="paramsHelpBlock" muted>
-                            build queue
+                            Name of your Build Queue in your AWS account (decentralized setting only)
                           </Form.Text>
                         </Form.Label>
                         <Col sm="6">
@@ -242,7 +243,7 @@ const Settings = (props) => {
                         <Form.Label column>
                           Eval queues
                           <Form.Text id="paramsHelpBlock" muted>
-                            eval queue
+                          Name of your Evaluation Queue in your AWS account (decentralized setting only)
                           </Form.Text>
                         </Form.Label>
                         <Col sm="6">
@@ -268,6 +269,26 @@ const Settings = (props) => {
                           />
                         </Col>
                       </Form.Group>
+                      <Form.Group
+                        as={Row}
+                        controlId="task_aws_account_id"
+                        className="py-3 my-0 border-bottom"
+                      >
+                        <Form.Label column>
+                          Task Owner AWS Account ID
+                          <Form.Text id="paramsHelpBlock" muted>
+                            AWS Account ID in your AWS Account (decentralized setting only)
+                          </Form.Text>
+                        </Form.Label>
+                        <Col sm="6">
+                          <Form.Control
+                            type="text"
+                            defaultValue={values.task_aws_account_id}
+                            onChange={handleChange}
+                          />
+                        </Col>
+                      </Form.Group>
+                      
                       {values.is_decen_task && (
                         <Form.Group
                           as={Row}

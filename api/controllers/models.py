@@ -303,13 +303,25 @@ def _eval_dataset(dataset_name, endpoint_name, model, task, afile):
             "aws_region": config["eval_aws_region"],
             "evaluation_sqs_queue": config["evaluation_sqs_queue"],
         }
-        ret = send_eval_request(
-            eval_server_id=task.eval_server_id,
-            model_id=model.id,
-            dataset_name=dataset_name,
-            config=eval_config,
-            logger=logger,
-        )
+        if task.is_decen_task:
+            ret = send_eval_request(
+                eval_server_id=task.eval_server_id,
+                model_id=model.id,
+                dataset_name=dataset_name,
+                config=eval_config,
+                logger=logger,
+                decen=True,
+                decen_queue_name=task.eval_sqs_queue,
+                decen_queue_aws_account_id=task.task_aws_account_id
+            )
+        else:
+            ret = send_eval_request(
+                eval_server_id=task.eval_server_id,
+                model_id=model.id,
+                dataset_name=dataset_name,
+                config=eval_config,
+                logger=logger,
+            )
     except Exception as e:
         logger.exception(e)
         bottle.abort(400, "Could not upload file: %s" % (e))
@@ -570,9 +582,13 @@ def upload_to_s3(credentials):
 
         # If the decen eaas build queue is provided,
         # send the message to the task owner's build queue
-        logger.info(f"Send message to sqs - enqueue model {model_name} for deployment")
+        logger.info(
+            f"Send message to sqs with queue name {task.build_sqs_queue} and AWS account id {task.task_aws_account_id}"
+            " - enqueue model {model_name} for deployment"
+        )
         sqs = session.resource("sqs")
-        queue = sqs.get_queue_by_name(QueueName=task.build_sqs_queue)
+
+        queue = sqs.get_queue_by_name(QueueName=task.build_sqs_queue, QueueOwnerAWSAccountId=task.task_aws_account_id)
         queue.send_message(
             MessageBody=util.json_encode(
                 {
@@ -783,6 +799,7 @@ def update_database_with_metrics():
         delta_metrics_dict = ujson.loads(data["delta_metrics_dict"])
 
         job = dotdict(job)
+        dataset["task"] = dotdict(dataset["task"])
         dataset = dotdict(dataset)
 
         secret = get_secret_for_model_id(job.model_id)
@@ -819,7 +836,8 @@ def update_database_with_metrics():
             score_obj = {**delta_metrics_dict, "metadata_json": metadata_json}
             sm.update(s.id, **score_obj)
         else:
-            job_metrics_dict = get_job_metrics(job, dataset)
+            # This is only hit by a decen task, so we can default to decen=True
+            job_metrics_dict = get_job_metrics(job, dataset, decen=True)
             score_obj = {**eval_metrics_dict, **job_metrics_dict}
             if s:
                 score_obj["metadata_json"] = update_metadata_json_string(

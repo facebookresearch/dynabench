@@ -9,6 +9,7 @@ import tempfile
 
 import boto3
 import bottle
+from bottle import response
 
 import common.auth as _auth
 import common.helpers as util
@@ -18,11 +19,11 @@ from models.dataset import AccessTypeEnum, DatasetModel
 from models.score import ScoreModel
 from models.task import AnnotationVerifierMode, TaskModel
 
-from .tasks import ensure_owner_or_admin
+from .tasks import ensure_owner_or_admin, get_secret_for_task_id
 
 
 sys.path.append("../evaluation")  # noqa isort:skip
-from utils.helpers import get_data_s3_path, send_eval_request  # noqa isort:skip
+from utils.helpers import get_data_s3_path, send_eval_request, decen_send_eval_download_dataset_request, decen_send_reload_dataset_request  # noqa isort:skip
 
 
 @bottle.get("/datasets/get_access_types")
@@ -86,6 +87,17 @@ def delete(credentials, did):
         )
 
     dm.delete(dataset)
+
+    if task.is_decen_task:
+
+        eval_config = {
+            "aws_access_key_id": config["aws_access_key_id"],
+            "aws_secret_access_key": config["aws_secret_access_key"],
+            "aws_region": config["aws_region"],
+        }
+        
+        decen_send_reload_dataset_request(task=task, config=eval_config, logger=logger)
+
     return util.json_encode({"success": "ok"})
 
 
@@ -141,6 +153,10 @@ def create(credentials, tid, name):
             bottle.abort(400, "Invalid dataset file")
 
     # Upload to s3
+
+    if task.is_decen_task:
+        s3_paths = []
+
     for parsed_upload, perturb_prefix in parsed_uploads:
         try:
             s3_client = boto3.client(
@@ -158,6 +174,8 @@ def create(credentials, tid, name):
                     task.s3_bucket,
                     get_data_s3_path(task.task_code, name + ".jsonl", perturb_prefix),
                 )
+                if task.is_decen_task:
+                    s3_paths.append(get_data_s3_path(task.task_code, name + ".jsonl", perturb_prefix))
                 os.remove(tmp.name)
                 if response:
                     logger.info(response)
@@ -181,22 +199,97 @@ def create(credentials, tid, name):
     else:
         updated_existing_dataset = True
 
-    # Evaluate all models
-    eval_config = {
-        "aws_access_key_id": config["eval_aws_access_key_id"],
-        "aws_secret_access_key": config["eval_aws_secret_access_key"],
-        "aws_region": config["eval_aws_region"],
-        "evaluation_sqs_queue": config["evaluation_sqs_queue"],
-    }
-    send_eval_request(
-        model_id="*",
-        dataset_name=name,
-        config=eval_config,
-        eval_server_id=task.eval_server_id,
-        logger=logger,
-        reload_datasets=True,
-    )
+   
+    if task.is_decen_task:
+
+        # Evaluate all models
+        eval_config = {
+            "aws_access_key_id": config["aws_access_key_id"],
+            "aws_secret_access_key": config["aws_secret_access_key"],
+            "aws_region": config["aws_region"],
+        }
+
+        # send download dataset requests for all datasets first
+        dataset_decen = d.getByName(name)
+        decen_send_eval_download_dataset_request(
+            dataset_id=dataset_decen.id,
+            dataset_name=name,
+            config=eval_config,
+            eval_server_id=task.eval_server_id,
+            delta_metric_types=delta_metric_types,
+            s3_paths=s3_paths,
+            queue_name=task.eval_sqs_queue,
+            task_aws_account_id=task.task_aws_account_id,
+            logger=logger,
+        )
+    else:
+        # Evaluate all models
+        eval_config = {
+            "aws_access_key_id": config["eval_aws_access_key_id"],
+            "aws_secret_access_key": config["eval_aws_secret_access_key"],
+            "aws_region": config["eval_aws_region"],
+            "evaluation_sqs_queue": config["evaluation_sqs_queue"],
+        }
+        send_eval_request(
+            model_id="*",
+            dataset_name=name,
+            config=eval_config,
+            eval_server_id=task.eval_server_id,
+            logger=logger,
+            reload_datasets=True,
+        )
 
     return util.json_encode(
         {"success": "ok", "updated_existing_dataset": updated_existing_dataset}
     )
+
+
+
+@bottle.get("/datasets/<did:int>/download")
+def download_dataset(did):
+    dm = DatasetModel()
+    tm = TaskModel()
+
+    dataset = dm.get(did)
+    name = dataset.name
+
+    task = tm.get(dataset.tid)
+
+    req_data = bottle.request.json
+
+    try:
+        secrets = get_secret_for_task_id(dataset.tid)
+
+        if not util.verified_data_mult_secret(req_data, secrets):
+            bottle.abort(401, "Operation not authorized")
+
+        data = req_data["data"]
+
+        if set(data.keys()) != {"perturb_prefix", "dataset_id"}:
+            bottle.abort(401, "Operation not authorized")
+
+        perturb_prefix = data["perturb_prefix"]
+
+        client = boto3.client(
+            "s3",
+            aws_access_key_id=config["aws_access_key_id"],
+            aws_secret_access_key=config["aws_secret_access_key"],
+            region_name=config["aws_region"],
+        )
+        
+        s3_path = get_data_s3_path(task.task_code, name + ".jsonl", perturb_prefix)
+        temp_file_path = name + ".jsonl"
+        final_filepath = f"/tmp/{temp_file_path}"
+
+        _ = client.download_file(task.s3_bucket, s3_path, final_filepath)
+
+        f = open(final_filepath, "rb")
+        response.headers["Content-Type"] = "application/octet-stream"
+        response.headers[
+            "Content-Disposition"
+        ] = f"attachment; filename={final_filepath}"
+        return f
+
+    except Exception as e:
+        logger.exception("Could not download dataset: %s" % (e))
+        bottle.abort(400, "Could not download dataset: %s" % (e))
