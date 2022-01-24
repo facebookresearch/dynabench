@@ -15,10 +15,11 @@ import boto3
 import botocore
 import sagemaker
 from botocore.config import Config
-from build_config import build_config
 from dynalab_cli.utils import SetupConfigHandler
 from sagemaker.model import Model
 from sagemaker.predictor import Predictor
+
+from build_config import build_config
 from utils.logging import logger
 
 

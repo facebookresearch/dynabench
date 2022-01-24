@@ -7,6 +7,7 @@ import time
 
 import boto3
 import uuid
+
 from build_config import build_config
 from utils.deployer import ModelDeployer
 from utils.helpers import (
