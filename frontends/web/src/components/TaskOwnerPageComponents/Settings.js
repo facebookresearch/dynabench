@@ -224,7 +224,8 @@ const Settings = (props) => {
                         <Form.Label column>
                           Build queues
                           <Form.Text id="paramsHelpBlock" muted>
-                            Name of your Build Queue in your AWS account (decentralized setting only)
+                            Name of your Build Queue in your AWS account
+                            (Decentralized Task only)
                           </Form.Text>
                         </Form.Label>
                         <Col sm="6">
@@ -243,7 +244,8 @@ const Settings = (props) => {
                         <Form.Label column>
                           Eval queues
                           <Form.Text id="paramsHelpBlock" muted>
-                          Name of your Evaluation Queue in your AWS account (decentralized setting only)
+                            Name of your Evaluation Queue in your AWS account
+                            (Decentralized Task only)
                           </Form.Text>
                         </Form.Label>
                         <Col sm="6">
@@ -277,7 +279,8 @@ const Settings = (props) => {
                         <Form.Label column>
                           Task Owner AWS Account ID
                           <Form.Text id="paramsHelpBlock" muted>
-                            AWS Account ID in your AWS Account (decentralized setting only)
+                            AWS Account ID in your AWS Account (decentralized
+                            setting only)
                           </Form.Text>
                         </Form.Label>
                         <Col sm="6">
@@ -288,7 +291,7 @@ const Settings = (props) => {
                           />
                         </Col>
                       </Form.Group>
-                      
+
                       {values.is_decen_task && (
                         <Form.Group
                           as={Row}
