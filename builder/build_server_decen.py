@@ -1,13 +1,12 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
 import json
+import os
 import pickle
 import time
-import os
 
 import boto3
 import uuid
-
 from build_config import build_config
 from utils.deployer import ModelDeployer
 from utils.helpers import (
