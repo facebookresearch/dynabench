@@ -29,9 +29,61 @@ def get_predictions_s3_path(endpoint_name, task_code, dataset_name):
         "predictions", endpoint_name, "raw", task_code, f"{dataset_name}.jsonl.out"
     )
 
+def decen_send_eval_download_dataset_request(
+    dataset_id, config, eval_server_id, 
+    delta_metric_types, s3_paths, queue_name, 
+    task_aws_account_id, dataset_name, 
+    logger=None
+):
+    session = boto3.Session(
+        aws_access_key_id=config["aws_access_key_id"],
+        aws_secret_access_key=config["aws_secret_access_key"],
+        region_name=config["aws_region"],
+    )
+    sqs = session.resource("sqs")
+
+    queue = sqs.get_queue_by_name(QueueName=queue_name, QueueOwnerAWSAccountId=task_aws_account_id)
+    
+    msg = {
+        "download_dataset": True,
+        "dataset_id": dataset_id,
+        "dataset_name":dataset_name,
+        "eval_server_id": eval_server_id,
+        "delta_metric_types": delta_metric_types,
+        "s3_paths": s3_paths
+    }
+    queue.send_message(MessageBody=json.dumps(msg))
+    if logger:
+        logger.info(f"Sent message to {queue_name} on account {task_aws_account_id}: {msg}")
+    return True
+
+def decen_send_reload_dataset_request(
+    task, config, logger=None
+):
+    session = boto3.Session(
+        aws_access_key_id=config["aws_access_key_id"],
+        aws_secret_access_key=config["aws_secret_access_key"],
+        region_name=config["aws_region"],
+    )
+    sqs = session.resource("sqs")
+
+    queue = sqs.get_queue_by_name(QueueName=task.eval_sqs_queue, QueueOwnerAWSAccountId=task.task_aws_account_id)
+    
+    msg = {
+        "reload_datasets": True,
+        "eval_server_id": task.eval_server_id,
+    }
+
+    queue.send_message(MessageBody=json.dumps(msg))
+    if logger:
+        logger.info(f"Sent message to {task.eval_sqs_queue} on account {task.task_aws_account_id}: {msg}")
+    return True
+
 
 def send_eval_request(
-    model_id, dataset_name, config, eval_server_id, logger=None, reload_datasets=False
+    model_id, dataset_name, config, eval_server_id, 
+    logger=None, reload_datasets=False,
+    decen=False, decen_queue_name=None, decen_queue_aws_account_id=None
 ):
     """
     If dataset name is a perturbed dataset with prefix, will evaluate this
@@ -53,13 +105,19 @@ def send_eval_request(
             logger.error(ex)
         return False
     else:
+        if decen:
+            assert (decen_queue_name is not None) and (decen_queue_aws_account_id is not None)
+        
         session = boto3.Session(
             aws_access_key_id=config["aws_access_key_id"],
             aws_secret_access_key=config["aws_secret_access_key"],
             region_name=config["aws_region"],
         )
         sqs = session.resource("sqs")
-        queue = sqs.get_queue_by_name(QueueName=config["evaluation_sqs_queue"])
+        if decen:
+            queue = sqs.get_queue_by_name(QueueName=decen_queue_name, QueueOwnerAWSAccountId=decen_queue_aws_account_id)
+        else:
+            queue = sqs.get_queue_by_name(QueueName=config["evaluation_sqs_queue"])
         msg = {
             "reload_datasets": reload_datasets,
             "model_id": model_id,
@@ -68,7 +126,10 @@ def send_eval_request(
         }
         queue.send_message(MessageBody=json.dumps(msg))
         if logger:
-            logger.info(f"Sent message to {config['evaluation_sqs_queue']}: {msg}")
+            if decen:
+                logger.info(f"Sent message to {decen_queue_name} on account {decen_queue_aws_account_id}: {msg}")
+            else:
+                logger.info(f"Sent message to {config['evaluation_sqs_queue']}: {msg}")
         return True
 
 
@@ -81,6 +142,7 @@ def send_takedown_model_request(model_id, config, s3_uri=None, logger=None):
         region_name=config["aws_region"],
     )
     sqs = session.resource("sqs")
+    
     queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
     msg = {"model_id": model_id, "s3_uri": s3_uri}
     queue.send_message(MessageBody=json.dumps(msg))
