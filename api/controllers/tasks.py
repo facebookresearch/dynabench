@@ -434,6 +434,7 @@ def update(credentials, tid):
             "build_sqs_queue",
             "eval_sqs_queue",
             "is_decen_task",
+            "task_aws_account_id",
             "annotation_config_json",
         ):
             bottle.abort(
@@ -1087,7 +1088,6 @@ def get_secret_for_task_id(tid):
     ret = [tup[0] for tup in tups]
     return ret
 
-
 @bottle.get("/tasks/listdatasets")
 def decen_eaas_list_datasets():
     dm = DatasetModel()
@@ -1120,7 +1120,12 @@ def decen_eaas_list_datasets():
         for dataset in datasets:
             json_encoded_datasets.append(util.json_encode(dm.to_dict(dataset)))
 
-        return util.json_encode(json_encoded_datasets)
+        resp = {
+            "datasets_metadata": json_encoded_datasets,
+            "task_metadata": util.json_encode(tm.to_dict(task))
+        }
+
+        return util.json_encode(resp)
 
     except Exception as e:
         logger.exception("Could not retrieve datasets for task: %s" % (e))

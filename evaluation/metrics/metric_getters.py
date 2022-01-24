@@ -25,13 +25,20 @@ def get_eval_metrics(task, predictions: list, targets: list) -> tuple:
     return score_dict[perf_metric_type], score_dict
 
 
-def get_job_metrics(job, dataset) -> dict:
+def get_job_metrics(job, dataset, decen=False) -> dict:
     if not job.aws_metrics:
         return {}
 
     instance_config = instance_property[dataset.task.instance_type]
     job_metrics = instance_config["aws_metrics"]
-    return {key: job_metrics_dict[key](job, dataset) for key in job_metrics}
+    return_dict = {}
+    for key in job_metrics:
+        if key == "examples_per_second":
+            return_dict[key] = job_metrics_dict[key](job, dataset, decen=decen)
+        else:
+            return_dict[key] = job_metrics_dict[key](job, dataset)
+
+    return return_dict
 
 
 def get_delta_metrics(

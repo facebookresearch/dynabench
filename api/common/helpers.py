@@ -276,6 +276,14 @@ def generate_signature(data, secret):
 def verified_data(data, secret):
     return generate_signature(data["data"], secret) == data["signature"]
 
+def verified_data_mult_secret(data, secrets):
+    verified_across_keys = False
+    for secret in secrets:
+        if verified_data(data, secret):
+            verified_across_keys = True
+            break
+
+    return verified_across_keys
 
 def wrap_data_with_signature(data, secret):
     data_signature = generate_signature(data, secret)

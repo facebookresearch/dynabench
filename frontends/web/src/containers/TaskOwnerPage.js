@@ -264,6 +264,7 @@ class TaskOwnerPage extends React.Component {
       "build_sqs_queue",
       "eval_sqs_queue",
       "is_decen_task",
+      "task_aws_account_id",
       "annotation_config_json",
     ];
 
