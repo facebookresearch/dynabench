@@ -13,6 +13,7 @@ from pathlib import Path
 
 import boto3
 import botocore
+from botocore.config import Config
 import sagemaker
 from dynalab_cli.utils import SetupConfigHandler
 from sagemaker.model import Model
@@ -49,7 +50,14 @@ class ModelDeployer:
         endpoint_name = os.path.basename(s3_path).replace(".tar.gz", "")
         return s3_bucket, s3_path, s3_dir, endpoint_name
 
-    def load_model(self, s3_uri):
+    def decen_change_s3_bucket_to_config(self, s3_uri):
+        parts = s3_uri.replace("s3://", "").split("/")
+        s3_path = "/".join(parts[1:])
+        decen_task_bucket = build_config["model_s3_bucket"]
+        new_s3_uri = f"s3://{decen_task_bucket}/{s3_path}"
+        return new_s3_uri
+
+    def load_model(self, s3_uri, decen=False, decen_task_info=None):
         try:
             s3_bucket, s3_path, s3_dir, endpoint_name = self.parse_s3_uri(s3_uri)
             assert (
@@ -61,7 +69,18 @@ class ModelDeployer:
             logger.info("Load the model setup config")
             config_handler = SetupConfigHandler(self.name)
             config = config_handler.load_config()
-            self._save_task_info_json(config["task"])
+            if decen:
+                assert (decen_task_info is not None)
+                logger.info("Decen task ... parsing task from message")
+                task_decoded = json.loads(decen_task_info)
+                task_code = task_decoded["task_code"]
+                annotation_config = json.loads(task_decoded["annotation_config_json"])
+                task_info = {"annotation_config": annotation_config, "task": task_code}
+                task_info_path = os.path.join(self.root_dir, f"{task_code}.json")
+                with open(task_info_path, "w+") as f:
+                    f.write(json.dumps(task_info, indent=4))
+            else:
+                self._save_task_info_json(config["task"])
             return config_handler, config, s3_dir
         except AssertionError as ex:
             logger.exception(ex)
@@ -101,6 +120,7 @@ class ModelDeployer:
 
         env["region"] = region
         env["account"] = session.client("sts").get_caller_identity().get("Account")
+
         env["sagemaker_client"] = session.client("sagemaker")
         env["s3_client"] = session.client("s3")
         env["ecr_client"] = session.client("ecr")
@@ -360,6 +380,7 @@ class ModelDeployer:
 
         # upload model tarball to S3
         logger.info(f"Uploading the archived model {self.name} to S3 ...")
+
         response = self.env["s3_client"].upload_file(
             tarball, self.env["bucket_name"], f"{s3_dir}/{tarball}"
         )
@@ -372,6 +393,7 @@ class ModelDeployer:
 
     def deploy_model(self, image_ecr_path, model_s3_path):
         logger.info(f"Deploying model {self.name} to Sagemaker")
+ 
         torchserve_model = Model(
             model_data=model_s3_path,
             image_uri=image_ecr_path,
@@ -398,13 +420,13 @@ class ModelDeployer:
             )
             return None
 
-    def deploy(self, s3_uri, endpoint_only=False):
+    def deploy(self, s3_uri, endpoint_only=False, decen=False, decen_task_info=None):
         deployed, delayed, ex_msg = False, False, ""
         try:
             if not endpoint_only:
                 self.delete_existing_endpoints()
                 os.chdir(self.root_dir)
-                setup_config_handler, setup_config, s3_dir = self.load_model(s3_uri)
+                setup_config_handler, setup_config, s3_dir = self.load_model(s3_uri, decen=decen, decen_task_info=decen_task_info)
                 image_ecr_path = self.build_and_push_docker(
                     setup_config_handler, setup_config
                 )

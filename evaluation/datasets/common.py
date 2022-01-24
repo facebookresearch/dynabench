@@ -37,14 +37,21 @@ class BaseDataset:
         ext=".jsonl",
         longdesc=None,
         source_url=None,
+        db_connection_avail=True,
+        db_connection_not_avail_task_info=None
     ):
         self.name = name
         self.round_id = round_id
         self.access_type = access_type
         self.filename = self.name + ext
         self._n_examples = {}  # will be get through API
-        tm = TaskModel()
-        self.task = tm.getByTaskCode(task_code)
+
+        if db_connection_avail:
+            tm = TaskModel()
+            self.task = tm.getByTaskCode(task_code)
+        else:
+            self.task = db_connection_not_avail_task_info
+        
         self.s3_url = self._get_data_s3_url()
         self.longdesc = longdesc
         self.source_url = source_url
@@ -194,6 +201,7 @@ class BaseDataset:
         This can be used by tasks to have a better control on how the metrics are
         computed.
         """
+
         predictions = self.parse_outfile_and_upload(job)
         eval_metrics_dict = self.eval(predictions, perturb_prefix=job.perturb_prefix)
         delta_metrics_dict = {}
@@ -202,6 +210,7 @@ class BaseDataset:
                 self.pred_to_target_converter(self.pred_field_converter(prediction))
                 for prediction in self.parse_outfile_and_upload(job, original=True)
             ]
+
             delta_metrics_dict = self.eval(
                 predictions, targets, perturb_prefix=job.perturb_prefix
             )
