@@ -19,7 +19,7 @@ from models.validation import LabelEnum, ModeEnum, Validation
 
 from .base import Base, BaseModel
 from .context import ContextModel
-from .task import TaskModel
+from .task import TaskModel, get_name_to_full_annotation_config_obj
 from .user import UserModel
 
 
@@ -158,10 +158,13 @@ class ExampleModel(BaseModel):
                     task_config = yaml.load(task.config_yaml, yaml.SafeLoader)
                     if task.task_code in ("hs", "sentiment"):
                         task_config["context"] = []
+                    name_to_config_obj = get_name_to_full_annotation_config_obj(
+                        task_config
+                    )
                     task_config["output"] = [
-                        obj
+                        name_to_config_obj[obj["name"]]
                         for obj in task_config.get("output", [])
-                        if obj["type"] not in ("prob")
+                        if name_to_config_obj[obj["name"]]["type"] not in ("prob")
                     ]
                     tmp.write(
                         util.json_encode(
