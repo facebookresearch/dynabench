@@ -501,7 +501,7 @@ def activate(credentials, tid):
 
     tm.update(tid, {"config_yaml": data["config_yaml"], "active": True})
 
-    if len(util.json_decode(data["config_yaml"])["context"]) == 0:
+    if len(yaml.load(data["config_yaml"], yaml.SafeLoader).get("context", [])) == 0:
         # If there is no context in the config, then add an empty context.
         # The task owner should not need to do this, because we already know
         # that the context will be empty.

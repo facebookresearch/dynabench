@@ -120,9 +120,9 @@ def do_upload(credentials, tid, rid):
                 context_info["metadata"], dict
             ), "'metadata' must be a dict on every line of the jsonl"
             for item in yaml.load(task.config_yaml, yaml.SafeLoader).get("context", []):
-                assert item["name"] in context_info, (
-                    "for every line, 'context' must have all of the fields defined"
-                    + " in the task's config"
+                assert item["name"] in context_info["context"], (
+                    "for every line, 'context' must have all of the context fields"
+                    + " defined in the task's config"
                 )
         except Exception as ex:
             bottle.abort(400, str(ex))

@@ -306,6 +306,21 @@ def get_name_to_full_annotation_config_obj(config):
     return name_to_config_obj
 
 
+def get_full_annotation_config_objs(config):
+    name_to_full_config_obj = get_name_to_full_annotation_config_obj(config)
+    full_config_objs = []
+    annotation_config_objs = (
+        config.get("output", [])
+        + config.get("input", [])
+        + config.get("context", [])
+        + config.get("metadata", {}).get("create", [])
+        + config.get("metadata", {}).get("validate", [])
+    )
+    for obj in annotation_config_objs:
+        full_config_objs.append(name_to_full_config_obj[obj["name"]])
+    return full_config_objs
+
+
 class Image(AnnotationComponent):
     @staticmethod
     def convert_to_model_io(url):
@@ -467,11 +482,7 @@ class Prob(AnnotationComponent):
             )
             reference_objs = filter(
                 lambda other_obj: other_obj["name"] == config_obj["reference_name"],
-                config.get("context", [])
-                + config.get("output", [])
-                + config.get("input", [])
-                + config.get("metadata", {}).get("create", [])
-                + config.get("metadata", {}).get("validate", []),
+                get_full_annotation_config_objs(config),
             )
             for reference_obj in reference_objs:
                 assert reference_obj["type"] in (AnnotationTypeEnum.multiclass.name,), (
@@ -700,13 +711,7 @@ class Task(Base):
         if "train_file_metric" in config:
             Task.verify_train_file_metric_config(config["train_file_metric"])
 
-        annotation_config_objs = (
-            config.get("context", [])
-            + config.get("output", [])
-            + config.get("input", [])
-            + config.get("metadata", {}).get("create", [])
-            + config.get("metadata", {}).get("validate", [])
-        )
+        annotation_config_objs = get_full_annotation_config_objs(config)
         for obj in annotation_config_objs:
             assert "name" in obj, (
                 prefixed_message + "name must be a field in annotation config objects"
@@ -746,18 +751,10 @@ class Task(Base):
     def convert_to_model_io(self, data):
         name_to_type = {}
         config = yaml.load(self.config_yaml, yaml.SafeLoader)
-        annotation_config_objs = (
-            config.get("output", [])
-            + config.get("context", [])
-            + config.get("input", [])
-            + config.get("metadata", {}).get("create", [])
-            + config.get("metadata", {}).get("validate", [])
-        )
+        annotation_config_objs = get_full_annotation_config_objs(config)
 
         for obj in annotation_config_objs:
-            if "type" in obj:
-                # "type" might not be in obj because of the abbreviated output syntax
-                name_to_type[obj["name"]] = obj["type"]
+            name_to_type[obj["name"]] = obj["type"]
 
         converted_data = util.json_decode(util.json_encode(data))
         for key, value in data.items():

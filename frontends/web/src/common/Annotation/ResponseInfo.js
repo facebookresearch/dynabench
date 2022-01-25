@@ -414,19 +414,42 @@ class ResponseInfo extends React.Component {
       </Row>
     );
 
+    const submissionResultsNoModelNoTarget = (
+      <Row>
+        <Col>
+          <nobr>The input is</nobr>
+        </Col>
+        <Col className="text-center">
+          <strong>{modelInputInterface}</strong>
+        </Col>
+      </Row>
+    );
+
     return (
       <Card className={classNames} style={{ minHeight: 120 }}>
         <Card.Body className="p-3">
           {!this.props.obj.modelInTheLoop ? (
-            <Row>
-              <Col xs={12} md={9}>
-                {title !== null && <div className="mb-3">{title}</div>}
-                {submissionResultsNoModel}
-                {userFeedback}
-                {sandboxContent}
-              </Col>
-              <Col className="text-center" xs={12} md={3}></Col>
-            </Row>
+            targetInterface.length > 0 ? (
+              <Row>
+                <Col xs={12} md={9}>
+                  {title !== null && <div className="mb-3">{title}</div>}
+                  {submissionResultsNoModel}
+                  {userFeedback}
+                  {sandboxContent}
+                </Col>
+                <Col className="text-center" xs={12} md={3}></Col>
+              </Row>
+            ) : (
+              <Row>
+                <Col xs={12} md={9}>
+                  {title !== null && <div className="mb-3">{title}</div>}
+                  {submissionResultsNoModelNoTarget}
+                  {userFeedback}
+                  {sandboxContent}
+                </Col>
+                <Col className="text-center" xs={12} md={3}></Col>
+              </Row>
+            )
           ) : targetInterface.length > 0 ? (
             <Row>
               <Col xs={12} md={9}>
