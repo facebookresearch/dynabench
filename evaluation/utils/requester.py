@@ -2,8 +2,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import json
 import logging
+
+import yaml
 
 from common.config import config
 from models.dataset import DatasetModel
@@ -77,7 +78,7 @@ class Requester:
                 dataset = self.datasets[dataset_name]
                 delta_metric_types = [
                     obj["type"]
-                    for obj in json.loads(dataset.task.config_yaml).get(
+                    for obj in yaml.load(dataset.task.config_yaml).get(
                         "delta_metrics", []
                     )
                 ]

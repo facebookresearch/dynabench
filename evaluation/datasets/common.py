@@ -12,7 +12,7 @@ import yaml
 
 from eval_config import eval_config
 from metrics.metric_getters import get_delta_metrics, get_eval_metrics
-from models.dataset import AccessTypeEnum
+from models.dataset import AccessTypeEnum, LogAccessTypeEnum
 from models.task import TaskModel
 from utils.helpers import (
     get_data_s3_path,
@@ -34,6 +34,7 @@ class BaseDataset:
         name,
         config=eval_config,
         access_type=AccessTypeEnum.scoring,
+        log_access_type=LogAccessTypeEnum.owner,
         ext=".jsonl",
         longdesc=None,
         source_url=None,

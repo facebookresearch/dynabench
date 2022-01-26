@@ -1,0 +1,23 @@
+aggregation_metric:
+  type: dynascore
+context:
+- name: sourceLanguage
+  placeholder: Enter source language...
+  type: string
+- name: targetLanguage
+  placeholder: Enter target language...
+  type: string
+input:
+- name: sourceText
+  placeholder: Enter source text...
+  type: string
+- name: translatedText
+  placeholder: Enter target text
+  type: string
+model_wrong_metric:
+  type: ask_user
+output:
+- name: translatedText
+perf_metric:
+  reference_name: translatedText
+  type: sp_bleu
