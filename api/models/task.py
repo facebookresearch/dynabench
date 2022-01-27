@@ -463,7 +463,7 @@ class Prob(AnnotationComponent):
         else:
             prefixed_message = "in prob config: "
             assert "reference_name" in config_obj, (
-                prefixed_message + "reference_name must be in object config object"
+                prefixed_message + "reference_name must be in config object"
             )
             reference_objs = filter(
                 lambda other_obj: other_obj["name"] == config_obj["reference_name"],
