@@ -25,7 +25,7 @@ RUN apt-get update && \
     curl \
     vim \
     git \
-    && rm -rf /var/lib/apt/lists/* 
+    && rm -rf /var/lib/apt/lists/*
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.6 1
 RUN cd /tmp \
@@ -33,7 +33,7 @@ RUN cd /tmp \
     && python3 get-pip.py
 
 RUN python -m pip install --no-cache-dir torchserve
-RUN python -m pip install --no-cache-dir torch==1.7.1
+RUN python -m pip install --no-cache-dir torch==1.8.1
 
 COPY dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh
 RUN chmod +x /usr/local/bin/dockerd-entrypoint.sh
@@ -48,7 +48,7 @@ WORKDIR /home/model-server/code
 
 RUN if [ -f requirements.txt ] && [ ${requirements} = True ]; then python -m pip install --no-cache-dir --force-reinstall -r requirements.txt; fi
 RUN if [ -f setup.py ] && [ ${setup} = True ]; then python -m pip install --no-cache-dir --force-reinstall -e .; fi
-RUN python -m pip install --force-reinstall git+git://github.com/facebookresearch/dynalab.git
+RUN python -m pip install --force-reinstall git+git://github.com/facebookresearch/dynalab.git@feat/yaml_task_config
 
 RUN echo 'from dynalab.tasks.task_io import TaskIO; TaskIO("'${task_code}'")'
 RUN python -c 'from dynalab.tasks.task_io import TaskIO; TaskIO("'${task_code}'")'
