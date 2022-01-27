@@ -116,7 +116,80 @@ if __name__ == "__main__":
         name="Test",
         task_code="test",
         desc="Your test task",
-        annotation_config_json=util.json_encode({}),
+        config_yaml="""
+aggregation_metric:
+  type: dynascore
+context:
+- name: context
+  placeholder: Enter context...
+  type: string
+delta_metrics:
+- type: fairness
+- type: robustness
+input:
+- name: statement
+  placeholder: Enter statement...
+  type: string
+- labels:
+  - negative
+  - positive
+  - neutral
+  name: label
+  type: multiclass
+  as_goal_message: true
+metadata:
+  create:
+  - display_name: example explanation
+    name: example_explanation
+    placeholder: Explain why your example is correct...
+    type: string
+  - display_name: model explanation
+    model_wrong_condition: false
+    name: model_explanation_right
+    placeholder: Explain why you thought the model would make a mistake...
+    type: string
+  - display_name: model explanation
+    model_wrong_condition: true
+    name: model_explanation_wrong
+    placeholder: Explain why you think the model made a mistake...
+    type: string
+  validate:
+  - labels:
+    - negative
+    - positive
+    - entailed
+    name: corrected_label
+    placeholder: Enter corrected label
+    type: multiclass
+    validated_label_condition: incorrect
+  - name: target_explanation
+    placeholder: Explain why your proposed target is correct...
+    type: string
+    validated_label_condition: incorrect
+  - name: flag_reason
+    placeholder: Enter the reason for flagging...
+    type: string
+    validated_label_condition: flagged
+  - name: validator_example_explanation
+    placeholder: Explain why the example is correct...
+    type: string
+    validated_label_condition: correct
+  - name: validator_model_explanation
+    placeholder: Enter what you think was done to try to trick the model...
+    type: string
+model_wrong_metric:
+  reference_names:
+  - label
+  type: exact_match
+output:
+- name: label
+- name: prob
+  reference_name: label
+  type: prob
+perf_metric:
+  reference_name: label
+  type: macro_f1
+        """,
         cur_round=1,
     )
     dbs.add(t)

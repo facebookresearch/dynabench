@@ -13,6 +13,7 @@ import Owners from "../components/TaskOwnerPageComponents/Owners";
 import Rounds from "../components/TaskOwnerPageComponents/Rounds";
 import Settings from "../components/TaskOwnerPageComponents/Settings";
 import Datasets from "../components/TaskOwnerPageComponents/Datasets";
+const yaml = require("js-yaml");
 
 class TaskOwnerPage extends React.Component {
   static contextType = UserContext;
@@ -246,24 +247,22 @@ class TaskOwnerPage extends React.Component {
     values,
     { setFieldError, setSubmitting, resetForm }
   ) => {
-    this.context.api
-      .activateTask(this.state.task.id, values.annotation_config_json)
-      .then(
-        (result) => {
-          this.fetchTask(() => {
-            resetForm({ values: values });
-            setSubmitting(false);
-          });
-        },
-        (error) => {
-          console.log(error);
-          setFieldError(
-            "accept",
-            "Task could not be activated (" + error.error + ")"
-          );
+    this.context.api.activateTask(this.state.task.id, values.config_yaml).then(
+      (result) => {
+        this.fetchTask(() => {
+          resetForm({ values: values });
           setSubmitting(false);
-        }
-      );
+        });
+      },
+      (error) => {
+        console.log(error);
+        setFieldError(
+          "accept",
+          "Task could not be activated (" + error.error + ")"
+        );
+        setSubmitting(false);
+      }
+    );
   };
 
   handleTaskUpdate = (values, { setFieldError, setSubmitting, resetForm }) => {
@@ -277,7 +276,7 @@ class TaskOwnerPage extends React.Component {
       "hidden",
       "submitable",
       "create_endpoint",
-      "annotation_config_json",
+      "config_yaml",
     ];
 
     const data = Object.keys(values)
@@ -445,8 +444,11 @@ class TaskOwnerPage extends React.Component {
     { setFieldError, setSubmitting, setFieldValue, resetForm }
   ) => {
     const files = { file: values.file };
-    for (const config of JSON.parse(this.state.task.annotation_config_json)
-      .delta_metrics) {
+    const config = yaml.load(this.state.task.config_yaml);
+    const delta_metric_configs = config.delta_metrics
+      ? config.delta_metrics
+      : [];
+    for (const config of delta_metric_configs) {
       files[config.type] = values[config.type];
     }
     this.context.api

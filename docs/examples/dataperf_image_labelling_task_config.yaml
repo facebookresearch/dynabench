@@ -1,0 +1,33 @@
+aggregation_metric:
+  type: dynascore
+goal_message: enter an image and labels based on the image, such that the model is
+  fooled.
+input:
+- display_name: image
+  name: image
+  type: image
+- labels:
+  - Bird
+  - Canoe
+  - Croissant
+  - Muffin
+  - Pizza
+  name: labels
+  type: multilabel
+model_wrong_metric:
+  type: ask_user
+output:
+- name: labels
+perf_metric:
+  reference_name: labels
+  type: dataperf_f1
+train_file_metric:
+  reference_name: labels
+  seeds: 5
+  test_labels:
+  - Bird
+  - Canoe
+  - Croissant
+  - Muffin
+  - Pizza
+  type: dataperf

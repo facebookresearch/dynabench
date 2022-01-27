@@ -1,0 +1,35 @@
+aggregation_metric:
+  type: dynascore
+context:
+- display_name: image
+  name: image
+  type: image
+goal_message: enter a question and answer based on the image, such that the model is fooled.
+input:
+- name: question
+  placeholder: Enter question...
+  type: string
+metadata:
+  create:
+  - display_name: answer
+    model_wrong_condition: true
+    name: target_answer
+    placeholder: The model was wrong, so enter the correct answer...
+    type: string
+  validate:
+  - labels:
+    - 'yes'
+    - 'no'
+    name: is_question_valid
+    placeholder: Is the question even valid?
+    type: multiclass
+    validated_label_condition: incorrect
+model_wrong_metric:
+  type: ask_user
+output:
+- name: answer
+  placeholder: Enter answer...
+  type: string
+perf_metric:
+  reference_name: answer
+  type: vqa_accuracy

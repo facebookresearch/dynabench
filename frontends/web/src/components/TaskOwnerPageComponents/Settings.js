@@ -8,6 +8,7 @@ import React from "react";
 import { Container, Row, Form, Col, Card, Button } from "react-bootstrap";
 import Markdown from "react-markdown";
 import { Formik } from "formik";
+const yaml = require("js-yaml");
 
 const Settings = (props) => {
   return (
@@ -100,10 +101,10 @@ const Settings = (props) => {
                           </Col>
                         </Form.Group>
                       )}
-                      {props.task.annotation_config_json &&
-                        JSON.parse(
-                          props.task.annotation_config_json
-                        ).hasOwnProperty("train_file_metric") && (
+                      {props.task.config_yaml &&
+                        yaml
+                          .load(props.task.config_yaml)
+                          .hasOwnProperty("train_file_metric") && (
                           <Form.Group
                             as={Row}
                             controlId="train_file_upload_instructions_md"

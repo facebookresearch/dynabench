@@ -622,10 +622,10 @@ export default class ApiService {
     });
   }
 
-  activateTask(tid, annotation_config_json) {
+  activateTask(tid, config_yaml) {
     return this.fetch(`${this.domain}/tasks/activate/${tid}`, {
       method: "PUT",
-      body: JSON.stringify({ annotation_config_json: annotation_config_json }),
+      body: JSON.stringify({ config_yaml: config_yaml }),
     });
   }
 

@@ -32,6 +32,7 @@ import AnnotationComponent from "./AnnotationComponent.js";
 import initializeData from "./InitializeAnnotationData.js";
 import ResponseInfo from "./ResponseInfo.js";
 import Explainer from "./Explainer.js";
+const yaml = require("js-yaml");
 
 function deepCopyJSON(obj) {
   return JSON.parse(JSON.stringify(obj));
@@ -53,7 +54,7 @@ class CreateInterface extends React.Component {
       refreshDisabled: true,
       mapKeyToExampleId: {},
       submitWithoutFullExample: false,
-      annotationConfig: null,
+      taskConfig: null,
       data: {},
       loading: true,
     };
@@ -71,9 +72,8 @@ class CreateInterface extends React.Component {
 
   getInputData() {
     const inputData = {};
-    for (const annotationConfigObj of this.state.annotationConfig.input) {
-      inputData[annotationConfigObj.name] =
-        this.state.data[annotationConfigObj.name];
+    for (const taskConfigObj of this.state.taskConfig.input) {
+      inputData[taskConfigObj.name] = this.state.data[taskConfigObj.name];
     }
     return inputData;
   }
@@ -82,7 +82,7 @@ class CreateInterface extends React.Component {
     this.setState({
       data: Object.assign(
         {},
-        initializeData(this.state.annotationConfig.input),
+        initializeData(this.state.taskConfig.input),
         JSON.parse(this.state.context.context_json)
       ),
     });
@@ -100,16 +100,47 @@ class CreateInterface extends React.Component {
                 this.state.task.round.url !== null
                   ? this.pickModel(this.state.task.round.url)
                   : null;
-              const annotationConfig = JSON.parse(
-                this.state.task.annotation_config_json
-              );
+              const taskConfig = yaml.load(this.state.task.config_yaml);
+
+              taskConfig.input = taskConfig.input ? taskConfig.input : [];
+              taskConfig.output = taskConfig.output ? taskConfig.output : [];
+              taskConfig.context = taskConfig.context ? taskConfig.context : [];
+
+              // output is stored in a condensed format, where the task owner can
+              // specify the name of an annotation component without the type or
+              // other arguments, as long as that component is also in input or
+              // context. Here, we are getting the full annotation component info
+              // and making sure it is in output.
+              const expandedOutput = [];
+              for (const obj of taskConfig.output) {
+                const expandedObj = deepCopyJSON(taskConfig.input)
+                  .concat(deepCopyJSON(taskConfig.context))
+                  .filter((item) => item.name === obj.name);
+                if (expandedObj.length > 0) {
+                  expandedOutput.push(
+                    JSON.parse(JSON.stringify(expandedObj[0]))
+                  );
+                } else {
+                  expandedOutput.push(obj);
+                }
+              }
+              taskConfig.output = expandedOutput;
+              taskConfig.metadata = taskConfig.metadata
+                ? taskConfig.metadata
+                : {};
+              taskConfig.metadata.create = taskConfig.metadata.create
+                ? taskConfig.metadata.create
+                : [];
+              taskConfig.metadata.validate = taskConfig.metadata.validate
+                ? taskConfig.metadata.validate
+                : [];
 
               this.setState({
-                annotationConfig: annotationConfig,
+                taskConfig: taskConfig,
                 randomTargetModel: randomTargetModel,
                 data: Object.assign(
                   {},
-                  initializeData(annotationConfig.input),
+                  initializeData(taskConfig.input),
                   JSON.parse(result.context_json)
                 ),
                 context: result,
@@ -265,8 +296,8 @@ class CreateInterface extends React.Component {
   handleResponse(e) {
     e.preventDefault();
     var incompleteExample = false;
-    this.state.annotationConfig.input.forEach((annotationConfigObj) => {
-      if (this.state.data[annotationConfigObj.name] === null) {
+    this.state.taskConfig.input.forEach((taskConfigObj) => {
+      if (this.state.data[taskConfigObj.name] === null) {
         this.setState({ submitWithoutFullExample: true });
         incompleteExample = true;
       }
@@ -398,13 +429,10 @@ class CreateInterface extends React.Component {
                 // Get the target, which is the user input that is expected to
                 // be in the model's output.
                 const target = {};
-                for (const annotationConfigObj of this.state.annotationConfig
-                  .output) {
-                  if (
-                    this.state.data.hasOwnProperty(annotationConfigObj.name)
-                  ) {
-                    target[annotationConfigObj.name] =
-                      this.state.data[annotationConfigObj.name];
+                for (const taskConfigObj of this.state.taskConfig.output) {
+                  if (this.state.data.hasOwnProperty(taskConfigObj.name)) {
+                    target[taskConfigObj.name] =
+                      this.state.data[taskConfigObj.name];
                   }
                 }
 
@@ -531,7 +559,7 @@ class CreateInterface extends React.Component {
     const responseContent = this.state.content
       .map((item, index) => (
         <ResponseInfo
-          annotationConfig={this.state.annotationConfig}
+          taskConfig={this.state.taskConfig}
           key={index}
           index={index}
           exampleId={this.state.mapKeyToExampleId[index + 1]}
@@ -557,26 +585,27 @@ class CreateInterface extends React.Component {
       return renderTooltip(props, "Don't like this context? Try another one.");
     }
 
-    // The target_label type is special. We want this object to
-    // appear in a special place in the interface.
-    const goalMessageInterface = this.state.annotationConfig?.input
+    // The multiclass type is special when as_goal_message is true. We want this
+    // object to appear in a special place in the interface.
+    const goalMessageInterface = this.state.taskConfig?.input
       .filter(
-        (annotationConfigObj) => annotationConfigObj.type === "target_label"
+        (taskConfigObj) =>
+          taskConfigObj.type === "multiclass" && taskConfigObj.as_goal_message
       )
-      .map((annotationConfigObj) => (
-        <div key={annotationConfigObj.name} className="mb-1 mt-1">
+      .map((taskConfigObj) => (
+        <div key={taskConfigObj.name} className="mb-1 mt-1">
           <AnnotationComponent
-            displayName={annotationConfigObj.display_name}
+            displayName={taskConfigObj.display_name}
             className="user-input-primary"
-            key={annotationConfigObj.name}
+            key={taskConfigObj.name}
             create={true}
-            name={annotationConfigObj.name}
+            name={taskConfigObj.name}
             data={this.state.data}
             setData={(data) => this.setState({ data: data })}
-            type={annotationConfigObj.type}
-            constructorArgs={annotationConfigObj.constructor_args}
+            type={taskConfigObj.type}
+            configObj={taskConfigObj}
             inputReminder={
-              this.state.data[annotationConfigObj.name] === null &&
+              this.state.data[taskConfigObj.name] === null &&
               this.state.submitWithoutFullExample
             }
           />
@@ -586,71 +615,65 @@ class CreateInterface extends React.Component {
     // The context_string_selection type is special. When it is present, we want
     // to remove the context string from view and put the context_string_selection
     // in its place
-    const contextStringSelectionGroup =
-      this.state.annotationConfig?.input.filter(
-        (annotationConfigObj) =>
-          annotationConfigObj.type === "context_string_selection"
-      );
-    const selectableContexts = contextStringSelectionGroup?.map(
-      (annotationConfigObj) =>
-        annotationConfigObj.constructor_args.reference_name
+    const contextStringSelectionGroup = this.state.taskConfig?.input.filter(
+      (taskConfigObj) => taskConfigObj.type === "context_string_selection"
     );
-    const tooTallForResponseInfoPlaceholder =
-      this.state.annotationConfig?.context
-        .concat(this.state.annotationConfig?.input)
-        .map((annotationConfigObj) => annotationConfigObj.type)
-        .includes("image");
-    const contextInterface = this.state.annotationConfig?.context
+    const selectableContexts = contextStringSelectionGroup?.map(
+      (taskConfigObj) => taskConfigObj.reference_name
+    );
+    const tooTallForResponseInfoPlaceholder = this.state.taskConfig?.context
+      .concat(this.state.taskConfig?.input)
+      .map((taskConfigObj) => taskConfigObj.type)
+      .includes("image");
+    const contextInterface = this.state.taskConfig?.context
       .concat(contextStringSelectionGroup)
       .filter(
-        (annotationConfigObj) =>
-          !selectableContexts.includes(annotationConfigObj.name)
+        (taskConfigObj) => !selectableContexts.includes(taskConfigObj.name)
       )
-      .map((annotationConfigObj) => (
-        <div key={annotationConfigObj.name} className="mb-1 mt-1">
+      .map((taskConfigObj) => (
+        <div key={taskConfigObj.name} className="mb-1 mt-1">
           <AnnotationComponent
-            displayName={annotationConfigObj.display_name}
+            displayName={taskConfigObj.display_name}
             className={"name-display-primary"}
-            key={annotationConfigObj.name}
+            key={taskConfigObj.name}
             create={
-              annotationConfigObj.type === "context_string_selection"
-                ? true
-                : false
+              taskConfigObj.type === "context_string_selection" ? true : false
             }
-            name={annotationConfigObj.name}
+            name={taskConfigObj.name}
             data={this.state.data}
             setData={(data) => this.setState({ data: data })}
-            type={annotationConfigObj.type}
-            constructorArgs={annotationConfigObj.constructor_args}
+            type={taskConfigObj.type}
+            configObj={taskConfigObj}
             inputReminder={
-              this.state.data[annotationConfigObj.name] === null &&
+              this.state.data[taskConfigObj.name] === null &&
               this.state.submitWithoutFullExample
             }
           />
         </div>
       ));
 
-    const belowModelResponseInterface = this.state.annotationConfig?.input
+    const belowModelResponseInterface = this.state.taskConfig?.input
       .filter(
-        (annotationConfigObj) =>
-          !["target_label", "context_string_selection"].includes(
-            annotationConfigObj.type
+        (taskConfigObj) =>
+          taskConfigObj.type !== "context_string_selection" &&
+          !(
+            taskConfigObj.type === "multiclass" && taskConfigObj.as_goal_message
           )
       )
-      .map((annotationConfigObj) => (
-        <div key={annotationConfigObj.name} className="mb-1 mt-1">
+      .map((taskConfigObj) => (
+        <div key={taskConfigObj.name} className="mb-1 mt-1">
           <AnnotationComponent
-            displayName={annotationConfigObj.display_name}
+            displayName={taskConfigObj.display_name}
             className="user-input-primary"
-            key={annotationConfigObj.name}
+            key={taskConfigObj.name}
             create={true}
-            name={annotationConfigObj.name}
+            name={taskConfigObj.name}
             data={this.state.data}
             setData={(data) => this.setState({ data: data })}
-            type={annotationConfigObj.type}
-            constructorArgs={annotationConfigObj.constructor_args}
+            type={taskConfigObj.type}
+            configObj={taskConfigObj}
             inputReminder={
-              this.state.data[annotationConfigObj.name] === null &&
+              this.state.data[taskConfigObj.name] === null &&
               this.state.submitWithoutFullExample
             }
           />
@@ -748,13 +771,13 @@ class CreateInterface extends React.Component {
               randomTargetModel={this.state.randomTargetModel}
             />
             <div className={"mb-3"}>
-              {(this.state.annotationConfig?.goal_message ||
+              {(this.state.taskConfig?.goal_message ||
                 (goalMessageInterface && goalMessageInterface.length) > 0) && (
                 <div className="mb-1 p-3 rounded light-gray-bg">
-                  {this.state.annotationConfig.goal_message && (
+                  {this.state.taskConfig.goal_message && (
                     <InputGroup className="align-items-center">
                       <i className="fas fa-flag-checkered mr-1"></i>
-                      Your goal: {this.state.annotationConfig.goal_message}
+                      Your goal: {this.state.taskConfig.goal_message}
                     </InputGroup>
                   )}
                   {goalMessageInterface}
@@ -829,9 +852,8 @@ class CreateInterface extends React.Component {
                       </Col>
                       <Col xs={6}>
                         <InputGroup className="d-flex justify-content-end">
-                          {this.state.annotationConfig &&
-                            this.state.annotationConfig.context.length !==
-                              0 && (
+                          {this.state.taskConfig &&
+                            this.state.taskConfig.context.length !== 0 && (
                               <OverlayTrigger
                                 placement="bottom"
                                 delay={{ show: 250, hide: 400 }}

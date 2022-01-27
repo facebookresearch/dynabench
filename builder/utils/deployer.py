@@ -14,6 +14,7 @@ from pathlib import Path
 import boto3
 import botocore
 import sagemaker
+import yaml
 from dynalab_cli.utils import SetupConfigHandler
 from sagemaker.model import Model
 from sagemaker.predictor import Predictor
@@ -84,8 +85,8 @@ class ModelDeployer:
     def _save_task_info_json(self, task_code):
         tm = TaskModel()
         task = tm.getByTaskCode(task_code)
-        annotation_config = json.loads(task.annotation_config_json)
-        task_info = {"annotation_config": annotation_config, "task": task_code}
+        task_config = yaml.load(task.config_yaml, yaml.SafeLoader)
+        task_info = {"config": task_config, "task": task_code}
         task_info_path = os.path.join(self.root_dir, f"{task_code}.json")
         with open(task_info_path, "w+") as f:
             f.write(json.dumps(task_info, indent=4))

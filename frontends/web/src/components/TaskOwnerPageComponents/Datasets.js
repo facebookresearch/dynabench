@@ -16,6 +16,7 @@ import {
 } from "react-bootstrap";
 import { Formik } from "formik";
 import DragAndDrop from "../DragAndDrop/DragAndDrop";
+const yaml = require("js-yaml");
 
 const FileUpload = (props) => {
   return props.values[props.filename] ? (
@@ -53,9 +54,8 @@ const FileUpload = (props) => {
 };
 
 const Datasets = (props) => {
-  const delta_metric_configs = JSON.parse(
-    props.task.annotation_config_json
-  ).delta_metrics;
+  const config = yaml.load(props.task.config_yaml);
+  const delta_metric_configs = config.delta_metrics ? config.delta_metrics : [];
   const delta_files = {};
   for (const config of delta_metric_configs) {
     delta_files[config.type] = null;
