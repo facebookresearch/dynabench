@@ -226,7 +226,7 @@ const Settings = (props) => {
                           Build queues
                           <Form.Text id="paramsHelpBlock" muted>
                             Name of your Build Queue in your AWS account
-                            (decentralized setting only)
+                            (Decentralized Task only)
                           </Form.Text>
                         </Form.Label>
                         <Col sm="6">
@@ -246,7 +246,7 @@ const Settings = (props) => {
                           Eval queues
                           <Form.Text id="paramsHelpBlock" muted>
                             Name of your Evaluation Queue in your AWS account
-                            (decentralized setting only)
+                            (Decentralized Task only)
                           </Form.Text>
                         </Form.Label>
                         <Col sm="6">

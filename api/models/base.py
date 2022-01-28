@@ -15,7 +15,12 @@ Base = declarative_base()
 
 
 def connect_db():
-    if (config["db_user"] == "" or config["db_password"] == "" or config["db_host"] == "" or config["db_name"] == ""):
+    if (
+        config["db_user"] == ""
+        or config["db_password"] == ""
+        or config["db_host"] == ""
+        or config["db_name"] == ""
+    ):
         return
     engine_url = "mysql+pymysql://{}:{}@{}:3306/{}".format(
         config["db_user"], config["db_password"], config["db_host"], config["db_name"]
