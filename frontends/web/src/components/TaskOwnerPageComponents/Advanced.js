@@ -19,7 +19,7 @@ const Advanced = (props) => {
           <Card.Body className="mt-4">
             <Formik
               initialValues={{
-                annotation_config_json: props.task.annotation_config_json,
+                config_yaml: props.task.config_yaml,
               }}
               onSubmit={
                 props.task.active
@@ -40,7 +40,7 @@ const Advanced = (props) => {
                     <Container>
                       <Form.Group
                         as={Row}
-                        controlId="annotation_config_json"
+                        controlId="config_yaml"
                         className="py-3 my-0"
                       >
                         <Row>
@@ -54,10 +54,7 @@ const Advanced = (props) => {
                               the task configuration can no longer be changed
                               except for the following properties:
                               <ul>
-                                <li>
-                                  aggregation_metric.constructor_args.default_weights
-                                  (this should be a dict)
-                                </li>
+                                <li>aggregation_metric.default_weights</li>
                               </ul>
                             </Form.Text>
                           </Col>
@@ -65,14 +62,15 @@ const Advanced = (props) => {
                         <Col sm="12" className="light-gray-bg">
                           <Form.Control
                             as="textarea"
-                            defaultValue={values.annotation_config_json}
+                            defaultValue={values.config_yaml}
                             rows="24"
                             onChange={handleChange}
-                            style={{ fontSize: 10 }}
+                            spellCheck={false}
+                            style={{ fontSize: 12, fontFamily: "Courier New" }}
                           />
                         </Col>
                         <Form.Text id="paramsHelpBlock" muted>
-                          DynaTask configuration strings are JSON objects that
+                          DynaTask configuration strings are YAML objects that
                           specify the input/output format for dataset and model
                           submissions, as well as the fields in the create and
                           validation interfaces. See{" "}

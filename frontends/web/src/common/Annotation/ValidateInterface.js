@@ -26,6 +26,11 @@ import {
 } from "../../containers/Overlay";
 import AnnotationComponent from "./AnnotationComponent.js";
 import initializeData from "./InitializeAnnotationData.js";
+const yaml = require("js-yaml");
+
+function deepCopyJSON(obj) {
+  return JSON.parse(JSON.stringify(obj));
+}
 
 class ValidateInterface extends React.Component {
   static contextType = UserContext;
@@ -39,7 +44,7 @@ class ValidateInterface extends React.Component {
       ownerValidationFlagFilter: "Any",
       ownerValidationDisagreementFilter: "Any",
       validatorAction: null,
-      annotationConfig: null,
+      taskConfig: null,
       data: {},
       loading: true,
       admin_or_owner: false,
@@ -134,18 +139,47 @@ class ValidateInterface extends React.Component {
             )
         ).then(
           (result) => {
-            const annotationConfig = JSON.parse(
-              this.state.task.annotation_config_json
-            );
+            const taskConfig = yaml.load(this.state.task.config_yaml);
+            taskConfig.input = taskConfig.input ? taskConfig.input : [];
+            taskConfig.output = taskConfig.output ? taskConfig.output : [];
+            taskConfig.context = taskConfig.context ? taskConfig.context : [];
+
+            // output is stored in a condensed format, where the task owner can
+            // specify the name of an annotation component without the type or
+            // other arguments, as long as that component is also in input or
+            // context. Here, we are getting the full annotation component info
+            // and making sure it is in output.
+            const expandedOutput = [];
+            for (const obj of taskConfig.output) {
+              const expandedObj = deepCopyJSON(taskConfig.input)
+                .concat(deepCopyJSON(taskConfig.context))
+                .filter((item) => item.name === obj.name);
+              if (expandedObj.length > 0) {
+                expandedOutput.push(JSON.parse(JSON.stringify(expandedObj[0])));
+              } else {
+                expandedOutput.push(obj);
+              }
+            }
+            taskConfig.output = expandedOutput;
+            taskConfig.metadata = taskConfig.metadata
+              ? taskConfig.metadata
+              : {};
+            taskConfig.metadata.create = taskConfig.metadata.create
+              ? taskConfig.metadata.create
+              : [];
+            taskConfig.metadata.validate = taskConfig.metadata.validate
+              ? taskConfig.metadata.validate
+              : [];
+
             const context = JSON.parse(result.context.context_json);
             const input = JSON.parse(result.input_json);
             const createMetadata = JSON.parse(result.metadata_json);
             const validateMetadata = initializeData(
-              annotationConfig.metadata.validate
+              taskConfig.metadata.validate
             );
             this.setState({
               example: result,
-              annotationConfig: annotationConfig,
+              taskConfig: taskConfig,
               data: Object.assign(
                 {},
                 input,
@@ -170,11 +204,10 @@ class ValidateInterface extends React.Component {
   handleResponse() {
     const mode = this.state.ownerMode ? "owner" : "user";
     const filteredValidatorMetadata = {};
-    for (const annotationConfigObj of this.state.annotationConfig.metadata
-      .validate) {
-      if (this.state.data[annotationConfigObj.name] !== null) {
-        filteredValidatorMetadata[annotationConfigObj.name] =
-          this.state.data[annotationConfigObj.name];
+    for (const taskConfigObj of this.state.taskConfig.metadata.validate) {
+      if (this.state.data[taskConfigObj.name] !== null) {
+        filteredValidatorMetadata[taskConfigObj.name] =
+          this.state.data[taskConfigObj.name];
       }
     }
 
@@ -257,70 +290,68 @@ class ValidateInterface extends React.Component {
   }
 
   render() {
-    const inputMetadataInterface = this.state.annotationConfig?.input
+    const inputMetadataInterface = this.state.taskConfig?.input
       .concat(
-        this.state.annotationConfig.metadata.create.filter(
-          (annotationConfigObj) =>
-            annotationConfigObj.model_wrong_condition === undefined ||
-            annotationConfigObj.model_wrong_condition ===
+        this.state.taskConfig.metadata.create.filter(
+          (taskConfigObj) =>
+            taskConfigObj.model_wrong_condition === undefined ||
+            taskConfigObj.model_wrong_condition ===
               this.state.example.model_wrong
         )
       )
       .filter(
-        (annotationConfigObj) =>
-          ![undefined, null].includes(this.state.data[annotationConfigObj.name])
+        (taskConfigObj) =>
+          ![undefined, null].includes(this.state.data[taskConfigObj.name])
       )
-      .map((annotationConfigObj) => (
-        <div key={annotationConfigObj.name} className="mb-3">
+      .map((taskConfigObj) => (
+        <div key={taskConfigObj.name} className="mb-3">
           <AnnotationComponent
-            displayName={annotationConfigObj.display_name}
+            displayName={taskConfigObj.display_name}
             className="name-display-primary"
-            key={annotationConfigObj.name}
-            name={annotationConfigObj.name}
+            key={taskConfigObj.name}
+            name={taskConfigObj.name}
             data={this.state.data}
-            type={annotationConfigObj.type}
-            constructorArgs={annotationConfigObj.constructor_args}
+            type={taskConfigObj.type}
+            configObj={taskConfigObj}
           />
         </div>
       ));
 
-    const contextInterface = this.state.annotationConfig?.context.map(
-      (annotationConfigObj) => (
+    const contextInterface = this.state.taskConfig?.context.map(
+      (taskConfigObj) => (
         <AnnotationComponent
-          displayName={annotationConfigObj.display_name}
+          displayName={taskConfigObj.display_name}
           className="name-display-primary"
-          key={annotationConfigObj.name}
-          name={annotationConfigObj.name}
+          key={taskConfigObj.name}
+          name={taskConfigObj.name}
           data={this.state.data}
-          type={annotationConfigObj.type}
-          constructorArgs={annotationConfigObj.constructor_args}
+          type={taskConfigObj.type}
+          configObj={taskConfigObj}
         />
       )
     );
 
-    const validatorMetadataInterface =
-      this.state.annotationConfig?.metadata.validate
-        ?.filter(
-          (annotationConfigObj) =>
-            annotationConfigObj.validated_label_condition === undefined ||
-            annotationConfigObj.validated_label_condition ===
-              this.state.validatorAction
-        )
-        .map((annotationConfigObj) => (
-          <div key={annotationConfigObj.name} className="mb-1 mt-1">
-            <AnnotationComponent
-              displayName={annotationConfigObj.display_name}
-              className="user-input-secondary"
-              key={annotationConfigObj.name}
-              create={true}
-              name={annotationConfigObj.name}
-              data={this.state.data}
-              setData={(data) => this.setState({ data: data })}
-              type={annotationConfigObj.type}
-              constructorArgs={annotationConfigObj.constructor_args}
-            />
-          </div>
-        ));
+    const validatorMetadataInterface = this.state.taskConfig?.metadata.validate
+      ?.filter(
+        (taskConfigObj) =>
+          taskConfigObj.validated_label_condition === undefined ||
+          taskConfigObj.validated_label_condition === this.state.validatorAction
+      )
+      .map((taskConfigObj) => (
+        <div key={taskConfigObj.name} className="mb-1 mt-1">
+          <AnnotationComponent
+            displayName={taskConfigObj.display_name}
+            className="user-input-secondary"
+            key={taskConfigObj.name}
+            create={true}
+            name={taskConfigObj.name}
+            data={this.state.data}
+            setData={(data) => this.setState({ data: data })}
+            type={taskConfigObj.type}
+            configObj={taskConfigObj}
+          />
+        </div>
+      ));
 
     return (
       <OverlayProvider initiallyHide={true}>
@@ -431,10 +462,10 @@ class ValidateInterface extends React.Component {
                 Validate examples
               </h2>
             </div>
-            {this.state.annotationConfig?.content_warning && (
+            {this.state.taskConfig?.content_warning && (
               <p className="mt-3 p-3 light-red-bg rounded white-color">
                 <strong>WARNING</strong>:{" "}
-                {this.state.annotationConfig.content_warning}
+                {this.state.taskConfig.content_warning}
               </p>
             )}
             <Card className="profile-card">

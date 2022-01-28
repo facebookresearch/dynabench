@@ -9,6 +9,7 @@ import { Container, Row, Form, Col, Card, Button } from "react-bootstrap";
 import Markdown from "react-markdown";
 import { Formik } from "formik";
 import UserContext from "../../containers/UserContext";
+const yaml = require("js-yaml");
 
 const Settings = (props) => {
   const context = useContext(UserContext);
@@ -112,10 +113,10 @@ const Settings = (props) => {
                           </Col>
                         </Form.Group>
                       )}
-                      {props.task.annotation_config_json &&
-                        JSON.parse(
-                          props.task.annotation_config_json
-                        ).hasOwnProperty("train_file_metric") && (
+                      {props.task.config_yaml &&
+                        yaml
+                          .load(props.task.config_yaml)
+                          .hasOwnProperty("train_file_metric") && (
                           <Form.Group
                             as={Row}
                             controlId="train_file_upload_instructions_md"
@@ -224,7 +225,8 @@ const Settings = (props) => {
                         <Form.Label column>
                           Build queues
                           <Form.Text id="paramsHelpBlock" muted>
-                            Name of your Build Queue in your AWS account (decentralized setting only)
+                            Name of your Build Queue in your AWS account
+                            (decentralized setting only)
                           </Form.Text>
                         </Form.Label>
                         <Col sm="6">
@@ -243,7 +245,8 @@ const Settings = (props) => {
                         <Form.Label column>
                           Eval queues
                           <Form.Text id="paramsHelpBlock" muted>
-                          Name of your Evaluation Queue in your AWS account (decentralized setting only)
+                            Name of your Evaluation Queue in your AWS account
+                            (decentralized setting only)
                           </Form.Text>
                         </Form.Label>
                         <Col sm="6">
@@ -277,7 +280,8 @@ const Settings = (props) => {
                         <Form.Label column>
                           Task Owner AWS Account ID
                           <Form.Text id="paramsHelpBlock" muted>
-                            AWS Account ID in your AWS Account (decentralized setting only)
+                            AWS Account ID in your AWS Account (decentralized
+                            setting only)
                           </Form.Text>
                         </Form.Label>
                         <Col sm="6">
@@ -288,7 +292,7 @@ const Settings = (props) => {
                           />
                         </Col>
                       </Form.Group>
-                      
+
                       {values.is_decen_task && (
                         <Form.Group
                           as={Row}

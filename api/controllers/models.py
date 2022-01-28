@@ -11,6 +11,7 @@ import boto3
 import bottle
 import sqlalchemy as db
 import ujson
+import yaml
 from bottle import response
 
 import common.auth as _auth
@@ -69,8 +70,10 @@ def get_latest_job_log(credentials, mid, did):
     task = tm.get(model.tid)
 
     delta_metric_types = [
-        config["type"]
-        for config in util.json_decode(task.annotation_config_json)["delta_metrics"]
+        task_config["type"]
+        for task_config in yaml.load(task.config_yaml, yaml.SafeLoader).get(
+            "delta_metrics", []
+        )
     ]
     delta_metric_types.append(None)
 
@@ -147,19 +150,15 @@ def do_upload_via_train_files(credentials, tid, model_name):
 
     tm = TaskModel()
     task = tm.get(tid)
-    annotation_config = util.json_decode(task.annotation_config_json)
-    if "train_file_metric" not in annotation_config:
+    task_config = yaml.load(task.config_yaml, yaml.SafeLoader)
+    if "train_file_metric" not in task_config:
         bottle.abort(
             403,
             """This task does not allow train file uploads. Submit a model instead.""",
         )
 
-    train_file_metric = train_file_metrics[
-        annotation_config["train_file_metric"]["type"]
-    ]
-    train_file_metric_constructor_args = annotation_config["train_file_metric"][
-        "constructor_args"
-    ]
+    train_file_metric = train_file_metrics[task_config["train_file_metric"]["type"]]
+    train_file_metric_config_obj = task_config["train_file_metric"]
 
     m = ModelModel()
     if (
@@ -216,7 +215,7 @@ def do_upload_via_train_files(credentials, tid, model_name):
             parsed_prediction_file = train_file_metric(
                 util.json_decode(upload.file.read().decode("utf-8")),
                 parsed_test_file,
-                train_file_metric_constructor_args,
+                train_file_metric_config_obj,
             )
             parsed_uploads[name] = parsed_prediction_file
 

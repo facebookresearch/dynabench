@@ -25,7 +25,7 @@ RUN apt-get update && \
     curl \
     vim \
     git \
-    && rm -rf /var/lib/apt/lists/* 
+    && rm -rf /var/lib/apt/lists/*
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.6 1
 RUN cd /tmp \

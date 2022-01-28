@@ -13,6 +13,7 @@ import time
 from pathlib import Path
 from typing import Dict, List, TextIO, Tuple
 
+import yaml
 from datasets.common import BaseDataset
 
 from utils import helpers
@@ -119,9 +120,9 @@ class Flores101Base(BaseDataset):
                 src_perfs = self.eval_src_lang(job, src)
                 perf_by_tag.extend(src_perfs)
 
-        perf_metric_type = json.loads(self.task.annotation_config_json)["perf_metric"][
-            "type"
-        ]
+        perf_metric_type = yaml.load(self.task.config_yaml, yaml.SafeLoader)[
+            "perf_metric"
+        ]["type"]
         return compute_averages(perf_metric_type, perf_by_tag), {}
 
     def eval_src_lang(self, job: Job, src: str) -> dict:

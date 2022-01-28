@@ -8,10 +8,11 @@ import os
 import tempfile
 
 import boto3
+import yaml
 
 from eval_config import eval_config
 from metrics.metric_getters import get_delta_metrics, get_eval_metrics
-from models.dataset import AccessTypeEnum
+from models.dataset import AccessTypeEnum, LogAccessTypeEnum
 from models.task import TaskModel
 from utils.helpers import (
     dotdict,
@@ -34,11 +35,12 @@ class BaseDataset:
         name,
         config=eval_config,
         access_type=AccessTypeEnum.scoring,
+        log_access_type=LogAccessTypeEnum.owner,
         ext=".jsonl",
         longdesc=None,
         source_url=None,
         db_connection_avail=True,
-        db_connection_not_avail_task_info=None
+        db_connection_not_avail_task_info=None,
     ):
         self.name = name
         self.round_id = round_id
@@ -51,7 +53,7 @@ class BaseDataset:
             self.task = tm.getByTaskCode(task_code)
         else:
             self.task = db_connection_not_avail_task_info
-        
+
         self.s3_url = self._get_data_s3_url()
         self.longdesc = longdesc
         self.source_url = source_url
@@ -128,18 +130,25 @@ class BaseDataset:
         self, sagemaker_client, endpoint_name, job_name, perturb_prefix=None
     ) -> dict:
         input_names = [
-            obj["name"] for obj in json.loads(self.task.annotation_config_json)["input"]
+            obj["name"]
+            for obj in yaml.load(self.task.config_yaml, yaml.SafeLoader).get(
+                "input", []
+            )
         ]
         output_names = [
             obj["name"]
-            for obj in json.loads(self.task.annotation_config_json)["output"]
+            for obj in yaml.load(self.task.config_yaml, yaml.SafeLoader).get(
+                "output", []
+            )
         ]
         input_names_without_target_names = list(
             set(input_names).difference(set(output_names))
         )
         model_input_names = input_names_without_target_names + [
             obj["name"]
-            for obj in json.loads(self.task.annotation_config_json)["context"]
+            for obj in yaml.load(self.task.config_yaml, yaml.SafeLoader).get(
+                "context", []
+            )
         ]
         model_input_names.append("uid")  # unique example identifier
         return dict(
@@ -359,9 +368,9 @@ class BaseDataset:
         return {
             "id": example["uid"],
             "answer": example[
-                json.loads(self.task.annotation_config_json)["perf_metric"][
-                    "constructor_args"
-                ]["reference_name"]
+                yaml.load(self.task.config_yaml, yaml.SafeLoader)["perf_metric"][
+                    "reference_name"
+                ]
             ],
             "tags": example.get("tags", []),
         }  # NOTE: For now, the perf_metric defines the output to look for
@@ -380,9 +389,9 @@ class BaseDataset:
         return {
             "id": example["id"],
             "pred": example[
-                json.loads(self.task.annotation_config_json)["perf_metric"][
-                    "constructor_args"
-                ]["reference_name"]
+                yaml.load(self.task.config_yaml, yaml.SafeLoader)["perf_metric"][
+                    "reference_name"
+                ]
             ],
         }  # NOTE: For now, the perf_metric defines the output to look for
 

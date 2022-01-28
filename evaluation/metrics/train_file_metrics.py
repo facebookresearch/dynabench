@@ -60,14 +60,14 @@ def download_s3_dir(bucket, prefix, local):
         s3_client.download_file(bucket, k, dest_pathname)
 
 
-def dataperf(train, test, constructor_args):
+def dataperf(train, test, config_obj):
     """
     Input:
 
     train: {"Dog": {"train_id_0": 1, "train_id_1": 0, "train_id_3": 1, ...},
         "Cat": {"train_id_0": 1, "train_id_2": 1, "train_id_3": 0 ...} ...}
     test: [{"uid": "test_id_0"}, {"uid": "test_id_1"}, ...]
-    constructor_args: {"iterations": 5, "reference_name": "labels"}
+    config_obj: {"iterations": 5, "reference_name": "labels"}
 
     Output:
 
@@ -105,7 +105,7 @@ def dataperf(train, test, constructor_args):
     def get_test_dataset_embedding(uid):
         if uid in test_memo:
             return test_memo[uid]
-        for label in constructor_args["test_labels"]:
+        for label in config_obj["test_labels"]:
             with tempfile.TemporaryDirectory() as td:
                 download_s3_dir("dataperf-embeddings", label + "_test", td)
                 df = pd.read_parquet(td, engine="pyarrow")
@@ -122,7 +122,7 @@ def dataperf(train, test, constructor_args):
             train_X.append(get_train_dataset_embedding(unique_id))
             train_y.append(is_present)
         differently_seeded_classifiers = []
-        for i in range(constructor_args["seeds"]):
+        for i in range(config_obj["seeds"]):
             differently_seeded_classifiers.append(
                 LogisticRegression(random_state=i).fit(train_X, train_y)
             )
@@ -131,7 +131,7 @@ def dataperf(train, test, constructor_args):
     preds_formatted = []
     for obj in test:
         differently_seeded_predictions = []
-        for i in range(constructor_args["seeds"]):
+        for i in range(config_obj["seeds"]):
             differently_seeded_predictions.append([])
             for (
                 label,
@@ -144,7 +144,7 @@ def dataperf(train, test, constructor_args):
         preds_formatted.append(
             {
                 "uid": obj["uid"],
-                constructor_args["reference_name"]: differently_seeded_predictions,
+                config_obj["reference_name"]: differently_seeded_predictions,
             }
         )
 

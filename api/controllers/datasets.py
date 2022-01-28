@@ -9,6 +9,7 @@ import tempfile
 
 import boto3
 import bottle
+import yaml
 from bottle import response
 
 import common.auth as _auth
@@ -88,7 +89,9 @@ def delete(credentials, did):
 
     delta_metric_types = [
         config["type"]
-        for config in util.json_decode(task.annotation_config_json)["delta_metrics"]
+        for config in yaml.load(task.config_yaml, yaml.SafeLoader).get(
+            "delta_metrics", []
+        )
     ]
     delta_metric_types.append(None)
 
@@ -142,7 +145,9 @@ def create(credentials, tid, name):
     delta_dataset_uploads = []
     delta_metric_types = [
         config["type"]
-        for config in util.json_decode(task.annotation_config_json)["delta_metrics"]
+        for config in yaml.load(task.config_yaml, yaml.SafeLoader).get(
+            "delta_metrics", []
+        )
     ]
     for delta_metric_type in delta_metric_types:
         delta_dataset_uploads.append(

@@ -13,6 +13,7 @@ import { useState } from "react";
 import ChevronExpandButton from "../Buttons/ChevronExpandButton";
 import Contexts from "./Contexts";
 import { Spinner } from "react-bootstrap";
+const yaml = require("js-yaml");
 
 const Rounds = (props) => {
   const [showModelSelectRound, setShowModelSelectRound] = useState(
@@ -34,6 +35,9 @@ const Rounds = (props) => {
     model_identifiers[index].is_target = !model_identifiers[index].is_target;
     setFieldValue("model_identifiers", model_identifiers);
   };
+
+  const context = yaml.load(props.task.config_yaml).context;
+  const allowContextUpload = context ? context.length !== 0 : false;
 
   return (
     <Container className="mb-5 pb-5">
@@ -224,8 +228,7 @@ const Rounds = (props) => {
                               </Form.Group>
                             </Container>
                           ) : null}
-                          {JSON.parse(props.task.annotation_config_json).context
-                            .length !== 0 && (
+                          {allowContextUpload && (
                             <Form.Group
                               as={Row}
                               className="py-3 my-0 border-top"

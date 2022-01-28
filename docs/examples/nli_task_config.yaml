@@ -1,0 +1,72 @@
+aggregation_metric:
+  type: dynascore
+context:
+- name: context
+  placeholder: Enter context...
+  type: string
+delta_metrics:
+- type: fairness
+- type: robustness
+input:
+- name: hypothesis
+  placeholder: Enter hypothesis...
+  type: string
+- as_goal_message: true
+  labels:
+  - entailed
+  - neutral
+  - contradictory
+  name: label
+  type: multiclass
+metadata:
+  create:
+  - display_name: example explanation
+    name: example_explanation
+    placeholder: Explain why your example is correct...
+    type: string
+  - display_name: model explanation
+    model_wrong_condition: false
+    name: model_explanation_right
+    placeholder: Explain why you thought the model would make a mistake...
+    type: string
+  - display_name: model explanation
+    model_wrong_condition: true
+    name: model_explanation_wrong
+    placeholder: Explain why you think the model made a mistake...
+    type: string
+  validate:
+  - labels:
+    - entailed
+    - neutral
+    - contradictory
+    name: corrected_label
+    placeholder: Enter corrected label
+    type: multiclass
+    validated_label_condition: incorrect
+  - name: target_explanation
+    placeholder: Explain why your proposed target is correct...
+    type: string
+    validated_label_condition: incorrect
+  - name: flag_reason
+    placeholder: Enter the reason for flagging...
+    type: string
+    validated_label_condition: flagged
+  - name: validator_example_explanation
+    placeholder: Explain why the example is correct...
+    type: string
+    validated_label_condition: correct
+  - name: validator_model_explanation
+    placeholder: Enter what you think was done to try to trick the model...
+    type: string
+model_wrong_metric:
+  reference_names:
+  - label
+  type: exact_match
+output:
+- name: label
+- name: prob
+  reference_name: label
+  type: prob
+perf_metric:
+  reference_name: label
+  type: accuracy
