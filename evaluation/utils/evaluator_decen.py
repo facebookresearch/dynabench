@@ -14,6 +14,8 @@ from dateutil.tz import tzlocal
 
 from utils.helpers import (
     api_model_endpoint_name,
+    api_model_eval_update,
+    generate_job_name,
     process_aws_metrics,
     round_end_dt,
     round_start_dt,
@@ -34,7 +36,12 @@ class Job:
         self.perturb_prefix = perturb_prefix
         # Generate a temporary name, the scheduler will put a proper timestamp
         # at the time of submission
-        self.job_name = generate_job_name(self, timestamp=self.TEMP_JOB_NAME_SUFFIX)
+        self.job_name = generate_job_name(
+            self.endpoint_name,
+            self.perturb_prefix,
+            self.dataset_name,
+            timestamp=self.TEMP_JOB_NAME_SUFFIX,
+        )
 
         self.status = None  # will update once job is successfully submitted
         self.aws_metrics = {}  # will update once job is completed
@@ -120,7 +127,7 @@ class JobScheduler:
         else:
             self._queued.append(job)
             logger.info(f"Queued {job.job_name} for submission")
-
+        api_model_eval_update(job.model_id, job.dataset_name, "evaluating")
         if dump:
             self.dump()
 
@@ -138,7 +145,12 @@ class JobScheduler:
         if time.time() - self._last_submission < 1:
             time.sleep(1.1)
         submission_timestamp = int(time.time())
-        job.job_name = generate_job_name(job, submission_timestamp)
+        job.job_name = generate_job_name(
+            self.endpoint_name,
+            self.perturb_prefix,
+            self.dataset_name,
+            submission_timestamp,
+        )
         self._last_submission = submission_timestamp
 
     def submit(self):
@@ -156,6 +168,7 @@ class JobScheduler:
                     f"Requeueing job {job.job_name} due to AWS limit exceeds: {ex}"
                 )
                 self._queued.append(job)
+                api_model_eval_update(job.model_id, job.dataset_name, "evaluating")
                 return False
             except sagemaker.exceptions.ResourceInUse as ex:
                 logger.exception(
@@ -163,6 +176,7 @@ class JobScheduler:
                 )
                 logger.debug(f"{ex}")
                 self._submitted.append(job)
+                api_model_eval_update(job.model_id, job.dataset_name, "evaluating")
                 return True
             except botocore.exceptions.ClientError as ex:
                 if ex.response["Error"]["Code"] == "ThrottlingException":
@@ -172,20 +186,24 @@ class JobScheduler:
                     )
                     logger.debug(f"{ex}")
                     self._queued.append(job)
+                    api_model_eval_update(job.model_id, job.dataset_name, "evaluating")
                     time.sleep(2)
                 else:
                     logger.exception(
                         f"Exception in submitting job {job.job_name}: {ex}"
                     )
                     self._failed.append(job)
+                    api_model_eval_update(job.model_id, job.dataset_name, "failed")
                 return False
             except Exception as ex:
                 logger.exception(f"Exception in submitting job {job.job_name}: {ex}")
                 self._failed.append(job)
+                api_model_eval_update(job.model_id, job.dataset_name, "failed")
                 return False
             else:
                 logger.info(f"Submitted {job.job_name} for batch transform.")
                 self._submitted.append(job)
+                api_model_eval_update(job.model_id, job.dataset_name, "evaluating")
                 return True
 
         # Submit remaining jobs
@@ -229,11 +247,15 @@ class JobScheduler:
                 if job.status["TransformJobStatus"] != "InProgress":
                     if job.status["TransformJobStatus"] != "Completed":
                         self._failed.append(job)
+                        api_model_eval_update(job.model_id, job.dataset_name, "failed")
                         done_job_names.add(job.job_name)
                     elif job.perturb_prefix or round_end_dt(
                         job.status["TransformEndTime"]
                     ) < datetime.now(tzlocal()):
                         self._completed.append(job)
+                        api_model_eval_update(
+                            job.model_id, job.dataset_name, "evaluating"
+                        )
                         done_job_names.add(job.job_name)
         self._submitted = [
             job for job in self._submitted if job.job_name not in done_job_names
@@ -351,16 +373,16 @@ class JobScheduler:
         print(f"Scheduler dumped status to {self._status_dump}")
 
 
-def generate_job_name(job: Job, timestamp: int):
-    """Generate the job name with a given timestamp.
+# def generate_job_name(job: Job, timestamp: int):
+#     """Generate the job name with a given timestamp.
 
-    The timestamp need to be properly spaced out, because they need to be unique
-    across all jobs in the same AWS region.
-    This is taken care of by `_set_jobname_with_unique_timestamp`
-    """
-    suffix = f"-{timestamp}"
-    prefix = "-".join(
-        filter(None, (job.endpoint_name, job.perturb_prefix, job.dataset_name))
-    )
-    # :63 is AWS requirement, and we want to keep the timestamp intact
-    return prefix[: 63 - len(suffix)] + suffix
+#     The timestamp need to be properly spaced out, because they need to be unique
+#     across all jobs in the same AWS region.
+#     This is taken care of by `_set_jobname_with_unique_timestamp`
+#     """
+#     suffix = f"-{timestamp}"
+#     prefix = "-".join(
+#         filter(None, (job.endpoint_name, job.perturb_prefix, job.dataset_name))
+#     )
+#     # :63 is AWS requirement, and we want to keep the timestamp intact
+#     return prefix[: 63 - len(suffix)] + suffix

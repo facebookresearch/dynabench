@@ -68,15 +68,15 @@ class MetricsComputer:
         self.dump()
 
         # Don't change model's evaluation status if it has failed.
-        if ("evaluation_status" not in model_json) or (
-            model_json["evaluation_status"] != "failed"
-        ):
-            model_done_evaluating = True
-            for other_job in self._waiting + self._computing:
-                if other_job.model_id == job.model_id:
-                    model_done_evaluating = False
-            if model_done_evaluating:
-                api_model_eval_update(model_json["id"], "completed")
+        # if ("evaluation_status" not in model_json) or (
+        #     model_json["evaluation_status"] != "failed"
+        # ):
+        #     model_done_evaluating = True
+        #     for other_job in self._waiting + self._computing:
+        #         if other_job.model_id == job.model_id:
+        #             model_done_evaluating = False
+        #     if model_done_evaluating:
+        api_model_eval_update(model_json["id"], job.dataset_name, "completed")
 
         logger.info(f"Successfully evaluated {job.job_name}")
 
@@ -90,13 +90,14 @@ class MetricsComputer:
         if job in self._computing:
             self._computing.remove(job)
         self._failed.append(job)
-        api_model_eval_update(job.model_id, "failed")
+        api_model_eval_update(job.model_id, job.dataset_name, "failed")
 
     def compute_one_blocking(self, job) -> None:
         try:
 
             logger.info(f"Evaluating {job.job_name}")
             self._computing.append(job)
+            api_model_eval_update(job.model_id, job.dataset_name, "evaluating")
             dataset = self.datasets[job.dataset_name]
             eval_metrics, delta_metrics = dataset.compute_job_metrics(job)
             self.update_database_with_metrics(job, eval_metrics, delta_metrics)
@@ -116,6 +117,7 @@ class MetricsComputer:
             )
         except Exception as e:
             self._failed.append(job)
+            api_model_eval_update(job.model_id, job.dataset_name, "failed")
             logger.error(
                 f"Couldn't start the final evaluation for {job}."
                 " Probably due to a pickling error"
@@ -125,6 +127,7 @@ class MetricsComputer:
             return
 
         self._computing.append(job)
+        api_model_eval_update(job.model_id, job.dataset_name, "evaluating")
         self.dump()
 
     def find_next_ready_job(self) -> Optional[Job]:
@@ -152,6 +155,7 @@ class MetricsComputer:
                     f"Postpone computation."
                 )
                 self._waiting.append(job)
+                api_model_eval_update(job.model_id, job.dataset_name, "evaluating")
             else:
                 self.dump()
                 return job

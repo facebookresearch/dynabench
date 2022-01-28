@@ -334,8 +334,8 @@ class dotdict(dict):
     __delattr__ = dict.__delitem__
 
 
-def api_model_eval_update(model_id, evaluation_status, prod=False):
-    data = {"evaluation_status": evaluation_status}
+def api_model_eval_update(model_id, dataset_name, evaluation_status, prod=False):
+    data = {"evaluation_status": evaluation_status, "dataset_name": dataset_name}
 
     _ = requests.get(
         f"{DYNABENCH_API}/models/{model_id}/update_evaluation_status",

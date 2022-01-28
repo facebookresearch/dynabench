@@ -21,13 +21,14 @@ from common.config import config
 from common.logging import logger
 from models.badge import BadgeModel
 from models.dataset import AccessTypeEnum, DatasetModel, LogAccessTypeEnum
-from models.model import DeploymentStatusEnum, EvaluationStatusEnum, ModelModel
+from models.model import DeploymentStatusEnum, ModelModel
 from models.notification import NotificationModel
 from models.round import RoundModel
 from models.score import ScoreModel
 from models.task import AnnotationVerifierMode, TaskModel, train_file_metrics
 from models.task_user_permission import TaskUserPermission
 from models.user import UserModel
+from utils.helpers import update_evaluation_status
 
 from .tasks import ensure_owner_or_admin
 
@@ -946,13 +947,6 @@ def update_database_with_metrics():
         data = req_data["data"]
 
         model = mm.get(job.model_id)
-        # Don't change model's evaluation status if it has failed.
-        if model.evaluation_status != EvaluationStatusEnum.failed:
-            if model.evaluation_status != EvaluationStatusEnum.evaluating:
-                model.evaluation_status = EvaluationStatusEnum.evaluating
-                mm.dbs.add(model)
-                mm.dbs.flush()
-                mm.dbs.commit()
 
         dm = DatasetModel()
         d_entry = dm.getByName(job.dataset_name)
@@ -1004,8 +998,8 @@ def update_database_with_metrics():
 
 
 @bottle.get("/models/<mid:int>/update_evaluation_status")
-def update_evaluation_status(mid):
-    m = ModelModel()
+def update_evaluation_status_api_call(mid):
+    # m = ModelModel()
     req_data = bottle.request.json
 
     secret = get_secret_for_model_id(mid)
@@ -1015,15 +1009,16 @@ def update_evaluation_status(mid):
     data = req_data["data"]
 
     # TODO: add secret here so it is not unauthorized
-    if set(data.keys()) != {"evaluation_status"}:
+    if set(data.keys()) != {"evaluation_status", "dataset_name"}:
         bottle.abort(401, "Operation not authorized")
 
     try:
-        model = m.getUnpublishedModelByMid(mid)
-        m.update(
-            model.id,
-            evaluation_status=data["evaluation_status"],
-        )
+        # model = m.getUnpublishedModelByMid(mid)
+        update_evaluation_status(mid, data["dataset_name"], data["evaluation_status"])
+        # m.update(
+        #     model.id,
+        #     evaluation_status=data["evaluation_status"],
+        # )
 
         return {"status": "success"}
 
