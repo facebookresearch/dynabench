@@ -87,9 +87,9 @@ The input/output format for a task, both in terms of what the model expects and 
 
 * [Machine Translation](https://github.com/facebookresearch/dynabench/blob/main/docs/examples/flores_task_config.yaml)
 
-* [Hate Speech Detection](https://github.com/facebookresearch/dynabench/blob/main/docs/examples/vqa_task_config.yaml)
+* [Visual Question Answering](https://github.com/facebookresearch/dynabench/blob/main/docs/examples/vqa_task_config.yaml)
 
-* [Machine Translation](https://github.com/facebookresearch/dynabench/blob/main/docs/examples/dataperf_image_labelling_task_config.yaml)
+* [Image Labelling with Core Set Selection Leaderboard](https://github.com/facebookresearch/dynabench/blob/main/docs/examples/dataperf_image_labelling_task_config.yaml)
 
 We recommend that you look through the examples before reading further. The task config can have the following fields:
 
