@@ -29,7 +29,7 @@ RUN apt-get update && \
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.6 1
 RUN cd /tmp \
-    && curl -O https://bootstrap.pypa.io/get-pip.py \
+    && curl -O https://bootstrap.pypa.io/pip/3.6/get-pip.py \
     && python3 get-pip.py
 
 RUN python -m pip install --no-cache-dir torchserve

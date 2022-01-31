@@ -8,6 +8,7 @@ import multiprocessing
 import os
 import sys
 import time
+import traceback
 
 import boto3
 import requests
@@ -43,6 +44,13 @@ def load_datasets_for_task_owner():
         verify=False,
     )
 
+    if r.status_code != 200:
+        json_resp = r.json()
+        status_code = json_resp["status_code"]
+        error = json_resp["error"]
+        print(f"Recieved {status_code} from dynabench: {error}")
+        return None, False
+
     jsonResponse = r.json()
     datasetJsonResponse = jsonResponse["datasets_metadata"]
     taskJsonResponse = jsonResponse["task_metadata"]
@@ -71,16 +79,16 @@ def load_datasets_for_task_owner():
 
     # This means there are no datasets for the task, as
     # opposed to the request not going through
-    succesful_but_empty = (r.status_code == 200) and (len(datasetJsonResponse) == 0)
+    status_code_check_fail = r.status_code != 200
+    len_dataset_check_fail = len(datasetJsonResponse) == 0
 
-    return datasets_dict, succesful_but_empty
+    return datasets_dict, status_code_check_fail, len_dataset_check_fail
 
 
 def main():
     init_logger("evaluation")
     server_id = eval_config["eval_server_id"]
     logger.info(f"Start evaluation server '{server_id}'")
-    succesful_but_empty = False
 
     sqs = boto3.resource(
         "sqs",
@@ -89,10 +97,18 @@ def main():
         region_name=eval_config["aws_region"],
     )
     queue = sqs.get_queue_by_name(QueueName=eval_config["evaluation_sqs_queue"])
-    dataset_dict, succesful_but_empty = load_datasets_for_task_owner()
+    (
+        dataset_dict,
+        status_code_check_fail,
+        len_dataset_check_fail,
+    ) = load_datasets_for_task_owner()
+
+    if status_code_check_fail:
+        return
+
     active_model_ids = load_models_ids_for_task_owners()
 
-    while (not dataset_dict) and (not succesful_but_empty):
+    while (not dataset_dict) and (len_dataset_check_fail):
         logger.info("Haven't got dataset_dict. Sleep.")
         time.sleep(sleep_interval)
     requester = Requester(eval_config, dataset_dict, active_model_ids)
@@ -119,14 +135,16 @@ def main():
 
                     # load the necessary dictionary dict
                     if msg.get("reload_datasets", False):
-                        succesful_but_empty = False
+                        status_code_check_fail = False
+                        len_dataset_check_fail = False
                         (
                             dataset_dict,
-                            succesful_but_empty,
+                            status_code_check_fail,
+                            len_dataset_check_fail,
                         ) = load_datasets_for_task_owner()
                         active_model_ids = load_models_ids_for_task_owners()
 
-                        while (not dataset_dict) and (not succesful_but_empty):
+                        while (not dataset_dict) and (len_dataset_check_fail):
                             logger.info("Haven't got dataset_dict. Sleep.")
                             time.sleep(sleep_interval)
                         requester = Requester(
@@ -195,14 +213,16 @@ def main():
 
                                 os.remove(dataset_download_filename)
 
-                                # add a message back to the queue to eval this dataset
-                                msg = {
-                                    "reload_datasets": True,
-                                    "model_id": "*",
-                                    "dataset_name": dataset_name,
-                                    "eval_server_id": server_id,
-                                }
-                                queue.send_message(MessageBody=json.dumps(msg))
+                            # Once all datasets are downloaded
+                            # Re-add message to queue to evaluate
+                            # all models
+                            msg = {
+                                "reload_datasets": True,
+                                "model_id": "*",
+                                "dataset_name": dataset_name,
+                                "eval_server_id": server_id,
+                            }
+                            queue.send_message(MessageBody=json.dumps(msg))
 
                     if not download_dataset_message:
                         requester.request(msg)
@@ -227,7 +247,7 @@ def main():
                     if job:
                         logger.info(pool)
                         # requester.computer.compute_one_async(pool, job)
-                        requester.computer.compute_one_blocking(pool, job)
+                        requester.computer.compute_one_blocking(job)
                 except Exception as e:
                     print("job I failed on was")
                     print(job.to_dict())
@@ -242,6 +262,7 @@ def main():
             except Exception as e:
                 logger.info(f"Got exception while processing request: {message.body}")
                 print(e)
+                print(traceback.format_exc())
 
             time.sleep(sleep_interval)
             timer += sleep_interval

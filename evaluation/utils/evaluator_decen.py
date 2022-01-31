@@ -146,9 +146,9 @@ class JobScheduler:
             time.sleep(1.1)
         submission_timestamp = int(time.time())
         job.job_name = generate_job_name(
-            self.endpoint_name,
-            self.perturb_prefix,
-            self.dataset_name,
+            job.endpoint_name,
+            job.perturb_prefix,
+            job.dataset_name,
             submission_timestamp,
         )
         self._last_submission = submission_timestamp

@@ -81,7 +81,7 @@ class Requester:
                 dataset = self.datasets[dataset_name]
                 delta_metric_types = [
                     obj["type"]
-                    for obj in yaml.load(dataset.task.config_yaml).get(
+                    for obj in yaml.load(dataset.task.config_yaml, yaml.SafeLoader).get(
                         "delta_metrics", []
                     )
                 ]
