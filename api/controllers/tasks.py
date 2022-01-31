@@ -441,6 +441,7 @@ def update(credentials, tid):
             "eval_sqs_queue",
             "is_decen_task",
             "task_aws_account_id",
+            "task_gateway_predict_prefix",
             "config_yaml",
         ):
             bottle.abort(
@@ -1122,6 +1123,16 @@ def decen_eaas_list_datasets():
 
     # Get the TID for the task code
     task = tm.getByTaskCode(task_code)
+
+    if not task:
+        # This means the task code the decen eval server 
+        # started is wrong => return a useful message
+        bottle.abort(
+            400, "That task code does not exist! "
+            "Please check eval_config.py to ensure your"
+            " task_code is correct."
+        )
+
     task_secrets = get_secret_for_task_id(task.id)
 
     verified_across_keys = False

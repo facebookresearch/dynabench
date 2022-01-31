@@ -339,7 +339,7 @@ class ModelPage extends React.Component {
       state: {
         detail: {
           endpointUrl:
-            `https://obws766r82.execute-api.${this.state.task.aws_region}.amazonaws.com/predict?model=` +
+            `https://${this.state.task.task_gateway_predict_prefix}.execute-api.${this.state.task.aws_region}.amazonaws.com/predict?model=` +
             this.state.model.endpoint_name,
           name: this.state.model.name,
           mid: this.state.model.id,

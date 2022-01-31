@@ -618,6 +618,7 @@ class Task(Base):
     eval_sqs_queue = db.Column(db.Text)
     is_decen_task = db.Column(db.Boolean, default=False)
     task_aws_account_id = db.Column(db.Text)
+    task_gateway_predict_prefix = db.Column(db.Text)
 
     unique_validators_for_example_tags = db.Column(db.Boolean, default=False)
     train_file_upload_instructions_md = db.Column(db.Text)

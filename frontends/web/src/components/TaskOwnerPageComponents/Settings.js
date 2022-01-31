@@ -40,6 +40,7 @@ const Settings = (props) => {
                 eval_sqs_queue: props.task.eval_sqs_queue,
                 is_decen_task: props.task.is_decen_task,
                 task_aws_account_id: props.task.task_aws_account_id,
+                task_gateway_predict_prefix: props.task.task_gateway_predict_prefix,
                 train_file_upload_instructions_md:
                   props.task.train_file_upload_instructions_md,
               }}
@@ -288,6 +289,25 @@ const Settings = (props) => {
                           <Form.Control
                             type="text"
                             defaultValue={values.task_aws_account_id}
+                            onChange={handleChange}
+                          />
+                        </Col>
+                      </Form.Group>
+                      <Form.Group
+                        as={Row}
+                        controlId="task_gateway_predict_prefix"
+                        className="py-3 my-0 border-bottom"
+                      >
+                        <Form.Label column>
+                          Task Owner AWS API Gateway Predict URL
+                          <Form.Text id="paramsHelpBlock" muted>
+                            API Gateway ID to interact with Sagemaker Models (decentralized setting only)
+                          </Form.Text>
+                        </Form.Label>
+                        <Col sm="6">
+                          <Form.Control
+                            type="text"
+                            defaultValue={values.task_gateway_predict_prefix}
                             onChange={handleChange}
                           />
                         </Col>
