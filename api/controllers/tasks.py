@@ -1125,12 +1125,13 @@ def decen_eaas_list_datasets():
     task = tm.getByTaskCode(task_code)
 
     if not task:
-        # This means the task code the decen eval server 
+        # This means the task code the decen eval server
         # started is wrong => return a useful message
         bottle.abort(
-            400, "That task code does not exist! "
+            400,
+            "That task code does not exist! "
             "Please check eval_config.py to ensure your"
-            " task_code is correct."
+            " task_code is correct.",
         )
 
     task_secrets = get_secret_for_task_id(task.id)

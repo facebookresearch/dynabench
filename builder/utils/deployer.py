@@ -75,7 +75,9 @@ class ModelDeployer:
                 logger.info("Decen task ... parsing task from message")
                 task_decoded = json.loads(decen_task_info)
                 task_code = task_decoded["task_code"]
-                annotation_config = yaml.load(task_decoded["config_yaml"], yaml.SafeLoader)
+                annotation_config = yaml.load(
+                    task_decoded["config_yaml"], yaml.SafeLoader
+                )
                 task_info = {"config": annotation_config, "task": task_code}
                 task_info_path = os.path.join(self.root_dir, f"{task_code}.json")
                 with open(task_info_path, "w+") as f:
@@ -242,7 +244,7 @@ class ModelDeployer:
             my_secret=self.model.secret,
             task_code=self.model.task.task_code,
         )
-        
+
         with subprocess.Popen(
             shlex.split(docker_build_command),
             bufsize=1,
