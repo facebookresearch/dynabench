@@ -334,12 +334,20 @@ class ModelPage extends React.Component {
   };
 
   handleInteract = () => {
+    const user_provided_gateway_url =
+      this.state.task.task_gateway_predict_prefix != null
+        ? this.state.task.task_gateway_predict_prefix.trim()
+        : "";
+    const gateway_url =
+      user_provided_gateway_url != ""
+        ? user_provided_gateway_url
+        : "obws766r82";
     this.props.history.push({
       pathname: `/tasks/${this.state.taskCode}/create`,
       state: {
         detail: {
           endpointUrl:
-            `https://${this.state.task.task_gateway_predict_prefix}.execute-api.${this.state.task.aws_region}.amazonaws.com/predict?model=` +
+            `https://${gateway_url}.execute-api.${this.state.task.aws_region}.amazonaws.com/predict?model=` +
             this.state.model.endpoint_name,
           name: this.state.model.name,
           mid: this.state.model.id,
