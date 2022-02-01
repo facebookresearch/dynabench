@@ -91,18 +91,19 @@ def apply_step(conn):
                     else:
                         simplified_config_dict[key] = value
 
-            for key, value in config_dict["metadata"].items():
-                if value != []:
-                    if "metadata" not in simplified_config_dict:
-                        simplified_config_dict["metadata"] = {}
-                    simplified_config_dict["metadata"][key] = []
-                    for obj in value:
-                        if "constructor_args" in obj:
-                            newobj = obj
-                            for key2, value2 in obj["constructor_args"].items():
-                                newobj[key2] = value2
-                            del newobj["constructor_args"]
-                        simplified_config_dict["metadata"][key].append(newobj)
+            if "metadata" in config_dict:
+                for key, value in config_dict["metadata"].items():
+                    if value != []:
+                        if "metadata" not in simplified_config_dict:
+                            simplified_config_dict["metadata"] = {}
+                        simplified_config_dict["metadata"][key] = []
+                        for obj in value:
+                            if "constructor_args" in obj:
+                                newobj = obj
+                                for key2, value2 in obj["constructor_args"].items():
+                                    newobj[key2] = value2
+                                del newobj["constructor_args"]
+                            simplified_config_dict["metadata"][key].append(newobj)
 
             task.config_yaml = yaml.dump(simplified_config_dict)
 
