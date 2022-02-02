@@ -119,6 +119,8 @@ class JobScheduler:
         job = Job(model_id, dataset_name, perturb_prefix)
         if self.is_predictions_upload(model_id):
             self._completed.append(job)
+            # Although the job is completed here, scores still need to be calculated,
+            # so the status is still "evaluating"
             logger.info(
                 f"Queued {job.job_name} for completion instead of "
                 + f"submission, as this is just a predictions upload and not a "
@@ -253,6 +255,9 @@ class JobScheduler:
                         job.status["TransformEndTime"]
                     ) < datetime.now(tzlocal()):
                         self._completed.append(job)
+                        # Although this particular job is completed here, scores
+                        # still need to be calculated, so the status is now
+                        # "evaluating"
                         api_model_eval_update(
                             job.model_id, job.dataset_name, "evaluating"
                         )

@@ -83,6 +83,8 @@ class MetricsComputer:
     def update_status(self, jobs: list):
         if jobs:
             self._waiting.extend(jobs)
+            for job in jobs:
+                api_model_eval_update(job.model_id, job.dataset_name, "evaluating")
             self.dump()
 
     def log_job_error(self, job, ex):
