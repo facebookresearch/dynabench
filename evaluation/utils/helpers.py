@@ -4,13 +4,25 @@
 
 import json
 import os
+import sys
 import tempfile
 from datetime import datetime, timedelta
 from typing import List
 
 import boto3
+import requests
+import ujson
 
+import common.helpers as util
+from eval_config import eval_config
 from models.model import ModelModel
+
+
+sys.path.append("../api")  # noqa
+
+DYNABENCH_API = eval_config["DYNABENCH_API"]
+decen_eaas_secret = eval_config["decen_eaas_secret"]
+task_code = eval_config["task_code"]
 
 
 def generate_job_name(
@@ -48,8 +60,80 @@ def get_predictions_s3_path(endpoint_name, task_code, dataset_name):
     )
 
 
+def decen_send_eval_download_dataset_request(
+    dataset_id,
+    config,
+    eval_server_id,
+    delta_metric_types,
+    s3_paths,
+    queue_name,
+    task_aws_account_id,
+    dataset_name,
+    logger=None,
+):
+    session = boto3.Session(
+        aws_access_key_id=config["aws_access_key_id"],
+        aws_secret_access_key=config["aws_secret_access_key"],
+        region_name=config["aws_region"],
+    )
+    sqs = session.resource("sqs")
+
+    queue = sqs.get_queue_by_name(
+        QueueName=queue_name, QueueOwnerAWSAccountId=task_aws_account_id
+    )
+
+    msg = {
+        "download_dataset": True,
+        "dataset_id": dataset_id,
+        "dataset_name": dataset_name,
+        "eval_server_id": eval_server_id,
+        "delta_metric_types": delta_metric_types,
+        "s3_paths": s3_paths,
+    }
+    queue.send_message(MessageBody=json.dumps(msg))
+    if logger:
+        logger.info(
+            f"Sent message to {queue_name} on account " "{task_aws_account_id}: {msg}"
+        )
+    return True
+
+
+def decen_send_reload_dataset_request(task, config, logger=None):
+    session = boto3.Session(
+        aws_access_key_id=config["aws_access_key_id"],
+        aws_secret_access_key=config["aws_secret_access_key"],
+        region_name=config["aws_region"],
+    )
+    sqs = session.resource("sqs")
+
+    queue = sqs.get_queue_by_name(
+        QueueName=task.eval_sqs_queue, QueueOwnerAWSAccountId=task.task_aws_account_id
+    )
+
+    msg = {
+        "reload_datasets": True,
+        "eval_server_id": task.eval_server_id,
+    }
+
+    queue.send_message(MessageBody=json.dumps(msg))
+    if logger:
+        logger.info(
+            f"Sent message to {task.eval_sqs_queue} on "
+            "account {task.task_aws_account_id}: {msg}"
+        )
+    return True
+
+
 def send_eval_request(
-    model_id, dataset_name, config, eval_server_id, logger=None, reload_datasets=False
+    model_id,
+    dataset_name,
+    config,
+    eval_server_id,
+    logger=None,
+    reload_datasets=False,
+    decen=False,
+    decen_queue_name=None,
+    decen_queue_aws_account_id=None,
 ):
     """
     If dataset name is a perturbed dataset with prefix, will evaluate this
@@ -71,13 +155,24 @@ def send_eval_request(
             logger.error(ex)
         return False
     else:
+        if decen:
+            assert (decen_queue_name is not None) and (
+                decen_queue_aws_account_id is not None
+            )
+
         session = boto3.Session(
             aws_access_key_id=config["aws_access_key_id"],
             aws_secret_access_key=config["aws_secret_access_key"],
             region_name=config["aws_region"],
         )
         sqs = session.resource("sqs")
-        queue = sqs.get_queue_by_name(QueueName=config["evaluation_sqs_queue"])
+        if decen:
+            queue = sqs.get_queue_by_name(
+                QueueName=decen_queue_name,
+                QueueOwnerAWSAccountId=decen_queue_aws_account_id,
+            )
+        else:
+            queue = sqs.get_queue_by_name(QueueName=config["evaluation_sqs_queue"])
         msg = {
             "reload_datasets": reload_datasets,
             "model_id": model_id,
@@ -86,7 +181,13 @@ def send_eval_request(
         }
         queue.send_message(MessageBody=json.dumps(msg))
         if logger:
-            logger.info(f"Sent message to {config['evaluation_sqs_queue']}: {msg}")
+            if decen:
+                logger.info(
+                    f"Sent message to {decen_queue_name} on "
+                    "account {decen_queue_aws_account_id}: {msg}"
+                )
+            else:
+                logger.info(f"Sent message to {config['evaluation_sqs_queue']}: {msg}")
         return True
 
 
@@ -99,6 +200,7 @@ def send_takedown_model_request(model_id, config, s3_uri=None, logger=None):
         region_name=config["aws_region"],
     )
     sqs = session.resource("sqs")
+
     queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
     msg = {"model_id": model_id, "s3_uri": s3_uri}
     queue.send_message(MessageBody=json.dumps(msg))
@@ -221,3 +323,109 @@ def upload_predictions(s3_client, s3_uri: str, predictions: List[dict]) -> None:
     s3_client.upload_file(parsed_pred_file, s3_bucket, s3_path)
     os.close(fd)
     os.remove(parsed_pred_file)
+
+
+# Decentralized Eaas Helpers
+class dotdict(dict):
+    """dot.notation access to dictionary attributes"""
+
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+
+def api_model_eval_update(model_id, dataset_name, evaluation_status, prod=False):
+    data = {"evaluation_status": evaluation_status, "dataset_name": dataset_name}
+
+    _ = requests.get(
+        f"{DYNABENCH_API}/models/{model_id}/update_evaluation_status",
+        data=json.dumps(util.wrap_data_with_signature(data, decen_eaas_secret)),
+        headers={"Content-Type": "application/json"},
+        verify=prod,
+    )
+
+
+def api_update_database_with_metrics(data_pkg, prod=False):
+    r = requests.post(
+        f"{DYNABENCH_API}/models/update_database_with_metrics",
+        data=json.dumps(util.wrap_data_with_signature(data_pkg, decen_eaas_secret)),
+        headers={"Content-Type": "application/json"},
+        verify=prod,
+    )
+
+    return r.json()
+
+
+def api_get_next_job_score_entry(job, prod=False):
+    str_encoded_obj = ujson.dumps(job, default=str)
+
+    r = requests.get(
+        f"{DYNABENCH_API}/models/eval_score_entry",
+        data=ujson.dumps(
+            util.wrap_data_with_signature(str_encoded_obj, decen_eaas_secret)
+        ),
+        headers={"Content-Type": "application/json"},
+        verify=prod,
+    )
+
+    return r.json()
+
+
+def api_model_endpoint_name(model_id, prod=False):
+    data = {"model_id": model_id}
+
+    r = requests.get(
+        f"{DYNABENCH_API}/models/{model_id}/get_model_info",
+        data=json.dumps(util.wrap_data_with_signature(data, decen_eaas_secret)),
+        headers={"Content-Type": "application/json"},
+        verify=prod,
+    )
+
+    return r.json()
+
+
+def api_model_update(mid, model_status, prod=False):
+    data = {"deployment_status": model_status}
+
+    _ = requests.post(
+        f"{DYNABENCH_API}/models/{mid}/update_decen_eaas",
+        data=json.dumps(util.wrap_data_with_signature(data, decen_eaas_secret)),
+        headers={"Content-Type": "application/json"},
+        verify=prod,
+    )
+
+
+def load_models_ids_for_task_owners():
+    task_code = eval_config["task_code"]
+    data = {"task_code": task_code}
+
+    r = requests.get(
+        f"{DYNABENCH_API}/tasks/listmodelsids",
+        data=json.dumps(util.wrap_data_with_signature(data, decen_eaas_secret)),
+        headers={"Content-Type": "application/json"},
+        verify=False,
+    )
+
+    model_ids_list = r.json()
+
+    return model_ids_list
+
+
+def api_download_dataset(dataset_id, perturb_prefix, prod=False):
+    data = {"dataset_id": dataset_id, "perturb_prefix": perturb_prefix}
+
+    with requests.get(
+        f"{DYNABENCH_API}/datasets/{dataset_id}/download",
+        data=json.dumps(util.wrap_data_with_signature(data, decen_eaas_secret)),
+        headers={"Content-Type": "application/json"},
+        verify=prod,
+        stream=True,
+    ) as r:
+        download_filename = (
+            f"/tmp/datasetdownloadid_{dataset_id}_perturbprefix_{perturb_prefix}.tar.gz"
+        )
+        r.raise_for_status()
+        with open(download_filename, "wb") as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
+        return download_filename

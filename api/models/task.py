@@ -614,6 +614,11 @@ class Task(Base):
 
     has_predictions_upload = db.Column(db.Boolean, default=False)
     predictions_upload_instructions_md = db.Column(db.Text)
+    build_sqs_queue = db.Column(db.Text)
+    eval_sqs_queue = db.Column(db.Text)
+    is_decen_task = db.Column(db.Boolean, default=False)
+    task_aws_account_id = db.Column(db.Text)
+    task_gateway_predict_prefix = db.Column(db.Text)
 
     unique_validators_for_example_tags = db.Column(db.Boolean, default=False)
     train_file_upload_instructions_md = db.Column(db.Text)
@@ -873,3 +878,9 @@ class TaskModel(BaseModel):
             return t_dict
         except db.orm.exc.NoResultFound:
             return False
+
+    def to_dict(self, model):
+        task_dict = {}
+        for c in model.__table__.columns:
+            task_dict[c.name] = getattr(model, c.name)
+        return task_dict

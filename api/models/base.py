@@ -15,6 +15,13 @@ Base = declarative_base()
 
 
 def connect_db():
+    if (
+        config["db_user"] == ""
+        or config["db_password"] == ""
+        or config["db_host"] == ""
+        or config["db_name"] == ""
+    ):
+        return
     engine_url = "mysql+pymysql://{}:{}@{}:3306/{}".format(
         config["db_user"], config["db_password"], config["db_host"], config["db_name"]
     )
@@ -34,22 +41,28 @@ class BaseModel:
     def __init__(self, model):
         self.model = model
         # self.dbs = dbs #connect_db()
-        self.dbs = DBSession()
+        self.dbs = None
+        if DBSession is not None:
+            self.dbs = DBSession()
 
     def __del__(self):
-        self.dbs.close()
+        if self.dbs:
+            self.dbs.close()
 
     def get(self, id):
-        try:
-            return self.dbs.query(self.model).filter(self.model.id == id).one()
-        except db.orm.exc.NoResultFound:
-            return False
+        if self.dbs:
+            try:
+                return self.dbs.query(self.model).filter(self.model.id == id).one()
+            except db.orm.exc.NoResultFound:
+                return False
 
     def list(self):
-        rows = self.dbs.query(self.model).all()
-        return [r.to_dict() for r in rows]
+        if self.dbs:
+            rows = self.dbs.query(self.model).all()
+            return [r.to_dict() for r in rows]
 
     def update(self, id, kwargs):
-        t = self.dbs.query(self.model).filter(self.model.id == id)
-        t.update(kwargs)
-        self.dbs.commit()
+        if self.dbs:
+            t = self.dbs.query(self.model).filter(self.model.id == id)
+            t.update(kwargs)
+            self.dbs.commit()

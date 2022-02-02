@@ -10,7 +10,9 @@ import time
 import boto3
 import bottle
 import sqlalchemy as db
+import ujson
 import yaml
+from bottle import response
 
 import common.auth as _auth
 import common.helpers as util
@@ -20,21 +22,29 @@ from common.logging import logger
 from models.badge import BadgeModel
 from models.dataset import AccessTypeEnum, DatasetModel, LogAccessTypeEnum
 from models.model import DeploymentStatusEnum, ModelModel
+from models.notification import NotificationModel
+from models.round import RoundModel
 from models.score import ScoreModel
 from models.task import AnnotationVerifierMode, TaskModel, train_file_metrics
+from models.task_user_permission import TaskUserPermission
 from models.user import UserModel
+from utils.helpers import update_evaluation_status
 
 from .tasks import ensure_owner_or_admin
 
 
-sys.path.append("../evaluation")  # noqa isort:skip
 from utils.helpers import (  # noqa isort:skip
     get_data_s3_path,  # noqa isort:skip
     get_predictions_s3_path,  # noqa isort:skip
     parse_s3_outfile,  # noqa isort:skip
     send_eval_request,  # noqa isort:skip
+    update_metadata_json_string,  # noqa isort:skip
+    dotdict,  # noqa isort:skip
     generate_job_name,  # noqa isort:skip
 )  # noqa isort:skip
+
+sys.path.append("../evaluation")  # noqa isort:skip
+from metrics.metric_getters import get_job_metrics  # noqa isort:skip
 
 
 @bottle.get("/models/latest_job_log/<mid:int>/<did:int>")
@@ -387,13 +397,25 @@ def _eval_dataset(dataset_name, endpoint_name, model, task, afile):
             "aws_region": config["eval_aws_region"],
             "evaluation_sqs_queue": config["evaluation_sqs_queue"],
         }
-        ret = send_eval_request(
-            eval_server_id=task.eval_server_id,
-            model_id=model.id,
-            dataset_name=dataset_name,
-            config=eval_config,
-            logger=logger,
-        )
+        if task.is_decen_task:
+            ret = send_eval_request(
+                eval_server_id=task.eval_server_id,
+                model_id=model.id,
+                dataset_name=dataset_name,
+                config=eval_config,
+                logger=logger,
+                decen=True,
+                decen_queue_name=task.eval_sqs_queue,
+                decen_queue_aws_account_id=task.task_aws_account_id,
+            )
+        else:
+            ret = send_eval_request(
+                eval_server_id=task.eval_server_id,
+                model_id=model.id,
+                dataset_name=dataset_name,
+                config=eval_config,
+                logger=logger,
+            )
     except Exception as e:
         logger.exception(e)
         bottle.abort(400, "Could not upload file: %s" % (e))
@@ -664,9 +686,10 @@ def upload_to_s3(credentials):
         response = s3_client.upload_fileobj(tarball.file, bucket_name, s3_path)
         if response:
             logger.info(f"Response from the mar file upload to s3 {response}")
+
     except Exception as ex:
         logger.exception(ex)
-        bottle.abort(400, "upload failed")
+        bottle.abort(400, "normal s3 upload failed")
 
     # Update database entry
     model = m.create(
@@ -685,15 +708,46 @@ def upload_to_s3(credentials):
     um = UserModel()
     um.incrementModelSubmitCount(user.to_dict()["id"])
 
-    # send SQS message
-    logger.info(f"Send message to sqs - enqueue model {model_name} for deployment")
-    sqs = session.resource("sqs")
-    queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
-    queue.send_message(
-        MessageBody=util.json_encode(
-            {"model_id": model.id, "s3_uri": f"s3://{bucket_name}/{s3_path}"}
+    if task.is_decen_task:
+        model_dict = m.to_dict(model)
+        task_dict = m.to_dict(model.task)
+        full_model_info = util.json_encode(model_dict)
+        full_task_info = util.json_encode(task_dict)
+
+        # If the decen eaas build queue is provided,
+        # send the message to the task owner's build queue
+        logger.info(
+            f"Send message to sqs with queue name {task.build_sqs_queue}"
+            " and AWS account id {task.task_aws_account_id}"
+            " - enqueue model {model_name} for deployment"
         )
-    )
+        sqs = session.resource("sqs")
+
+        queue = sqs.get_queue_by_name(
+            QueueName=task.build_sqs_queue,
+            QueueOwnerAWSAccountId=task.task_aws_account_id,
+        )
+        queue.send_message(
+            MessageBody=util.json_encode(
+                {
+                    "model_id": model.id,
+                    "s3_uri": f"s3://{bucket_name}/{s3_path}",
+                    "decen_eaas": True,
+                    "model_info": full_model_info,
+                    "task_info": full_task_info,
+                }
+            )
+        )
+    else:
+        # send SQS message
+        logger.info(f"Send message to sqs - enqueue model {model_name} for deployment")
+        sqs = session.resource("sqs")
+        queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
+        queue.send_message(
+            MessageBody=util.json_encode(
+                {"model_id": model.id, "s3_uri": f"s3://{bucket_name}/{s3_path}"}
+            )
+        )
 
 
 @bottle.get("/models/<mid:int>/deploy")
@@ -738,18 +792,351 @@ def deploy_model_from_s3(credentials, mid):
         region_name=config["aws_region"],
     )
 
-    # send SQS message
-    logger.info(f"Send message to sqs - enqueue model {model_name} for re-deployment")
-    sqs = session.resource("sqs")
-    queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
-    queue.send_message(
-        MessageBody=util.json_encode(
-            {
-                "model_id": model.id,
-                "s3_uri": f"s3://{bucket_name}/{s3_path}",
-                "endpoint_only": True,
-            }
+    if task.is_decen_task:
+        model_dict = m.to_dict(model)
+        task_dict = m.to_dict(model.task)
+        full_model_info = util.json_encode(model_dict)
+        full_task_info = util.json_encode(task_dict)
+
+        # If the decen eaas build queue is provided,
+        # send the message to that build queue
+        logger.info(f"Send message to sqs - enqueue model {model_name} for deployment")
+        sqs = session.resource("sqs")
+        queue = sqs.get_queue_by_name(QueueName=task.build_sqs_queue)
+        queue.send_message(
+            MessageBody=util.json_encode(
+                {
+                    "model_id": model.id,
+                    "s3_uri": f"s3://{bucket_name}/{s3_path}",
+                    "decen_eaas": True,
+                    "model_info": full_model_info,
+                    "task_info": full_task_info,
+                    "endpoint_only": True,
+                }
+            )
         )
-    )
+    else:
+        # send SQS message
+        logger.info(
+            f"Send message to sqs - enqueue model {model_name} for re-deployment"
+        )
+        sqs = session.resource("sqs")
+        queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
+        queue.send_message(
+            MessageBody=util.json_encode(
+                {
+                    "model_id": model.id,
+                    "s3_uri": f"s3://{bucket_name}/{s3_path}",
+                    "endpoint_only": True,
+                }
+            )
+        )
 
     return {"status": "success"}
+
+
+@bottle.post("/models/<mid:int>/update_decen_eaas")
+def update_model_decen_eaas(mid):
+    m = ModelModel()
+    req_data = bottle.request.json
+
+    try:
+        model = m.getUnpublishedModelByMid(mid)
+        secret = get_secret_for_model_id(mid)
+
+        if not util.verified_data(req_data, secret):
+            bottle.abort(401, "Operation not authorized")
+
+        data = req_data["data"]
+
+        # The only property we need to update is the deployment_status
+        if set(data.keys()) != {"deployment_status"}:
+            bottle.abort(401, "Operation not authorized")
+
+        m.update(
+            model.id,
+            deployment_status=data["deployment_status"],
+        )
+
+        return {"status": "success"}
+
+    except Exception as e:
+        logger.exception("Could not update deployment status: %s" % (e))
+        bottle.abort(400, "Could not update deployment status: %s" % (e))
+
+
+@bottle.post("/models/<mid:int>/email_decen_eaas")
+def email_decen_eaas(mid):
+    m = ModelModel()
+    req_data = bottle.request.json
+
+    try:
+        model = m.getUnpublishedModelByMid(mid)
+        secret = get_secret_for_model_id(mid)
+
+        if not util.verified_data(req_data, secret):
+            bottle.abort(401, "Operation not authorized")
+
+        data = req_data["data"]
+        if set(data.keys()) != {"secret", "template", "msg", "subject"}:
+            bottle.abort(401, "Operation not authorized")
+
+        if model.secret != data["secret"]:
+            logger.error(
+                "Original secret ({}) and secret provided is ({})".format(
+                    model.secret, data["secret"]
+                )
+            )
+            bottle.abort(401, "Operation not authorized")
+
+        _, user = m.getModelUserByMid(mid)
+        config = bottle.default_app().config
+        template = data["template"]
+        msg = data["msg"]
+        subject = data["subject"]
+        mail.send(
+            config["mail"],
+            config,
+            [user.email],
+            cc_contact="dynabench@fb.com",
+            template_name=f"templates/{template}.txt",
+            msg_dict=msg,
+            subject=subject,
+        )
+        nm = NotificationModel()
+        nm.create(user.id, "MODEL_DEPLOYMENT_STATUS", template.upper())
+
+        return {"status": "success"}
+
+    except Exception as e:
+        logger.exception("Could not send deployment email: %s" % (e))
+        bottle.abort(400, "Could not send deployment email: %s" % (e))
+
+
+@bottle.post("/models/update_database_with_metrics")
+def update_database_with_metrics():
+    mm = ModelModel()
+    req_data = bottle.request.json
+
+    try:
+        data = req_data["data"]
+
+        if set(data.keys()) != {
+            "job",
+            "eval_metrics_dict",
+            "delta_metrics_dict",
+            "dataset",
+        }:
+            bottle.abort(401, "Operation not authorized")
+
+        job = ujson.loads(data["job"])
+        json_acceptable_string = job["aws_metrics"].replace("'", '"')
+        job["aws_metrics"] = ujson.loads(json_acceptable_string)
+        dataset = ujson.loads(data["dataset"])
+        eval_metrics_dict = ujson.loads(data["eval_metrics_dict"])
+        delta_metrics_dict = ujson.loads(data["delta_metrics_dict"])
+
+        job = dotdict(job)
+        dataset["task"] = dotdict(dataset["task"])
+        dataset = dotdict(dataset)
+
+        secret = get_secret_for_model_id(job.model_id)
+        if not util.verified_data(req_data, secret):
+            bottle.abort(401, "Operation not authorized")
+
+        data = req_data["data"]
+
+        model = mm.get(job.model_id)
+
+        dm = DatasetModel()
+        d_entry = dm.getByName(job.dataset_name)
+        sm = ScoreModel()
+        s = sm.getOneByModelIdAndDataset(job.model_id, d_entry.id)
+
+        if job.perturb_prefix:
+            assert s is not None
+            eval_metadata_json = ujson.loads(eval_metrics_dict["metadata_json"])
+            eval_metadata_json = {
+                f"{job.perturb_prefix}-{metric}": eval_metadata_json[metric]
+                for metric in eval_metadata_json
+            }
+            metadata_json = update_metadata_json_string(
+                s.metadata_json,
+                [ujson.dumps(eval_metadata_json), delta_metrics_dict["metadata_json"]],
+            )
+            score_obj = {**delta_metrics_dict, "metadata_json": metadata_json}
+            sm.update(s.id, **score_obj)
+        else:
+            # This is only hit by a decen task, so we can default to decen=True
+            job_metrics_dict = get_job_metrics(job, dataset, decen=True)
+            score_obj = {**eval_metrics_dict, **job_metrics_dict}
+            if s:
+                score_obj["metadata_json"] = update_metadata_json_string(
+                    s.metadata_json, [score_obj["metadata_json"]]
+                )
+                sm.update(s.id, **score_obj)
+            else:
+                score_obj["model_id"] = job.model_id
+                score_obj["did"] = d_entry.id
+                score_obj["raw_output_s3_uri"] = dataset.get_output_s3_url
+
+                rm = RoundModel()
+                if dataset.round_id != 0:
+                    score_obj["r_realid"] = rm.getByTidAndRid(
+                        d_entry.tid, d_entry.rid
+                    ).id
+                else:
+                    score_obj["r_realid"] = 1
+                sm.create(**score_obj)
+
+        return util.json_encode(mm.to_dict(model))
+
+    except Exception as e:
+        logger.exception("Could not update model score metrics: %s" % (e))
+        mm.dbs.rollback()
+        bottle.abort(400, "Could not update model score metrics: %s" % (e))
+
+
+@bottle.get("/models/<mid:int>/update_evaluation_status")
+def update_evaluation_status_api_call(mid):
+    # m = ModelModel()
+    req_data = bottle.request.json
+
+    secret = get_secret_for_model_id(mid)
+    if not util.verified_data(req_data, secret):
+        bottle.abort(401, "Operation not authorized")
+
+    data = req_data["data"]
+
+    # TODO: add secret here so it is not unauthorized
+    if set(data.keys()) != {"evaluation_status", "dataset_name"}:
+        bottle.abort(401, "Operation not authorized")
+
+    try:
+        # model = m.getUnpublishedModelByMid(mid)
+        update_evaluation_status(mid, data["dataset_name"], data["evaluation_status"])
+        # m.update(
+        #     model.id,
+        #     evaluation_status=data["evaluation_status"],
+        # )
+
+        return {"status": "success"}
+
+    except Exception as e:
+        logger.exception("Could not update evaluation status: %s" % (e))
+        bottle.abort(400, "Could not update evaluation status: %s" % (e))
+
+
+@bottle.get("/models/eval_score_entry")
+def eval_score_entry():
+    dm = DatasetModel()
+    sm = ScoreModel()
+    req_data = bottle.request.json
+    data = ujson.loads(req_data["data"])
+
+    job = dotdict(data)
+
+    secret = get_secret_for_model_id(job.model_id)
+    if not util.verified_data(req_data, secret):
+        bottle.abort(401, "Operation not authorized - signature not correct")
+
+    if not ({"dataset_name", "model_id"} <= set(job.keys())):
+        bottle.abort(401, "Operation not authorized - request keys not correct")
+
+    try:
+        d_entry = dm.getByName(job.dataset_name)
+        if d_entry:
+            score_entry = sm.getOneByModelIdAndDataset(job.model_id, d_entry.id)
+            found_score_entry = True if score_entry else False
+            resp = {"status": "success", "found_score_entry": found_score_entry}
+            return util.json_encode(resp)
+        else:
+            bottle.abort(404, "Dataset not found!")
+
+    except Exception as e:
+        logger.exception("Could not retrieve eval score entry: %s" % (e))
+        bottle.abort(400, "Could not retrieve eval score entry %s" % (e))
+
+
+def get_secret_for_model_id(mid):
+    m = ModelModel()
+    model = m.getUnpublishedModelByMid(mid)
+    tid = model.task.id
+    tm = TaskModel()
+    tups = (
+        tm.dbs.query(TaskUserPermission)
+        .filter(
+            db.and_(TaskUserPermission.type == "owner", TaskUserPermission.tid == tid)
+        )
+        .all()
+    )
+    assert len(tups) == 1
+    um = UserModel()
+    user = um.get(tups[0].uid)
+    return user.api_token
+
+
+@bottle.get("/models/<mid:int>/get_model_info")
+def get_model_info(mid):
+    m = ModelModel()
+    req_data = bottle.request.json
+
+    secret = get_secret_for_model_id(mid)
+    if not util.verified_data(req_data, secret):
+        bottle.abort(401, "Operation not authorized")
+
+    try:
+        model = m.getUnpublishedModelByMid(mid)
+        endpoint_name = model.endpoint_name
+        deployment_status = model.deployment_status
+
+        resp = {"endpoint_name": endpoint_name, "deployment_status": deployment_status}
+        return util.json_encode(resp)
+
+    except Exception as e:
+        logger.exception("Could not retrieve model details: %s" % (e))
+        bottle.abort(400, "Could not retrieve model details: %s" % (e))
+
+
+@bottle.get("/models/<mid:int>/download")
+def download_model(mid):
+    m = ModelModel()
+    req_data = bottle.request.json
+
+    try:
+        model = m.getUnpublishedModelByMid(mid)
+        secret = get_secret_for_model_id(mid)
+
+        if not util.verified_data(req_data, secret):
+            bottle.abort(401, "Operation not authorized")
+
+        data = req_data["data"]
+
+        if data["secret"] != model.secret:
+            bottle.abort(401, "Operation not authorized")
+
+        endpoint_name = model.endpoint_name
+
+        client = boto3.client(
+            "s3",
+            aws_access_key_id=config["aws_access_key_id"],
+            aws_secret_access_key=config["aws_secret_access_key"],
+            region_name=config["aws_region"],
+        )
+        s3_filename = f"{endpoint_name}.tar.gz"
+        s3_path = f"torchserve/models/{model.task.task_code}/{s3_filename}"
+        s3_bucket = model.task.s3_bucket
+        final_filepath = f"/tmp/{s3_filename}"
+
+        _ = client.download_file(s3_bucket, s3_path, final_filepath)
+
+        f = open(final_filepath, "rb")
+        response.headers["Content-Type"] = "application/octet-stream"
+        response.headers[
+            "Content-Disposition"
+        ] = f"attachment; filename={final_filepath}"
+        return f
+
+    except Exception as e:
+        logger.exception("Could not download model: %s" % (e))
+        bottle.abort(400, "Could not download model: %s" % (e))

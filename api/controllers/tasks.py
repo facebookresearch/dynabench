@@ -25,7 +25,7 @@ from models.score import ScoreModel
 from models.task import Task, TaskModel
 from models.task_proposal import TaskProposal, TaskProposalModel
 from models.task_user_permission import TaskUserPermission
-from models.user import UserModel
+from models.user import User, UserModel
 
 
 @bottle.put("/tasks/process_proposal/<tpid:int>")
@@ -437,6 +437,11 @@ def update(credentials, tid):
             "hidden",
             "submitable",
             "create_endpoint",
+            "build_sqs_queue",
+            "eval_sqs_queue",
+            "is_decen_task",
+            "task_aws_account_id",
+            "task_gateway_predict_prefix",
             "config_yaml",
         ):
             bottle.abort(
@@ -1091,3 +1096,119 @@ def construct_trends_response_json(query_result):
         )
     else:
         return util.json_encode([])
+
+
+def get_secret_for_task_id(tid):
+    tm = TaskModel()
+    tups = (
+        tm.dbs.query(User.api_token)
+        .join(TaskUserPermission, TaskUserPermission.uid == User.id)
+        .filter(
+            db.and_(TaskUserPermission.type == "owner", TaskUserPermission.tid == tid)
+        )
+        .all()
+    )
+
+    ret = [tup[0] for tup in tups]
+    return ret
+
+
+@bottle.get("/tasks/listdatasets")
+def decen_eaas_list_datasets():
+    dm = DatasetModel()
+    tm = TaskModel()
+    req_data = bottle.request.json
+    data = req_data["data"]
+    task_code = data["task_code"]
+
+    # Get the TID for the task code
+    task = tm.getByTaskCode(task_code)
+
+    if not task:
+        # This means the task code the decen eval server
+        # started is wrong => return a useful message
+        bottle.abort(
+            400,
+            "That task code does not exist! "
+            "Please check eval_config.py to ensure your"
+            " task_code is correct.",
+        )
+
+    task_secrets = get_secret_for_task_id(task.id)
+
+    verified_across_keys = False
+    for task_sec in task_secrets:
+        if util.verified_data(req_data, task_sec):
+            verified_across_keys = True
+            break
+
+    if not verified_across_keys:
+        bottle.abort(401, "Operation not authorized")
+
+    # The only thing so far we need to update is the deployment_status
+    if set(data.keys()) != {"task_code"}:
+        bottle.abort(401, "Operation not authorized")
+
+    try:
+        # Get all datasets related to the task code
+        datasets = dm.getByTid(task.id)
+        json_encoded_datasets = []
+        for dataset in datasets:
+            json_encoded_datasets.append(util.json_encode(dm.to_dict(dataset)))
+
+        resp = {
+            "datasets_metadata": json_encoded_datasets,
+            "task_metadata": util.json_encode(tm.to_dict(task)),
+        }
+
+        return util.json_encode(resp)
+
+    except Exception as e:
+        logger.exception("Could not retrieve datasets for task: %s" % (e))
+        bottle.abort(400, "Could not retrieve datasets for task: %s" % (e))
+
+
+@bottle.get("/tasks/listmodelsids")
+def decen_eaas_list_model_ids():
+    mm = ModelModel()
+    tm = TaskModel()
+    req_data = bottle.request.json
+    data = req_data["data"]
+    task_code = data["task_code"]
+
+    # Get the TID for the task code
+    task = tm.getByTaskCode(task_code)
+
+    task_secrets = get_secret_for_task_id(task.id)
+
+    verified_across_keys = False
+    for task_sec in task_secrets:
+        if util.verified_data(req_data, task_sec):
+            verified_across_keys = True
+            break
+
+    if not verified_across_keys:
+        bottle.abort(401, "Operation not authorized")
+
+    # The only thing so far we need to update is the deployment_status
+    if set(data.keys()) != {"task_code"}:
+        bottle.abort(401, "Operation not authorized")
+
+    try:
+
+        # Get all datasets related to the task code
+        models = mm.getByTid(task.id)
+        model_ids = []
+        for model in models:
+            if model.deployment_status in {
+                DeploymentStatusEnum.deployed,
+                DeploymentStatusEnum.created,
+                DeploymentStatusEnum.predictions_upload,
+            }:
+                model_ids.append(model.id)
+
+        return util.json_encode(model_ids)
+
+    except Exception as e:
+        logger.exception("Could not list model ids for task: %s" % (e))
+        bottle.abort(400, "Could not list model ids for task: %s" % (e))

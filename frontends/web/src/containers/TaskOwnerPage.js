@@ -276,6 +276,11 @@ class TaskOwnerPage extends React.Component {
       "hidden",
       "submitable",
       "create_endpoint",
+      "build_sqs_queue",
+      "eval_sqs_queue",
+      "is_decen_task",
+      "task_aws_account_id",
+      "task_gateway_predict_prefix",
       "config_yaml",
     ];
 

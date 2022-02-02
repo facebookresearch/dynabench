@@ -4,6 +4,7 @@
 
 import functools
 import subprocess
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -276,14 +277,26 @@ def get_memory_utilization_meta(task):
     }
 
 
-def get_examples_per_second(job, dataset):
-    n_examples = dataset.get_n_examples()
-    eps = (
-        n_examples
-        / (
-            job.status["TransformEndTime"] - job.status["TransformStartTime"]
-        ).total_seconds()
-    )
+def get_examples_per_second(job, dataset, decen=False):
+    n_examples = None
+    if decen:
+        n_examples = dataset.get_n_examples
+        transform_start_time = datetime.strptime(
+            job.status["TransformStartTime"], "%Y-%m-%d %H:%M:%S.%f%z"
+        )
+        transform_end_time = datetime.strptime(
+            job.status["TransformEndTime"], "%Y-%m-%d %H:%M:%S.%f%z"
+        )
+        eps = n_examples / (transform_end_time - transform_start_time).total_seconds()
+    else:
+        n_examples = dataset.get_n_examples()
+        eps = (
+            n_examples
+            / (
+                job.status["TransformEndTime"] - job.status["TransformStartTime"]
+            ).total_seconds()
+        )
+
     return round(eps, 2)
 
 

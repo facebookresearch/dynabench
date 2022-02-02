@@ -98,3 +98,9 @@ class DatasetModel(BaseModel):
             return self.dbs.query(Dataset).filter(Dataset.name == name).one()
         except db.orm.exc.NoResultFound:
             return False
+
+    def to_dict(self, dataset):
+        model_dict = {}
+        for c in dataset.__table__.columns:
+            model_dict[c.name] = getattr(dataset, c.name)
+        return model_dict

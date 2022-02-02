@@ -194,3 +194,12 @@ class ModelModel(BaseModel):
         if tid != -1:
             base_query = base_query.filter(Model.tid == tid)
         return base_query.scalar()
+
+    def to_dict(self, model):
+        model_dict = {}
+        for c in model.__table__.columns:
+            if c.name == "deployment_status" or c.name == "evaluation_status":
+                model_dict[c.name] = getattr(model, c.name).value
+            else:
+                model_dict[c.name] = getattr(model, c.name)
+        return model_dict
