@@ -108,9 +108,9 @@ def main():
 
     active_model_ids = load_models_ids_for_task_owners()
 
-    while (not dataset_dict) and (len_dataset_check_fail):
-        logger.info("Haven't got dataset_dict. Sleep.")
-        time.sleep(sleep_interval)
+    if len_dataset_check_fail:
+        print("No datasets uploaded for this task yet..please upload dataset")
+
     requester = Requester(eval_config, dataset_dict, active_model_ids)
 
     cpus = eval_config.get("compute_metric_processes", 2)
@@ -144,9 +144,16 @@ def main():
                         ) = load_datasets_for_task_owner()
                         active_model_ids = load_models_ids_for_task_owners()
 
-                        while (not dataset_dict) and (len_dataset_check_fail):
-                            logger.info("Haven't got dataset_dict. Sleep.")
-                            time.sleep(sleep_interval)
+                        if status_code_check_fail:
+                            print("Failed to reload datasets")
+                            return
+
+                        if len_dataset_check_fail:
+                            print(
+                                "No datasets uploaded for this task yet.."
+                                "please upload dataset"
+                            )
+
                         requester = Requester(
                             eval_config, dataset_dict, active_model_ids
                         )
