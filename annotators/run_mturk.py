@@ -19,6 +19,7 @@ from mephisto.abstractions.blueprints.static_react_task.static_react_blueprint i
 from mephisto.operations.hydra_config import RunScriptConfig, register_script_config
 from mephisto.operations.operator import Operator
 from mephisto.tools.scripts import load_db_and_process_config
+from mephisto.data_model.qualification import QUAL_EXISTS, QUAL_NOT_EXIST, make_qualification_dict
 from omegaconf import DictConfig
 
 from util import get_qualifications

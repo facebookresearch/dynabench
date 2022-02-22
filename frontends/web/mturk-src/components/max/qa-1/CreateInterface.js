@@ -355,11 +355,12 @@ class CreateInterface extends React.Component {
           id: last_example.response.id,
           text: last_example.response.answer,
           answer: last_example.response.answer,
+          conf: last_example.response.conf,
           prob: last_example.response.conf,
           model_is_correct: !last_example.fooled,
           eval_f1: last_example.response.eval_f1,
           eval_exact: last_example.response.eval_exact,
-          signed: last_example.response.signed,
+          signed: last_example.response.signature,
         };
         const metadata = {
           annotator_id: this.props.providerWorkerId,
@@ -378,6 +379,7 @@ class CreateInterface extends React.Component {
           experiment_mode: this.experiment_mode,
           current_tries: this.state.tries,
           modelInputs: last_example.modelInputs,
+          modelOutput: model_output,
           fullresponse: JSON.stringify(last_example.response),
           annotatorValidation: last_example.validated,
           requiresValidation: last_example.response.eval_f1 <= 0.6 || (this.experiment_mode["adversary"] !== "none" && last_example.validated == "valid"),  // i.e. modelWrong

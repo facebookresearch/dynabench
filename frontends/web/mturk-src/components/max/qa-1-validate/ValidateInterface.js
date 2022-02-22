@@ -220,9 +220,10 @@ class ValidateInterface extends React.Component {
             },
             (error) => {
               console.log(error);
-              this.setState({
-                processingResponse: false,
-              })
+              // this.setState({
+              //   processingResponse: false,
+              // })
+              this.getNewExample();
             }
           );
       }

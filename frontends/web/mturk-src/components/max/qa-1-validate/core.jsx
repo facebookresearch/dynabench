@@ -176,7 +176,7 @@ class QAValidationTaskOnboarder extends React.Component {
               )}
               {this.state.showOnboardingSubmit && (
                 <Col lg={12} className="mt-3">
-                  <p><b>Congratulations</b>, you have successfully completed onboarding! Please click the button below to proceed to the main task.</p>
+                  <p><b>Congratulations</b>, you have successfully completed onboarding! Please click the button below to proceed to the main task. <b>If you do not get automatically redirected after clicking the button below, please refresh your browser window.</b></p>
                   <Button
                     className="btn btn-primary btn-success mt-2 py-2"
                     onClick={this.completeOnboarding}

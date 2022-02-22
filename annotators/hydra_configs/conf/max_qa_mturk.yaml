@@ -1,18 +1,21 @@
 #@package _global_
 mephisto:
   blueprint:
-    onboarding_qualification: max-qa-1-onboarding
-    block_qualification: max-qa-1-val-onboarding
+    onboarding_qualification: max-qa-1-onboarding-v2
+    block_qualification: max-qa-1-val-onboarding-v2
   # architect:
   #   port: 4000
+  database:
+    _database_type: singleton
   task:
     task_name: max-qa-1
     task_title: Generate Questions and Answers | Reading Comprehension
     task_description: >
       You will be presented with a short passage of text from Wikipedia. You will then be asked to write questions and select answers for a given question.
-    task_reward: 1.00
+    task_reward: 1.20
     assignment_duration_in_seconds: 3600
-    maximum_units_per_worker: 10
+    maximum_units_per_worker: 20
+    allowed_concurrent: 250
     max_num_concurrent_units: 250  # how much it launches at a given time (how many HITs running at any given time)
     task_tags: "question answering, question, reading comprehension, AI"
 dynabench:
@@ -23,8 +26,9 @@ dynabench:
   frame_height: 0
   # fetching_tags: "val2017"
   # tag_to_store_with_examples is required
-  extra_logging: "tag_to_store_with_examples:max_scalingannotation_pilot_v4"
-num_jobs: 400
+  extra_logging: "tag_to_store_with_examples:max_scalingannotation_pilot_v6"
+num_jobs: 3000
 preselected_qualifications: ["1000_hits_approved", "98_percent_approved", "english_only"]
-# num_jobs: 10
+block_qualifications: ["max-worker-blocked", "max-validator-blocked", "max-qa-1-onboarding", "max-qa-1-val-onboarding"]
+# num_jobs: 5
 # preselected_qualifications: []

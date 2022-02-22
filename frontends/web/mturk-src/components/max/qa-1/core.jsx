@@ -47,11 +47,12 @@ class MaxQATaskOnboarder extends React.Component {
     this.showOnboardingSubmit = this.showOnboardingSubmit.bind(this);
     this.showOnboardingPrevious = this.showOnboardingPrevious.bind(this);
     this.previousOnboarding = this.previousOnboarding.bind(this);
+    this.showOnboardingNext = this.showOnboardingNext.bind(this);
   }
   nextOnboarding() {
-    this.setState({ onboardingStep: this.state.onboardingStep + 1 });
+    this.setState({ onboardingStep: this.state.onboardingStep + 1, showNext: false, });
     this.showOnboardingPrevious();
-    if (this.state.onboardingStep == 9) {
+    if (this.state.onboardingStep >= 9) {
       this.showOnboardingSubmit();
     }
   }
@@ -70,6 +71,9 @@ class MaxQATaskOnboarder extends React.Component {
   }
   showOnboardingPrevious() {
     this.setState({ showPrevious: true });
+  }
+  showOnboardingNext(action) {
+    this.setState({ showNext: action });
   }
 
   render() {
@@ -91,6 +95,7 @@ class MaxQATaskOnboarder extends React.Component {
               <CreateInterfaceOnboardingAns
                 api={this.api}
                 step={this.state.onboardingStep}
+                showOnboardingNext={this.showOnboardingNext}
                 {...this.props}
               />{" "}
             </Row>
@@ -101,6 +106,7 @@ class MaxQATaskOnboarder extends React.Component {
               <CreateInterfaceOnboardingAns
                 api={this.api}
                 step={this.state.onboardingStep}
+                showOnboardingNext={this.showOnboardingNext}
                 {...this.props}
               />{" "}
             </Row>
@@ -111,6 +117,7 @@ class MaxQATaskOnboarder extends React.Component {
               <CreateInterfaceOnboardingAns
                 api={this.api}
                 step={this.state.onboardingStep}
+                showOnboardingNext={this.showOnboardingNext}
                 {...this.props}
               />{" "}
             </Row>
@@ -121,6 +128,7 @@ class MaxQATaskOnboarder extends React.Component {
               <CreateInterfaceOnboardingAns
                 api={this.api}
                 step={this.state.onboardingStep}
+                showOnboardingNext={this.showOnboardingNext}
                 {...this.props}
               />{" "}
             </Row>
@@ -131,6 +139,7 @@ class MaxQATaskOnboarder extends React.Component {
               <CreateInterfaceOnboardingAns
                 api={this.api}
                 step={this.state.onboardingStep}
+                showOnboardingNext={this.showOnboardingNext}
                 {...this.props}
               />{" "}
             </Row>
@@ -140,6 +149,7 @@ class MaxQATaskOnboarder extends React.Component {
               {" "}
               <CreateInterfaceOnboardingQues
                 step={this.state.onboardingStep}
+                showOnboardingNext={this.showOnboardingNext}
                 {...this.props}
               />{" "}
             </Row>
@@ -149,6 +159,7 @@ class MaxQATaskOnboarder extends React.Component {
               {" "}
               <CreateInterfaceOnboardingQues
                 step={this.state.onboardingStep}
+                showOnboardingNext={this.showOnboardingNext}
                 {...this.props}
               />{" "}
             </Row>
@@ -158,6 +169,7 @@ class MaxQATaskOnboarder extends React.Component {
               {" "}
               <CreateInterfaceOnboardingQues
                 step={this.state.onboardingStep}
+                showOnboardingNext={this.showOnboardingNext}
                 {...this.props}
               />{" "}
             </Row>
@@ -167,6 +179,7 @@ class MaxQATaskOnboarder extends React.Component {
               {" "}
               <CreateInterfaceOnboardingQues
                 step={this.state.onboardingStep}
+                showOnboardingNext={this.showOnboardingNext}
                 {...this.props}
               />{" "}
             </Row>
@@ -301,7 +314,7 @@ class TaskOnboardingCompletedInstructions extends React.Component {
           </li>
           <li key="3">
             If, upon clicking "Complete Onboarding", the interface does not
-            re-route you to the main task, please refresh your page.
+            re-route you to the main task, <b>please refresh your page</b>.
           </li>
         </ul>
         <p>
@@ -633,11 +646,11 @@ class ExperimentInstructions extends React.Component {
 
           {this.experiment_mode["adversary"] === "none" ? null : (
             <small className="mb-3">
-              <b>Note:</b> you will earn an <b>additional $0.50 BONUS*</b> for
-              every question that <b>beats the AI</b>, abides by the
+              <b>Note:</b> you will earn an <b>additional $1.00 BONUS*</b> for
+              each question that <b>beats the AI</b> and that <b>another human
+              can answer successfully</b>, abides by the
               requirements specified in the instructions above, and is
-              successfully validated by other human annotators. This means that
-              you could potentially earn <b>an additional $2.50 per HIT!</b>
+              successfully validated by other human annotators.
             </small>
           )}
         </Row>
@@ -652,8 +665,10 @@ class MaxQATaskMain extends React.Component {
     this.api = props.api;
     this.model_names = ["none", "electra-synqa"];
     this.model_urls = [
-      "https://obws766r82.execute-api.us-west-1.amazonaws.com/predict?model=ts1626399549-electra-synqa",
-      "https://obws766r82.execute-api.us-west-1.amazonaws.com/predict?model=ts1626399549-electra-synqa",
+      // "https://obws766r82.execute-api.us-west-1.amazonaws.com/predict?model=ts1626399549-electra-synqa",
+      // "https://obws766r82.execute-api.us-west-1.amazonaws.com/predict?model=ts1626399549-electra-synqa",
+      "https://obws766r82.execute-api.us-west-1.amazonaws.com/predict?model=ts1636489569-electra-synqa",
+      "https://obws766r82.execute-api.us-west-1.amazonaws.com/predict?model=ts1636489569-electra-synqa",
     ];
     this.generator_names = [
       "qgen_dcombined",

@@ -84,16 +84,34 @@ class CreateInterfaceOnboardingAns extends React.Component {
       answer: [],
       answerNotSelected: true,
       target: 0,
+      answerCorrect: false,
     };
     this.handleResponseChange = this.handleResponseChange.bind(this);
     this.updateAnswer = this.updateAnswer.bind(this);
   }
   updateAnswer(value) {
+    const answers = {
+      1: ["mainstream press", "the mainstream press"],
+      2: ["1971"],
+      3: ["American Media Inc (AMI)", "American Media Inc"],
+      4: ["American supermarket tabloid", "an American supermarket tabloid", "supermarket tabloid"],
+      5: [
+        "declining circulation figures because of competition from glossy tabloid publications",
+        "declining circulation figures",
+      ],
+    };
     if (value.length > 0) {
       this.setState({
         answer: [value[value.length - 1]],
         answerNotSelected: false,
       });
+      var answer_text = value[value.length - 1].tokens.join("");
+      console.log(answers[this.props.step]);
+      console.log(answer_text);
+      if (answers[this.props.step].includes(answer_text)) {
+        this.props.showOnboardingNext(true);
+        console.log("Showing Next");
+      }
     } else {
       this.setState({ answer: value, answerNotSelected: false });
     }
@@ -107,7 +125,7 @@ class CreateInterfaceOnboardingAns extends React.Component {
       1: ["mainstream press", "the mainstream press"],
       2: ["1971"],
       3: ["American Media Inc (AMI)", "American Media Inc"],
-      4: ["American supermarket tabloid", "an American supermarket tabloid"],
+      4: ["American supermarket tabloid", "an American supermarket tabloid", "supermarket tabloid"],
       5: [
         "declining circulation figures because of competition from glossy tabloid publications",
         "declining circulation figures",
@@ -126,6 +144,7 @@ class CreateInterfaceOnboardingAns extends React.Component {
         updateAnswer={this.updateAnswer}
       />
     );
+
     var answer_correct = <></>;
     if (this.state.answer.length > 0) {
       var last_answer = this.state.answer[this.state.answer.length - 1];
@@ -133,7 +152,7 @@ class CreateInterfaceOnboardingAns extends React.Component {
       if (answers[this.props.step].includes(answer_text)) {
         answer_correct = (
           <Row>
-            <p>Correct Answer!</p>
+            <p><b>Correct Answer!</b></p>
           </Row>
         );
       } else if (answer_text.includes(answers[this.props.step][0])) {
@@ -243,6 +262,7 @@ class CreateInterfaceOnboardingQues extends React.Component {
   }
   handleResponseChange(e) {
     this.setState({ hypothesis: e.target.value });
+    this.props.showOnboardingNext(true);
   }
   render() {
     const answers = {
