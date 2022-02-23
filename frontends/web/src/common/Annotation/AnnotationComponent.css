@@ -13,3 +13,15 @@
     text-transform: uppercase;
     color: #005798;
 }
+
+.token-annotator > span {
+    /* Fix for react-text-annote token annotator added whitespace around tokens */
+    margin-right: -4px;
+    white-space: pre-wrap;
+    letter-spacing: 0.2px;
+    line-height: 1.8;
+}
+
+.token-annotator > mark {
+    margin-right: 2px;
+}
