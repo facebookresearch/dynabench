@@ -394,7 +394,7 @@ class ContextStringSelection(AnnotationComponent):
             assert isinstance(data[name], str), (
                 prefixed_message + "the value must be a string"
             )
-            assert data[name] in data[name_to_config_obj["reference_name"]], (
+            assert data[name] in data[name_to_config_obj[name]["reference_name"]], (
                 prefixed_message + "the selected string is not in the context"
             )
 
