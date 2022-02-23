@@ -8,8 +8,11 @@ import bottle
 
 
 # Add Access-Control-Allow-Origin for turk endpoints OPTIONS
-@bottle.route("/contexts/<tid:int>/<rid:int>/min", method="OPTIONS")
 @bottle.route("/contexts/<tid:int>/<rid:int>", method="OPTIONS")
+@bottle.route("/contexts/<tid:int>/<rid:int>/min", method="OPTIONS")
+@bottle.route("/contexts/<tid:int>/<rid:int>/uniform", method="OPTIONS")
+@bottle.route("/contexts/<tid:int>/<rid:int>/least_fooled", method="OPTIONS")
+@bottle.route("/contexts/<tid:int>/<rid:int>/validation_failed", method="OPTIONS")
 @bottle.route("/examples/<tid:int>/<rid:int>", method="OPTIONS")
 @bottle.route("/examples/<eid:int>", method="OPTIONS")
 @bottle.route("/examples", method="OPTIONS")
