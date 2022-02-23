@@ -27,14 +27,15 @@ def getContext(tid, rid):
 
 
 @bottle.get("/contexts/<tid:int>/<rid:int>/uniform")
-@_auth.requires_auth_or_turk
-def getUniformContext(credentials, tid, rid):
+@_auth.turk_endpoint
+def getUniformContext(tid, rid):
     query_dict = parse_qs(bottle.request.query_string)
     tags = _getTags(query_dict)
     return _getContext(tid, rid, "uniform", tags=tags)
 
 
 @bottle.get("/contexts/<tid:int>/<rid:int>/least_fooled")
+@_auth.turk_endpoint
 def getRandomMinLeastFooledContext(tid, rid):
     query_dict = parse_qs(bottle.request.query_string)
     tags = _getTags(query_dict)
@@ -42,6 +43,7 @@ def getRandomMinLeastFooledContext(tid, rid):
 
 
 @bottle.get("/contexts/<tid:int>/<rid:int>/validation_failed")
+@_auth.turk_endpoint
 def getRandomValidationFailedContext(tid, rid):
     query_dict = parse_qs(bottle.request.query_string)
     tags = _getTags(query_dict)
