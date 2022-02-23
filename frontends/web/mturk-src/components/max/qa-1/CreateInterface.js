@@ -112,7 +112,7 @@ class CreateInterface extends React.Component {
       function () {
         // this.api.getRandomContext(this.state.taskId, this.state.task.cur_round, ['test'])
         this.api
-          .getRandomContext(this.state.taskId, this.state.task.cur_round)
+          .getRandomContext(this.state.taskId, this.state.task.cur_round, [], "uniform")
           .then((result) => {
             result.context = JSON.parse(result.context_json).context;
             this.setState({

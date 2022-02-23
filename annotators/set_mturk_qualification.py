@@ -23,7 +23,7 @@ e.g.,
     }
 """
 
-from mephisto.core.local_database import LocalMephistoDB
+from mephisto.abstractions.databases.local_database import LocalMephistoDB
 
 
 db = LocalMephistoDB()

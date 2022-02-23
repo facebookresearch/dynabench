@@ -44,6 +44,13 @@ export default class ApiService {
     });
   }
 
+  convertToModelIO(tid, data) {
+    return this.fetch(`${this.domain}/tasks/${tid}/convert_to_model_io`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
   register(email, password, username) {
     return this.fetch(`${this.domain}/users`, {
       method: "POST",
@@ -72,30 +79,25 @@ export default class ApiService {
     });
   }
 
-  updateExample(id, target, fooled, uid = null) {
-    var obj = {};
-    obj.target_pred = target;
-    obj.model_wrong = fooled;
+  updateExample(id, data, uid = null) {
+    const includeCredentials = this.mode !== "mturk";
     if (this.mode === "mturk") {
-      obj.uid = uid;
+      data.uid = uid;
     }
-    return this.fetch(`${this.domain}/examples/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(obj),
-    });
+    return this.doFetch(
+      `${this.domain}/examples/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(data),
+      },
+      includeCredentials
+    );
   }
 
   updateUser(userId, body) {
     return this.fetch(`${this.domain}/users/${userId}`, {
       method: "PUT",
       body: JSON.stringify(body),
-    });
-  }
-
-  updateTaskSettings(taskId, settings) {
-    return this.fetch(`${this.domain}/tasks/${taskId}/settings`, {
-      method: "PUT",
-      body: JSON.stringify({ settings: settings }),
     });
   }
 
@@ -145,12 +147,11 @@ export default class ApiService {
     });
   }
 
-  submitContexts(data) {
+  submitContexts(tid, rid, data) {
     const token = this.getToken();
     const formData = new FormData();
     formData.append("file", data.file);
-    formData.append("taskId", data.taskId);
-    return this.fetch(`${this.domain}/contexts/upload`, {
+    return this.fetch(`${this.domain}/contexts/upload/${tid}/${rid}`, {
       method: "POST",
       body: formData,
       headers: {
@@ -159,7 +160,7 @@ export default class ApiService {
     });
   }
 
-  publishModel({
+  updateModel({
     modelId,
     name,
     description,
@@ -168,8 +169,9 @@ export default class ApiService {
     license,
     source_url,
     model_card,
+    is_anonymous,
   }) {
-    return this.fetch(`${this.domain}/models/${modelId}/publish`, {
+    return this.fetch(`${this.domain}/models/${modelId}/update`, {
       method: "PUT",
       body: JSON.stringify({
         name,
@@ -179,6 +181,7 @@ export default class ApiService {
         license,
         source_url,
         model_card,
+        is_anonymous,
       }),
     });
   }
@@ -186,13 +189,6 @@ export default class ApiService {
   toggleModelStatus(modelId) {
     return this.fetch(`${this.domain}/models/${modelId}/revertstatus`, {
       method: "PUT",
-    });
-  }
-
-  updateModel(modelId, data) {
-    return this.fetch(`${this.domain}/models/${modelId}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
     });
   }
 
@@ -253,6 +249,12 @@ export default class ApiService {
     });
   }
 
+  deployModel(modelId) {
+    return this.fetch(`${this.domain}/models/${modelId}/deploy`, {
+      method: "GET",
+    });
+  }
+
   getOverallUserLeaderboard(taskId, round, limit, offset) {
     const url =
       round === "overall"
@@ -273,10 +275,15 @@ export default class ApiService {
     });
   }
 
-  getTask(id) {
-    return this.fetch(`${this.domain}/tasks/${id}`, {
-      method: "GET",
-    });
+  getTask(idOrCode) {
+    const includeCredentials = this.mode !== "mturk";
+    return this.doFetch(
+      `${this.domain}/tasks/${idOrCode}`,
+      {
+        method: "GET",
+      },
+      includeCredentials
+    );
   }
 
   getTaskRound(id, rid) {
@@ -286,7 +293,9 @@ export default class ApiService {
   }
 
   getRandomContext(tid, rid, tags = [], method = "min") {
-    return this.fetch(
+    const includeCredentials = this.mode !== "mturk";
+
+    return this.doFetch(
       `${
         this.domain
       }/contexts/${tid}/${rid}/${method}?tags=${encodeURIComponent(
@@ -294,7 +303,8 @@ export default class ApiService {
       )}`,
       {
         method: "GET",
-      }
+      },
+      includeCredentials
     );
   }
 
@@ -305,18 +315,22 @@ export default class ApiService {
     context_tags = [],
     annotator_id = null
   ) {
+    const includeCredentials = this.mode !== "mturk";
+
     let annotator_query = annotator_id ? `&annotator_id=${annotator_id}` : "";
     let context_tags_query =
       context_tags.length > 0
         ? `&context_tags=${encodeURIComponent(context_tags.join("|"))}`
         : "";
-    return this.fetch(
+    return this.doFetch(
       `${this.domain}/examples/${tid}/${rid}?tags=${encodeURIComponent(
         tags.join("|")
       )}${context_tags_query}${annotator_query}`,
       {
         method: "GET",
-      }
+      },
+      {},
+      includeCredentials
     );
   }
 
@@ -372,11 +386,38 @@ export default class ApiService {
     );
   }
 
-  getModelResponse(
-    modelUrl,
-    { context, hypothesis, answer, image_url, question, insight, statement }
-  ) {
-    const uid = "0"; //A requied field for dynalab uploaded models
+  getUserTasks(userId, limit, offset) {
+    return this.fetch(
+      `${this.domain}/users/${userId}/tasks?limit=${limit || 10}&offset=${
+        offset || 0
+      }`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  getUserForks(userId, limit, offset) {
+    return this.fetch(
+      `${this.domain}/users/${userId}/forks?limit=${limit}&offset=${offset}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  getUserSnapshots(userId, limit, offset) {
+    return this.fetch(
+      `${this.domain}/users/${userId}/snapshots?limit=${limit}&offset=${offset}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  getModelResponse(modelUrl, data) {
+    data["uid"] = "0"; // A required field for dynalab uploaded models. TODO: fix
+    data["insight"] = false; // TODO: an artifact of old models
     const trialAuthToken = localStorage.getItem("trial_auth_token");
     const customHeader =
       this.loggedIn() || this.mode === "mturk" || trialAuthToken == null
@@ -388,16 +429,7 @@ export default class ApiService {
           };
     return this.fetch(modelUrl, {
       method: "POST",
-      body: JSON.stringify({
-        uid,
-        context,
-        hypothesis,
-        answer,
-        image_url,
-        question,
-        insight,
-        statement,
-      }),
+      body: JSON.stringify(data),
       ...(customHeader == null ? {} : { headers: customHeader }),
     });
   }
@@ -428,25 +460,15 @@ export default class ApiService {
     });
   }
 
-  setExampleMetadata(id, metadata_json) {
-    var obj = {};
-    obj.metadata_json = JSON.stringify(metadata_json);
-    return this.fetch(`${this.domain}/examples/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(obj),
+  getAdminOrOwner(tid) {
+    return this.fetch(`${this.domain}/tasks/admin_or_owner/${tid}`, {
+      method: "GET",
     });
   }
 
-  explainExample(id, type, explanation, uid = null) {
+  setExampleMetadata(id, metadata) {
     var obj = {};
-    if (type === "example") {
-      obj.example_explanation = explanation;
-    } else if (type === "model") {
-      obj.model_explanation = explanation;
-    }
-    if (this.mode === "mturk") {
-      obj.uid = uid;
-    }
+    obj.metadata_json = JSON.stringify(metadata);
     return this.fetch(`${this.domain}/examples/${id}`, {
       method: "PUT",
       body: JSON.stringify(obj),
@@ -454,34 +476,39 @@ export default class ApiService {
   }
 
   retractExample(id, uid = null) {
+    const includeCredentials = this.mode !== "mturk";
     let obj = { retracted: true };
     if (this.mode === "mturk") {
       obj.uid = uid;
     }
-    return this.fetch(`${this.domain}/examples/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(obj),
-    });
-  }
-
-  isTaskOwner(user, tid) {
-    return (
-      user.task_permissions?.filter(
-        (task_permission) =>
-          tid === task_permission.tid && "owner" === task_permission.type
-      ).length > 0
+    return this.doFetch(
+      `${this.domain}/examples/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(obj),
+      },
+      includeCredentials
     );
   }
 
   validateExample(id, label, mode, metadata = {}, uid = null) {
-    let obj = { label: label, mode: mode, metadata: metadata };
+    const includeCredentials = this.mode !== "mturk";
+    let obj = {
+      label: label,
+      mode: mode,
+      metadata: metadata,
+    };
     if (this.mode === "mturk") {
       obj.uid = uid;
     }
-    return this.fetch(`${this.domain}/validations/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(obj),
-    });
+    return this.doFetch(
+      `${this.domain}/validations/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(obj),
+      },
+      includeCredentials
+    );
   }
 
   flagExample(id, uid = null) {
@@ -506,6 +533,196 @@ export default class ApiService {
     );
   }
 
+  getModelWrong(tid, target, output) {
+    let obj = {
+      target: target,
+      tid: tid,
+      output: output,
+    };
+    return this.fetch(`${this.domain}/examples/evaluate`, {
+      method: "POST",
+      body: JSON.stringify(obj),
+    });
+  }
+
+  getAllTaskProposals(page, pageLimit) {
+    return this.fetch(
+      `${this.domain}/task_proposals/all/${page}/${pageLimit}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  getUserTaskProposals(page, pageLimit) {
+    return this.fetch(
+      `${this.domain}/task_proposals/user/${page}/${pageLimit}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  createTaskProposal(name, task_code, desc, longdesc) {
+    let obj = {
+      name: name,
+      desc: desc,
+      longdesc: longdesc,
+      task_code: task_code,
+    };
+    return this.fetch(`${this.domain}/task_proposals/create`, {
+      method: "POST",
+      body: JSON.stringify(obj),
+    });
+  }
+
+  processTaskProposal(tpid, accept, changes) {
+    let obj = {
+      accept: accept,
+      changes: changes || "",
+    };
+    return this.fetch(`${this.domain}/tasks/process_proposal/${tpid}`, {
+      method: "PUT",
+      body: JSON.stringify(obj),
+    });
+  }
+
+  updateTask(tid, data) {
+    return this.fetch(`${this.domain}/tasks/update/${tid}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  toggleOwner(tid, username) {
+    return this.fetch(`${this.domain}/tasks/toggle_owner/${tid}/${username}`, {
+      method: "PUT",
+    });
+  }
+
+  getOwners(tid, username) {
+    return this.fetch(`${this.domain}/tasks/owners/${tid}`, {
+      method: "GET",
+    });
+  }
+
+  getRounds(tid) {
+    return this.fetch(`${this.domain}/tasks/get_all_rounds/${tid}`, {
+      method: "GET",
+    });
+  }
+
+  activateTask(tid, annotation_config_json) {
+    return this.fetch(`${this.domain}/tasks/activate/${tid}`, {
+      method: "PUT",
+      body: JSON.stringify({ annotation_config_json: annotation_config_json }),
+    });
+  }
+
+  updateRound(tid, rid, data) {
+    return this.fetch(`${this.domain}/tasks/update_round/${tid}/${rid}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  createRound(tid) {
+    return this.fetch(`${this.domain}/tasks/create_round/${tid}`, {
+      method: "POST",
+    });
+  }
+
+  getModelIdentifiersForTargetSelection(tid) {
+    return this.fetch(
+      `${this.domain}/tasks/get_model_identifiers_for_target_selection/${tid}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  getModelIdentifiers(tid) {
+    return this.fetch(`${this.domain}/tasks/get_model_identifiers/${tid}`, {
+      method: "GET",
+    });
+  }
+
+  getAvailableDatasetAccessTypes() {
+    return this.fetch(`${this.domain}/datasets/get_access_types`, {
+      method: "GET",
+    });
+  }
+
+  getDatasets(tid) {
+    return this.fetch(`${this.domain}/tasks/datasets/${tid}`, {
+      method: "GET",
+    });
+  }
+
+  updateDataset(did, data) {
+    return this.fetch(`${this.domain}/datasets/update/${did}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  uploadAndCreateDataset(tid, name, files) {
+    const token = this.getToken();
+    const formData = new FormData();
+    for (const [name, file] of Object.entries(files)) {
+      formData.append(name, file);
+    }
+    return this.fetch(`${this.domain}/datasets/create/${tid}/${name}`, {
+      method: "POST",
+      body: formData,
+      headers: {
+        Authorization: token ? "Bearer " + token : "None",
+      },
+    });
+  }
+
+  deleteDataset(did) {
+    return this.fetch(`${this.domain}/datasets/delete/${did}`, {
+      method: "DELETE",
+    });
+  }
+
+  uploadTrainFiles(tid, modelName, files) {
+    const token = this.getToken();
+    const formData = new FormData();
+    for (const [name, file] of Object.entries(files)) {
+      formData.append(name, file);
+    }
+    return this.fetch(
+      `${this.domain}/models/upload_train_files/${tid}/${modelName}`,
+      {
+        method: "POST",
+        body: formData,
+        headers: {
+          Authorization: token ? "Bearer " + token : "None",
+        },
+      }
+    );
+  }
+
+  uploadPredictions(tid, modelName, files) {
+    const token = this.getToken();
+    const formData = new FormData();
+    for (const [name, file] of Object.entries(files)) {
+      formData.append(name, file);
+    }
+    return this.fetch(
+      `${this.domain}/models/upload_predictions/${tid}/${modelName}`,
+      {
+        method: "POST",
+        body: formData,
+        headers: {
+          Authorization: token ? "Bearer " + token : "None",
+        },
+      }
+    );
+  }
+
   storeExample(
     tid,
     rid,
@@ -519,30 +736,36 @@ export default class ApiService {
     tag = null,
     modelEndpointName = null
   ) {
-    return this.fetch(`${this.domain}/examples`, {
-      method: "POST",
-      body: JSON.stringify({
-        tid: tid,
-        rid: rid,
-        cid: cid,
-        uid: uid,
-        input: input,
-        output: output,
-        model_signature: modelSignature,
-        metadata: metadata,
-        model_wrong: modelWrong,
-        tag: tag,
-        model_endpoint_name: modelEndpointName,
-      }),
-    });
+    const includeCredentials = this.mode !== "mturk";
+    return this.doFetch(
+      `${this.domain}/examples`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          tid: tid,
+          rid: rid,
+          cid: cid,
+          uid: uid,
+          input: input,
+          output: output,
+          model_signature: modelSignature,
+          metadata: metadata,
+          model_wrong: modelWrong,
+          tag: tag,
+          model_endpoint_name: modelEndpointName,
+        }),
+      },
+      includeCredentials
+    );
   }
 
-  createLeaderboardConfiguration(tid, name, configuration_json) {
+  createLeaderboardConfiguration(tid, name, configuration_json, description) {
     return this.fetch(`${this.domain}/tasks/${tid}/leaderboard_configuration`, {
       method: "PUT",
       body: JSON.stringify({
         name: name,
         configuration_json: configuration_json,
+        description: description,
       }),
     });
   }
@@ -550,6 +773,50 @@ export default class ApiService {
   getLeaderboardConfiguration(tid, name) {
     return this.fetch(
       `${this.domain}/tasks/${tid}/leaderboard_configuration/${name}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  createLeaderboardSnapshot(
+    tid,
+    sort,
+    metricWeights,
+    datasetWeights,
+    orderedMetricWeights,
+    orderedDatasetWeights,
+    totalCount,
+    description,
+    name
+  ) {
+    return this.fetch(`${this.domain}/tasks/${tid}/leaderboard_snapshot`, {
+      method: "PUT",
+      body: JSON.stringify({
+        sort: sort,
+        metricWeights: metricWeights,
+        datasetWeights: datasetWeights,
+        orderedMetricWeights: orderedMetricWeights,
+        orderedDatasetWeights: orderedDatasetWeights,
+        totalCount: totalCount,
+        description: description,
+        name: name,
+      }),
+    });
+  }
+
+  getLeaderboardSnapshot(tid, name) {
+    return this.fetch(
+      `${this.domain}/tasks/${tid}/leaderboard_snapshot/${name}`,
+      {
+        method: "GET",
+      }
+    );
+  }
+
+  disambiguateForkAndSnapshot(tid, name) {
+    return this.fetch(
+      `${this.domain}/tasks/${tid}/disambiguate_forks_and_snapshots/${name}`,
       {
         method: "GET",
       }
@@ -653,6 +920,7 @@ export default class ApiService {
 
   doFetch(url, options, includeCredentials = false) {
     const token = this.mode !== "mturk" ? this.getToken() : null;
+
     const headers = {
       Accept: "application/json",
       "Content-Type": "application/json",
