@@ -267,12 +267,11 @@ const ContextStringSelection = ({
               if (value.length > 0) {
                 setSelectionInfo([value[value.length - 1]]);
                 data[name] = value[value.length - 1].tokens.join("");
-                setData(data);
               } else {
                 setSelectionInfo([]);
                 data[name] = "";
-                setData(data);
               }
+              setData(data);
             }}
             getSpan={(span) => ({
               ...span,
