@@ -282,7 +282,7 @@ const ContextStringSelection = ({
 const Prob = ({ create, data, setData, name, configObj }) => {
   if (data[name]) {
     const labels = configObj.single_prob
-      ? ["confidence", "uncertianty"]
+      ? ["confidence", "uncertainty"]
       : Object.keys(data[name]);
     const probs = configObj.single_prob
       ? [data[name], 1 - data[name]]
