@@ -258,15 +258,20 @@ const ContextStringSelection = ({
             {configObj.reference_name}:
           </h6>
           <TokenAnnotator
-            className="mb-1 p-3 light-gray-bg"
-            tokens={data[configObj.reference_name].split(/\b/)}
+            className="mb-1 p-3 light-gray-bg token-annotator"
+            tokens={data[configObj.reference_name].split(
+              /\b|(?<=[\s\(\)])|(?=[\s\(\)])/
+            )}
             value={selectionInfo}
             onChange={(value) => {
               if (value.length > 0) {
                 setSelectionInfo([value[value.length - 1]]);
                 data[name] = value[value.length - 1].tokens.join("");
-                setData(data);
+              } else {
+                setSelectionInfo([]);
+                data[name] = "";
               }
+              setData(data);
             }}
             getSpan={(span) => ({
               ...span,
