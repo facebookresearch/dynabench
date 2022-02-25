@@ -237,8 +237,12 @@ def get_datasets(credentials, tid):
 
 
 @bottle.get("/tasks/admin_or_owner/<tid:int>")
-@_auth.requires_auth
+@_auth.requires_auth_or_turk
+@_auth.turk_endpoint
 def get_admin_or_owner(credentials, tid):
+    if credentials["id"] == "turk":
+        return util.json_encode({"admin_or_owner": False})
+
     um = UserModel()
     user = um.get(credentials["id"])
     admin_or_owner = True

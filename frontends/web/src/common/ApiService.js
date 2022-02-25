@@ -471,9 +471,14 @@ export default class ApiService {
   }
 
   getAdminOrOwner(tid) {
-    return this.fetch(`${this.domain}/tasks/admin_or_owner/${tid}`, {
-      method: "GET",
-    });
+    const includeCredentials = this.mode !== "mturk";
+    return this.doFetch(
+      `${this.domain}/tasks/admin_or_owner/${tid}`,
+      {
+        method: "GET",
+      },
+      includeCredentials
+    );
   }
 
   setExampleMetadata(id, metadata) {
