@@ -17,6 +17,7 @@ import bottle
 @bottle.route("/examples/<eid:int>", method="OPTIONS")
 @bottle.route("/examples", method="OPTIONS")
 @bottle.route("/tasks/<task_id_or_code>", method="OPTIONS")
+@bottle.route("/tasks/admin_or_owner/<tid:int>", method="OPTIONS")
 @bottle.route("/validations/<eid:int>", method="OPTIONS")
 def turk_preflight(**args):
     bottle.default_app()
