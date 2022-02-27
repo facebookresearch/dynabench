@@ -32,10 +32,20 @@ perturbations = ["fairness", "robustness"]  # TODO: get this from task config
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "--dev",
+        # type=bool,
+        # default=False,
+        action="store_true",
+        help=(
+            "Local development mode where datasets are read and stored locally \
+                without S3 communication."
+        ),
+    )
+    parser.add_argument(
         "--s3-uri", type=str, help="The s3 uri, in the format of s3://<bucket>/<path>"
     )
     parser.add_argument(
-        "--local-path",
+        "--local_path",
         type=str,
         default="",
         help=(
@@ -132,8 +142,17 @@ def print_instructions(args, outpath, base_dataset_name):
 
 if __name__ == "__main__":
     args = parse_args()
-    local_path, base_dataset_name = download_base_from_s3(args)
+    if args.dev:
+        import ipdb; ipdb.set_trace()
+        # dev mode requires that local dataset exists
+        local_path = args.local_path
+        assert os.path.isfile(args.local_path) and os.path.getsize(args.local_path) > 0
+
+    # else:
+    #     local_path, base_dataset_name = download_base_from_s3(args)
+    ipdb.set_trace()
     outpath = perturb(local_path, args.task, args.perturb_prefix)
+    ipdb.set_trace()
     print_instructions(args, outpath, base_dataset_name)
     ops = input(f"Remove locally downloaded file at {local_path}? [Y/n] ")
     if ops == "Y":
