@@ -330,7 +330,6 @@ export default class ApiService {
       {
         method: "GET",
       },
-      {},
       includeCredentials
     );
   }
