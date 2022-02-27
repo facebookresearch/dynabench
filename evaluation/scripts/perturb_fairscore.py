@@ -20,6 +20,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(args.local_path)
 
+    orig_csv_writer = csv.writer(open("mnli_unchanged_examples.csv", "w"), delimiter="|")
+    orig_csv_writer.writerow(["Original"])
+
     # Save the perturbed data samples
     perturbed_pairs = []
     with open("fairness_dataset.csv", "w") as csvfile:
@@ -35,10 +38,14 @@ if __name__ == "__main__":
             perturbed = pert.perturb("nli", example)
             if len(perturbed) == 0:
                 # print("Nothing to perturb")
+                orig_csv_writer.writerow([example["context"]])
+                orig_csv_writer.writerow([example["hypothesis"]])
                 continue
             # print(perturbed)
             # with open("fairness_dataset.csv", "w") as csvfile:
             # csv_writer = csv.writer(csvfile, delimiter="|")
+            # csv_writer.writerow(example)
+            # csv_writer.writerow(perturbed[0])
             csv_writer.writerow([example["context"], perturbed[0]["context"]])
             csv_writer.writerow([example["hypothesis"], perturbed[0]["hypothesis"]])
 
