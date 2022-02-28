@@ -284,7 +284,7 @@ const AboutPage = () => (
             target="_blank"
             rel="noopener noreferrer"
           >
-            Swag
+            SWAG
           </a>
           ,{" "}
           <a
@@ -374,6 +374,16 @@ const AboutPage = () => (
               <a href="https://arxiv.org/abs/2108.05921">
                 Hatemoji: A Test Suite and Adversarially-Generated Dataset for
                 Benchmarking and Detecting Emoji-based Hate
+              </a>
+            </li>
+            <li>
+              <a href="https://scholarworks.umass.edu/cgi/viewcontent.cgi?article=1250&context=scil">
+                ANLIzing the Adversarial Natural Language Inference Dataset
+              </a>
+            </li>
+            <li>
+              <a href="https://arxiv.org/abs/2110.08514">
+                Analyzing Dynamic Adversarial Training Data in the Limit
               </a>
             </li>
           </ul>
@@ -474,14 +484,14 @@ const AboutPage = () => (
         </h2>
         <p>
           Everyone! People who have contributed to Dynabench so far include:
-          Douwe Kiela, Divyansh Kaushik, Max Bartolo, Adina Williams, Yixin Nie,
+          Douwe Kiela, Max Bartolo, Adina Williams, Yixin Nie, Divyansh Kaushik, 
           Grusha Prasad, Pratik Ringshia, Amanpreet Singh, Robin Jia, Sebastian
-          Riedel, Tristan Thrush, Atticus Geiger, Chris Potts, Pontus Stenetorp,
-          Mohit Bansal, Bertie Vidgen, Zeerak Talat, Zhiyi Ma, Ledell Wu, Sonia
-          Kris, Zen Wu, Kawin Ethayarajh, Alberto Lopez, Sasha Sheng, Eric
-          Wallace, Pedro Rodriguez, Rebecca Qian, Somya Jain, Guillaume Wenzek,
-          Sahir Gomez, Anmol Gupta, Hannah Rose Kirk, Zoe Papakipos, Kok Rui
-          Wong, Ishita Dasgupta, Anand Rajaram, Fatima Zahra Chriha, and others.
+          Riedel, Tristan Thrush, Kushal Tirumala, Atticus Geiger, Chris Potts, 
+          Pontus Stenetorp, Mohit Bansal, Bertie Vidgen, Zeerak Talat, Zhiyi Ma, 
+          Ledell Wu, Sonia Kris, Zen Wu, Kawin Ethayarajh, Alberto Lopez, Sasha Sheng, 
+          Eric Wallace, Pedro Rodriguez, Rebecca Qian, Somya Jain, Guillaume Wenzek,
+          Juan Felipe Cerón, Sahir Gomez, Anmol Gupta, Hannah Rose Kirk, Zoe Papakipos, 
+          Kok Rui Wong, Ishita Dasgupta, Anand Rajaram, Fatima Zahra Chriha, and others.
         </p>
         <h2 className="task-page-header d-block ml-0 mt-4 text-reset">
           How can I help?
