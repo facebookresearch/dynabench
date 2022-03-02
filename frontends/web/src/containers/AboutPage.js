@@ -484,12 +484,12 @@ const AboutPage = () => (
         </h2>
         <p>
           Everyone! People who have contributed to Dynabench so far include:
-          Douwe Kiela, Max Bartolo, Adina Williams, Yixin Nie, Divyansh Kaushik, 
+          Douwe Kiela, Max Bartolo, Adina Williams, Yixin Nie, Divyansh Kaushik,
           Grusha Prasad, Pratik Ringshia, Amanpreet Singh, Robin Jia, Sebastian
-          Riedel, Tristan Thrush, Kushal Tirumala, Atticus Geiger, Chris Potts, 
-          Pontus Stenetorp, Mohit Bansal, Bertie Vidgen, Zeerak Talat, Zhiyi Ma, 
-          Ledell Wu, Sonia Kris, Zen Wu, Kawin Ethayarajh, Alberto Lopez, Sasha 
-          Sheng, Eric Wallace, Pedro Rodriguez, Rebecca Qian, Somya Jain, 
+          Riedel, Tristan Thrush, Kushal Tirumala, Atticus Geiger, Chris Potts,
+          Pontus Stenetorp, Mohit Bansal, Bertie Vidgen, Zeerak Talat, Zhiyi Ma,
+          Ledell Wu, Sonia Kris, Zen Wu, Kawin Ethayarajh, Alberto Lopez, Sasha
+          Sheng, Eric Wallace, Pedro Rodriguez, Rebecca Qian, Somya Jain,
           Guillaume Wenzek, Juan Felipe Cerón, Sahir Gomez, Anmol Gupta, Hannah
           Rose Kirk, Zoe Papakipos, Kok Rui Wong, Ishita Dasgupta, Anand
           Rajaram, Fatima Zahra Chriha, and others.
