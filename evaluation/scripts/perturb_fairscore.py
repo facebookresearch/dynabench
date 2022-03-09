@@ -8,8 +8,7 @@ import csv
 
 
 def load_examples(path: str) -> List[Dict[str, Any]]:
-    """Load examples in .jsonl format
-    """
+    """Load examples in .jsonl format"""
     with open(path) as f:
         return [json.loads(line) for line in f]
 
@@ -35,20 +34,49 @@ def textflint_perturb_gender(examples: List[Dict[str, Any]]) -> None:
             row["textflint_rewrite"] = textflint_rewrite["x"]
 
 
-def write_perturb_outputs_to_csv(annotated_examples: List[Dict[str, Any]], augly_perturbed_examples: List[Dict[str, Any]], output_file: str) -> None:
-    """Collate results from heuristic perturbation functions with original data and write to CSV path.
-    """
+def write_perturb_outputs_to_csv(
+    annotated_examples: List[Dict[str, Any]],
+    augly_perturbed_examples: List[Dict[str, Any]],
+    output_file: str,
+) -> None:
+    """Collate results from heuristic perturbation functions with original data and write to CSV path."""
     with open(output_file, "w") as csvfile:
         csv_writer = csv.writer(csvfile, delimiter="|")
-        csv_writer.writerow(["original", "text_with_params", "augly_rewrite",
-                            "textflint_rewrite", "perturber_rewrite", "annotator_rewrite"])
-        for annotated_ex, augly_output in zip(annotated_examples, augly_perturbed_examples):
+        csv_writer.writerow(
+            [
+                "original",
+                "text_with_params",
+                "augly_rewrite",
+                "textflint_rewrite",
+                "perturber_rewrite",
+                "annotator_rewrite",
+            ]
+        )
+        for annotated_ex, augly_output in zip(
+            annotated_examples, augly_perturbed_examples
+        ):
             if len(augly_output) == 0:
-                csv_writer.writerow([annotated_ex["original"], annotated_ex["text_with_params"], annotated_ex["original"],
-                                    annotated_ex["textflint_rewrite"], annotated_ex["perturber_rewrite"], annotated_ex["annotator_rewrite"]])
+                csv_writer.writerow(
+                    [
+                        annotated_ex["original"],
+                        annotated_ex["text_with_params"],
+                        annotated_ex["original"],
+                        annotated_ex["textflint_rewrite"],
+                        annotated_ex["perturber_rewrite"],
+                        annotated_ex["annotator_rewrite"],
+                    ]
+                )
                 continue
-            csv_writer.writerow([annotated_ex["original"], annotated_ex["text_with_params"], augly_output[0]["original"],
-                                annotated_ex["textflint_rewrite"], annotated_ex["perturber_rewrite"], annotated_ex["annotator_rewrite"]])
+            csv_writer.writerow(
+                [
+                    annotated_ex["original"],
+                    annotated_ex["text_with_params"],
+                    augly_output[0]["original"],
+                    annotated_ex["textflint_rewrite"],
+                    annotated_ex["perturber_rewrite"],
+                    annotated_ex["annotator_rewrite"],
+                ]
+            )
 
 
 def main():
@@ -66,7 +94,7 @@ def main():
         type=str,
         required=True,
         help=(
-            "Local path to a .jsonl file containing annotator and perturber rewrites"
+            "Path to a .csv file to save heuristically perturbed outputs"
         ),
     )
     args = parser.parse_args()
@@ -74,14 +102,20 @@ def main():
     annotated_examples = load_examples(args.local_path)
 
     # Run AugLy perturbations on original text fields
-    pert = AuglyPerturbation(perturb_prefix="fairness", seed=2000, num_threads=1, perturb_fields=[
-                             "original"], ignore_words_fields=[])
+    pert = AuglyPerturbation(
+        perturb_prefix="fairness",
+        seed=2000,
+        num_threads=1,
+        perturb_fields=["original"],
+        ignore_words_fields=[],
+    )
     augly_perturbed_examples = pert.perturb(annotated_examples)
 
     textflint_perturb_gender(annotated_examples)
 
     write_perturb_outputs_to_csv(
-        annotated_examples, augly_perturbed_examples, args.output_file)
+        annotated_examples, augly_perturbed_examples, args.output_file
+    )
 
 
 if __name__ == "__main__":
