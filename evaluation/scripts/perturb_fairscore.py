@@ -1,7 +1,7 @@
 from augly_perturbation import AuglyPerturbation
 from textflint import UTSample
 from textflint.generation.transformation.UT.prejudice import Prejudice
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 import argparse
 import json
 import csv
