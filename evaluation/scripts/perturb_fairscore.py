@@ -93,9 +93,7 @@ def main():
         "--output_file",
         type=str,
         required=True,
-        help=(
-            "Path to a .csv file to save heuristically perturbed outputs"
-        ),
+        help=("Path to a .csv file to save heuristically perturbed outputs"),
     )
     args = parser.parse_args()
 
