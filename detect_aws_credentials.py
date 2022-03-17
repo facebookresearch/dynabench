@@ -65,7 +65,7 @@ def get_aws_secrets_from_file(credentials_file: str) -> Set[str]:
             ):
 
                 key_info = line.split(":")[1][2:-3].strip()
-                if key_info != "":
+                if (key_info != "") or (key_info != '"'):
                     keys.add(key_info)
 
     return keys
@@ -134,6 +134,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     # Secrets might be part of environment variables, so add such secrets to
     # the set of keys.
     keys |= get_aws_secrets_from_env()
+
+    keys.remove("")
+    keys.remove('"')
 
     if not keys:
         return 0
