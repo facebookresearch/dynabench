@@ -14,10 +14,7 @@ class BadFile(NamedTuple):
 def check_for_endwsith(
     filenames: Sequence[str],
 ) -> List[BadFile]:
-    """Check if files contain AWS secrets.
-    Return a list of all files containing AWS secrets and keys found, with all
-    but the first four characters obfuscated to ease debugging.
-    """
+    """Check if files contain bad CORS configurations."""
     bad_files = []
 
     for filename in filenames:
