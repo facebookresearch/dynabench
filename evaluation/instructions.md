@@ -257,6 +257,243 @@ build_config = {
 ### Filling in `gateway_url`
 To securely talk to Sagemaker model endpoints, Dynabench uses API Gateway.
 
+First, we have to import the 3 lambda functions that are used by the API Gateway (a function to handle CORS, a function to authorize requests, and a function to invoke sagemaker model endpoints). First navigate to the lambda function homepage (go to `AWS Lambda` -> `Functions`).
+
+(1) To create `corsHandlerJs`
+
+From the lambda function home page, press `Create function`, name the function `corsHandlerJs`, choose `Node.js 14.x` as the runtime. Then click `Create function`. Then you will be taken to a page with the lambda function you just created. Click `Upload from` in the top right of the Code source panel, and upload the zip file for the cors handler.
+
+(2) To create `ApiGatewayAuthorizerJs`
+
+From the lambda function home page, press `Create function`, name the function `ApiGatewayAuthorizerJs`, choose `Node.js 14.x` as the runtime. Then click `Create function`. Then you will be taken to a page with the lambda function you just created. Click `Upload from` in the top right of the Code source panel, and upload the zip file for the ApiGatewayAuthorizerJs handler.
+
+(3) To create `InvokeSagemakerEndpoint`
+
+From the lambda function home page, press `Create function`, name the function `InvokeSagemakerEndpoint`, choose `Python 3.8` as the runtime. Then click `Create function`. Then you will be taken to a page with the lambda function you just created. Click `Upload from` in the top right of the Code source panel, and upload the zip file for the InvokeSagemakerEndpoint handler.
+
+Now, we construct the API Gateway. Luckily, we can import the exact API Gateway we use in Dynabench through Open API 3. First, go to API Gateway, click `Create API`. When asked to Choose an API Type, navigate to the `REST API` panel but DO NOT CLICK `Build`. Instead, click `Import`. Then choose `Import from Swagger or Open API 3` from the `Create a new API` radio button list. In the text field below the radio buttons, copy paste the following:
+
+```
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "title" : "SagemakerEndpointAuth",
+    "description" : "Secure gateway to access Sagemaker model endpoints through lambda",
+    "version" : "2021-07-16T00:36:57Z"
+  },
+  "servers" : [ {
+    "url" : "https://obws766r82.execute-api.us-west-1.amazonaws.com/{basePath}",
+    "variables" : {
+      "basePath" : {
+        "default" : "/predict"
+      }
+    }
+  } ],
+  "paths" : {
+    "/" : {
+      "post" : {
+        "parameters" : [ {
+          "name" : "model",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "200 response",
+            "headers" : {
+              "Access-Control-Allow-Origin" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              },
+              "Access-Control-Allow-Credentials" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Empty"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "APIGatewayAuthorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-request-validator" : "Validate query string parameters and headers",
+        "x-amazon-apigateway-integration" : {
+          "credentials" : "arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/InvokeLambdaRole",
+          "httpMethod" : "POST",
+          "uri" : "arn:aws:apigateway:us-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-1:YOUR_AWS_ACCOUNT_ID:function:InvokeSagemakerEndpoint/invocations",
+          "responses" : {
+            "default" : {
+              "statusCode" : "200",
+              "responseParameters" : {
+                "method.response.header.Access-Control-Allow-Credentials" : "'true'",
+                "method.response.header.Access-Control-Allow-Origin" : "'*'"
+              },
+              "responseTemplates" : {
+                "application/json" : "$input.json(\"$\")\n#set($origin = $input.params(\"origin\"))\n#set($context.responseOverride.header.Access-Control-Allow-Origin=\"$origin\")"
+              }
+            }
+          },
+          "requestTemplates" : {
+            "application/json" : "{\n\"data\": $input.json('$'),\n\"model\":\"$input.params('model')\"\n}\n"
+          },
+          "passthroughBehavior" : "never",
+          "contentHandling" : "CONVERT_TO_TEXT",
+          "type" : "aws"
+        }
+      },
+      "options" : {
+        "responses" : {
+          "200" : {
+            "description" : "200 response",
+            "headers" : {
+              "Access-Control-Allow-Origin" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              },
+              "Access-Control-Allow-Methods" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              },
+              "Access-Control-Allow-Credentials" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              },
+              "Access-Control-Allow-Headers" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Empty"
+                }
+              }
+            }
+          }
+        },
+        "x-amazon-apigateway-integration" : {
+          "httpMethod" : "POST",
+          "uri" : "arn:aws:apigateway:us-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-1:YOUR_AWS_ACCOUNT_ID:function:corsHandlerJs/invocations",
+          "responses" : {
+            "default" : {
+              "statusCode" : "200"
+            }
+          },
+          "passthroughBehavior" : "when_no_match",
+          "contentHandling" : "CONVERT_TO_TEXT",
+          "type" : "aws_proxy"
+        }
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "Empty" : {
+        "title" : "Empty Schema",
+        "type" : "object"
+      }
+    },
+    "securitySchemes" : {
+      "APIGatewayAuthorizer" : {
+        "type" : "apiKey",
+        "name" : "Authorization",
+        "in" : "header",
+        "x-amazon-apigateway-authtype" : "custom",
+        "x-amazon-apigateway-authorizer" : {
+          "authorizerUri" : "arn:aws:apigateway:us-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-1:YOUR_AWS_ACCOUNT_ID:function:ApiGatewayAuthorizerJs/invocations",
+          "authorizerResultTtlInSeconds" : 0,
+          "type" : "token"
+        }
+      }
+    }
+  },
+  "x-amazon-apigateway-gateway-responses" : {
+    "DEFAULT_5XX" : {
+      "responseParameters" : {
+        "gatewayresponse.header.Access-Control-Allow-Methods" : "'OPTIONS,POST'",
+        "gatewayresponse.header.Access-Control-Allow-Credentials" : "'true'",
+        "gatewayresponse.header.Access-Control-Allow-Origin" : "'https://dynabench.org'",
+        "gatewayresponse.header.Access-Control-Allow-Headers" : "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+      }
+    },
+    "AUTHORIZER_FAILURE" : {
+      "statusCode" : 401,
+      "responseParameters" : {
+        "gatewayresponse.header.Access-Control-Allow-Methods" : "'OPTIONS,POST'",
+        "gatewayresponse.header.Access-Control-Allow-Credentials" : "'true'",
+        "gatewayresponse.header.Access-Control-Allow-Origin" : "'https://dynabench.org'",
+        "gatewayresponse.header.Access-Control-Allow-Headers" : "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+      },
+      "responseTemplates" : {
+        "application/json" : "{\"message\":$context.error.messageString}"
+      }
+    },
+    "AUTHORIZER_CONFIGURATION_ERROR" : {
+      "statusCode" : 500,
+      "responseParameters" : {
+        "gatewayresponse.header.Access-Control-Allow-Methods" : "'OPTIONS,POST'",
+        "gatewayresponse.header.Access-Control-Allow-Credentials" : "'true'",
+        "gatewayresponse.header.Access-Control-Allow-Origin" : "'https://dynabench.org'",
+        "gatewayresponse.header.Access-Control-Allow-Headers" : "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+      },
+      "responseTemplates" : {
+        "application/json" : "{\"message\":$context.error.messageString}"
+      }
+    },
+    "DEFAULT_4XX" : {
+      "responseParameters" : {
+        "gatewayresponse.header.Access-Control-Allow-Methods" : "'OPTIONS,POST'",
+        "gatewayresponse.header.Access-Control-Allow-Credentials" : "'true'",
+        "gatewayresponse.header.Access-Control-Allow-Origin" : "'https://dynabench.org'",
+        "gatewayresponse.header.Access-Control-Allow-Headers" : "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+      }
+    }
+  },
+  "x-amazon-apigateway-request-validators" : {
+    "Validate query string parameters and headers" : {
+      "validateRequestParameters" : true,
+      "validateRequestBody" : false
+    }
+  }
+}
+```
+
+Now replace everywhere it says `YOUR_AWS_ACCOUNT_ID` with your AWS account id. Then click `Import`. If at this point, you run into some errors, it is possible that the `uri` fields in the above template do not match the path to your lambda functions.
+
+After this, you can navigate back to the API Gateway console, and there should be a new entry for the API Gateway you just created. Click on it, press the `Actions` button towards the top of the page, and click `Deploy API`. A small box should appear asking for more details: in `Deployment stage` click `[New stage]` and type in `predict`, and for `Deployment Description` also put `predict`, and then click `Deploy`.
+
+Now the API is deployed, but there are still a few details. First, click `Resources` on the left side bar, and click `OPTIONS`. You should see the flow of the OPTIONS request come up - click on `Integration Request` and click the pencil icon next to `corsHandlerJs` where it says `Lambda Function`. Then delete the text and type in `corsHandlerJs` and click the gray checkmark - you should see a box pop up saying `Add Permission to Lambda Function`. Click `OK`, and then redeploy the API (`Actions` -> `Deploy API` just like above).
+
+Now the OPTIONS request is working, which you can check by going to any command line and typing in:
+```
+curl "https://{YOUR_API_GATEWAY_URL}.execute-api.us-west-1.amazonaws.com/predict?model=ts1643060001-newbertvfourteen" -X OPTIONS -H "Origin: https://dynabench.org"
+```
+where you replace `YOUR_API_GATEWAY_URL` with the `ID` of the API you just created (you can find this on the API Gateway homepage console).
+
+The only remaining steps are:
+(1) email/message Dynabench Admins to ask for the model endpoint secret
+(2) navigate to the code for the lambda function for `ApiGatewayAuthorizerJs`
+(3) put the secret in the array on line 6 of the code
+(4) press `Deploy` on the top of the `Code source` panel
+
+and you're done!
+
 
 ### Filling in the rest of the config
 To fill the rest of `build_config` in, you can put your AWS account region under `aws_region`. To find this, in the AWS console in the very top bar right next to the account drop down, there will be a region name. Click on it, and it will show the region (it will look something like `us-west-1` or `us-east-1`).
