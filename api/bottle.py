@@ -128,7 +128,6 @@ try:
                     defaults.append(param.default)
         return (args, varargs, keywords, tuple(defaults) or None)
 
-
 except ImportError:
     try:
         from inspect import getfullargspec
@@ -186,7 +185,6 @@ if py3k:
 
     def _raise(*a):
         raise a[0](a[1]).with_traceback(a[2])
-
 
 else:  # 2.x
     import httplib
@@ -3001,7 +2999,7 @@ class FileUpload:
         fname = re.sub(r"[-\s]+", "-", fname).strip(".-")
         return fname[:255] or "empty"
 
-    def _copy_file(self, fp, chunk_size=2 ** 16):
+    def _copy_file(self, fp, chunk_size=2**16):
         read, write, offset = self.file.read, fp.write, self.file.tell()
         while True:
             buf = read(chunk_size)
@@ -3010,7 +3008,7 @@ class FileUpload:
             write(buf)
         self.file.seek(offset)
 
-    def save(self, destination, overwrite=False, chunk_size=2 ** 16):
+    def save(self, destination, overwrite=False, chunk_size=2**16):
         """Save file to disk or copy its content to an open file(-like) object.
         If *destination* is a directory, :attr:`filename` is added to the
         path. Existing files are not overwritten by default (IOError).

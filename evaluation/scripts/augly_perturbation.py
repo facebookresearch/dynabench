@@ -2,6 +2,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+# flake8: noqa
+
 import logging
 import os
 import random
@@ -160,7 +162,7 @@ class AuglyPerturbation:
         perturb_example["input_id"] = example["uid"]
         perturb_example["uid"] = f"{example['uid']}_{transform_name}"
         uid_hash = zlib.adler32(perturb_example["uid"].encode())
-        random.seed((self.seed + uid_hash) % 2 ** 32)
+        random.seed((self.seed + uid_hash) % 2**32)
         transforms = self.perturbations[transform_name]
 
         changed = False
