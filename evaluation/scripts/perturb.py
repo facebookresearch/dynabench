@@ -149,7 +149,8 @@ def download_base_from_s3(args: Any) -> Optional[Tuple[str, str]]:
 
 def load_examples(path: str) -> List[Dict[str, Any]]:
     with open(path) as f:
-        return [json.loads(line) for line in f]
+        rows = f.readlines()
+        return [json.loads(line.strip(), strict=False) for line in rows]
 
 
 def perturb(
