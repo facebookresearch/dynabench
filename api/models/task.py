@@ -9,7 +9,6 @@ import enum
 import requests
 import sqlalchemy as db
 import yaml
-from transformers.data.metrics.squad_metrics import compute_f1
 
 import common.helpers as util
 from common.logging import logger
@@ -76,6 +75,8 @@ def verify_exact_match_config(config_obj):
 
 
 def string_f1(output, target, config_obj):
+    from transformers.data.metrics.squad_metrics import compute_f1
+
     return (
         compute_f1(
             output[config_obj["reference_name"]],

@@ -14,6 +14,7 @@ import boto3
 import requests
 import uuid
 from datasets.common import BaseDataset
+from datasets.mt import flores
 
 from eval_config import eval_config
 from utils.helpers import api_download_dataset, dotdict, load_models_ids_for_task_owners
@@ -32,7 +33,7 @@ logger = logging.getLogger("evaluation")
 DYNABENCH_API = eval_config["DYNABENCH_API"]
 decen_eaas_secret = eval_config["decen_eaas_secret"]
 
-
+# TODO: allow several tasks
 def load_datasets_for_task_owner():
     task_code = eval_config["task_code"]
     data = {"task_code": task_code}
@@ -68,6 +69,14 @@ def load_datasets_for_task_owner():
 
         rid, _ = dataset.pop("rid"), dataset.pop("tid")
         del dataset["id"], dataset["desc"]
+
+        # Not all dataset have the same task. It's important
+        # to have correct class so that the eval_server call
+        # the correct `compute_job_metrics`
+        if dataset["name"] in flores.FLORES_DATASETS:
+            d = flores.FLORES_DATASETS[dataset["name"]]()
+            d.task = task
+            datasets_dict[dataset["name"]] = d
         if dataset["name"] not in datasets_dict:
             datasets_dict[dataset["name"]] = BaseDataset(
                 round_id=rid,
@@ -90,18 +99,19 @@ def main():
     server_id = eval_config["eval_server_id"]
     logger.info(f"Start evaluation server '{server_id}'")
 
-    sqs = boto3.resource(
-        "sqs",
-        aws_access_key_id=eval_config["aws_access_key_id"],
-        aws_secret_access_key=eval_config["aws_secret_access_key"],
-        region_name=eval_config["aws_region"],
-    )
-    queue = sqs.get_queue_by_name(QueueName=eval_config["evaluation_sqs_queue"])
     (
         dataset_dict,
         status_code_check_fail,
         len_dataset_check_fail,
     ) = load_datasets_for_task_owner()
+    sqs_region = eval_config["aws_region"]
+    sqs = boto3.resource(
+        "sqs",
+        aws_access_key_id=eval_config["aws_access_key_id"],
+        aws_secret_access_key=eval_config["aws_secret_access_key"],
+        region_name=sqs_region,
+    )
+    queue = sqs.get_queue_by_name(QueueName=eval_config["evaluation_sqs_queue"])
 
     if status_code_check_fail:
         return
@@ -122,12 +132,6 @@ def main():
                 for message in queue.receive_messages():
 
                     msg = json.loads(message.body)
-
-                    if msg.get("eval_server_id", "default") != server_id:
-                        logger.info(
-                            f"Evaluation server {server_id} ignored message {msg}"
-                        )
-                        continue
 
                     logger.info(
                         f"Evaluation server {server_id} received SQS message {msg}"
@@ -252,7 +256,7 @@ def main():
                     # Evaluate one job
                     job = requester.computer.find_next_ready_job()
                     if job:
-                        logger.info(pool)
+                        # logger.info(pool)
                         # requester.computer.compute_one_async(pool, job)
                         requester.computer.compute_one_blocking(job)
                 except Exception as e:
@@ -277,3 +281,9 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+"""
+{"model_id": 615, "eval_server_id": "flores101"}
+{'model_id': 621, 'eval_server_id': 'flores101'}
+
+"""

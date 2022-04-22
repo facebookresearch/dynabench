@@ -2,6 +2,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import functools
 import os
 import tempfile
 
@@ -13,12 +14,14 @@ from sklearn.linear_model import LogisticRegression
 from eval_config import eval_config
 
 
-s3_client = boto3.client(
-    "s3",
-    aws_access_key_id=eval_config["dataperf_aws_access_key_id"],
-    aws_secret_access_key=eval_config["dataperf_aws_secret_access_key"],
-    region_name=eval_config["dataperf_aws_region"],
-)
+@functools.lru_cache()
+def s3_client():
+    return boto3.client(
+        "s3",
+        aws_access_key_id=eval_config["dataperf_aws_access_key_id"],
+        aws_secret_access_key=eval_config["dataperf_aws_secret_access_key"],
+        region_name=eval_config["dataperf_aws_region"],
+    )
 
 
 def download_s3_dir(bucket, prefix, local):
@@ -40,7 +43,7 @@ def download_s3_dir(bucket, prefix, local):
         kwargs = base_kwargs.copy()
         if next_token != "":
             kwargs.update({"ContinuationToken": next_token})
-        results = s3_client.list_objects_v2(**kwargs)
+        results = s3_client().list_objects_v2(**kwargs)
         contents = results.get("Contents")
         for i in contents:
             k = i.get("Key")
@@ -57,7 +60,7 @@ def download_s3_dir(bucket, prefix, local):
         dest_pathname = os.path.join(local, k)
         if not os.path.exists(os.path.dirname(dest_pathname)):
             os.makedirs(os.path.dirname(dest_pathname))
-        s3_client.download_file(bucket, k, dest_pathname)
+        s3_client().download_file(bucket, k, dest_pathname)
 
 
 def dataperf(train, test, config_obj):
@@ -89,7 +92,7 @@ def dataperf(train, test, config_obj):
             return train_memo[uid]
         else:
             with tempfile.NamedTemporaryFile() as tf:
-                s3_client.download_fileobj(
+                s3_client().download_fileobj(
                     "dataperf-embeddings",
                     "public_train_dataset_dynabench_formatted/train"
                     + str(uid)

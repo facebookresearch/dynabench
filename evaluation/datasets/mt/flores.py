@@ -49,7 +49,20 @@ class Flores101Base(BaseDataset):
         self.partition = partition
         self.shard_by_lang = shard_by_lang
         self.languages = languages
-        super().__init__(task_code=task_code, name=name, round_id=round_id)
+        task = helpers.dotdict(
+            {
+                "s3_bucket": "nllb",
+                "task_code": task_code,
+                "aws_region": "us-west-2",
+            }
+        )
+        super().__init__(
+            task_code=task_code,
+            name=name,
+            round_id=round_id,
+            db_connection_avail=False,
+            db_connection_not_avail_task_info=task,
+        )
 
     def _get_data_s3_path(self, perturb_prefix=None):
         # filename has the .jsonl extension.
@@ -309,6 +322,24 @@ def output_file(task_code: str, partition: str, outdir: Path, lang: str = None) 
     return outdir / f"{filename}.jsonl"
 
 
+def prepare_dataset(name: str = "Flores101Small1Dev", local_path: Path = None):
+    assert "Flores" in name
+    flores = globals()[name]()
+    local_path = local_path or Path(flores.local_path)
+    assert local_path.exists(), f"Folder for {flores.task_code} not found: {local_path}"
+    outdir = Path("/tmp") / "flores_json"
+
+    return prepare(
+        local_path,
+        outdir,
+        task_code=flores.task_code,
+        langs=flores.langs,
+        partition=flores.partition,
+        s3_bucket="s3://nllb",
+        shard=flores.shard,
+    )
+
+
 def prepare(
     folder: Path,
     outdir: Path,
@@ -393,7 +424,7 @@ def prepare(
 def _upload_file(task_code: str, partition: str, outfile: Path, s3_bucket: str) -> None:
     s3_path = "/".join([s3_bucket, "flores", f"flores_{task_code}", outfile.name])
     logger.info(f"Copying {outfile} to {s3_path}")
-    cmd = ["s3cmd", "put", "--force", str(outfile), s3_path]
+    cmd = ["aws", "s3", "cp", str(outfile), s3_path]
     logger.info(" ".join(cmd))
     logger.info(subprocess.check_output(cmd, text=True))
 
@@ -418,3 +449,21 @@ def compute_averages(perf_metric: str, perf_by_tag: List[dict]) -> dict:
         "metadata_json": json.dumps({**avg_metrics, "perf_by_tag": perf_by_tag}),
     }
     return score_obj
+
+
+FLORES_DATASETS = {
+    "flores101-full-dev": Flores101FullDev,
+    "flores101-full-devtest": Flores101FullDevTest,
+    "flores101-full-test": Flores101FullTest,
+    "flores101-small1-dev": Flores101Small1Dev,
+    "flores101-small1-devtest": Flores101Small1DevTest,
+    "flores101-small1-test": Flores101Small1Test,
+    "flores101-small2-dev": Flores101Small2Dev,
+    "flores101-small2-devtest": Flores101Small2DevTest,
+    "flores101-small2-test": Flores101Small2Test,
+}
+
+if __name__ == "__main__":
+    import func_argparse
+
+    func_argparse.single_main(prepare_dataset)

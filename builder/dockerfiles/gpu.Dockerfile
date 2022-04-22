@@ -32,7 +32,9 @@ RUN cd /tmp \
     && curl -O https://bootstrap.pypa.io/pip/3.6/get-pip.py \
     && python3 get-pip.py
 
-RUN python -m pip install --no-cache-dir torchserve
+# Explicitly install nvgpu until the issue is fixed
+# https://github.com/pytorch/serve/issues/1516
+RUN python -m pip install --no-cache-dir torchserve nvgpu
 RUN python -m pip install --no-cache-dir torch==1.8.1
 
 COPY dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh
@@ -48,7 +50,7 @@ WORKDIR /home/model-server/code
 
 RUN if [ -f requirements.txt ] && [ ${requirements} = True ]; then python -m pip install --no-cache-dir --force-reinstall -r requirements.txt; fi
 RUN if [ -f setup.py ] && [ ${setup} = True ]; then python -m pip install --no-cache-dir --force-reinstall -e .; fi
-RUN python -m pip install --force-reinstall git+git://github.com/facebookresearch/dynalab.git
+RUN python -m pip install --force-reinstall git+https://github.com/facebookresearch/dynalab.git
 
 RUN echo 'from dynalab.tasks.task_io import TaskIO; TaskIO("'${task_code}'")'
 RUN python -c 'from dynalab.tasks.task_io import TaskIO; TaskIO("'${task_code}'")'

@@ -6,7 +6,6 @@ import logging
 
 import yaml
 
-from common.config import config
 from utils.computer_decen import MetricsComputer
 from utils.evaluator_decen import JobScheduler
 from utils.helpers import (
@@ -140,7 +139,7 @@ class Requester:
             remaining_evaluating_job_ids = []
             for mid in failed_models:
                 api_model_update(mid, "completed")
-                send_takedown_model_request(model_id=mid, config=config, logger=logger)
+                send_takedown_model_request(model_id=mid, config=self.config, logger=logger, decen=True)
                 for i, job in enumerate(self.scheduler._queued):
                     if job.model_id != mid:
                         remaining_queued_job_ids.append(i)
