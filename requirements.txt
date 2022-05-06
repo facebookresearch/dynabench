@@ -22,4 +22,3 @@ spacy
 pyyaml
 textflint
 ujson>=4.2.0
-urllib3[secure]

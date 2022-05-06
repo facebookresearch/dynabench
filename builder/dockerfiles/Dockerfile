@@ -32,7 +32,7 @@ RUN cd /tmp \
     && curl -O https://bootstrap.pypa.io/pip/3.6/get-pip.py \
     && python3 get-pip.py
 
-RUN python -m pip install --no-cache-dir torchserve nvgpu
+RUN python -m pip install --no-cache-dir torchserve
 RUN python -m pip install --no-cache-dir torch==1.8.1
 
 COPY dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh

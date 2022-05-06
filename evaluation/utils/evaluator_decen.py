@@ -82,20 +82,15 @@ class JobScheduler:
         """
         dataset = self.datasets[dataset_name]
         assert kind in self._clients
-        task = dataset.task
+        region = self.config.get("sagemaker_region") or self.config["aws_region"]
+        self._clients[kind] = boto3.client(
+            kind,
+            aws_access_key_id=self.config["aws_access_key_id"],
+            aws_secret_access_key=self.config["aws_secret_access_key"],
+            region_name=region,
+        )
 
-        task_identifier = f"{task.id}-{task.task_code}-{task.name}"
-
-        if task_identifier not in self._clients[kind]:
-            region = self.config.get("sagemaker_region") or task.aws_region
-            self._clients[kind][task_identifier] = boto3.client(
-                kind,
-                aws_access_key_id=self.config["aws_access_key_id"],
-                aws_secret_access_key=self.config["aws_secret_access_key"],
-                region_name=region,
-            )
-
-        return self._clients[kind][task_identifier]
+        return self._clients[kind]
 
     def _load_status(self):
         try:

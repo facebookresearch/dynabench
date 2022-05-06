@@ -281,9 +281,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-"""
-{"model_id": 615, "eval_server_id": "flores101"}
-{'model_id': 621, 'eval_server_id': 'flores101'}
-
-"""
