@@ -11,7 +11,6 @@ import numpy as np
 import sacrebleu
 import sentencepiece
 from sklearn.metrics import f1_score
-from transformers.data.metrics.squad_metrics import compute_f1
 
 from metrics.instance_property import instance_property
 
@@ -173,6 +172,7 @@ def get_squad_f1(predictions: list, targets: list):
     the f1 of p and each item in t is computed, and the max f1 is used, per the
     squad evaluation standard.
     """
+    from transformers.data.metrics.squad_metrics import compute_f1
 
     def squad_f1_loop(t, p):
         if isinstance(t, list):

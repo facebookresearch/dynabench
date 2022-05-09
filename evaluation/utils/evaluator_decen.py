@@ -13,8 +13,8 @@ import botocore
 from dateutil.tz import tzlocal
 
 from utils.helpers import (
-    api_model_endpoint_name,
     api_model_eval_update,
+    api_model_info,
     generate_job_name,
     process_aws_metrics,
     round_end_dt,
@@ -30,8 +30,7 @@ class Job:
 
     def __init__(self, model_id, dataset_name, perturb_prefix=None):
         self.model_id = model_id
-        model_endpoint_name = api_model_endpoint_name(model_id)["endpoint_name"]
-        self.endpoint_name = model_endpoint_name
+        self.endpoint_name = api_model_info(model_id)["endpoint_name"]
         self.dataset_name = dataset_name
         self.perturb_prefix = perturb_prefix
         # Generate a temporary name, the scheduler will put a proper timestamp
@@ -84,20 +83,15 @@ class JobScheduler:
         """
         dataset = self.datasets[dataset_name]
         assert kind in self._clients
-        task = dataset.task
+        region = self.config.get("sagemaker_region") or self.config["aws_region"]
+        self._clients[kind] = boto3.client(
+            kind,
+            aws_access_key_id=self.config["aws_access_key_id"],
+            aws_secret_access_key=self.config["aws_secret_access_key"],
+            region_name=region,
+        )
 
-        task_identifier = f"{task.id}-{task.task_code}-{task.name}"
-
-        if task_identifier not in self._clients[kind]:
-            region = task.aws_region
-            self._clients[kind][task_identifier] = boto3.client(
-                kind,
-                aws_access_key_id=self.config["aws_access_key_id"],
-                aws_secret_access_key=self.config["aws_secret_access_key"],
-                region_name=region,
-            )
-
-        return self._clients[kind][task_identifier]
+        return self._clients[kind]
 
     def _load_status(self):
         try:
@@ -134,7 +128,7 @@ class JobScheduler:
             self.dump()
 
     def is_predictions_upload(self, model_id):
-        model_deployment_status = api_model_endpoint_name(model_id)["deployment_status"]
+        model_deployment_status = api_model_info(model_id)["deployment_status"]
         return model_deployment_status == "predictions_upload"
 
     def _set_jobname_with_unique_timestamp(self, job: Job) -> None:

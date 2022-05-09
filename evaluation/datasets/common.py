@@ -73,11 +73,12 @@ class BaseDataset:
     @property
     def s3_client(self):
         if self._s3_client is None:
+            region = self._config["sagemaker_region"] or self._config["aws_region"]
             self._s3_client = boto3.client(
                 "s3",
                 aws_access_key_id=self._config["aws_access_key_id"],
                 aws_secret_access_key=self._config["aws_secret_access_key"],
-                region_name=self._config["aws_region"],
+                region_name=region,
             )
         return self._s3_client
 

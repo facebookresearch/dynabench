@@ -191,7 +191,9 @@ def send_eval_request(
         return True
 
 
-def send_takedown_model_request(model_id, config, s3_uri=None, logger=None):
+def send_takedown_model_request(
+    model_id, config, s3_uri=None, logger=None, decen=False
+):
     if not s3_uri:
         s3_uri = ""
     session = boto3.Session(
@@ -203,6 +205,12 @@ def send_takedown_model_request(model_id, config, s3_uri=None, logger=None):
 
     queue = sqs.get_queue_by_name(QueueName=config["builder_sqs_queue"])
     msg = {"model_id": model_id, "s3_uri": s3_uri}
+    if decen:
+        # In decentralized mode we need to send more information to the builder
+        model_info = api_model_info(model_id)
+        model_info["deployment_status"] = "failed"
+        msg["model_info"] = json.dumps(model_info)
+        msg["task_info"] = "{}"
     queue.send_message(MessageBody=json.dumps(msg))
     if logger:
         logger.info(f"Sent message to {config['builder_sqs_queue']}: {msg}")
@@ -371,7 +379,7 @@ def api_get_next_job_score_entry(job, prod=False):
     return r.json()
 
 
-def api_model_endpoint_name(model_id, prod=False):
+def api_model_info(model_id, prod=False) -> str:
     data = {"model_id": model_id}
 
     r = requests.get(

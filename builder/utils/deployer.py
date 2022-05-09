@@ -114,7 +114,7 @@ class ModelDeployer:
 
     def setup_sagemaker_env(self):
         env = {}
-        region = self.model.task.aws_region
+        region = self.config.get("sagemaker_region") or self.config.get("aws_region")
         session = boto3.Session(
             aws_access_key_id=build_config["aws_access_key_id"],
             aws_secret_access_key=build_config["aws_secret_access_key"],

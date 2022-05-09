@@ -9,13 +9,14 @@ import sys
 
 sys.path.append("../api")  # noqa
 # TODO: find a way not to comment the follow imports to skip linter
-from models.dataset import DatasetModel  # isort:skip
-from models.task import TaskModel  # isort:skip
 from datasets.common import BaseDataset  # isort:skip
 from datasets.mt import flores  # isort:skip
 
 
 def load_datasets():
+    from models.dataset import DatasetModel
+    from models.task import TaskModel
+
     dm = DatasetModel()
     datasets = dm.list()
 
