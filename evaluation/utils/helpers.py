@@ -191,7 +191,9 @@ def send_eval_request(
         return True
 
 
-def send_takedown_model_request(model_id, config, s3_uri=None, logger=None, decen=False):
+def send_takedown_model_request(
+    model_id, config, s3_uri=None, logger=None, decen=False
+):
     if not s3_uri:
         s3_uri = ""
     session = boto3.Session(

@@ -14,8 +14,9 @@ from datasets.mt import flores  # isort:skip
 
 
 def load_datasets():
-    from models.dataset import DatasetModel  # isort:skip
-    from models.task import TaskModel  # isort:skip
+    from models.dataset import DatasetModel
+    from models.task import TaskModel
+
     dm = DatasetModel()
     datasets = dm.list()
 
