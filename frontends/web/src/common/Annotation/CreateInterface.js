@@ -483,15 +483,19 @@ class CreateInterface extends React.Component {
   }
 
   switchLiveMode(checked) {
-    if (checked === true && !this.context.api.loggedIn()) {
-      this.props.history.push(
-        "/register?msg=" +
-          encodeURIComponent(
-            "Please sign up or log in so that you can get credit for your generated examples."
-          ) +
-          "&src=" +
-          encodeURIComponent(`/tasks/${this.state.taskCode}/create`)
-      );
+    if (checked === true) {
+      if (!this.context.api.loggedIn()) {
+        this.props.history.push(
+          "/register?msg=" +
+            encodeURIComponent(
+              "Please sign up or log in so that you can get credit for your generated examples."
+            ) +
+            "&src=" +
+            encodeURIComponent(`/tasks/${this.state.taskCode}/create`)
+        );
+      } else {
+        this.getNewContext();
+      }
     }
     this.setState({ livemode: checked });
   }
