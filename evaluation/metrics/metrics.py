@@ -268,7 +268,7 @@ def get_chrf_pp(predictions: list, targets: list):
 
 
 def get_chrf_pp_meta(task=None):
-    return {"unit": "", "pretty_name": "chrf++", "utility_direction": 1, "offset": 0}
+    return {"unit": "", "pretty_name": "ᴄʜʀF++", "utility_direction": 1, "offset": 0}
 
 
 # job_metrics, takes raw job and dataset as input
